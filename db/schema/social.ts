@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, integer, boolean, primaryKey, pgEnum } from 'drizzle-orm/pg-core'
+import { pgTable, text, timestamp, integer, boolean, primaryKey, pgEnum, index, AnyPgColumn } from 'drizzle-orm/pg-core'
 import { createId } from '@paralleldrive/cuid2'
 import { relations } from 'drizzle-orm'
 import { users } from './auth'
@@ -26,10 +26,10 @@ export const bookComments = pgTable('book_comments', {
   bookId: text('book_id').notNull().references(() => books.id, { onDelete: 'cascade' }),
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   content: text('content').notNull(),
-  parentId: text('parent_id'),
+  parentId: text('parent_id').references((): AnyPgColumn => bookComments.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-})
+}, (t) => [index('book_comments_book_id_idx').on(t.bookId)])
 
 export const bookmarks = pgTable('bookmarks', {
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
@@ -53,7 +53,7 @@ export const notifications = pgTable('notifications', {
   resourceId: text('resource_id'),
   read: boolean('read').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-})
+}, (t) => [index('notifications_user_id_idx').on(t.userId)])
 
 export const sparks = pgTable('sparks', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
@@ -72,4 +72,11 @@ export const sparkEntries = pgTable('spark_entries', {
   chapterId: text('chapter_id').references(() => chapters.id, { onDelete: 'set null' }),
   votes: integer('votes').default(0).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-})
+}, (t) => [index('spark_entries_spark_id_idx').on(t.sparkId)])
+
+export const bookCommentsRelations = relations(bookComments, ({ one, many }) => ({
+  book: one(books, { fields: [bookComments.bookId], references: [books.id] }),
+  user: one(users, { fields: [bookComments.userId], references: [users.id] }),
+  parent: one(bookComments, { fields: [bookComments.parentId], references: [bookComments.id], relationName: 'parent' }),
+  replies: many(bookComments, { relationName: 'parent' }),
+}))

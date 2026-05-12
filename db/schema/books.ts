@@ -1,4 +1,4 @@
-import { pgTable, text, boolean, timestamp, integer, jsonb, pgEnum } from 'drizzle-orm/pg-core'
+import { pgTable, text, boolean, timestamp, integer, jsonb, pgEnum, index, AnyPgColumn } from 'drizzle-orm/pg-core'
 import { createId } from '@paralleldrive/cuid2'
 import { relations } from 'drizzle-orm'
 import { users } from './auth'
@@ -23,7 +23,7 @@ export const books = pgTable('books', {
   synopsis: text('synopsis'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-})
+}, (t) => [index('books_user_id_idx').on(t.userId)])
 
 export const bookPublishingMetadata = pgTable('book_publishing_metadata', {
   bookId: text('book_id').primaryKey().references(() => books.id, { onDelete: 'cascade' }),
@@ -40,14 +40,14 @@ export const bookPublishingMetadata = pgTable('book_publishing_metadata', {
 export const binderItems = pgTable('binder_items', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
   bookId: text('book_id').notNull().references(() => books.id, { onDelete: 'cascade' }),
-  parentId: text('parent_id'),
+  parentId: text('parent_id').references((): AnyPgColumn => binderItems.id, { onDelete: 'set null' }),
   type: binderItemTypeEnum('type').notNull(),
   title: text('title').notNull(),
   order: integer('order').default(0).notNull(),
   content: jsonb('content'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-})
+}, (t) => [index('binder_items_book_id_idx').on(t.bookId), index('binder_items_parent_id_idx').on(t.parentId)])
 
 export const chapters = pgTable('chapters', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
@@ -59,7 +59,7 @@ export const chapters = pgTable('chapters', {
   notes: text('notes'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-})
+}, (t) => [index('chapters_book_id_idx').on(t.bookId)])
 
 export const chapterSnapshots = pgTable('chapter_snapshots', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
@@ -67,7 +67,7 @@ export const chapterSnapshots = pgTable('chapter_snapshots', {
   content: jsonb('content').notNull(),
   wordCount: integer('word_count').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-})
+}, (t) => [index('chapter_snapshots_chapter_id_idx').on(t.chapterId)])
 
 export const booksRelations = relations(books, ({ one, many }) => ({
   user: one(users, { fields: [books.userId], references: [users.id] }),

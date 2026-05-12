@@ -13,20 +13,27 @@ type Props = {
 export default async function BookEditorPage({ params }: Props) {
   const { bookId } = await params
 
-  const [bookResult, binderResult] = await Promise.all([
-    getBookAction(bookId),
-    getBinderTreeAction(bookId),
-  ])
+  let bookResult: Awaited<ReturnType<typeof getBookAction>>
+  let binderResult: Awaited<ReturnType<typeof getBinderTreeAction>>
 
-  if (!bookResult.success || !binderResult.success) notFound()
+  try {
+    ;[bookResult, binderResult] = await Promise.all([
+      getBookAction(bookId),
+      getBinderTreeAction(bookId),
+    ])
+  } catch {
+    notFound()
+  }
+
+  if (!bookResult!.success || !binderResult!.success) notFound()
 
   return (
     <BookEditorProvider
       bookId={bookId}
-      bookTitle={bookResult.data.title}
-      initialBinderItems={binderResult.data}
+      bookTitle={bookResult!.data.title}
+      initialBinderItems={binderResult!.data}
     >
-      <div className="flex h-[calc(100vh-var(--header-height,0px))] overflow-hidden">
+      <div className="flex h-full overflow-hidden">
         <BinderTree />
         <ChapterEditor />
         <MetadataPanel />

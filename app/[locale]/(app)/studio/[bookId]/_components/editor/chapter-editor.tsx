@@ -1,9 +1,15 @@
 'use client'
 
-import { useRef, useCallback } from 'react'
+import { useRef, useCallback, useEffect } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
+import Underline from '@tiptap/extension-underline'
+import Highlight from '@tiptap/extension-highlight'
+import Link from '@tiptap/extension-link'
+import Typography from '@tiptap/extension-typography'
+import CharacterCount from '@tiptap/extension-character-count'
+import TextAlign from '@tiptap/extension-text-align'
 import { useBookEditor } from '../book-editor-provider'
 import { EditorToolbar } from './editor-toolbar'
 import { updateBinderItemAction } from '@/lib/actions/binder.actions'
@@ -33,9 +39,16 @@ export function ChapterEditor() {
 
   const editor = useEditor(
     {
+      immediatelyRender: false,
       extensions: [
         StarterKit,
         Placeholder.configure({ placeholder: 'Start writing…' }),
+        Underline,
+        Highlight.configure({ multicolor: false }),
+        Link.configure({ openOnClick: false, HTMLAttributes: { class: 'text-brand underline cursor-pointer' } }),
+        Typography,
+        CharacterCount,
+        TextAlign.configure({ types: ['heading', 'paragraph'] }),
       ],
       content: activeChapter?.content ?? null,
       onUpdate: ({ editor }) => {
@@ -49,6 +62,13 @@ export function ChapterEditor() {
     },
     [activeItemId],
   )
+
+  // When chapter data arrives after the async fetch, populate the editor.
+  // useEditor initializes with null because activeChapter is always null on first render.
+  useEffect(() => {
+    if (!editor || !activeChapter || !editor.isEmpty) return
+    editor.commands.setContent(activeChapter.content as Parameters<typeof editor.commands.setContent>[0])
+  }, [activeChapter, editor])
 
   if (activeItemId === null) {
     return (

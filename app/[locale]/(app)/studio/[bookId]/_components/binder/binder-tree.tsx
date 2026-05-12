@@ -71,8 +71,10 @@ function flattenVisible(nodes: TreeNode[], collapsed: Set<string>): string[] {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function BinderTree() {
-  const { bookId, bookTitle, binderItems, setBinderItems } = useBookEditor()
+  const { bookId, bookTitle, binderItems, setBinderItems, focusMode } = useBookEditor()
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
+
+  if (focusMode) return null
 
   const tree = useMemo(() => buildTree(binderItems), [binderItems])
 

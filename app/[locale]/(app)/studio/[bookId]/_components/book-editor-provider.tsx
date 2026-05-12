@@ -42,6 +42,8 @@ type BookEditorContextValue = {
   updateChapterStatus: (status: ChapterData['status']) => Promise<void>
   updateChapterNotes: (notes: string | null) => void
   dismissError: (index: number) => void
+  focusMode: boolean
+  toggleFocusMode: () => void
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
@@ -70,9 +72,14 @@ export function BookEditorProvider({ bookId, bookTitle, initialBinderItems, chil
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved')
   const [wordCount, setWordCount] = useState(0)
   const [errors, setErrors] = useState<string[]>([])
+  const [focusMode, setFocusMode] = useState(false)
+  const toggleFocusMode = useCallback(() => setFocusMode(f => !f), [])
 
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const notesTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Mirror of chapterCache for synchronous reads without triggering setState
+  const chapterCacheRef = useRef(chapterCache)
+  chapterCacheRef.current = chapterCache
 
   const pushError = useCallback((msg: string) => {
     setErrors(prev => [...prev, msg])
@@ -91,26 +98,16 @@ export function BookEditorProvider({ bookId, bookTitle, initialBinderItems, chil
 
     if (!CHAPTER_TYPES.has(item.type)) return
 
-    // Chapter-type: load from cache or fetch
-    setChapterCache(prev => {
-      if (prev.has(id)) return prev // cache hit — no fetch needed
-      // Trigger fetch outside of setState
-      return prev
-    })
+    // Cache hit — nothing to do
+    if (chapterCacheRef.current.has(id)) return
 
-    setChapterCache(prev => {
-      if (prev.has(id)) return prev
-
-      // Async fetch — fire and forget, update cache on completion
-      getChapterAction(item.chapterId!).then(result => {
-        if (result.success) {
-          setChapterCache(c => new Map(c).set(id, result.data))
-        } else {
-          pushError(`Couldn't load chapter: ${result.error}`)
-        }
-      })
-
-      return prev
+    // Cache miss — fetch and store (called directly, never inside a setState updater)
+    getChapterAction(item.chapterId!).then(result => {
+      if (result.success) {
+        setChapterCache(c => new Map(c).set(id, result.data))
+      } else {
+        pushError(`Couldn't load chapter: ${result.error}`)
+      }
     })
   }, [binderItems, pushError])
 
@@ -138,7 +135,7 @@ export function BookEditorProvider({ bookId, bookTitle, initialBinderItems, chil
       setSaveStatus('saving')
 
       const cachedChapter = targetItemId
-        ? (chapterCache.get(targetItemId) ?? null)
+        ? (chapterCacheRef.current.get(targetItemId) ?? null)
         : null
 
       if (!cachedChapter) return
@@ -158,8 +155,6 @@ export function BookEditorProvider({ bookId, bookTitle, initialBinderItems, chil
         pushError("Couldn't save. Retrying…")
       }
     }, 2000)
-  // chapterCache intentionally not in deps — we capture via closure at call time
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeItemId, pushError])
 
   const updateChapterStatus = useCallback(async (status: ChapterData['status']) => {
@@ -196,7 +191,7 @@ export function BookEditorProvider({ bookId, bookTitle, initialBinderItems, chil
 
     notesTimerRef.current = setTimeout(async () => {
       const cachedChapter = targetItemId
-        ? (chapterCache.get(targetItemId) ?? null)
+        ? (chapterCacheRef.current.get(targetItemId) ?? null)
         : null
 
       if (!cachedChapter) return
@@ -206,8 +201,6 @@ export function BookEditorProvider({ bookId, bookTitle, initialBinderItems, chil
         pushError("Couldn't save notes. Please try again.")
       }
     }, 2000)
-  // chapterCache intentionally not in deps — captured at call time
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeItemId, pushError])
 
   const dismissError = useCallback((index: number) => {
@@ -243,6 +236,8 @@ export function BookEditorProvider({ bookId, bookTitle, initialBinderItems, chil
     updateChapterStatus,
     updateChapterNotes,
     dismissError,
+    focusMode,
+    toggleFocusMode,
   }), [
     bookId,
     bookTitle,
@@ -262,6 +257,8 @@ export function BookEditorProvider({ bookId, bookTitle, initialBinderItems, chil
     updateChapterStatus,
     updateChapterNotes,
     dismissError,
+    focusMode,
+    toggleFocusMode,
   ])
 
   return <BookEditorContext.Provider value={value}>{children}</BookEditorContext.Provider>

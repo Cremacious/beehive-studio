@@ -5,6 +5,7 @@ import type { Editor } from '@tiptap/react'
 // Side-effect import: pulls in module augmentations for all StarterKit commands
 import '@tiptap/starter-kit'
 import { useBookEditor } from '../book-editor-provider'
+import type { CharacterCountStorage } from '@tiptap/extensions'
 
 type Props = {
   editor: Editor
@@ -38,7 +39,18 @@ function Separator() {
 }
 
 export function EditorToolbar({ editor }: Props) {
-  const { saveStatus, wordCount } = useBookEditor()
+  const { saveStatus, wordCount, focusMode, toggleFocusMode } = useBookEditor()
+
+  function handleLinkClick() {
+    if (editor.isActive('link')) {
+      editor.chain().focus().unsetLink().run()
+    } else {
+      const url = window.prompt('URL')
+      if (url) editor.chain().focus().setLink({ href: url }).run()
+    }
+  }
+
+  const charCount = editor.storage.characterCount as CharacterCountStorage | undefined
 
   return (
     <div className="flex items-center gap-1 px-3 py-1.5 border-b border-border bg-surface">
@@ -138,6 +150,50 @@ export function EditorToolbar({ editor }: Props) {
         ↻
       </ToolbarButton>
 
+      <Separator />
+
+      {/* Format: Underline, Highlight, Link */}
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleUnderline().run()}
+        isActive={editor.isActive('underline')}
+      >
+        <span style={{ textDecoration: 'underline' }}>U</span>
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleHighlight().run()}
+        isActive={editor.isActive('highlight')}
+      >
+        H
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={handleLinkClick}
+        isActive={editor.isActive('link')}
+      >
+        🔗
+      </ToolbarButton>
+
+      <Separator />
+
+      {/* Align */}
+      <ToolbarButton
+        onClick={() => editor.chain().focus().setTextAlign('left').run()}
+        isActive={editor.isActive({ textAlign: 'left' })}
+      >
+        ≡
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().setTextAlign('center').run()}
+        isActive={editor.isActive({ textAlign: 'center' })}
+      >
+        ≡
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().setTextAlign('right').run()}
+        isActive={editor.isActive({ textAlign: 'right' })}
+      >
+        ≡
+      </ToolbarButton>
+
       <span className="flex-1" />
 
       {/* Save status + word count */}
@@ -153,10 +209,26 @@ export function EditorToolbar({ editor }: Props) {
           {saveStatus === 'saving' && '○ Saving…'}
           {saveStatus === 'unsaved' && '● Unsaved'}
         </span>
-        {wordCount > 0 && (
+        {charCount ? (
+          <span>{charCount.words()} words</span>
+        ) : wordCount > 0 ? (
           <span>{wordCount.toLocaleString()} words</span>
-        )}
+        ) : null}
       </span>
+
+      {/* Focus mode toggle */}
+      <button
+        onClick={toggleFocusMode}
+        title={focusMode ? 'Exit focus mode' : 'Focus mode'}
+        className={cn(
+          'text-xs px-2 py-1 rounded transition-colors ml-1',
+          focusMode
+            ? 'text-brand bg-brand/20'
+            : 'text-foreground/60 hover:text-foreground hover:bg-surface-elevated',
+        )}
+      >
+        {focusMode ? '⊠' : '⊡'}
+      </button>
     </div>
   )
 }

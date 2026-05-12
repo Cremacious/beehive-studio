@@ -10,14 +10,16 @@ import Link from '@tiptap/extension-link'
 import Typography from '@tiptap/extension-typography'
 import CharacterCount from '@tiptap/extension-character-count'
 import TextAlign from '@tiptap/extension-text-align'
+import type { CharacterCountStorage } from '@tiptap/extensions'
 import { useBookEditor } from '../book-editor-provider'
 import { EditorToolbar } from './editor-toolbar'
+import { SprintTimer } from './sprint-timer'
 import { updateBinderItemAction } from '@/lib/actions/binder.actions'
 
 const CHAPTER_TYPES = new Set(['chapter', 'front_matter', 'back_matter'])
 
 export function ChapterEditor() {
-  const { activeItemId, activeItem, activeChapter, updateChapterContent, updateBinderItem } =
+  const { activeItemId, activeItem, activeChapter, updateChapterContent, updateBinderItem, wordCount } =
     useBookEditor()
 
   const researchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -107,8 +109,10 @@ export function ChapterEditor() {
     )
   }
 
+  const charCount = editor?.storage.characterCount as CharacterCountStorage | undefined
+
   return (
-    <main className="flex-1 flex flex-col overflow-hidden">
+    <main className="flex-1 flex flex-col overflow-hidden relative">
       {editor && <EditorToolbar editor={editor} />}
       <div className="flex-1 overflow-y-auto">
         <EditorContent
@@ -116,6 +120,7 @@ export function ChapterEditor() {
           className="min-h-full p-8 max-w-3xl mx-auto prose prose-invert prose-sm focus:outline-none"
         />
       </div>
+      <SprintTimer currentWordCount={charCount?.words() ?? wordCount} />
     </main>
   )
 }

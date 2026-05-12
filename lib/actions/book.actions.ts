@@ -103,8 +103,10 @@ export async function createBookAction(input: {
       seriesNumber: d.seriesNumber ?? null,
     })
 
-    // Upsert publishing metadata if any Step 3 publishing fields were provided
-    const hasMeta = d.subtitle || d.publisherName || d.trimSize || d.edition
+    // Publishing metadata at creation time is intentionally free-tier — ongoing edits
+    // via updatePublishingMetadataAction remain premium-gated.
+    const hasMeta = d.subtitle !== undefined || d.publisherName !== undefined
+      || d.trimSize !== undefined || d.edition !== undefined
     if (hasMeta) {
       await tx.insert(bookPublishingMetadata).values({
         bookId,
@@ -115,15 +117,6 @@ export async function createBookAction(input: {
         isbn: null,
         authorBio: null,
         dedication: null,
-      }).onConflictDoUpdate({
-        target: bookPublishingMetadata.bookId,
-        set: {
-          subtitle: d.subtitle ?? null,
-          publisherName: d.publisherName ?? null,
-          trimSize: d.trimSize ?? '6x9',
-          edition: d.edition ?? 'First Edition',
-          updatedAt: new Date(),
-        },
       })
     }
 

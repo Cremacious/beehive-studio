@@ -55,8 +55,12 @@ export function BinderItem({ node, depth }: Props) {
 
   useEffect(() => {
     if (isRenaming) {
-      inputRef.current?.focus()
-      inputRef.current?.select()
+      // Defer past Radix's focus-restoration after dropdown close
+      const id = setTimeout(() => {
+        inputRef.current?.focus()
+        inputRef.current?.select()
+      }, 0)
+      return () => clearTimeout(id)
     }
   }, [isRenaming])
 

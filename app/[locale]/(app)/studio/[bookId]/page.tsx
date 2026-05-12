@@ -12,7 +12,7 @@ type Props = {
 }
 
 export default async function BookEditorPage({ params }: Props) {
-  const { bookId } = await params
+  const { bookId, locale } = await params
 
   let bookResult: Awaited<ReturnType<typeof getBookAction>>
   let binderResult: Awaited<ReturnType<typeof getBinderTreeAction>>
@@ -32,6 +32,7 @@ export default async function BookEditorPage({ params }: Props) {
     <BookEditorProvider
       bookId={bookId}
       bookTitle={bookResult!.data.title}
+      locale={locale}
       initialBinderItems={binderResult!.data}
     >
       <div className="flex h-full overflow-hidden">

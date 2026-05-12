@@ -19,6 +19,7 @@ import { BinderAddMenu } from './binder-add-menu'
 import { BinderItem } from './binder-item'
 import { reorderBinderItemsAction } from '@/lib/actions/binder.actions'
 import type { BinderItemRow } from '@/lib/actions/binder.actions'
+import { CreateHiveButton } from '../create-hive-button'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -72,7 +73,7 @@ function flattenVisible(nodes: TreeNode[], collapsed: Set<string>): string[] {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function BinderTree() {
-  const { bookId, bookTitle, binderItems, setBinderItems, focusMode, corkboardMode, toggleCorkboardMode } = useBookEditor()
+  const { bookId, bookTitle, locale, binderItems, setBinderItems, focusMode, corkboardMode, toggleCorkboardMode } = useBookEditor()
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
 
   if (focusMode) return null
@@ -161,6 +162,9 @@ export function BinderTree() {
             </button>
             <BinderAddMenu />
           </div>
+        </div>
+        <div className="px-3 py-2 border-b border-border">
+          <CreateHiveButton bookId={bookId} locale={locale} />
         </div>
 
         {!corkboardMode && (

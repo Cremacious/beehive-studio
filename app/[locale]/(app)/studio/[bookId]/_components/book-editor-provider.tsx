@@ -26,6 +26,7 @@ const CHAPTER_TYPES = new Set<BinderItemRow['type']>(['chapter', 'front_matter',
 type BookEditorContextValue = {
   bookId: string
   bookTitle: string
+  locale: string
   binderItems: BinderItemRow[]
   activeItemId: string | null
   activeItem: BinderItemRow | null
@@ -65,11 +66,12 @@ export function useBookEditor(): BookEditorContextValue {
 type Props = {
   bookId: string
   bookTitle: string
+  locale: string
   initialBinderItems: BinderItemRow[]
   children: React.ReactNode
 }
 
-export function BookEditorProvider({ bookId, bookTitle, initialBinderItems, children }: Props) {
+export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderItems, children }: Props) {
   const [binderItems, setBinderItems] = useState<BinderItemRow[]>(initialBinderItems)
   const [activeItemId, setActiveItemIdState] = useState<string | null>(null)
   const [chapterCache, setChapterCache] = useState<Map<string, ChapterData>>(new Map())
@@ -228,6 +230,7 @@ export function BookEditorProvider({ bookId, bookTitle, initialBinderItems, chil
   const value = useMemo<BookEditorContextValue>(() => ({
     bookId,
     bookTitle,
+    locale,
     binderItems,
     activeItemId,
     activeItem,
@@ -253,6 +256,7 @@ export function BookEditorProvider({ bookId, bookTitle, initialBinderItems, chil
   }), [
     bookId,
     bookTitle,
+    locale,
     binderItems,
     activeItemId,
     activeItem,

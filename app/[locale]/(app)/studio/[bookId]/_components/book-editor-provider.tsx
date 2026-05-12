@@ -73,6 +73,9 @@ export function BookEditorProvider({ bookId, bookTitle, initialBinderItems, chil
 
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const notesTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Mirror of chapterCache for synchronous reads without triggering setState
+  const chapterCacheRef = useRef(chapterCache)
+  chapterCacheRef.current = chapterCache
 
   const pushError = useCallback((msg: string) => {
     setErrors(prev => [...prev, msg])
@@ -91,26 +94,16 @@ export function BookEditorProvider({ bookId, bookTitle, initialBinderItems, chil
 
     if (!CHAPTER_TYPES.has(item.type)) return
 
-    // Chapter-type: load from cache or fetch
-    setChapterCache(prev => {
-      if (prev.has(id)) return prev // cache hit — no fetch needed
-      // Trigger fetch outside of setState
-      return prev
-    })
+    // Cache hit — nothing to do
+    if (chapterCacheRef.current.has(id)) return
 
-    setChapterCache(prev => {
-      if (prev.has(id)) return prev
-
-      // Async fetch — fire and forget, update cache on completion
-      getChapterAction(item.chapterId!).then(result => {
-        if (result.success) {
-          setChapterCache(c => new Map(c).set(id, result.data))
-        } else {
-          pushError(`Couldn't load chapter: ${result.error}`)
-        }
-      })
-
-      return prev
+    // Cache miss — fetch and store (called directly, never inside a setState updater)
+    getChapterAction(item.chapterId!).then(result => {
+      if (result.success) {
+        setChapterCache(c => new Map(c).set(id, result.data))
+      } else {
+        pushError(`Couldn't load chapter: ${result.error}`)
+      }
     })
   }, [binderItems, pushError])
 

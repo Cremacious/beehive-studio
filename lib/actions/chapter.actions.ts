@@ -6,7 +6,7 @@ import { eq, desc } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { getUserPremiumStatus } from '@/lib/premium'
 import { extractWordCount } from '@/lib/tiptap-utils'
-import { updateChapterNotesSchema } from '@/lib/validations/book'
+import { updateChapterNotesSchema, chapterStatusSchema } from '@/lib/validations/book'
 import type { ActionResult } from './book.actions'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -133,18 +133,17 @@ export async function updateChapterStatusAction(
   status: ChapterData['status'],
 ): Promise<ActionResult> {
   const userId = await requireAuth()
-  await assertChapterOwner(chapterId, userId)
 
-  const validStatuses: ChapterData['status'][] = [
-    'IDEA', 'OUTLINE', 'FIRST_DRAFT', 'REVISED', 'FINAL',
-  ]
-  if (!validStatuses.includes(status)) {
-    return { success: false, error: 'Invalid status' }
+  const parsed = chapterStatusSchema.safeParse(status)
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message }
   }
+
+  await assertChapterOwner(chapterId, userId)
 
   await db
     .update(chapters)
-    .set({ status, updatedAt: new Date() })
+    .set({ status: parsed.data, updatedAt: new Date() })
     .where(eq(chapters.id, chapterId))
 
   return { success: true, data: undefined }

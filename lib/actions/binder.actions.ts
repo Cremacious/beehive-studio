@@ -177,11 +177,26 @@ export async function updateBinderItemAction(
  */
 export async function deleteBinderItemAction(id: string): Promise<ActionResult> {
   const userId = await requireAuth()
-  await assertBinderOwner(id, userId)
+  const { bookId } = await assertBinderOwner(id, userId)
 
-  // If this is a chapter binder item, delete the associated chapter row first.
-  // The FK (chapters.binderItemId) uses onDelete: 'set null', not cascade.
+  // Delete child binder items and their associated chapter documents
+  // (binder_items.parent_id uses onDelete: 'set null', not cascade)
+  const children = await db
+    .select({ id: binderItems.id, type: binderItems.type })
+    .from(binderItems)
+    .where(and(eq(binderItems.parentId, id), eq(binderItems.bookId, bookId)))
+
+  for (const child of children) {
+    if (child.type === 'chapter') {
+      await db.delete(chapters).where(eq(chapters.binderItemId, child.id))
+    }
+    await db.delete(binderItems).where(eq(binderItems.id, child.id))
+  }
+
+  // Delete the chapter document for this item if it's a chapter
   await db.delete(chapters).where(eq(chapters.binderItemId, id))
+
+  // Delete the item itself
   await db.delete(binderItems).where(eq(binderItems.id, id))
 
   return { success: true, data: undefined }

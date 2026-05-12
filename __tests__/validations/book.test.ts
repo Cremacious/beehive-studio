@@ -6,6 +6,7 @@ import {
   updateChapterNotesSchema,
   updatePublishingMetadataSchema,
   updateBinderItemSchema,
+  chapterStatusSchema,
 } from '@/lib/validations/book'
 
 describe('createBookSchema', () => {
@@ -149,6 +150,18 @@ describe('updateChapterNotesSchema', () => {
   it('rejects notes over 10000 characters', () => {
     const result = updateChapterNotesSchema.safeParse({ notes: 'a'.repeat(10001) })
     expect(result.success).toBe(false)
+  })
+})
+
+describe('chapterStatusSchema', () => {
+  it('accepts valid statuses', () => {
+    for (const status of ['IDEA', 'OUTLINE', 'FIRST_DRAFT', 'REVISED', 'FINAL']) {
+      expect(chapterStatusSchema.safeParse(status).success).toBe(true)
+    }
+  })
+
+  it('rejects invalid status', () => {
+    expect(chapterStatusSchema.safeParse('DONE').success).toBe(false)
   })
 })
 

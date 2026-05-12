@@ -37,6 +37,8 @@ export const reorderBinderItemsSchema = z.array(z.object({
   parentId: z.string().nullable(),
 }))
 
+export const chapterStatusSchema = z.enum(['IDEA', 'OUTLINE', 'FIRST_DRAFT', 'REVISED', 'FINAL'])
+
 export const updateChapterNotesSchema = z.object({
   notes: z.string().max(10000).nullable(),
 })

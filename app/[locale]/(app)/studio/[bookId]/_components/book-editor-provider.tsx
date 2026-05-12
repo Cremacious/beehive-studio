@@ -44,6 +44,8 @@ type BookEditorContextValue = {
   dismissError: (index: number) => void
   focusMode: boolean
   toggleFocusMode: () => void
+  typewriterMode: boolean
+  toggleTypewriterMode: () => void
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
@@ -74,6 +76,8 @@ export function BookEditorProvider({ bookId, bookTitle, initialBinderItems, chil
   const [errors, setErrors] = useState<string[]>([])
   const [focusMode, setFocusMode] = useState(false)
   const toggleFocusMode = useCallback(() => setFocusMode(f => !f), [])
+  const [typewriterMode, setTypewriterMode] = useState(false)
+  const toggleTypewriterMode = useCallback(() => setTypewriterMode(t => !t), [])
 
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const notesTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -238,6 +242,8 @@ export function BookEditorProvider({ bookId, bookTitle, initialBinderItems, chil
     dismissError,
     focusMode,
     toggleFocusMode,
+    typewriterMode,
+    toggleTypewriterMode,
   }), [
     bookId,
     bookTitle,
@@ -259,6 +265,8 @@ export function BookEditorProvider({ bookId, bookTitle, initialBinderItems, chil
     dismissError,
     focusMode,
     toggleFocusMode,
+    typewriterMode,
+    toggleTypewriterMode,
   ])
 
   return <BookEditorContext.Provider value={value}>{children}</BookEditorContext.Provider>

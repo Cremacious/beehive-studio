@@ -13,8 +13,12 @@ const SOUNDS: { id: SoundName; label: string; emoji: string }[] = [
   { id: 'cafe', label: 'Café', emoji: '☕' },
 ]
 
-export function AmbientSounds() {
-  const [isOpen, setIsOpen] = useState(false)
+type AmbientSoundsProps = {
+  onClose?: () => void
+}
+
+export function AmbientSounds({ onClose }: AmbientSoundsProps) {
+  const [isOpen, setIsOpen] = useState(true)
   const [activeSound, setActiveSound] = useState<SoundName | null>(null)
   const [volume, setVolume] = useState(0.4)
   const audioCtxRef = useRef<AudioContext | null>(null)
@@ -101,23 +105,14 @@ export function AmbientSounds() {
 
   useEffect(() => () => stopSound(), [])
 
-  if (!isOpen) {
-    return (
-      <button
-        onClick={() => setIsOpen(true)}
-        className="absolute bottom-4 left-4 text-xs text-foreground/40 hover:text-foreground/70 bg-surface border border-border rounded-full px-3 py-1.5 transition-colors"
-      >
-        🎵 Sounds
-      </button>
-    )
-  }
+  if (!isOpen) return null
 
   return (
     <div className="absolute bottom-4 left-4 bg-surface-elevated border border-border rounded-xl p-4 w-52 shadow-xl z-10">
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-foreground">Ambient Sounds</span>
         <button
-          onClick={() => setIsOpen(false)}
+          onClick={() => { setIsOpen(false); onClose?.() }}
           className="text-muted-foreground hover:text-foreground text-xs leading-none"
         >
           ×

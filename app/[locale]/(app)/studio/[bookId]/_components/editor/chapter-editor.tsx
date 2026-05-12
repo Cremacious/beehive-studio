@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useCallback, useEffect } from 'react'
+import { useRef, useCallback, useEffect, useState } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
@@ -14,13 +14,19 @@ import type { CharacterCountStorage } from '@tiptap/extensions'
 import { useBookEditor } from '../book-editor-provider'
 import { EditorToolbar } from './editor-toolbar'
 import { SprintTimer } from './sprint-timer'
+import { AmbientSounds } from './ambient-sounds'
+import { WritingAnalysis, extractPlainText } from './writing-analysis'
 import { updateBinderItemAction } from '@/lib/actions/binder.actions'
 
 const CHAPTER_TYPES = new Set(['chapter', 'front_matter', 'back_matter'])
 
 export function ChapterEditor() {
-  const { activeItemId, activeItem, activeChapter, updateChapterContent, updateBinderItem, wordCount } =
+  const { activeItemId, activeItem, activeChapter, updateChapterContent, updateBinderItem, wordCount, typewriterMode } =
     useBookEditor()
+
+  const [analysisOpen, setAnalysisOpen] = useState(false)
+  const [soundsOpen, setSoundsOpen] = useState(false)
+  const [editorText, setEditorText] = useState('')
 
   const researchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -55,6 +61,7 @@ export function ChapterEditor() {
       content: activeChapter?.content ?? null,
       onUpdate: ({ editor }) => {
         updateChapterContent(editor.getJSON())
+        setEditorText(extractPlainText(editor.getJSON()))
       },
       editorProps: {
         attributes: {
@@ -70,6 +77,7 @@ export function ChapterEditor() {
   useEffect(() => {
     if (!editor || !activeChapter || !editor.isEmpty) return
     editor.commands.setContent(activeChapter.content as Parameters<typeof editor.commands.setContent>[0])
+    setEditorText(extractPlainText(activeChapter.content))
   }, [activeChapter, editor])
 
   if (activeItemId === null) {
@@ -113,14 +121,40 @@ export function ChapterEditor() {
 
   return (
     <main className="flex-1 flex flex-col overflow-hidden relative">
-      {editor && <EditorToolbar editor={editor} />}
-      <div className="flex-1 overflow-y-auto">
-        <EditorContent
+      {editor && (
+        <EditorToolbar
           editor={editor}
-          className="min-h-full p-8 max-w-3xl mx-auto prose prose-invert prose-sm focus:outline-none"
+          onToggleAnalysis={() => setAnalysisOpen(a => !a)}
+          analysisOpen={analysisOpen}
+          onToggleSounds={() => setSoundsOpen(s => !s)}
+          soundsOpen={soundsOpen}
         />
+      )}
+      <div className="flex flex-1 overflow-hidden">
+        <div
+          className="flex-1 overflow-y-auto"
+          style={typewriterMode ? { scrollPaddingTop: '40vh' } : undefined}
+        >
+          <EditorContent
+            editor={editor}
+            className="min-h-full p-8 max-w-3xl mx-auto prose prose-invert prose-sm focus:outline-none"
+            style={{
+              ...(typewriterMode ? { paddingTop: '40vh', paddingBottom: '40vh' } : {}),
+              fontSize: 'var(--editor-font-size, 16px)',
+              lineHeight: '1.8',
+            }}
+          />
+        </div>
+        {analysisOpen && (
+          <WritingAnalysis
+            editorText={editorText}
+            isOpen={analysisOpen}
+            onClose={() => setAnalysisOpen(false)}
+          />
+        )}
       </div>
       <SprintTimer currentWordCount={charCount?.words() ?? wordCount} />
+      {soundsOpen && <AmbientSounds onClose={() => setSoundsOpen(false)} />}
     </main>
   )
 }

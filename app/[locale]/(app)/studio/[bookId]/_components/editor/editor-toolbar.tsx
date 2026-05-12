@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import type { Editor } from '@tiptap/react'
 // Side-effect import: pulls in module augmentations for all StarterKit commands
@@ -9,6 +10,10 @@ import type { CharacterCountStorage } from '@tiptap/extensions'
 
 type Props = {
   editor: Editor
+  onToggleAnalysis: () => void
+  analysisOpen: boolean
+  onToggleSounds: () => void
+  soundsOpen: boolean
 }
 
 type ToolbarButtonProps = {
@@ -38,8 +43,23 @@ function Separator() {
   return <span className="w-px h-4 bg-border mx-1" />
 }
 
-export function EditorToolbar({ editor }: Props) {
-  const { saveStatus, wordCount, focusMode, toggleFocusMode } = useBookEditor()
+export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggleSounds, soundsOpen }: Props) {
+  const { saveStatus, wordCount, focusMode, toggleFocusMode, typewriterMode, toggleTypewriterMode } = useBookEditor()
+
+  const [fontSize, setFontSizeState] = useState(() => {
+    if (typeof window === 'undefined') return 16
+    return parseInt(localStorage.getItem('editor-font-size') ?? '16', 10)
+  })
+
+  function setFontSize(size: number) {
+    setFontSizeState(size)
+    localStorage.setItem('editor-font-size', String(size))
+    document.documentElement.style.setProperty('--editor-font-size', `${size}px`)
+  }
+
+  useEffect(() => {
+    document.documentElement.style.setProperty('--editor-font-size', `${fontSize}px`)
+  }, [fontSize])
 
   function handleLinkClick() {
     if (editor.isActive('link')) {
@@ -126,7 +146,7 @@ export function EditorToolbar({ editor }: Props) {
         disabled={!editor.can().chain().focus().toggleBlockquote().run()}
         isActive={editor.isActive('blockquote')}
       >
-        "
+        &quot;
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().setHorizontalRule().run()}
@@ -215,6 +235,59 @@ export function EditorToolbar({ editor }: Props) {
           <span>{wordCount.toLocaleString()} words</span>
         ) : null}
       </span>
+
+      {/* Font size control */}
+      <select
+        value={fontSize}
+        onChange={e => setFontSize(Number(e.target.value))}
+        className="text-xs bg-surface border border-border rounded px-1 py-0.5 text-foreground/60 ml-1"
+      >
+        {[12, 14, 16, 18, 20, 24].map(s => (
+          <option key={s} value={s}>{s}px</option>
+        ))}
+      </select>
+
+      {/* Typewriter mode toggle */}
+      <button
+        onClick={toggleTypewriterMode}
+        title={typewriterMode ? 'Exit typewriter mode' : 'Typewriter mode'}
+        className={cn(
+          'text-xs px-2 py-1 rounded transition-colors ml-1',
+          typewriterMode
+            ? 'text-brand bg-brand/20'
+            : 'text-foreground/60 hover:text-foreground hover:bg-surface-elevated',
+        )}
+      >
+        ✍
+      </button>
+
+      {/* Writing analysis toggle */}
+      <button
+        onClick={onToggleAnalysis}
+        title="Writing analysis"
+        className={cn(
+          'text-xs px-2 py-1 rounded transition-colors ml-1',
+          analysisOpen
+            ? 'text-brand bg-brand/20'
+            : 'text-foreground/60 hover:text-foreground hover:bg-surface-elevated',
+        )}
+      >
+        📊
+      </button>
+
+      {/* Ambient sounds toggle */}
+      <button
+        onClick={onToggleSounds}
+        title="Ambient sounds"
+        className={cn(
+          'text-xs px-2 py-1 rounded transition-colors ml-1',
+          soundsOpen
+            ? 'text-brand bg-brand/20'
+            : 'text-foreground/60 hover:text-foreground hover:bg-surface-elevated',
+        )}
+      >
+        🎵
+      </button>
 
       {/* Focus mode toggle */}
       <button

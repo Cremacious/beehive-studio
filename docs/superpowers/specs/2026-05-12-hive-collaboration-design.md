@@ -39,7 +39,7 @@ A Hive is a private collaborative workspace tied to a single book. The Hive owne
 | `hiveMembers` | `hiveId, userId, role (OWNER/ADMIN/MEMBER), joinedAt` |
 | `hiveInvites` | Invite tokens and username/email invites |
 | `hiveComments` | Inline chapter comments anchored by text selection |
-| `hiveSuggestions` | Tracked-change style text suggestions |
+| `hiveSuggestions` | Reserved for future tracked-changes feature — not used in Phase 4 |
 | `notifications` | Global notification store |
 
 ### Free Tier Limits
@@ -92,7 +92,7 @@ Sidebar layout mirroring the Studio. Left sidebar lists all seven sections plus 
 - `approveJoinRequestAction(hiveId, userId)` — owner/admin; enforces member limit; notifies requester
 - `removeMemberAction(hiveId, userId)` — owner/admin
 - `updateMemberRoleAction(hiveId, userId, role)` — owner only
-- `leaveHiveAction(hiveId)` — any member; owner must transfer ownership or delete
+- `leaveHiveAction(hiveId)` — any member; returns `{ success: false, error: 'OWNER_MUST_TRANSFER_OR_DELETE' }` if the owner tries to leave without first deleting the Hive or promoting another member to OWNER
 
 ### Chapter Collaboration
 - `lockChapterAction(chapterId)` — sets soft lock on chapter open
@@ -164,7 +164,7 @@ Page list on the left (title + last-edited timestamp). Clicking a page opens it 
 Flat list of posts, newest first. One level of replies per post (no infinite nesting). Plain textarea input — no rich text. Members can delete their own posts; owner/admin can delete any post.
 
 ### Tasks (`/hive/[hiveId]/tasks`)
-Three-column kanban: Open → In Progress → Done. Members drag their own tasks between columns or use a status dropdown. Owner can create, reassign, and delete any task. Members can create tasks and update status of tasks assigned to them.
+Three-column kanban: Open → In Progress → Done. Members update status of tasks assigned to them via drag-between-columns or a status dropdown. Owner can create, reassign, and delete any task. Members can create tasks and update status on tasks assigned to them.
 
 ### Members (`/hive/[hiveId]/members`)
 Full member list with role badges and online indicators. Invite panel at the top: search friends by username or copy the invite link. Pending join requests section (owner/admin only) with Approve/Deny buttons.

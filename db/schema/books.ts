@@ -21,6 +21,15 @@ export const books = pgTable('books', {
   coverUrl: text('cover_url'),
   explorable: boolean('explorable').default(false).notNull(),
   synopsis: text('synopsis'),
+  // Discovery fields (added for book creation wizard)
+  subgenre: text('subgenre'),
+  tags: text('tags').array(),
+  targetAudience: text('target_audience'),
+  language: text('language'),
+  contentWarnings: text('content_warnings').array(),
+  compTitles: text('comp_titles').array(),
+  seriesName: text('series_name'),
+  seriesNumber: integer('series_number'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (t) => [index('books_user_id_idx').on(t.userId)])

@@ -4,7 +4,7 @@ import { db } from '@/db'
 import { chapters, chapterSnapshots } from '@/db/schema'
 import { eq, desc } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
-import { getUserPremiumStatus, requirePremium } from '@/lib/premium'
+import { getUserPremiumStatus } from '@/lib/premium'
 import type { ActionResult } from './book.actions'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -41,7 +41,9 @@ export async function getChapterSnapshotsAction(
   const userId = await requireAuth()
 
   const isPremium = await getUserPremiumStatus(userId)
-  requirePremium(isPremium, 'version_history')
+  if (!isPremium) {
+    return { success: false, error: 'PREMIUM_REQUIRED:version_history' }
+  }
 
   await assertChapterOwner(chapterId, userId)
 
@@ -70,7 +72,9 @@ export async function restoreSnapshotAction(
   const userId = await requireAuth()
 
   const isPremium = await getUserPremiumStatus(userId)
-  requirePremium(isPremium, 'version_history')
+  if (!isPremium) {
+    return { success: false, error: 'PREMIUM_REQUIRED:version_history' }
+  }
 
   const snapshot = await db.query.chapterSnapshots.findFirst({
     where: eq(chapterSnapshots.id, snapshotId),
@@ -81,35 +85,41 @@ export async function restoreSnapshotAction(
     },
   })
 
+  // Ownership check is intentionally inline here: the snapshot query already
+  // joins chapter→book in one round-trip, so assertChapterOwner would be redundant.
   if (!snapshot || snapshot.chapter.book.userId !== userId) {
     return { success: false, error: 'Snapshot not found or access denied' }
   }
 
   const chapterId = snapshot.chapterId
 
-  // Save current chapter content as a snapshot before restoring
+  // Read current chapter state before the transaction — db.query.* is not
+  // available on neon-http transaction proxies, so this must stay outside.
   const current = await db.query.chapters.findFirst({
     where: eq(chapters.id, chapterId),
     columns: { content: true, wordCount: true },
   })
 
-  if (current?.content) {
-    await db.insert(chapterSnapshots).values({
-      chapterId,
-      content: current.content,
-      wordCount: current.wordCount,
-    })
-  }
+  await db.transaction(async (tx) => {
+    // Save current content as a snapshot first (undo safety)
+    if (current?.content) {
+      await tx.insert(chapterSnapshots).values({
+        chapterId,
+        content: current.content,
+        wordCount: current.wordCount,
+      })
+    }
 
-  // Restore the selected snapshot
-  await db
-    .update(chapters)
-    .set({
-      content: snapshot.content,
-      wordCount: snapshot.wordCount,
-      updatedAt: new Date(),
-    })
-    .where(eq(chapters.id, chapterId))
+    // Restore the selected snapshot
+    await tx
+      .update(chapters)
+      .set({
+        content: snapshot.content,
+        wordCount: snapshot.wordCount,
+        updatedAt: new Date(),
+      })
+      .where(eq(chapters.id, chapterId))
+  })
 
   return { success: true, data: { wordCount: snapshot.wordCount } }
 }

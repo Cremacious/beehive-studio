@@ -2,6 +2,8 @@ import { NextResponse, type NextRequest } from 'next/server'
 import createMiddleware from 'next-intl/middleware'
 import { defaultLocale, locales } from './i18n/config'
 
+const localePattern = new RegExp(`^/(${locales.join('|')})(\/|$)`)
+
 const BLOCKED_UA = /sqlmap|nikto|nmap|masscan|zgrab|python-requests\/2\.[0-1]/i
 
 const PUBLIC_PATHS = new Set([
@@ -17,7 +19,7 @@ const PUBLIC_PATHS = new Set([
 ])
 
 function isPublicPath(pathname: string): boolean {
-  const stripped = pathname.replace(/^\/(en)(\/|$)/, '/')
+  const stripped = pathname.replace(localePattern, '/')
   return PUBLIC_PATHS.has(stripped) ||
     stripped.startsWith('/books/') ||
     stripped.startsWith('/u/')
@@ -63,7 +65,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(signInUrl)
     }
 
-    const strippedPath = pathname.replace(/^\/(en)(\/|$)/, '/')
+    const strippedPath = pathname.replace(localePattern, '/')
     const isOnboardingPath = strippedPath === '/onboarding'
 
     if (!session.user.onboardingComplete && !isOnboardingPath) {
@@ -74,7 +76,8 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL(`/${defaultLocale}/studio`, request.url))
     }
   } catch {
-    // Session fetch failed — let the page handle it
+    const signInUrl = new URL(`/${defaultLocale}/sign-in`, request.url)
+    return NextResponse.redirect(signInUrl)
   }
 
   return intlResponse ?? NextResponse.next()

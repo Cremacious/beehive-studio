@@ -76,33 +76,36 @@ export function CreateBookWizard({ locale, templates, onClose }: Props) {
     setSubmitting(true)
     setError(null)
 
-    const result = await createBookAction({
-      title: form.title.trim(),
-      subtitle: form.subtitle || undefined,
-      synopsis: form.synopsis || undefined,
-      coverUrl: form.coverUrl,
-      genre: form.genre || undefined,
-      subgenre: form.subgenre || undefined,
-      tags: form.tags.length ? form.tags : undefined,
-      targetAudience: form.targetAudience || undefined,
-      contentWarnings: form.contentWarnings.length ? form.contentWarnings : undefined,
-      compTitles: form.compTitles.filter(Boolean).length ? form.compTitles.filter(Boolean) : undefined,
-      language: form.language || undefined,
-      templateId: form.templateId || undefined,
-      seriesName: form.isSeriesBook && form.seriesName ? form.seriesName : undefined,
-      seriesNumber: form.isSeriesBook && form.seriesNumber ? parseInt(form.seriesNumber, 10) : undefined,
-      publisherName: form.publisherName || undefined,
-      trimSize: form.trimSize || undefined,
-      edition: form.edition || undefined,
-    })
+    try {
+      const result = await createBookAction({
+        title: form.title.trim(),
+        subtitle: form.subtitle || undefined,
+        synopsis: form.synopsis || undefined,
+        coverUrl: form.coverUrl,
+        genre: form.genre || undefined,
+        subgenre: form.subgenre || undefined,
+        tags: form.tags.length ? form.tags : undefined,
+        targetAudience: form.targetAudience || undefined,
+        contentWarnings: form.contentWarnings.length ? form.contentWarnings : undefined,
+        compTitles: form.compTitles.filter(Boolean).length ? form.compTitles.filter(Boolean) : undefined,
+        language: form.language || undefined,
+        templateId: form.templateId || undefined,
+        seriesName: form.isSeriesBook && form.seriesName ? form.seriesName : undefined,
+        seriesNumber: form.isSeriesBook && form.seriesNumber ? parseInt(form.seriesNumber, 10) : undefined,
+        publisherName: form.publisherName || undefined,
+        trimSize: form.trimSize || undefined,
+        edition: form.edition || undefined,
+      })
 
-    if (!result.success) {
-      setError(result.error)
+      if (!result.success) {
+        setError(result.error)
+        return
+      }
+
+      router.push(`/${locale}/studio/${result.data.bookId}`)
+    } finally {
       setSubmitting(false)
-      return
     }
-
-    router.push(`/${locale}/studio/${result.data.bookId}`)
   }
 
   return (

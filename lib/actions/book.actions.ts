@@ -112,7 +112,7 @@ export async function createBookAction(input: {
         bookId,
         subtitle: d.subtitle ?? null,
         publisherName: d.publisherName ?? null,
-        trimSize: d.trimSize ?? '6x9',
+        trimSize: d.trimSize ?? '6×9',
         edition: d.edition ?? 'First Edition',
         isbn: null,
         authorBio: null,

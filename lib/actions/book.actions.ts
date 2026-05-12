@@ -2,7 +2,7 @@
 
 import { db } from '@/db'
 import {
-  books, binderItems, chapters, bookTemplates,
+  books, binderItems, chapters, bookTemplates, bookPublishingMetadata,
 } from '@/db/schema'
 import { eq, and, count } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
@@ -50,8 +50,22 @@ async function getActiveBookCount(userId: string): Promise<number> {
  */
 export async function createBookAction(input: {
   title: string
+  subtitle?: string
+  synopsis?: string
+  coverUrl?: string | null
   genre?: string
+  subgenre?: string
+  tags?: string[]
+  targetAudience?: string
+  contentWarnings?: string[]
+  compTitles?: string[]
+  language?: string
   templateId?: string
+  seriesName?: string
+  seriesNumber?: number
+  publisherName?: string
+  trimSize?: string
+  edition?: string
 }): Promise<ActionResult<{ bookId: string }>> {
   const userId = await requireAuth()
 
@@ -69,21 +83,55 @@ export async function createBookAction(input: {
   }
 
   const bookId = createId()
+  const d = parsed.data
 
   await db.transaction(async (tx) => {
     await tx.insert(books).values({
       id: bookId,
       userId,
-      title: parsed.data.title,
-      genre: parsed.data.genre ?? null,
+      title: d.title,
+      genre: d.genre ?? null,
+      coverUrl: d.coverUrl ?? null,
+      synopsis: d.synopsis ?? null,
+      subgenre: d.subgenre ?? null,
+      tags: d.tags ?? null,
+      targetAudience: d.targetAudience ?? null,
+      language: d.language ?? null,
+      contentWarnings: d.contentWarnings ?? null,
+      compTitles: d.compTitles ?? null,
+      seriesName: d.seriesName ?? null,
+      seriesNumber: d.seriesNumber ?? null,
     })
 
-    if (parsed.data.templateId) {
-      // Apply template structure
+    // Upsert publishing metadata if any Step 3 publishing fields were provided
+    const hasMeta = d.subtitle || d.publisherName || d.trimSize || d.edition
+    if (hasMeta) {
+      await tx.insert(bookPublishingMetadata).values({
+        bookId,
+        subtitle: d.subtitle ?? null,
+        publisherName: d.publisherName ?? null,
+        trimSize: d.trimSize ?? '6x9',
+        edition: d.edition ?? 'First Edition',
+        isbn: null,
+        authorBio: null,
+        dedication: null,
+      }).onConflictDoUpdate({
+        target: bookPublishingMetadata.bookId,
+        set: {
+          subtitle: d.subtitle ?? null,
+          publisherName: d.publisherName ?? null,
+          trimSize: d.trimSize ?? '6x9',
+          edition: d.edition ?? 'First Edition',
+          updatedAt: new Date(),
+        },
+      })
+    }
+
+    if (d.templateId) {
       const [template] = await tx
         .select()
         .from(bookTemplates)
-        .where(eq(bookTemplates.id, parsed.data.templateId))
+        .where(eq(bookTemplates.id, d.templateId))
 
       if (template?.structure) {
         const structure = template.structure as {
@@ -93,7 +141,6 @@ export async function createBookAction(input: {
 
         let globalOrder = 0
 
-        // Create parts and their chapters
         for (const part of structure.parts ?? []) {
           const partId = createId()
           await tx.insert(binderItems).values({
@@ -125,7 +172,6 @@ export async function createBookAction(input: {
           }
         }
 
-        // Create research folders
         for (const folderName of structure.researchFolders ?? []) {
           await tx.insert(binderItems).values({
             bookId,
@@ -136,7 +182,6 @@ export async function createBookAction(input: {
         }
       }
     } else {
-      // Default: one chapter
       const chapterBinderId = createId()
       const chapterId = createId()
 

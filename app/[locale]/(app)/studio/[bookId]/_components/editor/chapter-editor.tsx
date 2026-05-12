@@ -33,6 +33,7 @@ export function ChapterEditor() {
 
   const editor = useEditor(
     {
+      immediatelyRender: false,
       extensions: [
         StarterKit,
         Placeholder.configure({ placeholder: 'Start writing…' }),

@@ -206,10 +206,10 @@ function ChapterMetadata() {
 }
 
 export function MetadataPanel() {
-  const { activeItem, activeItemId, focusMode } = useBookEditor()
+  const { activeItem, activeItemId, focusMode, corkboardMode } = useBookEditor()
   const isChapterActive = !!activeItem && CHAPTER_TYPES.has(activeItem.type)
 
-  if (focusMode) return null
+  if (focusMode || corkboardMode) return null
 
   return (
     <aside className="w-60 flex-shrink-0 flex flex-col bg-card border-l border-border overflow-hidden">

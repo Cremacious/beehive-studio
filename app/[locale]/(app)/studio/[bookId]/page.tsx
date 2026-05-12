@@ -3,7 +3,7 @@ import { getBookAction } from '@/lib/actions/book.actions'
 import { getBinderTreeAction } from '@/lib/actions/binder.actions'
 import { BookEditorProvider } from './_components/book-editor-provider'
 import { BinderTree } from './_components/binder/binder-tree'
-import { ChapterEditor } from './_components/editor/chapter-editor'
+import { CorkboardOrEditor } from './_components/corkboard-or-editor'
 import { MetadataPanel } from './_components/metadata/metadata-panel'
 import { ErrorToasts } from './_components/error-toasts'
 
@@ -36,7 +36,7 @@ export default async function BookEditorPage({ params }: Props) {
     >
       <div className="flex h-full overflow-hidden">
         <BinderTree />
-        <ChapterEditor />
+        <CorkboardOrEditor />
         <MetadataPanel />
       </div>
       <ErrorToasts />

@@ -13,6 +13,7 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
+import { cn } from '@/lib/utils'
 import { useBookEditor } from '../book-editor-provider'
 import { BinderAddMenu } from './binder-add-menu'
 import { BinderItem } from './binder-item'
@@ -71,7 +72,7 @@ function flattenVisible(nodes: TreeNode[], collapsed: Set<string>): string[] {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function BinderTree() {
-  const { bookId, bookTitle, binderItems, setBinderItems, focusMode } = useBookEditor()
+  const { bookId, bookTitle, binderItems, setBinderItems, focusMode, corkboardMode, toggleCorkboardMode } = useBookEditor()
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
 
   if (focusMode) return null
@@ -150,22 +151,33 @@ export function BinderTree() {
           <span className="text-xs font-bold text-brand font-comfortaa uppercase tracking-wide truncate">
             {bookTitle}
           </span>
-          <BinderAddMenu />
+          <div className="flex items-center gap-1">
+            <button
+              onClick={toggleCorkboardMode}
+              title={corkboardMode ? 'Exit corkboard' : 'Corkboard view'}
+              className={cn("text-xs text-muted-foreground hover:text-foreground transition-colors p-0.5 rounded", corkboardMode && "text-brand")}
+            >
+              ⊞
+            </button>
+            <BinderAddMenu />
+          </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto py-1">
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext items={flatIds} strategy={verticalListSortingStrategy}>
-              {tree.map(node => (
-                <BinderItem key={node.id} node={node} depth={0} />
-              ))}
-            </SortableContext>
-          </DndContext>
-        </div>
+        {!corkboardMode && (
+          <div className="flex-1 overflow-y-auto py-1">
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext items={flatIds} strategy={verticalListSortingStrategy}>
+                {tree.map(node => (
+                  <BinderItem key={node.id} node={node} depth={0} />
+                ))}
+              </SortableContext>
+            </DndContext>
+          </div>
+        )}
       </aside>
     </BinderTreeContext.Provider>
   )

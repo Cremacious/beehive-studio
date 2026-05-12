@@ -82,3 +82,7 @@ export const bookCommentsRelations = relations(bookComments, ({ one, many }) => 
   parent: one(bookComments, { fields: [bookComments.parentId], references: [bookComments.id], relationName: 'parent' }),
   replies: many(bookComments, { relationName: 'parent' }),
 }))
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  actor: one(users, { fields: [notifications.actorId], references: [users.id] }),
+}))

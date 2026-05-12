@@ -87,3 +87,7 @@ export const chaptersRelations = relations(chapters, ({ one, many }) => ({
   binderItem: one(binderItems, { fields: [chapters.binderItemId], references: [binderItems.id] }),
   snapshots: many(chapterSnapshots),
 }))
+
+export const chapterSnapshotsRelations = relations(chapterSnapshots, ({ one }) => ({
+  chapter: one(chapters, { fields: [chapterSnapshots.chapterId], references: [chapters.id] }),
+}))

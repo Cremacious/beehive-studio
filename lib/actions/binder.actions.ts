@@ -4,6 +4,7 @@ import { db } from '@/db'
 import { books, binderItems, chapters } from '@/db/schema'
 import { eq, and, asc } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
+import { assertBookOwner } from './_helpers'
 import {
   createBinderItemSchema,
   updateBinderItemSchema,
@@ -46,15 +47,6 @@ async function assertBinderOwner(
   }
 
   return { bookId: item[0].bookId }
-}
-
-/** Verifies a book belongs to the authenticated user. */
-async function assertBookOwner(bookId: string, userId: string): Promise<void> {
-  const book = await db.query.books.findFirst({
-    where: and(eq(books.id, bookId), eq(books.userId, userId)),
-    columns: { id: true },
-  })
-  if (!book) throw new Error('Book not found or access denied')
 }
 
 // ─── Actions ──────────────────────────────────────────────────────────────────

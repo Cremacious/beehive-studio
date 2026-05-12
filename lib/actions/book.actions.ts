@@ -6,6 +6,7 @@ import {
 } from '@/db/schema'
 import { eq, and, count } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
+import { assertBookOwner } from './_helpers'
 import { getUserPremiumStatus, FREE_BOOK_LIMIT } from '@/lib/premium'
 import { createBookSchema, updateBookSchema } from '@/lib/validations/book'
 import { createId } from '@paralleldrive/cuid2'
@@ -31,15 +32,6 @@ export type ActionResult<T = void> =
   | { success: false; error: string }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-/** Verifies the book belongs to the authenticated user. */
-async function assertBookOwner(bookId: string, userId: string): Promise<void> {
-  const book = await db.query.books.findFirst({
-    where: and(eq(books.id, bookId), eq(books.userId, userId)),
-    columns: { id: true },
-  })
-  if (!book) throw new Error('Book not found or access denied')
-}
 
 /** Returns the count of active books for a user. */
 async function getActiveBookCount(userId: string): Promise<number> {

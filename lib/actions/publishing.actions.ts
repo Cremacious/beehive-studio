@@ -2,8 +2,9 @@
 
 import { db } from '@/db'
 import { books, bookPublishingMetadata, exportPresets } from '@/db/schema'
-import { eq, and } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
+import { assertBookOwner } from './_helpers'
 import { getUserPremiumStatus } from '@/lib/premium'
 import { updatePublishingMetadataSchema } from '@/lib/validations/book'
 import type { ActionResult } from './book.actions'
@@ -26,17 +27,6 @@ export type ExportPreset = {
   name: string
   format: 'EPUB' | 'PDF' | 'DOCX' | 'TXT' | 'ZIP'
   config: unknown
-}
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-/** Verifies the book belongs to the authenticated user. */
-async function assertBookOwner(bookId: string, userId: string): Promise<void> {
-  const book = await db.query.books.findFirst({
-    where: and(eq(books.id, bookId), eq(books.userId, userId)),
-    columns: { id: true },
-  })
-  if (!book) throw new Error('Book not found or access denied')
 }
 
 // ─── Actions ──────────────────────────────────────────────────────────────────
@@ -129,6 +119,12 @@ export async function updatePublishingMetadataAction(
   if (parsed.data.dedication !== undefined) updateSet.dedication = parsed.data.dedication
   if (parsed.data.publisherName !== undefined) updateSet.publisherName = parsed.data.publisherName
   if (parsed.data.edition !== undefined) updateSet.edition = parsed.data.edition
+
+  // Skip the DB round-trip if no fields were actually provided
+  if (Object.keys(updateSet).length === 1) {
+    // Only updatedAt is in updateSet — no real changes
+    return { success: true, data: undefined }
+  }
 
   await db
     .insert(bookPublishingMetadata)

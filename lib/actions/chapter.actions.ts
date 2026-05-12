@@ -2,7 +2,7 @@
 
 import { db } from '@/db'
 import { books, chapters, chapterSnapshots } from '@/db/schema'
-import { eq } from 'drizzle-orm'
+import { eq, desc } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { getUserPremiumStatus } from '@/lib/premium'
 import { extractWordCount } from '@/lib/tiptap-utils'
@@ -84,27 +84,42 @@ export async function saveChapterAction(
   const userId = await requireAuth()
   const { chapter } = await assertChapterOwner(chapterId, userId)
 
+  if (typeof content !== 'object' || content === null || (content as Record<string, unknown>).type !== 'doc') {
+    return { success: false, error: 'Invalid chapter content format' }
+  }
+
   const wordCount = extractWordCount(content)
 
-  await db
-    .update(chapters)
-    .set({ content, wordCount, updatedAt: new Date() })
-    .where(eq(chapters.id, chapterId))
+  await db.transaction(async (tx) => {
+    await tx
+      .update(chapters)
+      .set({ content, wordCount, updatedAt: new Date() })
+      .where(eq(chapters.id, chapterId))
 
-  // Update book's updatedAt so the dashboard shows correct last-edited time
-  await db
-    .update(books)
-    .set({ updatedAt: new Date() })
-    .where(eq(books.id, chapter.bookId))
+    // Update book's updatedAt so the dashboard shows correct last-edited time
+    await tx
+      .update(books)
+      .set({ updatedAt: new Date() })
+      .where(eq(books.id, chapter.bookId))
+  })
 
-  // Create snapshot for premium users
+  // Create snapshot for premium users (outside transaction — snapshot failure must not roll back the save)
   const isPremium = await getUserPremiumStatus(userId)
   if (isPremium) {
-    await db.insert(chapterSnapshots).values({
-      chapterId,
-      content,
-      wordCount,
+    const recent = await db.query.chapterSnapshots.findFirst({
+      where: eq(chapterSnapshots.chapterId, chapterId),
+      orderBy: [desc(chapterSnapshots.createdAt)],
+      columns: { createdAt: true },
     })
+
+    const sixtySecondsAgo = new Date(Date.now() - 60_000)
+    if (!recent || recent.createdAt < sixtySecondsAgo) {
+      await db.insert(chapterSnapshots).values({
+        chapterId,
+        content,
+        wordCount,
+      })
+    }
   }
 
   return { success: true, data: { wordCount } }

@@ -1,2 +1,101 @@
 'use client'
-export function ChapterEditor() { return <main className="flex-1" /> }
+
+import { useRef, useCallback } from 'react'
+import { useEditor, EditorContent } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
+import Placeholder from '@tiptap/extension-placeholder'
+import { useBookEditor } from '../book-editor-provider'
+import { EditorToolbar } from './editor-toolbar'
+import { updateBinderItemAction } from '@/lib/actions/binder.actions'
+
+const CHAPTER_TYPES = new Set(['chapter', 'front_matter', 'back_matter'])
+
+export function ChapterEditor() {
+  const { activeItemId, activeItem, activeChapter, updateChapterContent, updateBinderItem } =
+    useBookEditor()
+
+  const researchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const handleResearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const value = e.target.value
+      if (researchTimerRef.current) clearTimeout(researchTimerRef.current)
+      researchTimerRef.current = setTimeout(async () => {
+        if (!activeItem) return
+        await updateBinderItemAction(activeItem.id, { content: value })
+        updateBinderItem(activeItem.id, { content: value })
+      }, 2000)
+    },
+    [activeItem, updateBinderItem],
+  )
+
+  const isChapterType = activeItem ? CHAPTER_TYPES.has(activeItem.type) : false
+
+  const editor = useEditor(
+    {
+      extensions: [
+        StarterKit,
+        Placeholder.configure({ placeholder: 'Start writing…' }),
+      ],
+      content: activeChapter?.content ?? null,
+      onUpdate: ({ editor }) => {
+        updateChapterContent(editor.getJSON())
+      },
+      editorProps: {
+        attributes: {
+          class: 'outline-none min-h-full',
+        },
+      },
+    },
+    [activeItemId],
+  )
+
+  if (activeItemId === null) {
+    return (
+      <main className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
+        Select a chapter from the binder to start writing.
+      </main>
+    )
+  }
+
+  if (activeItem && !isChapterType) {
+    return (
+      <main className="flex-1 flex flex-col overflow-hidden">
+        <div className="px-6 py-4 border-b border-border">
+          <h2 className="text-sm font-medium text-foreground/70">{activeItem.title}</h2>
+        </div>
+        <textarea
+          className="flex-1 resize-none bg-transparent text-sm text-foreground/80 p-6 outline-none leading-relaxed"
+          placeholder="Start writing your notes..."
+          defaultValue={typeof activeItem.content === 'string' ? activeItem.content : ''}
+          onChange={handleResearchChange}
+        />
+      </main>
+    )
+  }
+
+  if (activeChapter === null) {
+    return (
+      <main className="flex-1 flex flex-col overflow-hidden">
+        <div className="h-10 border-b border-border bg-surface animate-pulse" />
+        <div className="flex-1 p-8 space-y-3">
+          <div className="h-4 bg-surface rounded w-3/4 animate-pulse" />
+          <div className="h-4 bg-surface rounded w-full animate-pulse" />
+          <div className="h-4 bg-surface rounded w-5/6 animate-pulse" />
+        </div>
+      </main>
+    )
+  }
+
+  return (
+    <main className="flex-1 flex flex-col overflow-hidden">
+      {editor && <EditorToolbar editor={editor} />}
+      <div className="flex-1 overflow-y-auto">
+        <EditorContent
+          editor={editor}
+          className="min-h-full p-8 max-w-3xl mx-auto prose prose-invert prose-sm focus:outline-none"
+        />
+      </div>
+    </main>
+  )
+}

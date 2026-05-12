@@ -15,6 +15,7 @@ import {
 } from '@dnd-kit/sortable'
 import { useBookEditor } from '../book-editor-provider'
 import { BinderAddMenu } from './binder-add-menu'
+import { BinderItem } from './binder-item'
 import { reorderBinderItemsAction } from '@/lib/actions/binder.actions'
 import type { BinderItemRow } from '@/lib/actions/binder.actions'
 
@@ -158,7 +159,7 @@ export function BinderTree() {
           >
             <SortableContext items={flatIds} strategy={verticalListSortingStrategy}>
               {tree.map(node => (
-                <div key={node.id}>{node.title}</div>
+                <BinderItem key={node.id} node={node} depth={0} />
               ))}
             </SortableContext>
           </DndContext>

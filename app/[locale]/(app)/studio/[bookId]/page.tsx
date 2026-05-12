@@ -5,6 +5,7 @@ import { BookEditorProvider } from './_components/book-editor-provider'
 import { BinderTree } from './_components/binder/binder-tree'
 import { ChapterEditor } from './_components/editor/chapter-editor'
 import { MetadataPanel } from './_components/metadata/metadata-panel'
+import { ErrorToasts } from './_components/error-toasts'
 
 type Props = {
   params: Promise<{ locale: string; bookId: string }>
@@ -38,6 +39,7 @@ export default async function BookEditorPage({ params }: Props) {
         <ChapterEditor />
         <MetadataPanel />
       </div>
+      <ErrorToasts />
     </BookEditorProvider>
   )
 }

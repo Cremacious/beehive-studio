@@ -5,7 +5,14 @@ import { db } from '@/db'
 import { userProfiles } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 
-export default async function AuthLayout({ children }: { children: React.ReactNode }) {
+export default async function AuthLayout({
+  children,
+  params,
+}: {
+  children: React.ReactNode
+  params: Promise<{ locale: string }>
+}) {
+  const { locale } = await params
   const session = await auth.api.getSession({ headers: await headers() })
 
   if (session?.user?.id) {
@@ -13,7 +20,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
       where: eq(userProfiles.userId, session.user.id),
       columns: { onboardingComplete: true },
     })
-    if (profile?.onboardingComplete) redirect('/studio')
+    if (profile?.onboardingComplete) redirect(`/${locale}/studio`)
   }
 
   return <>{children}</>

@@ -23,6 +23,9 @@ export function buildCloudinaryUrl(
   publicId: string,
   opts: { width?: number; height?: number; quality?: number } = {},
 ): string {
+  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+  if (!cloudName) throw new Error('NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME is not configured')
+
   const { width, height, quality = 80 } = opts
   const transforms = [
     `q_${quality}`,
@@ -31,5 +34,5 @@ export function buildCloudinaryUrl(
     height ? `h_${height}` : null,
     width || height ? 'c_fill' : null,
   ].filter(Boolean).join(',')
-  return `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload/${transforms}/${publicId}`
+  return `https://res.cloudinary.com/${cloudName}/image/upload/${transforms}/${publicId}`
 }

@@ -1,4 +1,12 @@
-import { createBookSchema, updateBookSchema } from '@/lib/validations/book'
+import {
+  createBookSchema,
+  updateBookSchema,
+  createBinderItemSchema,
+  reorderBinderItemsSchema,
+  updateChapterNotesSchema,
+  updatePublishingMetadataSchema,
+  updateBinderItemSchema,
+} from '@/lib/validations/book'
 
 describe('createBookSchema', () => {
   it('accepts valid input', () => {
@@ -35,6 +43,134 @@ describe('updateBookSchema', () => {
 
   it('accepts valid visibility', () => {
     const result = updateBookSchema.safeParse({ visibility: 'PUBLIC' })
+    expect(result.success).toBe(true)
+  })
+})
+
+describe('createBinderItemSchema', () => {
+  it('accepts valid chapter item', () => {
+    const result = createBinderItemSchema.safeParse({
+      bookId: 'book-1',
+      type: 'chapter',
+      title: 'Chapter 1',
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('rejects unknown type', () => {
+    const result = createBinderItemSchema.safeParse({
+      bookId: 'book-1',
+      type: 'unknown_type',
+      title: 'Bad Item',
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects empty bookId', () => {
+    const result = createBinderItemSchema.safeParse({
+      bookId: '',
+      type: 'chapter',
+      title: 'Chapter 1',
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects title over 200 characters', () => {
+    const result = createBinderItemSchema.safeParse({
+      bookId: 'book-1',
+      type: 'chapter',
+      title: 'a'.repeat(201),
+    })
+    expect(result.success).toBe(false)
+  })
+})
+
+describe('updateBinderItemSchema', () => {
+  it('accepts an object for content', () => {
+    const result = updateBinderItemSchema.safeParse({
+      content: { type: 'doc', content: [] },
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('rejects a string for content', () => {
+    const result = updateBinderItemSchema.safeParse({
+      content: 'not-an-object',
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('accepts null content (clearing)', () => {
+    const result = updateBinderItemSchema.safeParse({ content: null })
+    expect(result.success).toBe(true)
+  })
+})
+
+describe('reorderBinderItemsSchema', () => {
+  it('accepts valid array', () => {
+    const result = reorderBinderItemsSchema.safeParse([
+      { id: 'item-1', order: 0, parentId: null },
+      { id: 'item-2', order: 1, parentId: 'item-1' },
+    ])
+    expect(result.success).toBe(true)
+  })
+
+  it('accepts empty array', () => {
+    const result = reorderBinderItemsSchema.safeParse([])
+    expect(result.success).toBe(true)
+  })
+
+  it('rejects non-integer order', () => {
+    const result = reorderBinderItemsSchema.safeParse([
+      { id: 'item-1', order: 1.5, parentId: null },
+    ])
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects empty id', () => {
+    const result = reorderBinderItemsSchema.safeParse([
+      { id: '', order: 0, parentId: null },
+    ])
+    expect(result.success).toBe(false)
+  })
+})
+
+describe('updateChapterNotesSchema', () => {
+  it('accepts valid notes', () => {
+    const result = updateChapterNotesSchema.safeParse({ notes: 'My notes.' })
+    expect(result.success).toBe(true)
+  })
+
+  it('accepts null (clearing notes)', () => {
+    const result = updateChapterNotesSchema.safeParse({ notes: null })
+    expect(result.success).toBe(true)
+  })
+
+  it('rejects notes over 10000 characters', () => {
+    const result = updateChapterNotesSchema.safeParse({ notes: 'a'.repeat(10001) })
+    expect(result.success).toBe(false)
+  })
+})
+
+describe('updatePublishingMetadataSchema', () => {
+  it('accepts empty update (all optional)', () => {
+    const result = updatePublishingMetadataSchema.safeParse({})
+    expect(result.success).toBe(true)
+  })
+
+  it('rejects ISBN over 20 characters', () => {
+    const result = updatePublishingMetadataSchema.safeParse({
+      isbn: '1'.repeat(21),
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('accepts null for nullable fields', () => {
+    const result = updatePublishingMetadataSchema.safeParse({
+      isbn: null,
+      subtitle: null,
+      authorBio: null,
+    })
     expect(result.success).toBe(true)
   })
 })

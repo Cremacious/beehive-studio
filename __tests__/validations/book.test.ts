@@ -29,6 +29,50 @@ describe('createBookSchema', () => {
     const result = createBookSchema.safeParse({ title: 'a'.repeat(201) })
     expect(result.success).toBe(false)
   })
+
+  it('accepts all optional fields', () => {
+    const result = createBookSchema.safeParse({
+      title: 'My Novel',
+      genre: 'Fantasy',
+      subgenre: 'Epic Fantasy',
+      tags: ['Found Family', 'Slow Burn'],
+      targetAudience: 'Adult',
+      contentWarnings: ['Violence'],
+      compTitles: ['A Name of the Wind', 'The Way of Kings'],
+      language: 'English',
+      templateId: 'some-id',
+      seriesName: 'The Stormlight Archive',
+      seriesNumber: 1,
+      publisherName: 'Tor Books',
+      trimSize: '6x9',
+      edition: 'First Edition',
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('rejects more than 10 tags', () => {
+    const result = createBookSchema.safeParse({
+      title: 'My Novel',
+      tags: Array.from({ length: 11 }, (_, i) => `tag${i}`),
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects more than 5 comp titles', () => {
+    const result = createBookSchema.safeParse({
+      title: 'My Novel',
+      compTitles: ['A', 'B', 'C', 'D', 'E', 'F'],
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects seriesNumber below 1', () => {
+    const result = createBookSchema.safeParse({
+      title: 'My Novel',
+      seriesNumber: 0,
+    })
+    expect(result.success).toBe(false)
+  })
 })
 
 describe('updateBookSchema', () => {

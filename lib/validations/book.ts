@@ -1,9 +1,26 @@
 import { z } from 'zod'
 
 export const createBookSchema = z.object({
+  // Step 1
   title: z.string().min(1, 'Title is required').max(200, 'Title must be 200 characters or less'),
+  subtitle: z.string().max(200).optional(),
+  synopsis: z.string().max(2000).optional(),
+  coverUrl: z.string().url().optional().nullable(),
+  // Step 2
   genre: z.string().max(50).optional(),
+  subgenre: z.string().max(100).optional(),
+  tags: z.array(z.string().max(50)).max(10).optional(),
+  targetAudience: z.string().max(50).optional(),
+  contentWarnings: z.array(z.string().max(100)).optional(),
+  compTitles: z.array(z.string().max(200)).max(5).optional(),
+  language: z.string().max(50).optional(),
+  // Step 3
   templateId: z.string().optional(),
+  seriesName: z.string().max(200).optional(),
+  seriesNumber: z.number().int().min(1).max(9999).optional(),
+  publisherName: z.string().max(200).optional(),
+  trimSize: z.string().max(20).optional(),
+  edition: z.string().max(100).optional(),
 })
 
 export const updateBookSchema = z.object({

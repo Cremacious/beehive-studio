@@ -1,0 +1,285 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Privacy Policy — Beehive Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          bg: '#141414', card: '#1c1c1c', elev: '#252525', inset: '#1e1e1e',
+          line: '#2a2a2a', brand: '#FFC300', brandHi: '#FFD040', brandLo: '#e0ac01',
+        },
+        fontFamily: {
+          display: ['Comfortaa', 'sans-serif'],
+          sans: ['Geist', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        },
+        borderRadius: { xl: '14px', '2xl': '18px', '3xl': '22px' },
+      }
+    }
+  }
+</script>
+<style>
+  html, body { background: #141414; color: white; margin: 0; }
+  body { font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  .font-display { font-family: 'Comfortaa', sans-serif; }
+
+  .nav-item {
+    position: relative; padding: 6px 14px; border-radius: 9999px;
+    font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.55);
+    transition: color .15s, background-color .15s;
+  }
+  .nav-item:hover { color: white; background: rgba(255,255,255,0.05); }
+  .nav-item.active { color: #FFC300; background: rgba(255,195,0,0.1); }
+
+  .icon-btn {
+    width: 40px; height: 40px; border-radius: 12px;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: rgba(255,255,255,0.55); transition: color .15s, background-color .15s;
+  }
+  .icon-btn:hover { color: white; background: rgba(255,255,255,0.06); }
+
+  /* Prose styling */
+  .prose h2 {
+    font-family: 'Comfortaa', sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    color: white;
+    margin-top: 2.5rem;
+    margin-bottom: 0.75rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #2a2a2a;
+  }
+  .prose h2:first-of-type { border-top: none; padding-top: 0; margin-top: 0; }
+  .prose p {
+    color: rgba(255,255,255,0.65);
+    font-size: 15px;
+    line-height: 1.75;
+    margin-bottom: 1rem;
+  }
+  .prose ul {
+    color: rgba(255,255,255,0.65);
+    font-size: 15px;
+    line-height: 1.75;
+    margin-bottom: 1rem;
+    padding-left: 1.25rem;
+    list-style: none;
+  }
+  .prose ul li {
+    position: relative;
+    padding-left: 1rem;
+    margin-bottom: 0.35rem;
+  }
+  .prose ul li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.65em;
+    width: 5px; height: 5px;
+    border-radius: 9999px;
+    background: rgba(255,195,0,0.5);
+  }
+  .prose a { color: #FFC300; text-decoration: none; }
+  .prose a:hover { text-decoration: underline; text-underline-offset: 4px; }
+  .prose strong { color: rgba(255,255,255,0.85); font-weight: 600; }
+
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: #FFC300; border-radius: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+</style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+<!-- ───────── TOP NAV ───────── -->
+<header class="sticky top-0 z-40 bg-bg/90 backdrop-blur border-b border-line/70">
+  <div class="max-w-7xl mx-auto px-5 lg:px-8 h-14 flex items-center justify-between">
+    <div class="flex items-center gap-6">
+      <a href="Landing Page.html" class="flex items-center gap-2.5 shrink-0">
+        <span class="relative inline-flex items-center justify-center w-8 h-8 rounded-[10px] bg-brand/15 border border-brand/30">
+          <svg viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="none" stroke="#FFC300" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2 L20 6.5 L20 15.5 L12 20 L4 15.5 L4 6.5 Z"/>
+            <path d="M12 9 L16 11 L16 14.5 L12 16.5 L8 14.5 L8 11 Z" fill="#FFC300" fill-opacity="0.6" stroke="none"/>
+          </svg>
+        </span>
+        <span class="font-display font-bold text-[15px] tracking-tight hidden sm:inline">Beehive</span>
+      </a>
+      <nav class="flex items-center gap-1">
+        <a href="studio-empty.html" class="nav-item">
+          <span class="flex items-center gap-2">
+            <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            Studio
+          </span>
+        </a>
+        <a href="#" class="nav-item">
+          <span class="flex items-center gap-2">
+            <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L20 6.5 L20 15.5 L12 20 L4 15.5 L4 6.5 Z"/><path d="M12 7 L16 9.5 L16 13.5 L12 16 L8 13.5 L8 9.5 Z"/></svg>
+            Community
+          </span>
+        </a>
+        <a href="#" class="nav-item">
+          <span class="flex items-center gap-2">
+            <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            Discover
+          </span>
+        </a>
+      </nav>
+    </div>
+    <div class="flex items-center gap-1.5">
+      <button class="icon-btn relative" aria-label="Notifications">
+        <svg viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+      </button>
+      <button class="w-8 h-8 rounded-full bg-brand/20 border border-brand/30 flex items-center justify-center text-[12px] font-bold text-brand font-display ml-1" aria-label="Account menu">M</button>
+    </div>
+  </div>
+</header>
+
+<!-- ───────── PAGE CONTENT ───────── -->
+<main class="flex-1">
+  <div class="max-w-2xl mx-auto px-6 lg:px-8 py-14 lg:py-20">
+
+    <!-- Page header -->
+    <div class="mb-10">
+      <a href="Landing Page.html" class="inline-flex items-center gap-2 text-[13px] text-white/50 hover:text-white transition-colors mb-5 group">
+        <svg viewBox="0 0 24 24" class="w-4 h-4 transition-transform group-hover:-translate-x-0.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+        Back to home
+      </a>
+      <h1 class="font-display font-bold text-[32px] sm:text-[38px] leading-tight tracking-tight">Privacy Policy</h1>
+      <p class="text-white/40 text-[14px] mt-3">Last updated: May 11, 2026</p>
+    </div>
+
+    <!-- Prose body -->
+    <div class="prose">
+
+      <h2>1. Introduction</h2>
+      <p>
+        Beehive Studio ("we", "us", or "our") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our web application and related services (the "Service").
+      </p>
+      <p>
+        By accessing or using the Service, you agree to this Privacy Policy. If you do not agree with the terms of this policy, please do not use the Service.
+      </p>
+
+      <h2>2. Information we collect</h2>
+      <p>We collect information you provide directly and information collected automatically when you use the Service.</p>
+      <p><strong>Information you provide:</strong></p>
+      <ul>
+        <li>Account details — name, email address, username, and profile photo</li>
+        <li>Content — manuscripts, chapters, notes, comments, and other writing you create or upload</li>
+        <li>Communications — messages you send to other users through Hive collaboration or support requests</li>
+        <li>Payment information — billing details processed by our third-party payment provider (we do not store full card numbers)</li>
+      </ul>
+      <p><strong>Information collected automatically:</strong></p>
+      <ul>
+        <li>Device and browser type, operating system, and IP address</li>
+        <li>Usage data — pages viewed, features used, session duration, and interaction patterns</li>
+        <li>Cookies and similar technologies for authentication, preferences, and analytics</li>
+      </ul>
+
+      <h2>3. How we use your information</h2>
+      <p>We use the information we collect to:</p>
+      <ul>
+        <li>Provide, maintain, and improve the Service</li>
+        <li>Create and manage your account</li>
+        <li>Process transactions and send related notifications</li>
+        <li>Enable collaboration features (Hive) and community interactions (Discover)</li>
+        <li>Send you updates, security alerts, and support messages</li>
+        <li>Analyze usage trends to improve the writing experience</li>
+        <li>Detect, prevent, and address technical issues or abuse</li>
+      </ul>
+
+      <h2>4. Sharing your information</h2>
+      <p>We do not sell your personal information. We may share your information in the following circumstances:</p>
+      <ul>
+        <li><strong>With your consent</strong> — when you choose to publish content on Discover or share manuscripts through Hive</li>
+        <li><strong>Service providers</strong> — trusted third parties who assist us in operating the Service (hosting, analytics, payment processing), bound by confidentiality obligations</li>
+        <li><strong>Legal requirements</strong> — when required by law, regulation, or legal process</li>
+        <li><strong>Business transfers</strong> — in connection with a merger, acquisition, or sale of assets, with prior notice to you</li>
+      </ul>
+
+      <h2>5. Your content and manuscripts</h2>
+      <p>
+        Your writing is yours. We do not claim ownership of any content you create on Beehive Studio. We access your manuscripts only to provide the Service (rendering, syncing, collaboration) and to comply with legal obligations.
+      </p>
+      <p>
+        Content you publish on Discover is visible to other users according to your publication settings. Unpublished drafts remain private to you and any collaborators you explicitly invite.
+      </p>
+
+      <h2>6. Data retention</h2>
+      <p>
+        We retain your account information and content for as long as your account is active. If you delete your account, we will delete or anonymize your personal data within 30 days, except where retention is required by law or for legitimate business purposes (e.g., resolving disputes).
+      </p>
+      <p>
+        You can export your manuscripts at any time in EPUB, PDF, or DOCX format from the Studio.
+      </p>
+
+      <h2>7. Security</h2>
+      <p>
+        We implement industry-standard security measures including encryption in transit (TLS), encryption at rest, and regular security audits. However, no method of electronic transmission or storage is 100% secure, and we cannot guarantee absolute security.
+      </p>
+
+      <h2>8. Cookies</h2>
+      <p>
+        We use essential cookies for authentication and session management, and optional analytics cookies to understand how the Service is used. You can manage cookie preferences in your browser settings. Disabling essential cookies may affect your ability to use the Service.
+      </p>
+
+      <h2>9. Your rights</h2>
+      <p>Depending on your location, you may have the following rights:</p>
+      <ul>
+        <li><strong>Access</strong> — request a copy of the personal data we hold about you</li>
+        <li><strong>Correction</strong> — request that we correct inaccurate or incomplete data</li>
+        <li><strong>Deletion</strong> — request that we delete your personal data</li>
+        <li><strong>Portability</strong> — request your data in a structured, machine-readable format</li>
+        <li><strong>Objection</strong> — object to processing based on legitimate interests</li>
+      </ul>
+      <p>
+        To exercise any of these rights, contact us at <a href="mailto:privacy@beehivestudio.com">privacy@beehivestudio.com</a>.
+      </p>
+
+      <h2>10. Children's privacy</h2>
+      <p>
+        The Service is not intended for users under 16 years of age. We do not knowingly collect personal information from children under 16. If we learn that we have collected data from a child under 16, we will take steps to delete it promptly.
+      </p>
+
+      <h2>11. Changes to this policy</h2>
+      <p>
+        We may update this Privacy Policy from time to time. We will notify you of material changes by posting the updated policy on this page and updating the "Last updated" date. Your continued use of the Service after changes constitutes acceptance of the revised policy.
+      </p>
+
+      <h2>12. Contact us</h2>
+      <p>
+        If you have questions about this Privacy Policy or our data practices, please contact us:
+      </p>
+      <ul>
+        <li>Email: <a href="mailto:privacy@beehivestudio.com">privacy@beehivestudio.com</a></li>
+        <li>Address: Beehive Studio Ltd, 14 Harbour Lane, Bristol BS1 4DJ, United Kingdom</li>
+      </ul>
+
+    </div>
+  </div>
+</main>
+
+<!-- ───────── FOOTER ───────── -->
+<footer class="border-t border-line/70 bg-[#121212]">
+  <div class="max-w-7xl mx-auto px-6 lg:px-8 py-8 flex flex-wrap items-center justify-between gap-3 text-[12px] text-white/40">
+    <div>&copy; 2026 Beehive Studio</div>
+    <div class="flex items-center gap-5">
+      <a href="#" class="hover:text-white/70 text-brand">Privacy</a>
+      <a href="#" class="hover:text-white/70">Terms</a>
+      <a href="#" class="hover:text-white/70">DMCA</a>
+      <span class="flex items-center gap-1.5">
+        <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span>
+        All systems honey
+      </span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

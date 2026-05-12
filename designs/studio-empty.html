@@ -1,0 +1,206 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Studio — Beehive Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          bg: '#141414', card: '#1c1c1c', elev: '#252525', inset: '#1e1e1e',
+          line: '#2a2a2a', brand: '#FFC300', brandHi: '#FFD040', brandLo: '#e0ac01',
+        },
+        fontFamily: {
+          display: ['Comfortaa', 'sans-serif'],
+          sans: ['Geist', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        },
+        borderRadius: { xl: '14px', '2xl': '18px', '3xl': '22px' },
+      }
+    }
+  }
+</script>
+<style>
+  html, body { background: #141414; color: white; margin: 0; }
+  body { font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  .font-display { font-family: 'Comfortaa', sans-serif; }
+
+  .btn-primary {
+    background: #FFC300; color: #0a0a0a; font-weight: 700; font-family: 'Comfortaa', sans-serif;
+    transition: background-color .15s ease, transform .15s ease, box-shadow .15s ease;
+    box-shadow: 0 6px 24px -10px rgba(255,195,0,0.55);
+  }
+  .btn-primary:hover { background: #FFD040; transform: translateY(-1px); }
+  .btn-primary:active { background: #e0ac01; transform: translateY(0); }
+
+  .nav-item {
+    position: relative;
+    padding: 6px 14px;
+    border-radius: 9999px;
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.55);
+    transition: color .15s, background-color .15s;
+  }
+  .nav-item:hover { color: white; background: rgba(255,255,255,0.05); }
+  .nav-item.active {
+    color: #FFC300;
+    background: rgba(255,195,0,0.1);
+  }
+
+  .icon-btn {
+    width: 40px; height: 40px; border-radius: 12px;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: rgba(255,255,255,0.55);
+    transition: color .15s, background-color .15s;
+  }
+  .icon-btn:hover { color: white; background: rgba(255,255,255,0.06); }
+
+  .hex-empty {
+    background-image:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='52' viewBox='0 0 60 52'><path d='M15 1 L45 1 L60 26 L45 51 L15 51 L0 26 Z' fill='none' stroke='%23FFC300' stroke-opacity='0.05' stroke-width='1'/></svg>");
+    background-size: 60px 52px;
+  }
+
+  @keyframes floatUp {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  .float-gentle { animation: floatUp 4s ease-in-out infinite; }
+
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: #FFC300; border-radius: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+</style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+<!-- ───────── TOP NAV ───────── -->
+<header class="sticky top-0 z-40 bg-bg/90 backdrop-blur border-b border-line/70">
+  <div class="max-w-7xl mx-auto px-5 lg:px-8 h-14 flex items-center justify-between">
+
+    <!-- Left: logo + nav -->
+    <div class="flex items-center gap-6">
+      <!-- Logo -->
+      <a href="#" class="flex items-center gap-2.5 shrink-0">
+        <span class="relative inline-flex items-center justify-center w-8 h-8 rounded-[10px] bg-brand/15 border border-brand/30">
+          <svg viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="none" stroke="#FFC300" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2 L20 6.5 L20 15.5 L12 20 L4 15.5 L4 6.5 Z"/>
+            <path d="M12 9 L16 11 L16 14.5 L12 16.5 L8 14.5 L8 11 Z" fill="#FFC300" fill-opacity="0.6" stroke="none"/>
+          </svg>
+        </span>
+        <span class="font-display font-bold text-[15px] tracking-tight hidden sm:inline">Beehive</span>
+      </a>
+
+      <!-- Nav items -->
+      <nav class="flex items-center gap-1">
+        <a href="#" class="nav-item active">
+          <span class="flex items-center gap-2">
+            <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+            Studio
+          </span>
+        </a>
+        <a href="#" class="nav-item">
+          <span class="flex items-center gap-2">
+            <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2 L20 6.5 L20 15.5 L12 20 L4 15.5 L4 6.5 Z"/>
+              <path d="M12 7 L16 9.5 L16 13.5 L12 16 L8 13.5 L8 9.5 Z"/>
+            </svg>
+            Community
+          </span>
+        </a>
+        <a href="#" class="nav-item">
+          <span class="flex items-center gap-2">
+            <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
+            </svg>
+            Discover
+          </span>
+        </a>
+      </nav>
+    </div>
+
+    <!-- Right: bell + avatar -->
+    <div class="flex items-center gap-1.5">
+      <!-- Notification bell -->
+      <button class="icon-btn relative" aria-label="Notifications">
+        <svg viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
+          <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
+        </svg>
+        <!-- Unread dot -->
+        <span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-brand border-2 border-bg"></span>
+      </button>
+
+      <!-- User avatar -->
+      <button class="w-8 h-8 rounded-full bg-brand/20 border border-brand/30 flex items-center justify-center text-[12px] font-bold text-brand font-display ml-1" aria-label="Account menu">
+        M
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ───────── MAIN CONTENT — EMPTY STATE ───────── -->
+<main class="flex-1 flex items-center justify-center relative">
+  <!-- Subtle hex backdrop -->
+  <div class="absolute inset-0 hex-empty pointer-events-none [mask-image:radial-gradient(ellipse_50%_50%_at_50%_45%,black,transparent_70%)]"></div>
+
+  <div class="relative text-center px-6 py-20 max-w-lg">
+    <!-- Illustration: stacked books with bee hexagon -->
+    <div class="float-gentle mb-10 inline-flex items-center justify-center">
+      <div class="relative">
+        <svg viewBox="0 0 180 160" class="w-[180px] h-[160px]" fill="none">
+          <!-- Bottom book -->
+          <rect x="30" y="100" width="120" height="18" rx="4" fill="#252525" stroke="#2a2a2a" stroke-width="1"/>
+          <rect x="32" y="102" width="3" height="14" rx="1" fill="#3a3a3a"/>
+          <!-- Middle book -->
+          <rect x="40" y="78" width="110" height="18" rx="4" fill="#1c1c1c" stroke="#2a2a2a" stroke-width="1"/>
+          <rect x="42" y="80" width="3" height="14" rx="1" fill="#333"/>
+          <!-- Top book (brand accent) -->
+          <rect x="35" y="56" width="115" height="18" rx="4" fill="rgba(255,195,0,0.15)" stroke="rgba(255,195,0,0.3)" stroke-width="1"/>
+          <rect x="37" y="58" width="3" height="14" rx="1" fill="rgba(255,195,0,0.4)"/>
+          <!-- Text lines on top book -->
+          <line x1="48" y1="63" x2="90" y2="63" stroke="rgba(255,195,0,0.2)" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="48" y1="68" x2="76" y2="68" stroke="rgba(255,195,0,0.15)" stroke-width="1.5" stroke-linecap="round"/>
+          <!-- Hexagon bee icon floating above -->
+          <g transform="translate(90, 28)">
+            <path d="M0 -20 L17.3 -10 L17.3 10 L0 20 L-17.3 10 L-17.3 -10 Z" fill="rgba(255,195,0,0.1)" stroke="#FFC300" stroke-width="1.2" stroke-opacity="0.4"/>
+            <path d="M0 -8 L7 -4 L7 4 L0 8 L-7 4 L-7 -4 Z" fill="#FFC300" fill-opacity="0.5" stroke="none"/>
+          </g>
+          <!-- Sparkle dots -->
+          <circle cx="55" cy="35" r="1.5" fill="#FFC300" fill-opacity="0.3"/>
+          <circle cx="130" cy="42" r="1" fill="#FFC300" fill-opacity="0.25"/>
+          <circle cx="145" cy="70" r="1.5" fill="#FFC300" fill-opacity="0.2"/>
+        </svg>
+      </div>
+    </div>
+
+    <h1 class="font-display font-bold text-[28px] sm:text-[32px] leading-tight tracking-tight">
+      Your stories start here
+    </h1>
+    <p class="text-white/50 text-[15px] mt-3 leading-relaxed max-w-sm mx-auto">
+      Create your first book to open the writing workspace.
+    </p>
+
+    <div class="mt-8">
+      <button class="btn-primary rounded-full px-7 py-3.5 text-[15px] inline-flex items-center gap-2.5">
+        <svg viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 5v14"/><path d="M5 12h14"/>
+        </svg>
+        Create your first book
+      </button>
+    </div>
+  </div>
+</main>
+
+</body>
+</html>

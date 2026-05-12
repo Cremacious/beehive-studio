@@ -1,0 +1,954 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Beehive Studio — Craft your story. Grow your hive.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          bg: '#141414',
+          card: '#1c1c1c',
+          elev: '#252525',
+          inset: '#1e1e1e',
+          line: '#2a2a2a',
+          brand: '#FFC300',
+          brandHi: '#FFD040',
+          brandLo: '#e0ac01',
+        },
+        fontFamily: {
+          display: ['Comfortaa', 'sans-serif'],
+          sans: ['Geist', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          book: ['Fraunces', 'serif'],
+        },
+        borderRadius: {
+          xl: '14px',
+          '2xl': '18px',
+          '3xl': '22px',
+        }
+      }
+    }
+  }
+</script>
+<style>
+  html, body { background: #141414; color: white; }
+  body { font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  .font-display { font-family: 'Comfortaa', sans-serif; }
+  .font-book { font-family: 'Fraunces', serif; }
+
+  /* Paper stack — handmade book-pages surface */
+  .paper-stack {
+    border: 1px solid #2a2a2a;
+    border-bottom-color: #111;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.04) inset,
+      0 3px 0 rgba(0,0,0,0.32);
+    transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease, background-color .2s ease;
+  }
+  .paper-stack:hover {
+    border-color: rgba(255,195,0,0.35);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.05) inset,
+      0 4px 0 rgba(0,0,0,0.32);
+    transform: translateY(-1px);
+  }
+
+  /* Paper grit — subtle noise on warm surfaces */
+  .paper-grit {
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(255,255,255,0.02) 1px, transparent 0);
+    background-size: 18px 18px;
+  }
+
+  /* Hex honeycomb background pattern */
+  .hex-bg {
+    background-image:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='52' viewBox='0 0 60 52'><path d='M15 1 L45 1 L60 26 L45 51 L15 51 L0 26 Z' fill='none' stroke='%23FFC300' stroke-opacity='0.08' stroke-width='1'/></svg>");
+    background-size: 60px 52px;
+  }
+
+  /* Warm glow behind hero */
+  .hero-glow {
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 0%, rgba(255,195,0,0.10), transparent 60%),
+      radial-gradient(ellipse 40% 30% at 20% 30%, rgba(255,195,0,0.04), transparent 60%);
+  }
+
+  /* Custom yellow scrollbar (matches brand) */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: #FFC300; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #FFD040; }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  /* Pill CTA hover lift */
+  .btn-primary {
+    background: #FFC300; color: #0a0a0a; font-weight: 700; font-family: 'Comfortaa', sans-serif;
+    transition: background-color .15s ease, transform .15s ease, box-shadow .15s ease;
+    box-shadow: 0 6px 24px -8px rgba(255,195,0,0.5);
+  }
+  .btn-primary:hover { background: #FFD040; transform: translateY(-1px); }
+  .btn-primary:active { background: #e0ac01; transform: translateY(0); }
+
+  .btn-secondary {
+    background: transparent; color: white; border: 1px solid #2a2a2a;
+    transition: border-color .15s, color .15s, background-color .15s;
+    font-weight: 500;
+  }
+  .btn-secondary:hover { border-color: rgba(255,195,0,0.5); color: #FFC300; background-color: rgba(255,195,0,0.04); }
+
+  /* Underline link */
+  .link-brand { color: #FFC300; }
+  .link-brand:hover { text-decoration: underline; text-underline-offset: 4px; }
+
+  /* Subtle marquee for "stories" */
+  @keyframes drift {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  .drift { animation: drift 60s linear infinite; }
+
+  /* Book spine gradient */
+  .spine {
+    background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(0,0,0,0.4));
+  }
+
+  /* Window dot rows */
+  .dot { width: 10px; height: 10px; border-radius: 9999px; display: inline-block; }
+
+  /* Tabular numerals for code-ish bits */
+  .tnum { font-variant-numeric: tabular-nums; }
+
+  /* Reading body */
+  .reading-body { font-family: 'Fraunces', serif; color: rgba(255,255,255,0.88); }
+
+  /* Caret blink */
+  @keyframes caret { 0%, 49% { opacity: 1 } 50%, 100% { opacity: 0 } }
+  .caret { display: inline-block; width: 2px; height: 1em; background: #FFC300; vertical-align: -2px; margin-left: 2px; animation: caret 1.1s steps(1) infinite; }
+
+  /* Anchor link for nav */
+  .nav-link { color: rgba(255,255,255,0.75); transition: color .15s; }
+  .nav-link:hover { color: white; }
+
+  /* Soft divider */
+  .hr-soft { border-top: 1px solid #2a2a2a; }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- ───────── NAV ───────── -->
+<header class="sticky top-0 z-40 backdrop-blur bg-bg/80 border-b border-line/70">
+  <div class="max-w-7xl mx-auto px-6 lg:px-8 h-16 flex items-center justify-between">
+    <a href="#" class="flex items-center gap-2.5">
+      <!-- Bee/hive monogram -->
+      <span class="relative inline-flex items-center justify-center w-9 h-9 rounded-xl bg-brand/15 border border-brand/30">
+        <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="#FFC300" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 L20 6.5 L20 15.5 L12 20 L4 15.5 L4 6.5 Z"/>
+          <path d="M12 9 L16 11 L16 14.5 L12 16.5 L8 14.5 L8 11 Z" fill="#FFC300" fill-opacity="0.6" stroke="none"/>
+        </svg>
+      </span>
+      <span class="font-display font-bold text-[17px] tracking-tight">Beehive Studio</span>
+    </a>
+    <nav class="hidden md:flex items-center gap-7 text-[14px]">
+      <a href="#studio" class="nav-link">Studio</a>
+      <a href="#hive" class="nav-link">Hive</a>
+      <a href="#discover" class="nav-link">Discover</a>
+      <a href="#premium" class="nav-link">Premium</a>
+      <span class="w-px h-5 bg-line"></span>
+      <a href="#" class="nav-link">Sign in</a>
+    </nav>
+    <div class="flex items-center gap-3">
+      <a href="#" class="hidden sm:inline-flex md:hidden nav-link text-sm">Sign in</a>
+      <a href="#" class="btn-primary rounded-full px-4 py-2 text-sm inline-flex items-center gap-1.5">
+        Start writing
+        <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- ───────── HERO ───────── -->
+<section class="relative overflow-hidden">
+  <div class="absolute inset-0 hero-glow pointer-events-none"></div>
+  <div class="absolute inset-0 hex-bg opacity-60 pointer-events-none [mask-image:radial-gradient(ellipse_70%_60%_at_50%_30%,black,transparent_75%)]"></div>
+
+  <div class="relative max-w-7xl mx-auto px-6 lg:px-8 pt-16 lg:pt-24 pb-20 grid lg:grid-cols-12 gap-12 items-center">
+    <!-- Left: copy -->
+    <div class="lg:col-span-6">
+      <div class="inline-flex items-center gap-2 rounded-full border border-line bg-card/60 px-3 py-1 text-xs text-white/70 mb-7">
+        <span class="w-1.5 h-1.5 rounded-full bg-brand animate-pulse"></span>
+        Now in open beta — Hive 1.0 just shipped
+      </div>
+
+      <h1 class="font-display font-bold text-[44px] sm:text-[56px] lg:text-[64px] leading-[1.04] tracking-tight text-balance">
+        Craft your story.<br/>
+        Grow your <span class="text-brand">hive</span>.
+      </h1>
+
+      <p class="mt-6 text-[17px] lg:text-[18px] leading-relaxed text-white/70 max-w-xl text-pretty">
+        The professional writing studio where authors write, collaborate, and publish to a community of readers. Drafting, planning, and feedback — all in one warm, focused workspace.
+      </p>
+
+      <div class="mt-8 flex flex-wrap items-center gap-3">
+        <a href="#" class="btn-primary rounded-full px-6 py-3 text-[15px] inline-flex items-center gap-2">
+          Start writing free
+          <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </a>
+        <a href="#discover" class="btn-secondary rounded-full px-5 py-3 text-[15px] inline-flex items-center gap-2">
+          <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-8 10-8 10 8 10 8-3 8-10 8-10-8-10-8Z"/><circle cx="12" cy="12" r="3"/></svg>
+          Explore stories
+        </a>
+      </div>
+
+      <div class="mt-10 flex items-center gap-5 text-xs text-white/50">
+        <div class="flex items-center gap-2">
+          <svg viewBox="0 0 24 24" class="w-4 h-4 text-brand" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          Free forever for solo writers
+        </div>
+        <div class="flex items-center gap-2">
+          <svg viewBox="0 0 24 24" class="w-4 h-4 text-brand" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          No credit card
+        </div>
+        <div class="hidden sm:flex items-center gap-2">
+          <svg viewBox="0 0 24 24" class="w-4 h-4 text-brand" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          Export EPUB / PDF / DOCX
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Studio preview mock -->
+    <div class="lg:col-span-6">
+      <div class="relative">
+        <!-- Floating tag chips -->
+        <div class="absolute -top-3 -left-3 z-20 hidden md:flex items-center gap-2 rounded-full bg-card border border-line px-3 py-1.5 text-[11px] font-medium shadow-lg">
+          <span class="w-2 h-2 rounded-full bg-green-400"></span>
+          <span class="text-white/80">Maya is editing Chapter 3</span>
+        </div>
+        <div class="absolute -bottom-4 -right-3 z-20 hidden md:flex items-center gap-2 rounded-full bg-card border border-line px-3 py-1.5 text-[11px] font-medium shadow-lg">
+          <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 text-brand" fill="currentColor"><path d="M12 2l2.39 7.36H22l-6.19 4.5L18.2 21 12 16.5 5.8 21l2.39-7.14L2 9.36h7.61z"/></svg>
+          <span class="text-white/80">+148 words / 1,200 goal</span>
+        </div>
+
+        <!-- Window chrome -->
+        <div class="bg-card rounded-2xl paper-stack overflow-hidden">
+          <div class="flex items-center gap-2 px-3 py-2.5 border-b border-line">
+            <span class="dot bg-[#3a3a3a]"></span>
+            <span class="dot bg-[#3a3a3a]"></span>
+            <span class="dot bg-[#3a3a3a]"></span>
+            <div class="ml-3 flex-1 flex items-center gap-2">
+              <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 text-white/40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              <span class="text-[12px] text-white/50 font-medium">studio · The Cartographer's Wife</span>
+            </div>
+            <span class="text-[10px] text-white/40 hidden sm:inline">Auto-saved 2s ago</span>
+          </div>
+
+          <div class="grid grid-cols-[160px_1fr] min-h-[420px]">
+            <!-- Sidebar: chapter list -->
+            <aside class="border-r border-line bg-[#191919] py-3 px-2 text-[12px]">
+              <div class="px-2 mb-2 text-[10px] uppercase tracking-wider text-white/40 font-semibold">Manuscript</div>
+              <div class="space-y-0.5">
+                <div class="flex items-center gap-2 px-2 py-1.5 rounded text-white/70">
+                  <svg viewBox="0 0 24 24" class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                  <span>Part I — Salt</span>
+                </div>
+                <div class="ml-4 space-y-0.5">
+                  <div class="flex items-center gap-2 px-2 py-1.5 rounded text-white/60 hover:bg-white/5">
+                    <span class="text-white/30 tnum text-[10px]">01</span>
+                    <span>The signal</span>
+                  </div>
+                  <div class="flex items-center gap-2 px-2 py-1.5 rounded text-white/60 hover:bg-white/5">
+                    <span class="text-white/30 tnum text-[10px]">02</span>
+                    <span>Low tide</span>
+                  </div>
+                  <div class="flex items-center gap-2 px-2 py-1.5 rounded bg-brand/10 text-brand">
+                    <span class="text-brand/70 tnum text-[10px]">03</span>
+                    <span class="font-medium">Cartography</span>
+                  </div>
+                  <div class="flex items-center gap-2 px-2 py-1.5 rounded text-white/40 hover:bg-white/5">
+                    <span class="text-white/30 tnum text-[10px]">04</span>
+                    <span class="italic">Drafting…</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 px-2 py-1.5 rounded text-white/70 mt-2">
+                  <svg viewBox="0 0 24 24" class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
+                  <span>Part II — Compass</span>
+                </div>
+                <div class="flex items-center gap-2 px-2 py-1.5 rounded text-white/70">
+                  <svg viewBox="0 0 24 24" class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg>
+                  <span>Research</span>
+                </div>
+              </div>
+            </aside>
+
+            <!-- Editor pane -->
+            <div class="p-6 lg:p-7 relative">
+              <div class="flex items-center justify-between mb-4">
+                <div>
+                  <div class="text-[10px] uppercase tracking-wider text-white/40 font-semibold">Chapter 03</div>
+                  <h3 class="font-display font-bold text-[20px] mt-0.5">Cartography</h3>
+                </div>
+                <div class="flex items-center -space-x-1.5">
+                  <span class="w-6 h-6 rounded-full bg-brand/20 border border-bg flex items-center justify-center text-[10px] font-bold text-brand">M</span>
+                  <span class="w-6 h-6 rounded-full bg-[#3a3a3a] border border-bg flex items-center justify-center text-[10px] font-bold text-white/80">R</span>
+                  <span class="w-6 h-6 rounded-full bg-[#3a3a3a] border border-bg flex items-center justify-center text-[10px] font-bold text-white/80">J</span>
+                </div>
+              </div>
+
+              <div class="reading-body text-[14px] lg:text-[15px] leading-[1.75] space-y-3">
+                <p>She mapped the harbour the way other people kept a diary — in tide marks, in the slant of mast shadows, in the small inaccuracies the sea forgave each morning.</p>
+                <p>The lighthouse was not where the charts said it was. It had not been there for forty years, but she still drew it in, faintly, in pencil that she could erase if anyone <span class="bg-brand/15 text-white px-0.5 rounded-sm">official</span> ever asked.</p>
+                <p>By Tuesday the fog had a name and a temperament. By Thursday it had moved in.<span class="caret"></span></p>
+              </div>
+
+              <!-- Inline comment marker -->
+              <div class="absolute right-5 top-28 hidden md:block w-44">
+                <div class="bg-elev border border-line rounded-xl p-3 text-[11px] paper-stack">
+                  <div class="flex items-center gap-2 mb-1.5">
+                    <span class="w-5 h-5 rounded-full bg-brand/20 flex items-center justify-center text-[9px] font-bold text-brand">R</span>
+                    <span class="font-semibold text-white">Rin</span>
+                    <span class="text-white/40 text-[10px]">2m</span>
+                  </div>
+                  <p class="text-white/80 leading-snug">Love this opening — feels like the harbour is a character. Keep "forgave"?</p>
+                </div>
+              </div>
+
+              <!-- Status bar -->
+              <div class="absolute left-7 right-7 bottom-4 flex items-center justify-between text-[10px] text-white/40">
+                <div class="flex items-center gap-3 tnum">
+                  <span>1,348 words</span>
+                  <span>·</span>
+                  <span>5 min read</span>
+                  <span>·</span>
+                  <span class="text-brand">3 comments</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span>
+                  <span>Synced</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── FEATURE COLUMNS ───────── -->
+<section id="studio" class="max-w-7xl mx-auto px-6 lg:px-8 py-24 lg:py-28">
+  <div class="max-w-2xl mb-14">
+    <div class="text-brand text-[12px] font-semibold tracking-[0.16em] uppercase mb-3">Three rooms, one studio</div>
+    <h2 class="font-display font-bold text-[36px] lg:text-[44px] leading-tight tracking-tight">
+      Everything a writer needs.<br/>
+      Nothing they don't.
+    </h2>
+    <p class="mt-5 text-white/65 text-[16px] leading-relaxed max-w-xl">
+      Beehive is built around how books actually get written — heads-down drafting, the occasional second pair of eyes, and a reader at the end of the tunnel.
+    </p>
+  </div>
+
+  <div class="grid md:grid-cols-3 gap-5 lg:gap-6">
+    <!-- Studio -->
+    <article class="paper-stack bg-card rounded-2xl p-7 group">
+      <div class="flex items-center justify-between mb-6">
+        <span class="inline-flex w-11 h-11 rounded-xl bg-brand/12 border border-brand/25 items-center justify-center">
+          <svg viewBox="0 0 24 24" class="w-5 h-5 text-brand" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 7h7"/><path d="M9 11h5"/>
+          </svg>
+        </span>
+        <span class="text-[10px] uppercase tracking-wider text-white/40 font-semibold tnum">01 — Write</span>
+      </div>
+      <h3 class="font-display font-bold text-[24px] mb-2">Studio</h3>
+      <p class="text-white/65 text-[14.5px] leading-relaxed mb-6">
+        A Scrivener-style workspace for long-form. Chapters, scenes, collections, research — drafted in a calm, distraction-free editor that auto-saves every keystroke.
+      </p>
+      <!-- Mini visual: stacked chapters -->
+      <div class="bg-[#171717] rounded-xl border border-line p-3 mb-5">
+        <div class="space-y-1.5 text-[11px]">
+          <div class="flex items-center justify-between px-2 py-1.5 rounded bg-brand/10 text-brand">
+            <span class="flex items-center gap-2"><span class="tnum text-[10px] text-brand/60">03</span>Cartography</span>
+            <span class="tnum text-[10px]">1,348</span>
+          </div>
+          <div class="flex items-center justify-between px-2 py-1.5 rounded text-white/55">
+            <span class="flex items-center gap-2"><span class="tnum text-[10px] text-white/30">04</span>Drafting…</span>
+            <span class="tnum text-[10px]">274</span>
+          </div>
+          <div class="flex items-center justify-between px-2 py-1.5 rounded text-white/55">
+            <span class="flex items-center gap-2"><span class="tnum text-[10px] text-white/30">05</span>Tin coast</span>
+            <span class="tnum text-[10px]">2,011</span>
+          </div>
+        </div>
+      </div>
+      <ul class="space-y-2 text-[13px] text-white/65">
+        <li class="flex items-start gap-2"><span class="text-brand mt-0.5">→</span> Outline, scene, and wiki views</li>
+        <li class="flex items-start gap-2"><span class="text-brand mt-0.5">→</span> Word goals & daily streaks</li>
+        <li class="flex items-start gap-2"><span class="text-brand mt-0.5">→</span> Import DOCX · export EPUB</li>
+      </ul>
+    </article>
+
+    <!-- Hive -->
+    <article class="paper-stack bg-card rounded-2xl p-7 group relative overflow-hidden">
+      <div class="relative flex items-center justify-between mb-6">
+        <span class="inline-flex w-11 h-11 rounded-xl bg-brand/12 border border-brand/25 items-center justify-center">
+          <svg viewBox="0 0 24 24" class="w-5 h-5 text-brand" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2 L20 6.5 L20 15.5 L12 20 L4 15.5 L4 6.5 Z"/>
+            <path d="M12 7 L16 9.5 L16 13.5 L12 16 L8 13.5 L8 9.5 Z"/>
+          </svg>
+        </span>
+        <span class="text-[10px] uppercase tracking-wider text-white/40 font-semibold tnum">02 — Together</span>
+      </div>
+      <h3 class="font-display font-bold text-[24px] mb-2">Hive</h3>
+      <p class="text-white/65 text-[14.5px] leading-relaxed mb-6">
+        Async collaboration that respects the draft. Invite trusted readers and co-writers, share outlines and chapters, and gather inline edits and comments — on your schedule.
+      </p>
+      <!-- Mini visual: collaborators -->
+      <div class="bg-[#171717] rounded-xl border border-line p-3 mb-5 space-y-2">
+        <div class="flex items-center gap-2 text-[11px]">
+          <span class="w-6 h-6 rounded-full bg-brand/20 flex items-center justify-center text-[10px] font-bold text-brand">M</span>
+          <span class="text-white/80 flex-1 truncate">Maya suggested an edit on <span class="text-brand">Ch. 3</span></span>
+          <span class="text-white/40 tnum">2m</span>
+        </div>
+        <div class="flex items-center gap-2 text-[11px]">
+          <span class="w-6 h-6 rounded-full bg-[#2f2f2f] flex items-center justify-center text-[10px] font-bold text-white/80">R</span>
+          <span class="text-white/80 flex-1 truncate">Rin left 3 comments on the outline</span>
+          <span class="text-white/40 tnum">14m</span>
+        </div>
+        <div class="flex items-center gap-2 text-[11px]">
+          <span class="w-6 h-6 rounded-full bg-[#2f2f2f] flex items-center justify-center text-[10px] font-bold text-white/80">J</span>
+          <span class="text-white/80 flex-1 truncate">June approved your chapter submission</span>
+          <span class="text-white/40 tnum">1h</span>
+        </div>
+      </div>
+      <ul class="space-y-2 text-[13px] text-white/65">
+        <li class="flex items-start gap-2"><span class="text-brand mt-0.5">→</span> Roles, submissions & approvals</li>
+        <li class="flex items-start gap-2"><span class="text-brand mt-0.5">→</span> Inline rewrites with diff view</li>
+        <li class="flex items-start gap-2"><span class="text-brand mt-0.5">→</span> Shared word goals & milestones</li>
+      </ul>
+    </article>
+
+    <!-- Discover -->
+    <article class="paper-stack bg-card rounded-2xl p-7 group">
+      <div class="flex items-center justify-between mb-6">
+        <span class="inline-flex w-11 h-11 rounded-xl bg-brand/12 border border-brand/25 items-center justify-center">
+          <svg viewBox="0 0 24 24" class="w-5 h-5 text-brand" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
+          </svg>
+        </span>
+        <span class="text-[10px] uppercase tracking-wider text-white/40 font-semibold tnum">03 — Readers</span>
+      </div>
+      <h3 class="font-display font-bold text-[24px] mb-2">Discover</h3>
+      <p class="text-white/65 text-[14.5px] leading-relaxed mb-6">
+        Publish chapters to a real audience of readers, not an algorithm. Build a following through reading lists, sparks, and clubs — curated by people who actually finish books.
+      </p>
+      <!-- Mini visual: book grid -->
+      <div class="bg-[#171717] rounded-xl border border-line p-3 mb-5">
+        <div class="grid grid-cols-4 gap-1.5">
+          <div class="aspect-[2/3] rounded-md spine bg-[#3a2a1a] relative overflow-hidden">
+            <div class="absolute inset-x-0 bottom-0 h-3 bg-black/30"></div>
+            <div class="absolute top-1 left-1 text-[6px] font-book text-white/80 leading-tight">SALT<br/>HARBOUR</div>
+          </div>
+          <div class="aspect-[2/3] rounded-md spine bg-[#1c2a3a] relative overflow-hidden">
+            <div class="absolute top-1 left-1 text-[6px] font-book text-white/80 leading-tight">NIGHT<br/>WORK</div>
+          </div>
+          <div class="aspect-[2/3] rounded-md spine bg-brand relative overflow-hidden">
+            <div class="absolute top-1 left-1 text-[6px] font-book text-black leading-tight font-bold">HONEY<br/>ROAD</div>
+          </div>
+          <div class="aspect-[2/3] rounded-md spine bg-[#2c1f33] relative overflow-hidden">
+            <div class="absolute top-1 left-1 text-[6px] font-book text-white/80 leading-tight">THE<br/>CIPHER</div>
+          </div>
+        </div>
+      </div>
+      <ul class="space-y-2 text-[13px] text-white/65">
+        <li class="flex items-start gap-2"><span class="text-brand mt-0.5">→</span> Reading lists & book clubs</li>
+        <li class="flex items-start gap-2"><span class="text-brand mt-0.5">→</span> Writing prompts ("sparks")</li>
+        <li class="flex items-start gap-2"><span class="text-brand mt-0.5">→</span> Friends, likes, and a real feed</li>
+      </ul>
+    </article>
+  </div>
+</section>
+
+<!-- ───────── SPOTLIGHT: STORIES FROM THE HIVE (drift band) ───────── -->
+<section id="discover" class="border-y border-line/70 bg-[#171717] py-12 overflow-hidden">
+  <div class="max-w-7xl mx-auto px-6 lg:px-8 mb-7 flex items-end justify-between gap-6">
+    <div>
+      <div class="text-brand text-[12px] font-semibold tracking-[0.16em] uppercase mb-2">From the hive</div>
+      <h3 class="font-display font-bold text-[26px] lg:text-[30px] tracking-tight">Stories being written right now</h3>
+    </div>
+    <a href="#" class="link-brand text-sm hidden sm:inline-flex items-center gap-1.5">
+      Browse all
+      <svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+    </a>
+  </div>
+
+  <div class="relative">
+    <div class="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-[#171717] to-transparent z-10 pointer-events-none"></div>
+    <div class="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-[#171717] to-transparent z-10 pointer-events-none"></div>
+    <div class="flex gap-4 drift w-max">
+      <div class="w-48 shrink-0 paper-stack bg-card rounded-xl p-3">
+        <div class="aspect-[2/3] rounded-lg spine bg-[#3a2a1a] mb-3 relative overflow-hidden">
+          <div class="absolute inset-2 border border-white/20 rounded-sm flex flex-col justify-between p-2">
+            <div class="font-book text-[14px] text-white/90 leading-tight">Salt<br/>Harbour</div>
+            <div class="text-[9px] uppercase tracking-wider text-white/50">M. Vance</div>
+          </div>
+        </div>
+        <div class="text-[13px] font-medium truncate">Salt Harbour</div>
+        <div class="text-[11px] text-white/50 tnum">Ch. 12 · 1.2k readers</div>
+      </div>
+      <div class="w-48 shrink-0 paper-stack bg-card rounded-xl p-3">
+        <div class="aspect-[2/3] rounded-lg spine bg-[#1c2a3a] mb-3 relative overflow-hidden">
+          <div class="absolute inset-2 border border-white/20 rounded-sm flex flex-col justify-between p-2">
+            <div class="font-book text-[14px] text-white/90 leading-tight">Night<br/>Work</div>
+            <div class="text-[9px] uppercase tracking-wider text-white/50">R. Okafor</div>
+          </div>
+        </div>
+        <div class="text-[13px] font-medium truncate">Night Work</div>
+        <div class="text-[11px] text-white/50 tnum">Ch. 04 · 318 readers</div>
+      </div>
+      <div class="w-48 shrink-0 paper-stack bg-card rounded-xl p-3">
+        <div class="aspect-[2/3] rounded-lg mb-3 relative overflow-hidden bg-brand">
+          <div class="absolute inset-2 border border-black/30 rounded-sm flex flex-col justify-between p-2">
+            <div class="font-book text-[14px] text-black leading-tight font-semibold">The Honey<br/>Road</div>
+            <div class="text-[9px] uppercase tracking-wider text-black/60">J. Adelekan</div>
+          </div>
+        </div>
+        <div class="text-[13px] font-medium truncate">The Honey Road</div>
+        <div class="text-[11px] text-white/50 tnum">Ch. 21 · 4.6k readers</div>
+      </div>
+      <div class="w-48 shrink-0 paper-stack bg-card rounded-xl p-3">
+        <div class="aspect-[2/3] rounded-lg spine bg-[#2c1f33] mb-3 relative overflow-hidden">
+          <div class="absolute inset-2 border border-white/20 rounded-sm flex flex-col justify-between p-2">
+            <div class="font-book text-[14px] text-white/90 leading-tight italic">The Cipher<br/>Keeper</div>
+            <div class="text-[9px] uppercase tracking-wider text-white/50">H. Lin</div>
+          </div>
+        </div>
+        <div class="text-[13px] font-medium truncate">The Cipher Keeper</div>
+        <div class="text-[11px] text-white/50 tnum">Ch. 09 · 882 readers</div>
+      </div>
+      <div class="w-48 shrink-0 paper-stack bg-card rounded-xl p-3">
+        <div class="aspect-[2/3] rounded-lg spine bg-[#2a1818] mb-3 relative overflow-hidden">
+          <div class="absolute inset-2 border border-white/20 rounded-sm flex flex-col justify-between p-2">
+            <div class="font-book text-[14px] text-white/90 leading-tight">Low<br/>Frequencies</div>
+            <div class="text-[9px] uppercase tracking-wider text-white/50">D. Marsh</div>
+          </div>
+        </div>
+        <div class="text-[13px] font-medium truncate">Low Frequencies</div>
+        <div class="text-[11px] text-white/50 tnum">Ch. 17 · 2.1k readers</div>
+      </div>
+      <div class="w-48 shrink-0 paper-stack bg-card rounded-xl p-3">
+        <div class="aspect-[2/3] rounded-lg spine bg-[#1a2a22] mb-3 relative overflow-hidden">
+          <div class="absolute inset-2 border border-white/20 rounded-sm flex flex-col justify-between p-2">
+            <div class="font-book text-[14px] text-white/90 leading-tight">Greenhouse<br/>Letters</div>
+            <div class="text-[9px] uppercase tracking-wider text-white/50">P. Castellan</div>
+          </div>
+        </div>
+        <div class="text-[13px] font-medium truncate">Greenhouse Letters</div>
+        <div class="text-[11px] text-white/50 tnum">Ch. 06 · 540 readers</div>
+      </div>
+      <div class="w-48 shrink-0 paper-stack bg-card rounded-xl p-3">
+        <div class="aspect-[2/3] rounded-lg spine bg-[#33291a] mb-3 relative overflow-hidden">
+          <div class="absolute inset-2 border border-white/20 rounded-sm flex flex-col justify-between p-2">
+            <div class="font-book text-[14px] text-white/90 leading-tight">Wax &<br/>Tin</div>
+            <div class="text-[9px] uppercase tracking-wider text-white/50">A. Brunet</div>
+          </div>
+        </div>
+        <div class="text-[13px] font-medium truncate">Wax & Tin</div>
+        <div class="text-[11px] text-white/50 tnum">Ch. 02 · 96 readers</div>
+      </div>
+
+      <!-- Duplicate set for loop -->
+      <div class="w-48 shrink-0 paper-stack bg-card rounded-xl p-3" aria-hidden="true">
+        <div class="aspect-[2/3] rounded-lg spine bg-[#3a2a1a] mb-3 relative overflow-hidden">
+          <div class="absolute inset-2 border border-white/20 rounded-sm flex flex-col justify-between p-2">
+            <div class="font-book text-[14px] text-white/90 leading-tight">Salt<br/>Harbour</div>
+            <div class="text-[9px] uppercase tracking-wider text-white/50">M. Vance</div>
+          </div>
+        </div>
+        <div class="text-[13px] font-medium truncate">Salt Harbour</div>
+        <div class="text-[11px] text-white/50 tnum">Ch. 12 · 1.2k readers</div>
+      </div>
+      <div class="w-48 shrink-0 paper-stack bg-card rounded-xl p-3" aria-hidden="true">
+        <div class="aspect-[2/3] rounded-lg spine bg-[#1c2a3a] mb-3 relative overflow-hidden">
+          <div class="absolute inset-2 border border-white/20 rounded-sm flex flex-col justify-between p-2">
+            <div class="font-book text-[14px] text-white/90 leading-tight">Night<br/>Work</div>
+            <div class="text-[9px] uppercase tracking-wider text-white/50">R. Okafor</div>
+          </div>
+        </div>
+        <div class="text-[13px] font-medium truncate">Night Work</div>
+        <div class="text-[11px] text-white/50 tnum">Ch. 04 · 318 readers</div>
+      </div>
+      <div class="w-48 shrink-0 paper-stack bg-card rounded-xl p-3" aria-hidden="true">
+        <div class="aspect-[2/3] rounded-lg mb-3 relative overflow-hidden bg-brand">
+          <div class="absolute inset-2 border border-black/30 rounded-sm flex flex-col justify-between p-2">
+            <div class="font-book text-[14px] text-black leading-tight font-semibold">The Honey<br/>Road</div>
+            <div class="text-[9px] uppercase tracking-wider text-black/60">J. Adelekan</div>
+          </div>
+        </div>
+        <div class="text-[13px] font-medium truncate">The Honey Road</div>
+        <div class="text-[11px] text-white/50 tnum">Ch. 21 · 4.6k readers</div>
+      </div>
+      <div class="w-48 shrink-0 paper-stack bg-card rounded-xl p-3" aria-hidden="true">
+        <div class="aspect-[2/3] rounded-lg spine bg-[#2c1f33] mb-3 relative overflow-hidden">
+          <div class="absolute inset-2 border border-white/20 rounded-sm flex flex-col justify-between p-2">
+            <div class="font-book text-[14px] text-white/90 leading-tight italic">The Cipher<br/>Keeper</div>
+            <div class="text-[9px] uppercase tracking-wider text-white/50">H. Lin</div>
+          </div>
+        </div>
+        <div class="text-[13px] font-medium truncate">The Cipher Keeper</div>
+        <div class="text-[11px] text-white/50 tnum">Ch. 09 · 882 readers</div>
+      </div>
+      <div class="w-48 shrink-0 paper-stack bg-card rounded-xl p-3" aria-hidden="true">
+        <div class="aspect-[2/3] rounded-lg spine bg-[#2a1818] mb-3 relative overflow-hidden">
+          <div class="absolute inset-2 border border-white/20 rounded-sm flex flex-col justify-between p-2">
+            <div class="font-book text-[14px] text-white/90 leading-tight">Low<br/>Frequencies</div>
+            <div class="text-[9px] uppercase tracking-wider text-white/50">D. Marsh</div>
+          </div>
+        </div>
+        <div class="text-[13px] font-medium truncate">Low Frequencies</div>
+        <div class="text-[11px] text-white/50 tnum">Ch. 17 · 2.1k readers</div>
+      </div>
+      <div class="w-48 shrink-0 paper-stack bg-card rounded-xl p-3" aria-hidden="true">
+        <div class="aspect-[2/3] rounded-lg spine bg-[#1a2a22] mb-3 relative overflow-hidden">
+          <div class="absolute inset-2 border border-white/20 rounded-sm flex flex-col justify-between p-2">
+            <div class="font-book text-[14px] text-white/90 leading-tight">Greenhouse<br/>Letters</div>
+            <div class="text-[9px] uppercase tracking-wider text-white/50">P. Castellan</div>
+          </div>
+        </div>
+        <div class="text-[13px] font-medium truncate">Greenhouse Letters</div>
+        <div class="text-[11px] text-white/50 tnum">Ch. 06 · 540 readers</div>
+      </div>
+      <div class="w-48 shrink-0 paper-stack bg-card rounded-xl p-3" aria-hidden="true">
+        <div class="aspect-[2/3] rounded-lg spine bg-[#33291a] mb-3 relative overflow-hidden">
+          <div class="absolute inset-2 border border-white/20 rounded-sm flex flex-col justify-between p-2">
+            <div class="font-book text-[14px] text-white/90 leading-tight">Wax &<br/>Tin</div>
+            <div class="text-[9px] uppercase tracking-wider text-white/50">A. Brunet</div>
+          </div>
+        </div>
+        <div class="text-[13px] font-medium truncate">Wax & Tin</div>
+        <div class="text-[11px] text-white/50 tnum">Ch. 02 · 96 readers</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── SOCIAL PROOF ───────── -->
+<section class="max-w-7xl mx-auto px-6 lg:px-8 py-24 lg:py-28">
+  <div class="text-center mb-14">
+    <div class="text-brand text-[12px] font-semibold tracking-[0.16em] uppercase mb-3">Writers love it here</div>
+    <h2 class="font-display font-bold text-[36px] lg:text-[44px] leading-tight tracking-tight max-w-2xl mx-auto">
+      Built by writers,<br/>for writers.
+    </h2>
+  </div>
+
+  <div class="grid md:grid-cols-3 gap-5 lg:gap-6">
+    <blockquote class="paper-stack bg-card rounded-2xl p-7 flex flex-col">
+      <div class="flex items-center gap-3 mb-5">
+        <span class="w-10 h-10 rounded-full bg-[#3a2a1a] flex items-center justify-center font-display font-bold text-brand text-[14px]">M</span>
+        <div>
+          <div class="font-medium text-[14px]">Maya Vance</div>
+          <div class="text-[12px] text-white/45">Author, Salt Harbour</div>
+        </div>
+      </div>
+      <p class="font-book text-[15px] text-white/75 leading-relaxed flex-1">
+        "I moved from Scrivener after 8 years. The chapter tree and real-time collab sold me — but the reading community is what made me stay. My beta readers are already here."
+      </p>
+      <div class="mt-5 flex items-center gap-1">
+        <svg viewBox="0 0 20 20" class="w-4 h-4 text-brand" fill="currentColor"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+        <svg viewBox="0 0 20 20" class="w-4 h-4 text-brand" fill="currentColor"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+        <svg viewBox="0 0 20 20" class="w-4 h-4 text-brand" fill="currentColor"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+        <svg viewBox="0 0 20 20" class="w-4 h-4 text-brand" fill="currentColor"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+        <svg viewBox="0 0 20 20" class="w-4 h-4 text-brand" fill="currentColor"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+      </div>
+    </blockquote>
+
+    <blockquote class="paper-stack bg-card rounded-2xl p-7 flex flex-col">
+      <div class="flex items-center gap-3 mb-5">
+        <span class="w-10 h-10 rounded-full bg-[#1c2a3a] flex items-center justify-center font-display font-bold text-brand text-[14px]">R</span>
+        <div>
+          <div class="font-medium text-[14px]">Rin Okafor</div>
+          <div class="text-[12px] text-white/45">Novelist & writing coach</div>
+        </div>
+      </div>
+      <p class="font-book text-[15px] text-white/75 leading-relaxed flex-1">
+        "The inline comment system is the best I've used. I run a writing group of 14 and we all edit in Hive. Feels like sitting around a table with manuscripts, not fighting a Google Doc."
+      </p>
+      <div class="mt-5 flex items-center gap-1">
+        <svg viewBox="0 0 20 20" class="w-4 h-4 text-brand" fill="currentColor"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+        <svg viewBox="0 0 20 20" class="w-4 h-4 text-brand" fill="currentColor"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+        <svg viewBox="0 0 20 20" class="w-4 h-4 text-brand" fill="currentColor"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+        <svg viewBox="0 0 20 20" class="w-4 h-4 text-brand" fill="currentColor"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+        <svg viewBox="0 0 20 20" class="w-4 h-4 text-brand" fill="currentColor"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+      </div>
+    </blockquote>
+
+    <blockquote class="paper-stack bg-card rounded-2xl p-7 flex flex-col">
+      <div class="flex items-center gap-3 mb-5">
+        <span class="w-10 h-10 rounded-full bg-[#2c1f33] flex items-center justify-center font-display font-bold text-brand text-[14px]">H</span>
+        <div>
+          <div class="font-medium text-[14px]">Helen Lin</div>
+          <div class="text-[12px] text-white/45">Author, The Cipher Keeper</div>
+        </div>
+      </div>
+      <p class="font-book text-[15px] text-white/75 leading-relaxed flex-1">
+        "I published my first three chapters on Discover and had 200 readers within a week. No algorithm tricks — people actually found me through a book club. That's never happened before."
+      </p>
+      <div class="mt-5 flex items-center gap-1">
+        <svg viewBox="0 0 20 20" class="w-4 h-4 text-brand" fill="currentColor"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+        <svg viewBox="0 0 20 20" class="w-4 h-4 text-brand" fill="currentColor"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+        <svg viewBox="0 0 20 20" class="w-4 h-4 text-brand" fill="currentColor"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+        <svg viewBox="0 0 20 20" class="w-4 h-4 text-brand" fill="currentColor"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+        <svg viewBox="0 0 20 20" class="w-4 h-4 text-brand" fill="currentColor"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+      </div>
+    </blockquote>
+  </div>
+
+  <!-- Stats strip -->
+  <div class="mt-14 grid grid-cols-2 md:grid-cols-4 gap-6 border border-line rounded-2xl bg-card/50 p-8">
+    <div class="text-center">
+      <div class="font-display font-bold text-[32px] lg:text-[36px] text-brand tnum">12k+</div>
+      <div class="text-[13px] text-white/50 mt-1">Writers on the platform</div>
+    </div>
+    <div class="text-center">
+      <div class="font-display font-bold text-[32px] lg:text-[36px] text-white tnum">48M</div>
+      <div class="text-[13px] text-white/50 mt-1">Words written</div>
+    </div>
+    <div class="text-center">
+      <div class="font-display font-bold text-[32px] lg:text-[36px] text-white tnum">3.2k</div>
+      <div class="text-[13px] text-white/50 mt-1">Stories published</div>
+    </div>
+    <div class="text-center">
+      <div class="font-display font-bold text-[32px] lg:text-[36px] text-white tnum">94%</div>
+      <div class="text-[13px] text-white/50 mt-1">Writer retention rate</div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── PREMIUM PRICING ───────── -->
+<section id="premium" class="border-y border-line/70 bg-[#171717]">
+  <div class="max-w-5xl mx-auto px-6 lg:px-8 py-24 lg:py-28">
+    <div class="text-center mb-14">
+      <div class="text-brand text-[12px] font-semibold tracking-[0.16em] uppercase mb-3">Premium</div>
+      <h2 class="font-display font-bold text-[36px] lg:text-[44px] leading-tight tracking-tight">
+        Simple plans, honest pricing.
+      </h2>
+      <p class="mt-4 text-white/60 text-[16px] max-w-lg mx-auto">
+        Write for free, forever. Upgrade when your hive outgrows the nest.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-5 lg:gap-6">
+      <!-- Free -->
+      <div class="paper-stack bg-card rounded-2xl p-7 flex flex-col">
+        <div class="mb-6">
+          <h3 class="font-display font-bold text-[20px]">Solo</h3>
+          <div class="mt-3 flex items-baseline gap-1">
+            <span class="font-display font-bold text-[40px] tracking-tight tnum">$0</span>
+            <span class="text-white/45 text-[14px]">/mo</span>
+          </div>
+          <p class="mt-3 text-[13px] text-white/55 leading-relaxed">Everything you need to write, draft, and publish your first book.</p>
+        </div>
+        <ul class="space-y-2.5 text-[13px] text-white/70 flex-1">
+          <li class="flex items-start gap-2.5">
+            <svg viewBox="0 0 24 24" class="w-4 h-4 text-brand shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            Unlimited chapters & scenes
+          </li>
+          <li class="flex items-start gap-2.5">
+            <svg viewBox="0 0 24 24" class="w-4 h-4 text-brand shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            1 active manuscript
+          </li>
+          <li class="flex items-start gap-2.5">
+            <svg viewBox="0 0 24 24" class="w-4 h-4 text-brand shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            Publish to Discover
+          </li>
+          <li class="flex items-start gap-2.5">
+            <svg viewBox="0 0 24 24" class="w-4 h-4 text-brand shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            Export EPUB & PDF
+          </li>
+        </ul>
+        <a href="#" class="btn-secondary rounded-full px-5 py-3 text-[14px] text-center mt-7 block">Get started</a>
+      </div>
+
+      <!-- Pro — featured -->
+      <div class="relative paper-stack bg-card rounded-2xl p-7 flex flex-col border-brand/40" style="border-color: rgba(255,195,0,0.4);">
+        <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand text-black text-[11px] font-bold font-display px-3 py-0.5 rounded-full">Most popular</div>
+        <div class="mb-6">
+          <h3 class="font-display font-bold text-[20px]">Pro</h3>
+          <div class="mt-3 flex items-baseline gap-1">
+            <span class="font-display font-bold text-[40px] tracking-tight tnum">$12</span>
+            <span class="text-white/45 text-[14px]">/mo</span>
+          </div>
+          <p class="mt-3 text-[13px] text-white/55 leading-relaxed">For serious writers who want unlimited manuscripts and collaboration.</p>
+        </div>
+        <ul class="space-y-2.5 text-[13px] text-white/70 flex-1">
+          <li class="flex items-start gap-2.5">
+            <svg viewBox="0 0 24 24" class="w-4 h-4 text-brand shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            Everything in Solo
+          </li>
+          <li class="flex items-start gap-2.5">
+            <svg viewBox="0 0 24 24" class="w-4 h-4 text-brand shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            Unlimited manuscripts
+          </li>
+          <li class="flex items-start gap-2.5">
+            <svg viewBox="0 0 24 24" class="w-4 h-4 text-brand shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            Hive collab — up to 5 writers
+          </li>
+          <li class="flex items-start gap-2.5">
+            <svg viewBox="0 0 24 24" class="w-4 h-4 text-brand shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            Version history & snapshots
+          </li>
+          <li class="flex items-start gap-2.5">
+            <svg viewBox="0 0 24 24" class="w-4 h-4 text-brand shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            Export DOCX + custom CSS
+          </li>
+          <li class="flex items-start gap-2.5">
+            <svg viewBox="0 0 24 24" class="w-4 h-4 text-brand shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            Priority support
+          </li>
+        </ul>
+        <a href="#" class="btn-primary rounded-full px-5 py-3 text-[14px] text-center mt-7 block">Start free trial</a>
+      </div>
+
+      <!-- Studio -->
+      <div class="paper-stack bg-card rounded-2xl p-7 flex flex-col">
+        <div class="mb-6">
+          <h3 class="font-display font-bold text-[20px]">Studio</h3>
+          <div class="mt-3 flex items-baseline gap-1">
+            <span class="font-display font-bold text-[40px] tracking-tight tnum">$29</span>
+            <span class="text-white/45 text-[14px]">/mo</span>
+          </div>
+          <p class="mt-3 text-[13px] text-white/55 leading-relaxed">For writing teams, publishers, and book clubs that need the full toolset.</p>
+        </div>
+        <ul class="space-y-2.5 text-[13px] text-white/70 flex-1">
+          <li class="flex items-start gap-2.5">
+            <svg viewBox="0 0 24 24" class="w-4 h-4 text-brand shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            Everything in Pro
+          </li>
+          <li class="flex items-start gap-2.5">
+            <svg viewBox="0 0 24 24" class="w-4 h-4 text-brand shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            Unlimited collaborators
+          </li>
+          <li class="flex items-start gap-2.5">
+            <svg viewBox="0 0 24 24" class="w-4 h-4 text-brand shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            Submissions & approvals
+          </li>
+          <li class="flex items-start gap-2.5">
+            <svg viewBox="0 0 24 24" class="w-4 h-4 text-brand shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            Admin analytics dashboard
+          </li>
+          <li class="flex items-start gap-2.5">
+            <svg viewBox="0 0 24 24" class="w-4 h-4 text-brand shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            Custom branding on Discover
+          </li>
+        </ul>
+        <a href="#" class="btn-secondary rounded-full px-5 py-3 text-[14px] text-center mt-7 block">Contact us</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── BIG CTA ───────── -->
+<section class="border-t border-line/70 bg-gradient-to-b from-[#171717] to-bg">
+  <div class="max-w-4xl mx-auto px-6 lg:px-8 py-20 text-center relative">
+    <div class="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-brand/50 to-transparent"></div>
+    <h2 class="font-display font-bold text-[36px] lg:text-[48px] leading-tight tracking-tight">
+      Your hive is waiting.
+    </h2>
+    <p class="mt-4 text-white/65 text-[16px] max-w-lg mx-auto">
+      A blank page and a small audience of readers who actually care. That's the whole pitch.
+    </p>
+    <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
+      <a href="#" class="btn-primary rounded-full px-7 py-3.5 text-[15px] inline-flex items-center gap-2">
+        Start writing free
+        <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+      </a>
+      <a href="#" class="btn-secondary rounded-full px-5 py-3.5 text-[15px]">Read the changelog</a>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── FOOTER ───────── -->
+<footer class="border-t border-line/70 bg-[#121212]">
+  <div class="max-w-7xl mx-auto px-6 lg:px-8 py-14">
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
+      <div class="col-span-2">
+        <a href="#" class="flex items-center gap-2.5 mb-4">
+          <span class="relative inline-flex items-center justify-center w-9 h-9 rounded-xl bg-brand/15 border border-brand/30">
+            <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="#FFC300" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2 L20 6.5 L20 15.5 L12 20 L4 15.5 L4 6.5 Z"/>
+              <path d="M12 9 L16 11 L16 14.5 L12 16.5 L8 14.5 L8 11 Z" fill="#FFC300" fill-opacity="0.6" stroke="none"/>
+            </svg>
+          </span>
+          <span class="font-display font-bold text-[17px]">Beehive Studio</span>
+        </a>
+        <p class="text-[13px] text-white/55 leading-relaxed max-w-sm">
+          A late-night indie bookshop for writing. Built with care, one chapter at a time.
+        </p>
+        <div class="mt-5 flex items-center gap-3">
+          <a href="#" class="w-9 h-9 rounded-xl border border-line flex items-center justify-center text-white/60 hover:text-brand hover:border-brand/40 transition-colors" aria-label="X / Twitter">
+            <svg viewBox="0 0 24 24" class="w-4 h-4" fill="currentColor"><path d="M18.244 2H21l-6.52 7.45L22 22h-6.812l-4.74-6.198L4.86 22H2.1l6.978-7.974L2 2h6.99l4.288 5.665L18.244 2Zm-2.39 18.25h1.885L7.27 3.66H5.247l10.607 16.59Z"/></svg>
+          </a>
+          <a href="#" class="w-9 h-9 rounded-xl border border-line flex items-center justify-center text-white/60 hover:text-brand hover:border-brand/40 transition-colors" aria-label="GitHub">
+            <svg viewBox="0 0 24 24" class="w-4 h-4" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.55 0-.27-.01-1-.02-1.96-3.2.7-3.87-1.54-3.87-1.54-.52-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.71 1.26 3.37.96.1-.75.4-1.27.73-1.56-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.47.11-3.07 0 0 .97-.31 3.18 1.18a11.06 11.06 0 0 1 5.79 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.6.24 2.78.12 3.07.74.81 1.18 1.84 1.18 3.1 0 4.43-2.69 5.41-5.26 5.69.41.36.78 1.06.78 2.14 0 1.55-.01 2.8-.01 3.18 0 .31.21.66.8.55C20.21 21.39 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5Z"/></svg>
+          </a>
+          <a href="#" class="w-9 h-9 rounded-xl border border-line flex items-center justify-center text-white/60 hover:text-brand hover:border-brand/40 transition-colors" aria-label="RSS">
+            <svg viewBox="0 0 24 24" class="w-4 h-4" fill="currentColor"><path d="M4 4v3c8.28 0 15 6.72 15 15h3C22 12.05 13.95 4 4 4Zm0 6v3c4.97 0 9 4.03 9 9h3c0-6.63-5.37-12-12-12Zm2 8a2 2 0 1 0 .001 4.001A2 2 0 0 0 6 18Z"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <div>
+        <div class="text-[11px] uppercase tracking-wider text-white/40 font-semibold mb-3 font-display">Product</div>
+        <ul class="space-y-2 text-[13.5px]">
+          <li><a href="#studio" class="nav-link">Studio</a></li>
+          <li><a href="#hive" class="nav-link">Hive</a></li>
+          <li><a href="#discover" class="nav-link">Discover</a></li>
+          <li><a href="#" class="nav-link">Sparks</a></li>
+          <li><a href="#" class="nav-link">Changelog</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="text-[11px] uppercase tracking-wider text-white/40 font-semibold mb-3 font-display">Community</div>
+        <ul class="space-y-2 text-[13.5px]">
+          <li><a href="#" class="nav-link">Reading lists</a></li>
+          <li><a href="#" class="nav-link">Book clubs</a></li>
+          <li><a href="#" class="nav-link">Writers we love</a></li>
+          <li><a href="#" class="nav-link">Newsletter</a></li>
+          <li><a href="#" class="nav-link">Discord</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="text-[11px] uppercase tracking-wider text-white/40 font-semibold mb-3 font-display">Company</div>
+        <ul class="space-y-2 text-[13.5px]">
+          <li><a href="#" class="nav-link">About</a></li>
+          <li><a href="#premium" class="nav-link">Premium</a></li>
+          <li><a href="#" class="nav-link">Privacy</a></li>
+          <li><a href="#" class="nav-link">Terms</a></li>
+          <li><a href="#" class="nav-link">DMCA</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="hr-soft pt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-[12px] text-white/40">
+      <div>© 2026 Beehive Studio · Made with care in Bristol, UK</div>
+      <div class="flex items-center gap-4">
+        <span>v2.0 · open beta</span>
+        <span class="flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span>
+          All systems honey
+        </span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

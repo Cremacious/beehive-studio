@@ -16,6 +16,11 @@ export function getHiveLimitForTier(isPremium: boolean): number {
   return isPremium ? Infinity : FREE_HIVE_LIMIT
 }
 
+/** Returns the max number of members a hive can have for the given tier. */
+export function getHiveMemberLimitForTier(isPremium: boolean): number {
+  return isPremium ? Infinity : FREE_HIVE_MEMBER_LIMIT
+}
+
 /**
  * Queries whether the given user has an active premium subscription.
  * Returns false if the userBilling row doesn't exist yet (new users).

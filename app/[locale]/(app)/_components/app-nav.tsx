@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { NotificationsBell } from './notifications-bell'
 
 interface AppNavProps {
   locale: string
@@ -82,16 +83,7 @@ export function AppNav({ locale, user }: AppNavProps) {
 
         {/* Right: bell + avatar */}
         <div className="flex items-center gap-1.5">
-          <button
-            className="w-10 h-10 rounded-xl inline-flex items-center justify-center text-white/55 hover:text-white hover:bg-white/[0.06] transition-colors relative"
-            aria-label="Notifications"
-          >
-            <svg viewBox="0 0 24 24" className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
-              <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
-            </svg>
-            <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-brand border-2 border-[#141414]" />
-          </button>
+          <NotificationsBell />
 
           <button
             className="w-8 h-8 rounded-full bg-brand/20 border border-brand/30 flex items-center justify-center text-[12px] font-bold text-brand mainFont ml-1"

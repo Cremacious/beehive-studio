@@ -7,6 +7,8 @@ import { books, chapters } from './books'
 export const notificationTypeEnum = pgEnum('notification_type', [
   'NEW_FOLLOWER', 'NEW_LIKE', 'NEW_COMMENT', 'NEW_CHAPTER',
   'HIVE_INVITE', 'HIVE_SUBMISSION', 'HIVE_SUGGESTION', 'SPARK_WIN',
+  'HIVE_JOIN_REQUEST', 'HIVE_JOIN_APPROVED', 'HIVE_MEMBER_JOINED',
+  'CHAPTER_EDITED', 'HIVE_COMMENT', 'TASK_ASSIGNED', 'TASK_COMPLETED',
 ])
 
 export const follows = pgTable('follows', {
@@ -79,4 +81,8 @@ export const bookCommentsRelations = relations(bookComments, ({ one, many }) => 
   user: one(users, { fields: [bookComments.userId], references: [users.id] }),
   parent: one(bookComments, { fields: [bookComments.parentId], references: [bookComments.id], relationName: 'parent' }),
   replies: many(bookComments, { relationName: 'parent' }),
+}))
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  actor: one(users, { fields: [notifications.actorId], references: [users.id] }),
 }))

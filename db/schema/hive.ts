@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, pgEnum, index } from 'drizzle-orm/pg-core'
+import { pgTable, text, timestamp, pgEnum, index, boolean, integer } from 'drizzle-orm/pg-core'
 import { createId } from '@paralleldrive/cuid2'
 import { relations } from 'drizzle-orm'
 import { users } from './auth'
@@ -34,7 +34,8 @@ export const hiveMembers = pgTable('hive_members', {
 export const hiveInvites = pgTable('hive_invites', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
   hiveId: text('hive_id').notNull().references(() => hives.id, { onDelete: 'cascade' }),
-  inviteeId: text('invitee_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  inviteeId: text('invitee_id').references(() => users.id, { onDelete: 'cascade' }),
+  token: text('token').unique(),
   role: hiveMemberRoleEnum('role').default('CONTRIBUTOR').notNull(),
   status: hiveInviteStatusEnum('status').default('PENDING').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -74,6 +75,51 @@ export const hiveComments = pgTable('hive_comments', {
   resolved: timestamp('resolved'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (t) => [index('hive_comments_chapter_id_idx').on(t.chapterId)])
+
+export const hiveOutlines = pgTable('hive_outlines', {
+  id: text('id').primaryKey().$defaultFn(() => createId()),
+  hiveId: text('hive_id').notNull().unique().references(() => hives.id, { onDelete: 'cascade' }),
+  content: text('content'),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+export const hiveWikiPages = pgTable('hive_wiki_pages', {
+  id: text('id').primaryKey().$defaultFn(() => createId()),
+  hiveId: text('hive_id').notNull().references(() => hives.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  content: text('content'),
+  createdBy: text('created_by').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  updatedBy: text('updated_by').references(() => users.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (t) => [index('hive_wiki_pages_hive_id_idx').on(t.hiveId)])
+
+export const hiveTasks = pgTable('hive_tasks', {
+  id: text('id').primaryKey().$defaultFn(() => createId()),
+  hiveId: text('hive_id').notNull().references(() => hives.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  description: text('description'),
+  assigneeId: text('assignee_id').references(() => users.id, { onDelete: 'set null' }),
+  creatorId: text('creator_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  status: text('status').notNull().default('OPEN'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (t) => [index('hive_tasks_hive_id_idx').on(t.hiveId)])
+
+export const hiveDiscussionPosts = pgTable('hive_discussion_posts', {
+  id: text('id').primaryKey().$defaultFn(() => createId()),
+  hiveId: text('hive_id').notNull().references(() => hives.id, { onDelete: 'cascade' }),
+  authorId: text('author_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  content: text('content').notNull(),
+  parentId: text('parent_id'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (t) => [index('hive_discussion_posts_hive_id_idx').on(t.hiveId)])
+
+export const hiveChapterLocks = pgTable('hive_chapter_locks', {
+  chapterId: text('chapter_id').notNull().primaryKey().references(() => chapters.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  lockedAt: timestamp('locked_at').defaultNow().notNull(),
+})
 
 export const hivesRelations = relations(hives, ({ one, many }) => ({
   owner: one(users, { fields: [hives.ownerId], references: [users.id] }),

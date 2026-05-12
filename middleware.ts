@@ -64,17 +64,6 @@ export async function middleware(request: NextRequest) {
       const signInUrl = new URL(`/${defaultLocale}/sign-in`, request.url)
       return NextResponse.redirect(signInUrl)
     }
-
-    const strippedPath = pathname.replace(localePattern, '/')
-    const isOnboardingPath = strippedPath === '/onboarding'
-
-    if (!session.user.onboardingComplete && !isOnboardingPath) {
-      return NextResponse.redirect(new URL(`/${defaultLocale}/onboarding`, request.url))
-    }
-
-    if (session.user.onboardingComplete && isOnboardingPath) {
-      return NextResponse.redirect(new URL(`/${defaultLocale}/studio`, request.url))
-    }
   } catch {
     const signInUrl = new URL(`/${defaultLocale}/sign-in`, request.url)
     return NextResponse.redirect(signInUrl)

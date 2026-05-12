@@ -11,7 +11,7 @@ export const createBookSchema = z.object({
   subgenre: z.string().max(100).optional(),
   tags: z.array(z.string().max(50)).max(10).optional(),
   targetAudience: z.string().max(50).optional(),
-  contentWarnings: z.array(z.string().max(100)).optional(),
+  contentWarnings: z.array(z.string().max(100)).max(20).optional(),
   compTitles: z.array(z.string().max(200)).max(5).optional(),
   language: z.string().max(50).optional(),
   // Step 3

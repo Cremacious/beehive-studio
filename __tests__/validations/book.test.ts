@@ -73,6 +73,14 @@ describe('createBookSchema', () => {
     })
     expect(result.success).toBe(false)
   })
+
+  it('rejects seriesNumber above 9999', () => {
+    const result = createBookSchema.safeParse({
+      title: 'My Novel',
+      seriesNumber: 10000,
+    })
+    expect(result.success).toBe(false)
+  })
 })
 
 describe('updateBookSchema', () => {

@@ -122,27 +122,31 @@ export async function createBinderItemAction(input: {
 
   const binderId = createId()
 
-  await db.insert(binderItems).values({
-    id: binderId,
-    bookId: parsed.data.bookId,
-    parentId: parsed.data.parentId ?? null,
-    type: parsed.data.type,
-    title: parsed.data.title,
-    order: parsed.data.order,
+  const result = await db.transaction(async (tx) => {
+    await tx.insert(binderItems).values({
+      id: binderId,
+      bookId: parsed.data.bookId,
+      parentId: parsed.data.parentId ?? null,
+      type: parsed.data.type,
+      title: parsed.data.title,
+      order: parsed.data.order,
+    })
+
+    let chapterId: string | null = null
+
+    if (parsed.data.type === 'chapter') {
+      chapterId = createId()
+      await tx.insert(chapters).values({
+        id: chapterId,
+        bookId: parsed.data.bookId,
+        binderItemId: binderId,
+      })
+    }
+
+    return { id: binderId, chapterId }
   })
 
-  let chapterId: string | null = null
-
-  if (parsed.data.type === 'chapter') {
-    chapterId = createId()
-    await db.insert(chapters).values({
-      id: chapterId,
-      bookId: parsed.data.bookId,
-      binderItemId: binderId,
-    })
-  }
-
-  return { success: true, data: { id: binderId, chapterId } }
+  return { success: true, data: result }
 }
 
 /**
@@ -161,23 +165,31 @@ export async function updateBinderItemAction(
 
   await assertBinderOwner(id, userId)
 
-  const updates: Record<string, unknown> = { updatedAt: new Date() }
+  const updates: Record<string, unknown> = {}
   if (parsed.data.title !== undefined) updates.title = parsed.data.title
   if (parsed.data.content !== undefined) updates.content = parsed.data.content
 
-  await db.update(binderItems).set(updates).where(eq(binderItems.id, id))
+  if (Object.keys(updates).length === 0) {
+    return { success: true, data: undefined }
+  }
+
+  await db.update(binderItems).set({ ...updates, updatedAt: new Date() }).where(eq(binderItems.id, id))
 
   return { success: true, data: undefined }
 }
 
 /**
- * Deletes a binder item. If type is 'chapter', the associated chapter row
- * is cascade-deleted via the FK. Research items are deleted directly.
+ * Deletes a binder item and, if it is a chapter, its associated chapter document.
+ * The chapters.binderItemId FK uses onDelete: 'set null', so chapter rows must
+ * be deleted explicitly to avoid orphaned documents.
  */
 export async function deleteBinderItemAction(id: string): Promise<ActionResult> {
   const userId = await requireAuth()
   await assertBinderOwner(id, userId)
 
+  // If this is a chapter binder item, delete the associated chapter row first.
+  // The FK (chapters.binderItemId) uses onDelete: 'set null', not cascade.
+  await db.delete(chapters).where(eq(chapters.binderItemId, id))
   await db.delete(binderItems).where(eq(binderItems.id, id))
 
   return { success: true, data: undefined }

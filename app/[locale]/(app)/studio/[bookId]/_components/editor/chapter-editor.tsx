@@ -17,6 +17,7 @@ import { SprintTimer } from './sprint-timer'
 import { AmbientSounds } from './ambient-sounds'
 import { WritingAnalysis, extractPlainText } from './writing-analysis'
 import { updateBinderItemAction } from '@/lib/actions/binder.actions'
+import { FindReplace } from './find-replace'
 
 const CHAPTER_TYPES = new Set(['chapter', 'front_matter', 'back_matter'])
 
@@ -26,6 +27,7 @@ export function ChapterEditor() {
 
   const [analysisOpen, setAnalysisOpen] = useState(false)
   const [soundsOpen, setSoundsOpen] = useState(false)
+  const [findOpen, setFindOpen] = useState(false)
   const [editorText, setEditorText] = useState('')
 
   const researchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -71,6 +73,18 @@ export function ChapterEditor() {
     },
     [activeItemId],
   )
+
+  // Cmd/Ctrl+F keyboard shortcut to open/close the find panel
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'f' && editor) {
+        e.preventDefault()
+        setFindOpen(f => !f)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [editor])
 
   // When chapter data arrives after the async fetch, populate the editor.
   // useEditor initializes with null because activeChapter is always null on first render.
@@ -128,8 +142,11 @@ export function ChapterEditor() {
           analysisOpen={analysisOpen}
           onToggleSounds={() => setSoundsOpen(s => !s)}
           soundsOpen={soundsOpen}
+          onToggleFind={() => setFindOpen(f => !f)}
+          findOpen={findOpen}
         />
       )}
+      {findOpen && editor && <FindReplace editor={editor} onClose={() => setFindOpen(false)} />}
       <div className="flex flex-1 overflow-hidden">
         <div
           className="flex-1 overflow-y-auto"

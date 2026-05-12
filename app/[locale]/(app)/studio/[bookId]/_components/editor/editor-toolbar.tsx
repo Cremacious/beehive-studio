@@ -14,20 +14,24 @@ type Props = {
   analysisOpen: boolean
   onToggleSounds: () => void
   soundsOpen: boolean
+  onToggleFind: () => void
+  findOpen: boolean
 }
 
 type ToolbarButtonProps = {
   onClick: () => void
   disabled?: boolean
   isActive?: boolean
+  title?: string
   children: React.ReactNode
 }
 
-function ToolbarButton({ onClick, disabled, isActive, children }: ToolbarButtonProps) {
+function ToolbarButton({ onClick, disabled, isActive, title, children }: ToolbarButtonProps) {
   return (
     <button
       onClick={onClick}
       disabled={disabled}
+      title={title}
       className={cn(
         'text-xs px-2 py-1 rounded transition-colors',
         'text-foreground/60 hover:text-foreground hover:bg-surface-elevated',
@@ -43,7 +47,7 @@ function Separator() {
   return <span className="w-px h-4 bg-border mx-1" />
 }
 
-export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggleSounds, soundsOpen }: Props) {
+export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggleSounds, soundsOpen, onToggleFind, findOpen }: Props) {
   const { saveStatus, wordCount, focusMode, toggleFocusMode, typewriterMode, toggleTypewriterMode } = useBookEditor()
 
   const [fontSize, setFontSizeState] = useState(() => {
@@ -168,6 +172,13 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
         disabled={!editor.can().redo()}
       >
         ↻
+      </ToolbarButton>
+
+      <Separator />
+
+      {/* Find & Replace */}
+      <ToolbarButton onClick={onToggleFind} isActive={findOpen} title="Find & replace (⌘F)">
+        🔍
       </ToolbarButton>
 
       <Separator />

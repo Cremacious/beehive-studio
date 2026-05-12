@@ -28,7 +28,7 @@ function brandedEmail(heading: string, body: string, ctaLabel: string, ctaUrl: s
 }
 
 export async function sendVerificationEmail(email: string, url: string) {
-  await resend.emails.send({
+  const { error } = await resend.emails.send({
     from: FROM,
     to: email,
     subject: 'Verify your Beehive Studio email',
@@ -39,10 +39,11 @@ export async function sendVerificationEmail(email: string, url: string) {
       url,
     ),
   })
+  if (error) throw new Error(`Failed to send email: ${error.message}`)
 }
 
 export async function sendPasswordResetEmail(email: string, url: string) {
-  await resend.emails.send({
+  const { error } = await resend.emails.send({
     from: FROM,
     to: email,
     subject: 'Reset your Beehive Studio password',
@@ -53,6 +54,7 @@ export async function sendPasswordResetEmail(email: string, url: string) {
       url,
     ),
   })
+  if (error) throw new Error(`Failed to send email: ${error.message}`)
 }
 
 // APP_URL available for future use (e.g. constructing links server-side)

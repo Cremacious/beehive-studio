@@ -4,6 +4,10 @@ import { db } from '@/db'
 import * as schema from '@/db/schema'
 import { sendVerificationEmail, sendPasswordResetEmail } from './email'
 
+if (!process.env.BETTER_AUTH_SECRET) {
+  throw new Error('BETTER_AUTH_SECRET environment variable is required')
+}
+
 const appleConfigured =
   !!process.env.APPLE_CLIENT_ID &&
   !!process.env.APPLE_TEAM_ID &&
@@ -20,7 +24,7 @@ export const auth = betterAuth({
       verification: schema.verifications,
     },
   }),
-  baseURL: process.env.BETTER_AUTH_URL,
+  baseURL: process.env.BETTER_AUTH_URL ?? 'http://localhost:3000',
   secret: process.env.BETTER_AUTH_SECRET,
   trustedOrigins: [process.env.BETTER_AUTH_URL ?? 'http://localhost:3000'],
   session: {
@@ -42,11 +46,12 @@ export const auth = betterAuth({
     callbackURL: '/sign-in',
   },
   socialProviders: {
-    google: {
-      clientId: process.env.GOOGLE_AUTH_CLIENT_ID ?? '',
-      clientSecret: process.env.GOOGLE_AUTH_CLIENT_SECRET ?? '',
-      enabled: !!process.env.GOOGLE_AUTH_CLIENT_ID,
-    },
+    ...(process.env.GOOGLE_AUTH_CLIENT_ID && {
+      google: {
+        clientId: process.env.GOOGLE_AUTH_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_AUTH_CLIENT_SECRET!,
+      },
+    }),
     ...(appleConfigured && {
       apple: {
         clientId: process.env.APPLE_CLIENT_ID!,

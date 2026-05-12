@@ -1,0 +1,30 @@
+{
+  "app": {
+    "name": "Beehive Studio",
+    "tagline": "Craft your story. Grow your hive."
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "signUp": "Sign up",
+    "signOut": "Sign out",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot password?",
+    "resetPassword": "Reset password",
+    "continueWithGoogle": "Continue with Google",
+    "continueWithApple": "Continue with Apple",
+    "appleComingSoon": "Apple Sign In coming soon"
+  },
+  "onboarding": {
+    "step1Title": "Choose your username",
+    "step1Subtitle": "This is how other writers will find you.",
+    "step2Title": "Tell us about yourself",
+    "step2Subtitle": "Optional — you can always add this later.",
+    "step3Title": "Add a profile photo",
+    "step3Subtitle": "Optional.",
+    "continue": "Continue",
+    "skip": "Skip",
+    "finish": "Finish setup",
+    "skipForNow": "Skip for now"
+  }
+}

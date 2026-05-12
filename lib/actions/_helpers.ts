@@ -15,6 +15,7 @@ export async function assertBookOwner(bookId: string, userId: string): Promise<v
 export async function assertHiveMember(hiveId: string, userId: string) {
   const member = await db.query.hiveMembers.findFirst({
     where: and(eq(hiveMembers.hiveId, hiveId), eq(hiveMembers.userId, userId)),
+    columns: { id: true, hiveId: true, userId: true, role: true },
   })
   if (!member) throw new Error('Not a member of this hive')
   return member
@@ -43,6 +44,7 @@ export async function assertHiveAdmin(hiveId: string, userId: string) {
       eq(hiveMembers.userId, userId),
       eq(hiveMembers.role, 'EDITOR'),
     ),
+    columns: { id: true },
   })
   if (!member) throw new Error('Admin access required')
 }

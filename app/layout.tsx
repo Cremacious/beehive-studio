@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono, Comfortaa } from 'next/font/google'
+import { Geist, Geist_Mono, Comfortaa, Fraunces } from 'next/font/google'
 import './globals.css'
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
@@ -8,6 +8,13 @@ const comfortaa = Comfortaa({
   variable: '--font-comfortaa',
   subsets: ['latin'],
   weight: ['300', '400', '500', '600', '700'],
+  display: 'swap',
+})
+const fraunces = Fraunces({
+  variable: '--font-fraunces',
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  style: ['normal', 'italic'],
   display: 'swap',
 })
 
@@ -19,7 +26,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} ${comfortaa.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} ${comfortaa.variable} ${fraunces.variable} antialiased`}>
         {children}
       </body>
     </html>

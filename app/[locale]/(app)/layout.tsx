@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth'
 import { db } from '@/db'
 import { userProfiles } from '@/db/schema'
 import { eq } from 'drizzle-orm'
+import { AppNav } from './_components/app-nav'
 
 export default async function AppLayout({
   children,
@@ -25,9 +26,9 @@ export default async function AppLayout({
   if (!profile?.onboardingComplete) redirect(`/${locale}/onboarding`)
 
   return (
-    <div className="min-h-screen bg-[#141414]">
-      {/* AppShell nav — injected when Claude Design UI is ready */}
-      <main>{children}</main>
+    <div className="min-h-screen bg-[#141414] flex flex-col">
+      <AppNav locale={locale} user={session.user} />
+      <main className="flex-1 flex flex-col">{children}</main>
     </div>
   )
 }

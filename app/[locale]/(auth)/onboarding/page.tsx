@@ -1,7 +1,8 @@
-export default function OnboardingPage() {
-  return (
-    <div className="flex items-center justify-center min-h-screen">
-      <p className="text-white/50">Onboarding — UI coming soon</p>
-    </div>
-  )
+import { OnboardingFlow } from './_components/onboarding-flow'
+
+export const metadata = { title: 'Get started — Beehive Studio' }
+
+export default async function OnboardingPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params
+  return <OnboardingFlow locale={locale} />
 }

@@ -1,6 +1,14 @@
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+let _resend: Resend | null = null
+function getResend(): Resend {
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error('RESEND_API_KEY is not set — email sending is unavailable in this environment')
+  }
+  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY)
+  return _resend
+}
+
 const FROM = 'Beehive Studio <noreply@beehive-studio.app>'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
@@ -28,7 +36,7 @@ function brandedEmail(heading: string, body: string, ctaLabel: string, ctaUrl: s
 }
 
 export async function sendVerificationEmail(email: string, url: string) {
-  const { error } = await resend.emails.send({
+  const { error } = await getResend().emails.send({
     from: FROM,
     to: email,
     subject: 'Verify your Beehive Studio email',
@@ -43,7 +51,7 @@ export async function sendVerificationEmail(email: string, url: string) {
 }
 
 export async function sendPasswordResetEmail(email: string, url: string) {
-  const { error } = await resend.emails.send({
+  const { error } = await getResend().emails.send({
     from: FROM,
     to: email,
     subject: 'Reset your Beehive Studio password',

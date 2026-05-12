@@ -2,7 +2,7 @@
 
 import { db } from '@/db'
 import {
-  books, bookPublishingMetadata, binderItems, chapters, bookTemplates,
+  books, binderItems, chapters, bookTemplates,
 } from '@/db/schema'
 import { eq, and, count } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
@@ -78,88 +78,91 @@ export async function createBookAction(input: {
 
   const bookId = createId()
 
-  await db.insert(books).values({
-    id: bookId,
-    userId,
-    title: parsed.data.title,
-    genre: parsed.data.genre ?? null,
-  })
-
-  if (parsed.data.templateId) {
-    // Apply template structure
-    const template = await db.query.bookTemplates.findFirst({
-      where: eq(bookTemplates.id, parsed.data.templateId),
+  await db.transaction(async (tx) => {
+    await tx.insert(books).values({
+      id: bookId,
+      userId,
+      title: parsed.data.title,
+      genre: parsed.data.genre ?? null,
     })
 
-    if (template?.structure) {
-      const structure = template.structure as {
-        parts?: Array<{ title: string; chapterCount: number }>
-        researchFolders?: string[]
-      }
+    if (parsed.data.templateId) {
+      // Apply template structure
+      const [template] = await tx
+        .select()
+        .from(bookTemplates)
+        .where(eq(bookTemplates.id, parsed.data.templateId))
 
-      let globalOrder = 0
+      if (template?.structure) {
+        const structure = template.structure as {
+          parts?: Array<{ title: string; chapterCount: number }>
+          researchFolders?: string[]
+        }
 
-      // Create parts and their chapters
-      for (const part of structure.parts ?? []) {
-        const partId = createId()
-        await db.insert(binderItems).values({
-          id: partId,
-          bookId,
-          type: 'part',
-          title: part.title,
-          order: globalOrder++,
-        })
+        let globalOrder = 0
 
-        for (let i = 0; i < (part.chapterCount ?? 1); i++) {
-          const chapterBinderId = createId()
-          const chapterId = createId()
-
-          await db.insert(binderItems).values({
-            id: chapterBinderId,
+        // Create parts and their chapters
+        for (const part of structure.parts ?? []) {
+          const partId = createId()
+          await tx.insert(binderItems).values({
+            id: partId,
             bookId,
-            parentId: partId,
-            type: 'chapter',
-            title: `Chapter ${i + 1}`,
-            order: i,
+            type: 'part',
+            title: part.title,
+            order: globalOrder++,
           })
 
-          await db.insert(chapters).values({
-            id: chapterId,
+          for (let i = 0; i < (part.chapterCount ?? 1); i++) {
+            const chapterBinderId = createId()
+            const chapterId = createId()
+
+            await tx.insert(binderItems).values({
+              id: chapterBinderId,
+              bookId,
+              parentId: partId,
+              type: 'chapter',
+              title: `Chapter ${i + 1}`,
+              order: i,
+            })
+
+            await tx.insert(chapters).values({
+              id: chapterId,
+              bookId,
+              binderItemId: chapterBinderId,
+            })
+          }
+        }
+
+        // Create research folders
+        for (const folderName of structure.researchFolders ?? []) {
+          await tx.insert(binderItems).values({
             bookId,
-            binderItemId: chapterBinderId,
+            type: 'research_folder',
+            title: folderName,
+            order: globalOrder++,
           })
         }
       }
+    } else {
+      // Default: one chapter
+      const chapterBinderId = createId()
+      const chapterId = createId()
 
-      // Create research folders
-      for (const folderName of structure.researchFolders ?? []) {
-        await db.insert(binderItems).values({
-          bookId,
-          type: 'research_folder',
-          title: folderName,
-          order: globalOrder++,
-        })
-      }
+      await tx.insert(binderItems).values({
+        id: chapterBinderId,
+        bookId,
+        type: 'chapter',
+        title: 'Chapter 1',
+        order: 0,
+      })
+
+      await tx.insert(chapters).values({
+        id: chapterId,
+        bookId,
+        binderItemId: chapterBinderId,
+      })
     }
-  } else {
-    // Default: one chapter
-    const chapterBinderId = createId()
-    const chapterId = createId()
-
-    await db.insert(binderItems).values({
-      id: chapterBinderId,
-      bookId,
-      type: 'chapter',
-      title: 'Chapter 1',
-      order: 0,
-    })
-
-    await db.insert(chapters).values({
-      id: chapterId,
-      bookId,
-      binderItemId: chapterBinderId,
-    })
-  }
+  })
 
   return { success: true, data: { bookId } }
 }
@@ -246,10 +249,7 @@ export async function updateBookAction(
 ): Promise<ActionResult> {
   const userId = await requireAuth()
 
-  // Separate coverUrl before schema validation (not in updateBookSchema)
-  const { coverUrl, ...schemaInput } = input
-
-  const parsed = updateBookSchema.safeParse(schemaInput)
+  const parsed = updateBookSchema.safeParse(input)
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0].message }
   }
@@ -262,7 +262,7 @@ export async function updateBookAction(
   if (parsed.data.synopsis !== undefined) updates.synopsis = parsed.data.synopsis
   if (parsed.data.visibility !== undefined) updates.visibility = parsed.data.visibility
   if (parsed.data.status !== undefined) updates.status = parsed.data.status
-  if (coverUrl !== undefined) updates.coverUrl = coverUrl
+  if (parsed.data.coverUrl !== undefined) updates.coverUrl = parsed.data.coverUrl
 
   if (Object.keys(updates).length === 0) return { success: true, data: undefined }
 

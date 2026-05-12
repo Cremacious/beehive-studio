@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, pgEnum, index, boolean, integer } from 'drizzle-orm/pg-core'
+import { pgTable, text, timestamp, pgEnum, index, AnyPgColumn } from 'drizzle-orm/pg-core'
 import { createId } from '@paralleldrive/cuid2'
 import { relations } from 'drizzle-orm'
 import { users } from './auth'
@@ -10,6 +10,7 @@ export const hiveMemberRoleEnum = pgEnum('hive_member_role', ['OWNER', 'CONTRIBU
 export const hiveInviteStatusEnum = pgEnum('hive_invite_status', ['PENDING', 'ACCEPTED', 'DECLINED'])
 export const hiveSubmissionStatusEnum = pgEnum('hive_submission_status', ['PENDING', 'APPROVED', 'REJECTED'])
 export const hiveSuggestionStatusEnum = pgEnum('hive_suggestion_status', ['PENDING', 'ACCEPTED', 'REJECTED'])
+export const hiveTaskStatusEnum = pgEnum('hive_task_status', ['OPEN', 'IN_PROGRESS', 'DONE'])
 
 export const hives = pgTable('hives', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
@@ -80,6 +81,7 @@ export const hiveOutlines = pgTable('hive_outlines', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
   hiveId: text('hive_id').notNull().unique().references(() => hives.id, { onDelete: 'cascade' }),
   content: text('content'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
 
@@ -101,7 +103,7 @@ export const hiveTasks = pgTable('hive_tasks', {
   description: text('description'),
   assigneeId: text('assignee_id').references(() => users.id, { onDelete: 'set null' }),
   creatorId: text('creator_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  status: text('status').notNull().default('OPEN'),
+  status: hiveTaskStatusEnum('status').notNull().default('OPEN'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (t) => [index('hive_tasks_hive_id_idx').on(t.hiveId)])
@@ -111,7 +113,7 @@ export const hiveDiscussionPosts = pgTable('hive_discussion_posts', {
   hiveId: text('hive_id').notNull().references(() => hives.id, { onDelete: 'cascade' }),
   authorId: text('author_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   content: text('content').notNull(),
-  parentId: text('parent_id'),
+  parentId: text('parent_id').references((): AnyPgColumn => hiveDiscussionPosts.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (t) => [index('hive_discussion_posts_hive_id_idx').on(t.hiveId)])
 
@@ -154,4 +156,31 @@ export const hiveCommentsRelations = relations(hiveComments, ({ one }) => ({
   hive: one(hives, { fields: [hiveComments.hiveId], references: [hives.id] }),
   chapter: one(chapters, { fields: [hiveComments.chapterId], references: [chapters.id] }),
   author: one(users, { fields: [hiveComments.authorId], references: [users.id] }),
+}))
+
+export const hiveOutlinesRelations = relations(hiveOutlines, ({ one }) => ({
+  hive: one(hives, { fields: [hiveOutlines.hiveId], references: [hives.id] }),
+}))
+
+export const hiveWikiPagesRelations = relations(hiveWikiPages, ({ one }) => ({
+  hive: one(hives, { fields: [hiveWikiPages.hiveId], references: [hives.id] }),
+  creator: one(users, { fields: [hiveWikiPages.createdBy], references: [users.id] }),
+}))
+
+export const hiveTasksRelations = relations(hiveTasks, ({ one }) => ({
+  hive: one(hives, { fields: [hiveTasks.hiveId], references: [hives.id] }),
+  assignee: one(users, { fields: [hiveTasks.assigneeId], references: [users.id], relationName: 'task_assignee' }),
+  creator: one(users, { fields: [hiveTasks.creatorId], references: [users.id], relationName: 'task_creator' }),
+}))
+
+export const hiveDiscussionPostsRelations = relations(hiveDiscussionPosts, ({ one, many }) => ({
+  hive: one(hives, { fields: [hiveDiscussionPosts.hiveId], references: [hives.id] }),
+  author: one(users, { fields: [hiveDiscussionPosts.authorId], references: [users.id] }),
+  parent: one(hiveDiscussionPosts, { fields: [hiveDiscussionPosts.parentId], references: [hiveDiscussionPosts.id], relationName: 'post_parent' }),
+  replies: many(hiveDiscussionPosts, { relationName: 'post_parent' }),
+}))
+
+export const hiveChapterLocksRelations = relations(hiveChapterLocks, ({ one }) => ({
+  chapter: one(chapters, { fields: [hiveChapterLocks.chapterId], references: [chapters.id] }),
+  user: one(users, { fields: [hiveChapterLocks.userId], references: [users.id] }),
 }))

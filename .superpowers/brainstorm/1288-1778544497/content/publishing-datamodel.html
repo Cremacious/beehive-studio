@@ -1,0 +1,147 @@
+<h2>Design Section 4 — Publishing Prep & Data Model</h2>
+<p class="subtitle">The publishing tools and the core schema that supports the whole app — including the publisher foundation for later.</p>
+
+<div class="mockup" style="margin-bottom:16px;">
+  <div class="mockup-header">Publishing Prep — Inspector Panel (Premium)</div>
+  <div class="mockup-body" style="font-family:monospace;font-size:10px;padding:12px;background:#141414;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+
+      <!-- Export presets -->
+      <div style="background:#1c1c1c;border:1px solid #2a2a2a;border-radius:8px;padding:10px;">
+        <div style="color:#FFC300;font-size:9px;font-weight:bold;letter-spacing:1px;margin-bottom:8px;">📤 EXPORT PRESETS</div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <div style="background:#252525;border:1px solid #2a2a2a;border-radius:4px;padding:5px 8px;color:#ccc;font-size:9px;">📄 Standard Manuscript Format <span style="color:#555;font-size:8px;">— agents & trad. publishers</span></div>
+          <div style="background:#252525;border:1px solid #FFC300;border-radius:4px;padding:5px 8px;color:#fff;font-size:9px;">📱 EPUB <span style="color:#555;font-size:8px;">— e-readers, KDP</span></div>
+          <div style="background:#252525;border:1px solid #2a2a2a;border-radius:4px;padding:5px 8px;color:#ccc;font-size:9px;">📕 KDP Print-Ready PDF <span style="color:#555;font-size:8px;">— Amazon print</span></div>
+          <div style="background:#252525;border:1px solid #2a2a2a;border-radius:4px;padding:5px 8px;color:#ccc;font-size:9px;">📗 IngramSpark PDF <span style="color:#555;font-size:8px;">— indie print dist.</span></div>
+          <div style="background:#252525;border:1px solid #2a2a2a;border-radius:4px;padding:5px 8px;color:#ccc;font-size:9px;">📝 DOCX <span style="color:#555;font-size:8px;">— editors & beta readers</span></div>
+        </div>
+      </div>
+
+      <!-- Publisher metadata -->
+      <div style="background:#1c1c1c;border:1px solid #2a2a2a;border-radius:8px;padding:10px;">
+        <div style="color:#FFC300;font-size:9px;font-weight:bold;letter-spacing:1px;margin-bottom:8px;">📋 PUBLISHING METADATA</div>
+        <div style="display:flex;flex-direction:column;gap:5px;">
+          <div>
+            <div style="color:#555;font-size:8px;margin-bottom:1px;">TITLE</div>
+            <div style="background:#252525;border:1px solid #2a2a2a;border-radius:3px;padding:3px 6px;color:#fff;font-size:9px;">The Iron Throne</div>
+          </div>
+          <div>
+            <div style="color:#555;font-size:8px;margin-bottom:1px;">SUBTITLE (optional)</div>
+            <div style="background:#252525;border:1px solid #2a2a2a;border-radius:3px;padding:3px 6px;color:#555;font-size:9px;font-style:italic;">Add subtitle...</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
+            <div>
+              <div style="color:#555;font-size:8px;margin-bottom:1px;">TRIM SIZE</div>
+              <div style="background:#252525;border:1px solid #2a2a2a;border-radius:3px;padding:3px 6px;color:#ccc;font-size:9px;">6×9"</div>
+            </div>
+            <div>
+              <div style="color:#555;font-size:8px;margin-bottom:1px;">ISBN</div>
+              <div style="background:#252525;border:1px solid #2a2a2a;border-radius:3px;padding:3px 6px;color:#555;font-size:9px;font-style:italic;">Add ISBN...</div>
+            </div>
+          </div>
+          <div>
+            <div style="color:#555;font-size:8px;margin-bottom:1px;">AUTHOR BIO (for back matter)</div>
+            <div style="background:#252525;border:1px solid #2a2a2a;border-radius:3px;padding:3px 6px;color:#555;font-size:9px;font-style:italic;">Add bio...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Handoff package -->
+    <div style="background:#1c1c1c;border:1px solid #2a2a2a;border-radius:8px;padding:10px;margin-top:10px;">
+      <div style="color:#FFC300;font-size:9px;font-weight:bold;letter-spacing:1px;margin-bottom:6px;">📦 PUBLISHER HANDOFF PACKAGE</div>
+      <div style="color:#888;font-size:9px;margin-bottom:8px;">Bundle everything a publisher needs into one download.</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <div style="background:#252525;border:1px solid #2a2a2a;border-radius:4px;padding:3px 8px;color:#ccc;font-size:8px;">☑ Manuscript (DOCX)</div>
+        <div style="background:#252525;border:1px solid #2a2a2a;border-radius:4px;padding:3px 8px;color:#ccc;font-size:8px;">☑ Synopsis (1-page)</div>
+        <div style="background:#252525;border:1px solid #2a2a2a;border-radius:4px;padding:3px 8px;color:#ccc;font-size:8px;">☑ Author bio</div>
+        <div style="background:#252525;border:1px solid #2a2a2a;border-radius:4px;padding:3px 8px;color:#ccc;font-size:8px;">☑ Book metadata JSON</div>
+        <div style="background:#FFC300;color:#000;border-radius:4px;padding:3px 8px;font-size:8px;font-weight:bold;cursor:pointer;">⬇ Download ZIP</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">Core Data Model — Key Tables</div>
+  <div class="mockup-body" style="font-family:monospace;font-size:9px;padding:12px;background:#141414;">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+
+      <div style="background:#1c1c1c;border:1px solid #2a2a2a;border-radius:6px;padding:8px;">
+        <div style="color:#FFC300;font-size:9px;font-weight:bold;margin-bottom:6px;">users</div>
+        <div style="color:#888;font-size:8px;">id, email, username</div>
+        <div style="color:#888;font-size:8px;">premium, role</div>
+        <div style="color:#888;font-size:8px;">stripe_* fields</div>
+        <div style="color:#555;font-size:8px;margin-top:4px;font-style:italic;">+ user_profiles table<br/>(bio, avatar, display name)<br/>+ user_billing table<br/>(stripe fields separated)</div>
+      </div>
+
+      <div style="background:#1c1c1c;border:1px solid #2a2a2a;border-radius:6px;padding:8px;">
+        <div style="color:#FFC300;font-size:9px;font-weight:bold;margin-bottom:6px;">books</div>
+        <div style="color:#888;font-size:8px;">id, user_id, title</div>
+        <div style="color:#888;font-size:8px;">genre, visibility</div>
+        <div style="color:#888;font-size:8px;">status (draft/published)</div>
+        <div style="color:#888;font-size:8px;">cover_url</div>
+        <div style="color:#555;font-size:8px;margin-top:4px;font-style:italic;">+ book_publishing_metadata<br/>(ISBN, trim, subtitle, bio)<br/>← publisher foundation</div>
+      </div>
+
+      <div style="background:#1c1c1c;border:1px solid #2a2a2a;border-radius:6px;padding:8px;">
+        <div style="color:#FFC300;font-size:9px;font-weight:bold;margin-bottom:6px;">chapters</div>
+        <div style="color:#888;font-size:8px;">id, book_id, title</div>
+        <div style="color:#888;font-size:8px;">content (TipTap JSON)</div>
+        <div style="color:#888;font-size:8px;">order, status</div>
+        <div style="color:#888;font-size:8px;">word_count, notes</div>
+        <div style="color:#555;font-size:8px;margin-top:4px;font-style:italic;">+ chapter_snapshots<br/>(version history)</div>
+      </div>
+
+      <div style="background:#1c1c1c;border:1px solid #2a2a2a;border-radius:6px;padding:8px;">
+        <div style="color:#FFC300;font-size:9px;font-weight:bold;margin-bottom:6px;">binder_items</div>
+        <div style="color:#888;font-size:8px;">id, book_id</div>
+        <div style="color:#888;font-size:8px;">type (chapter/collection/</div>
+        <div style="color:#888;font-size:8px;">research/note)</div>
+        <div style="color:#888;font-size:8px;">parent_id, order</div>
+        <div style="color:#555;font-size:8px;margin-top:4px;font-style:italic;">Unified tree — chapters,<br/>parts, research folders<br/>all in one table</div>
+      </div>
+
+      <div style="background:#1c1c1c;border:1px solid #2a2a2a;border-radius:6px;padding:8px;">
+        <div style="color:#FFC300;font-size:9px;font-weight:bold;margin-bottom:6px;">hives</div>
+        <div style="color:#888;font-size:8px;">id, book_id, owner_id</div>
+        <div style="color:#888;font-size:8px;">name, visibility</div>
+        <div style="color:#888;font-size:8px;">status (active/complete)</div>
+        <div style="color:#555;font-size:8px;margin-top:4px;font-style:italic;">+ hive_members (roles)<br/>+ hive_submissions<br/>+ hive_suggestions</div>
+      </div>
+
+      <div style="background:#1c1c1c;border:1px solid #2a2a2a;border-radius:6px;padding:8px;">
+        <div style="color:#FFC300;font-size:9px;font-weight:bold;margin-bottom:6px;">export_presets</div>
+        <div style="color:#888;font-size:8px;">id, name, format</div>
+        <div style="color:#888;font-size:8px;">config (JSON)</div>
+        <div style="color:#888;font-size:8px;">is_system_preset</div>
+        <div style="color:#555;font-size:8px;margin-top:4px;font-style:italic;">Presets as data rows —<br/>KDP, IngramSpark, SMF<br/>publisher-extensible ✓</div>
+      </div>
+
+    </div>
+
+    <div style="margin-top:8px;background:#1c1c1c;border:1px solid #2a2a2a;border-radius:6px;padding:8px;">
+      <div style="color:#888;font-size:8px;letter-spacing:1px;margin-bottom:4px;">SOCIAL TABLES (community layer)</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <div style="color:#ccc;font-size:8px;">follows (user→user)</div>
+        <div style="color:#555;">·</div>
+        <div style="color:#ccc;font-size:8px;">book_likes</div>
+        <div style="color:#555;">·</div>
+        <div style="color:#ccc;font-size:8px;">book_comments</div>
+        <div style="color:#555;">·</div>
+        <div style="color:#ccc;font-size:8px;">chapter_comments</div>
+        <div style="color:#555;">·</div>
+        <div style="color:#ccc;font-size:8px;">reading_progress</div>
+        <div style="color:#555;">·</div>
+        <div style="color:#ccc;font-size:8px;">bookmarks</div>
+        <div style="color:#555;">·</div>
+        <div style="color:#ccc;font-size:8px;">notifications</div>
+        <div style="color:#555;">·</div>
+        <div style="color:#ccc;font-size:8px;">sparks + spark_entries</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:16px;">Does the publishing prep and data model look right? Any concerns before I write the full spec?</p>

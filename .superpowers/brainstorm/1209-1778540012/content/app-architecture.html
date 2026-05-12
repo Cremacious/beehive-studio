@@ -1,0 +1,81 @@
+<h2>App Architecture — Overall Structure</h2>
+<p class="subtitle">Two equally important surfaces: <strong>Studio</strong> (write) and <strong>Community</strong> (publish & discover). Does this structure feel right?</p>
+
+<div class="mockup">
+  <div class="mockup-header">Beehive Studio — Top-Level Structure</div>
+  <div class="mockup-body" style="font-family:monospace;font-size:11px;padding:16px;">
+
+    <!-- Nav bar -->
+    <div style="display:flex;align-items:center;gap:0;background:#1c1c1c;border:1px solid #2a2a2a;border-radius:10px;padding:10px 16px;margin-bottom:20px;">
+      <div style="color:#FFC300;font-weight:bold;font-size:13px;margin-right:auto;">🐝 Beehive Studio</div>
+      <div style="display:flex;gap:4px;">
+        <div style="background:#FFC300;color:#000;padding:4px 12px;border-radius:6px;font-size:10px;font-weight:bold;">Studio</div>
+        <div style="color:#888;padding:4px 12px;border-radius:6px;font-size:10px;">Community</div>
+        <div style="color:#888;padding:4px 12px;border-radius:6px;font-size:10px;">Discover</div>
+        <div style="color:#888;padding:4px 12px;border-radius:6px;font-size:10px;">🔔</div>
+        <div style="background:#252525;border:1px solid #2a2a2a;color:#fff;padding:4px 12px;border-radius:6px;font-size:10px;">@username</div>
+      </div>
+    </div>
+
+    <!-- Three columns -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;">
+
+      <!-- Studio -->
+      <div style="background:#1c1c1c;border:1px solid #FFC300;border-radius:10px;padding:12px;">
+        <div style="color:#FFC300;font-weight:bold;font-size:11px;margin-bottom:8px;letter-spacing:1px;">✍️ STUDIO</div>
+        <div style="color:#ccc;font-size:10px;margin-bottom:6px;">The writing workspace. Where authors spend most of their time.</div>
+        <div style="border-top:1px solid #2a2a2a;padding-top:8px;display:flex;flex-direction:column;gap:4px;">
+          <div style="color:#fff;font-size:10px;">📚 My Projects (books)</div>
+          <div style="color:#fff;font-size:10px;">✎ Writing workspace (3-panel)</div>
+          <div style="color:#fff;font-size:10px;">🐝 Hives (collaboration)</div>
+          <div style="color:#fff;font-size:10px;">📤 Publishing prep & export</div>
+          <div style="color:#fff;font-size:10px;">🎯 Goals & streaks</div>
+        </div>
+      </div>
+
+      <!-- Community -->
+      <div style="background:#1c1c1c;border:1px solid #2a2a2a;border-radius:10px;padding:12px;">
+        <div style="color:#fff;font-weight:bold;font-size:11px;margin-bottom:8px;letter-spacing:1px;">👥 COMMUNITY</div>
+        <div style="color:#ccc;font-size:10px;margin-bottom:6px;">Social layer. Follow authors, engage with stories, build an audience.</div>
+        <div style="border-top:1px solid #2a2a2a;padding-top:8px;display:flex;flex-direction:column;gap:4px;">
+          <div style="color:#fff;font-size:10px;">📰 Feed (authors you follow)</div>
+          <div style="color:#fff;font-size:10px;">📖 Reading shelf (what you read)</div>
+          <div style="color:#fff;font-size:10px;">👤 Author profiles</div>
+          <div style="color:#fff;font-size:10px;">💬 Comments & likes</div>
+          <div style="color:#fff;font-size:10px;">🏅 Sparks (writing contests)</div>
+        </div>
+      </div>
+
+      <!-- Discover -->
+      <div style="background:#1c1c1c;border:1px solid #2a2a2a;border-radius:10px;padding:12px;">
+        <div style="color:#fff;font-weight:bold;font-size:11px;margin-bottom:8px;letter-spacing:1px;">🔍 DISCOVER</div>
+        <div style="color:#ccc;font-size:10px;margin-bottom:6px;">Book discovery. Compete with RoyalRoad/Wattpad here.</div>
+        <div style="border-top:1px solid #2a2a2a;padding-top:8px;display:flex;flex-direction:column;gap:4px;">
+          <div style="color:#fff;font-size:10px;">🔥 Trending books</div>
+          <div style="color:#fff;font-size:10px;">🎭 Browse by genre</div>
+          <div style="color:#fff;font-size:10px;">⭐ Featured & editor's picks</div>
+          <div style="color:#fff;font-size:10px;">🆕 New releases</div>
+          <div style="color:#fff;font-size:10px;">📋 Reading lists</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Publishing flow -->
+    <div style="background:#1c1c1c;border:1px solid #2a2a2a;border-radius:10px;padding:12px;">
+      <div style="color:#888;font-size:10px;letter-spacing:1px;margin-bottom:8px;">THE PUBLISHING FLOW — how a book moves through the app</div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <div style="background:#252525;border:1px solid #2a2a2a;padding:6px 10px;border-radius:6px;color:#fff;font-size:10px;">✍️ Write in Studio</div>
+        <div style="color:#555;">→</div>
+        <div style="background:#252525;border:1px solid #2a2a2a;padding:6px 10px;border-radius:6px;color:#fff;font-size:10px;">🐝 Collaborate in Hive</div>
+        <div style="color:#555;">→</div>
+        <div style="background:#252525;border:1px solid #2a2a2a;padding:6px 10px;border-radius:6px;color:#fff;font-size:10px;">📤 Publish to Community</div>
+        <div style="color:#555;">→</div>
+        <div style="background:#FFC300;padding:6px 10px;border-radius:6px;color:#000;font-size:10px;font-weight:bold;">🔍 Discovered by Readers</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:16px;">Does this three-section split feel right? Anything missing, misplaced, or that should be renamed?</p>

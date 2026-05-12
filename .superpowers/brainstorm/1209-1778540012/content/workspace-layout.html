@@ -1,0 +1,112 @@
+<h2>Core Writing Workspace Layout</h2>
+<p class="subtitle">Beehive Studio v2 — the writing environment users spend 80% of their time in. Which structural approach fits the vision best?</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="scrivener" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#141414;padding:12px;font-family:monospace;font-size:11px;">
+      <div style="display:flex;height:220px;gap:0;border:1px solid #2a2a2a;border-radius:8px;overflow:hidden;">
+        <!-- Binder panel -->
+        <div style="width:160px;background:#1c1c1c;border-right:1px solid #2a2a2a;padding:8px;flex-shrink:0;">
+          <div style="color:#FFC300;font-size:10px;font-weight:bold;margin-bottom:8px;letter-spacing:1px;">BINDER</div>
+          <div style="color:#fff;font-size:10px;padding:3px 4px;border-radius:4px;background:#252525;margin-bottom:2px;">📁 Draft</div>
+          <div style="color:#fff/70;font-size:10px;padding:3px 4px 3px 16px;color:#ccc;margin-bottom:1px;">Chapter 1</div>
+          <div style="color:#fff/70;font-size:10px;padding:3px 4px 3px 16px;background:#FFC300;color:#000;border-radius:4px;margin-bottom:1px;">Chapter 2 ✎</div>
+          <div style="color:#fff/70;font-size:10px;padding:3px 4px 3px 16px;color:#ccc;margin-bottom:4px;">Chapter 3</div>
+          <div style="color:#fff;font-size:10px;padding:3px 4px;border-radius:4px;background:#252525;margin-bottom:2px;">📁 Research</div>
+          <div style="color:#fff;font-size:10px;padding:3px 4px;border-radius:4px;background:#252525;">📁 Characters</div>
+        </div>
+        <!-- Editor -->
+        <div style="flex:1;background:#141414;padding:12px;overflow:hidden;">
+          <div style="color:#fff;font-size:11px;font-weight:600;margin-bottom:8px;border-bottom:1px solid #2a2a2a;padding-bottom:6px;">Chapter 2 — The Storm</div>
+          <div style="color:#ccc;font-size:10px;line-height:1.6;">The rain had been falling for three days without pause. Elena stood at the window...</div>
+          <div style="color:#ccc;font-size:10px;line-height:1.6;margin-top:6px;opacity:0.5;">She pressed her palm against the cold glass and watched the droplets trace...</div>
+        </div>
+        <!-- Inspector panel -->
+        <div style="width:130px;background:#1c1c1c;border-left:1px solid #2a2a2a;padding:8px;flex-shrink:0;">
+          <div style="color:#FFC300;font-size:10px;font-weight:bold;margin-bottom:8px;letter-spacing:1px;">INSPECTOR</div>
+          <div style="color:#888;font-size:9px;margin-bottom:4px;">WORD COUNT</div>
+          <div style="color:#fff;font-size:11px;font-weight:bold;margin-bottom:8px;">2,847</div>
+          <div style="color:#888;font-size:9px;margin-bottom:4px;">STATUS</div>
+          <div style="background:#FFC300;color:#000;font-size:9px;padding:2px 6px;border-radius:4px;display:inline-block;margin-bottom:8px;">Draft</div>
+          <div style="color:#888;font-size:9px;margin-bottom:4px;">NOTES</div>
+          <div style="color:#666;font-size:9px;font-style:italic;">Add tension here...</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Scrivener-Style (Three-Panel)</h3>
+      <p>Binder (project tree) + Editor + Inspector. Full project hierarchy always visible. Familiar to serious writers. Most powerful for long-form books.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="notion" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#141414;padding:12px;font-family:monospace;font-size:11px;">
+      <div style="display:flex;height:220px;gap:0;border:1px solid #2a2a2a;border-radius:8px;overflow:hidden;">
+        <!-- Slim sidebar -->
+        <div style="width:200px;background:#1c1c1c;border-right:1px solid #2a2a2a;padding:10px;flex-shrink:0;">
+          <div style="color:#FFC300;font-weight:bold;font-size:11px;margin-bottom:10px;">🐝 My Novel</div>
+          <div style="color:#888;font-size:9px;letter-spacing:1px;margin-bottom:6px;">CHAPTERS</div>
+          <div style="color:#ccc;font-size:10px;padding:4px 8px;border-radius:4px;margin-bottom:1px;display:flex;align-items:center;gap:4px;"><span>📄</span> Prologue</div>
+          <div style="color:#fff;font-size:10px;padding:4px 8px;border-radius:4px;background:#FFC300;color:#000;margin-bottom:1px;display:flex;align-items:center;gap:4px;"><span>📄</span> Ch 1 · The Storm</div>
+          <div style="color:#ccc;font-size:10px;padding:4px 8px;border-radius:4px;margin-bottom:6px;display:flex;align-items:center;gap:4px;"><span>📄</span> Ch 2 · The Letter</div>
+          <div style="color:#888;font-size:9px;letter-spacing:1px;margin-bottom:6px;">TOOLS</div>
+          <div style="color:#ccc;font-size:10px;padding:4px 8px;border-radius:4px;margin-bottom:1px;">🗺 Outline</div>
+          <div style="color:#ccc;font-size:10px;padding:4px 8px;border-radius:4px;">👥 Characters</div>
+        </div>
+        <!-- Full-width editor -->
+        <div style="flex:1;background:#141414;padding:16px;overflow:hidden;">
+          <div style="color:#fff;font-size:13px;font-weight:700;margin-bottom:10px;">Chapter 1 — The Storm</div>
+          <div style="color:#fff/80;font-size:10px;line-height:1.7;color:#ddd;">The rain had been falling for three days without pause. Elena stood at the window, her breath fogging the glass.</div>
+          <div style="color:#ccc;font-size:10px;line-height:1.7;margin-top:8px;opacity:0.5;">She pressed her palm against the cold glass and watched the droplets trace long silver lines...</div>
+          <div style="position:absolute;bottom:16px;right:16px;color:#666;font-size:9px;">2,847 words</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Notion-Style (Sidebar + Full Editor)</h3>
+      <p>Clean collapsible sidebar for navigation + full-width distraction-free editor. More modern feel. Tools accessible from sidebar. Google Docs familiarity.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="hybrid" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#141414;padding:12px;font-family:monospace;font-size:11px;">
+      <div style="display:flex;height:220px;gap:0;border:1px solid #2a2a2a;border-radius:8px;overflow:hidden;">
+        <!-- Icon rail -->
+        <div style="width:44px;background:#1c1c1c;border-right:1px solid #2a2a2a;padding:8px 4px;flex-shrink:0;display:flex;flex-direction:column;gap:8px;align-items:center;">
+          <div style="color:#FFC300;font-size:14px;" title="Chapters">📄</div>
+          <div style="color:#555;font-size:14px;" title="Outline">🗺</div>
+          <div style="color:#555;font-size:14px;" title="Characters">👥</div>
+          <div style="color:#555;font-size:14px;" title="Notes">📝</div>
+          <div style="margin-top:auto;color:#555;font-size:14px;">⚙️</div>
+        </div>
+        <!-- Contextual panel -->
+        <div style="width:160px;background:#1c1c1c;border-right:1px solid #2a2a2a;padding:8px;flex-shrink:0;">
+          <div style="color:#FFC300;font-size:10px;font-weight:bold;margin-bottom:8px;">CHAPTERS</div>
+          <div style="color:#ccc;font-size:10px;padding:3px 6px;border-radius:4px;margin-bottom:2px;">Prologue</div>
+          <div style="color:#000;font-size:10px;padding:3px 6px;border-radius:4px;background:#FFC300;margin-bottom:2px;">The Storm ✎</div>
+          <div style="color:#ccc;font-size:10px;padding:3px 6px;border-radius:4px;margin-bottom:2px;">The Letter</div>
+          <div style="color:#ccc;font-size:10px;padding:3px 6px;border-radius:4px;margin-bottom:2px;">Betrayal</div>
+        </div>
+        <!-- Editor -->
+        <div style="flex:1;background:#141414;padding:14px;overflow:hidden;position:relative;">
+          <div style="color:#fff;font-size:12px;font-weight:700;margin-bottom:8px;">The Storm</div>
+          <div style="color:#ddd;font-size:10px;line-height:1.7;">The rain had been falling for three days without pause. Elena stood at the window...</div>
+          <div style="color:#ccc;font-size:10px;line-height:1.7;margin-top:6px;opacity:0.5;">She pressed her palm against the cold glass...</div>
+          <!-- Floating toolbar hint -->
+          <div style="position:absolute;top:14px;right:10px;display:flex;gap:4px;">
+            <div style="background:#252525;border:1px solid #2a2a2a;border-radius:4px;padding:2px 6px;color:#888;font-size:9px;">Focus</div>
+            <div style="background:#252525;border:1px solid #2a2a2a;border-radius:4px;padding:2px 6px;color:#888;font-size:9px;">Stats</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — VS Code-Style (Icon Rail + Contextual Panel)</h3>
+      <p>Narrow icon rail switches what the middle panel shows (chapters, outline, characters, notes). Editor always full. Most scalable as features grow.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px;">Click to select. You can pick one or tell me in the terminal what direction feels right — or if you want a hybrid of two.</p>

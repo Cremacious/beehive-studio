@@ -1,0 +1,30 @@
+<h2>Collaboration Model</h2>
+<p class="subtitle">Scrivener's biggest weakness is solo-only. How live should Beehive Studio's collaboration be?</p>
+
+<div class="options">
+
+  <div class="option" data-choice="realtime" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Real-time (Google Docs style)</h3>
+      <p>Multiple cursors, live typing, presence indicators. Requires a CRDT or OT sync layer (e.g. Liveblocks, Yjs). High engineering cost but maximum differentiation from Scrivener.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="async" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Async collaboration (evolve v1 Hives)</h3>
+      <p>Chapter ownership, submit-for-review, inline suggestions, comments. The existing Hive model but tightly integrated into the Studio workspace. Lower engineering cost, works well for co-authors with different schedules.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="hybrid" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Hybrid — async core + real-time sessions</h3>
+      <p>Async as the default (like Hives), plus optional live "writing sessions" where collaborators can see each other's presence. Best of both worlds, but scoped — real-time only during an active session, not always-on.</p>
+    </div>
+  </div>
+
+</div>

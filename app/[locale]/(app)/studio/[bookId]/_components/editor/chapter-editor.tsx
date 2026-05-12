@@ -18,6 +18,7 @@ import { AmbientSounds } from './ambient-sounds'
 import { WritingAnalysis, extractPlainText } from './writing-analysis'
 import { updateBinderItemAction } from '@/lib/actions/binder.actions'
 import { FindReplace } from './find-replace'
+import { CharacterProfile } from './character-profile'
 
 const CHAPTER_TYPES = new Set(['chapter', 'front_matter', 'back_matter'])
 
@@ -103,6 +104,9 @@ export function ChapterEditor() {
   }
 
   if (activeItem && !isChapterType) {
+    if (activeItem.type === 'character') {
+      return <CharacterProfile item={activeItem} />
+    }
     return (
       <main className="flex-1 flex flex-col overflow-hidden">
         <div className="px-6 py-4 border-b border-border">

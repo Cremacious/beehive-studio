@@ -2,7 +2,7 @@
 
 import { db } from '@/db'
 import { bookLikes, bookmarks, follows, bookComments, userProfiles } from '@/db/schema'
-import { and, eq, isNull } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { z } from 'zod'
 import type { ActionResult } from './book.actions'

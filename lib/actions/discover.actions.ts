@@ -68,33 +68,33 @@ export async function getDiscoverFeedAction(
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
 
   const likeCountSq = db
-    .select({ bookId: bookLikes.bookId, total: count().as('total') })
+    .select({ bookId: bookLikes.bookId, likeTotal: count().as('like_total') })
     .from(bookLikes)
     .groupBy(bookLikes.bookId)
     .as('like_counts')
 
   const bookmarkCountSq = db
-    .select({ bookId: bookmarks.bookId, total: count().as('total') })
+    .select({ bookId: bookmarks.bookId, bookmarkTotal: count().as('bookmark_total') })
     .from(bookmarks)
     .groupBy(bookmarks.bookId)
     .as('bookmark_counts')
 
   const recentLikesSq = db
-    .select({ bookId: bookLikes.bookId, total: count().as('total') })
+    .select({ bookId: bookLikes.bookId, recentLikeTotal: count().as('recent_like_total') })
     .from(bookLikes)
     .where(sql`${bookLikes.createdAt} > ${sevenDaysAgo}`)
     .groupBy(bookLikes.bookId)
     .as('recent_likes')
 
   const recentBookmarksSq = db
-    .select({ bookId: bookmarks.bookId, total: count().as('total') })
+    .select({ bookId: bookmarks.bookId, recentBookmarkTotal: count().as('recent_bookmark_total') })
     .from(bookmarks)
     .where(sql`${bookmarks.createdAt} > ${sevenDaysAgo}`)
     .groupBy(bookmarks.bookId)
     .as('recent_bookmarks')
 
   const wordCountSq = db
-    .select({ bookId: chapters.bookId, total: sql<number>`SUM(${chapters.wordCount})`.as('total') })
+    .select({ bookId: chapters.bookId, wordTotal: sql<number>`SUM(${chapters.wordCount})`.as('word_total') })
     .from(chapters)
     .groupBy(chapters.bookId)
     .as('word_counts')
@@ -108,9 +108,9 @@ export async function getDiscoverFeedAction(
       synopsis: books.synopsis,
       tags: books.tags,
       updatedAt: books.updatedAt,
-      likeCount: sql<number>`COALESCE(${likeCountSq.total}, 0)`,
-      bookmarkCount: sql<number>`COALESCE(${bookmarkCountSq.total}, 0)`,
-      wordCount: sql<number>`COALESCE(${wordCountSq.total}, 0)`,
+      likeCount: sql<number>`COALESCE(${likeCountSq.likeTotal}, 0)`,
+      bookmarkCount: sql<number>`COALESCE(${bookmarkCountSq.bookmarkTotal}, 0)`,
+      wordCount: sql<number>`COALESCE(${wordCountSq.wordTotal}, 0)`,
       authorUsername: userProfiles.username,
       authorDisplayName: userProfiles.displayName,
     })
@@ -132,11 +132,11 @@ export async function getDiscoverFeedAction(
   const ordered =
     sort === 'trending'
       ? baseQuery.orderBy(
-          desc(sql`COALESCE(${recentLikesSq.total}, 0) + COALESCE(${recentBookmarksSq.total}, 0)`)
+          desc(sql`COALESCE(${recentLikesSq.recentLikeTotal}, 0) + COALESCE(${recentBookmarksSq.recentBookmarkTotal}, 0)`)
         )
       : sort === 'popular'
       ? baseQuery.orderBy(
-          desc(sql`COALESCE(${likeCountSq.total}, 0) + COALESCE(${bookmarkCountSq.total}, 0)`)
+          desc(sql`COALESCE(${likeCountSq.likeTotal}, 0) + COALESCE(${bookmarkCountSq.bookmarkTotal}, 0)`)
         )
       : baseQuery.orderBy(desc(books.updatedAt))
 

@@ -3,7 +3,7 @@
 import { db } from '@/db'
 import { books, binderItems, chapters, bookLikes, bookmarks, bookComments } from '@/db/schema'
 import { userProfiles } from '@/db/schema'
-import { eq, and, desc, sql, count } from 'drizzle-orm'
+import { eq, and, desc, sql, count, isNull } from 'drizzle-orm'
 
 export type DiscoverBook = {
   id: string
@@ -16,7 +16,7 @@ export type DiscoverBook = {
   likeCount: number
   bookmarkCount: number
   wordCount: number
-  authorUsername: string
+  authorUsername: string | null
   authorDisplayName: string | null
 }
 
@@ -29,7 +29,7 @@ export type PublicBook = {
   tags: string[] | null
   updatedAt: Date
   authorUserId: string
-  authorUsername: string
+  authorUsername: string | null
   authorDisplayName: string | null
   authorAvatarUrl: string | null
   likeCount: number
@@ -42,14 +42,14 @@ export type BookComment = {
   id: string
   content: string
   createdAt: Date
-  authorUsername: string
+  authorUsername: string | null
   authorDisplayName: string | null
   authorAvatarUrl: string | null
 }
 
 export type DiscoverWriter = {
   userId: string
-  username: string
+  username: string | null
   displayName: string | null
   avatarUrl: string | null
   bookCount: number
@@ -146,7 +146,7 @@ export async function getDiscoverFeedAction(
   return {
     success: true,
     data: {
-      books: rows.slice(0, PAGE_SIZE) as DiscoverBook[],
+      books: rows.slice(0, PAGE_SIZE),
       hasMore,
     },
   }
@@ -195,7 +195,7 @@ export async function getPublicBookAction(
     success: true,
     data: {
       ...row,
-      authorUsername: row.authorUsername ?? '',
+      authorUsername: row.authorUsername,
       likeCount: likeCount[0]?.total ?? 0,
       bookmarkCount: bookmarkCount[0]?.total ?? 0,
       wordCount: wordCountResult[0]?.total ?? 0,
@@ -223,7 +223,7 @@ export async function getBookCommentsAction(
     })
     .from(bookComments)
     .innerJoin(userProfiles, eq(bookComments.userId, userProfiles.userId))
-    .where(and(eq(bookComments.bookId, bookId), sql`${bookComments.parentId} IS NULL`))
+    .where(and(eq(bookComments.bookId, bookId), isNull(bookComments.parentId)))
     .orderBy(desc(bookComments.createdAt))
     .limit(COMMENTS_PAGE_SIZE + 1)
     .offset(offset)
@@ -232,7 +232,7 @@ export async function getBookCommentsAction(
 
   return {
     success: true,
-    data: { comments: rows.slice(0, COMMENTS_PAGE_SIZE) as BookComment[], hasMore },
+    data: { comments: rows.slice(0, COMMENTS_PAGE_SIZE), hasMore },
   }
 }
 
@@ -258,5 +258,5 @@ export async function getDiscoverWritersAction(): Promise<ActionResult<DiscoverW
     .orderBy(desc(sql`COUNT(${bookLikes.userId})`))
     .limit(3)
 
-  return { success: true, data: rows as DiscoverWriter[] }
+  return { success: true, data: rows }
 }

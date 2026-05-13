@@ -87,6 +87,14 @@ export const sparkVotes = pgTable('spark_votes', {
   primaryKey({ columns: [t.userId, t.entryId] }),
 ])
 
+export const sparkEntryComments = pgTable('spark_entry_comments', {
+  id: text('id').primaryKey().$defaultFn(() => createId()),
+  entryId: text('entry_id').notNull().references(() => sparkEntries.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  content: text('content').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (t) => [index('spark_entry_comments_entry_id_idx').on(t.entryId)])
+
 export const bookCommentsRelations = relations(bookComments, ({ one, many }) => ({
   book: one(books, { fields: [bookComments.bookId], references: [books.id] }),
   user: one(users, { fields: [bookComments.userId], references: [users.id] }),

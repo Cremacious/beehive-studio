@@ -5,6 +5,7 @@ import {
   sparks,
   sparkEntries,
   sparkVotes,
+  sparkEntryComments,
   notifications,
   userProfiles,
 } from '@/db/schema'
@@ -717,31 +718,109 @@ export async function setCreatorChoiceAction(
 }
 
 /**
- * Get comments on a spark entry.
- *
- * NOTE: There is no `sparkEntryComments` table in the current schema.
- * This action returns an empty list until a migration adds that table.
- * The add action below is similarly a no-op stub.
+ * Get paginated comments on a spark entry, joined with author profile info.
  */
 export async function getSparkEntryCommentsAction(
-  _entryId: string,
-  _page = 1
+  entryId: string,
+  page = 1
 ): Promise<ActionResult<{ comments: EntryComment[]; hasMore: boolean }>> {
-  // TODO: Migrate to add a sparkEntryComments table, then implement this.
-  return { success: true, data: { comments: [], hasMore: false } }
+  const offset = (page - 1) * PAGE_SIZE
+
+  const rows = await db
+    .select({
+      id: sparkEntryComments.id,
+      content: sparkEntryComments.content,
+      createdAt: sparkEntryComments.createdAt,
+      authorUsername: userProfiles.username,
+      authorDisplayName: userProfiles.displayName,
+      authorAvatarUrl: userProfiles.avatarUrl,
+    })
+    .from(sparkEntryComments)
+    .leftJoin(userProfiles, eq(userProfiles.userId, sparkEntryComments.userId))
+    .where(eq(sparkEntryComments.entryId, entryId))
+    .orderBy(asc(sparkEntryComments.createdAt))
+    .limit(PAGE_SIZE + 1)
+    .offset(offset)
+
+  const hasMore = rows.length > PAGE_SIZE
+  const pageRows = rows.slice(0, PAGE_SIZE)
+
+  const comments: EntryComment[] = pageRows.map((r) => ({
+    id: r.id,
+    content: r.content,
+    createdAt: r.createdAt,
+    authorUsername: r.authorUsername ?? null,
+    authorDisplayName: r.authorDisplayName ?? null,
+    authorAvatarUrl: r.authorAvatarUrl ?? null,
+  }))
+
+  return { success: true, data: { comments, hasMore } }
 }
 
 /**
- * Add a comment to a spark entry.
- *
- * NOTE: There is no `sparkEntryComments` table in the current schema.
- * This action is a stub until a migration adds that table.
+ * Add a comment to a spark entry. Fires a NEW_COMMENT notification to the
+ * entry author if the commenter is a different user.
  */
 export async function addSparkEntryCommentAction(
-  _entryId: string,
-  _content: string
+  entryId: string,
+  content: string
 ): Promise<ActionResult<EntryComment>> {
-  await requireAuth()
-  // TODO: Migrate to add a sparkEntryComments table, then implement this.
-  return { success: false, error: 'NOT_IMPLEMENTED' }
+  const userId = await requireAuth()
+
+  const parsed = addCommentSchema.safeParse({ content })
+  if (!parsed.success) return { success: false, error: 'INVALID_CONTENT' }
+
+  // Verify the entry exists
+  const [entry] = await db
+    .select({ userId: sparkEntries.userId })
+    .from(sparkEntries)
+    .where(eq(sparkEntries.id, entryId))
+    .limit(1)
+
+  if (!entry) return { success: false, error: 'NOT_FOUND' }
+
+  const [inserted] = await db
+    .insert(sparkEntryComments)
+    .values({
+      entryId,
+      userId,
+      content: parsed.data.content,
+    })
+    .returning({
+      id: sparkEntryComments.id,
+      content: sparkEntryComments.content,
+      createdAt: sparkEntryComments.createdAt,
+    })
+
+  // Notify the entry author if they are not the commenter
+  if (entry.userId !== userId) {
+    await db.insert(notifications).values({
+      userId: entry.userId,
+      type: 'NEW_COMMENT',
+      actorId: userId,
+      resourceType: 'spark_entry',
+      resourceId: entryId,
+    })
+  }
+
+  const [profile] = await db
+    .select({
+      username: userProfiles.username,
+      displayName: userProfiles.displayName,
+      avatarUrl: userProfiles.avatarUrl,
+    })
+    .from(userProfiles)
+    .where(eq(userProfiles.userId, userId))
+    .limit(1)
+
+  const comment: EntryComment = {
+    id: inserted.id,
+    content: inserted.content,
+    createdAt: inserted.createdAt,
+    authorUsername: profile?.username ?? null,
+    authorDisplayName: profile?.displayName ?? null,
+    authorAvatarUrl: profile?.avatarUrl ?? null,
+  }
+
+  return { success: true, data: comment }
 }

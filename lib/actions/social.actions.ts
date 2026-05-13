@@ -1,7 +1,7 @@
 'use server'
 
 import { db } from '@/db'
-import { bookLikes, bookmarks, follows, bookComments, userProfiles } from '@/db/schema'
+import { bookLikes, bookmarks, books, follows, bookComments, notifications, userProfiles } from '@/db/schema'
 import { and, eq } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { z } from 'zod'
@@ -25,6 +25,18 @@ export async function toggleBookLikeAction(bookId: string): Promise<ActionResult
   }
 
   await db.insert(bookLikes).values({ userId, bookId })
+
+  const [book] = await db.select({ userId: books.userId }).from(books).where(eq(books.id, bookId)).limit(1)
+  if (book && book.userId !== userId) {
+    await db.insert(notifications).values({
+      userId: book.userId,
+      type: 'NEW_LIKE',
+      actorId: userId,
+      resourceType: 'book',
+      resourceId: bookId,
+    })
+  }
+
   return { success: true, data: { liked: true } }
 }
 
@@ -67,6 +79,15 @@ export async function toggleFollowAction(targetUserId: string): Promise<ActionRe
   }
 
   await db.insert(follows).values({ followerId: userId, followeeId: targetUserId })
+
+  await db.insert(notifications).values({
+    userId: targetUserId,
+    type: 'NEW_FOLLOWER',
+    actorId: userId,
+    resourceType: 'user',
+    resourceId: userId,
+  })
+
   return { success: true, data: { following: true } }
 }
 
@@ -87,6 +108,17 @@ export async function addCommentAction(
     .insert(bookComments)
     .values({ bookId, userId, content: parsed.data.content })
     .returning()
+
+  const [book] = await db.select({ userId: books.userId }).from(books).where(eq(books.id, bookId)).limit(1)
+  if (book && book.userId !== userId) {
+    await db.insert(notifications).values({
+      userId: book.userId,
+      type: 'NEW_COMMENT',
+      actorId: userId,
+      resourceType: 'book',
+      resourceId: bookId,
+    })
+  }
 
   const [profile] = await db
     .select({

@@ -50,6 +50,10 @@ export function NotificationsBell() {
     TASK_COMPLETED: 'completed a task',
     HIVE_MEMBER_JOINED: 'joined your Hive',
     CHAPTER_EDITED: 'edited a chapter',
+    NEW_FOLLOWER: 'started following you',
+    NEW_LIKE: 'liked your book',
+    NEW_COMMENT: 'commented on your book',
+    SPARK_WIN: 'your Spark entry won!',
   }
 
   return (

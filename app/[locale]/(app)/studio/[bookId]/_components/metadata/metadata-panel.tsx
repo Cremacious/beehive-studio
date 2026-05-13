@@ -4,6 +4,11 @@ import { useState, useRef, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import { useBookEditor } from '../book-editor-provider'
 import { updateBinderItemAction } from '@/lib/actions/binder.actions'
+import {
+  getPublishingMetadataAction,
+  updatePublishingMetadataAction,
+  type PublishingMetadata,
+} from '@/lib/actions/publishing.actions'
 
 const CHAPTER_TYPES = new Set(['chapter', 'front_matter', 'back_matter'])
 
@@ -205,15 +210,118 @@ function ChapterMetadata() {
   )
 }
 
+function PublishingSection({ bookId }: { bookId: string }) {
+  const [expanded, setExpanded] = useState(false)
+  const [loaded, setLoaded] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [upgradePrompt, setUpgradePrompt] = useState(false)
+  const [fields, setFields] = useState<Partial<PublishingMetadata>>({})
+
+  async function handleExpand() {
+    setExpanded(e => !e)
+    if (!loaded) {
+      const result = await getPublishingMetadataAction(bookId)
+      if (result.success) setFields(result.data)
+      setLoaded(true)
+    }
+  }
+
+  async function handleBlur(field: keyof PublishingMetadata, value: string) {
+    setSaving(true)
+    setUpgradePrompt(false)
+    const result = await updatePublishingMetadataAction(bookId, { [field]: value || null })
+    setSaving(false)
+    if (!result.success && result.error?.startsWith('PREMIUM_REQUIRED')) {
+      setUpgradePrompt(true)
+    }
+  }
+
+  return (
+    <div className="border-t border-[#2a2a2a] mt-2">
+      <button
+        onClick={handleExpand}
+        className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-[#1a1a1a] transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-[#666]">
+            {expanded ? '▾' : '▸'} Publishing details
+          </span>
+          <span className="rounded-sm bg-[#1f1a00] px-1.5 py-0.5 text-[9px] font-semibold text-[#FFC300] border border-[#3a2e00]">
+            Premium
+          </span>
+        </div>
+        {saving && <span className="text-[9px] text-[#555]">Saving…</span>}
+      </button>
+
+      {expanded && (
+        <div className="px-4 pb-4 flex flex-col gap-3">
+          {upgradePrompt && (
+            <div className="rounded-md border border-[#3a2e00] bg-[#1a1200] px-3 py-2 text-[10px] text-[#FFC300]">
+              Publishing details require a premium account.
+            </div>
+          )}
+
+          {[
+            { field: 'subtitle' as const, label: 'Subtitle', type: 'text' },
+            { field: 'isbn' as const, label: 'ISBN', type: 'text' },
+            { field: 'publisherName' as const, label: 'Publisher name', type: 'text' },
+            { field: 'dedication' as const, label: 'Dedication', type: 'text' },
+            { field: 'edition' as const, label: 'Edition', type: 'text' },
+          ].map(({ field, label, type }) => (
+            <div key={field}>
+              <label className="block text-[10px] text-[#555] mb-1">{label}</label>
+              <input
+                type={type}
+                defaultValue={fields[field] ?? ''}
+                onBlur={e => handleBlur(field, e.target.value)}
+                className="w-full rounded border border-[#2a2a2a] bg-[#111] px-2 py-1.5 text-xs text-[#ccc] placeholder-[#444] focus:border-[#3a3a3a] focus:outline-none"
+                placeholder={`Enter ${label.toLowerCase()}…`}
+              />
+            </div>
+          ))}
+
+          <div>
+            <label className="block text-[10px] text-[#555] mb-1">Author bio</label>
+            <textarea
+              rows={3}
+              defaultValue={fields.authorBio ?? ''}
+              onBlur={e => handleBlur('authorBio', e.target.value)}
+              className="w-full rounded border border-[#2a2a2a] bg-[#111] px-2 py-1.5 text-xs text-[#ccc] placeholder-[#444] focus:border-[#3a3a3a] focus:outline-none resize-none"
+              placeholder="Enter author bio…"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[10px] text-[#555] mb-1">Trim size</label>
+            <select
+              defaultValue={fields.trimSize ?? ''}
+              onBlur={e => handleBlur('trimSize', e.target.value)}
+              className="w-full rounded border border-[#2a2a2a] bg-[#111] px-2 py-1.5 text-xs text-[#ccc] focus:border-[#3a3a3a] focus:outline-none"
+            >
+              <option value="">— Select —</option>
+              <option value="5x8">5 × 8</option>
+              <option value="5.5x8.5">5.5 × 8.5</option>
+              <option value="6x9">6 × 9</option>
+            </select>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function MetadataPanel() {
-  const { activeItem, activeItemId, focusMode, corkboardMode } = useBookEditor()
+  const { activeItem, activeItemId, focusMode, corkboardMode, bookId } = useBookEditor()
   const isChapterActive = !!activeItem && CHAPTER_TYPES.has(activeItem.type)
 
   if (focusMode || corkboardMode) return null
 
   return (
     <aside className="w-60 flex-shrink-0 flex flex-col bg-card border-l border-border overflow-hidden">
-      {isChapterActive ? <ChapterMetadata key={activeItemId} /> : <EmptyPlaceholder />}
+      <div className="flex-1 overflow-y-auto">
+        {isChapterActive ? <ChapterMetadata key={activeItemId} /> : <EmptyPlaceholder />}
+      </div>
+      <PublishingSection bookId={bookId} />
     </aside>
   )
 }

@@ -1,4 +1,4 @@
-import { tiptapToHtml } from './tiptap-to-html'
+import { tiptapToHtml, escapeHtml } from './tiptap-to-html'
 
 export type DocxStyle = 'manuscript' | 'basic'
 
@@ -24,7 +24,7 @@ function chaptersToHtml(chapters: ChapterInput[], css: string): string {
   const body = chapters
     .map(ch => {
       const content = tiptapToHtml(ch.content)
-      return `<h1>${ch.title}</h1>${content || '<p></p>'}`
+      return `<h1>${escapeHtml(ch.title)}</h1>${content || '<p></p>'}`
     })
     .join('\n')
   return `<!DOCTYPE html><html><head><style>${css}</style></head><body>${body}</body></html>`

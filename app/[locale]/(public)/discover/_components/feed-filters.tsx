@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { useCallback } from 'react'
 
 const GENRES = ['Fantasy', 'Sci-Fi', 'Romance', 'Thriller', 'Horror', 'Mystery', 'Literary', 'Historical']
@@ -19,6 +19,8 @@ type Props = {
 export function FeedFilters({ currentSort, currentGenre }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const pathname = usePathname()
+  const locale = pathname.split('/')[1]
 
   const setParam = useCallback(
     (key: string, value: string | null) => {
@@ -29,7 +31,7 @@ export function FeedFilters({ currentSort, currentGenre }: Props) {
         params.set(key, value)
       }
       params.delete('page')
-      router.push(`/discover?${params.toString()}`)
+      router.push(`/${locale}/discover?${params.toString()}`)
     },
     [router, searchParams]
   )

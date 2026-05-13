@@ -64,6 +64,9 @@ export const sparks = pgTable('sparks', {
   description: text('description'),
   rules: text('rules'),
   deadline: timestamp('deadline'),
+  wordLimit: integer('word_limit'),
+  creatorChoiceEntryId: text('creator_choice_entry_id').references((): AnyPgColumn => sparkEntries.id),
+  winnerEntryId: text('winner_entry_id').references((): AnyPgColumn => sparkEntries.id),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
@@ -71,10 +74,18 @@ export const sparkEntries = pgTable('spark_entries', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
   sparkId: text('spark_id').notNull().references(() => sparks.id, { onDelete: 'cascade' }),
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  chapterId: text('chapter_id').references(() => chapters.id, { onDelete: 'set null' }),
-  votes: integer('votes').default(0).notNull(),
+  content: text('content').notNull().default(''),
+  wordCount: integer('word_count').notNull().default(0),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (t) => [index('spark_entries_spark_id_idx').on(t.sparkId)])
+
+export const sparkVotes = pgTable('spark_votes', {
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  entryId: text('entry_id').notNull().references(() => sparkEntries.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (t) => [
+  primaryKey({ columns: [t.userId, t.entryId] }),
+])
 
 export const bookCommentsRelations = relations(bookComments, ({ one, many }) => ({
   book: one(books, { fields: [bookComments.bookId], references: [books.id] }),

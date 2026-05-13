@@ -7,6 +7,7 @@ import type { Editor } from '@tiptap/react'
 import '@tiptap/starter-kit'
 import { useBookEditor } from '../book-editor-provider'
 import type { CharacterCountStorage } from '@tiptap/extensions'
+import { ExportModal } from '../export-modal'
 
 type Props = {
   editor: Editor
@@ -49,6 +50,8 @@ function Separator() {
 
 export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggleSounds, soundsOpen, onToggleFind, findOpen }: Props) {
   const { saveStatus, wordCount, focusMode, toggleFocusMode, typewriterMode, toggleTypewriterMode } = useBookEditor()
+
+  const [showExport, setShowExport] = useState(false)
 
   const [fontSize, setFontSizeState] = useState(() => {
     if (typeof window === 'undefined') return 16
@@ -247,6 +250,15 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
         ) : null}
       </span>
 
+      {/* Export */}
+      <button
+        onClick={() => setShowExport(true)}
+        title="Export book"
+        className="flex items-center gap-1 rounded px-2 py-1 text-[10px] text-[#888] hover:bg-[#2a2a2a] hover:text-[#ccc] transition-colors"
+      >
+        ↓ Export
+      </button>
+
       {/* Font size control */}
       <select
         value={fontSize}
@@ -313,6 +325,8 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
       >
         {focusMode ? '⊠' : '⊡'}
       </button>
+
+      <ExportModal open={showExport} onClose={() => setShowExport(false)} />
     </div>
   )
 }

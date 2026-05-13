@@ -218,18 +218,29 @@ function PublishingSection({ bookId }: { bookId: string }) {
   const [fields, setFields] = useState<Partial<PublishingMetadata>>({})
 
   async function handleExpand() {
-    setExpanded(e => !e)
+    if (expanded) {
+      setExpanded(false)
+      return
+    }
     if (!loaded) {
+      // Fetch first, then expand — inputs mount with data already in fields
       const result = await getPublishingMetadataAction(bookId)
       if (result.success) setFields(result.data)
       setLoaded(true)
     }
+    setExpanded(true)
   }
+
+  // Fields that accept null (nullable in schema): isbn, subtitle, authorBio, dedication, publisherName
+  // Fields that are optional-only (no null): trimSize, edition
+  const NULLABLE_FIELDS = new Set<keyof PublishingMetadata>(['isbn', 'subtitle', 'authorBio', 'dedication', 'publisherName'])
 
   async function handleBlur(field: keyof PublishingMetadata, value: string) {
     setSaving(true)
     setUpgradePrompt(false)
-    const result = await updatePublishingMetadataAction(bookId, { [field]: value || null })
+    const trimmed = value.trim()
+    const coerced = NULLABLE_FIELDS.has(field) ? (trimmed || null) : (trimmed || undefined)
+    const result = await updatePublishingMetadataAction(bookId, { [field]: coerced })
     setSaving(false)
     if (!result.success && result.error?.startsWith('PREMIUM_REQUIRED')) {
       setUpgradePrompt(true)

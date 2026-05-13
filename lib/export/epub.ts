@@ -106,7 +106,7 @@ export async function generateEpub(
   chapters: EpubChapter[],
   bookTitle: string,
   authorName: string,
-  isbn: string | null = null,
+  isbn?: string | null,
 ): Promise<Buffer> {
   const uid = crypto.randomUUID()
   const zip = new JSZip()
@@ -123,9 +123,12 @@ export async function generateEpub(
 
   for (let i = 0; i < chapters.length; i++) {
     const ch = chapters[i]
-    let id = slugify(ch.title) || `chapter-${i + 1}`
-    // Ensure unique ids
-    if (usedIds.has(id)) id = `${id}-${i + 1}`
+    const baseId = slugify(ch.title) || `chapter-${i + 1}`
+    let id = baseId
+    let counter = 1
+    while (usedIds.has(id)) {
+      id = `${baseId}-${++counter}`
+    }
     usedIds.add(id)
     chapterMeta.push({ id, title: ch.title })
 
@@ -134,7 +137,7 @@ export async function generateEpub(
   }
 
   const chapterIds = chapterMeta.map(c => c.id)
-  zip.file('OEBPS/content.opf', contentOpf(uid, bookTitle, authorName, isbn, chapterIds))
+  zip.file('OEBPS/content.opf', contentOpf(uid, bookTitle, authorName, isbn ?? null, chapterIds))
   zip.file('OEBPS/nav.xhtml', navXhtml(chapterMeta))
   zip.file('OEBPS/styles.css', EPUB_CSS)
 

@@ -17,12 +17,13 @@ export async function markChapterReadAction(
 ): Promise<ActionResult<void>> {
   const userId = await requireAuth()
 
+  const now = new Date()
   await db
     .insert(readingProgress)
-    .values({ userId, bookId, chapterId, lastOpenedAt: new Date() })
+    .values({ userId, bookId, chapterId, lastOpenedAt: now })
     .onConflictDoUpdate({
       target: [readingProgress.userId, readingProgress.bookId],
-      set: { chapterId, lastOpenedAt: new Date() },
+      set: { chapterId, lastOpenedAt: now },
     })
 
   return { success: true, data: undefined }

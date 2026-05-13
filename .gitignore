@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# superpowers brainstorm sessions
+.superpowers/
+
+# scratch files
+push_err.txt
+push_out.txt

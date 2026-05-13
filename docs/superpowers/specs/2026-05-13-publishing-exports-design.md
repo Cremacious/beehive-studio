@@ -38,7 +38,7 @@ GET /api/export/[bookId]/pdf   → 501 Not Implemented
 
 All routes follow the same pattern:
 1. Authenticate caller via `requireAuth()`
-2. Verify book ownership (`assertBookOwner` logic inline or via helper)
+2. Verify book ownership (direct DB query — `assertBookOwner` is server-action-only; API routes check `books.userId === callerId` inline)
 3. Fetch all binder items for the book, ordered by `position`, with their chapters
 4. Generate file
 5. Return binary response with `Content-Disposition: attachment; filename="[title].[ext]"` and appropriate `Content-Type`

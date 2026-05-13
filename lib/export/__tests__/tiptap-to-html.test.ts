@@ -109,4 +109,41 @@ describe('tiptapToHtml', () => {
     }
     expect(tiptapToHtml(doc)).toBe('<p>&lt;b&gt;not bold&lt;/b&gt; &amp; &quot;quotes&quot;</p>')
   })
+
+  it('converts ordered list', () => {
+    const doc = {
+      type: 'doc',
+      content: [
+        {
+          type: 'orderedList',
+          content: [
+            { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'First' }] }] },
+            { type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Second' }] }] },
+          ],
+        },
+      ],
+    }
+    expect(tiptapToHtml(doc)).toBe('<ol><li><p>First</p></li><li><p>Second</p></li></ol>')
+  })
+
+  it('converts highlight mark', () => {
+    const doc = {
+      type: 'doc',
+      content: [{
+        type: 'paragraph',
+        content: [
+          { type: 'text', text: 'highlighted', marks: [{ type: 'highlight' }] },
+        ],
+      }],
+    }
+    expect(tiptapToHtml(doc)).toBe('<p><mark>highlighted</mark></p>')
+  })
+
+  it('renders empty paragraph as <p></p>', () => {
+    const doc = {
+      type: 'doc',
+      content: [{ type: 'paragraph' }],
+    }
+    expect(tiptapToHtml(doc)).toBe('<p></p>')
+  })
 })

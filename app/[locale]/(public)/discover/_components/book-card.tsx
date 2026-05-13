@@ -1,16 +1,16 @@
 import Link from 'next/link'
 import type { DiscoverBook } from '@/lib/actions/discover.actions'
 
-type Props = { book: DiscoverBook }
+type Props = { book: DiscoverBook; locale: string }
 
-export function BookCard({ book }: Props) {
+export function BookCard({ book, locale }: Props) {
   const wordCountFormatted =
     book.wordCount >= 1000
       ? `${Math.round(book.wordCount / 1000)}k words`
       : `${book.wordCount} words`
 
   return (
-    <Link href={`/discover/book/${book.id}`} className="block group">
+    <Link href={`/${locale}/discover/book/${book.id}`} className="block group">
       <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg overflow-hidden hover:border-[#3a3a3a] transition-colors">
         <div className="aspect-[2/3] bg-gradient-to-br from-[#1e1e1e] to-[#2a2a2a] relative flex items-end p-2">
           {book.coverUrl ? (

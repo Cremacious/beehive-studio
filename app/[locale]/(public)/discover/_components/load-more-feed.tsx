@@ -10,9 +10,10 @@ type Props = {
   initialHasMore: boolean
   sort: string
   genre: string | undefined
+  locale: string
 }
 
-export function LoadMoreFeed({ initialBooks, initialHasMore, sort, genre }: Props) {
+export function LoadMoreFeed({ initialBooks, initialHasMore, sort, genre, locale }: Props) {
   const [books, setBooks] = useState(initialBooks)
   const [hasMore, setHasMore] = useState(initialHasMore)
   const [page, setPage] = useState(1)
@@ -38,7 +39,7 @@ export function LoadMoreFeed({ initialBooks, initialHasMore, sort, genre }: Prop
     <div>
       <div className="grid grid-cols-4 gap-4">
         {books.map(book => (
-          <BookCard key={book.id} book={book} />
+          <BookCard key={book.id} book={book} locale={locale} />
         ))}
       </div>
       {hasMore && (

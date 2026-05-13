@@ -5,13 +5,15 @@ import { WritersStrip } from './_components/writers-strip'
 import { LoadMoreFeed } from './_components/load-more-feed'
 
 type Props = {
+  params: Promise<{ locale: string }>
   searchParams: Promise<{ sort?: string; genre?: string; page?: string }>
 }
 
-export default async function DiscoverPage({ searchParams }: Props) {
-  const params = await searchParams
-  const sort = (params.sort === 'popular' || params.sort === 'new') ? params.sort : 'trending'
-  const genre = params.genre
+export default async function DiscoverPage({ params, searchParams }: Props) {
+  const { locale } = await params
+  const resolvedParams = await searchParams
+  const sort = (resolvedParams.sort === 'popular' || resolvedParams.sort === 'new') ? resolvedParams.sort : 'trending'
+  const genre = resolvedParams.genre
 
   const [feedResult, writersResult] = await Promise.all([
     getDiscoverFeedAction(sort, genre, 1),
@@ -46,6 +48,7 @@ export default async function DiscoverPage({ searchParams }: Props) {
             initialHasMore={hasMore}
             sort={sort}
             genre={genre}
+            locale={locale}
           />
         )}
 

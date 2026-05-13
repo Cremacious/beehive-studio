@@ -22,7 +22,8 @@ function isPublicPath(pathname: string): boolean {
   const stripped = pathname.replace(localePattern, '/')
   return PUBLIC_PATHS.has(stripped) ||
     stripped.startsWith('/books/') ||
-    stripped.startsWith('/u/')
+    stripped.startsWith('/u/') ||
+    stripped.startsWith('/discover')
 }
 
 const intlMiddleware = createMiddleware({

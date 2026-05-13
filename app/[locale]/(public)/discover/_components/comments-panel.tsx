@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import Link from 'next/link'
 import { addCommentAction } from '@/lib/actions/social.actions'
 import type { BookComment } from '@/lib/actions/discover.actions'
 
@@ -72,7 +73,7 @@ export function CommentsPanel({ bookId, locale, initialComments, initialHasMore,
         </div>
       ) : (
         <p className="text-[#555] text-[12px] mb-4">
-          <a href={`/${locale}/sign-in`} className="text-[#FFC300] hover:underline">Sign in</a> to leave a comment.
+          <Link href={`/${locale}/sign-in`} className="text-[#FFC300] hover:underline">Sign in</Link> to leave a comment.
         </p>
       )}
 

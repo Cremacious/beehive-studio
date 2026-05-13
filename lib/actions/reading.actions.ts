@@ -62,7 +62,7 @@ export async function getReadingProgressAction(
 
   const currentIndex = allChapterItems.findIndex(item => item.id === currentChapter.binderItemId)
   const readIds = currentIndex >= 0
-    ? allChapterItems.slice(0, currentIndex).map(item => item.id)
+    ? allChapterItems.slice(0, currentIndex + 1).map(item => item.id)
     : []
 
   return {

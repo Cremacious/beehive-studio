@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import Link from 'next/link'
 import { toggleBookLikeAction, toggleBookmarkAction, toggleFollowAction } from '@/lib/actions/social.actions'
 
 type Props = {
@@ -64,7 +65,7 @@ export function SocialActions({
   if (!isAuthenticated) {
     return (
       <p className="text-[#555] text-xs">
-        <a href={`/${locale}/sign-in`} className="text-[#FFC300] hover:underline">Sign in</a>
+        <Link href={`/${locale}/sign-in`} className="text-[#FFC300] hover:underline">Sign in</Link>
         {' '}to like, bookmark, and follow
       </p>
     )

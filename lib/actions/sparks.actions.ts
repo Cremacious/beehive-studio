@@ -24,7 +24,6 @@ import {
 import { requireAuth } from '@/lib/require-auth'
 import { z } from 'zod'
 import type { ActionResult } from './book.actions'
-import { createId } from '@paralleldrive/cuid2'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -94,7 +93,10 @@ function computeStatus(deadline: Date): SparkStatus {
 
 const createSparkSchema = z.object({
   prompt: z.string().min(10).max(500),
-  deadline: z.date().min(new Date(Date.now() + 60 * 60 * 1000)),
+  deadline: z.date().refine(
+    d => d.getTime() > Date.now() + 60 * 60 * 1000,
+    { message: 'Deadline must be at least 1 hour from now' }
+  ),
   wordLimit: z.number().int().positive().optional(),
 })
 
@@ -251,26 +253,30 @@ export async function getSparkAction(
 
     const top = topEntries[0]
     if (top) {
-      // Guard against race: only update if still null
-      await db
+      // Guard against race: only update if still null, use .returning() to know if we won the race
+      const updated = await db
         .update(sparks)
         .set({ winnerEntryId: top.entryId })
         .where(and(eq(sparks.id, sparkId), isNull(sparks.winnerEntryId)))
+        .returning({ id: sparks.id })
 
-      // Look up the entry's userId for notification
-      const [entry] = await db
-        .select({ userId: sparkEntries.userId })
-        .from(sparkEntries)
-        .where(eq(sparkEntries.id, top.entryId))
-        .limit(1)
+      // Only fire notification if THIS request was the one that set the winner
+      if (updated.length > 0) {
+        // Look up the entry's userId for notification
+        const [entry] = await db
+          .select({ userId: sparkEntries.userId })
+          .from(sparkEntries)
+          .where(eq(sparkEntries.id, top.entryId))
+          .limit(1)
 
-      if (entry) {
-        await db.insert(notifications).values({
-          userId: entry.userId,
-          type: 'SPARK_WIN',
-          resourceType: 'spark',
-          resourceId: sparkId,
-        })
+        if (entry) {
+          await db.insert(notifications).values({
+            userId: entry.userId,
+            type: 'SPARK_WIN',
+            resourceType: 'spark',
+            resourceId: sparkId,
+          })
+        }
       }
 
       winnerEntryId = top.entryId
@@ -691,6 +697,16 @@ export async function setCreatorChoiceAction(
 
   const status = computeStatus(spark.deadline ?? new Date(0))
   if (status === 'OPEN') return { success: false, error: 'SPARK_STILL_OPEN' }
+
+  // Verify entry belongs to this spark
+  const [entryCheck] = await db
+    .select({ sparkId: sparkEntries.sparkId })
+    .from(sparkEntries)
+    .where(eq(sparkEntries.id, entryId))
+    .limit(1)
+  if (!entryCheck || entryCheck.sparkId !== sparkId) {
+    return { success: false, error: 'ENTRY_NOT_IN_SPARK' }
+  }
 
   await db
     .update(sparks)

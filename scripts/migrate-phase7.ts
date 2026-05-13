@@ -44,6 +44,19 @@ async function main() {
   `
   console.log('✓ spark_votes table created')
 
+  // 5. Create spark_entry_comments table
+  await sql`
+    CREATE TABLE IF NOT EXISTS spark_entry_comments (
+      id text PRIMARY KEY,
+      entry_id text NOT NULL REFERENCES spark_entries(id) ON DELETE CASCADE,
+      user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      content text NOT NULL,
+      created_at timestamp NOT NULL DEFAULT now()
+    )
+  `
+  await sql`CREATE INDEX IF NOT EXISTS spark_entry_comments_entry_id_idx ON spark_entry_comments(entry_id)`
+  console.log('✓ spark_entry_comments table created')
+
   console.log('\nPhase 7 migration complete!')
 }
 

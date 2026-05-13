@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { auth } from '@/lib/auth'
 import { headers } from 'next/headers'
-import { getSparkAction, getSparkEntriesAction } from '@/lib/actions/sparks.actions'
+import { getSparkAction, getSparkEntriesAction, getSparkEntryAction } from '@/lib/actions/sparks.actions'
 import { SparkEntryCard } from '../../_components/spark-entry-card'
 import { SparkSubmitPanel } from '../../_components/spark-submit-panel'
 
@@ -26,6 +26,23 @@ export default async function SparkDetailPage({ params }: Props) {
 
   const isCreator = userId === spark.creatorUserId
   const hasUserEntry = entries.some(e => e.authorUserId === userId)
+
+  // Fetch winner/creator-choice entry author names for CLOSED spark banner
+  let winnerEntry: { authorDisplayName: string | null; authorUsername: string | null } | null = null
+  let creatorChoiceEntry: { authorDisplayName: string | null; authorUsername: string | null } | null = null
+
+  if (spark.status === 'CLOSED') {
+    const [w, cc] = await Promise.all([
+      spark.winnerEntryId
+        ? getSparkEntryAction(sparkId, spark.winnerEntryId)
+        : Promise.resolve(null),
+      spark.creatorChoiceEntryId && spark.creatorChoiceEntryId !== spark.winnerEntryId
+        ? getSparkEntryAction(sparkId, spark.creatorChoiceEntryId)
+        : Promise.resolve(null),
+    ])
+    if (w?.success) winnerEntry = w.data
+    if (cc?.success) creatorChoiceEntry = cc.data
+  }
 
   // Format deadline
   const deadlineStr = spark.deadline.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
@@ -67,11 +84,11 @@ export default async function SparkDetailPage({ params }: Props) {
       {spark.status === 'CLOSED' && spark.winnerEntryId && (
         <div className="px-6 py-4 bg-[#1a1500] border-b border-[#3a2a00]">
           <p className="text-[#FFC300] text-[13px] font-semibold">
-            🏆 Most Voted: <span className="text-white">{entries.find(e => e.id === spark.winnerEntryId)?.authorDisplayName ?? entries.find(e => e.id === spark.winnerEntryId)?.authorUsername ?? 'Unknown'}</span>
+            🏆 Most Voted: <span className="text-white">{winnerEntry?.authorDisplayName ?? winnerEntry?.authorUsername ?? 'Unknown'}</span>
           </p>
           {spark.creatorChoiceEntryId && spark.creatorChoiceEntryId !== spark.winnerEntryId && (
             <p className="text-[#888] text-[12px] mt-1">
-              ⭐ Creator&apos;s choice: <span className="text-[#aaa]">{entries.find(e => e.id === spark.creatorChoiceEntryId)?.authorDisplayName ?? entries.find(e => e.id === spark.creatorChoiceEntryId)?.authorUsername ?? 'Unknown'}</span>
+              ⭐ Creator&apos;s choice: <span className="text-[#aaa]">{creatorChoiceEntry?.authorDisplayName ?? creatorChoiceEntry?.authorUsername ?? 'Unknown'}</span>
             </p>
           )}
         </div>

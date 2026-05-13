@@ -18,7 +18,11 @@ export function HiveCard({ hive, locale }: { hive: HiveSummary; locale: string }
         <div className="flex items-center gap-3 text-[#555] text-[11px]">
           <span>{hive.memberCount} members</span>
         </div>
-        <button className="text-[11px] text-[#666] border border-[#2a2a2a] px-3 py-1.5 rounded hover:text-white hover:border-[#3a3a3a] transition-colors cursor-pointer">
+        <button
+          disabled
+          className="px-3 py-1 bg-transparent border border-[#2a2a2a] text-[#555] rounded text-[11px] opacity-60 cursor-not-allowed"
+          title="Coming soon"
+        >
           Request to Join
         </button>
       </div>

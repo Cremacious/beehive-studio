@@ -9,6 +9,7 @@ import { LoadMoreFeed } from './_components/load-more-feed'
 import { DiscoverTabs } from './_components/tabs'
 import { SparkCard } from './_components/spark-card'
 import { HiveCard } from './_components/hive-card'
+import { CreateSparkModal } from './_components/create-spark-modal'
 
 type Tab = 'books' | 'sparks' | 'hives'
 
@@ -98,10 +99,7 @@ async function SparksTab({ locale }: { locale: string }) {
       {/* Active Sparks grid */}
       <div className="flex items-center justify-between mb-4">
         <p className="text-[#555] text-[11px] uppercase tracking-wider">Active Sparks</p>
-        {/* CreateSparkModal trigger — just a button, modal will be added in Task 6 */}
-        <button className="text-[11px] text-[#666] border border-[#2a2a2a] px-3 py-1.5 rounded hover:text-white hover:border-[#3a3a3a] transition-colors cursor-pointer">
-          + Create Spark
-        </button>
+        <CreateSparkModal locale={locale} />
       </div>
       {activeSparks.length === 0 ? (
         <p className="text-[#555] text-[13px] py-8 text-center">No active Sparks yet. Create one!</p>

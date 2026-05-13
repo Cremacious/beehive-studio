@@ -40,33 +40,35 @@ Files created:
 - `lib/actions/snapshot.actions.ts` — `getChapterSnapshotsAction`, `restoreSnapshotAction` (both premium-gated)
 - `lib/actions/publishing.actions.ts` — `getPublishingMetadataAction`, `updatePublishingMetadataAction` (premium), `getExportPresetsAction`
 
+### Phase 6 — Discover Feed ✅ COMPLETE
+- `/discover` page: trending/popular/new feed with genre filter, load-more pagination
+- Book detail page `/discover/book/[bookId]`: cover, synopsis, chapter list with read progress, like/bookmark/follow, comments
+- Chapter reader `/discover/book/[bookId]/read/[chapterId]`: full TipTap prose at reading width, marks chapter as read
+- Social actions: `toggleBookLikeAction`, `toggleBookmarkAction`, `toggleFollowAction`, `addCommentAction`, `getCommentsAction`
+- Reading progress: `markChapterReadAction`, `getReadingProgressAction`
+- DB: `readingProgress` table (last chapter per user+book), `bookLikes`, `bookmarks`, `bookComments`, `follows`
+
+### Phase 7 — Community ✅ COMPLETE
+- **Sparks** — writing prompt contests: create, submit entries (one per user), 48h voting window, creator's choice, lazy winner finalization with `SPARK_WIN` notification
+- **Discover tab bar** — Books | Sparks | Hives tabs on `/discover`
+- **Hives tab** — public Hives grid using existing `getPublicHivesAction`
+- **Full entry pages** — `/discover/spark/[sparkId]/entry/[entryId]`: full prose reading + comments
+- **Author profiles** — `/u/[username]`: bio, stats (followers/following/words/books/Sparks), published books, open Sparks, activity feed, follow button
+- **Notification wiring** — `NEW_FOLLOWER`, `NEW_LIKE`, `NEW_COMMENT`, `SPARK_WIN` fired inline from server actions
+- DB: `sparkVotes` (composite PK prevents double-voting), `sparkEntryComments`, `sparks` gains `wordLimit`/`creatorChoiceEntryId`/`winnerEntryId`, `sparkEntries` gains `content`/`wordCount`
+- Key files: `lib/actions/sparks.actions.ts`, `lib/actions/user-profile.actions.ts`
+
 ## What's Next
 
-### Immediate: Port Claude Designs to Pages (UI work)
-
-HTML design files are in `designs/`. These need to be mechanically ported to the existing page stubs — convert HTML/CSS to JSX, wire up existing actions. No design decisions. Pixel-faithful to the designs.
-
-| Design File | Target Page | Notes |
-|---|---|---|
-| `designs/beehive-landing-page.html` | `app/[locale]/(public)/page.tsx` | Main landing page |
-| `designs/Sign In.html` | `app/[locale]/(auth)/sign-in/page.tsx` | |
-| `designs/Sign Up.html` | `app/[locale]/(auth)/sign-up/page.tsx` | |
-| `designs/Forgot Password.html` | `app/[locale]/(auth)/forgot-password/page.tsx` | |
-| `designs/onboarding-username.html` | `app/[locale]/(auth)/onboarding/page.tsx` | Multi-step: username → avatar → profile |
-| `designs/onboarding-avatar.html` | Same onboarding page | Step 2 |
-| `designs/onboarding-profile.html` | Same onboarding page | Step 3 |
-| `designs/privacy-policy.html` | `app/[locale]/(public)/privacy/page.tsx` | |
-| `designs/studio-empty.html` | `app/[locale]/(app)/studio/page.tsx` | Empty state (no books yet) |
-
-**How to port:** Read the design HTML, reproduce it as JSX using Tailwind v4 classes (or the closest equivalent). Wire server actions where needed (e.g. sign-in page calls better-auth's `signIn.email`, onboarding calls `completeOnboardingAction`).
-
-### After UI Ports
-- Phase 3: Book editor (TipTap + binder tree UI)
-- Phase 4: Hive collaboration
-- Phase 5: Publishing & exports
-- Phase 6: Discover feed
-- Phase 7: Community
 - Phase 8: Stripe monetization
+
+## Completed UI Work (pre-Phase 3)
+
+HTML design files in `designs/` were ported to pages. Key patterns for future UI work:
+- Server actions use `ActionResult<T>` = `{ success: true; data: T } | { success: false; error: string }`
+- All internal links include `/${locale}/` prefix (localePrefix: 'always')
+- Client components that use hooks need `'use client'` at top
+- `params` and `searchParams` in Next.js 16 are `Promise<{...}>` — must be awaited
 
 ## Key Patterns
 

@@ -206,8 +206,11 @@ export function BinderTree() {
             <BinderAddMenu />
           </div>
         </div>
-        <div className="px-3 py-2 border-b border-border">
+        <div className="px-3 py-2 border-b border-border flex flex-col gap-1">
           <CreateHiveButton bookId={bookId} locale={locale} />
+          <p className="text-[10px] text-muted-foreground leading-snug">
+            Invite readers to give feedback on your drafts.
+          </p>
         </div>
 
         {!corkboardMode && (

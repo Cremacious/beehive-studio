@@ -156,7 +156,7 @@ export async function createBinderItemAction(input: {
  */
 export async function updateBinderItemAction(
   id: string,
-  input: { title?: string; content?: unknown },
+  input: { title?: string; content?: unknown; parentId?: string | null },
 ): Promise<ActionResult> {
   const userId = await requireAuth()
 
@@ -170,6 +170,7 @@ export async function updateBinderItemAction(
   const updates: Record<string, unknown> = {}
   if (parsed.data.title !== undefined) updates.title = parsed.data.title
   if (parsed.data.content !== undefined) updates.content = parsed.data.content
+  if (parsed.data.parentId !== undefined) updates.parentId = parsed.data.parentId
 
   if (Object.keys(updates).length === 0) {
     return { success: true, data: undefined }

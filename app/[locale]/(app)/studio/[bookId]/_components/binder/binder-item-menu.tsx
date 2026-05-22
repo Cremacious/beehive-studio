@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useBookEditor } from '../book-editor-provider'
-import { createBinderItemAction, deleteBinderItemAction } from '@/lib/actions/binder.actions'
+import { createBinderItemAction, deleteBinderItemAction, updateBinderItemAction } from '@/lib/actions/binder.actions'
 import type { BinderItemRow } from '@/lib/actions/binder.actions'
 import type { TreeNode } from './binder-tree'
 import {
@@ -41,9 +41,10 @@ function MenuItem({
 }
 
 export function BinderItemMenu({ node, onRenameStart }: Props) {
-  const { bookId, addBinderItem, removeBinderItem } = useBookEditor()
+  const { bookId, binderItems, addBinderItem, removeBinderItem, updateBinderItem } = useBookEditor()
   const [open, setOpen] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [showMoveTo, setShowMoveTo] = useState(false)
   // Tracks whether the close was triggered by clicking Rename — used to
   // suppress Radix's auto-restore-focus-to-trigger, which otherwise steals
   // focus away from the rename input the moment it tries to mount.
@@ -57,7 +58,20 @@ export function BinderItemMenu({ node, onRenameStart }: Props) {
 
   function handleOpenChange(next: boolean) {
     setOpen(next)
-    if (!next) setConfirmingDelete(false)
+    if (!next) {
+      setConfirmingDelete(false)
+      setShowMoveTo(false)
+    }
+  }
+
+  async function handleMove(newParentId: string | null) {
+    setOpen(false)
+    setShowMoveTo(false)
+    updateBinderItem(node.id, { parentId: newParentId })
+    const result = await updateBinderItemAction(node.id, { parentId: newParentId })
+    if (!result.success) {
+      console.error('Move failed:', result.error)
+    }
   }
 
   async function handleAddChild(
@@ -134,15 +148,49 @@ export function BinderItemMenu({ node, onRenameStart }: Props) {
             <DropdownMenuSeparator />
           </>
         )
-      default:
+      default: {
+        const collections = binderItems.filter(i => i.type === 'part')
+        const canMove = node.type === 'chapter' && collections.length > 0
+        const currentParent = node.parentId
+
+        if (showMoveTo) {
+          return (
+            <>
+              <MenuItem onClick={() => setShowMoveTo(false)}>
+                ← Back
+              </MenuItem>
+              <DropdownMenuSeparator />
+              {currentParent !== null && (
+                <MenuItem onClick={() => handleMove(null)}>
+                  ↑ Move to top level
+                </MenuItem>
+              )}
+              {collections.map(c => (
+                c.id !== currentParent ? (
+                  <MenuItem key={c.id} onClick={() => handleMove(c.id)}>
+                    📖 {c.title}
+                  </MenuItem>
+                ) : null
+              ))}
+              <DropdownMenuSeparator />
+            </>
+          )
+        }
+
         return (
           <>
             <MenuItem onClick={handleRenameStart}>
               Rename
             </MenuItem>
+            {canMove && (
+              <MenuItem onClick={() => setShowMoveTo(true)}>
+                Move to Collection…
+              </MenuItem>
+            )}
             <DropdownMenuSeparator />
           </>
         )
+      }
     }
   })()
 

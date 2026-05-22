@@ -60,6 +60,10 @@ export async function GET(
     .filter(r => r.type === 'chapter')
     .map(r => ({ title: r.title ?? 'Untitled', content: r.chapterContent }))
 
+  if (chapterInputs.length === 0) {
+    return Response.json({ error: 'No chapters to export' }, { status: 400 })
+  }
+
   const safeTitle = book.title.replace(/[^a-z0-9\s-]/gi, '').trim() || 'export'
 
   if (format === 'docx') {

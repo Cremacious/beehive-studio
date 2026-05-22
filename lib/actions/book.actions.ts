@@ -174,24 +174,11 @@ export async function createBookAction(input: {
           })
         }
       }
-    } else {
-      const chapterBinderId = createId()
-      const chapterId = createId()
-
-      await tx.insert(binderItems).values({
-        id: chapterBinderId,
-        bookId,
-        type: 'chapter',
-        title: 'Chapter 1',
-        order: 0,
-      })
-
-      await tx.insert(chapters).values({
-        id: chapterId,
-        bookId,
-        binderItemId: chapterBinderId,
-      })
     }
+    // If no templateId is provided, the book is created with an empty binder.
+    // The user creates their first chapter explicitly via the editor's empty
+    // state CTA. Removed 2026-05-22 in SP2 — gives users naming agency from
+    // the first keystroke.
   })
 
   return { success: true, data: { bookId } }

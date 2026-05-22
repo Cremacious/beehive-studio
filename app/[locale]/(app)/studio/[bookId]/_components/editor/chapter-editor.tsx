@@ -16,11 +16,84 @@ import { EditorToolbar } from './editor-toolbar'
 import { SprintTimer } from './sprint-timer'
 import { AmbientSounds } from './ambient-sounds'
 import { WritingAnalysis, extractPlainText } from './writing-analysis'
-import { updateBinderItemAction } from '@/lib/actions/binder.actions'
+import { updateBinderItemAction, createBinderItemAction } from '@/lib/actions/binder.actions'
 import { FindReplace } from './find-replace'
 import { CharacterProfile } from './character-profile'
 
 const CHAPTER_TYPES = new Set(['chapter', 'front_matter', 'back_matter'])
+
+function EmptyStartChapter() {
+  const { bookId, binderItems, addBinderItem, setActiveItemId, setPendingRenameId } = useBookEditor()
+  const [creating, setCreating] = useState(false)
+
+  // A book is "empty" if it has no editable-prose items (chapter, front_matter, back_matter).
+  const hasAnyChapters = binderItems.some(i =>
+    i.type === 'chapter' || i.type === 'front_matter' || i.type === 'back_matter'
+  )
+
+  async function createFirstChapter() {
+    if (creating) return
+    setCreating(true)
+    const rootItems = binderItems.filter(i => i.parentId === null)
+    const order = rootItems.length > 0 ? Math.max(...rootItems.map(i => i.order)) + 1 : 0
+    const result = await createBinderItemAction({
+      bookId,
+      parentId: null,
+      type: 'chapter',
+      title: 'Untitled Chapter',
+      order,
+    })
+    setCreating(false)
+    if (result.success) {
+      addBinderItem({
+        id: result.data.id,
+        bookId,
+        parentId: null,
+        type: 'chapter',
+        title: 'Untitled Chapter',
+        order,
+        content: null,
+        chapterId: result.data.chapterId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      setActiveItemId(result.data.id)
+      setPendingRenameId(result.data.id)
+    }
+  }
+
+  if (hasAnyChapters) {
+    return (
+      <main className="flex-1 flex items-center justify-center p-8">
+        <div className="max-w-md text-center flex flex-col items-center gap-2">
+          <h1 className="text-lg font-medium text-foreground/80">Select a chapter to write</h1>
+          <p className="text-sm text-muted-foreground">
+            Pick a chapter from the binder on the left, or click <span className="text-brand font-semibold">+ Add</span> to create a new one.
+          </p>
+        </div>
+      </main>
+    )
+  }
+
+  return (
+    <main className="flex-1 flex items-center justify-center p-8">
+      <div className="max-w-md text-center flex flex-col items-center gap-4">
+        <h1 className="text-2xl font-bold font-comfortaa text-foreground">Start your first chapter</h1>
+        <p className="text-sm text-muted-foreground">
+          Your binder is empty. Create a chapter — you can rename it anytime.
+        </p>
+        <button
+          onClick={createFirstChapter}
+          disabled={creating}
+          className="inline-flex items-center gap-2 rounded-md bg-brand hover:bg-brand-hover px-4 py-2 text-sm font-semibold text-background transition-colors shadow-sm disabled:opacity-50"
+        >
+          <span className="text-base leading-none">+</span>
+          <span>{creating ? 'Creating…' : 'Start your first chapter'}</span>
+        </button>
+      </div>
+    </main>
+  )
+}
 
 export function ChapterEditor() {
   const { activeItemId, activeItem, activeChapter, updateChapterContent, updateBinderItem, wordCount, flushPendingSave, pushFlash } =
@@ -115,11 +188,7 @@ export function ChapterEditor() {
   }, [activeChapter, editor])
 
   if (activeItemId === null) {
-    return (
-      <main className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
-        Select a chapter from the binder to start writing.
-      </main>
-    )
+    return <EmptyStartChapter />
   }
 
   if (activeItem && !isChapterType) {

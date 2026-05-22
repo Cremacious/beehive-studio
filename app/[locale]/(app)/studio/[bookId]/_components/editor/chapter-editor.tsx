@@ -20,6 +20,7 @@ import { updateBinderItemAction, createBinderItemAction } from '@/lib/actions/bi
 import { FindReplace } from './find-replace'
 import { CharacterProfile } from './character-profile'
 import { FrontBackMatterRenderer, shouldUseFrontBackMatterRenderer } from '../front-back-matter'
+import { OutlineBoard } from '../outline/outline-board'
 
 const CHAPTER_TYPES = new Set(['chapter', 'front_matter', 'back_matter'])
 
@@ -202,6 +203,9 @@ export function ChapterEditor() {
   }
 
   if (activeItem && !isChapterType) {
+    if (activeItem.type === 'outline') {
+      return <OutlineBoard item={activeItem} />
+    }
     if (activeItem.type === 'character') {
       return <CharacterProfile item={activeItem} />
     }

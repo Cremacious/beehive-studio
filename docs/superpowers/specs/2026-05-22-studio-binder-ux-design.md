@@ -109,6 +109,60 @@ pills in metadata panel.
 
 (Metadata panel brand-yellow stays in scope for sub-project 4.)
 
+### 6. Binder-add menu: clearer types, grouping, and "Part" → "Collection" rename
+
+**Current:** The `BinderAddMenu` dropdown lists eight item types
+(`part`, `chapter`, `front_matter`, `back_matter`, `research_folder`,
+`research_note`, `character`, `outline`) as bare labels with no
+descriptions and no grouping. First-time users have no idea what most of
+them mean or why they'd pick one over another. User feedback 2026-05-22:
+"it's not clear what creating a 'part' means and what a research folder
+is."
+
+**Fix:**
+
+**6a. Group the menu into two sections** — manuscript items (what gets
+exported into the book) and research items (private, never exported):
+
+```
+── Manuscript ──
+📄 Chapter              The actual prose. Opens in the editor.
+📖 Collection           A group of chapters (e.g., "Part One").
+📑 Front matter         Title page, dedication, copyright.
+📑 Back matter          Acknowledgments, about the author.
+
+── Research (private, not exported) ──
+📁 Research folder      Container for your reference materials.
+📝 Research note        Freeform notes — world-building, ideas, scraps.
+👤 Character profile    Name, traits, backstory for one character.
+📋 Outline              Outline of a chapter or arc.
+```
+
+Use a styled section header in the dropdown (`<DropdownMenuLabel>` or a
+plain styled span) — not a separator. The one-line subtitle under each
+option teaches as the user reads.
+
+**6b. Rename "Part" → "Collection" (display-only).** "Part" is correct
+Scrivener vocabulary but reads as ambiguous to non-Scrivener users
+("part of what?"). "Collection" is plain English and aligns with the
+beehive theme (a collection of related chapters, like cells in a hive).
+
+**Implementation: display-only rename.** The DB type enum value stays
+`'part'` — no migration, no Zod schema change. The change is purely
+the user-facing label and icon:
+- Wherever `'Part'` or `Add Part` is displayed in the UI (binder add
+  menu, binder item menu's "Add Part" option, item-create modals, etc.),
+  swap to `'Collection'` / `'Add Collection'`.
+- Internal type identifier in code and DB remains `part`. This decouples
+  data shape from naming and avoids a needless migration risk.
+
+**Files:**
+- `app/[locale]/(app)/studio/[bookId]/_components/binder/binder-add-menu.tsx`
+- `app/[locale]/(app)/studio/[bookId]/_components/binder/binder-item-menu.tsx`
+- `app/[locale]/(app)/studio/[bookId]/_components/binder/binder-item.tsx`
+  (the `ICONS` map — pick a `Collection`-appropriate icon)
+- Any other files that hard-code the user-facing string `'Part'`.
+
 ## Out of Scope
 
 - Drag-drop edge cases (dropping into collapsed folders, type
@@ -132,6 +186,11 @@ Primarily manual.
   (input focused).
 - Double-click the book title in the binder header → input appears →
   rename to `My Renamed Book` → reload page → title persists.
+- Open the binder add menu → see "Manuscript" and "Research" section
+  headers with grouped items + one-line descriptions → confirm "Part"
+  is now labeled "Collection" everywhere user-facing → confirm DB still
+  stores `type: 'part'` (e.g., inspect a created Collection via DevTools
+  Network tab).
 - `npm test` passes; `npx tsc --noEmit` clean.
 
 ## Risks

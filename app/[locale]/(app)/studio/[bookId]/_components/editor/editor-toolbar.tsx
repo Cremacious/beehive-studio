@@ -256,11 +256,12 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
 
         <span className="flex-1" />
 
-        {/* Save status + word count */}
-        <span className="flex items-center gap-2 text-xs text-foreground/40">
+        {/* Save status + word count — fixed-width to prevent toolbar shift
+            when status text or word count changes width */}
+        <span className="flex items-center gap-3 text-xs text-foreground/40 min-w-[180px] justify-end tabular-nums">
           <span
             className={cn(
-              'flex items-center gap-1',
+              'inline-flex items-center gap-1 w-[72px] justify-end',
               saveStatus === 'unsaved' && 'text-brand',
               saveStatus === 'saving' && 'text-foreground/40 animate-pulse',
             )}
@@ -269,11 +270,9 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
             {saveStatus === 'saving' && '○ Saving…'}
             {saveStatus === 'unsaved' && '● Unsaved'}
           </span>
-          {charCount ? (
-            <span>{charCount.words()} words</span>
-          ) : wordCount > 0 ? (
-            <span>{wordCount.toLocaleString()} words</span>
-          ) : null}
+          <span className="inline-block w-[80px] text-right">
+            {charCount ? `${charCount.words()} words` : wordCount > 0 ? `${wordCount.toLocaleString()} words` : ''}
+          </span>
         </span>
 
         {/* Export */}

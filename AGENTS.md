@@ -10,6 +10,36 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 **Slogan:** "Get buzzed about writing!"
 
+## 📍 Resume Here
+
+> **Last updated:** 2026-05-22
+>
+> **Current focus:** Phase 8 — Stripe monetization (not started)
+> **Active branch:** `main`
+> **Last commit:** docs: add Resume Here handoff block + Stop hook to nag on stale AGENTS.md
+>
+> **Next concrete step when resuming:**
+> 1. Run `npm install` (dev env error: `'next' is not recognized` — node_modules missing)
+> 2. Brainstorm Phase 8 pricing model + upgrade triggers (tie to existing `FREE_LIMIT_REACHED` / `PREMIUM_REQUIRED:<feature>` codes)
+> 3. Then: Stripe products, checkout server action, webhook handler, `userBilling` table wiring
+>
+> **Open questions for the user:**
+> - Pricing tiers + trial length?
+> - Annual vs monthly only, or both?
+> - Self-serve cancel/downgrade in v1, or email-support only?
+
+## ⚙️ Working Agreement (read this every session)
+
+**When you start a session:** read this file top-to-bottom, then `git log -5 --oneline` and `git status` to confirm reality matches the "Resume Here" block above. If they diverge, the file is stale — fix it before doing anything else.
+
+**When you finish meaningful work in a session** (any commit, any phase progress, any decision the user agreed to):
+1. Update the "📍 Resume Here" block: bump `Last updated`, refresh `Current focus`, `Last commit`, and `Next concrete step`.
+2. If a phase completed, move it from "What's Next" into "What Has Been Built" with the same level of detail as existing phases.
+3. If new patterns / file conventions / gotchas emerged, add them under "Key Patterns".
+4. Commit the doc update **with** the code change, not as a separate commit.
+
+This file is the handoff contract. If "read AGENTS.md and continue project" doesn't get the next session to the right spot, this file failed.
+
 ## What This Is
 
 Beehive Studio is a solo-developer writing platform: rich-text book editor, Hive collaboration groups, and a community discovery feed. Dark-only, bee-themed. Built with Next.js 16 App Router, React 19, TypeScript, Tailwind v4, shadcn/ui (New York style), Drizzle ORM on Neon Postgres.

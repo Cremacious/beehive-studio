@@ -84,7 +84,10 @@ export async function getBinderTreeAction(
     title: item.title,
     order: item.order,
     content: item.content,
-    chapterId: item.type === 'chapter' ? (chapterByBinderId.get(item.id) ?? null) : null,
+    chapterId:
+      item.type === 'chapter' || item.type === 'front_matter' || item.type === 'back_matter'
+        ? (chapterByBinderId.get(item.id) ?? null)
+        : null,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
   }))
@@ -126,7 +129,14 @@ export async function createBinderItemAction(input: {
 
     let chapterId: string | null = null
 
-    if (parsed.data.type === 'chapter') {
+    // Editable-prose types all need a backing chapters row, otherwise the
+    // editor's getChapterAction(item.chapterId!) call returns null and the
+    // editor sits on the loading skeleton forever.
+    if (
+      parsed.data.type === 'chapter' ||
+      parsed.data.type === 'front_matter' ||
+      parsed.data.type === 'back_matter'
+    ) {
       chapterId = createId()
       await tx.insert(chapters).values({
         id: chapterId,

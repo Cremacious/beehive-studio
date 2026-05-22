@@ -17,6 +17,7 @@ import {
 } from '@/lib/outline/board'
 import { SaveStatusBadge, type FormSaveStatus } from '../front-back-matter/save-status-badge'
 import { OutlineColumnView } from './outline-column'
+import { ChapterLinkPopover } from './chapter-link-popover'
 
 type Props = { item: BinderItemRow }
 
@@ -28,6 +29,7 @@ export function OutlineBoard({ item }: Props) {
     return seedOutline()
   })
   const [saveStatus, setSaveStatus] = useState<FormSaveStatus>('idle')
+  const [linkingCardId, setLinkingCardId] = useState<{ columnId: string; cardId: string } | null>(null)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
@@ -154,7 +156,7 @@ export function OutlineBoard({ item }: Props) {
               onAddCard={() => addCard(col.id)}
               onCardChange={(cardId, patch) => patchCard(col.id, cardId, patch)}
               onCardDelete={cardId => deleteCard(col.id, cardId)}
-              onCardOpenLinkPopover={() => { /* wired in Task 4 */ }}
+              onCardOpenLinkPopover={cardId => setLinkingCardId({ columnId: col.id, cardId })}
               onCardUnlink={cardId => patchCard(col.id, cardId, { linkedChapterId: undefined })}
               onCardJumpToChapter={cardId => {
                 const card = col.cards.find(c => c.id === cardId)
@@ -174,6 +176,15 @@ export function OutlineBoard({ item }: Props) {
           </SortableContext>
         </DndContext>
       </div>
+
+      {linkingCardId && (
+        <ChapterLinkPopover
+          onPick={chapterId => {
+            patchCard(linkingCardId.columnId, linkingCardId.cardId, { linkedChapterId: chapterId })
+          }}
+          onClose={() => setLinkingCardId(null)}
+        />
+      )}
     </main>
   )
 }

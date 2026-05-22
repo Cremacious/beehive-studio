@@ -96,10 +96,11 @@ export function ChapterEditor() {
       activeChapter.content as Parameters<typeof editor.commands.setContent>[0],
       { emitUpdate: false },
     )
-    // After hydration, drop the cursor at the end so the user can type immediately.
-    // autofocus on useEditor only fires for the initial mount with content === null;
-    // this handles the cache-miss path where content arrives asynchronously.
-    editor.commands.focus('end')
+    // Defer focus past the DOM update from setContent — calling focus()
+    // synchronously inside the same tick is unreliable in React 19 + TipTap.
+    requestAnimationFrame(() => {
+      editor.commands.focus('end')
+    })
     setEditorText(extractPlainText(activeChapter.content))
   }, [activeChapter, editor])
 
@@ -161,8 +162,9 @@ export function ChapterEditor() {
       {findOpen && editor && <FindReplace editor={editor} onClose={() => setFindOpen(false)} />}
       <div className="flex flex-1 overflow-hidden">
         <div
-          className="flex-1 overflow-y-auto"
+          className="flex-1 overflow-y-auto cursor-text"
           style={typewriterMode ? { scrollPaddingTop: '40vh' } : undefined}
+          onClick={() => editor?.commands.focus()}
         >
           <EditorContent
             editor={editor}

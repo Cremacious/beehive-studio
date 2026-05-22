@@ -16,7 +16,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 >
 > **Current focus:** Studio Editor Audit — sub-project 2 (Binder UX) — not started
 > **Active branch:** `main`
-> **Last commit:** docs: mark studio editor stability pass complete (SP 1/5)
+> **Last commit:** feat(studio): tooltips on every editor toolbar button (ad-hoc SP1 polish — shadcn Tooltip wired through)
 >
 > **The audit** is a 5-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational. Sequence (Option A):

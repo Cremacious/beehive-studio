@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { cn } from '@/lib/utils'
 import type { OutlineCard, OutlineColumn } from '@/lib/outline/board'
 import { OutlineCardView } from './outline-card'
@@ -26,10 +28,25 @@ export function OutlineColumnView({
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
 
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: column.id })
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+  }
+
   return (
-    <div className="flex flex-col gap-2 w-72 flex-shrink-0 bg-card border border-border rounded-lg p-3">
+    <div ref={setNodeRef} style={style} className="flex flex-col gap-2 w-72 flex-shrink-0 bg-card border border-border rounded-lg p-3">
       {/* Header */}
       <div className="flex items-center justify-between gap-2">
+        <span
+          {...attributes}
+          {...listeners}
+          className="cursor-grab text-muted-foreground text-xs flex-shrink-0"
+          aria-label="Drag column"
+        >
+          ⠿
+        </span>
         {renaming ? (
           <input
             autoFocus
@@ -80,20 +97,22 @@ export function OutlineColumnView({
       )}
 
       {/* Cards */}
-      <div className="flex flex-col gap-2">
-        {column.cards.map(card => (
-          <OutlineCardView
-            key={card.id}
-            card={card}
-            onChange={patch => onCardChange(card.id, patch)}
-            onDelete={() => onCardDelete(card.id)}
-            onOpenLinkPopover={() => onCardOpenLinkPopover(card.id)}
-            onUnlink={() => onCardUnlink(card.id)}
-            onJumpToChapter={() => onCardJumpToChapter(card.id)}
-            chapterAvailable={isChapterAvailable(card.linkedChapterId)}
-          />
-        ))}
-      </div>
+      <SortableContext items={column.cards.map(c => c.id)} strategy={verticalListSortingStrategy}>
+        <div className="flex flex-col gap-2">
+          {column.cards.map(card => (
+            <OutlineCardView
+              key={card.id}
+              card={card}
+              onChange={patch => onCardChange(card.id, patch)}
+              onDelete={() => onCardDelete(card.id)}
+              onOpenLinkPopover={() => onCardOpenLinkPopover(card.id)}
+              onUnlink={() => onCardUnlink(card.id)}
+              onJumpToChapter={() => onCardJumpToChapter(card.id)}
+              chapterAvailable={isChapterAvailable(card.linkedChapterId)}
+            />
+          ))}
+        </div>
+      </SortableContext>
 
       <button
         onClick={onAddCard}

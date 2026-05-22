@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { cn } from '@/lib/utils'
 import type { OutlineCard } from '@/lib/outline/board'
 
@@ -20,15 +22,32 @@ export function OutlineCardView({
   const [editingSynopsis, setEditingSynopsis] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
 
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: card.id })
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+  }
+
   return (
-    <div className="bg-surface-elevated border border-border rounded-md p-3 flex flex-col gap-2 group relative">
+    <div ref={setNodeRef} style={style} className="bg-surface-elevated border border-border rounded-md p-3 flex flex-col gap-2 group relative">
+      {/* Drag handle */}
+      <span
+        {...attributes}
+        {...listeners}
+        className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 cursor-grab text-muted-foreground text-xs"
+        aria-label="Drag card"
+      >
+        ⠿
+      </span>
+
       {/* Title */}
       <input
         type="text"
         value={card.title}
         onChange={e => onChange({ title: e.target.value })}
         placeholder="Card title"
-        className="bg-transparent text-sm font-medium text-foreground outline-none placeholder-muted-foreground"
+        className="bg-transparent text-sm font-medium text-foreground outline-none placeholder-muted-foreground px-5"
       />
 
       {/* Synopsis */}

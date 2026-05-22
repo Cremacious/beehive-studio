@@ -6,8 +6,14 @@ import type { BinderItemRow } from '@/lib/actions/binder.actions'
 import { updateBinderItemAction } from '@/lib/actions/binder.actions'
 import { useBookEditor } from '../book-editor-provider'
 import {
+  DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext, horizontalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import {
   type OutlineContent, type OutlineCard, type OutlineColumn,
-  seedOutline,
+  seedOutline, moveCard, moveColumn,
 } from '@/lib/outline/board'
 import { SaveStatusBadge, type FormSaveStatus } from '../front-back-matter/save-status-badge'
 import { OutlineColumnView } from './outline-column'
@@ -23,6 +29,7 @@ export function OutlineBoard({ item }: Props) {
   })
   const [saveStatus, setSaveStatus] = useState<FormSaveStatus>('idle')
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
   // Persist seeded content for legacy items so subsequent reloads don't re-seed.
   useEffect(() => {
@@ -80,6 +87,40 @@ export function OutlineBoard({ item }: Props) {
     })
   }
 
+  // ─── Drag and drop ─────────────────────────────────────────────────────────
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    const activeId = String(active.id)
+    const overId = String(over.id)
+
+    // Was a column dragged?
+    const isColumnDrag = outline.columns.some(c => c.id === activeId)
+    if (isColumnDrag) {
+      const toIndex = outline.columns.findIndex(c => c.id === overId)
+      if (toIndex < 0) return
+      commit(moveColumn(outline, activeId, toIndex))
+      return
+    }
+
+    // Otherwise it's a card drag. Find source column.
+    const sourceCol = outline.columns.find(c => c.cards.some(card => card.id === activeId))
+    if (!sourceCol) return
+
+    // The over.id may be another card OR a column id (when dropping onto a column itself).
+    const targetColAsCol = outline.columns.find(c => c.id === overId)
+    if (targetColAsCol) {
+      commit(moveCard(outline, { columnId: sourceCol.id, cardId: activeId }, { columnId: targetColAsCol.id, index: targetColAsCol.cards.length }))
+      return
+    }
+
+    const targetCol = outline.columns.find(c => c.cards.some(card => card.id === overId))
+    if (!targetCol) return
+    const targetIndex = targetCol.cards.findIndex(c => c.id === overId)
+    commit(moveCard(outline, { columnId: sourceCol.id, cardId: activeId }, { columnId: targetCol.id, index: targetIndex }))
+  }
+
   // Chapter link helpers (popover wired in Task 4)
   function isChapterAvailable(chapterId: string | undefined): boolean {
     if (!chapterId) return false
@@ -101,9 +142,11 @@ export function OutlineBoard({ item }: Props) {
       </header>
 
       <div className="flex-1 overflow-x-auto overflow-y-hidden p-4">
-        <div className="flex items-start gap-4 h-full min-h-0">
-          {outline.columns.map(col => (
-            <OutlineColumnView
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={outline.columns.map(c => c.id)} strategy={horizontalListSortingStrategy}>
+            <div className="flex items-start gap-4 h-full min-h-0">
+              {outline.columns.map(col => (
+                <OutlineColumnView
               key={col.id}
               column={col}
               onChange={patch => patchColumn(col.id, patch)}
@@ -121,13 +164,15 @@ export function OutlineBoard({ item }: Props) {
             />
           ))}
 
-          <button
-            onClick={addColumn}
-            className="text-xs text-muted-foreground hover:text-foreground border border-dashed border-border rounded-lg py-2 px-4 w-48 flex-shrink-0 self-start"
-          >
-            + Column
-          </button>
-        </div>
+              <button
+                onClick={addColumn}
+                className="text-xs text-muted-foreground hover:text-foreground border border-dashed border-border rounded-lg py-2 px-4 w-48 flex-shrink-0 self-start"
+              >
+                + Column
+              </button>
+            </div>
+          </SortableContext>
+        </DndContext>
       </div>
     </main>
   )

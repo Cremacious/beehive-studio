@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -246,6 +247,30 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
 
   const dismissError = useCallback((index: number) => {
     setErrors(prev => prev.filter((_, i) => i !== index))
+  }, [])
+
+  // Save-on-unload safety net: if there's a pending save when the user closes
+  // the tab, fire it via sendBeacon (the only API that reliably completes
+  // during unload) AND show the browser's native "Leave site?" prompt.
+  useEffect(() => {
+    function handleBeforeUnload(e: BeforeUnloadEvent) {
+      const pending = pendingSaveRef.current
+      if (!pending) return
+
+      const chapterId = chapterCacheRef.current.get(pending.itemId)?.id
+      if (!chapterId) return
+
+      const blob = new Blob(
+        [JSON.stringify({ chapterId, content: pending.content })],
+        { type: 'application/json' },
+      )
+      navigator.sendBeacon('/api/chapter-save-beacon', blob)
+
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [])
 
   const activeItem = useMemo(

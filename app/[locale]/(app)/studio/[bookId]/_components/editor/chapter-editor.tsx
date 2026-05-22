@@ -91,7 +91,10 @@ export function ChapterEditor() {
   // useEditor initializes with null because activeChapter is always null on first render.
   useEffect(() => {
     if (!editor || !activeChapter || !editor.isEmpty) return
-    editor.commands.setContent(activeChapter.content as Parameters<typeof editor.commands.setContent>[0])
+    editor.commands.setContent(
+      activeChapter.content as Parameters<typeof editor.commands.setContent>[0],
+      { emitUpdate: false },
+    )
     setEditorText(extractPlainText(activeChapter.content))
   }, [activeChapter, editor])
 

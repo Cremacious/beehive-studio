@@ -40,6 +40,7 @@ type BookEditorContextValue = {
   removeBinderItem: (id: string) => void
   setBinderItems: React.Dispatch<React.SetStateAction<BinderItemRow[]>>
   updateChapterContent: (content: unknown) => void
+  flushPendingSave: () => Promise<void>
   updateChapterStatus: (status: ChapterData['status']) => Promise<void>
   updateChapterNotes: (notes: string | null) => void
   dismissError: (index: number) => void
@@ -87,6 +88,7 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
 
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const notesTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingSaveRef = useRef<{ itemId: string; content: unknown } | null>(null)
   // Mirror of chapterCache for synchronous reads without triggering setState
   const chapterCacheRef = useRef(chapterCache)
   chapterCacheRef.current = chapterCache
@@ -95,7 +97,52 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     setErrors(prev => [...prev, msg])
   }, [])
 
+  // Performs the actual save. Pulled out of updateChapterContent so it can also be
+  // invoked synchronously by chapter-switch flush, by Cmd+S (future task), and by
+  // beforeunload (future task).
+  const performSave = useCallback(async (targetItemId: string, content: unknown) => {
+    const cachedChapter = chapterCacheRef.current.get(targetItemId) ?? null
+    if (!cachedChapter) {
+      // Nothing to save — return to 'unsaved' so a future keystroke retriggers.
+      setSaveStatus('unsaved')
+      return
+    }
+
+    setSaveStatus('saving')
+
+    const result = await saveChapterAction(cachedChapter.id, content)
+    if (result.success) {
+      setSaveStatus('saved')
+      setWordCount(result.data.wordCount)
+      setChapterCache(prev => {
+        const m = new Map(prev)
+        const ch = m.get(targetItemId)
+        if (ch) m.set(targetItemId, { ...ch, content, wordCount: result.data.wordCount })
+        return m
+      })
+    } else {
+      setSaveStatus('unsaved')
+      pushError("Couldn't save. Retrying…")
+    }
+  }, [pushError])
+
+  const flushPendingSave = useCallback(async () => {
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current)
+      saveTimerRef.current = null
+    }
+    const pending = pendingSaveRef.current
+    if (!pending) return
+    pendingSaveRef.current = null
+    await performSave(pending.itemId, pending.content)
+  }, [performSave])
+
   const setActiveItemId = useCallback((id: string | null) => {
+    // Flush any pending save for the outgoing chapter so its edits aren't lost.
+    // Fire-and-forget: performSave uses pendingSaveRef's captured itemId, so the
+    // save lands on the correct chapter even after this switch completes.
+    void flushPendingSave()
+
     if (id === null) {
       setActiveItemIdState(null)
       return
@@ -119,7 +166,7 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
         pushError(`Couldn't load chapter: ${result.error}`)
       }
     })
-  }, [binderItems, pushError])
+  }, [binderItems, pushError, flushPendingSave])
 
   const addBinderItem = useCallback((item: BinderItemRow) => {
     setBinderItems(prev => [...prev, item])
@@ -138,34 +185,18 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
 
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
 
-    // Capture active item ID at call time so save targets the right chapter mid-debounce
     const targetItemId = activeItemId
+    if (!targetItemId) return
+
+    pendingSaveRef.current = { itemId: targetItemId, content }
 
     saveTimerRef.current = setTimeout(async () => {
-      setSaveStatus('saving')
-
-      const cachedChapter = targetItemId
-        ? (chapterCacheRef.current.get(targetItemId) ?? null)
-        : null
-
-      if (!cachedChapter) return
-
-      const result = await saveChapterAction(cachedChapter.id, content)
-      if (result.success) {
-        setSaveStatus('saved')
-        setWordCount(result.data.wordCount)
-        setChapterCache(prev => {
-          const m = new Map(prev)
-          const ch = m.get(targetItemId!)
-          if (ch) m.set(targetItemId!, { ...ch, content, wordCount: result.data.wordCount })
-          return m
-        })
-      } else {
-        setSaveStatus('unsaved')
-        pushError("Couldn't save. Retrying…")
-      }
+      const pending = pendingSaveRef.current
+      if (!pending) return
+      pendingSaveRef.current = null
+      await performSave(pending.itemId, pending.content)
     }, 2000)
-  }, [activeItemId, pushError])
+  }, [activeItemId, performSave])
 
   const updateChapterStatus = useCallback(async (status: ChapterData['status']) => {
     if (!activeItemId) return
@@ -244,6 +275,7 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     removeBinderItem,
     setBinderItems,
     updateChapterContent,
+    flushPendingSave,
     updateChapterStatus,
     updateChapterNotes,
     dismissError,
@@ -270,6 +302,7 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     removeBinderItem,
     setBinderItems,
     updateChapterContent,
+    flushPendingSave,
     updateChapterStatus,
     updateChapterNotes,
     dismissError,

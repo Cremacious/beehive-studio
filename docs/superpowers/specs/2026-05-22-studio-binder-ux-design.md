@@ -39,25 +39,30 @@ existing `⋯` → Rename path stays for menu-driven users.
 Add `onDoubleClick={() => setIsRenaming(true)}` to the title span
 (line ~126).
 
-### 2. Persistent "+ New Chapter" CTA in the binder
+### 2. Prominent "+ Add" primary CTA in the binder header
 
-**Current:** The only "add" affordance is a small `+` icon in the binder
-header (the `BinderAddMenu` dropdown). Easy to miss. Once the binder has
-chapters, there is no obvious way to add another *at the bottom*.
+**Original plan:** A persistent "+ New Chapter" footer button below the
+tree.
 
-**Fix:** Add a persistent footer button in the binder sidebar:
-**`+ New Chapter`**. Full-width, brand-color text, sits below the tree.
-Clicks create a new chapter at the end of the binder and immediately
-enter rename mode on the new item.
+**Revised after Task 5 testing (user feedback 2026-05-22):** The footer
+button was chapter-biased and de-emphasized the other 7 item types.
+Better solution: keep the existing top-of-header `+` menu but make it
+**prominent** — brand-yellow background, "+ Add" label, semibold —
+making it visually the binder's primary action. The menu's grouped
+content (Manuscript / Research from item 6) then introduces users to
+Collections, Front/Back Matter, Characters, Outlines, etc.
 
-**File:** `app/[locale]/(app)/studio/[bookId]/_components/binder/binder-tree.tsx`
+Additionally, wire the `pendingRenameId` flow into `BinderAddMenu`'s
+`handleAdd` so EVERY newly-created item (chapter, collection, character,
+outline, anything) opens in the editor and immediately enters rename
+mode. The user names the item before doing anything else.
 
-Insert a `<button>` below the scrollable tree (after line ~184), wired to
-`createBinderItemAction({ bookId, type: 'chapter', title: 'Untitled
-Chapter', order: <next> })`. On success, dispatch
-`setActiveItemId(newItem.id)` and set the new item into rename mode (will
-require lifting `isRenaming` state into the provider or using a
-`pendingRenameId` flag).
+**Files:** `app/[locale]/(app)/studio/[bookId]/_components/binder/binder-add-menu.tsx`
+(button styling + `setActiveItemId` + `setPendingRenameId` calls after
+each create).
+
+The `pendingRenameId` state on `BookEditorProvider` is kept — it's the
+mechanism that powers the immediate-rename UX.
 
 ### 3. New books land on an empty binder with a "Start your first chapter" CTA
 

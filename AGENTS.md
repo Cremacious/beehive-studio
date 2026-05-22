@@ -14,19 +14,23 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-22
 >
-> **Current focus:** Studio Editor Audit — sub-project 2 (Binder UX) — not started
+> **Current focus:** Studio Editor Audit — SP3 Specialized Editors (Front/Back Matter, Outline, Notes) — not started
 > **Active branch:** `main`
-> **Last commit:** fix(studio): explicit ProseMirror styles — headings, lists, quote, link all visible (root cause: @tailwindcss/typography not installed)
+> **Last commit:** fix(studio): explicit 'Edit character name' button on character profile (closes SP2)
 >
-> **The audit** is a 5-sub-project effort to make the book editor at
-> `/[locale]/studio/[bookId]` fully operational. Sequence (Option A):
+> **The audit** is a 6-sub-project effort to make the book editor at
+> `/[locale]/studio/[bookId]` fully operational.
 >
-> 1. ~~**Stability Pass**~~ **DONE** (2026-05-22).
-> 2. **Binder UX (IN FLIGHT)** — Tasks 1-4 done, Tasks 5-6 + items 7-10 pending. Spec: `docs/superpowers/specs/2026-05-22-studio-binder-ux-design.md`. Plan: `docs/superpowers/plans/2026-05-22-studio-binder-ux.md`.
-> 3. **Specialized Editors (NEW — after SP2)** — Front/Back Matter built-in tools, Outline editor, Research notes UX. Sequence: brainstorm + spec for each in order **B (Front/Back Matter) → C (Outline, with /design-critique) → D (Notes)**. Each gets its own session.
-> 4. **Toolbar + modes** *(was SP3)* — spec drafted at `docs/superpowers/specs/2026-05-22-studio-toolbar-modes-design.md` — reconfirm via /brainstorming before execution. Also pick up the deferred font-size mark from SP1.
-> 5. **Metadata + persistence** *(was SP4)* — synopsis/scene-planner/notes/word-goal/status/publishing-details correctness, bottom status-bar consolidation.
-> 6. **New surfaces** *(was SP5 minus Outline)* — Snapshot UI, mobile/tablet responsive, accessibility audit (aria-labels, contrast, ? keyboard cheatsheet).
+> 1. ~~**SP1 Stability Pass**~~ **DONE** (2026-05-22).
+> 2. ~~**SP2 Binder UX**~~ **DONE** (2026-05-22) — double-click rename (chapters + book + character), prominent `+ Add` button as binder primary CTA wired to `pendingRenameId` flow, Manuscript/Research grouped add menu with subtitles, Part→Collection (display-only), no auto-Chapter-1 + "Start your first chapter" CTA, Move-to-Collection submenu, friendlier "(only you can see these)" Research label, Hive explainer subtitle, brand-color discipline. Plus bug fixes: front_matter/back_matter chapter-row creation, ⋯-menu rename input flash. 76/76 tests, tsc clean.
+> 3. **SP3 Specialized Editors (NEXT)** — Front/Back Matter built-in tools → Outline editor → Research notes UX. Each gets its own /brainstorming → /writing-plans → execute cycle. Use /design-critique on Outline layout options before locking. Start with Front/Back Matter — smallest brainstorm, sets the "specialized binder editor" pattern.
+> 4. **SP4 Toolbar + modes** — spec drafted at `docs/superpowers/specs/2026-05-22-studio-toolbar-modes-design.md` — reconfirm via /brainstorming. Also pick up the deferred font-size mark from SP1.
+> 5. **SP5 Metadata + persistence** — synopsis/scene-planner/notes/word-goal/status/publishing-details correctness, bottom status-bar consolidation.
+> 6. **SP6 New surfaces** — Snapshot UI, mobile/tablet responsive, accessibility audit (aria-labels, contrast, ? keyboard cheatsheet).
+>
+> After all six: Claude Design redesigns visually, mechanical import. Then Phase 8 (Stripe monetization) resumes.
+>
+> **Next concrete step when resuming:** invoke `/brainstorming` for SP3 Feature B (Front/Back Matter built-in tools). The three open questions parked during SP2 audit were template vs structured-form vs hybrid for Front/Back; distinct UI features for Research notes; outline layout (nested list vs card grid vs Kanban). Brainstorm picks per feature.
 >
 > After all five: Claude Design will redesign the UI; I'll do a mechanical
 > import. Then Phase 8 (Stripe monetization) resumes.

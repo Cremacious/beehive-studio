@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useBookEditor } from '../book-editor-provider'
 import { createBinderItemAction, deleteBinderItemAction } from '@/lib/actions/binder.actions'
@@ -44,6 +44,16 @@ export function BinderItemMenu({ node, onRenameStart }: Props) {
   const { bookId, addBinderItem, removeBinderItem } = useBookEditor()
   const [open, setOpen] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
+  // Tracks whether the close was triggered by clicking Rename — used to
+  // suppress Radix's auto-restore-focus-to-trigger, which otherwise steals
+  // focus away from the rename input the moment it tries to mount.
+  const renameClicked = useRef(false)
+
+  function handleRenameStart() {
+    renameClicked.current = true
+    setOpen(false)
+    onRenameStart()
+  }
 
   function handleOpenChange(next: boolean) {
     setOpen(next)
@@ -100,7 +110,7 @@ export function BinderItemMenu({ node, onRenameStart }: Props) {
             <MenuItem onClick={() => handleAddChild('chapter', 'Untitled Chapter')}>
               Add Chapter
             </MenuItem>
-            <MenuItem onClick={() => { setOpen(false); onRenameStart() }}>
+            <MenuItem onClick={handleRenameStart}>
               Rename
             </MenuItem>
             <DropdownMenuSeparator />
@@ -118,7 +128,7 @@ export function BinderItemMenu({ node, onRenameStart }: Props) {
             <MenuItem onClick={() => handleAddChild('outline', 'Untitled Outline')}>
               Add Outline
             </MenuItem>
-            <MenuItem onClick={() => { setOpen(false); onRenameStart() }}>
+            <MenuItem onClick={handleRenameStart}>
               Rename
             </MenuItem>
             <DropdownMenuSeparator />
@@ -127,7 +137,7 @@ export function BinderItemMenu({ node, onRenameStart }: Props) {
       default:
         return (
           <>
-            <MenuItem onClick={() => { setOpen(false); onRenameStart() }}>
+            <MenuItem onClick={handleRenameStart}>
               Rename
             </MenuItem>
             <DropdownMenuSeparator />
@@ -150,6 +160,15 @@ export function BinderItemMenu({ node, onRenameStart }: Props) {
         align="start"
         className="w-44 p-1"
         onClick={e => e.stopPropagation()}
+        onCloseAutoFocus={e => {
+          // Only suppress focus-restoration when closing because Rename was
+          // clicked — otherwise (Escape, outside-click) focus correctly
+          // returns to the trigger for keyboard nav.
+          if (renameClicked.current) {
+            e.preventDefault()
+            renameClicked.current = false
+          }
+        }}
       >
         {menuItems}
 

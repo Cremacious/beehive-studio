@@ -41,6 +41,7 @@ export const createBinderItemSchema = z.object({
   ]),
   title: z.string().min(1).max(200),
   order: z.number().int().min(0).default(0),
+  content: z.record(z.string(), z.unknown()).optional().nullable(),
 })
 
 export const updateBinderItemSchema = z.object({

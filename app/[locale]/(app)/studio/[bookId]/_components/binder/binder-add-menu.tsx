@@ -72,12 +72,18 @@ export function BinderAddMenu() {
     const maxOrder = rootItems.length > 0 ? Math.max(...rootItems.map(i => i.order)) : -1
     const order = maxOrder + 1
 
+    const initialContent =
+      option.type === 'front_matter' || option.type === 'back_matter'
+        ? { subtype: null, fields: {} }
+        : null
+
     const result = await createBinderItemAction({
       bookId,
       parentId: null,
       type: option.type,
       title: option.defaultTitle,
       order,
+      content: initialContent,
     })
     if (result.success) {
       addBinderItem({
@@ -87,7 +93,7 @@ export function BinderAddMenu() {
         type: option.type,
         title: option.defaultTitle,
         order,
-        content: null,
+        content: initialContent,
         chapterId: result.data.chapterId,
         createdAt: new Date(),
         updatedAt: new Date(),

@@ -105,6 +105,7 @@ export async function createBinderItemAction(input: {
   type: BinderItemRow['type']
   title: string
   order?: number
+  content?: Record<string, unknown> | null
 }): Promise<ActionResult<{ id: string; chapterId: string | null }>> {
   const userId = await requireAuth()
 
@@ -125,6 +126,7 @@ export async function createBinderItemAction(input: {
       type: parsed.data.type,
       title: parsed.data.title,
       order: parsed.data.order,
+      content: parsed.data.content ?? null,
     })
 
     let chapterId: string | null = null

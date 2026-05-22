@@ -1,8 +1,20 @@
 'use client'
 
 import type { BinderItemRow } from '@/lib/actions/binder.actions'
-import type { FrontBackMatterContent } from '@/lib/front-back-matter/types'
+import type {
+  FrontBackMatterContent,
+  TitlePageFields,
+  CopyrightFields,
+  DedicationFields,
+  AcknowledgmentsFields,
+  AboutAuthorFields,
+} from '@/lib/front-back-matter/types'
 import { SubtypePicker } from './subtype-picker'
+import { TitlePageForm } from './title-page-form'
+import { CopyrightForm } from './copyright-form'
+import { DedicationForm } from './dedication-form'
+import { AcknowledgmentsForm } from './acknowledgments-form'
+import { AboutAuthorForm } from './about-author-form'
 
 type Props = {
   item: BinderItemRow
@@ -27,12 +39,22 @@ export function FrontBackMatterRenderer({ item }: Props): React.ReactElement | n
 
   if (content.subtype === 'custom') return null
 
-  // Specialized forms — wired up in Task 4. Placeholder so this compiles now.
-  return (
-    <main className="flex-1 flex items-center justify-center p-8 text-sm text-muted-foreground">
-      <p>Form for &quot;{content.subtype}&quot; — coming in Task 4.</p>
-    </main>
-  )
+  const fields = content.fields as Record<string, unknown>
+
+  switch (content.subtype) {
+    case 'title_page':
+      return <TitlePageForm itemId={item.id} initialFields={fields as Partial<TitlePageFields>} />
+    case 'copyright':
+      return <CopyrightForm itemId={item.id} initialFields={fields as Partial<CopyrightFields>} />
+    case 'dedication':
+      return <DedicationForm itemId={item.id} initialFields={fields as Partial<DedicationFields>} />
+    case 'acknowledgments':
+      return <AcknowledgmentsForm itemId={item.id} initialFields={fields as Partial<AcknowledgmentsFields>} />
+    case 'about_author':
+      return <AboutAuthorForm itemId={item.id} initialFields={fields as Partial<AboutAuthorFields>} />
+    default:
+      return null
+  }
 }
 
 // Returns true if this item should use the FrontBackMatterRenderer

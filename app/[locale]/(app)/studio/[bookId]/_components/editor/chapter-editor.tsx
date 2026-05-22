@@ -155,13 +155,13 @@ export function ChapterEditor() {
     function handleKeyDown(e: KeyboardEvent) {
       if (!(e.metaKey || e.ctrlKey)) return
 
-      if (e.key === 'f' && editor) {
+      if (e.key === 'f' && editor && !editor.isDestroyed) {
         e.preventDefault()
         setFindOpen(f => !f)
         return
       }
 
-      if (e.key === 's' && editor) {
+      if (e.key === 's' && editor && !editor.isDestroyed) {
         e.preventDefault()
         const json = editor.getJSON()
         updateChapterContent(json)
@@ -174,8 +174,12 @@ export function ChapterEditor() {
 
   // When chapter data arrives after the async fetch, populate the editor.
   // useEditor initializes with null because activeChapter is always null on first render.
+  // editor.isDestroyed guard handles React 19 strict-mode's unmount/remount
+  // simulation: the effect can re-run with an editor whose internal view was
+  // destroyed by the simulated unmount. Accessing editor.commands on a
+  // destroyed editor throws "Cannot read properties of null (reading 'commands')".
   useEffect(() => {
-    if (!editor || !activeChapter || !editor.isEmpty) return
+    if (!editor || editor.isDestroyed || !activeChapter || !editor.isEmpty) return
     editor.commands.setContent(
       activeChapter.content as Parameters<typeof editor.commands.setContent>[0],
       { emitUpdate: false },
@@ -183,6 +187,7 @@ export function ChapterEditor() {
     // Defer focus past the DOM update from setContent — calling focus()
     // synchronously inside the same tick is unreliable in React 19 + TipTap.
     requestAnimationFrame(() => {
+      if (editor.isDestroyed) return
       editor.commands.focus('end')
     })
     setEditorText(extractPlainText(activeChapter.content))
@@ -247,7 +252,9 @@ export function ChapterEditor() {
       <div className="flex flex-1 overflow-hidden">
         <div
           className="flex-1 overflow-y-auto cursor-text"
-          onClick={() => editor?.commands.focus()}
+          onClick={() => {
+            if (editor && !editor.isDestroyed) editor.commands.focus()
+          }}
         >
           <EditorContent
             editor={editor}

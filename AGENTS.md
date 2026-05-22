@@ -14,33 +14,33 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-22
 >
-> **Current focus:** Studio Editor Audit — SP3 Specialized Editors (Front/Back Matter, Outline, Notes) — not started
+> **Current focus:** SP3 Specialized Editors — Feature C (Outline editor) — not started
 > **Active branch:** `main`
-> **Last commit:** fix(studio): explicit 'Edit character name' button on character profile (closes SP2)
+> **Last commit:** fix(studio): guard TipTap editor.commands on destroyed editor (closes SP3 Feature B)
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.
 >
-> 1. ~~**SP1 Stability Pass**~~ **DONE** (2026-05-22).
-> 2. ~~**SP2 Binder UX**~~ **DONE** (2026-05-22) — double-click rename (chapters + book + character), prominent `+ Add` button as binder primary CTA wired to `pendingRenameId` flow, Manuscript/Research grouped add menu with subtitles, Part→Collection (display-only), no auto-Chapter-1 + "Start your first chapter" CTA, Move-to-Collection submenu, friendlier "(only you can see these)" Research label, Hive explainer subtitle, brand-color discipline. Plus bug fixes: front_matter/back_matter chapter-row creation, ⋯-menu rename input flash. 76/76 tests, tsc clean.
-> 3. **SP3 Specialized Editors (NEXT)** — Front/Back Matter built-in tools → Outline editor → Research notes UX. Each gets its own /brainstorming → /writing-plans → execute cycle. Use /design-critique on Outline layout options before locking. Start with Front/Back Matter — smallest brainstorm, sets the "specialized binder editor" pattern.
-> 4. **SP4 Toolbar + modes** — spec drafted at `docs/superpowers/specs/2026-05-22-studio-toolbar-modes-design.md` — reconfirm via /brainstorming. Also pick up the deferred font-size mark from SP1.
+> 1. ~~**SP1 Stability Pass**~~ DONE.
+> 2. ~~**SP2 Binder UX**~~ DONE.
+> 3. **SP3 Specialized Editors (IN FLIGHT)**:
+>    - ~~Feature B: Front/Back Matter~~ **DONE** (2026-05-22) — Title Page / Copyright / Dedication / Acknowledgments / About the Author specialized forms + Custom TipTap fallback. Sub-type picker, autosave with visible status indicator, export integration (docx + epub). 92/92 tests, tsc clean. Spec + plan: `docs/superpowers/specs/2026-05-22-studio-front-back-matter-design.md`, `docs/superpowers/plans/2026-05-22-studio-front-back-matter.md`.
+>    - **Feature C: Outline editor (NEXT)** — start with `/brainstorming` + `/design-critique` to compare layout options (C1 nested list / C2 card grid / C3 Kanban board) before locking the spec.
+>    - Feature D: Research notes UX — last, smallest, borrows patterns from B + C.
+> 4. **SP4 Toolbar + modes** — spec drafted at `docs/superpowers/specs/2026-05-22-studio-toolbar-modes-design.md`. Also pick up the deferred font-size mark from SP1.
 > 5. **SP5 Metadata + persistence** — synopsis/scene-planner/notes/word-goal/status/publishing-details correctness, bottom status-bar consolidation.
 > 6. **SP6 New surfaces** — Snapshot UI, mobile/tablet responsive, accessibility audit (aria-labels, contrast, ? keyboard cheatsheet).
 >
 > After all six: Claude Design redesigns visually, mechanical import. Then Phase 8 (Stripe monetization) resumes.
 >
-> **Next concrete step when resuming:** invoke `/brainstorming` for SP3 Feature B (Front/Back Matter built-in tools). The three open questions parked during SP2 audit were template vs structured-form vs hybrid for Front/Back; distinct UI features for Research notes; outline layout (nested list vs card grid vs Kanban). Brainstorm picks per feature.
->
-> After all five: Claude Design will redesign the UI; I'll do a mechanical
-> import. Then Phase 8 (Stripe monetization) resumes.
->
-> **Chris's working preferences (confirmed 2026-05-22):**
+> **Chris's working preferences (confirmed across SP1–SP3 B):**
 > - Commits go straight to `main`, no feature branches.
 > - Per-task manual verification (don't batch).
 > - Subagent-driven execution preserves context window.
 >
-> **Next concrete step when resuming:** invoke `/brainstorming` against the SP2 draft spec to reconfirm scope, then `writing-plans` for the plan, then execute via subagent-driven development.
+> **Bug-fix posture:** the global error boundary at `app/[locale]/error.tsx` logs errors with stack + message + digest. Always start with the console error before guessing causes.
+>
+> **Next concrete step when resuming:** invoke `/brainstorming` for SP3 Feature C (Outline editor). Use `/design-critique` to compare C1 / C2 / C3 layouts with mockups before locking the spec.
 
 ## ⚙️ Working Agreement (read this every session)
 

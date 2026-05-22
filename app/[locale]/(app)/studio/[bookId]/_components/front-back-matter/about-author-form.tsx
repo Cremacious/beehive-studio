@@ -5,6 +5,7 @@ import { updateBinderItemAction } from '@/lib/actions/binder.actions'
 import { useCloudinaryUpload } from '@/hooks/use-cloudinary-upload'
 import { useBookEditor } from '../book-editor-provider'
 import type { AboutAuthorFields } from '@/lib/front-back-matter/types'
+import { SaveStatusBadge, type FormSaveStatus } from './save-status-badge'
 
 const cloudinaryConfigured = !!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
 
@@ -23,13 +24,17 @@ export function AboutAuthorForm({ itemId, initialFields }: Props) {
   })
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+  const [saveStatus, setSaveStatus] = useState<FormSaveStatus>('idle')
 
   function scheduleSave(next: AboutAuthorFields) {
+    setSaveStatus('unsaved')
     if (saveTimer.current) clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(async () => {
+      setSaveStatus('saving')
       const newContent = { subtype: 'about_author' as const, fields: next }
       updateBinderItem(itemId, { content: newContent })
-      await updateBinderItemAction(itemId, { content: newContent })
+      const result = await updateBinderItemAction(itemId, { content: newContent })
+      setSaveStatus(result.success ? 'saved' : 'unsaved')
     }, 2000)
   }
 
@@ -68,9 +73,12 @@ export function AboutAuthorForm({ itemId, initialFields }: Props) {
   return (
     <main className="flex-1 overflow-y-auto p-8">
       <div className="max-w-2xl mx-auto flex flex-col gap-5">
-        <header>
-          <h2 className="text-lg font-semibold text-foreground">About the Author</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">A short bio with optional photo and links.</p>
+        <header className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">About the Author</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">A short bio with optional photo and links.</p>
+          </div>
+          <SaveStatusBadge status={saveStatus} />
         </header>
 
         <label className="flex flex-col gap-1.5">

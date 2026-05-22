@@ -21,9 +21,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 > **The audit** is a 5-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational. Sequence (Option A):
 >
-> 1. **Stability Pass** (spec written, awaiting plan + execution) — crash + data-loss bugs, save-on-unload, Cmd+S. See `docs/superpowers/specs/2026-05-22-studio-editor-stability-pass-design.md`.
-> 2. Binder UX — drag-drop edges, book-title rename.
-> 3. Editor toolbar + modes — toolbar visual bugs, remove ambient sounds, find/replace scope.
+> 1. **Stability Pass** (in progress — see commit log) — crash + data-loss bugs, save-on-unload, Cmd+S, autofocus on chapter open. See `docs/superpowers/specs/2026-05-22-studio-editor-stability-pass-design.md` and `docs/superpowers/plans/2026-05-22-studio-editor-stability-pass.md`.
+> 2. Binder UX — drag-drop edges, book-title rename. **Add to spec:** new books should NOT auto-create Chapter 1 — let the user create it themselves and name it (user feedback 2026-05-22).
+> 3. Editor toolbar + modes — toolbar visual bugs, remove ambient sounds, find/replace scope. **Add to spec:** light-mode toggle (white bg / black text) alongside the existing dark default, persisted to localStorage (user feedback 2026-05-22).
 > 4. Metadata + persistence — synopsis/scene-planner/notes/word-goal/status/publishing-details correctness.
 > 5. New surfaces — Snapshot UI, Outline editor, mobile/tablet responsive.
 >

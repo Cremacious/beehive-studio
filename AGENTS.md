@@ -14,9 +14,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-22
 >
-> **Current focus:** SP3 Specialized Editors — Feature C (Outline editor) — not started
+> **Current focus:** SP3 Specialized Editors — Feature D (Research notes UX) — not started
 > **Active branch:** `main`
-> **Last commit:** fix(studio): guard TipTap editor.commands on destroyed editor (closes SP3 Feature B)
+> **Last commit:** feat(studio): route outline binder items to OutlineBoard (closes SP3 Feature C)
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.
@@ -24,23 +24,23 @@ This version has breaking changes — APIs, conventions, and file structure may 
 > 1. ~~**SP1 Stability Pass**~~ DONE.
 > 2. ~~**SP2 Binder UX**~~ DONE.
 > 3. **SP3 Specialized Editors (IN FLIGHT)**:
->    - ~~Feature B: Front/Back Matter~~ **DONE** (2026-05-22) — Title Page / Copyright / Dedication / Acknowledgments / About the Author specialized forms + Custom TipTap fallback. Sub-type picker, autosave with visible status indicator, export integration (docx + epub). 92/92 tests, tsc clean. Spec + plan: `docs/superpowers/specs/2026-05-22-studio-front-back-matter-design.md`, `docs/superpowers/plans/2026-05-22-studio-front-back-matter.md`.
->    - **Feature C: Outline editor (NEXT)** — start with `/brainstorming` + `/design-critique` to compare layout options (C1 nested list / C2 card grid / C3 Kanban board) before locking the spec.
->    - Feature D: Research notes UX — last, smallest, borrows patterns from B + C.
+>    - ~~Feature B: Front/Back Matter~~ DONE (2026-05-22).
+>    - ~~Feature C: Outline editor (Kanban)~~ **DONE** (2026-05-22) — user-editable columns, draggable cards w/ title + synopsis, optional chapter linking that navigates to the linked chapter on click. Default 3-column seed (Act 1/2/3). 104/104 tests, tsc clean. Spec + plan: `docs/superpowers/specs/2026-05-22-studio-outline-editor-design.md`, `docs/superpowers/plans/2026-05-22-studio-outline-editor.md`.
+>    - **Feature D: Research notes UX (NEXT)** — smallest of the three. Borrows the specialized-binder-editor pattern from B + C. Brainstorm question parked from earlier: B1 simpler-editor / B2 note-app features / B3 plain-text quick-capture.
 > 4. **SP4 Toolbar + modes** — spec drafted at `docs/superpowers/specs/2026-05-22-studio-toolbar-modes-design.md`. Also pick up the deferred font-size mark from SP1.
 > 5. **SP5 Metadata + persistence** — synopsis/scene-planner/notes/word-goal/status/publishing-details correctness, bottom status-bar consolidation.
 > 6. **SP6 New surfaces** — Snapshot UI, mobile/tablet responsive, accessibility audit (aria-labels, contrast, ? keyboard cheatsheet).
 >
 > After all six: Claude Design redesigns visually, mechanical import. Then Phase 8 (Stripe monetization) resumes.
 >
-> **Chris's working preferences (confirmed across SP1–SP3 B):**
+> **Chris's working preferences (confirmed across SP1–SP3 C):**
 > - Commits go straight to `main`, no feature branches.
 > - Per-task manual verification (don't batch).
 > - Subagent-driven execution preserves context window.
 >
 > **Bug-fix posture:** the global error boundary at `app/[locale]/error.tsx` logs errors with stack + message + digest. Always start with the console error before guessing causes.
 >
-> **Next concrete step when resuming:** invoke `/brainstorming` for SP3 Feature C (Outline editor). Use `/design-critique` to compare C1 / C2 / C3 layouts with mockups before locking the spec.
+> **Next concrete step when resuming:** invoke `/brainstorming` for SP3 Feature D (Research notes UX). Pick from B1/B2/B3, then spec → plan → execute.
 
 ## ⚙️ Working Agreement (read this every session)
 

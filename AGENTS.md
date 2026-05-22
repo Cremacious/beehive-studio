@@ -14,19 +14,27 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-22
 >
-> **Current focus:** Phase 8 — Stripe monetization (not started)
+> **Current focus:** Studio Editor Audit — sub-project 1 (Stability Pass)
 > **Active branch:** `main`
-> **Last commit:** docs: add Resume Here handoff block + Stop hook to nag on stale AGENTS.md
+> **Last commit:** docs: spec for studio editor stability pass (sub-project 1/5)
+>
+> **The audit** is a 5-sub-project effort to make the book editor at
+> `/[locale]/studio/[bookId]` fully operational. Sequence (Option A):
+>
+> 1. **Stability Pass** (spec written, awaiting plan + execution) — crash + data-loss bugs, save-on-unload, Cmd+S. See `docs/superpowers/specs/2026-05-22-studio-editor-stability-pass-design.md`.
+> 2. Binder UX — drag-drop edges, book-title rename.
+> 3. Editor toolbar + modes — toolbar visual bugs, remove ambient sounds, find/replace scope.
+> 4. Metadata + persistence — synopsis/scene-planner/notes/word-goal/status/publishing-details correctness.
+> 5. New surfaces — Snapshot UI, Outline editor, mobile/tablet responsive.
+>
+> After all five: Claude Design will redesign the UI; I'll do a mechanical
+> import. Then Phase 8 (Stripe monetization) resumes.
 >
 > **Next concrete step when resuming:**
-> 1. Run `npm install` (dev env error: `'next' is not recognized` — node_modules missing)
-> 2. Brainstorm Phase 8 pricing model + upgrade triggers (tie to existing `FREE_LIMIT_REACHED` / `PREMIUM_REQUIRED:<feature>` codes)
-> 3. Then: Stripe products, checkout server action, webhook handler, `userBilling` table wiring
->
-> **Open questions for the user:**
-> - Pricing tiers + trial length?
-> - Annual vs monthly only, or both?
-> - Self-serve cancel/downgrade in v1, or email-support only?
+> 1. Run `npm install` if dev env still has the missing-`next` error.
+> 2. Read the sub-project 1 spec above.
+> 3. Invoke the `writing-plans` skill to turn the spec into an executable plan.
+> 4. Execute the plan, verify all six manual tests in the spec's Testing section.
 
 ## ⚙️ Working Agreement (read this every session)
 

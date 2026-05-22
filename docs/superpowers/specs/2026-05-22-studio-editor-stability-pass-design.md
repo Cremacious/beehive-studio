@@ -24,6 +24,9 @@ Make the editor safe to use. After this ships, a writer can:
 - Switch between chapters with pending unsaved edits without losing them
 - Close the browser tab without silently dropping the last few seconds of typing
 - Hit Cmd/Ctrl+S to force-save on demand
+- See a visible blinking cursor in the editor the moment a chapter opens
+  (Amendment 1, 2026-05-22 — added after /design-critique surfaced this
+  as the highest-impact usability blocker)
 
 No visual polish, no missing features beyond the two below, no fixes to
 non-critical flows. Those land in sub-projects 2–5.
@@ -122,6 +125,56 @@ Add an editor-scoped `keydown` listener in `chapter-editor.tsx` that:
 **Toast infrastructure:** Reuse `ErrorToasts` with a new success variant,
 or add a minimal toast primitive. Pick whichever requires fewer new
 abstractions — this is plumbing, not a feature.
+
+### Bug 4 — Editor not focused on chapter open (Amendment 1)
+
+**Symptom:** When a chapter opens, no caret appears. Users cannot type
+until they click a toolbar button (which internally calls
+`editor.chain().focus()`).
+
+**Root cause:** Two compounding problems —
+1. `useEditor` config does not enable autofocus.
+2. The wrapper `<div className="flex-1 overflow-y-auto">` around
+   `EditorContent` is a wider click target than the content area. Clicks
+   in the empty whitespace land on the wrapper, not on the editor's
+   contentEditable, so focus never moves.
+
+A first attempt added `autofocus: 'end'` to `useEditor` and a
+`editor.commands.focus('end')` call after the post-hydration `setContent`.
+This did not resolve the issue in practice (user testing 2026-05-22).
+TipTap autofocus combined with `immediatelyRender: false` and React 19's
+strict-mode double-invoke pattern is unreliable.
+
+**Fix — three layers (defense in depth):**
+
+1. **Keep `autofocus: 'end'`** in the `useEditor` config (already added).
+2. **Replace the post-hydration `editor.commands.focus('end')` with a
+   deferred call** using `requestAnimationFrame` to ensure the DOM update
+   from `setContent` has flushed before focusing:
+   ```ts
+   useEffect(() => {
+     if (!editor || !activeChapter || !editor.isEmpty) return
+     editor.commands.setContent(
+       activeChapter.content as Parameters<typeof editor.commands.setContent>[0],
+       { emitUpdate: false },
+     )
+     requestAnimationFrame(() => {
+       editor.commands.focus('end')
+     })
+     setEditorText(extractPlainText(activeChapter.content))
+   }, [activeChapter, editor])
+   ```
+3. **Click-to-focus on the editor wrapper.** Add an `onClick` handler on
+   the `<div className="flex-1 overflow-y-auto">` that wraps
+   `EditorContent` — clicking anywhere in that area calls
+   `editor?.commands.focus()`. This makes the entire whitespace below the
+   content a click target for typing.
+4. **Caret visibility.** Add to `app/globals.css` (or the editor's CSS):
+   ```css
+   .ProseMirror { caret-color: var(--color-brand); }
+   ```
+   The default caret is a 1px gray line on near-black background, easy to
+   miss. Brand-yellow caret is unmissable and reinforces the brand.
 
 ### Verification task — Cmd+B / Cmd+I / Cmd+U work
 

@@ -21,11 +21,13 @@ This version has breaking changes — APIs, conventions, and file structure may 
 > **The audit** is a 5-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational. Sequence (Option A):
 >
-> 1. **Stability Pass** (in progress — see commit log) — crash + data-loss bugs, save-on-unload, Cmd+S, autofocus on chapter open. See `docs/superpowers/specs/2026-05-22-studio-editor-stability-pass-design.md` and `docs/superpowers/plans/2026-05-22-studio-editor-stability-pass.md`.
-> 2. Binder UX — drag-drop edges, book-title rename. **Add to spec:** new books should NOT auto-create Chapter 1 — let the user create it themselves and name it (user feedback 2026-05-22).
-> 3. Editor toolbar + modes — toolbar visual bugs, remove ambient sounds, find/replace scope. **Add to spec:** light-mode toggle (white bg / black text) alongside the existing dark default, persisted to localStorage (user feedback 2026-05-22).
-> 4. Metadata + persistence — synopsis/scene-planner/notes/word-goal/status/publishing-details correctness.
-> 5. New surfaces — Snapshot UI, Outline editor, mobile/tablet responsive.
+> 1. **Stability Pass** (in progress — autofocus fix outstanding) — crash + data-loss bugs, save-on-unload, Cmd+S, **autofocus + caret visibility (Amendment 1)**. See `docs/superpowers/specs/2026-05-22-studio-editor-stability-pass-design.md`.
+> 2. **Binder UX** — double-click rename, persistent "+ New Chapter" CTA, no auto-Chapter-1 on book creation, book-title rename, brand-color discipline. Spec: `docs/superpowers/specs/2026-05-22-studio-binder-ux-design.md`.
+> 3. **Editor toolbar + modes** — 3-zone toolbar layout, lucide icons, distinct align icons, light-mode toggle, remove ambient sounds, design-token cleanup, scoped Cmd+F. Spec: `docs/superpowers/specs/2026-05-22-studio-toolbar-modes-design.md`.
+> 4. Metadata + persistence — synopsis/scene-planner/notes/word-goal/status/publishing-details correctness, bottom status-bar consolidation.
+> 5. New surfaces — Snapshot UI, Outline editor, mobile/tablet responsive, accessibility audit (aria-labels, contrast, ? keyboard cheatsheet).
+>
+> Design critique informing 2/3/4/5: see git history for the 2026-05-22 critique session.
 >
 > After all five: Claude Design will redesign the UI; I'll do a mechanical
 > import. Then Phase 8 (Stripe monetization) resumes.

@@ -35,7 +35,7 @@ type Props = {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function BinderItem({ node, depth }: Props) {
-  const { activeItemId, setActiveItemId, updateBinderItem } = useBookEditor()
+  const { activeItemId, setActiveItemId, updateBinderItem, pendingRenameId, setPendingRenameId } = useBookEditor()
   const { collapsed, toggleCollapsed } = useBinderTree()
 
   const [isRenaming, setIsRenaming] = useState(false)
@@ -63,6 +63,13 @@ export function BinderItem({ node, depth }: Props) {
       return () => clearTimeout(id)
     }
   }, [isRenaming])
+
+  useEffect(() => {
+    if (pendingRenameId === node.id) {
+      setIsRenaming(true)
+      setPendingRenameId(null)
+    }
+  }, [pendingRenameId, node.id, setPendingRenameId])
 
   const commitRename = useCallback(async () => {
     const newTitle = inputRef.current?.value.trim() || node.title

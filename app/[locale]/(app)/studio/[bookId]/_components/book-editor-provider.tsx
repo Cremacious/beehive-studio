@@ -51,6 +51,8 @@ type BookEditorContextValue = {
   toggleFocusMode: () => void
   corkboardMode: boolean
   toggleCorkboardMode: () => void
+  pendingRenameId: string | null
+  setPendingRenameId: (id: string | null) => void
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
@@ -84,6 +86,7 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
   const toggleFocusMode = useCallback(() => setFocusMode(f => !f), [])
   const [corkboardMode, setCorkboardMode] = useState(false)
   const toggleCorkboardMode = useCallback(() => setCorkboardMode(c => !c), [])
+  const [pendingRenameId, setPendingRenameId] = useState<string | null>(null)
 
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const notesTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -317,6 +320,8 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     toggleFocusMode,
     corkboardMode,
     toggleCorkboardMode,
+    pendingRenameId,
+    setPendingRenameId,
   }), [
     bookId,
     bookTitle,
@@ -344,6 +349,7 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     toggleFocusMode,
     corkboardMode,
     toggleCorkboardMode,
+    pendingRenameId,
   ])
 
   return <BookEditorContext.Provider value={value}>{children}</BookEditorContext.Provider>

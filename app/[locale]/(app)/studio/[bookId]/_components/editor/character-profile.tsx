@@ -116,13 +116,21 @@ export function CharacterProfile({ item }: Props) {
             onBlur={commitRename}
           />
         ) : (
-          <h2
-            className="text-lg font-semibold text-foreground cursor-pointer hover:text-brand transition-colors"
-            onDoubleClick={() => setIsRenaming(true)}
-            title="Double-click to rename"
-          >
-            {localTitle}
-          </h2>
+          <div className="flex items-center gap-3">
+            <h2
+              className="text-lg font-semibold text-foreground cursor-pointer hover:text-brand transition-colors"
+              onDoubleClick={() => setIsRenaming(true)}
+              title="Double-click to rename"
+            >
+              {localTitle}
+            </h2>
+            <button
+              onClick={() => setIsRenaming(true)}
+              className="text-xs px-2 py-1 rounded-md border border-border text-muted-foreground hover:text-foreground hover:border-brand/40 transition-colors"
+            >
+              ✎ Edit character name
+            </button>
+          </div>
         )}
         <p className="text-xs text-muted-foreground mt-0.5">Character Profile</p>
       </div>

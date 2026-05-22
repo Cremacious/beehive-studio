@@ -9,6 +9,7 @@ import { useBookEditor } from '../book-editor-provider'
 import type { CharacterCountStorage } from '@tiptap/extensions'
 import { ExportModal } from '../export-modal'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { AlignLeft, AlignCenter, AlignRight } from 'lucide-react'
 
 type Props = {
   editor: Editor
@@ -31,6 +32,12 @@ type ToolbarButtonProps = {
 function ToolbarButton({ onClick, disabled, isActive, title, children }: ToolbarButtonProps) {
   const button = (
     <button
+      // Prevent the button from stealing focus from the editor on click.
+      // Without this, the editor's selection collapses to the previous cursor
+      // position when the button is pressed — node-level commands (heading,
+      // list, blockquote, link) silently fail because they no longer have a
+      // valid selection range to act on. Standard TipTap toolbar pattern.
+      onMouseDown={e => e.preventDefault()}
       onClick={onClick}
       disabled={disabled}
       className={cn(
@@ -231,27 +238,27 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
 
         <Separator />
 
-        {/* Align */}
+        {/* Align — distinct lucide icons so users can tell L/C/R apart */}
         <ToolbarButton
           onClick={() => editor.chain().focus().setTextAlign('left').run()}
           isActive={editor.isActive({ textAlign: 'left' })}
           title="Align left"
         >
-          ≡
+          <AlignLeft size={14} />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().setTextAlign('center').run()}
           isActive={editor.isActive({ textAlign: 'center' })}
           title="Align center"
         >
-          ≡
+          <AlignCenter size={14} />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().setTextAlign('right').run()}
           isActive={editor.isActive({ textAlign: 'right' })}
           title="Align right"
         >
-          ≡
+          <AlignRight size={14} />
         </ToolbarButton>
 
         <span className="flex-1" />
@@ -279,6 +286,7 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
         <Tooltip>
           <TooltipTrigger asChild>
             <button
+              onMouseDown={e => e.preventDefault()}
               onClick={() => setShowExport(true)}
               className="flex items-center gap-1 rounded px-2 py-1 text-[10px] text-[#888] hover:bg-[#2a2a2a] hover:text-[#ccc] transition-colors"
             >
@@ -303,6 +311,7 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
         <Tooltip>
           <TooltipTrigger asChild>
             <button
+              onMouseDown={e => e.preventDefault()}
               onClick={toggleTypewriterMode}
               className={cn(
                 'text-xs px-2 py-1 rounded transition-colors ml-1',
@@ -315,7 +324,9 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
             </button>
           </TooltipTrigger>
           <TooltipContent>
-            {typewriterMode ? 'Exit typewriter mode' : 'Typewriter mode — keep cursor centered'}
+            {typewriterMode
+              ? 'Exit typewriter mode'
+              : 'Typewriter mode — keeps the line you\'re typing centered on screen as you write'}
           </TooltipContent>
         </Tooltip>
 
@@ -323,6 +334,7 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
         <Tooltip>
           <TooltipTrigger asChild>
             <button
+              onMouseDown={e => e.preventDefault()}
               onClick={onToggleAnalysis}
               className={cn(
                 'text-xs px-2 py-1 rounded transition-colors ml-1',
@@ -334,13 +346,14 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
               📊
             </button>
           </TooltipTrigger>
-          <TooltipContent>Writing analysis</TooltipContent>
+          <TooltipContent>Writing analysis — readability, pacing, word stats</TooltipContent>
         </Tooltip>
 
         {/* Ambient sounds toggle */}
         <Tooltip>
           <TooltipTrigger asChild>
             <button
+              onMouseDown={e => e.preventDefault()}
               onClick={onToggleSounds}
               className={cn(
                 'text-xs px-2 py-1 rounded transition-colors ml-1',
@@ -359,6 +372,7 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
         <Tooltip>
           <TooltipTrigger asChild>
             <button
+              onMouseDown={e => e.preventDefault()}
               onClick={toggleFocusMode}
               className={cn(
                 'text-xs px-2 py-1 rounded transition-colors ml-1',

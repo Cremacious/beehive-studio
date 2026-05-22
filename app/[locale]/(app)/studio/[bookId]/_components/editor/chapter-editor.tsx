@@ -51,6 +51,7 @@ export function ChapterEditor() {
   const editor = useEditor(
     {
       immediatelyRender: false,
+      autofocus: 'end',
       extensions: [
         StarterKit,
         Placeholder.configure({ placeholder: 'Start writing…' }),
@@ -95,6 +96,10 @@ export function ChapterEditor() {
       activeChapter.content as Parameters<typeof editor.commands.setContent>[0],
       { emitUpdate: false },
     )
+    // After hydration, drop the cursor at the end so the user can type immediately.
+    // autofocus on useEditor only fires for the initial mount with content === null;
+    // this handles the cache-miss path where content arrives asynchronously.
+    editor.commands.focus('end')
     setEditorText(extractPlainText(activeChapter.content))
   }, [activeChapter, editor])
 

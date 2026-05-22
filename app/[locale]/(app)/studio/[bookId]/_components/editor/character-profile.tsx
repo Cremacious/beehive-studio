@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { BinderItemRow } from '@/lib/actions/binder.actions'
 import { updateBinderItemAction } from '@/lib/actions/binder.actions'
 import { useBookEditor } from '../book-editor-provider'
@@ -69,6 +69,28 @@ export function CharacterProfile({ item }: Props) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const profileRef = useRef<CharacterProfile>(profile)
 
+  const [isRenaming, setIsRenaming] = useState(false)
+  const [localTitle, setLocalTitle] = useState(item.title)
+  const titleInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (isRenaming) {
+      titleInputRef.current?.focus()
+      titleInputRef.current?.select()
+    }
+  }, [isRenaming])
+
+  async function commitRename() {
+    const next = titleInputRef.current?.value.trim() || localTitle
+    setIsRenaming(false)
+    if (next === localTitle) return
+    const prev = localTitle
+    setLocalTitle(next)
+    updateBinderItem(item.id, { title: next })
+    const result = await updateBinderItemAction(item.id, { title: next })
+    if (!result.success) setLocalTitle(prev)
+  }
+
   function handleFieldChange(key: keyof CharacterProfile, val: string) {
     const newProfile = { ...profileRef.current, [key]: val }
     profileRef.current = newProfile
@@ -82,7 +104,26 @@ export function CharacterProfile({ item }: Props) {
   return (
     <main key={item.id} className="flex-1 flex flex-col overflow-hidden">
       <div className="px-8 py-6 border-b border-border">
-        <h2 className="text-lg font-semibold text-foreground">{item.title}</h2>
+        {isRenaming ? (
+          <input
+            ref={titleInputRef}
+            defaultValue={localTitle}
+            className="text-lg font-semibold text-foreground bg-transparent border-b border-brand outline-none w-full max-w-md"
+            onKeyDown={e => {
+              if (e.key === 'Enter') commitRename()
+              if (e.key === 'Escape') setIsRenaming(false)
+            }}
+            onBlur={commitRename}
+          />
+        ) : (
+          <h2
+            className="text-lg font-semibold text-foreground cursor-pointer hover:text-brand transition-colors"
+            onDoubleClick={() => setIsRenaming(true)}
+            title="Double-click to rename"
+          >
+            {localTitle}
+          </h2>
+        )}
         <p className="text-xs text-muted-foreground mt-0.5">Character Profile</p>
       </div>
       <div className="flex-1 overflow-y-auto px-8 py-6">

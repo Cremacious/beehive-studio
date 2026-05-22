@@ -44,6 +44,15 @@ export function useBinderTree(): BinderTreeContextValue {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+// Returns true only when content is a structured object with pinned=true.
+// Safe to call on chapters, parts, etc. (their content shape doesn't have
+// a pinned field, so returns false).
+function isItemPinned(item: BinderItemRow): boolean {
+  const c = item.content
+  if (!c || typeof c !== 'object' || Array.isArray(c)) return false
+  return (c as { pinned?: boolean }).pinned === true
+}
+
 function buildTree(items: BinderItemRow[]): TreeNode[] {
   const map = new Map<string, TreeNode>()
   const roots: TreeNode[] = []
@@ -53,7 +62,12 @@ function buildTree(items: BinderItemRow[]): TreeNode[] {
     else roots.push(node)
   }
   const sort = (nodes: TreeNode[]) => {
-    nodes.sort((a, b) => a.order - b.order)
+    nodes.sort((a, b) => {
+      const aPin = isItemPinned(a) ? 1 : 0
+      const bPin = isItemPinned(b) ? 1 : 0
+      if (aPin !== bPin) return bPin - aPin   // pinned first
+      return a.order - b.order
+    })
     nodes.forEach(n => sort(n.children))
   }
   sort(roots)

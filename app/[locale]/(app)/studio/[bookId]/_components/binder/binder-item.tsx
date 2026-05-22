@@ -9,6 +9,34 @@ import { useBinderTree, type TreeNode } from './binder-tree'
 import { BinderItemMenu } from './binder-item-menu'
 import { updateBinderItemAction } from '@/lib/actions/binder.actions'
 import type { BinderItemRow } from '@/lib/actions/binder.actions'
+import { NOTE_COLOR_HEX } from '@/lib/notes/note-content'
+
+// ─── Note decorations ─────────────────────────────────────────────────────────
+
+type NoteDecorations = {
+  colorHex: string | null
+  pinned: boolean
+  favorited: boolean
+}
+
+function getNoteDecorations(item: BinderItemRow): NoteDecorations {
+  if (item.type !== 'research_note') {
+    return { colorHex: null, pinned: false, favorited: false }
+  }
+  const c = item.content
+  if (!c || typeof c !== 'object' || Array.isArray(c)) {
+    return { colorHex: null, pinned: false, favorited: false }
+  }
+  const obj = c as { pinned?: boolean; color?: string; favorited?: boolean }
+  const colorHex = obj.color && obj.color in NOTE_COLOR_HEX
+    ? NOTE_COLOR_HEX[obj.color as keyof typeof NOTE_COLOR_HEX]
+    : null
+  return {
+    colorHex,
+    pinned: obj.pinned === true,
+    favorited: obj.favorited === true,
+  }
+}
 
 // ─── Icon mapping ─────────────────────────────────────────────────────────────
 
@@ -119,7 +147,19 @@ export function BinderItem({ node, depth }: Props) {
           </button>
         )}
 
-        <span className="text-xs">{icon}</span>
+        {(() => {
+          const deco = getNoteDecorations(node)
+          if (deco.colorHex) {
+            return (
+              <span
+                className="inline-block w-2 h-2 rounded-full mr-0.5"
+                style={{ backgroundColor: deco.colorHex }}
+                aria-label="Note color"
+              />
+            )
+          }
+          return <span className="text-xs">{icon}</span>
+        })()}
 
         {isRenaming ? (
           <input
@@ -140,6 +180,20 @@ export function BinderItem({ node, depth }: Props) {
             {node.title}
           </span>
         )}
+
+        {(() => {
+          const deco = getNoteDecorations(node)
+          return (
+            <>
+              {deco.pinned && (
+                <span className="text-[10px] text-muted-foreground mr-0.5" title="Pinned">📌</span>
+              )}
+              {deco.favorited && (
+                <span className="text-[10px] text-brand mr-0.5" title="Favorite">⭐</span>
+              )}
+            </>
+          )
+        })()}
 
         <BinderItemMenu node={node} onRenameStart={() => setIsRenaming(true)} />
       </div>

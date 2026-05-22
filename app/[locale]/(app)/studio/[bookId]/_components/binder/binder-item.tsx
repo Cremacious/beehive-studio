@@ -13,7 +13,7 @@ import type { BinderItemRow } from '@/lib/actions/binder.actions'
 // ─── Icon mapping ─────────────────────────────────────────────────────────────
 
 const ICONS: Record<BinderItemRow['type'], string> = {
-  part: '',
+  part: '📖',
   chapter: '📄',
   front_matter: '📄',
   back_matter: '📄',

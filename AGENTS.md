@@ -16,7 +16,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 >
 > **Current focus:** Studio Editor Audit — sub-project 2 (Binder UX) — not started
 > **Active branch:** `main`
-> **Last commit:** fix(studio): toolbar — remove broken disabled gates, kill typewriter, move find panel (ad-hoc SP1 polish, 2026-05-22)
+> **Last commit:** fix(studio): explicit ProseMirror styles — headings, lists, quote, link all visible (root cause: @tailwindcss/typography not installed)
 >
 > **The audit** is a 5-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational. Sequence (Option A):

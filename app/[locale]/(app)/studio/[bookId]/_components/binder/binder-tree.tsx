@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useCallback, useContext, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -18,6 +18,7 @@ import { useBookEditor } from '../book-editor-provider'
 import { BinderAddMenu } from './binder-add-menu'
 import { BinderItem } from './binder-item'
 import { reorderBinderItemsAction } from '@/lib/actions/binder.actions'
+import { updateBookAction } from '@/lib/actions/book.actions'
 import type { BinderItemRow } from '@/lib/actions/binder.actions'
 import { CreateHiveButton } from '../create-hive-button'
 
@@ -75,6 +76,28 @@ function flattenVisible(nodes: TreeNode[], collapsed: Set<string>): string[] {
 export function BinderTree() {
   const { bookId, bookTitle, locale, binderItems, setBinderItems, focusMode, corkboardMode, toggleCorkboardMode } = useBookEditor()
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
+
+  // Book title inline rename (double-click the title in the binder header)
+  const [isRenamingBook, setIsRenamingBook] = useState(false)
+  const [localBookTitle, setLocalBookTitle] = useState(bookTitle)
+  const bookTitleInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (isRenamingBook) {
+      bookTitleInputRef.current?.focus()
+      bookTitleInputRef.current?.select()
+    }
+  }, [isRenamingBook])
+
+  async function commitBookRename() {
+    const next = bookTitleInputRef.current?.value.trim() || localBookTitle
+    setIsRenamingBook(false)
+    if (next === localBookTitle) return
+    const prev = localBookTitle
+    setLocalBookTitle(next)
+    const result = await updateBookAction(bookId, { title: next })
+    if (!result.success) setLocalBookTitle(prev)
+  }
 
   const tree = useMemo(() => buildTree(binderItems), [binderItems])
 
@@ -148,11 +171,31 @@ export function BinderTree() {
   return (
     <BinderTreeContext.Provider value={ctxValue}>
       <aside className="w-60 flex-shrink-0 flex flex-col bg-card border-r border-border overflow-hidden">
-        <div className="flex items-center justify-between px-3 py-2.5 border-b border-border">
-          <span className="text-xs font-bold text-brand font-comfortaa uppercase tracking-wide truncate">
-            {bookTitle}
+        <div className="flex items-center justify-between gap-2 px-3 py-2.5 border-b border-border">
+          <span className="flex items-center gap-1.5 flex-1 min-w-0">
+            <span className="text-brand text-xs flex-shrink-0">✦</span>
+            {isRenamingBook ? (
+              <input
+                ref={bookTitleInputRef}
+                defaultValue={localBookTitle}
+                className="flex-1 min-w-0 bg-transparent border-b border-brand text-xs font-bold font-comfortaa uppercase tracking-wide outline-none text-foreground"
+                onKeyDown={e => {
+                  if (e.key === 'Enter') commitBookRename()
+                  if (e.key === 'Escape') setIsRenamingBook(false)
+                }}
+                onBlur={commitBookRename}
+              />
+            ) : (
+              <span
+                className="text-xs font-bold text-foreground font-comfortaa uppercase tracking-wide truncate cursor-pointer hover:text-brand transition-colors"
+                onDoubleClick={() => setIsRenamingBook(true)}
+                title="Double-click to rename"
+              >
+                {localBookTitle}
+              </span>
+            )}
           </span>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 flex-shrink-0">
             <button
               onClick={toggleCorkboardMode}
               title={corkboardMode ? 'Exit corkboard' : 'Corkboard view'}

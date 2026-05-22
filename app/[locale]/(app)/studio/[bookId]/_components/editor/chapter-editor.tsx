@@ -19,6 +19,7 @@ import { WritingAnalysis, extractPlainText } from './writing-analysis'
 import { updateBinderItemAction, createBinderItemAction } from '@/lib/actions/binder.actions'
 import { FindReplace } from './find-replace'
 import { CharacterProfile } from './character-profile'
+import { FrontBackMatterRenderer, shouldUseFrontBackMatterRenderer } from '../front-back-matter'
 
 const CHAPTER_TYPES = new Set(['chapter', 'front_matter', 'back_matter'])
 
@@ -189,6 +190,10 @@ export function ChapterEditor() {
 
   if (activeItemId === null) {
     return <EmptyStartChapter />
+  }
+
+  if (activeItem && shouldUseFrontBackMatterRenderer(activeItem)) {
+    return <FrontBackMatterRenderer item={activeItem} />
   }
 
   if (activeItem && !isChapterType) {

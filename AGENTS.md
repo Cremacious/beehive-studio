@@ -14,29 +14,28 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-22
 >
-> **Current focus:** Studio Editor Audit — sub-project 1 (Stability Pass)
+> **Current focus:** Studio Editor Audit — sub-project 2 (Binder UX) — not started
 > **Active branch:** `main`
-> **Last commit:** docs: spec for studio editor stability pass (sub-project 1/5)
+> **Last commit:** docs: mark studio editor stability pass complete (SP 1/5)
 >
 > **The audit** is a 5-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational. Sequence (Option A):
 >
-> 1. **Stability Pass** (in progress — autofocus fix outstanding) — crash + data-loss bugs, save-on-unload, Cmd+S, **autofocus + caret visibility (Amendment 1)**. See `docs/superpowers/specs/2026-05-22-studio-editor-stability-pass-design.md`.
-> 2. **Binder UX** — double-click rename, persistent "+ New Chapter" CTA, no auto-Chapter-1 on book creation, book-title rename, brand-color discipline. Spec: `docs/superpowers/specs/2026-05-22-studio-binder-ux-design.md`.
-> 3. **Editor toolbar + modes** — 3-zone toolbar layout, lucide icons, distinct align icons, light-mode toggle, remove ambient sounds, design-token cleanup, scoped Cmd+F. Spec: `docs/superpowers/specs/2026-05-22-studio-toolbar-modes-design.md`.
+> 1. ~~**Stability Pass**~~ **DONE** (2026-05-22) — BinderTree hooks crash, save-state race, lost-edits-on-chapter-switch, save-on-unload via sendBeacon, Cmd+S w/ "Saved" toast, autofocus + brand-yellow caret + click-to-focus wrapper. Cmd+B/I/U verified working. Spec + plan: `docs/superpowers/specs/2026-05-22-studio-editor-stability-pass-design.md` and `docs/superpowers/plans/2026-05-22-studio-editor-stability-pass.md`. All 7 manual user tests passed; 76/76 automated tests pass; tsc clean.
+> 2. **Binder UX (NEXT)** — double-click rename, persistent "+ New Chapter" CTA, no auto-Chapter-1 on book creation, book-title rename, brand-color discipline. Spec drafted at `docs/superpowers/specs/2026-05-22-studio-binder-ux-design.md` from /design-critique findings — reconfirm via /brainstorming before execution.
+> 3. **Editor toolbar + modes** — 3-zone toolbar, lucide icons, distinct align icons, light-mode toggle, remove ambient sounds, design-token cleanup, scoped Cmd+F. Spec drafted at `docs/superpowers/specs/2026-05-22-studio-toolbar-modes-design.md` — reconfirm via /brainstorming before execution.
 > 4. Metadata + persistence — synopsis/scene-planner/notes/word-goal/status/publishing-details correctness, bottom status-bar consolidation.
 > 5. New surfaces — Snapshot UI, Outline editor, mobile/tablet responsive, accessibility audit (aria-labels, contrast, ? keyboard cheatsheet).
->
-> Design critique informing 2/3/4/5: see git history for the 2026-05-22 critique session.
 >
 > After all five: Claude Design will redesign the UI; I'll do a mechanical
 > import. Then Phase 8 (Stripe monetization) resumes.
 >
-> **Next concrete step when resuming:**
-> 1. Run `npm install` if dev env still has the missing-`next` error.
-> 2. Read the sub-project 1 spec above.
-> 3. Invoke the `writing-plans` skill to turn the spec into an executable plan.
-> 4. Execute the plan, verify all six manual tests in the spec's Testing section.
+> **Chris's working preferences (confirmed 2026-05-22):**
+> - Commits go straight to `main`, no feature branches.
+> - Per-task manual verification (don't batch).
+> - Subagent-driven execution preserves context window.
+>
+> **Next concrete step when resuming:** invoke `/brainstorming` against the SP2 draft spec to reconfirm scope, then `writing-plans` for the plan, then execute via subagent-driven development.
 
 ## ⚙️ Working Agreement (read this every session)
 

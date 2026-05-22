@@ -163,6 +163,43 @@ the user-facing label and icon:
   (the `ICONS` map — pick a `Collection`-appropriate icon)
 - Any other files that hard-code the user-facing string `'Part'`.
 
+### 7. "Add to Collection…" submenu on chapter items
+
+**Current:** Moving a chapter under a Collection requires drag-drop in
+the binder tree, which is finicky (especially into a collapsed
+Collection).
+
+**Fix:** Extend the chapter row's `⋯` context menu (in
+`binder-item-menu.tsx`) with an "Add to Collection…" submenu listing
+every existing Collection (and a "(Root level)" entry for un-nesting).
+Selecting one updates the chapter's `parentId` via
+`updateBinderItemAction`.
+
+### 8. Friendlier label on the Research section header
+
+**Current:** "Research (private — not exported)" reads as technical jargon.
+
+**Fix:** Reword to **"Research (only you can see these)"** in
+`binder-add-menu.tsx`.
+
+### 9. Character profile: clearer title edit
+
+**Current:** The character name in `CharacterProfile` is editable but the
+affordance is unclear. User reports difficulty.
+
+**Fix:** Match the same double-click-to-rename pattern from Task 1/2.
+Single-click reveals subtle hover styling, double-click enters inline
+rename. (Implementation depends on reading `CharacterProfile`'s current
+markup — small surgical change.)
+
+### 10. Create Hive explainer
+
+**Current:** The "Create Hive" button in the binder sidebar appears with
+no explanation. Users have no idea what a Hive is.
+
+**Fix:** Add a short subtitle below the button: *"Invite readers to give
+feedback on your drafts."* Plus a tooltip on hover.
+
 ## Out of Scope
 
 - Drag-drop edge cases (dropping into collapsed folders, type

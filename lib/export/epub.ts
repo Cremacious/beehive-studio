@@ -4,13 +4,20 @@ import { tiptapToHtml, escapeHtml } from './tiptap-to-html'
 export type EpubChapter = {
   title: string
   content: unknown // TipTap JSON
+  htmlOverride?: string // when present, used INSTEAD of tiptapToHtml(content)
 }
 
 function slugify(title: string): string {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 }
 
-function chapterXhtml(title: string, bodyHtml: string, cssPath: string): string {
+function chapterXhtml(
+  title: string,
+  bodyHtml: string,
+  cssPath: string,
+  suppressHeading: boolean,
+): string {
+  const heading = suppressHeading ? '' : `<h1>${escapeHtml(title)}</h1>`
   return `<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
@@ -20,7 +27,7 @@ function chapterXhtml(title: string, bodyHtml: string, cssPath: string): string 
   <link rel="stylesheet" type="text/css" href="${cssPath}"/>
 </head>
 <body>
-  <h1>${escapeHtml(title)}</h1>
+  ${heading}
   ${bodyHtml || '<p></p>'}
 </body>
 </html>`
@@ -132,8 +139,11 @@ export async function generateEpub(
     usedIds.add(id)
     chapterMeta.push({ id, title: ch.title })
 
-    const bodyHtml = tiptapToHtml(ch.content)
-    zip.file(`OEBPS/chapters/${id}.xhtml`, chapterXhtml(ch.title, bodyHtml, '../styles.css'))
+    const bodyHtml = ch.htmlOverride ?? tiptapToHtml(ch.content)
+    zip.file(
+      `OEBPS/chapters/${id}.xhtml`,
+      chapterXhtml(ch.title, bodyHtml, '../styles.css', ch.htmlOverride !== undefined),
+    )
   }
 
   const chapterIds = chapterMeta.map(c => c.id)

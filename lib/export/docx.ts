@@ -5,6 +5,7 @@ export type DocxStyle = 'manuscript' | 'basic'
 export type ChapterInput = {
   title: string
   content: unknown // TipTap JSON
+  htmlOverride?: string // when present, used INSTEAD of tiptapToHtml(content)
 }
 
 const MANUSCRIPT_CSS = `
@@ -23,8 +24,12 @@ const BASIC_CSS = `
 function chaptersToHtml(chapters: ChapterInput[], css: string): string {
   const body = chapters
     .map(ch => {
-      const content = tiptapToHtml(ch.content)
-      return `<h1>${escapeHtml(ch.title)}</h1>${content || '<p></p>'}`
+      const content = ch.htmlOverride ?? tiptapToHtml(ch.content)
+      // When htmlOverride is set, don't emit the <h1> title — the template
+      // already controls its own heading (or intentionally omits one for
+      // pages like Title Page).
+      const heading = ch.htmlOverride ? '' : `<h1>${escapeHtml(ch.title)}</h1>`
+      return `${heading}${content || '<p></p>'}`
     })
     .join('\n')
   return `<!DOCTYPE html><html><head><style>${css}</style></head><body>${body}</body></html>`

@@ -119,7 +119,7 @@ export function BinderAddMenu() {
           <MenuItem key={opt.type} option={opt} onClick={() => handleAdd(opt)} />
         ))}
         <SectionLabel>
-          Research <span className="font-normal normal-case text-muted-foreground/70">(private — not exported)</span>
+          Research <span className="font-normal normal-case text-muted-foreground/70">(only you can see these)</span>
         </SectionLabel>
         {RESEARCH_OPTIONS.map(opt => (
           <MenuItem key={opt.type} option={opt} onClick={() => handleAdd(opt)} />

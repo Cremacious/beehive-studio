@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils'
 import { useBookEditor } from '../book-editor-provider'
 import { BinderAddMenu } from './binder-add-menu'
 import { BinderItem } from './binder-item'
-import { createBinderItemAction, reorderBinderItemsAction } from '@/lib/actions/binder.actions'
+import { reorderBinderItemsAction } from '@/lib/actions/binder.actions'
 import { updateBookAction } from '@/lib/actions/book.actions'
 import type { BinderItemRow } from '@/lib/actions/binder.actions'
 import { CreateHiveButton } from '../create-hive-button'
@@ -74,7 +74,7 @@ function flattenVisible(nodes: TreeNode[], collapsed: Set<string>): string[] {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function BinderTree() {
-  const { bookId, bookTitle, locale, binderItems, setBinderItems, addBinderItem, setActiveItemId, setPendingRenameId, focusMode, corkboardMode, toggleCorkboardMode } = useBookEditor()
+  const { bookId, bookTitle, locale, binderItems, setBinderItems, focusMode, corkboardMode, toggleCorkboardMode } = useBookEditor()
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
 
   // Book title inline rename (double-click the title in the binder header)
@@ -226,42 +226,6 @@ export function BinderTree() {
           </div>
         )}
 
-        {!corkboardMode && (
-          <button
-            onClick={async () => {
-              const rootItems = binderItems.filter(i => i.parentId === null)
-              const maxOrder = rootItems.length > 0 ? Math.max(...rootItems.map(i => i.order)) : -1
-              const order = maxOrder + 1
-              const result = await createBinderItemAction({
-                bookId,
-                parentId: null,
-                type: 'chapter',
-                title: 'Untitled Chapter',
-                order,
-              })
-              if (result.success) {
-                addBinderItem({
-                  id: result.data.id,
-                  bookId,
-                  parentId: null,
-                  type: 'chapter',
-                  title: 'Untitled Chapter',
-                  order,
-                  content: null,
-                  chapterId: result.data.chapterId,
-                  createdAt: new Date(),
-                  updatedAt: new Date(),
-                })
-                setActiveItemId(result.data.id)
-                setPendingRenameId(result.data.id)
-              }
-            }}
-            className="border-t border-border px-3 py-2 text-xs text-brand hover:text-brand-hover hover:bg-surface-elevated transition-colors text-left flex items-center gap-1.5"
-          >
-            <span className="text-base leading-none">+</span>
-            <span>New Chapter</span>
-          </button>
-        )}
       </aside>
     </BinderTreeContext.Provider>
   )

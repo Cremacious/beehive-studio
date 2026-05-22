@@ -63,7 +63,7 @@ function MenuItem({
 }
 
 export function BinderAddMenu() {
-  const { bookId, binderItems, addBinderItem } = useBookEditor()
+  const { bookId, binderItems, addBinderItem, setActiveItemId, setPendingRenameId } = useBookEditor()
   const [open, setOpen] = useState(false)
 
   async function handleAdd(option: AddOption) {
@@ -92,6 +92,11 @@ export function BinderAddMenu() {
         createdAt: new Date(),
         updatedAt: new Date(),
       })
+      // Open the new item in the editor and immediately enter rename mode so
+      // the user can name it before doing anything else. Reuses the
+      // pendingRenameId mechanism added in SP2 Task 5.
+      setActiveItemId(result.data.id)
+      setPendingRenameId(result.data.id)
     } else {
       console.error('createBinderItemAction failed:', result.error)
     }
@@ -101,10 +106,11 @@ export function BinderAddMenu() {
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <button
-          className="text-brand hover:text-brand-hover text-lg font-light cursor-pointer leading-none"
-          title="Add to binder"
+          className="inline-flex items-center gap-1 rounded-md bg-brand hover:bg-brand-hover px-2.5 py-1 text-xs font-semibold text-background transition-colors shadow-sm"
+          title="Add chapter, collection, character, and more"
         >
-          +
+          <span className="text-sm leading-none">+</span>
+          <span>Add</span>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-72 p-1">

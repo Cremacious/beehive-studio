@@ -1,0 +1,134 @@
+'use client'
+
+import { useEffect, useRef, useState } from 'react'
+import { createId } from '@paralleldrive/cuid2'
+import type { BinderItemRow } from '@/lib/actions/binder.actions'
+import { updateBinderItemAction } from '@/lib/actions/binder.actions'
+import { useBookEditor } from '../book-editor-provider'
+import {
+  type OutlineContent, type OutlineCard, type OutlineColumn,
+  seedOutline,
+} from '@/lib/outline/board'
+import { SaveStatusBadge, type FormSaveStatus } from '../front-back-matter/save-status-badge'
+import { OutlineColumnView } from './outline-column'
+
+type Props = { item: BinderItemRow }
+
+export function OutlineBoard({ item }: Props) {
+  const { binderItems, setActiveItemId, updateBinderItem } = useBookEditor()
+  const [outline, setOutline] = useState<OutlineContent>(() => {
+    const c = item.content as OutlineContent | null
+    if (c && Array.isArray(c.columns)) return c
+    return seedOutline()
+  })
+  const [saveStatus, setSaveStatus] = useState<FormSaveStatus>('idle')
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Persist seeded content for legacy items so subsequent reloads don't re-seed.
+  useEffect(() => {
+    const c = item.content as OutlineContent | null
+    if (!c || !Array.isArray(c.columns)) {
+      void updateBinderItemAction(item.id, { content: outline })
+      updateBinderItem(item.id, { content: outline })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  function commit(next: OutlineContent) {
+    setOutline(next)
+    setSaveStatus('unsaved')
+    if (saveTimer.current) clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(async () => {
+      setSaveStatus('saving')
+      updateBinderItem(item.id, { content: next })
+      const result = await updateBinderItemAction(item.id, { content: next })
+      setSaveStatus(result.success ? 'saved' : 'unsaved')
+    }, 2000)
+  }
+
+  // ─── Column ops ────────────────────────────────────────────────────────────
+  function addColumn() {
+    commit({ columns: [...outline.columns, { id: createId(), title: 'New column', cards: [] }] })
+  }
+  function patchColumn(id: string, patch: Partial<OutlineColumn>) {
+    commit({ columns: outline.columns.map(c => c.id === id ? { ...c, ...patch } : c) })
+  }
+  function deleteColumn(id: string) {
+    commit({ columns: outline.columns.filter(c => c.id !== id) })
+  }
+
+  // ─── Card ops ──────────────────────────────────────────────────────────────
+  function addCard(columnId: string) {
+    commit({
+      columns: outline.columns.map(c => c.id === columnId
+        ? { ...c, cards: [...c.cards, { id: createId(), title: '' }] }
+        : c),
+    })
+  }
+  function patchCard(columnId: string, cardId: string, patch: Partial<OutlineCard>) {
+    commit({
+      columns: outline.columns.map(c => c.id === columnId
+        ? { ...c, cards: c.cards.map(card => card.id === cardId ? { ...card, ...patch } : card) }
+        : c),
+    })
+  }
+  function deleteCard(columnId: string, cardId: string) {
+    commit({
+      columns: outline.columns.map(c => c.id === columnId
+        ? { ...c, cards: c.cards.filter(card => card.id !== cardId) }
+        : c),
+    })
+  }
+
+  // Chapter link helpers (popover wired in Task 4)
+  function isChapterAvailable(chapterId: string | undefined): boolean {
+    if (!chapterId) return false
+    return binderItems.some(b => b.type === 'chapter' && b.chapterId === chapterId)
+  }
+  function jumpToChapter(chapterId: string) {
+    const binderItem = binderItems.find(b => b.type === 'chapter' && b.chapterId === chapterId)
+    if (binderItem) setActiveItemId(binderItem.id)
+  }
+
+  return (
+    <main className="flex-1 flex flex-col overflow-hidden">
+      <header className="flex items-center justify-between px-6 py-3 border-b border-border">
+        <div>
+          <h2 className="text-sm font-medium text-foreground">{item.title}</h2>
+          <p className="text-[10px] text-muted-foreground">Outline · Kanban board</p>
+        </div>
+        <SaveStatusBadge status={saveStatus} />
+      </header>
+
+      <div className="flex-1 overflow-x-auto overflow-y-hidden p-4">
+        <div className="flex items-start gap-4 h-full min-h-0">
+          {outline.columns.map(col => (
+            <OutlineColumnView
+              key={col.id}
+              column={col}
+              onChange={patch => patchColumn(col.id, patch)}
+              onDelete={() => deleteColumn(col.id)}
+              onAddCard={() => addCard(col.id)}
+              onCardChange={(cardId, patch) => patchCard(col.id, cardId, patch)}
+              onCardDelete={cardId => deleteCard(col.id, cardId)}
+              onCardOpenLinkPopover={() => { /* wired in Task 4 */ }}
+              onCardUnlink={cardId => patchCard(col.id, cardId, { linkedChapterId: undefined })}
+              onCardJumpToChapter={cardId => {
+                const card = col.cards.find(c => c.id === cardId)
+                if (card?.linkedChapterId) jumpToChapter(card.linkedChapterId)
+              }}
+              isChapterAvailable={isChapterAvailable}
+            />
+          ))}
+
+          <button
+            onClick={addColumn}
+            className="text-xs text-muted-foreground hover:text-foreground border border-dashed border-border rounded-lg py-2 px-4 w-48 flex-shrink-0 self-start"
+          >
+            + Column
+          </button>
+        </div>
+      </div>
+    </main>
+  )
+}

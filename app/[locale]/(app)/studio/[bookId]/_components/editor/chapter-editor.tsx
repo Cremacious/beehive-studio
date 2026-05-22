@@ -23,7 +23,7 @@ import { CharacterProfile } from './character-profile'
 const CHAPTER_TYPES = new Set(['chapter', 'front_matter', 'back_matter'])
 
 export function ChapterEditor() {
-  const { activeItemId, activeItem, activeChapter, updateChapterContent, updateBinderItem, wordCount, typewriterMode } =
+  const { activeItemId, activeItem, activeChapter, updateChapterContent, updateBinderItem, wordCount, typewriterMode, flushPendingSave, pushFlash } =
     useBookEditor()
 
   const [analysisOpen, setAnalysisOpen] = useState(false)
@@ -76,17 +76,27 @@ export function ChapterEditor() {
     [activeItemId],
   )
 
-  // Cmd/Ctrl+F keyboard shortcut to open/close the find panel
+  // Keyboard shortcuts: Cmd/Ctrl+F (find), Cmd/Ctrl+S (force save)
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'f' && editor) {
+      if (!(e.metaKey || e.ctrlKey)) return
+
+      if (e.key === 'f' && editor) {
         e.preventDefault()
         setFindOpen(f => !f)
+        return
+      }
+
+      if (e.key === 's' && editor) {
+        e.preventDefault()
+        const json = editor.getJSON()
+        updateChapterContent(json)
+        void flushPendingSave().then(() => pushFlash('Saved'))
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [editor])
+  }, [editor, updateChapterContent, flushPendingSave, pushFlash])
 
   // When chapter data arrives after the async fetch, populate the editor.
   // useEditor initializes with null because activeChapter is always null on first render.

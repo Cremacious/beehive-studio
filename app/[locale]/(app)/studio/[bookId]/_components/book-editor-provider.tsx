@@ -35,6 +35,8 @@ type BookEditorContextValue = {
   saveStatus: SaveStatus
   wordCount: number
   errors: string[]
+  flashes: string[]
+  pushFlash: (msg: string) => void
   setActiveItemId: (id: string | null) => void
   addBinderItem: (item: BinderItemRow) => void
   updateBinderItem: (id: string, patch: Partial<BinderItemRow>) => void
@@ -96,6 +98,15 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
 
   const pushError = useCallback((msg: string) => {
     setErrors(prev => [...prev, msg])
+  }, [])
+
+  const [flashes, setFlashes] = useState<string[]>([])
+
+  const pushFlash = useCallback((msg: string) => {
+    setFlashes(prev => [...prev, msg])
+    setTimeout(() => {
+      setFlashes(prev => prev.slice(1))
+    }, 1500)
   }, [])
 
   // Performs the actual save. Pulled out of updateChapterContent so it can also be
@@ -294,6 +305,8 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     saveStatus,
     wordCount,
     errors,
+    flashes,
+    pushFlash,
     setActiveItemId,
     addBinderItem,
     updateBinderItem,
@@ -321,6 +334,8 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     saveStatus,
     wordCount,
     errors,
+    flashes,
+    pushFlash,
     setActiveItemId,
     addBinderItem,
     updateBinderItem,

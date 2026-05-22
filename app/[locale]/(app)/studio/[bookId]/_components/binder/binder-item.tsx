@@ -123,7 +123,13 @@ export function BinderItem({ node, depth }: Props) {
             onBlur={handleRenameBlur}
           />
         ) : (
-          <span className={cn('flex-1 text-xs truncate', isActive ? 'text-brand' : 'text-foreground/70')}>
+          <span
+            className={cn('flex-1 text-xs truncate', isActive ? 'text-brand' : 'text-foreground/70')}
+            onDoubleClick={e => {
+              e.stopPropagation()
+              setIsRenaming(true)
+            }}
+          >
             {node.title}
           </span>
         )}

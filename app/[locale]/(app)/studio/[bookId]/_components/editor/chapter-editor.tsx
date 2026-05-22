@@ -23,7 +23,7 @@ import { CharacterProfile } from './character-profile'
 const CHAPTER_TYPES = new Set(['chapter', 'front_matter', 'back_matter'])
 
 export function ChapterEditor() {
-  const { activeItemId, activeItem, activeChapter, updateChapterContent, updateBinderItem, wordCount, typewriterMode, flushPendingSave, pushFlash } =
+  const { activeItemId, activeItem, activeChapter, updateChapterContent, updateBinderItem, wordCount, flushPendingSave, pushFlash } =
     useBookEditor()
 
   const [analysisOpen, setAnalysisOpen] = useState(false)
@@ -173,14 +173,12 @@ export function ChapterEditor() {
       <div className="flex flex-1 overflow-hidden">
         <div
           className="flex-1 overflow-y-auto cursor-text"
-          style={typewriterMode ? { scrollPaddingTop: '40vh' } : undefined}
           onClick={() => editor?.commands.focus()}
         >
           <EditorContent
             editor={editor}
             className="min-h-full p-8 max-w-3xl mx-auto prose prose-invert prose-sm focus:outline-none"
             style={{
-              ...(typewriterMode ? { paddingTop: '40vh', paddingBottom: '40vh' } : {}),
               fontSize: 'var(--editor-font-size, 16px)',
               lineHeight: '1.8',
             }}

@@ -97,7 +97,7 @@ export function FindReplace({ editor, onClose }: Props) {
   }
 
   return (
-    <div className="absolute top-2 right-2 z-20 bg-surface-elevated border border-border rounded-xl shadow-xl p-3 w-72">
+    <div className="absolute top-14 right-2 z-20 bg-surface-elevated border border-border rounded-xl shadow-xl p-3 w-72">
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs font-medium text-foreground/70">Find &amp; Replace</span>
         <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-sm leading-none">

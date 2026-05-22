@@ -49,8 +49,6 @@ type BookEditorContextValue = {
   dismissError: (index: number) => void
   focusMode: boolean
   toggleFocusMode: () => void
-  typewriterMode: boolean
-  toggleTypewriterMode: () => void
   corkboardMode: boolean
   toggleCorkboardMode: () => void
 }
@@ -84,8 +82,6 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
   const [errors, setErrors] = useState<string[]>([])
   const [focusMode, setFocusMode] = useState(false)
   const toggleFocusMode = useCallback(() => setFocusMode(f => !f), [])
-  const [typewriterMode, setTypewriterMode] = useState(false)
-  const toggleTypewriterMode = useCallback(() => setTypewriterMode(t => !t), [])
   const [corkboardMode, setCorkboardMode] = useState(false)
   const toggleCorkboardMode = useCallback(() => setCorkboardMode(c => !c), [])
 
@@ -319,8 +315,6 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     dismissError,
     focusMode,
     toggleFocusMode,
-    typewriterMode,
-    toggleTypewriterMode,
     corkboardMode,
     toggleCorkboardMode,
   }), [
@@ -348,8 +342,6 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     dismissError,
     focusMode,
     toggleFocusMode,
-    typewriterMode,
-    toggleTypewriterMode,
     corkboardMode,
     toggleCorkboardMode,
   ])

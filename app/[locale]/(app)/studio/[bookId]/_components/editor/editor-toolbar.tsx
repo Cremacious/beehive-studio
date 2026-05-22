@@ -63,7 +63,7 @@ function Separator() {
 }
 
 export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggleSounds, soundsOpen, onToggleFind, findOpen }: Props) {
-  const { saveStatus, wordCount, focusMode, toggleFocusMode, typewriterMode, toggleTypewriterMode } = useBookEditor()
+  const { saveStatus, wordCount, focusMode, toggleFocusMode } = useBookEditor()
 
   const [showExport, setShowExport] = useState(false)
 
@@ -99,7 +99,6 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
         {/* Inline */}
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBold().run()}
-          disabled={!editor.can().chain().focus().toggleBold().run()}
           isActive={editor.isActive('bold')}
           title="Bold (⌘B)"
         >
@@ -107,7 +106,6 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleItalic().run()}
-          disabled={!editor.can().chain().focus().toggleItalic().run()}
           isActive={editor.isActive('italic')}
           title="Italic (⌘I)"
         >
@@ -115,7 +113,6 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleStrike().run()}
-          disabled={!editor.can().chain().focus().toggleStrike().run()}
           isActive={editor.isActive('strike')}
           title="Strikethrough"
         >
@@ -124,10 +121,11 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
 
         <Separator />
 
-        {/* Block */}
+        {/* Block — disabled checks removed: editor.can().chain()...run() was
+            returning false in TipTap v3, blocking clicks entirely. The chain
+            no-ops gracefully when it can't apply, so we don't need the gate. */}
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-          disabled={!editor.can().chain().focus().toggleHeading({ level: 1 }).run()}
           isActive={editor.isActive('heading', { level: 1 })}
           title="Heading 1"
         >
@@ -135,7 +133,6 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          disabled={!editor.can().chain().focus().toggleHeading({ level: 2 }).run()}
           isActive={editor.isActive('heading', { level: 2 })}
           title="Heading 2"
         >
@@ -143,7 +140,6 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-          disabled={!editor.can().chain().focus().toggleHeading({ level: 3 }).run()}
           isActive={editor.isActive('heading', { level: 3 })}
           title="Heading 3"
         >
@@ -155,7 +151,6 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
         {/* Lists */}
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBulletList().run()}
-          disabled={!editor.can().chain().focus().toggleBulletList().run()}
           isActive={editor.isActive('bulletList')}
           title="Bullet list"
         >
@@ -163,7 +158,6 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          disabled={!editor.can().chain().focus().toggleOrderedList().run()}
           isActive={editor.isActive('orderedList')}
           title="Numbered list"
         >
@@ -173,7 +167,6 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
         {/* Other */}
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          disabled={!editor.can().chain().focus().toggleBlockquote().run()}
           isActive={editor.isActive('blockquote')}
           title="Quote"
         >
@@ -306,29 +299,6 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
             <option key={s} value={s}>{s}px</option>
           ))}
         </select>
-
-        {/* Typewriter mode toggle */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onMouseDown={e => e.preventDefault()}
-              onClick={toggleTypewriterMode}
-              className={cn(
-                'text-xs px-2 py-1 rounded transition-colors ml-1',
-                typewriterMode
-                  ? 'text-brand bg-brand/20'
-                  : 'text-foreground/60 hover:text-foreground hover:bg-surface-elevated',
-              )}
-            >
-              ✍
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>
-            {typewriterMode
-              ? 'Exit typewriter mode'
-              : 'Typewriter mode — keeps the line you\'re typing centered on screen as you write'}
-          </TooltipContent>
-        </Tooltip>
 
         {/* Writing analysis toggle */}
         <Tooltip>

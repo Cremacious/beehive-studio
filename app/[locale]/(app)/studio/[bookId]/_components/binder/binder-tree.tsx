@@ -76,8 +76,6 @@ export function BinderTree() {
   const { bookId, bookTitle, locale, binderItems, setBinderItems, focusMode, corkboardMode, toggleCorkboardMode } = useBookEditor()
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
 
-  if (focusMode) return null
-
   const tree = useMemo(() => buildTree(binderItems), [binderItems])
 
   const flatIds = useMemo(() => flattenVisible(tree, collapsed), [tree, collapsed])
@@ -144,6 +142,8 @@ export function BinderTree() {
     () => ({ tree, collapsed, toggleCollapsed }),
     [tree, collapsed, toggleCollapsed]
   )
+
+  if (focusMode) return null
 
   return (
     <BinderTreeContext.Provider value={ctxValue}>

@@ -21,11 +21,12 @@ This version has breaking changes — APIs, conventions, and file structure may 
 > **The audit** is a 5-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational. Sequence (Option A):
 >
-> 1. ~~**Stability Pass**~~ **DONE** (2026-05-22) — BinderTree hooks crash, save-state race, lost-edits-on-chapter-switch, save-on-unload via sendBeacon, Cmd+S w/ "Saved" toast, autofocus + brand-yellow caret + click-to-focus wrapper. Cmd+B/I/U verified working. Spec + plan: `docs/superpowers/specs/2026-05-22-studio-editor-stability-pass-design.md` and `docs/superpowers/plans/2026-05-22-studio-editor-stability-pass.md`. All 7 manual user tests passed; 76/76 automated tests pass; tsc clean.
-> 2. **Binder UX (NEXT)** — double-click rename, persistent "+ New Chapter" CTA, no auto-Chapter-1 on book creation, book-title rename, brand-color discipline. Spec drafted at `docs/superpowers/specs/2026-05-22-studio-binder-ux-design.md` from /design-critique findings — reconfirm via /brainstorming before execution.
-> 3. **Editor toolbar + modes** — 3-zone toolbar, lucide icons, distinct align icons, light-mode toggle, remove ambient sounds, design-token cleanup, scoped Cmd+F. Spec drafted at `docs/superpowers/specs/2026-05-22-studio-toolbar-modes-design.md` — reconfirm via /brainstorming before execution.
-> 4. Metadata + persistence — synopsis/scene-planner/notes/word-goal/status/publishing-details correctness, bottom status-bar consolidation.
-> 5. New surfaces — Snapshot UI, Outline editor, mobile/tablet responsive, accessibility audit (aria-labels, contrast, ? keyboard cheatsheet).
+> 1. ~~**Stability Pass**~~ **DONE** (2026-05-22).
+> 2. **Binder UX (IN FLIGHT)** — Tasks 1-4 done, Tasks 5-6 + items 7-10 pending. Spec: `docs/superpowers/specs/2026-05-22-studio-binder-ux-design.md`. Plan: `docs/superpowers/plans/2026-05-22-studio-binder-ux.md`.
+> 3. **Specialized Editors (NEW — after SP2)** — Front/Back Matter built-in tools, Outline editor, Research notes UX. Sequence: brainstorm + spec for each in order **B (Front/Back Matter) → C (Outline, with /design-critique) → D (Notes)**. Each gets its own session.
+> 4. **Toolbar + modes** *(was SP3)* — spec drafted at `docs/superpowers/specs/2026-05-22-studio-toolbar-modes-design.md` — reconfirm via /brainstorming before execution. Also pick up the deferred font-size mark from SP1.
+> 5. **Metadata + persistence** *(was SP4)* — synopsis/scene-planner/notes/word-goal/status/publishing-details correctness, bottom status-bar consolidation.
+> 6. **New surfaces** *(was SP5 minus Outline)* — Snapshot UI, mobile/tablet responsive, accessibility audit (aria-labels, contrast, ? keyboard cheatsheet).
 >
 > After all five: Claude Design will redesign the UI; I'll do a mechanical
 > import. Then Phase 8 (Stripe monetization) resumes.

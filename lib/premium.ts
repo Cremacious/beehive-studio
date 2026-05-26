@@ -24,8 +24,14 @@ export function getHiveMemberLimitForTier(isPremium: boolean): number {
 /**
  * Queries whether the given user has an active premium subscription.
  * Returns false if the userBilling row doesn't exist yet (new users).
+ *
+ * Dev override: set DEV_FORCE_PREMIUM=true in .env.local to force premium
+ * for any logged-in user. Only honored when NODE_ENV !== 'production'.
  */
 export async function getUserPremiumStatus(userId: string): Promise<boolean> {
+  if (process.env.NODE_ENV !== 'production' && process.env.DEV_FORCE_PREMIUM === 'true') {
+    return true
+  }
   const billing = await db.query.userBilling.findFirst({
     where: eq(userBilling.userId, userId),
     columns: { premium: true },

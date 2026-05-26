@@ -9,7 +9,17 @@ import { useBookEditor } from '../book-editor-provider'
 import type { CharacterCountStorage } from '@tiptap/extensions'
 import { ExportModal } from '../export-modal'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { AlignLeft, AlignCenter, AlignRight } from 'lucide-react'
+import {
+  AlignLeft, AlignCenter, AlignRight,
+  Bold, Italic, Strikethrough,
+  Heading1, Heading2, Heading3,
+  List, ListOrdered, Quote, Minus,
+  Undo, Redo, Search,
+  Underline, Highlighter, Link,
+  BarChart3,
+  Maximize2, Minimize2,
+  Download,
+} from 'lucide-react'
 
 type Props = {
   editor: Editor
@@ -100,21 +110,21 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
           isActive={editor.isActive('bold')}
           title="Bold (⌘B)"
         >
-          B
+          <Bold size={14} />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleItalic().run()}
           isActive={editor.isActive('italic')}
           title="Italic (⌘I)"
         >
-          I
+          <Italic size={14} />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleStrike().run()}
           isActive={editor.isActive('strike')}
           title="Strikethrough"
         >
-          S
+          <Strikethrough size={14} />
         </ToolbarButton>
 
         <Separator />
@@ -127,21 +137,21 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
           isActive={editor.isActive('heading', { level: 1 })}
           title="Heading 1"
         >
-          H1
+          <Heading1 size={14} />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
           isActive={editor.isActive('heading', { level: 2 })}
           title="Heading 2"
         >
-          H2
+          <Heading2 size={14} />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
           isActive={editor.isActive('heading', { level: 3 })}
           title="Heading 3"
         >
-          H3
+          <Heading3 size={14} />
         </ToolbarButton>
 
         <Separator />
@@ -152,14 +162,14 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
           isActive={editor.isActive('bulletList')}
           title="Bullet list"
         >
-          ≡
+          <List size={14} />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
           isActive={editor.isActive('orderedList')}
           title="Numbered list"
         >
-          1.
+          <ListOrdered size={14} />
         </ToolbarButton>
 
         {/* Other */}
@@ -168,13 +178,13 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
           isActive={editor.isActive('blockquote')}
           title="Quote"
         >
-          &quot;
+          <Quote size={14} />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().setHorizontalRule().run()}
           title="Horizontal rule"
         >
-          —
+          <Minus size={14} />
         </ToolbarButton>
 
         <Separator />
@@ -185,21 +195,21 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
           disabled={!editor.can().undo()}
           title="Undo (⌘Z)"
         >
-          ↺
+          <Undo size={14} />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().redo().run()}
           disabled={!editor.can().redo()}
           title="Redo (⌘⇧Z)"
         >
-          ↻
+          <Redo size={14} />
         </ToolbarButton>
 
         <Separator />
 
         {/* Find & Replace */}
         <ToolbarButton onClick={onToggleFind} isActive={findOpen} title="Find & replace (⌘F)">
-          🔍
+          <Search size={14} />
         </ToolbarButton>
 
         <Separator />
@@ -210,21 +220,21 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
           isActive={editor.isActive('underline')}
           title="Underline (⌘U)"
         >
-          <span style={{ textDecoration: 'underline' }}>U</span>
+          <Underline size={14} />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleHighlight().run()}
           isActive={editor.isActive('highlight')}
           title="Highlight"
         >
-          H
+          <Highlighter size={14} />
         </ToolbarButton>
         <ToolbarButton
           onClick={handleLinkClick}
           isActive={editor.isActive('link')}
           title="Link"
         >
-          🔗
+          <Link size={14} />
         </ToolbarButton>
 
         <Separator />
@@ -281,7 +291,8 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
               onClick={() => setShowExport(true)}
               className="flex items-center gap-1 rounded px-2 py-1 text-[10px] text-[#888] hover:bg-[#2a2a2a] hover:text-[#ccc] transition-colors"
             >
-              ↓ Export
+              <Download size={14} />
+              <span>Export</span>
             </button>
           </TooltipTrigger>
           <TooltipContent>Export book</TooltipContent>
@@ -311,7 +322,7 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
                   : 'text-foreground/60 hover:text-foreground hover:bg-surface-elevated',
               )}
             >
-              📊
+              <BarChart3 size={14} />
             </button>
           </TooltipTrigger>
           <TooltipContent>Writing analysis — readability, pacing, word stats</TooltipContent>
@@ -330,7 +341,7 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
                   : 'text-foreground/60 hover:text-foreground hover:bg-surface-elevated',
               )}
             >
-              {focusMode ? '⊠' : '⊡'}
+              {focusMode ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
             </button>
           </TooltipTrigger>
           <TooltipContent>

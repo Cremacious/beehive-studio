@@ -148,27 +148,17 @@ export function NoteEditor({ item }: Props) {
             {editor && <NoteToolbar editor={editor} />}
           </div>
 
-          {/* The note card — paper, ruled-pad guides, red margin rule. */}
+          {/* The note card — plain cream paper, no ruled lines. */}
           <article
             data-slot="note-card"
-            className="relative w-full max-w-[600px] rounded-lg px-14 pt-16 pb-20"
+            className="relative w-full max-w-[600px] rounded-lg px-14 pt-8 pb-20"
             style={{
               background: 'var(--paper-100)',
               color: 'var(--paper-ink)',
               boxShadow:
                 '0 1px 0 var(--paper-50) inset, 0 2px 6px rgba(0,0,0,0.3), 0 22px 60px -16px rgba(0,0,0,0.55)',
-              backgroundImage:
-                'repeating-linear-gradient(180deg, transparent 0 27px, oklch(0.78 0.04 60 / 0.20) 27px 28px)',
-              backgroundPosition: '0 92px',
             }}
           >
-            {/* Red margin rule, full height */}
-            <span
-              aria-hidden
-              className="absolute top-0 bottom-0 w-px"
-              style={{ left: '44px', background: 'oklch(0.66 0.18 25 / 0.20)' }}
-            />
-
             <h1
               data-slot="note-title"
               className="m-0 mb-1.5 leading-tight"
@@ -190,7 +180,7 @@ export function NoteEditor({ item }: Props) {
                 fontSize: '11px',
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase',
-                color: 'var(--paper-400)',
+                color: 'var(--paper-ink-muted)',
               }}
             >
               Research note{pinned ? ' · Pinned' : ''}

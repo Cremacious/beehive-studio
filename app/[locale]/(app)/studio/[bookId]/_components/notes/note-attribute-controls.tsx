@@ -71,13 +71,15 @@ export function NoteAttributeControls({
             <button
               onClick={() => onPinChange(!pinned)}
               aria-pressed={pinned}
-              className={cn(
-                'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wide transition-colors',
-                pinned
-                  ? 'bg-brand-soft text-brand-active border border-brand/40'
-                  : 'border border-dashed border-foreground/30 text-foreground/55 hover:text-foreground hover:border-foreground/50',
-              )}
-              style={{ fontFamily: 'var(--font-display)' }}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wide transition-colors"
+              style={{
+                fontFamily: 'var(--font-display)',
+                color: pinned ? 'var(--brand-active)' : 'var(--paper-ink-muted)',
+                background: pinned ? 'var(--brand-soft)' : 'transparent',
+                border: pinned
+                  ? '1px solid oklch(from var(--brand) l c h / 0.40)'
+                  : '1px dashed oklch(from var(--paper-ink) l c h / 0.35)',
+              }}
             >
               <Pin size={11} />
               {pinned ? 'Pinned' : 'Pin'}
@@ -92,12 +94,11 @@ export function NoteAttributeControls({
             <button
               onClick={() => onFavoriteChange(!favorited)}
               aria-pressed={favorited}
-              className={cn(
-                'inline-flex items-center justify-center w-[28px] h-[28px] rounded-full transition-colors',
-                favorited
-                  ? 'bg-brand-soft text-brand-active'
-                  : 'text-foreground/55 hover:text-foreground hover:bg-surface-elevated',
-              )}
+              className="inline-flex items-center justify-center w-[28px] h-[28px] rounded-full transition-colors"
+              style={{
+                color: favorited ? 'var(--brand-active)' : 'var(--paper-ink-muted)',
+                background: favorited ? 'var(--brand-soft)' : 'transparent',
+              }}
             >
               <Star size={13} fill={favorited ? 'currentColor' : 'none'} />
             </button>

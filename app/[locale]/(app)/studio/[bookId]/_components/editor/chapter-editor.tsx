@@ -306,10 +306,13 @@ export function ChapterEditor() {
         >
           <EditorContent
             editor={editor}
-            className="min-h-full p-8 max-w-3xl mx-auto prose prose-invert prose-sm focus:outline-none"
+            className="min-h-full mx-auto focus:outline-none"
             style={{
-              fontSize: 'var(--editor-font-size, 16px)',
-              lineHeight: '1.8',
+              fontFamily: 'var(--font-prose)',
+              fontSize: 'var(--editor-font-size, 18px)',
+              lineHeight: 'var(--editor-line-height, 1.78)',
+              maxWidth: 'var(--prose-max, 720px)',
+              padding: '64px 56px 96px',
             }}
           />
         </div>

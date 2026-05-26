@@ -74,13 +74,15 @@ export function CorkboardOrEditor() {
             color: var(--paper-ink) !important;
           }
 
-          /* ProseMirror prose body */
-          [data-editor-theme="light"] .tiptap.ProseMirror { color: var(--paper-ink-strong); caret-color: var(--color-brand); }
+          /* ProseMirror prose body — paper mode per mockup */
+          [data-editor-theme="light"] .tiptap.ProseMirror { color: var(--paper-ink); caret-color: var(--color-brand); }
           [data-editor-theme="light"] .tiptap.ProseMirror h1,
           [data-editor-theme="light"] .tiptap.ProseMirror h2,
           [data-editor-theme="light"] .tiptap.ProseMirror h3 { color: var(--paper-ink-strong); }
           [data-editor-theme="light"] .tiptap.ProseMirror strong { color: var(--paper-ink-strong); }
-          [data-editor-theme="light"] .tiptap.ProseMirror blockquote { color: var(--paper-ink); }
+          [data-editor-theme="light"] .tiptap.ProseMirror blockquote { color: var(--paper-ink-muted); }
+          [data-editor-theme="light"] .tiptap.ProseMirror hr::before { color: var(--paper-ink-muted); }
+          [data-editor-theme="light"] .tiptap.ProseMirror p.is-editor-empty:first-child::before { color: var(--paper-ink-muted); }
 
           /* Version history drawer */
           [data-editor-theme="light"] [data-slot="version-history-drawer"] {

@@ -14,9 +14,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-26
 >
-> **Current focus:** DP1 Foundations complete; DP2 Studio Shell next.
+> **Current focus:** DP2 Studio Shell complete; DP3 Specialized Editor Surfaces next.
 > **Active branch:** `main` (pushed to origin/main)
-> **Last commit:** feat(design): update light-mode editor CSS to reference new paper tokens (DP1 Task 3)
+> **Last commit:** feat(studio): brand-yellow audit + error toasts + DP2 close-out (Task 6)
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.
@@ -56,9 +56,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 >
 > **Community/Discover boundary:** /community lives in (app) — authenticated-only personal feed. /discover lives in (public) — unauthenticated browsing. Same data (books, sparks, hives) shown differently. Don't duplicate features across both surfaces — Community shows YOUR follows' activity; Discover shows everything.
 >
+> **DP2 design-port pattern:** Studio chrome ported surface-by-surface (status bar → binder → metadata → toolbar → editor body → audit). Brand yellow restrained to 5 sanctioned uses across the touched surfaces. Sprint timer relocated from floating overlay into the bottom status bar's right cluster (resolves a live overlap bug). Newsreader serif wired as the prose face; container max-width 720px; light mode flips body to paper-ink (not paper-ink-strong) for long-prose readability.
+>
 > **DP1 design-port pattern:** Claude Design's tokens.css ported into `app/globals.css` `:root` as oklch primitives (chrome/paper/canvas scales, status, type colors). Shadcn semantic tokens (`--card`, `--background`, etc.) bridge to the new chrome scale so existing components inherit walnut automatically. The SP4 light-mode workaround in `corkboard-or-editor.tsx` references `--paper-*` tokens directly. Source of truth for future updates: `designs/claude/studio-shell/tokens.css`. The bonus pages (Landing / Sign In / Sign Up) Claude Design produced separately are deferred.
 >
-> **Next concrete step when resuming:** invoke /brainstorming for DP2 Studio Shell — port binder, toolbar, editor body, status bar, metadata panel to match Claude Design's studio-shell mockup.
+> **Next concrete step when resuming:** invoke /brainstorming for DP3 Specialized Editor Surfaces — port FM/BM WYSIWYG previews, Outline (Claude Design proposed alternative layouts), Notes, Character profile.
 
 ## ⚙️ Working Agreement (read this every session)
 
@@ -145,6 +147,20 @@ First of four design-port sub-projects (DP1 → DP4). Ported Claude Design's ful
 - 119/119 tests, tsc clean.
 
 **Next:** DP2 Studio Shell (binder, toolbar, editor body, status bar, metadata panel, hive integration) — pixel-perfect target per the brainstorm.
+
+### DP2 — Design Port Studio Shell ✅ COMPLETE (2026-05-26)
+Second of four design-port sub-projects. Ported persistent studio chrome to match Claude Design's `studio-shell` mockup. Pixel-perfect: editor body, binder, toolbar. Structural fidelity: status bar, metadata panel, Hive integration, error toasts.
+
+- **Status bar restructured:** new `SprintControls` component composed by `EditorStatusBar`; floating sprint overlay deleted. Resolves a live overlap bug with the word-goal button.
+- **Binder:** 6 item-type icons tinted via `--type-*` tokens, active row gets brand-yellow left-edge marker, ⋯ menu Delete row distinct, + Add menu lists types with tinted icons, new `BinderHiveFooter` opens CreateHiveModal.
+- **Editor toolbar:** 26 buttons in three zones (FORMAT/spacer/VIEW), 30×30 button shape with mockup-spec spacing, shared `tbtnClass()` helper for ad-hoc buttons, solid brand-yellow active state.
+- **Editor body:** Newsreader serif prose (`--font-prose`), 18px body / 1.78 line-height, Comfortaa headings, 720px max-width container, brand-yellow blockquote rule, "· · ·" horizontal rules.
+- **Metadata panel:** status pills use `--status-*` palette (5 tints via relative-color syntax), Scene Planner chevrons via lucide, Publishing expander promoted to solid brand-yellow Premium badge.
+- **Brand-yellow audit:** restrained to 5 places — active binder row, unsaved indicator, + Add CTA, premium badges, active toolbar button.
+
+Token system extensions: registered `--color-brand-ink` + `--color-brand-soft` in `@theme` (`text-brand-ink` was silently falling back to white before). 119/119 tests, tsc clean.
+
+**Next:** DP3 Specialized Editor Surfaces (FM/BM WYSIWYG previews, Outline + alternative layouts, Notes, Character profile).
 
 ## What's Next
 

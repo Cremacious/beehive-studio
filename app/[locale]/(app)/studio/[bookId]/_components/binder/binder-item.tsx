@@ -228,10 +228,10 @@ export function BinderItem({ node, depth }: Props) {
           return (
             <>
               {deco.pinned && (
-                <Pin size={10} className="text-brand flex-shrink-0" aria-label="Pinned" />
+                <Pin size={10} className="text-muted-foreground flex-shrink-0" aria-label="Pinned" />
               )}
               {deco.favorited && (
-                <Star size={10} className="text-brand flex-shrink-0" aria-label="Favorite" />
+                <Star size={10} className="text-muted-foreground flex-shrink-0" aria-label="Favorite" />
               )}
             </>
           )

@@ -82,7 +82,7 @@ function ChapterMetadata() {
           <input
             ref={titleInputRef}
             defaultValue={activeItem!.title}
-            className="text-lg font-bold text-foreground bg-transparent border-b border-brand outline-none w-full font-[family-name:var(--font-display)]"
+            className="text-lg font-bold text-foreground bg-transparent border-b border-foreground/40 outline-none w-full font-[family-name:var(--font-display)]"
             onKeyDown={e => {
               if (e.key === 'Enter') commitTitle()
               if (e.key === 'Escape') setIsEditingTitle(false)

@@ -24,7 +24,7 @@ export function KeyboardCheatsheet() {
     { keys: `${mod}+Z`,         action: 'Undo' },
     { keys: `${mod}+Shift+Z`,   action: 'Redo' },
     { keys: 'Esc',              action: 'Close panels' },
-    { keys: '?',                action: 'This help' },
+    { keys: `${mod}+/`,         action: 'This help' },
   ]
 
   useEffect(() => {
@@ -36,15 +36,11 @@ export function KeyboardCheatsheet() {
         return
       }
 
-      // `?` toggle — only when focus is in editor or on body
-      if (e.key === '?' && !e.metaKey && !e.ctrlKey && !e.altKey) {
-        const active = document.activeElement
-        const tag = active?.tagName?.toLowerCase()
-        const inEditable =
-          tag === 'input' ||
-          tag === 'textarea' ||
-          (active as HTMLElement | null)?.isContentEditable === true
-        if (inEditable) return
+      // Cmd/Ctrl+/ toggle — works from any focus context (editor included)
+      // because the modifier makes conflict with typing impossible. The `/`
+      // key and `?` share the same physical key on most layouts, so muscle
+      // memory matches the "press ? for help" convention.
+      if (e.key === '/' && (e.metaKey || e.ctrlKey) && !e.altKey) {
         e.preventDefault()
         setOpen(o => !o)
       }

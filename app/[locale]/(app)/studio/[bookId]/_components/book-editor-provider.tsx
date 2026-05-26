@@ -53,6 +53,8 @@ type BookEditorContextValue = {
   toggleCorkboardMode: () => void
   pendingRenameId: string | null
   setPendingRenameId: (id: string | null) => void
+  editorTheme: 'dark' | 'light'
+  toggleEditorTheme: () => void
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
@@ -87,6 +89,20 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
   const [corkboardMode, setCorkboardMode] = useState(false)
   const toggleCorkboardMode = useCallback(() => setCorkboardMode(c => !c), [])
   const [pendingRenameId, setPendingRenameId] = useState<string | null>(null)
+  const [editorTheme, setEditorTheme] = useState<'dark' | 'light'>(() => {
+    if (typeof window === 'undefined') return 'dark'
+    return localStorage.getItem('editor-theme') === 'light' ? 'light' : 'dark'
+  })
+
+  const toggleEditorTheme = useCallback(() => {
+    setEditorTheme(prev => {
+      const next = prev === 'dark' ? 'light' : 'dark'
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('editor-theme', next)
+      }
+      return next
+    })
+  }, [])
 
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const notesTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -322,6 +338,8 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     toggleCorkboardMode,
     pendingRenameId,
     setPendingRenameId,
+    editorTheme,
+    toggleEditorTheme,
   }), [
     bookId,
     bookTitle,
@@ -350,6 +368,8 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     corkboardMode,
     toggleCorkboardMode,
     pendingRenameId,
+    editorTheme,
+    toggleEditorTheme,
   ])
 
   return <BookEditorContext.Provider value={value}>{children}</BookEditorContext.Provider>

@@ -19,6 +19,7 @@ import {
   BarChart3,
   Maximize2, Minimize2,
   Download,
+  Sun, Moon,
 } from 'lucide-react'
 
 type Props = {
@@ -71,7 +72,7 @@ function Separator() {
 }
 
 export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggleFind, findOpen }: Props) {
-  const { saveStatus, wordCount, focusMode, toggleFocusMode } = useBookEditor()
+  const { saveStatus, wordCount, focusMode, toggleFocusMode, editorTheme, toggleEditorTheme } = useBookEditor()
 
   const [showExport, setShowExport] = useState(false)
 
@@ -288,6 +289,21 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
           <ToolbarButton onClick={onToggleFind} isActive={findOpen} title="Find & replace (⌘F)">
             <Search size={14} />
           </ToolbarButton>
+
+          {/* Editor theme toggle (Sun/Moon) — shows the icon for the destination mode */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={toggleEditorTheme}
+                className="text-xs px-2 py-1 rounded transition-colors text-foreground/60 hover:text-foreground hover:bg-surface-elevated"
+              >
+                {editorTheme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {editorTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            </TooltipContent>
+          </Tooltip>
 
           {/* Font size control */}
           <select

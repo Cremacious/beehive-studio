@@ -15,8 +15,6 @@ type Props = {
   editor: Editor
   onToggleAnalysis: () => void
   analysisOpen: boolean
-  onToggleSounds: () => void
-  soundsOpen: boolean
   onToggleFind: () => void
   findOpen: boolean
 }
@@ -62,7 +60,7 @@ function Separator() {
   return <span className="w-px h-4 bg-border mx-1" />
 }
 
-export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggleSounds, soundsOpen, onToggleFind, findOpen }: Props) {
+export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggleFind, findOpen }: Props) {
   const { saveStatus, wordCount, focusMode, toggleFocusMode } = useBookEditor()
 
   const [showExport, setShowExport] = useState(false)
@@ -317,25 +315,6 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
             </button>
           </TooltipTrigger>
           <TooltipContent>Writing analysis — readability, pacing, word stats</TooltipContent>
-        </Tooltip>
-
-        {/* Ambient sounds toggle */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onMouseDown={e => e.preventDefault()}
-              onClick={onToggleSounds}
-              className={cn(
-                'text-xs px-2 py-1 rounded transition-colors ml-1',
-                soundsOpen
-                  ? 'text-brand bg-brand/20'
-                  : 'text-foreground/60 hover:text-foreground hover:bg-surface-elevated',
-              )}
-            >
-              🎵
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>Ambient sounds</TooltipContent>
         </Tooltip>
 
         {/* Focus mode toggle */}

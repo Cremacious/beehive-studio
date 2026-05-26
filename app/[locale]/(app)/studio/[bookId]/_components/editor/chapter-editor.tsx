@@ -14,7 +14,6 @@ import type { CharacterCountStorage } from '@tiptap/extensions'
 import { useBookEditor } from '../book-editor-provider'
 import { EditorToolbar } from './editor-toolbar'
 import { SprintTimer } from './sprint-timer'
-import { AmbientSounds } from './ambient-sounds'
 import { WritingAnalysis, extractPlainText } from './writing-analysis'
 import { updateBinderItemAction, createBinderItemAction } from '@/lib/actions/binder.actions'
 import { FindReplace } from './find-replace'
@@ -103,7 +102,6 @@ export function ChapterEditor() {
     useBookEditor()
 
   const [analysisOpen, setAnalysisOpen] = useState(false)
-  const [soundsOpen, setSoundsOpen] = useState(false)
   const [findOpen, setFindOpen] = useState(false)
   const [editorText, setEditorText] = useState('')
 
@@ -250,8 +248,6 @@ export function ChapterEditor() {
           editor={editor}
           onToggleAnalysis={() => setAnalysisOpen(a => !a)}
           analysisOpen={analysisOpen}
-          onToggleSounds={() => setSoundsOpen(s => !s)}
-          soundsOpen={soundsOpen}
           onToggleFind={() => setFindOpen(f => !f)}
           findOpen={findOpen}
         />
@@ -282,7 +278,6 @@ export function ChapterEditor() {
         )}
       </div>
       <SprintTimer currentWordCount={charCount?.words() ?? wordCount} />
-      {soundsOpen && <AmbientSounds onClose={() => setSoundsOpen(false)} />}
     </main>
   )
 }

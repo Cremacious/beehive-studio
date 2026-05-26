@@ -103,168 +103,165 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
 
   return (
     <TooltipProvider>
-      <div className="flex items-center gap-1 px-3 py-1.5 border-b border-border bg-surface">
-        {/* Inline */}
-        <ToolbarButton
-          onClick={() => editor.chain().focus().toggleBold().run()}
-          isActive={editor.isActive('bold')}
-          title="Bold (⌘B)"
-        >
-          <Bold size={14} />
-        </ToolbarButton>
-        <ToolbarButton
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-          isActive={editor.isActive('italic')}
-          title="Italic (⌘I)"
-        >
-          <Italic size={14} />
-        </ToolbarButton>
-        <ToolbarButton
-          onClick={() => editor.chain().focus().toggleStrike().run()}
-          isActive={editor.isActive('strike')}
-          title="Strikethrough"
-        >
-          <Strikethrough size={14} />
-        </ToolbarButton>
+      <div
+        data-slot="editor-toolbar"
+        className="flex items-center gap-1 px-3 py-1.5 border-b border-border bg-surface"
+      >
+        {/* FORMAT zone (left) */}
+        <div className="flex items-center gap-1">
+          {/* Inline */}
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleBold().run()}
+            isActive={editor.isActive('bold')}
+            title="Bold (⌘B)"
+          >
+            <Bold size={14} />
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleItalic().run()}
+            isActive={editor.isActive('italic')}
+            title="Italic (⌘I)"
+          >
+            <Italic size={14} />
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleStrike().run()}
+            isActive={editor.isActive('strike')}
+            title="Strikethrough"
+          >
+            <Strikethrough size={14} />
+          </ToolbarButton>
 
-        <Separator />
+          <Separator />
 
-        {/* Block — disabled checks removed: editor.can().chain()...run() was
-            returning false in TipTap v3, blocking clicks entirely. The chain
-            no-ops gracefully when it can't apply, so we don't need the gate. */}
-        <ToolbarButton
-          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-          isActive={editor.isActive('heading', { level: 1 })}
-          title="Heading 1"
-        >
-          <Heading1 size={14} />
-        </ToolbarButton>
-        <ToolbarButton
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          isActive={editor.isActive('heading', { level: 2 })}
-          title="Heading 2"
-        >
-          <Heading2 size={14} />
-        </ToolbarButton>
-        <ToolbarButton
-          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-          isActive={editor.isActive('heading', { level: 3 })}
-          title="Heading 3"
-        >
-          <Heading3 size={14} />
-        </ToolbarButton>
+          {/* Block — disabled checks removed: editor.can().chain()...run() was
+              returning false in TipTap v3, blocking clicks entirely. The chain
+              no-ops gracefully when it can't apply, so we don't need the gate. */}
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+            isActive={editor.isActive('heading', { level: 1 })}
+            title="Heading 1"
+          >
+            <Heading1 size={14} />
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+            isActive={editor.isActive('heading', { level: 2 })}
+            title="Heading 2"
+          >
+            <Heading2 size={14} />
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+            isActive={editor.isActive('heading', { level: 3 })}
+            title="Heading 3"
+          >
+            <Heading3 size={14} />
+          </ToolbarButton>
 
-        <Separator />
+          <Separator />
 
-        {/* Lists */}
-        <ToolbarButton
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-          isActive={editor.isActive('bulletList')}
-          title="Bullet list"
-        >
-          <List size={14} />
-        </ToolbarButton>
-        <ToolbarButton
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          isActive={editor.isActive('orderedList')}
-          title="Numbered list"
-        >
-          <ListOrdered size={14} />
-        </ToolbarButton>
+          {/* Lists, quote, hr */}
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleBulletList().run()}
+            isActive={editor.isActive('bulletList')}
+            title="Bullet list"
+          >
+            <List size={14} />
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleOrderedList().run()}
+            isActive={editor.isActive('orderedList')}
+            title="Numbered list"
+          >
+            <ListOrdered size={14} />
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleBlockquote().run()}
+            isActive={editor.isActive('blockquote')}
+            title="Quote"
+          >
+            <Quote size={14} />
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().setHorizontalRule().run()}
+            title="Horizontal rule"
+          >
+            <Minus size={14} />
+          </ToolbarButton>
 
-        {/* Other */}
-        <ToolbarButton
-          onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          isActive={editor.isActive('blockquote')}
-          title="Quote"
-        >
-          <Quote size={14} />
-        </ToolbarButton>
-        <ToolbarButton
-          onClick={() => editor.chain().focus().setHorizontalRule().run()}
-          title="Horizontal rule"
-        >
-          <Minus size={14} />
-        </ToolbarButton>
+          <Separator />
 
-        <Separator />
+          {/* History */}
+          <ToolbarButton
+            onClick={() => editor.chain().focus().undo().run()}
+            disabled={!editor.can().undo()}
+            title="Undo (⌘Z)"
+          >
+            <Undo size={14} />
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().redo().run()}
+            disabled={!editor.can().redo()}
+            title="Redo (⌘⇧Z)"
+          >
+            <Redo size={14} />
+          </ToolbarButton>
 
-        {/* History */}
-        <ToolbarButton
-          onClick={() => editor.chain().focus().undo().run()}
-          disabled={!editor.can().undo()}
-          title="Undo (⌘Z)"
-        >
-          <Undo size={14} />
-        </ToolbarButton>
-        <ToolbarButton
-          onClick={() => editor.chain().focus().redo().run()}
-          disabled={!editor.can().redo()}
-          title="Redo (⌘⇧Z)"
-        >
-          <Redo size={14} />
-        </ToolbarButton>
+          <Separator />
 
-        <Separator />
+          {/* Format: Underline, Highlight, Link */}
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleUnderline().run()}
+            isActive={editor.isActive('underline')}
+            title="Underline (⌘U)"
+          >
+            <Underline size={14} />
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().toggleHighlight().run()}
+            isActive={editor.isActive('highlight')}
+            title="Highlight"
+          >
+            <Highlighter size={14} />
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={handleLinkClick}
+            isActive={editor.isActive('link')}
+            title="Link"
+          >
+            <Link size={14} />
+          </ToolbarButton>
 
-        {/* Find & Replace */}
-        <ToolbarButton onClick={onToggleFind} isActive={findOpen} title="Find & replace (⌘F)">
-          <Search size={14} />
-        </ToolbarButton>
+          <Separator />
 
-        <Separator />
-
-        {/* Format: Underline, Highlight, Link */}
-        <ToolbarButton
-          onClick={() => editor.chain().focus().toggleUnderline().run()}
-          isActive={editor.isActive('underline')}
-          title="Underline (⌘U)"
-        >
-          <Underline size={14} />
-        </ToolbarButton>
-        <ToolbarButton
-          onClick={() => editor.chain().focus().toggleHighlight().run()}
-          isActive={editor.isActive('highlight')}
-          title="Highlight"
-        >
-          <Highlighter size={14} />
-        </ToolbarButton>
-        <ToolbarButton
-          onClick={handleLinkClick}
-          isActive={editor.isActive('link')}
-          title="Link"
-        >
-          <Link size={14} />
-        </ToolbarButton>
-
-        <Separator />
-
-        {/* Align — distinct lucide icons so users can tell L/C/R apart */}
-        <ToolbarButton
-          onClick={() => editor.chain().focus().setTextAlign('left').run()}
-          isActive={editor.isActive({ textAlign: 'left' })}
-          title="Align left"
-        >
-          <AlignLeft size={14} />
-        </ToolbarButton>
-        <ToolbarButton
-          onClick={() => editor.chain().focus().setTextAlign('center').run()}
-          isActive={editor.isActive({ textAlign: 'center' })}
-          title="Align center"
-        >
-          <AlignCenter size={14} />
-        </ToolbarButton>
-        <ToolbarButton
-          onClick={() => editor.chain().focus().setTextAlign('right').run()}
-          isActive={editor.isActive({ textAlign: 'right' })}
-          title="Align right"
-        >
-          <AlignRight size={14} />
-        </ToolbarButton>
+          {/* Align — distinct lucide icons so users can tell L/C/R apart */}
+          <ToolbarButton
+            onClick={() => editor.chain().focus().setTextAlign('left').run()}
+            isActive={editor.isActive({ textAlign: 'left' })}
+            title="Align left"
+          >
+            <AlignLeft size={14} />
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().setTextAlign('center').run()}
+            isActive={editor.isActive({ textAlign: 'center' })}
+            title="Align center"
+          >
+            <AlignCenter size={14} />
+          </ToolbarButton>
+          <ToolbarButton
+            onClick={() => editor.chain().focus().setTextAlign('right').run()}
+            isActive={editor.isActive({ textAlign: 'right' })}
+            title="Align right"
+          >
+            <AlignRight size={14} />
+          </ToolbarButton>
+        </div>
 
         <span className="flex-1" />
 
-        {/* Save status + word count — fixed-width to prevent toolbar shift
+        {/* STATUS zone (center) — fixed-width to prevent toolbar shift
             when status text or word count changes width */}
         <span className="flex items-center gap-3 text-xs text-foreground/40 min-w-[180px] justify-end tabular-nums">
           <span
@@ -283,71 +280,81 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
           </span>
         </span>
 
-        {/* Export */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onMouseDown={e => e.preventDefault()}
-              onClick={() => setShowExport(true)}
-              className="flex items-center gap-1 rounded px-2 py-1 text-[10px] text-[#888] hover:bg-[#2a2a2a] hover:text-[#ccc] transition-colors"
-            >
-              <Download size={14} />
-              <span>Export</span>
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>Export book</TooltipContent>
-        </Tooltip>
+        <span className="flex-1" />
 
-        {/* Font size control */}
-        <select
-          value={fontSize}
-          onChange={e => setFontSize(Number(e.target.value))}
-          className="text-xs bg-surface border border-border rounded px-1 py-0.5 text-foreground/60 ml-1"
-        >
-          {[12, 14, 16, 18, 20, 24].map(s => (
-            <option key={s} value={s}>{s}px</option>
-          ))}
-        </select>
+        {/* VIEW zone (right) */}
+        <div className="flex items-center gap-1">
+          {/* Find & Replace */}
+          <ToolbarButton onClick={onToggleFind} isActive={findOpen} title="Find & replace (⌘F)">
+            <Search size={14} />
+          </ToolbarButton>
 
-        {/* Writing analysis toggle */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onMouseDown={e => e.preventDefault()}
-              onClick={onToggleAnalysis}
-              className={cn(
-                'text-xs px-2 py-1 rounded transition-colors ml-1',
-                analysisOpen
-                  ? 'text-brand bg-brand/20'
-                  : 'text-foreground/60 hover:text-foreground hover:bg-surface-elevated',
-              )}
-            >
-              <BarChart3 size={14} />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>Writing analysis — readability, pacing, word stats</TooltipContent>
-        </Tooltip>
+          {/* Font size control */}
+          <select
+            value={fontSize}
+            onChange={e => setFontSize(Number(e.target.value))}
+            className="text-xs bg-surface border border-border rounded px-1 py-0.5 text-foreground/60"
+          >
+            {[12, 14, 16, 18, 20, 24].map(s => (
+              <option key={s} value={s}>{s}px</option>
+            ))}
+          </select>
 
-        {/* Focus mode toggle */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              onMouseDown={e => e.preventDefault()}
-              onClick={toggleFocusMode}
-              className={cn(
-                'text-xs px-2 py-1 rounded transition-colors ml-1',
-                focusMode
-                  ? 'text-brand bg-brand/20'
-                  : 'text-foreground/60 hover:text-foreground hover:bg-surface-elevated',
-              )}
-            >
-              {focusMode ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>
-            {focusMode ? 'Exit focus mode' : 'Focus mode — hide sidebars'}
-          </TooltipContent>
-        </Tooltip>
+          {/* Export */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onMouseDown={e => e.preventDefault()}
+                onClick={() => setShowExport(true)}
+                className="flex items-center gap-1 rounded px-2 py-1 text-xs text-foreground/60 hover:text-foreground hover:bg-surface-elevated transition-colors"
+              >
+                <Download size={14} />
+                <span>Export</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Export book</TooltipContent>
+          </Tooltip>
+
+          {/* Writing analysis toggle */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onMouseDown={e => e.preventDefault()}
+                onClick={onToggleAnalysis}
+                className={cn(
+                  'text-xs px-2 py-1 rounded transition-colors',
+                  analysisOpen
+                    ? 'text-brand bg-brand/20'
+                    : 'text-foreground/60 hover:text-foreground hover:bg-surface-elevated',
+                )}
+              >
+                <BarChart3 size={14} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Writing analysis — readability, pacing, word stats</TooltipContent>
+          </Tooltip>
+
+          {/* Focus mode toggle */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onMouseDown={e => e.preventDefault()}
+                onClick={toggleFocusMode}
+                className={cn(
+                  'text-xs px-2 py-1 rounded transition-colors',
+                  focusMode
+                    ? 'text-brand bg-brand/20'
+                    : 'text-foreground/60 hover:text-foreground hover:bg-surface-elevated',
+                )}
+              >
+                {focusMode ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {focusMode ? 'Exit focus mode' : 'Focus mode — hide sidebars'}
+            </TooltipContent>
+          </Tooltip>
+        </div>
 
         <ExportModal open={showExport} onClose={() => setShowExport(false)} />
       </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { ChevronDown, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useBookEditor } from '../book-editor-provider'
 import { updateBinderItemAction } from '@/lib/actions/binder.actions'
@@ -13,11 +14,11 @@ import {
 const CHAPTER_TYPES = new Set(['chapter', 'front_matter', 'back_matter'])
 
 const STATUS_OPTIONS = [
-  { value: 'IDEA' as const, label: 'Idea' },
-  { value: 'OUTLINE' as const, label: 'Outline' },
-  { value: 'FIRST_DRAFT' as const, label: 'First Draft' },
-  { value: 'REVISED' as const, label: 'Revised' },
-  { value: 'FINAL' as const, label: 'Final' },
+  { value: 'IDEA' as const, label: 'Idea', color: 'var(--status-idea)' },
+  { value: 'OUTLINE' as const, label: 'Outline', color: 'var(--status-outline)' },
+  { value: 'FIRST_DRAFT' as const, label: 'First Draft', color: 'var(--status-first-draft)' },
+  { value: 'REVISED' as const, label: 'Revised', color: 'var(--status-revised)' },
+  { value: 'FINAL' as const, label: 'Final', color: 'var(--status-final)' },
 ]
 
 type ChapterMeta = {
@@ -71,53 +72,72 @@ function ChapterMetadata() {
     updateChapterNotes(e.target.value)
   }
 
-  return (
-    <div className="p-4 flex flex-col gap-5">
-      {isEditingTitle ? (
-        <input
-          ref={titleInputRef}
-          defaultValue={activeItem!.title}
-          className="text-sm font-medium text-foreground bg-transparent border-b border-brand outline-none w-full"
-          onKeyDown={e => {
-            if (e.key === 'Enter') commitTitle()
-            if (e.key === 'Escape') setIsEditingTitle(false)
-          }}
-          onBlur={commitTitle}
-        />
-      ) : (
-        <h2
-          className="text-sm font-medium text-foreground cursor-pointer hover:text-brand transition-colors"
-          onClick={() => setIsEditingTitle(true)}
-        >
-          {activeItem!.title}
-        </h2>
-      )}
+  const labelClass = "text-[10px] text-muted-foreground uppercase tracking-[0.10em] font-medium font-mono"
+  const fieldClass = "resize-none bg-surface-inset rounded-md p-2.5 text-xs text-foreground outline-none border border-border focus:border-brand/40 transition-colors leading-relaxed placeholder:italic placeholder:text-muted-foreground"
 
-      <div className="flex flex-col gap-1.5">
-        <span className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Status</span>
+  return (
+    <div className="flex flex-col">
+      <div className="px-[18px] py-[18px] border-b border-[var(--chrome-800)]">
+        {isEditingTitle ? (
+          <input
+            ref={titleInputRef}
+            defaultValue={activeItem!.title}
+            className="text-lg font-bold text-foreground bg-transparent border-b border-brand outline-none w-full font-[family-name:var(--font-display)]"
+            onKeyDown={e => {
+              if (e.key === 'Enter') commitTitle()
+              if (e.key === 'Escape') setIsEditingTitle(false)
+            }}
+            onBlur={commitTitle}
+          />
+        ) : (
+          <h2
+            className="text-lg font-bold text-foreground cursor-pointer hover:text-brand transition-colors leading-tight font-[family-name:var(--font-display)]"
+            onClick={() => setIsEditingTitle(true)}
+          >
+            {activeItem!.title}
+          </h2>
+        )}
+      </div>
+
+      <div className="px-[18px] py-[18px] border-b border-[var(--chrome-800)] flex flex-col gap-2.5">
+        <span className={labelClass}>Status</span>
         <div className="flex flex-wrap gap-1.5">
-          {STATUS_OPTIONS.map(({ value, label }) => (
-            <button
-              key={value}
-              onClick={() => updateChapterStatus(value)}
-              className={cn(
-                "text-xs px-2.5 py-1 rounded-full border transition-colors",
-                activeChapter?.status === value
-                  ? "bg-brand/20 border-brand/40 text-brand"
-                  : "border-border text-muted-foreground hover:border-brand/40 hover:text-foreground",
-              )}
-            >
-              {label}
-            </button>
-          ))}
+          {STATUS_OPTIONS.map(({ value, label, color }) => {
+            const isActive = activeChapter?.status === value
+            return (
+              <button
+                key={value}
+                onClick={() => updateChapterStatus(value)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border transition-colors font-medium",
+                  !isActive && "bg-[var(--chrome-800)] text-foreground/80 border-[var(--chrome-700)] hover:text-foreground",
+                )}
+                style={
+                  isActive
+                    ? {
+                        color,
+                        backgroundColor: `oklch(from ${color} l c h / 0.18)`,
+                        borderColor: `oklch(from ${color} l c h / 0.40)`,
+                      }
+                    : undefined
+                }
+              >
+                <span
+                  className="w-1.5 h-1.5 rounded-full"
+                  style={{ backgroundColor: color }}
+                />
+                {label}
+              </button>
+            )
+          })}
         </div>
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <span className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Synopsis</span>
+      <div className="px-[18px] py-[18px] border-b border-[var(--chrome-800)] flex flex-col gap-2.5">
+        <span className={labelClass}>Synopsis</span>
         <textarea
           key={activeItemId + '-synopsis'}
-          className="resize-none bg-surface-inset rounded-md p-2 text-xs text-foreground/80 outline-none border border-border focus:border-brand/40 transition-colors leading-relaxed min-h-16"
+          className={cn(fieldClass, "min-h-16")}
           placeholder="One-line chapter summary…"
           defaultValue={meta.synopsis ?? ''}
           onChange={e => handleMetaChange({ synopsis: e.target.value })}
@@ -125,26 +145,30 @@ function ChapterMetadata() {
       </div>
 
       {activeItem!.type === 'chapter' && (
-        <div className="flex flex-col gap-1.5">
+        <div className="px-[18px] py-[18px] border-b border-[var(--chrome-800)] flex flex-col gap-2.5">
           <button
             onClick={() => setScenePlannerOpen(o => !o)}
-            className="flex items-center justify-between text-xs text-muted-foreground uppercase tracking-wide font-medium hover:text-foreground transition-colors"
+            className="flex items-center justify-between w-full text-xs text-foreground/80 font-medium hover:text-foreground transition-colors"
           >
-            <span>Scene Planner</span>
-            <span>{scenePlannerOpen ? '▾' : '▸'}</span>
+            <span className={labelClass}>Scene Planner</span>
+            {scenePlannerOpen ? (
+              <ChevronDown size={14} className="text-muted-foreground" />
+            ) : (
+              <ChevronRight size={14} className="text-muted-foreground" />
+            )}
           </button>
           {scenePlannerOpen && (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2.5 mt-1">
               {[
                 { key: 'sceneGoal', label: 'Goal', placeholder: "What does the POV character want?" },
                 { key: 'sceneConflict', label: 'Conflict', placeholder: "What stands in their way?" },
                 { key: 'sceneOutcome', label: 'Outcome', placeholder: "How does the scene end?" },
               ].map(({ key, label, placeholder }) => (
                 <div key={key} className="flex flex-col gap-1">
-                  <span className="text-xs text-muted-foreground">{label}</span>
+                  <span className={labelClass}>{label}</span>
                   <textarea
                     key={activeItemId + '-' + key}
-                    className="resize-none bg-surface-inset rounded-md p-2 text-xs text-foreground/80 outline-none border border-border focus:border-brand/40 transition-colors leading-relaxed min-h-12"
+                    className={cn(fieldClass, "min-h-12")}
                     placeholder={placeholder}
                     defaultValue={(meta as Record<string, string>)[key] ?? ''}
                     onChange={e => handleMetaChange({ [key]: e.target.value } as Partial<ChapterMeta>)}
@@ -156,11 +180,11 @@ function ChapterMetadata() {
         </div>
       )}
 
-      <div className="flex flex-col gap-1.5 flex-1">
-        <span className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Notes</span>
+      <div className="px-[18px] py-[18px] flex flex-col gap-2.5 flex-1">
+        <span className={labelClass}>Notes</span>
         <textarea
           key={activeItemId}
-          className="flex-1 resize-none bg-surface-inset rounded-md p-3 text-xs text-foreground/80 outline-none border border-border focus:border-brand/40 transition-colors leading-relaxed min-h-24"
+          className={cn(fieldClass, "flex-1 min-h-24 p-3")}
           placeholder="Private notes — only you can see these."
           defaultValue={activeChapter?.notes ?? ''}
           onChange={handleNotesChange}
@@ -207,30 +231,58 @@ function PublishingSection({ bookId }: { bookId: string }) {
     }
   }
 
+  const pubLabelClass = "block text-[10px] text-muted-foreground mb-1 uppercase tracking-[0.10em] font-mono"
+  const pubFieldClass = "w-full rounded border border-border bg-[var(--chrome-950)] px-2.5 py-1.5 text-xs text-foreground placeholder:text-muted-foreground placeholder:italic focus:border-brand/40 focus:outline-none transition-colors"
+
   return (
-    <div className="border-t border-[#2a2a2a] mt-2">
+    <div
+      className="mt-auto border-t border-[var(--chrome-800)]"
+      style={{ background: 'linear-gradient(180deg, var(--chrome-900), oklch(0.16 0.012 60))' }}
+    >
       <button
         onClick={handleExpand}
-        className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-[#1a1a1a] transition-colors"
+        className="flex w-full items-start justify-between px-[18px] pt-3.5 pb-1 text-left hover:bg-surface-elevated/30 transition-colors"
       >
-        <div className="flex flex-col gap-0.5">
+        <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-[#666]">
-              {expanded ? '▾' : '▸'} Publishing details
+            {expanded ? (
+              <ChevronDown size={14} className="text-muted-foreground" />
+            ) : (
+              <ChevronRight size={14} className="text-muted-foreground" />
+            )}
+            <span className="text-xs font-bold text-foreground/90 font-[family-name:var(--font-display)]">
+              Publishing details
             </span>
-            <span className="rounded-sm bg-[#1f1a00] px-1.5 py-0.5 text-[9px] font-semibold text-[#FFC300] border border-[#3a2e00]">
+            <span
+              className="rounded-sm px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.10em] font-mono"
+              style={{
+                backgroundColor: 'var(--brand)',
+                color: 'var(--brand-ink)',
+                borderColor: 'var(--brand)',
+              }}
+            >
               Premium
             </span>
           </div>
-          <span className="text-[10px] text-[#555]">Applies to the whole book, not just this chapter</span>
         </div>
-        {saving && <span className="text-[9px] text-[#555]">Saving…</span>}
+        {saving && <span className="text-[9px] text-muted-foreground mt-1">Saving…</span>}
       </button>
 
+      <div className="px-[18px] pb-3 -mt-1">
+        <span className="text-xs text-muted-foreground">Applies to the whole book, not just this chapter</span>
+      </div>
+
       {expanded && (
-        <div className="px-4 pb-4 flex flex-col gap-3">
+        <div className="px-[18px] pb-[22px] pt-1 flex flex-col gap-3">
           {upgradePrompt && (
-            <div className="rounded-md border border-[#3a2e00] bg-[#1a1200] px-3 py-2 text-[10px] text-[#FFC300]">
+            <div
+              className="rounded-md px-3 py-2 text-[10px]"
+              style={{
+                color: 'var(--brand)',
+                backgroundColor: 'var(--brand-soft)',
+                border: '1px solid oklch(0.85 0.18 90 / 0.25)',
+              }}
+            >
               Publishing details require a premium account.
             </div>
           )}
@@ -242,35 +294,35 @@ function PublishingSection({ bookId }: { bookId: string }) {
             { field: 'dedication' as const, label: 'Dedication', type: 'text' },
             { field: 'edition' as const, label: 'Edition', type: 'text' },
           ].map(({ field, label, type }) => (
-            <div key={field}>
-              <label className="block text-[10px] text-[#555] mb-1">{label}</label>
+            <div key={field} className="flex flex-col gap-1">
+              <label className={pubLabelClass}>{label}</label>
               <input
                 type={type}
                 defaultValue={fields[field] ?? ''}
                 onBlur={e => handleBlur(field, e.target.value)}
-                className="w-full rounded border border-[#2a2a2a] bg-[#111] px-2 py-1.5 text-xs text-[#ccc] placeholder-[#444] focus:border-[#3a3a3a] focus:outline-none"
+                className={pubFieldClass}
                 placeholder={`Enter ${label.toLowerCase()}…`}
               />
             </div>
           ))}
 
-          <div>
-            <label className="block text-[10px] text-[#555] mb-1">Author bio</label>
+          <div className="flex flex-col gap-1">
+            <label className={pubLabelClass}>Author bio</label>
             <textarea
               rows={3}
               defaultValue={fields.authorBio ?? ''}
               onBlur={e => handleBlur('authorBio', e.target.value)}
-              className="w-full rounded border border-[#2a2a2a] bg-[#111] px-2 py-1.5 text-xs text-[#ccc] placeholder-[#444] focus:border-[#3a3a3a] focus:outline-none resize-none"
+              className={cn(pubFieldClass, "resize-none leading-relaxed")}
               placeholder="Enter author bio…"
             />
           </div>
 
-          <div>
-            <label className="block text-[10px] text-[#555] mb-1">Trim size</label>
+          <div className="flex flex-col gap-1">
+            <label className={pubLabelClass}>Trim size</label>
             <select
               defaultValue={fields.trimSize ?? ''}
               onBlur={e => handleBlur('trimSize', e.target.value)}
-              className="w-full rounded border border-[#2a2a2a] bg-[#111] px-2 py-1.5 text-xs text-[#ccc] focus:border-[#3a3a3a] focus:outline-none"
+              className={pubFieldClass}
             >
               <option value="">— Select —</option>
               <option value="5x8">5 × 8</option>

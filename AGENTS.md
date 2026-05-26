@@ -14,9 +14,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-26
 >
-> **Current focus:** SP5 Metadata + persistence — not started
+> **Current focus:** SP6 New surfaces — not started
 > **Active branch:** `main` (pushed to origin/main)
-> **Last commit:** fix(studio): three columns fill viewport instead of stopping at 80%
+> **Last commit:** feat(studio): hide Scene Planner on front/back matter; label Publishing as book-level
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.
@@ -24,9 +24,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 > 1. ~~**SP1 Stability Pass**~~ DONE.
 > 2. ~~**SP2 Binder UX**~~ DONE.
 > 3. ~~**SP3 Specialized Editors**~~ DONE — Front/Back Matter, Outline, Research notes.
-> 4. ~~**SP4 Toolbar + modes**~~ **DONE** (2026-05-26) — ambient sounds finally removed; lucide icons across the entire toolbar; three-zone Format/Status/View layout; raw hex → semantic tokens; Cmd+F/Cmd+S scoped to editor; editor-area light-mode toggle (Sun/Moon, persisted to localStorage); studio columns now fill viewport. Font-size mark deferred indefinitely — Chris skipped during execution. 113/113 tests, tsc clean.
-> 5. **SP5 Metadata + persistence (NEXT)** — synopsis/scene-planner/notes/word-goal/status/publishing-details correctness, bottom status-bar consolidation.
-> 6. **SP6 New surfaces** — Snapshot UI, mobile/tablet responsive, accessibility audit (aria-labels, contrast, ? keyboard cheatsheet).
+> 4. ~~**SP4 Toolbar + modes**~~ DONE — ambient sounds removed; lucide icons; three-zone Format/Status/View; semantic tokens; Cmd+F/Cmd+S scoped to editor; editor light-mode toggle; studio columns fill viewport.
+> 5. ~~**SP5 Metadata + persistence**~~ **DONE** (2026-05-26) — bottom status bar (save indicator + word count + inline-editable word goal) replaces toolbar STATUS zone and metadata-panel Words/Word-Goal sections; word goal moved from per-device localStorage to `chapters.wordGoal` DB column with lazy migration helper; Publishing details expander gained "Applies to the whole book" subtitle; Scene Planner now only renders for `type === 'chapter'` (hidden on Front/Back Matter). 119/119 tests, tsc clean.
+> 6. **SP6 New surfaces (NEXT)** — Snapshot UI, mobile/tablet responsive, accessibility audit (aria-labels, contrast, ? keyboard cheatsheet).
 >
 > After all six: Claude Design redesigns visually, mechanical import. Then Phase 8 (Stripe monetization) resumes.
 >
@@ -44,7 +44,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 >
 > **Studio layout note:** the studio page's outer flex now uses `h-[calc(100vh-56px)]` (nav is `h-14`) instead of `h-full`, because the parent `(app)/layout.tsx` uses `min-h-screen` not `h-screen`. Other (app) routes are unaffected.
 >
-> **Next concrete step when resuming:** invoke `/brainstorming` for SP5 (Metadata + persistence). Audit the right-side metadata panel (synopsis, scene-planner, notes, status, word-goal, publishing-details) for correctness, then design the bottom status-bar consolidation.
+> **SP5 word-goal pattern:** word goal lives on `chapters.wordGoal` (int, default 0 = "no goal"). The bottom status bar (`editor-status-bar.tsx`) owns the UI; `lib/word-goal-migration.ts` is a pure helper that ports pre-SP5 `wcg:<binderItemId>` localStorage keys to DB on first chapter load, then deletes the key. Future per-chapter settings should follow the same shape (DB column + chapter action + status-bar inline edit) rather than localStorage.
+>
+> **Next concrete step when resuming:** invoke `/brainstorming` for SP6 (New surfaces — Snapshot UI, mobile/tablet responsive, accessibility audit).
 
 ## ⚙️ Working Agreement (read this every session)
 

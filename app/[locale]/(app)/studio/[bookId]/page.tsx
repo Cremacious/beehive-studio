@@ -35,7 +35,11 @@ export default async function BookEditorPage({ params }: Props) {
       locale={locale}
       initialBinderItems={binderResult!.data}
     >
-      <div className="flex h-full overflow-hidden">
+      {/* The (app) layout uses min-h-screen (not h-screen), so h-full on a
+          flex-1 ancestor resolves to content-height — not viewport. Pin the
+          studio columns to viewport-minus-nav (h-14 = 56px) so the binder /
+          editor / metadata fill the screen instead of stopping ~80% down. */}
+      <div className="flex h-[calc(100vh-56px)] overflow-hidden">
         <BinderTree />
         <CorkboardOrEditor />
         <MetadataPanel />

@@ -7,6 +7,7 @@ import { useParams } from 'next/navigation'
 import { useBookEditor } from '../book-editor-provider'
 import {
   getChapterSnapshotsAction,
+  getSnapshotContentAction,
   type SnapshotSummary,
 } from '@/lib/actions/snapshot.actions'
 
@@ -23,12 +24,31 @@ function formatSnapshotDate(d: Date): string {
 }
 
 export function VersionHistoryDrawer() {
-  const { activeChapter, toggleHistory, enterPreview } = useBookEditor()
+  const { activeChapter, toggleHistory, enterPreview, pushFlash } = useBookEditor()
   const params = useParams<{ locale: string }>()
   const locale = params.locale
   const [snapshots, setSnapshots] = useState<SnapshotSummary[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [openingId, setOpeningId] = useState<string | null>(null)
+
+  async function handleRowClick(s: SnapshotSummary) {
+    if (openingId) return
+    setOpeningId(s.id)
+    const result = await getSnapshotContentAction(s.id)
+    setOpeningId(null)
+    if (result.success) {
+      enterPreview({
+        id: result.data.id,
+        content: result.data.content,
+        createdAt: new Date(result.data.createdAt),
+      })
+    } else if (result.error.startsWith('PREMIUM_REQUIRED')) {
+      pushFlash('Premium required to preview')
+    } else {
+      pushFlash(`Couldn't open snapshot: ${result.error}`)
+    }
+  }
 
   useEffect(() => {
     if (!activeChapter) {
@@ -124,18 +144,9 @@ export function VersionHistoryDrawer() {
             {snapshots.map(s => (
               <li key={s.id}>
                 <button
-                  onClick={() =>
-                    // NOTE: list endpoint omits snapshot content for payload size;
-                    // a future task will add a getSnapshotContentAction and fetch
-                    // on click. For now we pass null — the preview banner/editor
-                    // wiring (Tasks 3-4) will handle the content fetch.
-                    enterPreview({
-                      id: s.id,
-                      content: null,
-                      createdAt: new Date(s.createdAt),
-                    })
-                  }
-                  className="w-full text-left px-4 py-2 hover:bg-surface-elevated transition-colors border-b border-border/40"
+                  onClick={() => handleRowClick(s)}
+                  disabled={openingId === s.id}
+                  className="w-full text-left px-4 py-2 hover:bg-surface-elevated transition-colors border-b border-border/40 disabled:opacity-50"
                 >
                   <div className="text-xs text-foreground">
                     {formatSnapshotDate(new Date(s.createdAt))}

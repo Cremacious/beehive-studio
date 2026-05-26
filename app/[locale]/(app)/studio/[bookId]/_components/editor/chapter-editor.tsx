@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useCallback, useEffect, useState } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
@@ -14,7 +14,7 @@ import { useBookEditor } from '../book-editor-provider'
 import { EditorToolbar } from './editor-toolbar'
 import { EditorStatusBar } from './editor-status-bar'
 import { WritingAnalysis, extractPlainText } from './writing-analysis'
-import { updateBinderItemAction, createBinderItemAction } from '@/lib/actions/binder.actions'
+import { createBinderItemAction } from '@/lib/actions/binder.actions'
 import { FindReplace } from './find-replace'
 import { PreviewBanner } from './preview-banner'
 import { KeyboardCheatsheet } from './keyboard-cheatsheet'
@@ -99,7 +99,7 @@ function EmptyStartChapter() {
 }
 
 export function ChapterEditor() {
-  const { activeItemId, activeItem, activeChapter, updateChapterContent, updateBinderItem, flushPendingSave, pushFlash, previewSnapshotId, previewSnapshotContent } =
+  const { activeItemId, activeItem, activeChapter, updateChapterContent, flushPendingSave, pushFlash, previewSnapshotId, previewSnapshotContent } =
     useBookEditor()
 
   const [analysisOpen, setAnalysisOpen] = useState(false)
@@ -110,21 +110,6 @@ export function ChapterEditor() {
   // Without the guard, typing in a metadata-panel textarea + Cmd+F would
   // intercept the browser's native Find and toggle the editor's find panel.
   const editorContainerRef = useRef<HTMLDivElement>(null)
-
-  const researchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const handleResearchChange = useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      const value = e.target.value
-      if (researchTimerRef.current) clearTimeout(researchTimerRef.current)
-      researchTimerRef.current = setTimeout(async () => {
-        if (!activeItem) return
-        await updateBinderItemAction(activeItem.id, { content: value })
-        updateBinderItem(activeItem.id, { content: value })
-      }, 2000)
-    },
-    [activeItem, updateBinderItem],
-  )
 
   const isChapterType = activeItem ? CHAPTER_TYPES.has(activeItem.type) : false
 
@@ -255,19 +240,12 @@ export function ChapterEditor() {
     if (activeItem.type === 'character') {
       return <CharacterProfile item={activeItem} />
     }
-    return (
-      <main className="flex-1 flex flex-col overflow-hidden">
-        <div className="px-6 py-4 border-b border-border">
-          <h2 className="text-sm font-medium text-foreground/70">{activeItem.title}</h2>
-        </div>
-        <textarea
-          className="flex-1 resize-none bg-transparent text-sm text-foreground/80 p-6 outline-none leading-relaxed"
-          placeholder="Start writing your notes..."
-          defaultValue={typeof activeItem.content === 'string' ? activeItem.content : ''}
-          onChange={handleResearchChange}
-        />
-      </main>
-    )
+    // All known non-chapter types are routed above. If we hit this in dev,
+    // log a warning; in prod, render nothing (silent fallback).
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('No specialized renderer for binder item type:', activeItem.type)
+    }
+    return null
   }
 
   if (activeChapter === null) {

@@ -14,9 +14,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-26
 >
-> **Current focus:** DP2 Studio Shell complete; DP3 Specialized Editor Surfaces next.
+> **Current focus:** DP3 Specialized Editor Surfaces complete; DP4 Overlays / Modes / Modals next.
 > **Active branch:** `main` (pushed to origin/main)
-> **Last commit:** feat(studio): brand-yellow audit + error toasts + DP2 close-out (Task 6)
+> **Last commit:** feat(studio): remove generic textarea fallback + DP3 close-out (Task 5)
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.
@@ -58,9 +58,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 >
 > **DP2 design-port pattern:** Studio chrome ported surface-by-surface (status bar → binder → metadata → toolbar → editor body → audit). Brand yellow restrained to 5 sanctioned uses across the touched surfaces. Sprint timer relocated from floating overlay into the bottom status bar's right cluster (resolves a live overlap bug). Newsreader serif wired as the prose face; container max-width 720px; light mode flips body to paper-ink (not paper-ink-strong) for long-prose readability.
 >
+> **DP3 specialized-surfaces pattern:** Non-chapter binder items each get their own renderer. FM/BM uses WYSIWYG inline-edit page previews (5 subtypes) with shared `PageWrapper` chrome — book pages always cream paper, surrounding pane theme-aware via `--sheet-canvas`. Outline replaces Kanban with vertical sortable beat-sheet; legacy `{columns, cards}` data flattened at render time via `readBeats()`. Character uses sheet-style with theme-aware ink (paper-ink-strong on cream in light mode for crisper readability). Notes restyled in-place; ruled-paper background lines removed per Chris. Generic textarea fallback removed — every binder type has a specialized renderer.
+>
 > **DP1 design-port pattern:** Claude Design's tokens.css ported into `app/globals.css` `:root` as oklch primitives (chrome/paper/canvas scales, status, type colors). Shadcn semantic tokens (`--card`, `--background`, etc.) bridge to the new chrome scale so existing components inherit walnut automatically. The SP4 light-mode workaround in `corkboard-or-editor.tsx` references `--paper-*` tokens directly. Source of truth for future updates: `designs/claude/studio-shell/tokens.css`. The bonus pages (Landing / Sign In / Sign Up) Claude Design produced separately are deferred.
 >
-> **Next concrete step when resuming:** invoke /brainstorming for DP3 Specialized Editor Surfaces — port FM/BM WYSIWYG previews, Outline (Claude Design proposed alternative layouts), Notes, Character profile.
+> **Next concrete step when resuming:** invoke /brainstorming for DP4 Overlays / Modes / Modals — port corkboard view, focus mode, history drawer, find/replace overlay, writing analysis panel, keyboard cheatsheet modal, export modal, confirmation dialogs, empty states.
 
 ## ⚙️ Working Agreement (read this every session)
 
@@ -161,6 +163,21 @@ Second of four design-port sub-projects. Ported persistent studio chrome to matc
 Token system extensions: registered `--color-brand-ink` + `--color-brand-soft` in `@theme` (`text-brand-ink` was silently falling back to white before). 119/119 tests, tsc clean.
 
 **Next:** DP3 Specialized Editor Surfaces (FM/BM WYSIWYG previews, Outline + alternative layouts, Notes, Character profile).
+
+### DP3 — Design Port Specialized Editor Surfaces ✅ COMPLETE (2026-05-26)
+Third of four design-port sub-projects. Ported all non-chapter editor surfaces.
+
+- **Research Notes:** restyled — Newsreader prose, cream paper card, paper-ink tokens. Ruled-paper background lines + red margin rule removed per Chris's feedback. Existing attribute controls (pin / color / favorite) preserved; tag-chip system noted as TODO. Top padding reduced from pt-16 to pt-8.
+- **Character profile:** sheet-style rewrite. Avatar (initials placeholder + TODO for upload), name + meta header card, 6 section cards (Appearance / Personality / Backstory / Arc / Relationships / Notes). Theme-aware surface via local `--sheet-*` CSS variables — canvas-dark in dark mode, paper-100 in light with paper-ink-strong body text for crisper readability.
+- **FM/BM WYSIWYG previews:** 5 new inline-edit page-preview components (title-page, copyright, dedication, acknowledgments, about-author) replace 5 deleted form components. Shared `PageWrapper` chrome with theme-aware surrounding pane (`--sheet-canvas`); book page itself always cream regardless of editor theme. Contenteditable spans for single-line fields; TipTap mini-editor (StarterKit with bold + italic + paragraph + hardBreak only) for multi-paragraph rich text. New `[contenteditable][data-placeholder]:empty::before` utility added to globals.css for inline-edit placeholders. Empty state ("Pick a subtype above") given theme-aware ink so it's readable on both walnut and cream canvases.
+- **Outline:** Kanban → beat-sheet swap. Vertical sortable list with handle-only drag. Render-time `readBeats()` translator flattens legacy `{columns, cards}` into `{beats: [...]}`. Status pill cycles `idea → drafting → done` with `--status-*` tints. Chapter-link-popover gained inline search; data flow preserved.
+- **Generic textarea fallback removed** from `chapter-editor.tsx`. Every binder type now has a specialized renderer; unknown types log in dev / return null in prod.
+
+Files deleted: 5 FM/BM form components, `outline/outline-column.tsx`. Data shape changes (all jsonb, no DB migration): Character (legacy `physicalDescription` → `appearance` etc.; `voice` lossy), Outline (Kanban → beats; column grouping lossy — accepted per spec), FM/BM TipTap bodies widened from `string` to `unknown` to hold both legacy strings and TipTap JSON (`toPlainText()` helper added to `lib/export/front-back-matter-templates.ts`).
+
+119/119 tests, tsc clean.
+
+**Next:** DP4 Overlays / Modes / Modals (corkboard, focus, history drawer, find/replace, writing analysis, cheatsheet, export, confirmations, empty states).
 
 ## What's Next
 

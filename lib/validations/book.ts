@@ -62,6 +62,10 @@ export const updateChapterNotesSchema = z.object({
   notes: z.string().max(10000).nullable(),
 })
 
+export const updateChapterWordGoalSchema = z.object({
+  wordGoal: z.number().int().min(0).max(1_000_000),
+})
+
 export const updatePublishingMetadataSchema = z.object({
   isbn: z.string().max(20).optional().nullable(),
   subtitle: z.string().max(200).optional().nullable(),

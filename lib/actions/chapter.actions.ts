@@ -6,7 +6,7 @@ import { eq, desc } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { getUserPremiumStatus } from '@/lib/premium'
 import { extractWordCount } from '@/lib/tiptap-utils'
-import { updateChapterNotesSchema, chapterStatusSchema } from '@/lib/validations/book'
+import { updateChapterNotesSchema, chapterStatusSchema, updateChapterWordGoalSchema } from '@/lib/validations/book'
 import type { ActionResult } from './book.actions'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -17,6 +17,7 @@ export type ChapterData = {
   binderItemId: string | null
   content: unknown
   wordCount: number
+  wordGoal: number
   status: 'IDEA' | 'OUTLINE' | 'FIRST_DRAFT' | 'REVISED' | 'FINAL'
   notes: string | null
   createdAt: Date
@@ -64,6 +65,7 @@ export async function getChapterAction(
       binderItemId: chapter.binderItemId,
       content: chapter.content,
       wordCount: chapter.wordCount,
+      wordGoal: chapter.wordGoal,
       status: chapter.status,
       notes: chapter.notes,
       createdAt: chapter.createdAt,
@@ -168,6 +170,31 @@ export async function updateChapterNotesAction(
   await db
     .update(chapters)
     .set({ notes: parsed.data.notes, updatedAt: new Date() })
+    .where(eq(chapters.id, chapterId))
+
+  return { success: true, data: undefined }
+}
+
+/**
+ * Updates the chapter's word goal (per-chapter writing target).
+ * 0 means "no goal set"; max enforced at 1,000,000.
+ */
+export async function updateChapterWordGoalAction(
+  chapterId: string,
+  wordGoal: number,
+): Promise<ActionResult> {
+  const userId = await requireAuth()
+
+  const parsed = updateChapterWordGoalSchema.safeParse({ wordGoal })
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message }
+  }
+
+  await assertChapterOwner(chapterId, userId)
+
+  await db
+    .update(chapters)
+    .set({ wordGoal: parsed.data.wordGoal, updatedAt: new Date() })
     .where(eq(chapters.id, chapterId))
 
   return { success: true, data: undefined }

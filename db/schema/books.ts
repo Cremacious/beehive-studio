@@ -64,6 +64,7 @@ export const chapters = pgTable('chapters', {
   binderItemId: text('binder_item_id').references(() => binderItems.id, { onDelete: 'set null' }),
   content: jsonb('content'),
   wordCount: integer('word_count').default(0).notNull(),
+  wordGoal: integer('word_goal').default(0).notNull(),
   status: chapterStatusEnum('status').default('FIRST_DRAFT').notNull(),
   notes: text('notes'),
   createdAt: timestamp('created_at').defaultNow().notNull(),

@@ -14,9 +14,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-26
 >
-> **Current focus:** Phase 7.5 Community feed COMPLETE — awaiting Claude Design mocks (Prompts 2+3 churning); Phase 8 (Stripe) queued in parallel
+> **Current focus:** DP1 Foundations complete; DP2 Studio Shell next.
 > **Active branch:** `main` (pushed to origin/main)
-> **Last commit:** feat(community): wire feed + sidebar into new /community page (Task 5)
+> **Last commit:** feat(design): update light-mode editor CSS to reference new paper tokens (DP1 Task 3)
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.
@@ -56,7 +56,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 >
 > **Community/Discover boundary:** /community lives in (app) — authenticated-only personal feed. /discover lives in (public) — unauthenticated browsing. Same data (books, sparks, hives) shown differently. Don't duplicate features across both surfaces — Community shows YOUR follows' activity; Discover shows everything.
 >
-> **Next concrete step when resuming:** when Claude Design Prompts 2+3 finish churning, mocks arrive → write design-implementation plan and mechanically import. In parallel, Phase 8 (Stripe monetization) is queued and can be started anytime.
+> **DP1 design-port pattern:** Claude Design's tokens.css ported into `app/globals.css` `:root` as oklch primitives (chrome/paper/canvas scales, status, type colors). Shadcn semantic tokens (`--card`, `--background`, etc.) bridge to the new chrome scale so existing components inherit walnut automatically. The SP4 light-mode workaround in `corkboard-or-editor.tsx` references `--paper-*` tokens directly. Source of truth for future updates: `designs/claude/studio-shell/tokens.css`. The bonus pages (Landing / Sign In / Sign Up) Claude Design produced separately are deferred.
+>
+> **Next concrete step when resuming:** invoke /brainstorming for DP2 Studio Shell — port binder, toolbar, editor body, status bar, metadata panel to match Claude Design's studio-shell mockup.
 
 ## ⚙️ Working Agreement (read this every session)
 
@@ -129,6 +131,20 @@ Repositioned /community from a redundant public-Hives list into the user's perso
 - Schema field name discoveries: `follows.followeeId` (not followingId), `userProfiles.avatarUrl` (not image), `books.coverUrl` (not coverImage), `books.status='PUBLISHED'` (not publishedAt), `sparkEntries.userId` (not authorId), `sparks.title` (aliased to sparkPrompt).
 - No DB migrations.
 - 119/119 tests, tsc clean.
+
+### DP1 — Design Port Foundations ✅ COMPLETE (2026-05-26)
+First of four design-port sub-projects (DP1 → DP4). Ported Claude Design's full token system into the live codebase.
+
+- `app/globals.css` `:root` now contains the full oklch primitive set: chrome scale (12 stops), paper scale (5 stops + 3 inks), warm-coffee dark canvas scale, brand + accent, 5 chapter status colors, 6 binder item type colors, validation (success/warning/error), type scale, spacing scale, elevation, radii, component sizing constants.
+- Shadcn semantic tokens bridge to the new chrome — every existing component inherits warm walnut automatically without component edits.
+- Newsreader font loaded via `next/font/google`, exposed as `--font-newsreader` and aliased into `--font-prose` for prose body use in DP2.
+- Existing `@utility` blocks (scrollbar-custom, paper-stack) updated to reference new tokens.
+- The SP4 light-mode editor CSS workaround in `corkboard-or-editor.tsx` (React-injected `<style>` tag + inline styles) now references `--paper-*` and `--paper-ink-*` tokens directly. 32 hex substitutions.
+- Preserved decorative utilities (`paper-grit`, `auth-glow`, `hero-glow`, etc.) that use brand-yellow rgba literals — they're effect recipes, not chrome surfaces.
+- No DB changes. No new dependencies. No component-tree changes.
+- 119/119 tests, tsc clean.
+
+**Next:** DP2 Studio Shell (binder, toolbar, editor body, status bar, metadata panel, hive integration) — pixel-perfect target per the brainstorm.
 
 ## What's Next
 

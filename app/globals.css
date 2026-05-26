@@ -31,6 +31,8 @@
   --color-brand: var(--brand);
   --color-brand-hover: var(--brand-hover);
   --color-brand-active: var(--brand-active);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-soft: var(--brand-soft);
   --color-surface: var(--chrome-850);
   --color-surface-elevated: var(--chrome-800);
   --color-surface-inset: var(--chrome-900);

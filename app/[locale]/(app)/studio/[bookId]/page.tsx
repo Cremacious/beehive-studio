@@ -4,7 +4,7 @@ import { getBinderTreeAction } from '@/lib/actions/binder.actions'
 import { BookEditorProvider } from './_components/book-editor-provider'
 import { BinderTree } from './_components/binder/binder-tree'
 import { CorkboardOrEditor } from './_components/corkboard-or-editor'
-import { MetadataPanel } from './_components/metadata/metadata-panel'
+import { RightPanelSlot } from './_components/right-panel-slot'
 import { ErrorToasts } from './_components/error-toasts'
 
 type Props = {
@@ -42,7 +42,7 @@ export default async function BookEditorPage({ params }: Props) {
       <div className="flex h-[calc(100vh-56px)] overflow-hidden">
         <BinderTree />
         <CorkboardOrEditor />
-        <MetadataPanel />
+        <RightPanelSlot />
       </div>
       <ErrorToasts />
     </BookEditorProvider>

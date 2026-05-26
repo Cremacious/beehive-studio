@@ -19,6 +19,7 @@ import {
   Maximize2, Minimize2,
   Download,
   Sun, Moon,
+  History,
 } from 'lucide-react'
 
 type Props = {
@@ -71,7 +72,7 @@ function Separator() {
 }
 
 export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggleFind, findOpen }: Props) {
-  const { focusMode, toggleFocusMode, editorTheme, toggleEditorTheme } = useBookEditor()
+  const { focusMode, toggleFocusMode, editorTheme, toggleEditorTheme, historyOpen, toggleHistory } = useBookEditor()
 
   const [showExport, setShowExport] = useState(false)
 
@@ -267,6 +268,11 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
           {/* Find & Replace */}
           <ToolbarButton onClick={onToggleFind} isActive={findOpen} title="Find & replace (⌘F)">
             <Search size={14} />
+          </ToolbarButton>
+
+          {/* Version history */}
+          <ToolbarButton onClick={toggleHistory} isActive={historyOpen} title="Version history">
+            <History size={14} />
           </ToolbarButton>
 
           {/* Editor theme toggle (Sun/Moon) — shows the icon for the destination mode */}

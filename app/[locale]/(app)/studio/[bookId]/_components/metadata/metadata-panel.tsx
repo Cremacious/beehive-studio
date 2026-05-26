@@ -285,10 +285,10 @@ function PublishingSection({ bookId }: { bookId: string }) {
 }
 
 export function MetadataPanel() {
-  const { activeItem, activeItemId, focusMode, corkboardMode, bookId } = useBookEditor()
+  const { activeItem, activeItemId, focusMode, corkboardMode, bookId, historyOpen } = useBookEditor()
   const isChapterActive = !!activeItem && CHAPTER_TYPES.has(activeItem.type)
 
-  if (focusMode || corkboardMode) return null
+  if (focusMode || corkboardMode || historyOpen) return null
 
   return (
     <aside className="w-60 flex-shrink-0 flex flex-col bg-card border-l border-border overflow-hidden">

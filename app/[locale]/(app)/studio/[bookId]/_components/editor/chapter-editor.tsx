@@ -18,6 +18,7 @@ import { SprintTimer } from './sprint-timer'
 import { WritingAnalysis, extractPlainText } from './writing-analysis'
 import { updateBinderItemAction, createBinderItemAction } from '@/lib/actions/binder.actions'
 import { FindReplace } from './find-replace'
+import { PreviewBanner } from './preview-banner'
 import { CharacterProfile } from './character-profile'
 import { FrontBackMatterRenderer, shouldUseFrontBackMatterRenderer } from '../front-back-matter'
 import { OutlineBoard } from '../outline/outline-board'
@@ -99,7 +100,7 @@ function EmptyStartChapter() {
 }
 
 export function ChapterEditor() {
-  const { activeItemId, activeItem, activeChapter, updateChapterContent, updateBinderItem, wordCount, flushPendingSave, pushFlash } =
+  const { activeItemId, activeItem, activeChapter, updateChapterContent, updateBinderItem, wordCount, flushPendingSave, pushFlash, previewSnapshotId, previewSnapshotContent } =
     useBookEditor()
 
   const [analysisOpen, setAnalysisOpen] = useState(false)
@@ -208,6 +209,35 @@ export function ChapterEditor() {
     setEditorText(extractPlainText(activeChapter.content))
   }, [activeChapter, editor])
 
+  // Preview-mode content swap. When previewSnapshotId becomes non-null,
+  // load the snapshot content into the editor and mark it read-only. When
+  // it returns to null AND we were just previewing, restore live content.
+  // We track `wasPreviewing` in a ref so the live restore only runs on the
+  // exit transition (not on every render where preview is null — that
+  // would clobber the user's typing).
+  const wasPreviewingRef = useRef(false)
+  useEffect(() => {
+    if (!editor || editor.isDestroyed) return
+    if (previewSnapshotId && previewSnapshotContent !== null) {
+      editor.commands.setContent(
+        previewSnapshotContent as Parameters<typeof editor.commands.setContent>[0],
+        { emitUpdate: false },
+      )
+      editor.setEditable(false)
+      wasPreviewingRef.current = true
+    } else if (wasPreviewingRef.current) {
+      // Exiting preview — restore live content from activeChapter.
+      if (activeChapter) {
+        editor.commands.setContent(
+          activeChapter.content as Parameters<typeof editor.commands.setContent>[0],
+          { emitUpdate: false },
+        )
+      }
+      editor.setEditable(true)
+      wasPreviewingRef.current = false
+    }
+  }, [previewSnapshotId, previewSnapshotContent, activeChapter, editor])
+
   if (activeItemId === null) {
     return <EmptyStartChapter />
   }
@@ -267,6 +297,7 @@ export function ChapterEditor() {
           findOpen={findOpen}
         />
       )}
+      <PreviewBanner />
       {findOpen && editor && <FindReplace editor={editor} onClose={() => setFindOpen(false)} />}
       <div className="flex flex-1 overflow-hidden">
         <div

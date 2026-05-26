@@ -77,6 +77,25 @@ export function CorkboardOrEditor() {
           [data-editor-theme="light"] .tiptap.ProseMirror h3 { color: #0a0a0a; }
           [data-editor-theme="light"] .tiptap.ProseMirror strong { color: #0a0a0a; }
           [data-editor-theme="light"] .tiptap.ProseMirror blockquote { color: #333; }
+
+          /* Version history drawer */
+          [data-editor-theme="light"] [data-slot="version-history-drawer"] {
+            background-color: #f4f4ee;
+            border-left-color: #e0e0d8;
+            color: #1a1a1a;
+          }
+          [data-editor-theme="light"] [data-slot="version-history-drawer"] button {
+            color: rgba(26, 26, 26, 0.7);
+          }
+          [data-editor-theme="light"] [data-slot="version-history-drawer"] button:hover {
+            color: #1a1a1a;
+            background-color: #e8e8e0;
+          }
+          [data-editor-theme="light"] [data-slot="preview-banner"] {
+            background-color: rgba(255, 195, 0, 0.12);
+            border-bottom-color: rgba(255, 195, 0, 0.4);
+            color: #1a1a1a;
+          }
         `}</style>
       )}
       {corkboardMode ? <CorkboardView /> : <ChapterEditor />}

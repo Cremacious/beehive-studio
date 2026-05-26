@@ -19,6 +19,7 @@ import { WritingAnalysis, extractPlainText } from './writing-analysis'
 import { updateBinderItemAction, createBinderItemAction } from '@/lib/actions/binder.actions'
 import { FindReplace } from './find-replace'
 import { PreviewBanner } from './preview-banner'
+import { KeyboardCheatsheet } from './keyboard-cheatsheet'
 import { CharacterProfile } from './character-profile'
 import { FrontBackMatterRenderer, shouldUseFrontBackMatterRenderer } from '../front-back-matter'
 import { OutlineBoard } from '../outline/outline-board'
@@ -326,6 +327,7 @@ export function ChapterEditor() {
       </div>
       {editor && <EditorStatusBar editor={editor} />}
       <SprintTimer currentWordCount={charCount?.words() ?? wordCount} />
+      <KeyboardCheatsheet />
     </main>
   )
 }

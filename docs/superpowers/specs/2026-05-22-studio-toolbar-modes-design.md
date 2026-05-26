@@ -1,8 +1,18 @@
 # Studio Editor — Toolbar + Modes
 
-**Date:** 2026-05-22
-**Sub-project:** 3 of 5 (Studio Editor Audit)
-**Status:** Draft from /design-critique findings — re-confirm via /brainstorming before implementation
+**Date:** 2026-05-22 (drafted) · 2026-05-26 (reconfirmed via /brainstorming, scope locked)
+**Sub-project:** 4 of 6 (Studio Editor Audit — sequence revised after SP3 added)
+**Status:** Approved — ready for implementation plan
+
+## Reconfirmation note (2026-05-26)
+
+After SP3 closed, this spec was audited against the current code. Net result:
+- Item #3 (distinct align icons) was already shipped during SP1 ad-hoc polish — confirmed via grep for `AlignLeft`/`AlignCenter`/`AlignRight` in `editor-toolbar.tsx`.
+- Item #5 (remove ambient sounds) is still outstanding despite the SP1 commit message claiming "kill typewriter, move find panel" — ambient sounds was missed.
+- Typewriter mode was removed in SP1, so item #2's icon mapping for `MoveVertical` (typewriter) is dropped.
+- A new item #8 (font-size mark) was added — deferred from SP1 when Chris asked about "make this word bigger" and learned headings are block-level.
+
+All other items (1, 2 except typewriter, 4, 5, 6, 7) carry forward unchanged from the original draft.
 
 ## Context
 
@@ -65,20 +75,18 @@ lucide icons. Specific mappings:
 | `H` (highlight) | `Highlighter` |
 | `🔗` | `Link` / `Link2Off` |
 | `≡` (three align buttons) | `AlignLeft` `AlignCenter` `AlignRight` |
-| `✍` | `TypeOutline` (or `MoveVertical` for typewriter mode) |
+| ~~`✍`~~ | ~~`MoveVertical`~~ — *typewriter mode removed in SP1, skip* |
 | `📊` | `BarChart3` |
 | `⊡` `⊠` | `Maximize2` `Minimize2` |
 | `↓ Export` | `Download` + `Export` text |
 
 Use a consistent size (`size={14}` or `size={16}`) and stroke width.
 
-### 3. Distinct text-align icons
+### 3. ~~Distinct text-align icons~~ — DONE in SP1 polish
 
-**Current critical bug:** Three buttons at lines 211-229 of
-`editor-toolbar.tsx` all render the same `≡` character. Users cannot
-tell left from center from right.
-
-**Fix:** Use `AlignLeft`, `AlignCenter`, `AlignRight` from lucide.
+The three text-align buttons now render lucide `AlignLeft`,
+`AlignCenter`, `AlignRight` icons. No work needed in SP4 for this
+item. Listed here for historical traceability.
 
 ### 4. Light-mode toggle
 
@@ -93,13 +101,18 @@ long sessions.
 - Apply via a `data-editor-theme` attribute on the editor's outermost
   surface (`<main>` element of `chapter-editor.tsx`).
 - Add CSS rules to `app/globals.css` scoped to `[data-editor-theme="light"]`:
-  - White paper-like background (`#fcfcfa` or similar)
-  - Black/near-black prose text
+  - Editor body background: light paper-like (`#fcfcfa`)
+  - Editor prose text: near-black (`#1a1a1a`)
   - Same brand-yellow caret + active state colors
   - Light-mode-appropriate border tones
+  - **Toolbar background also flips** to a light tone for cohesion —
+    a separate selector `[data-editor-theme="light"] .editor-toolbar`
+    (or however the toolbar is referenced via attribute). Without this,
+    the toolbar reads as a foreign dark bar over a light editor.
 
-This only affects the **editor content area**, not the binder or
-metadata panels. (Full app light mode is a separate future effort.)
+This only affects the **editor content area + its toolbar**, not the
+binder or metadata panels. (Full app light mode is a separate future
+effort.)
 
 **Files:**
 - `app/[locale]/(app)/studio/[bookId]/_components/editor/editor-toolbar.tsx`
@@ -140,13 +153,61 @@ editor's find panel (and overrides the browser's native find).
 
 The same scoping applies to the `Cmd+S` handler added in sub-project 1.
 
+### 8. Font-size mark (deferred from SP1)
+
+**Current:** H1/H2/H3 are block-level transformations — clicking them
+makes the *entire paragraph* a heading. There is no way to make
+*just selected words* bigger without converting the whole block.
+
+When Chris first encountered this in SP1, he asked why H1 affected
+every word in the line. We confirmed it was correct block-level
+behavior and deferred the per-selection size feature to SP4.
+
+**Fix:** Add an inline font-size *mark* that bumps the rendered size
+of the current selection only. Orthogonal to H1/H2/H3 (which remain
+block-level).
+
+**Implementation:**
+- Try `@tiptap/extension-font-size` first. If not available or it
+  brings in extra dependencies for features we don't want, write a
+  small custom Mark extension (~30 lines) that adds inline
+  `style="font-size: <value>em"` to its rendered span.
+- Add the extension to the TipTap config in `chapter-editor.tsx`'s
+  `useEditor` extensions array.
+- Toolbar control: a small dropdown (or popover) in the Format zone
+  with four presets:
+  - `Smaller` (0.85em)
+  - `Normal` (clear — removes the mark)
+  - `Larger` (1.25em)
+  - `Largest` (1.5em)
+- Em-based so they scale relative to the user's global font-size
+  dropdown setting.
+
+**Note: this is distinct from the existing font-size dropdown** which
+sets the editor's BASE font size globally via a CSS variable on the
+document root. Both stay — they do different things. The dropdown
+controls the global "reading size"; the new mark gives per-selection
+emphasis.
+
+**Files:**
+- `app/[locale]/(app)/studio/[bookId]/_components/editor/chapter-editor.tsx`
+  — add the extension to `useEditor` extensions
+- `app/[locale]/(app)/studio/[bookId]/_components/editor/editor-toolbar.tsx`
+  — add the dropdown/popover control in the Format zone
+- Possibly `lib/tiptap/font-size-mark.ts` if writing a custom mark
+  (decide during implementation)
+
 ## Out of Scope
 
 - Pixel-level visual redesign of the toolbar — that's the Claude Design
-  pass after sub-project 5.
+  pass after sub-project 6 (final audit sub-project).
 - Bottom status bar (consolidating save + word-count + word-goal) →
-  sub-project 4.
-- Mobile/touch-target accessibility → sub-project 5.
+  sub-project 5 (Metadata + persistence).
+- Mobile / touch-target accessibility → sub-project 6.
+- Light-mode for the binder and metadata panels — out of scope for
+  this feature. Defer until after Claude Design's pixel-level pass.
+- Color picker for the font-size mark — just the 4 presets, no custom
+  em values.
 
 ## Testing
 
@@ -157,12 +218,23 @@ Manual.
   writing analysis).
 - The three align buttons are visually distinct and apply the correct
   alignment.
-- Toggling light/dark via the new toggle changes the editor background
-  and text color. Refreshing the page restores the chosen mode.
-- Ambient sounds button is gone; clicking around the toolbar doesn't
-  open it.
+- Toggling light/dark via the new toggle changes the editor background,
+  prose text color, AND the toolbar's own background. Binder and
+  metadata panels stay dark. Refreshing the page restores the chosen
+  mode (localStorage `editor-theme`).
+- Ambient sounds button is gone from the toolbar. Grepping the repo for
+  `AmbientSounds`, `soundsOpen`, `🎵` returns no orphaned references.
 - `Cmd+F` while focused in the metadata panel does NOT open the
   editor's find. `Cmd+F` while focused in the editor DOES.
+- Same scoping check for `Cmd+S` — only fires save toast when focus is
+  in the editor.
+- Select a few words → font-size mark dropdown → pick "Larger" — just
+  the selection grows; surrounding text unaffected.
+- Pick "Normal" on the same selection → mark removed; selection back to
+  baseline size.
+- Existing global font-size dropdown still works — bumping it from 16px
+  to 20px enlarges everything; the per-selection mark scales relative
+  (e.g., "Larger" at base 20px is ~25px).
 - `npm test` passes; `npx tsc --noEmit` clean.
 
 ## Risks
@@ -176,7 +248,12 @@ Manual.
 
 ## Definition of Done
 
-- All seven changes land.
-- Manual checklist passes.
-- AGENTS.md Resume Here updated.
-- ~7 atomic commits (one per change).
+- All 7 outstanding items land (item #3 was already done in SP1
+  polish — confirmed during the 2026-05-26 reconfirmation).
+- Manual checklist passes (including font-size mark + light-mode
+  toolbar background + Cmd+S scoping).
+- `npm test` clean (~113 tests, plus any font-size mark unit tests).
+- `npx tsc --noEmit` clean.
+- AGENTS.md Resume Here updated to mark SP4 complete, point at SP5
+  (Metadata + persistence) as next.
+- ~7 atomic commits on `main`.

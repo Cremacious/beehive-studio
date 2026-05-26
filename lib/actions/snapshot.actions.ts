@@ -62,6 +62,47 @@ export async function getChapterSnapshotsAction(
 }
 
 /**
+ * Fetches the full content of a single snapshot for preview.
+ * Premium only.
+ *
+ * Separate from getChapterSnapshotsAction because the list endpoint
+ * intentionally omits content (payload size); preview needs it.
+ */
+export async function getSnapshotContentAction(
+  snapshotId: string,
+): Promise<ActionResult<{ id: string; content: unknown; wordCount: number; createdAt: Date }>> {
+  const userId = await requireAuth()
+
+  const isPremium = await getUserPremiumStatus(userId)
+  if (!isPremium) {
+    return { success: false, error: 'PREMIUM_REQUIRED:version_history' }
+  }
+
+  const snapshot = await db.query.chapterSnapshots.findFirst({
+    where: eq(chapterSnapshots.id, snapshotId),
+    with: {
+      chapter: {
+        with: { book: { columns: { userId: true } } },
+      },
+    },
+  })
+
+  if (!snapshot || snapshot.chapter.book.userId !== userId) {
+    return { success: false, error: 'Snapshot not found or access denied' }
+  }
+
+  return {
+    success: true,
+    data: {
+      id: snapshot.id,
+      content: snapshot.content,
+      wordCount: snapshot.wordCount,
+      createdAt: snapshot.createdAt,
+    },
+  }
+}
+
+/**
  * Restores a snapshot: copies snapshot content back to the chapter.
  * Creates a new snapshot first (so the current state is preserved).
  * Premium only.

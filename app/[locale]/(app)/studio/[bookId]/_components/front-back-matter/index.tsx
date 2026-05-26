@@ -75,27 +75,32 @@ export function FrontBackMatterRenderer({ item }: Props): React.ReactElement | n
 function EmptyState() {
   return (
     <div className="flex-1 flex items-center justify-center p-8">
-      <div
-        className="text-center max-w-sm"
-        style={{
-          padding: '48px 32px',
-          border: '1.5px dashed var(--border)',
-          borderRadius: 8,
-          background: 'oklch(0.18 0.012 60 / 0.4)',
-        }}
-      >
+      {/* Theme-aware ink — the empty state sits on the editor canvas which
+          flips dark/light per editor theme. shadcn --foreground stays chrome-
+          200 regardless, so it's invisible on cream paper. Local vars flip. */}
+      <style>{`
+        [data-slot="fbm-empty"] {
+          --empty-ink: var(--canvas-dark-ink-strong);
+          --empty-ink-muted: var(--canvas-dark-ink-muted);
+        }
+        [data-editor-theme="light"] [data-slot="fbm-empty"] {
+          --empty-ink: var(--paper-ink-strong);
+          --empty-ink-muted: var(--paper-ink);
+        }
+      `}</style>
+      <div data-slot="fbm-empty" className="text-center max-w-sm">
         <h3
           className="mb-2"
           style={{
             fontFamily: 'var(--font-display)',
             fontSize: 20,
             fontWeight: 700,
-            color: 'var(--foreground)',
+            color: 'var(--empty-ink)',
           }}
         >
           Pick a subtype above
         </h3>
-        <p className="text-sm text-muted-foreground" style={{ lineHeight: 1.5 }}>
+        <p style={{ fontSize: 14, lineHeight: 1.5, color: 'var(--empty-ink-muted)' }}>
           Choose Title Page, Copyright, Dedication, Acknowledgments, or About
           Author to set up this page.
         </p>

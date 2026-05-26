@@ -20,6 +20,7 @@ import {
   Download,
   Sun, Moon,
   History,
+  HelpCircle,
 } from 'lucide-react'
 
 type Props = {
@@ -274,6 +275,14 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
           {/* Version history */}
           <ToolbarButton onClick={toggleHistory} isActive={historyOpen} title="Version history">
             <History size={14} />
+          </ToolbarButton>
+
+          {/* Keyboard shortcuts */}
+          <ToolbarButton
+            onClick={() => window.dispatchEvent(new Event('beehive:toggle-cheatsheet'))}
+            title="Keyboard shortcuts (Ctrl+/)"
+          >
+            <HelpCircle size={14} />
           </ToolbarButton>
 
           {/* Editor theme toggle (Sun/Moon) — shows the icon for the destination mode */}

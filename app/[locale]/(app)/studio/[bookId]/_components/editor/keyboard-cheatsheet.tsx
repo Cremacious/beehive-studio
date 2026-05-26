@@ -45,8 +45,19 @@ export function KeyboardCheatsheet() {
         setOpen(o => !o)
       }
     }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
+    // Capture phase so we hear the event before ProseMirror/TipTap can
+    // stopPropagation on it. Without this, keys handled by the editor
+    // never bubble up to the window-level bubble-phase listener.
+    window.addEventListener('keydown', handleKeyDown, true)
+
+    // Also listen for a custom event so the toolbar Help button can open us.
+    function handleToggle() { setOpen(o => !o) }
+    window.addEventListener('beehive:toggle-cheatsheet', handleToggle)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown, true)
+      window.removeEventListener('beehive:toggle-cheatsheet', handleToggle)
+    }
   }, [open])
 
   // Click outside to close

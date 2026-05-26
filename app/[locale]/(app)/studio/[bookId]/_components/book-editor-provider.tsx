@@ -62,6 +62,7 @@ type BookEditorContextValue = {
   previewSnapshotCreatedAt: Date | null
   enterPreview: (snapshot: { id: string; content: unknown; createdAt: Date }) => void
   exitPreview: () => void
+  reloadActiveChapter: () => Promise<void>
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
@@ -313,6 +314,19 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     }, 2000)
   }, [activeItemId, pushError])
 
+  const reloadActiveChapter = useCallback(async () => {
+    const itemId = activeItemId
+    if (!itemId) return
+    const item = binderItems.find(x => x.id === itemId)
+    if (!item || !CHAPTER_TYPES.has(item.type) || !item.chapterId) return
+    const result = await getChapterAction(item.chapterId)
+    if (result.success) {
+      setChapterCache(c => new Map(c).set(itemId, result.data))
+    } else {
+      pushError(`Couldn't reload chapter: ${result.error}`)
+    }
+  }, [activeItemId, binderItems, pushError])
+
   const dismissError = useCallback((index: number) => {
     setErrors(prev => prev.filter((_, i) => i !== index))
   }, [])
@@ -389,6 +403,7 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     previewSnapshotCreatedAt,
     enterPreview,
     exitPreview,
+    reloadActiveChapter,
   }), [
     bookId,
     bookTitle,
@@ -426,6 +441,7 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     previewSnapshotCreatedAt,
     enterPreview,
     exitPreview,
+    reloadActiveChapter,
   ])
 
   return <BookEditorContext.Provider value={value}>{children}</BookEditorContext.Provider>

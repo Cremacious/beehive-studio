@@ -1,0 +1,2368 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Beehive Studio — Shell Design (Prompt 1)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&family=Geist:wght@300;400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- Icons -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <defs>
+    <symbol id="i-hive" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L20 6.5 L20 15.5 L12 20 L4 15.5 L4 6.5 Z"/><path d="M12 9 L16 11 L16 14.5 L12 16.5 L8 14.5 L8 11 Z" fill="currentColor" fill-opacity="0.55" stroke="none"/></symbol>
+    <symbol id="i-chev-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></symbol>
+    <symbol id="i-chev-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-corkboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></symbol>
+    <symbol id="i-chapter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h12a3 3 0 0 1 3 3v13H7a3 3 0 0 1-3-3z"/><path d="M4 4v13a3 3 0 0 0 3 3"/><path d="M9 8h6M9 12h6"/></symbol>
+    <symbol id="i-front-matter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h6M8 17h4"/><path d="M4 8h16" stroke-dasharray="2 2"/></symbol>
+    <symbol id="i-back-matter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 7h8M8 11h6"/><path d="M4 15h16" stroke-dasharray="2 2"/><path d="M8 19h4"/></symbol>
+    <symbol id="i-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="5" height="14" rx="1"/><rect x="10" y="5" width="5" height="9" rx="1"/><rect x="17" y="5" width="4" height="12" rx="1"/></symbol>
+    <symbol id="i-research" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h9a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a3 3 0 0 1-3-3V8"/><path d="M8 4v3a1 1 0 0 1-1 1H4"/><path d="M9 13h6M9 17h4"/></symbol>
+    <symbol id="i-character" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="3.5"/><path d="M5 20c1.5-3.5 4-5 7-5s5.5 1.5 7 5"/></symbol>
+    <symbol id="i-bold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 5h6a3.5 3.5 0 0 1 0 7H7zM7 12h7.5a3.5 3.5 0 0 1 0 7H7z"/></symbol>
+    <symbol id="i-italic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 5h6M10 19H4M15 5L9 19"/></symbol>
+    <symbol id="i-strike" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16"/><path d="M16 6.5c-1.5-2-7-2.5-9 0a3 3 0 0 0 1.5 4.5"/><path d="M8 17.5c1.5 2 7 2.5 9 0a3 3 0 0 0-1.5-4.5"/></symbol>
+    <symbol id="i-h1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6v12M12 6v12M4 12h8M17 9l3-1.5V18"/></symbol>
+    <symbol id="i-h2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6v12M12 6v12M4 12h8"/><path d="M16 9a2 2 0 0 1 4 0c0 2-4 4-4 9h4"/></symbol>
+    <symbol id="i-h3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6v12M12 6v12M4 12h8"/><path d="M16 8a2 2 0 0 1 4 0c0 1.5-1.5 2-3 2.5 1.5.5 3 1 3 2.5a2 2 0 0 1-4 0"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h12M9 12h12M9 18h12"/><circle cx="4" cy="6" r="1" fill="currentColor"/><circle cx="4" cy="12" r="1" fill="currentColor"/><circle cx="4" cy="18" r="1" fill="currentColor"/></symbol>
+    <symbol id="i-list-ord" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h12M9 12h12M9 18h12"/><path d="M4 5v3M3 5h2"/><path d="M3 12h2c0 1-2 1.5-2 2.5V15h2"/><path d="M3 18h2v1.5h-1m1 0v1.5h-2"/></symbol>
+    <symbol id="i-quote" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6c-3 1-4 4-4 7v4h4v-5H7c0-3 1-4 3-5z" fill="currentColor" fill-opacity="0.25"/><path d="M19 6c-3 1-4 4-4 7v4h4v-5h-2c0-3 1-4 3-5z" fill="currentColor" fill-opacity="0.25"/></symbol>
+    <symbol id="i-hr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 1 1 0 10h-4"/></symbol>
+    <symbol id="i-redo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 1 0 0 10h4"/></symbol>
+    <symbol id="i-underline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4v8a6 6 0 0 0 12 0V4M4 20h16"/></symbol>
+    <symbol id="i-highlight" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4l6 6-8 8H6v-6z"/><path d="M4 21h16"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 0 1 0-5l3-3a4 4 0 0 1 6 6l-1.5 1.5"/><path d="M14 10a4 4 0 0 1 0 5l-3 3a4 4 0 0 1-6-6l1.5-1.5"/></symbol>
+    <symbol id="i-align-l" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M3 12h12M3 18h15"/></symbol>
+    <symbol id="i-align-c" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M6 12h12M5 18h14"/></symbol>
+    <symbol id="i-align-r" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M9 12h12M6 18h15"/></symbol>
+    <symbol id="i-history" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 4 2c-1 .8-1.5 1.4-1.5 3"/><circle cx="12" cy="17" r="0.6" fill="currentColor"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.5"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4 7 7 0 0 0 20 14.5z"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></symbol>
+    <symbol id="i-analysis" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></symbol>
+    <symbol id="i-maximize" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+    <symbol id="i-timer" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="14" r="7"/><path d="M12 11v3l2 1"/><path d="M9 3h6"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="1.5"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linejoin="round"><polygon points="6 4 20 12 6 20" fill="currentColor"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><circle cx="12" cy="8" r="0.6" fill="currentColor"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 22 20H2z"/><path d="M12 10v5"/><circle cx="12" cy="18" r="0.6" fill="currentColor"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></symbol>
+    <symbol id="i-pencil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4l6 6-11 11H3v-6z"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></symbol>
+    <symbol id="i-move" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c1-3 3.5-5 7-5s6 2 7 5"/><circle cx="17.5" cy="8.5" r="2.5"/><path d="M16 14.5c2 .3 4 1.5 5 4"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v7l4 4v3H8v-3l4-4V2"/><path d="M9 2h6"/><path d="M12 16v6"/></symbol>
+  </defs>
+</svg>
+
+<!-- ============================================================== -->
+<!--  Document shell                                                  -->
+<!-- ============================================================== -->
+<div class="doc">
+
+  <!-- ── Sticky TOC ─────────────────────────────────────────────── -->
+  <aside class="toc">
+    <h1>Beehive Studio</h1>
+    <div class="sub">SHELL DESIGN · PROMPT 1/3</div>
+    <ol>
+      <li><a href="#s-rationale">Rationale</a></li>
+      <li><a href="#s-tokens">Design tokens</a></li>
+      <li><a href="#s-shell">Studio shell composition</a></li>
+      <li><a href="#s-binder">Binder &amp; menus</a></li>
+      <li><a href="#s-toolbar">Editor toolbar</a></li>
+      <li><a href="#s-editor">Editor body &amp; prose</a></li>
+      <li><a href="#s-status">Status bar &amp; sprint</a></li>
+      <li><a href="#s-metadata">Metadata panel</a></li>
+      <li><a href="#s-hive">Create Hive placement</a></li>
+      <li><a href="#s-toasts">Error toasts</a></li>
+      <li><a href="#s-modes">Shell under modes</a></li>
+      <li><a href="#s-handoff">Handoff &amp; open Qs</a></li>
+    </ol>
+    <div style="margin-top:28px; padding-top:18px; border-top:1px solid var(--chrome-800); font-size:11px; color:var(--chrome-500); line-height:1.6;">
+      Drafted by Claude Design · 2026-05-26 · For Chris @ Beehive Studio.
+      Tokens are the source of truth for Prompts 2 + 3.
+    </div>
+  </aside>
+
+  <!-- ── Main column ────────────────────────────────────────────── -->
+  <main class="main">
+
+    <!-- Hero header -->
+    <section class="s" style="padding-top:48px; padding-bottom: 24px;">
+      <div class="eyebrow"><span class="num">01/12</span> <span>Brief — Studio Shell</span></div>
+      <h2 class="title">A writer's desk —<br><em>cream paper on warm walnut.</em></h2>
+      <p class="lede">
+        The studio shell is the room a novelist lives in for hours.
+        Chris&nbsp;asked for cozy. Cozy doesn't mean soft-everything; it means a
+        warm sheet of paper on a desk lit by a lamp — and a strong, quiet dark
+        frame around it that lets the paper be the loudest thing in the room.
+      </p>
+      <p class="lede" style="margin-top:-12px;">
+        This document covers all persistent chrome (§§5.1–5.7 of the brief),
+        in both editor modes, with every state. It also establishes the token
+        system and depth language that Prompts 2 (specialized surfaces) and
+        3 (overlays &amp; modes) will inherit.
+      </p>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §1  RATIONALE                                                  -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-rationale">
+      <div class="eyebrow"><span class="num">01</span> <span>Design rationale</span></div>
+      <h2 class="title">The system at a glance.</h2>
+      <p class="lede">Six decisions that the rest of the document is built on.</p>
+
+      <div class="cols2" style="gap:24px; margin-top:8px;">
+        <div style="background:var(--chrome-900); border:1px solid var(--chrome-800); border-radius:var(--r-lg); padding:24px;">
+          <div class="md-label" style="color:var(--brand);">Palette · warm walnut + cream</div>
+          <p style="color:var(--chrome-300); font-size:15px; line-height:1.6; margin:0 0 8px;">
+            Chrome lives at <strong style="color:var(--chrome-100)">L 0.20–0.29, C 0.012, H 55°</strong> — a deep
+            espresso-walnut, never slate. Paper sits at <strong style="color:var(--chrome-100)">L 0.96, C 0.018, H 85°</strong> —
+            ivory cream, perceptibly warm but not yellow. The contrast is the desk.
+          </p>
+          <p style="color:var(--chrome-400); font-size:13px; margin:0;">
+            The old #141414 is replaced surface-by-surface. Brand yellow #FFC300 is preserved exactly — every other
+            chrome value got a 5–10° hue rotation toward warm.
+          </p>
+        </div>
+
+        <div style="background:var(--chrome-900); border:1px solid var(--chrome-800); border-radius:var(--r-lg); padding:24px;">
+          <div class="md-label" style="color:var(--brand);">Depth · stacked-paper elevation</div>
+          <p style="color:var(--chrome-300); font-size:15px; line-height:1.6; margin:0 0 8px;">
+            Every elevated surface carries three layers: a 1px <strong style="color:var(--chrome-100)">inset white highlight</strong>
+            (the leading edge of the page), a sharp 2–4px dark drop (the spine shadow),
+            and a soft long blur (the room).
+          </p>
+          <p style="color:var(--chrome-400); font-size:13px; margin:0;">
+            One scale, four levels — applied consistently to popovers, status pills, modals, toasts.
+            Flatness is reserved for body text; everything tactile lifts.
+          </p>
+        </div>
+
+        <div style="background:var(--chrome-900); border:1px solid var(--chrome-800); border-radius:var(--r-lg); padding:24px;">
+          <div class="md-label" style="color:var(--brand);">Type · serif body, sans chrome</div>
+          <p style="color:var(--chrome-300); font-size:15px; line-height:1.6; margin:0 0 8px;">
+            <strong style="color:var(--chrome-100)">Comfortaa</strong> stays for branding and headings — its softness
+            matches the cozy brief. <strong style="color:var(--chrome-100)">Geist</strong> stays for UI body.
+            <strong style="color:var(--chrome-100)">Newsreader</strong> joins as the prose face inside the editor —
+            an open optical serif that reads like a book at 18px.
+          </p>
+          <p style="color:var(--chrome-400); font-size:13px; margin:0;">
+            Numerics use <strong style="color:var(--chrome-100)">JetBrains Mono</strong> with old-style figures off
+            (sprint timer, ISBN, file refs). 4 families, 4 jobs, no overlap.
+          </p>
+        </div>
+
+        <div style="background:var(--chrome-900); border:1px solid var(--chrome-800); border-radius:var(--r-lg); padding:24px;">
+          <div class="md-label" style="color:var(--brand);">Density · cozy, not bloated</div>
+          <p style="color:var(--chrome-300); font-size:15px; line-height:1.6; margin:0 0 8px;">
+            Binder grew <strong style="color:var(--chrome-100)">240 → 264px</strong>, metadata
+            <strong style="color:var(--chrome-100)">240 → 288px</strong>, binder row
+            <strong style="color:var(--chrome-100)">28 → 36px</strong>. Toolbar height stays at 48 to keep the prose
+            area generous on a 13&quot; laptop.
+          </p>
+          <p style="color:var(--chrome-400); font-size:13px; margin:0;">
+            Result: more air around every interaction without the writing surface getting smaller.
+            The chrome <em>feels</em> heavier; it actually isn't.
+          </p>
+        </div>
+
+        <div style="background:var(--chrome-900); border:1px solid var(--chrome-800); border-radius:var(--r-lg); padding:24px;">
+          <div class="md-label" style="color:var(--brand);">Status palette · 5 harmonised hues</div>
+          <p style="color:var(--chrome-300); font-size:15px; line-height:1.6; margin:0 0 8px;">
+            Chapter status sweeps from cool to warm as work progresses:
+            <span style="color:var(--status-idea)">Idea</span> (cloud blue) →
+            <span style="color:var(--status-outline)">Outline</span> (plum) →
+            <span style="color:var(--status-first-draft)">First Draft</span> (warm yellow) →
+            <span style="color:var(--status-revised)">Revised</span> (sage) →
+            <span style="color:var(--status-final)">Final</span> (terracotta).
+          </p>
+          <p style="color:var(--chrome-400); font-size:13px; margin:0;">
+            All at chroma ≈ 0.08, lightness ≈ 0.72 — six hues that sit together without one screaming.
+            The same chroma is reused for binder type indicators (§4).
+          </p>
+        </div>
+
+        <div style="background:var(--chrome-900); border:1px solid var(--chrome-800); border-radius:var(--r-lg); padding:24px;">
+          <div class="md-label" style="color:var(--brand);">Brand yellow · used sparingly, used loudly</div>
+          <p style="color:var(--chrome-300); font-size:15px; line-height:1.6; margin:0 0 8px;">
+            Yellow appears in exactly five places: the active binder row, the unsaved-dot, the +Add button,
+            premium badges, and active toolbar buttons. Everywhere else it's the soft 18% wash
+            (<code style="font-family:var(--font-mono); color:var(--brand);">--brand-soft</code>).
+          </p>
+          <p style="color:var(--chrome-400); font-size:13px; margin:0;">
+            Discipline matters: if everything is yellow, nothing is. The unsaved-dot has to <em>jump</em>
+            at a writer mid-thought.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §2  TOKENS                                                    -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-tokens">
+      <div class="eyebrow"><span class="num">02</span> <span>Design tokens</span></div>
+      <h2 class="title">Tokens.</h2>
+      <p class="lede">Implementable as CSS custom properties or as a Tailwind v4 <code>@theme</code> block. Names are deliberately stable across Prompts 1–3.</p>
+
+      <!-- Chrome scale -->
+      <h3 style="font-family:var(--font-display); font-size:18px; color:var(--chrome-200); margin:24px 0 12px;">Chrome — the dark walnut frame</h3>
+      <div class="swatches">
+        <div class="sw"><div class="chip" style="background:var(--chrome-950)"></div><div class="meta">chrome-950<div class="v">app bg · deepest seam</div></div></div>
+        <div class="sw"><div class="chip" style="background:var(--chrome-900)"></div><div class="meta">chrome-900<div class="v">binder · metadata bg</div></div></div>
+        <div class="sw"><div class="chip" style="background:var(--chrome-850)"></div><div class="meta">chrome-850<div class="v">toolbar · status bar</div></div></div>
+        <div class="sw"><div class="chip" style="background:var(--chrome-800)"></div><div class="meta">chrome-800<div class="v">hover · popover</div></div></div>
+        <div class="sw"><div class="chip" style="background:var(--chrome-750)"></div><div class="meta">chrome-750<div class="v">elevated · dropdown</div></div></div>
+        <div class="sw"><div class="chip" style="background:var(--chrome-700)"></div><div class="meta">chrome-700<div class="v">button borders</div></div></div>
+        <div class="sw"><div class="chip" style="background:var(--chrome-600)"></div><div class="meta">chrome-600<div class="v">soft dividers</div></div></div>
+        <div class="sw"><div class="chip" style="background:var(--chrome-500)"></div><div class="meta">chrome-500<div class="v">muted icon · meta text</div></div></div>
+        <div class="sw"><div class="chip" style="background:var(--chrome-400)"></div><div class="meta">chrome-400<div class="v">secondary text</div></div></div>
+        <div class="sw"><div class="chip" style="background:var(--chrome-300)"></div><div class="meta">chrome-300<div class="v">primary text</div></div></div>
+        <div class="sw"><div class="chip" style="background:var(--chrome-200)"></div><div class="meta">chrome-200<div class="v">high-contrast UI</div></div></div>
+        <div class="sw"><div class="chip" style="background:var(--chrome-100)"></div><div class="meta">chrome-100<div class="v">ivory headings</div></div></div>
+      </div>
+
+      <h3 style="font-family:var(--font-display); font-size:18px; color:var(--chrome-200); margin:32px 0 12px;">Paper — the cream writing surface (light editor)</h3>
+      <div class="swatches">
+        <div class="sw"><div class="chip" style="background:var(--paper-50)"></div><div class="meta">paper-50<div class="v">page edge highlight</div></div></div>
+        <div class="sw"><div class="chip" style="background:var(--paper-100)"></div><div class="meta">paper-100<div class="v">prose surface</div></div></div>
+        <div class="sw"><div class="chip" style="background:var(--paper-200)"></div><div class="meta">paper-200<div class="v">highlight · selection</div></div></div>
+        <div class="sw"><div class="chip" style="background:var(--paper-300)"></div><div class="meta">paper-300<div class="v">paper rule</div></div></div>
+        <div class="sw"><div class="chip" style="background:var(--paper-400)"></div><div class="meta">paper-400<div class="v">meta on paper</div></div></div>
+        <div class="sw"><div class="chip" style="background:var(--paper-ink)"></div><div class="meta" style="color:var(--paper-100); background:var(--paper-ink);">paper-ink<div class="v" style="color:var(--paper-400);">body prose color</div></div></div>
+        <div class="sw"><div class="chip" style="background:var(--paper-ink-strong)"></div><div class="meta" style="color:var(--paper-100); background:var(--paper-ink-strong);">paper-ink-strong<div class="v" style="color:var(--paper-400);">prose headings</div></div></div>
+      </div>
+
+      <h3 style="font-family:var(--font-display); font-size:18px; color:var(--chrome-200); margin:32px 0 12px;">Dark canvas — warm coffee (dark editor)</h3>
+      <div class="swatches">
+        <div class="sw"><div class="chip" style="background:var(--canvas-dark-100)"></div><div class="meta">canvas-dark-100<div class="v">page surface</div></div></div>
+        <div class="sw"><div class="chip" style="background:var(--canvas-dark-200)"></div><div class="meta">canvas-dark-200<div class="v">lifted card</div></div></div>
+        <div class="sw"><div class="chip" style="background:var(--canvas-dark-300)"></div><div class="meta">canvas-dark-300<div class="v">rule on dark</div></div></div>
+        <div class="sw"><div class="chip" style="background:var(--canvas-dark-ink)"></div><div class="meta" style="background:var(--canvas-dark-ink); color:var(--canvas-dark-100);">canvas-dark-ink<div class="v" style="color:var(--canvas-dark-100); opacity:0.7;">prose body</div></div></div>
+      </div>
+
+      <h3 style="font-family:var(--font-display); font-size:18px; color:var(--chrome-200); margin:32px 0 12px;">Brand &amp; supporting palette</h3>
+      <div class="cols2" style="gap:24px;">
+        <div>
+          <div class="md-label">Brand</div>
+          <div class="swatches">
+            <div class="sw"><div class="chip" style="background:var(--brand)"></div><div class="meta">brand<div class="v">#FFC300 — accents, CTAs</div></div></div>
+            <div class="sw"><div class="chip" style="background:var(--brand-hover)"></div><div class="meta">brand-hover<div class="v">#FFD040</div></div></div>
+            <div class="sw"><div class="chip" style="background:var(--brand-active)"></div><div class="meta">brand-active<div class="v">#E0AC01</div></div></div>
+            <div class="sw"><div class="chip" style="background:var(--brand-soft)"></div><div class="meta">brand-soft<div class="v">18% wash for active bg</div></div></div>
+          </div>
+        </div>
+        <div>
+          <div class="md-label">Validation</div>
+          <div class="swatches">
+            <div class="sw"><div class="chip" style="background:var(--success)"></div><div class="meta">success</div></div>
+            <div class="sw"><div class="chip" style="background:var(--warning)"></div><div class="meta">warning</div></div>
+            <div class="sw"><div class="chip" style="background:var(--error)"></div><div class="meta">error</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cols2" style="gap:24px; margin-top:24px;">
+        <div>
+          <div class="md-label">Chapter status · 5</div>
+          <div class="swatches">
+            <div class="sw"><div class="chip" style="background:var(--status-idea)"></div><div class="meta">status-idea<div class="v">cloud blue · 245°</div></div></div>
+            <div class="sw"><div class="chip" style="background:var(--status-outline)"></div><div class="meta">status-outline<div class="v">plum · 295°</div></div></div>
+            <div class="sw"><div class="chip" style="background:var(--status-first-draft)"></div><div class="meta">status-first-draft<div class="v">warm yellow · 88°</div></div></div>
+            <div class="sw"><div class="chip" style="background:var(--status-revised)"></div><div class="meta">status-revised<div class="v">sage · 155°</div></div></div>
+            <div class="sw"><div class="chip" style="background:var(--status-final)"></div><div class="meta">status-final<div class="v">terracotta · 35°</div></div></div>
+          </div>
+        </div>
+        <div>
+          <div class="md-label">Binder item types · 6</div>
+          <div class="swatches">
+            <div class="sw"><div class="chip" style="background:var(--type-chapter)"></div><div class="meta">type-chapter<div class="v">brand yellow</div></div></div>
+            <div class="sw"><div class="chip" style="background:var(--type-front-matter)"></div><div class="meta">type-front-matter<div class="v">plum · 290°</div></div></div>
+            <div class="sw"><div class="chip" style="background:var(--type-back-matter)"></div><div class="meta">type-back-matter<div class="v">rose · 330°</div></div></div>
+            <div class="sw"><div class="chip" style="background:var(--type-outline)"></div><div class="meta">type-outline<div class="v">teal · 205°</div></div></div>
+            <div class="sw"><div class="chip" style="background:var(--type-research)"></div><div class="meta">type-research<div class="v">sage · 155°</div></div></div>
+            <div class="sw"><div class="chip" style="background:var(--type-character)"></div><div class="meta">type-character<div class="v">terracotta · 35°</div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Type specimens -->
+      <h3 style="font-family:var(--font-display); font-size:18px; color:var(--chrome-200); margin:48px 0 12px;">Type — four faces, four jobs</h3>
+      <div class="cols2" style="gap:16px;">
+        <div class="type-card">
+          <div class="name">Comfortaa · 400 / 500 / 700</div>
+          <div class="sample-display">Get buzzed about writing.</div>
+          <div class="role">Brand · headings · primary buttons · status pills. Soft geometric warmth — the cozy register.</div>
+        </div>
+        <div class="type-card">
+          <div class="name">Geist · 300 / 400 / 500 / 600</div>
+          <div class="sample-ui">All UI body, labels, tooltips, menu items, form fields. 14px / 1.5 line-height for the bulk of the chrome.</div>
+          <div class="role">Workhorse UI face. Modern, neutral, high legibility at 12–15px.</div>
+        </div>
+        <div class="type-card" style="background:var(--paper-100); border-color:var(--paper-300);">
+          <div class="name" style="color:var(--paper-400);">Newsreader · 400 / 500 / 600 / 400i</div>
+          <div class="sample-prose">A&nbsp;writer sits down. The page is the first room she enters. <em>What it feels like</em> matters before what it does.</div>
+          <div class="role" style="color:var(--paper-400);">Prose body inside the editor. Open optical serif; reads like a book at 18px / 1.78.</div>
+        </div>
+        <div class="type-card">
+          <div class="name">JetBrains Mono · 400 / 500</div>
+          <div class="sample-mono">12:34 · 1,240 words · 45% · ISBN 978-1-23456-789-0</div>
+          <div class="role">Numerics, identifiers, eyebrow labels, kbd hints. Tabular figures by default.</div>
+        </div>
+      </div>
+
+      <!-- Spacing / radii / elevation -->
+      <h3 style="font-family:var(--font-display); font-size:18px; color:var(--chrome-200); margin:48px 0 12px;">Spacing, radii, elevation</h3>
+      <div class="cols3" style="gap:20px;">
+        <div style="background:var(--chrome-900); border:1px solid var(--chrome-800); border-radius:var(--r-lg); padding:20px;">
+          <div class="md-label">Spacing · 4px base</div>
+          <table class="token-table">
+            <tr><th>token</th><th>px</th><th>where</th></tr>
+            <tr><td>s-1</td><td>4</td><td>icon nudge</td></tr>
+            <tr><td>s-2</td><td>8</td><td>btn gap, row internal</td></tr>
+            <tr><td>s-3</td><td>12</td><td>card inner</td></tr>
+            <tr><td>s-4</td><td>16</td><td>panel section</td></tr>
+            <tr><td>s-5</td><td>20</td><td>card padding</td></tr>
+            <tr><td>s-6</td><td>24</td><td>section gap</td></tr>
+            <tr><td>s-8</td><td>32</td><td>major rhythm</td></tr>
+            <tr><td>s-10</td><td>40</td><td>prose top gap</td></tr>
+            <tr><td>s-14</td><td>56</td><td>prose side pad</td></tr>
+            <tr><td>s-18</td><td>72</td><td>page rhythm</td></tr>
+          </table>
+        </div>
+        <div style="background:var(--chrome-900); border:1px solid var(--chrome-800); border-radius:var(--r-lg); padding:20px;">
+          <div class="md-label">Radii — never sharp</div>
+          <div style="display:flex; flex-direction:column; gap:14px; margin-top:14px;">
+            <div style="display:flex; align-items:center; gap:14px;"><div style="width:48px; height:32px; background:var(--chrome-750); border:1px solid var(--chrome-700); border-radius:4px;"></div><div><strong style="color:var(--chrome-200); font-family:var(--font-mono); font-size:12px;">r-xs · 4</strong><div style="font-size:12px; color:var(--chrome-500);">Inputs, status dots</div></div></div>
+            <div style="display:flex; align-items:center; gap:14px;"><div style="width:48px; height:32px; background:var(--chrome-750); border:1px solid var(--chrome-700); border-radius:6px;"></div><div><strong style="color:var(--chrome-200); font-family:var(--font-mono); font-size:12px;">r-sm · 6</strong><div style="font-size:12px; color:var(--chrome-500);">Small buttons</div></div></div>
+            <div style="display:flex; align-items:center; gap:14px;"><div style="width:48px; height:32px; background:var(--chrome-750); border:1px solid var(--chrome-700); border-radius:10px;"></div><div><strong style="color:var(--chrome-200); font-family:var(--font-mono); font-size:12px;">r-md · 10</strong><div style="font-size:12px; color:var(--chrome-500);">Toolbar btn, binder row</div></div></div>
+            <div style="display:flex; align-items:center; gap:14px;"><div style="width:48px; height:32px; background:var(--chrome-750); border:1px solid var(--chrome-700); border-radius:14px;"></div><div><strong style="color:var(--chrome-200); font-family:var(--font-mono); font-size:12px;">r-lg · 14</strong><div style="font-size:12px; color:var(--chrome-500);">Cards, popovers</div></div></div>
+            <div style="display:flex; align-items:center; gap:14px;"><div style="width:48px; height:32px; background:var(--chrome-750); border:1px solid var(--chrome-700); border-radius:18px;"></div><div><strong style="color:var(--chrome-200); font-family:var(--font-mono); font-size:12px;">r-xl · 18</strong><div style="font-size:12px; color:var(--chrome-500);">Modals</div></div></div>
+          </div>
+        </div>
+        <div style="background:var(--chrome-900); border:1px solid var(--chrome-800); border-radius:var(--r-lg); padding:20px;">
+          <div class="md-label">Elevation — stacked paper</div>
+          <div style="display:flex; flex-direction:column; gap:18px; margin-top:14px;">
+            <div style="background:var(--chrome-800); padding:10px 14px; border-radius:8px; box-shadow:var(--el-1); font-family:var(--font-mono); font-size:12px; color:var(--chrome-300);">el-1 · subtle base</div>
+            <div style="background:var(--chrome-800); padding:10px 14px; border-radius:10px; box-shadow:var(--el-2); font-family:var(--font-mono); font-size:12px; color:var(--chrome-300);">el-2 · button, pill</div>
+            <div style="background:var(--chrome-750); padding:10px 14px; border-radius:12px; box-shadow:var(--el-3); font-family:var(--font-mono); font-size:12px; color:var(--chrome-300);">el-3 · popover, toast</div>
+            <div style="background:var(--chrome-750); padding:10px 14px; border-radius:14px; box-shadow:var(--el-4); font-family:var(--font-mono); font-size:12px; color:var(--chrome-300);">el-4 · modal</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §3  STUDIO SHELL COMPOSITION                                   -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-shell">
+      <div class="eyebrow"><span class="num">03</span> <span>The full picture</span></div>
+      <h2 class="title">Studio shell — full composition.</h2>
+      <p class="lede">
+        The three-column shell at 1440 × 880. The center column carries toolbar + prose + status bar.
+        Binder and metadata are persistent and identical across editor themes; only the prose canvas
+        flips between cream paper and warm coffee.
+      </p>
+
+      <!-- ── Dark editor mode ─────────────────────────────────── -->
+      <div class="artboard">
+        <div class="artboard-header"><strong>Studio shell · Dark editor</strong><span>1440 × 880 · default state</span></div>
+        <div class="studio">
+          <!-- top nav -->
+          <header class="topnav">
+            <div class="left">
+              <a class="logo" href="#"><span class="hex"><svg width="18" height="18" style="color:var(--brand);"><use href="#i-hive"/></svg></span> Beehive</a>
+              <nav>
+                <a class="active" href="#">Studio</a>
+                <a href="#">Community</a>
+                <a href="#">Discover</a>
+              </nav>
+            </div>
+            <div class="right">
+              <button class="tbtn" style="width:32px; height:32px;" aria-label="Notifications"><svg width="18" height="18"><use href="#i-bell"/></svg></button>
+              <div class="avatar">M</div>
+            </div>
+          </header>
+
+          <div class="shell">
+            <!-- BINDER -->
+            <aside class="binder">
+              <div class="binder-head">
+                <div class="book-meta">Working manuscript · 41,820 wd</div>
+                <div class="book-title">The Last Cartographer</div>
+                <div class="row">
+                  <button class="cork-btn" aria-label="Corkboard view"><svg width="14" height="14"><use href="#i-corkboard"/></svg></button>
+                  <button class="cork-btn" aria-label="Search binder"><svg width="14" height="14"><use href="#i-search"/></svg></button>
+                </div>
+              </div>
+              <div class="binder-tree">
+                <!-- Front Matter -->
+                <div class="binder-row">
+                  <span class="chev open"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span>
+                  <span class="icon" style="color:var(--type-front-matter)"><svg width="14" height="14"><use href="#i-front-matter"/></svg></span>
+                  <span class="title">Front Matter</span>
+                  <button class="more"><svg width="14" height="14"><use href="#i-more"/></svg></button>
+                </div>
+                <div class="binder-row indent-1">
+                  <span class="chev none"></span>
+                  <span class="icon" style="color:var(--type-front-matter)"><svg width="14" height="14"><use href="#i-front-matter"/></svg></span>
+                  <span class="title">Title page</span>
+                  <button class="more"><svg width="14" height="14"><use href="#i-more"/></svg></button>
+                </div>
+                <div class="binder-row indent-1">
+                  <span class="chev none"></span>
+                  <span class="icon" style="color:var(--type-front-matter)"><svg width="14" height="14"><use href="#i-front-matter"/></svg></span>
+                  <span class="title">Dedication</span>
+                  <button class="more"><svg width="14" height="14"><use href="#i-more"/></svg></button>
+                </div>
+                <!-- Outline -->
+                <div class="binder-row">
+                  <span class="chev"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span>
+                  <span class="icon" style="color:var(--type-outline)"><svg width="14" height="14"><use href="#i-outline"/></svg></span>
+                  <span class="title">Story outline</span>
+                  <button class="more"><svg width="14" height="14"><use href="#i-more"/></svg></button>
+                </div>
+                <!-- Part One -->
+                <div class="binder-row">
+                  <span class="chev open"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span>
+                  <span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span>
+                  <span class="title" style="font-weight:500;">Part One — The Coast</span>
+                  <button class="more"><svg width="14" height="14"><use href="#i-more"/></svg></button>
+                </div>
+                <div class="binder-row indent-1">
+                  <span class="chev none"></span>
+                  <span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span>
+                  <span class="title">1. The bell at low tide</span>
+                  <button class="more"><svg width="14" height="14"><use href="#i-more"/></svg></button>
+                </div>
+                <div class="binder-row indent-1 active">
+                  <span class="chev none"></span>
+                  <span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span>
+                  <span class="title">2. What Cora found in the chart room</span>
+                  <button class="more" style="opacity:1; color:var(--brand);"><svg width="14" height="14"><use href="#i-more"/></svg></button>
+                  <svg class="pin" width="12" height="12"><use href="#i-pin"/></svg>
+                </div>
+                <div class="binder-row indent-1">
+                  <span class="chev none"></span>
+                  <span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span>
+                  <span class="title">3. The lighthouse keeper's letter</span>
+                  <button class="more"><svg width="14" height="14"><use href="#i-more"/></svg></button>
+                </div>
+                <div class="binder-row indent-1">
+                  <span class="chev none"></span>
+                  <span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span>
+                  <span class="title">4. The empty inlet</span>
+                  <button class="more"><svg width="14" height="14"><use href="#i-more"/></svg></button>
+                </div>
+                <!-- Part Two -->
+                <div class="binder-row">
+                  <span class="chev"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span>
+                  <span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span>
+                  <span class="title" style="font-weight:500;">Part Two — Inland</span>
+                  <button class="more"><svg width="14" height="14"><use href="#i-more"/></svg></button>
+                </div>
+                <!-- Research -->
+                <div class="binder-row">
+                  <span class="chev open"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span>
+                  <span class="icon" style="color:var(--type-research)"><svg width="14" height="14"><use href="#i-research"/></svg></span>
+                  <span class="title">Research</span>
+                  <button class="more"><svg width="14" height="14"><use href="#i-more"/></svg></button>
+                </div>
+                <div class="binder-row indent-1">
+                  <span class="chev none"></span>
+                  <span class="icon" style="color:var(--type-research)"><svg width="14" height="14"><use href="#i-research"/></svg></span>
+                  <span class="title">Cartography 1820s</span>
+                  <button class="more"><svg width="14" height="14"><use href="#i-more"/></svg></button>
+                </div>
+                <div class="binder-row indent-1">
+                  <span class="chev none"></span>
+                  <span class="icon" style="color:var(--type-research)"><svg width="14" height="14"><use href="#i-research"/></svg></span>
+                  <span class="title">Maine coastal towns</span>
+                  <button class="more"><svg width="14" height="14"><use href="#i-more"/></svg></button>
+                </div>
+                <!-- Characters -->
+                <div class="binder-row">
+                  <span class="chev"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span>
+                  <span class="icon" style="color:var(--type-character)"><svg width="14" height="14"><use href="#i-character"/></svg></span>
+                  <span class="title">Characters</span>
+                  <button class="more"><svg width="14" height="14"><use href="#i-more"/></svg></button>
+                </div>
+                <div class="binder-row">
+                  <span class="chev"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span>
+                  <span class="icon" style="color:var(--type-back-matter)"><svg width="14" height="14"><use href="#i-back-matter"/></svg></span>
+                  <span class="title">Back Matter</span>
+                  <button class="more"><svg width="14" height="14"><use href="#i-more"/></svg></button>
+                </div>
+              </div>
+
+              <div class="binder-foot">
+                <button class="btn-add">
+                  <svg width="14" height="14"><use href="#i-plus"/></svg>
+                  Add
+                </button>
+                <button style="display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:var(--r-md); background:transparent; border:1px solid var(--chrome-700); color:var(--chrome-300); font-size:13px; font-family:var(--font-ui); cursor:pointer;">
+                  <svg width="14" height="14"><use href="#i-users"/></svg>
+                  <span style="flex:1; text-align:left;">Hive · 3 members</span>
+                  <svg width="12" height="12" style="color:var(--chrome-500);"><use href="#i-chev-right"/></svg>
+                </button>
+              </div>
+            </aside>
+
+            <!-- CENTER -->
+            <div class="center">
+              <div class="toolbar">
+                <div class="tb-group">
+                  <button class="tbtn" aria-label="Bold"><svg width="16" height="16"><use href="#i-bold"/></svg></button>
+                  <button class="tbtn active" aria-label="Italic"><svg width="16" height="16"><use href="#i-italic"/></svg></button>
+                  <button class="tbtn" aria-label="Strikethrough"><svg width="16" height="16"><use href="#i-strike"/></svg></button>
+                </div>
+                <span class="tb-sep"></span>
+                <div class="tb-group">
+                  <button class="tbtn" aria-label="Heading 1"><svg width="16" height="16"><use href="#i-h1"/></svg></button>
+                  <button class="tbtn" aria-label="Heading 2"><svg width="16" height="16"><use href="#i-h2"/></svg></button>
+                  <button class="tbtn" aria-label="Heading 3"><svg width="16" height="16"><use href="#i-h3"/></svg></button>
+                </div>
+                <span class="tb-sep"></span>
+                <div class="tb-group">
+                  <button class="tbtn" aria-label="Bullet list"><svg width="16" height="16"><use href="#i-list"/></svg></button>
+                  <button class="tbtn" aria-label="Numbered list"><svg width="16" height="16"><use href="#i-list-ord"/></svg></button>
+                  <button class="tbtn" aria-label="Blockquote"><svg width="16" height="16"><use href="#i-quote"/></svg></button>
+                  <button class="tbtn" aria-label="Horizontal rule"><svg width="16" height="16"><use href="#i-hr"/></svg></button>
+                </div>
+                <span class="tb-sep"></span>
+                <div class="tb-group">
+                  <button class="tbtn" aria-label="Undo"><svg width="16" height="16"><use href="#i-undo"/></svg></button>
+                  <button class="tbtn" disabled aria-label="Redo"><svg width="16" height="16"><use href="#i-redo"/></svg></button>
+                </div>
+                <span class="tb-sep"></span>
+                <div class="tb-group">
+                  <button class="tbtn" aria-label="Underline"><svg width="16" height="16"><use href="#i-underline"/></svg></button>
+                  <button class="tbtn" aria-label="Highlight"><svg width="16" height="16"><use href="#i-highlight"/></svg></button>
+                  <button class="tbtn" aria-label="Link"><svg width="16" height="16"><use href="#i-link"/></svg></button>
+                </div>
+                <span class="tb-sep"></span>
+                <div class="tb-group">
+                  <button class="tbtn" aria-label="Align left"><svg width="16" height="16"><use href="#i-align-l"/></svg></button>
+                  <button class="tbtn" aria-label="Align center"><svg width="16" height="16"><use href="#i-align-c"/></svg></button>
+                  <button class="tbtn" aria-label="Align right"><svg width="16" height="16"><use href="#i-align-r"/></svg></button>
+                </div>
+
+                <span class="tb-spacer"></span>
+
+                <div class="tb-group">
+                  <button class="tbtn" aria-label="Find &amp; replace"><svg width="16" height="16"><use href="#i-search"/></svg></button>
+                  <button class="tbtn" aria-label="Version history"><svg width="16" height="16"><use href="#i-history"/></svg></button>
+                  <button class="tbtn" aria-label="Keyboard shortcuts"><svg width="16" height="16"><use href="#i-help"/></svg></button>
+                  <button class="tbtn" aria-label="Light mode"><svg width="16" height="16"><use href="#i-sun"/></svg></button>
+                </div>
+                <span class="tb-sep"></span>
+                <button class="tb-select" aria-label="Font size">
+                  <span>18 px</span>
+                  <svg width="10" height="10" style="color:var(--chrome-500);"><use href="#i-chev-down"/></svg>
+                </button>
+                <span class="tb-sep"></span>
+                <button class="tbtn has-label">
+                  <svg width="14" height="14"><use href="#i-download"/></svg>
+                  Export
+                </button>
+                <button class="tbtn" aria-label="Writing analysis"><svg width="16" height="16"><use href="#i-analysis"/></svg></button>
+                <button class="tbtn" aria-label="Focus mode"><svg width="16" height="16"><use href="#i-maximize"/></svg></button>
+              </div>
+
+              <div class="editor">
+                <div class="prose-wrap">
+                  <div class="prose">
+                    <h1>2. What Cora found in the chart room</h1>
+                    <p>The bell had stopped before sunrise — Cora was sure of it, the way you are sure of a thing the moment after you have learned to be sure of nothing else — and so she did what she always did when the noise inside her own head got bigger than the noise outside of it: she walked.</p>
+                    <p>Down the kitchen stairs in stocking feet. Past the umbrellas. Past the boots her father had not worn in five winters and which her mother could not bring herself to give away. Out through the side door, the one that <em>stuck</em>, the one she had to lift and lean against to make work.</p>
+                    <blockquote>The chart room smelled of cedar and old salt, the way a coat smells when you take it out of a trunk in October.</blockquote>
+                    <p>She lit the lamp. She did not light <strong>both</strong> lamps — only the small one over the desk, because she was not, she told herself, looking for anything. She was only walking. She was only standing. She was only standing in a room that had become unaccountably interesting at half past four in the<span class="faux-cursor"></span></p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="statusbar">
+                <div class="sprint-progress" style="width: 42%;"></div>
+                <div class="left">
+                  <span class="save-dot"></span>
+                  <span>Saved</span>
+                  <span class="sep"></span>
+                  <span style="color:var(--chrome-200); font-weight:500;">1,240 words</span>
+                  <span class="sep"></span>
+                  <span>45% of <span style="color:var(--chrome-200);">2,000</span> · <span class="goal-bar"><span style="width:45%;"></span></span> · <a href="#" class="edit-link">edit</a></span>
+                </div>
+                <div class="right">
+                  <span class="sprint-running">
+                    <svg width="12" height="12"><use href="#i-timer"/></svg>
+                    12:34
+                    <button style="background:transparent; border:0; color:inherit; padding:0 2px; display:inline-flex; cursor:pointer;"><svg width="11" height="11"><use href="#i-pause"/></svg></button>
+                    <button style="background:transparent; border:0; color:inherit; padding:0 2px; display:inline-flex; cursor:pointer;"><svg width="11" height="11"><use href="#i-stop"/></svg></button>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- METADATA -->
+            <aside class="metadata">
+              <div class="md-section">
+                <div class="md-label">Chapter</div>
+                <div class="md-title">2. What Cora found in the chart room</div>
+              </div>
+              <div class="md-section">
+                <div class="md-label">Status</div>
+                <div class="md-pills">
+                  <span class="status-pill" data-status="idea"><span class="dot"></span>Idea</span>
+                  <span class="status-pill" data-status="outline"><span class="dot"></span>Outline</span>
+                  <span class="status-pill active" data-status="first-draft"><span class="dot" style="background:var(--brand);"></span>First Draft</span>
+                  <span class="status-pill" data-status="revised"><span class="dot"></span>Revised</span>
+                  <span class="status-pill" data-status="final"><span class="dot"></span>Final</span>
+                </div>
+              </div>
+              <div class="md-section">
+                <div class="md-label">Synopsis</div>
+                <textarea class="md-textarea" rows="3" placeholder="One-line chapter summary…">Cora enters her father's chart room before dawn and finds a sea-chart annotated in a hand that is not his.</textarea>
+              </div>
+              <div class="md-section">
+                <button class="scene-toggle">
+                  Scene Planner
+                  <svg width="12" height="12" style="color:var(--chrome-500);"><use href="#i-chev-down"/></svg>
+                </button>
+                <div class="scene-grid">
+                  <div class="scene-field">
+                    <label>Goal</label>
+                    <textarea class="md-textarea" rows="2" placeholder="What does Cora want here?">To find proof her father was lying about the chart.</textarea>
+                  </div>
+                  <div class="scene-field">
+                    <label>Conflict</label>
+                    <textarea class="md-textarea" rows="2" placeholder="What is in her way?">The lamp's reach is small; her mother might wake.</textarea>
+                  </div>
+                  <div class="scene-field">
+                    <label>Outcome</label>
+                    <textarea class="md-textarea" rows="2" placeholder="What changes by the end?"></textarea>
+                  </div>
+                </div>
+              </div>
+              <div class="md-section">
+                <div class="md-label">Notes</div>
+                <textarea class="md-textarea" rows="4" placeholder="Private notes — only you can see these.">Anchor scene for Cora's arc. The chart must be visible in Ch. 9 again.</textarea>
+              </div>
+
+              <div class="publishing">
+                <div class="pub-head">
+                  <span class="chev"><svg width="12" height="12"><use href="#i-chev-right"/></svg></span>
+                  <span class="title">Publishing details</span>
+                  <span class="premium">Premium</span>
+                </div>
+                <div class="pub-subtitle">Applies to the whole book, not just this chapter.</div>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Light editor mode ──────────────────────────────────── -->
+      <div class="artboard">
+        <div class="artboard-header"><strong>Studio shell · Light editor (paper)</strong><span>Only the prose canvas + status bar flip — chrome stays warm walnut</span></div>
+        <div class="studio">
+          <header class="topnav">
+            <div class="left">
+              <a class="logo" href="#"><span class="hex"><svg width="18" height="18" style="color:var(--brand);"><use href="#i-hive"/></svg></span> Beehive</a>
+              <nav>
+                <a class="active" href="#">Studio</a>
+                <a href="#">Community</a>
+                <a href="#">Discover</a>
+              </nav>
+            </div>
+            <div class="right">
+              <button class="tbtn" style="width:32px; height:32px;" aria-label="Notifications"><svg width="18" height="18"><use href="#i-bell"/></svg></button>
+              <div class="avatar">M</div>
+            </div>
+          </header>
+          <div class="shell">
+            <aside class="binder">
+              <div class="binder-head">
+                <div class="book-meta">Working manuscript · 41,820 wd</div>
+                <div class="book-title">The Last Cartographer</div>
+                <div class="row">
+                  <button class="cork-btn"><svg width="14" height="14"><use href="#i-corkboard"/></svg></button>
+                </div>
+              </div>
+              <div class="binder-tree">
+                <div class="binder-row">
+                  <span class="chev open"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span>
+                  <span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span>
+                  <span class="title" style="font-weight:500;">Part One — The Coast</span>
+                </div>
+                <div class="binder-row indent-1"><span class="chev none"></span><span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span><span class="title">1. The bell at low tide</span></div>
+                <div class="binder-row indent-1 active">
+                  <span class="chev none"></span>
+                  <span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span>
+                  <span class="title">2. What Cora found in the chart room</span>
+                </div>
+                <div class="binder-row indent-1"><span class="chev none"></span><span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span><span class="title">3. The lighthouse keeper's letter</span></div>
+                <div class="binder-row indent-1"><span class="chev none"></span><span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span><span class="title">4. The empty inlet</span></div>
+                <div class="binder-row"><span class="chev"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span><span class="icon" style="color:var(--type-outline)"><svg width="14" height="14"><use href="#i-outline"/></svg></span><span class="title">Story outline</span></div>
+                <div class="binder-row"><span class="chev open"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span><span class="icon" style="color:var(--type-research)"><svg width="14" height="14"><use href="#i-research"/></svg></span><span class="title">Research</span></div>
+                <div class="binder-row indent-1"><span class="chev none"></span><span class="icon" style="color:var(--type-research)"><svg width="14" height="14"><use href="#i-research"/></svg></span><span class="title">Cartography 1820s</span></div>
+                <div class="binder-row"><span class="chev"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span><span class="icon" style="color:var(--type-character)"><svg width="14" height="14"><use href="#i-character"/></svg></span><span class="title">Characters</span></div>
+              </div>
+              <div class="binder-foot">
+                <button class="btn-add"><svg width="14" height="14"><use href="#i-plus"/></svg>Add</button>
+                <button style="display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:var(--r-md); background:transparent; border:1px solid var(--chrome-700); color:var(--chrome-300); font-size:13px; cursor:pointer;">
+                  <svg width="14" height="14"><use href="#i-users"/></svg>
+                  <span style="flex:1; text-align:left;">Hive · 3 members</span>
+                  <svg width="12" height="12" style="color:var(--chrome-500);"><use href="#i-chev-right"/></svg>
+                </button>
+              </div>
+            </aside>
+
+            <div class="center">
+              <div class="toolbar">
+                <div class="tb-group">
+                  <button class="tbtn active" aria-label="Bold"><svg width="16" height="16"><use href="#i-bold"/></svg></button>
+                  <button class="tbtn" aria-label="Italic"><svg width="16" height="16"><use href="#i-italic"/></svg></button>
+                  <button class="tbtn" aria-label="Strikethrough"><svg width="16" height="16"><use href="#i-strike"/></svg></button>
+                </div>
+                <span class="tb-sep"></span>
+                <div class="tb-group">
+                  <button class="tbtn" aria-label="H1"><svg width="16" height="16"><use href="#i-h1"/></svg></button>
+                  <button class="tbtn" aria-label="H2"><svg width="16" height="16"><use href="#i-h2"/></svg></button>
+                  <button class="tbtn" aria-label="H3"><svg width="16" height="16"><use href="#i-h3"/></svg></button>
+                </div>
+                <span class="tb-sep"></span>
+                <div class="tb-group">
+                  <button class="tbtn" aria-label="Bullet"><svg width="16" height="16"><use href="#i-list"/></svg></button>
+                  <button class="tbtn" aria-label="Number"><svg width="16" height="16"><use href="#i-list-ord"/></svg></button>
+                  <button class="tbtn" aria-label="Quote"><svg width="16" height="16"><use href="#i-quote"/></svg></button>
+                  <button class="tbtn" aria-label="HR"><svg width="16" height="16"><use href="#i-hr"/></svg></button>
+                </div>
+                <span class="tb-sep"></span>
+                <div class="tb-group">
+                  <button class="tbtn" aria-label="Undo"><svg width="16" height="16"><use href="#i-undo"/></svg></button>
+                  <button class="tbtn" disabled><svg width="16" height="16"><use href="#i-redo"/></svg></button>
+                </div>
+                <span class="tb-sep"></span>
+                <div class="tb-group">
+                  <button class="tbtn"><svg width="16" height="16"><use href="#i-underline"/></svg></button>
+                  <button class="tbtn"><svg width="16" height="16"><use href="#i-highlight"/></svg></button>
+                  <button class="tbtn"><svg width="16" height="16"><use href="#i-link"/></svg></button>
+                </div>
+                <span class="tb-sep"></span>
+                <div class="tb-group">
+                  <button class="tbtn"><svg width="16" height="16"><use href="#i-align-l"/></svg></button>
+                  <button class="tbtn"><svg width="16" height="16"><use href="#i-align-c"/></svg></button>
+                  <button class="tbtn"><svg width="16" height="16"><use href="#i-align-r"/></svg></button>
+                </div>
+                <span class="tb-spacer"></span>
+                <div class="tb-group">
+                  <button class="tbtn"><svg width="16" height="16"><use href="#i-search"/></svg></button>
+                  <button class="tbtn"><svg width="16" height="16"><use href="#i-history"/></svg></button>
+                  <button class="tbtn"><svg width="16" height="16"><use href="#i-help"/></svg></button>
+                  <button class="tbtn active" aria-label="Switch to dark"><svg width="16" height="16"><use href="#i-moon"/></svg></button>
+                </div>
+                <span class="tb-sep"></span>
+                <button class="tb-select"><span>18 px</span><svg width="10" height="10" style="color:var(--chrome-500);"><use href="#i-chev-down"/></svg></button>
+                <span class="tb-sep"></span>
+                <button class="tbtn has-label"><svg width="14" height="14"><use href="#i-download"/></svg>Export</button>
+                <button class="tbtn"><svg width="16" height="16"><use href="#i-analysis"/></svg></button>
+                <button class="tbtn"><svg width="16" height="16"><use href="#i-maximize"/></svg></button>
+              </div>
+
+              <div class="editor light paper-grain">
+                <div class="prose-wrap">
+                  <div class="prose">
+                    <h1>2. What Cora found in the chart room</h1>
+                    <p>The bell had stopped before sunrise — Cora was sure of it, the way you are sure of a thing the moment after you have learned to be sure of nothing else — and so she did what she always did when the noise inside her own head got bigger than the noise outside of it: she walked.</p>
+                    <p>Down the kitchen stairs in stocking feet. Past the umbrellas. Past the boots her father had not worn in five winters and which her mother could not bring herself to give away. Out through the side door, the one that <em>stuck</em>, the one she had to lift and lean against to make work.</p>
+                    <blockquote>The chart room smelled of cedar and old salt, the way a coat smells when you take it out of a trunk in October.</blockquote>
+                    <p>She lit the lamp. She did not light <mark>both lamps</mark> — only the small one over the desk, because she was not, she told herself, looking for anything. She was only walking. She was only standing. She was only standing in a room that had become unaccountably interesting at half past four in the<span class="faux-cursor"></span></p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="statusbar light">
+                <div class="sprint-progress" style="width: 42%;"></div>
+                <div class="left">
+                  <span class="save-dot"></span>
+                  <span>Saved</span>
+                  <span class="sep"></span>
+                  <span style="color:var(--paper-ink); font-weight:500;">1,240 words</span>
+                  <span class="sep"></span>
+                  <span>45% of <span style="color:var(--paper-ink);">2,000</span> · <span class="goal-bar"><span style="width:45%;"></span></span> · <a href="#" class="edit-link">edit</a></span>
+                </div>
+                <div class="right">
+                  <span class="sprint-running">
+                    <svg width="12" height="12"><use href="#i-timer"/></svg>
+                    12:34
+                    <button style="background:transparent; border:0; color:inherit; padding:0 2px; display:inline-flex; cursor:pointer;"><svg width="11" height="11"><use href="#i-pause"/></svg></button>
+                    <button style="background:transparent; border:0; color:inherit; padding:0 2px; display:inline-flex; cursor:pointer;"><svg width="11" height="11"><use href="#i-stop"/></svg></button>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <aside class="metadata">
+              <div class="md-section">
+                <div class="md-label">Chapter</div>
+                <div class="md-title">2. What Cora found in the chart room</div>
+              </div>
+              <div class="md-section">
+                <div class="md-label">Status</div>
+                <div class="md-pills">
+                  <span class="status-pill" data-status="idea"><span class="dot"></span>Idea</span>
+                  <span class="status-pill" data-status="outline"><span class="dot"></span>Outline</span>
+                  <span class="status-pill active" data-status="first-draft"><span class="dot" style="background:var(--brand);"></span>First Draft</span>
+                  <span class="status-pill" data-status="revised"><span class="dot"></span>Revised</span>
+                  <span class="status-pill" data-status="final"><span class="dot"></span>Final</span>
+                </div>
+              </div>
+              <div class="md-section">
+                <div class="md-label">Synopsis</div>
+                <textarea class="md-textarea" rows="3">Cora enters her father's chart room before dawn and finds a sea-chart annotated in a hand that is not his.</textarea>
+              </div>
+              <div class="md-section">
+                <div class="md-label">Notes</div>
+                <textarea class="md-textarea" rows="4">Anchor scene for Cora's arc. The chart must be visible in Ch. 9 again.</textarea>
+              </div>
+              <div class="publishing">
+                <div class="pub-head">
+                  <span class="chev"><svg width="12" height="12"><use href="#i-chev-right"/></svg></span>
+                  <span class="title">Publishing details</span>
+                  <span class="premium">Premium</span>
+                </div>
+                <div class="pub-subtitle">Applies to the whole book, not just this chapter.</div>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout"><strong>Note on theme symmetry.</strong> Binder, toolbar buttons, metadata panel chrome, and right-panel chrome stay in their main palette in both modes. Only the editor body and status bar flip. This keeps the writer's eye anchored to the chrome's structure as a constant — only the page changes.</div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §4  BINDER                                                    -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-binder">
+      <div class="eyebrow"><span class="num">04</span> <span>Surface 5.1 — Binder</span></div>
+      <h2 class="title">Binder.</h2>
+      <p class="lede">
+        Six item types — chapter, front matter, back matter, outline, research, character — each with its own
+        tinted icon at chroma 0.08 so a writer scanning the tree can see <em>where</em> they are without reading. The active row is
+        marked with a brand-yellow inset rail and a soft wash; never a hard slab.
+      </p>
+
+      <!-- Anatomy callout -->
+      <div class="artboard">
+        <div class="artboard-header"><strong>Row anatomy</strong><span>Default row at 264px width</span></div>
+        <div class="artboard-body" style="background:var(--chrome-900); padding:60px 48px; position:relative;">
+          <div class="anatomy" style="position:relative; width:264px; margin:0 auto; padding:8px 6px; background:var(--chrome-900);">
+            <div class="binder-row indent-1">
+              <span class="chev open"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span>
+              <span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span>
+              <span class="title">2. What Cora found</span>
+              <button class="more" style="opacity:1;"><svg width="14" height="14"><use href="#i-more"/></svg></button>
+            </div>
+            <span class="marker" style="left:24px; top:50%; transform:translate(-150%, -50%);">1</span>
+            <span class="marker" style="left:50px; top:50%; transform:translate(-150%, -50%);">2</span>
+            <span class="marker" style="left:130px; top:50%; transform:translate(-50%, -150%);">3</span>
+            <span class="marker" style="right:6px; top:50%; transform:translate(150%, -50%);">4</span>
+          </div>
+        </div>
+      </div>
+      <div class="anatomy-legend">
+        <div class="li"><span class="n">1</span><div><strong>Chevron · 14px</strong><br>Hidden if no children. Rotates 90° on expand.</div></div>
+        <div class="li"><span class="n">2</span><div><strong>Type icon · 14px</strong><br>Tinted to type token. 6 distinct hues at C 0.08. Never gray.</div></div>
+        <div class="li"><span class="n">3</span><div><strong>Title · 13px Geist</strong><br>Truncates with ellipsis. Becomes inline input on rename.</div></div>
+        <div class="li"><span class="n">4</span><div><strong>⋯ button · 22px</strong><br>Opacity 0 by default; opacity 1 on row hover or when row is active.</div></div>
+      </div>
+
+      <!-- States grid -->
+      <div class="artboard">
+        <div class="artboard-header"><strong>Row states · all 6</strong><span>The complete set</span></div>
+        <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:0; background:var(--chrome-900);">
+          <!-- Default -->
+          <div style="padding:28px 32px; border-right:1px solid var(--chrome-800); border-bottom:1px solid var(--chrome-800);">
+            <div class="md-label" style="margin-bottom:14px;">Default</div>
+            <div style="width:264px;"><div class="binder-row indent-1">
+              <span class="chev none"></span>
+              <span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span>
+              <span class="title">3. The lighthouse keeper's letter</span>
+              <button class="more"><svg width="14" height="14"><use href="#i-more"/></svg></button>
+            </div></div>
+          </div>
+          <!-- Hover -->
+          <div style="padding:28px 32px; border-bottom:1px solid var(--chrome-800);">
+            <div class="md-label" style="margin-bottom:14px;">Hover</div>
+            <div style="width:264px;"><div class="binder-row indent-1" style="background:var(--chrome-800);">
+              <span class="chev none"></span>
+              <span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span>
+              <span class="title">3. The lighthouse keeper's letter</span>
+              <button class="more" style="opacity:1;"><svg width="14" height="14"><use href="#i-more"/></svg></button>
+            </div></div>
+          </div>
+          <!-- Active -->
+          <div style="padding:28px 32px; border-right:1px solid var(--chrome-800); border-bottom:1px solid var(--chrome-800);">
+            <div class="md-label" style="margin-bottom:14px;">Active (open in editor)</div>
+            <div style="width:264px;"><div class="binder-row indent-1 active">
+              <span class="chev none"></span>
+              <span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span>
+              <span class="title">2. What Cora found in the chart room</span>
+              <button class="more" style="opacity:1; color:var(--brand);"><svg width="14" height="14"><use href="#i-more"/></svg></button>
+            </div></div>
+          </div>
+          <!-- Renaming -->
+          <div style="padding:28px 32px; border-bottom:1px solid var(--chrome-800);">
+            <div class="md-label" style="margin-bottom:14px;">Renaming · inline input</div>
+            <div style="width:264px;"><div class="binder-row indent-1 renaming">
+              <span class="chev none"></span>
+              <span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span>
+              <input value="2. What Cora found in the chart room" />
+            </div></div>
+            <div style="font-size:11px; color:var(--chrome-500); margin-top:10px; font-family:var(--font-mono);">⏎ commit · esc cancel</div>
+          </div>
+          <!-- Drag preview -->
+          <div style="padding:32px 32px 40px; border-right:1px solid var(--chrome-800);">
+            <div class="md-label" style="margin-bottom:14px;">Drag preview</div>
+            <div style="width:264px; position:relative;">
+              <div class="binder-row indent-1" style="opacity:0.4;">
+                <span class="chev none"></span>
+                <span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span>
+                <span class="title">3. The lighthouse keeper's letter</span>
+              </div>
+              <div class="binder-row indent-1 dragging" style="position:absolute; top:6px; left:14px; width:240px;">
+                <span class="chev none"></span>
+                <span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span>
+                <span class="title">3. The lighthouse keeper's letter</span>
+                <span class="icon" style="color:var(--chrome-500)"><svg width="14" height="14"><use href="#i-grip"/></svg></span>
+              </div>
+            </div>
+          </div>
+          <!-- Drop target -->
+          <div style="padding:28px 32px;">
+            <div class="md-label" style="margin-bottom:14px;">Drop target</div>
+            <div style="width:264px;"><div class="binder-row indent-1 drop-into">
+              <span class="chev none"></span>
+              <span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span>
+              <span class="title">3. The lighthouse keeper's letter</span>
+            </div></div>
+            <div style="font-size:11px; color:var(--chrome-500); margin-top:10px; font-family:var(--font-mono);">brand ring · 1.5px inset</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Item type swatches with the actual icons -->
+      <div class="artboard">
+        <div class="artboard-header"><strong>The six item types</strong><span>Tinted icons let a writer scan the tree by category</span></div>
+        <div style="background:var(--chrome-900); padding:32px; display:grid; grid-template-columns:repeat(3, 1fr); gap:24px;">
+          <div style="display:flex; gap:14px; align-items:center;">
+            <div style="width:44px; height:44px; border-radius:var(--r-md); background:oklch(0.85 0.18 90 / 0.12); border:1px solid oklch(0.85 0.18 90 / 0.25); display:inline-flex; align-items:center; justify-content:center; color:var(--type-chapter);"><svg width="22" height="22"><use href="#i-chapter"/></svg></div>
+            <div><strong style="color:var(--chrome-100); font-family:var(--font-display); font-weight:700;">Chapter</strong><div style="font-size:12px; color:var(--chrome-500);">type-chapter · brand yellow</div></div>
+          </div>
+          <div style="display:flex; gap:14px; align-items:center;">
+            <div style="width:44px; height:44px; border-radius:var(--r-md); background:oklch(0.74 0.065 290 / 0.14); border:1px solid oklch(0.74 0.065 290 / 0.30); display:inline-flex; align-items:center; justify-content:center; color:var(--type-front-matter);"><svg width="22" height="22"><use href="#i-front-matter"/></svg></div>
+            <div><strong style="color:var(--chrome-100); font-family:var(--font-display); font-weight:700;">Front matter</strong><div style="font-size:12px; color:var(--chrome-500);">type-front-matter · plum 290°</div></div>
+          </div>
+          <div style="display:flex; gap:14px; align-items:center;">
+            <div style="width:44px; height:44px; border-radius:var(--r-md); background:oklch(0.70 0.075 330 / 0.14); border:1px solid oklch(0.70 0.075 330 / 0.30); display:inline-flex; align-items:center; justify-content:center; color:var(--type-back-matter);"><svg width="22" height="22"><use href="#i-back-matter"/></svg></div>
+            <div><strong style="color:var(--chrome-100); font-family:var(--font-display); font-weight:700;">Back matter</strong><div style="font-size:12px; color:var(--chrome-500);">type-back-matter · rose 330°</div></div>
+          </div>
+          <div style="display:flex; gap:14px; align-items:center;">
+            <div style="width:44px; height:44px; border-radius:var(--r-md); background:oklch(0.74 0.080 205 / 0.14); border:1px solid oklch(0.74 0.080 205 / 0.30); display:inline-flex; align-items:center; justify-content:center; color:var(--type-outline);"><svg width="22" height="22"><use href="#i-outline"/></svg></div>
+            <div><strong style="color:var(--chrome-100); font-family:var(--font-display); font-weight:700;">Outline</strong><div style="font-size:12px; color:var(--chrome-500);">type-outline · teal 205°</div></div>
+          </div>
+          <div style="display:flex; gap:14px; align-items:center;">
+            <div style="width:44px; height:44px; border-radius:var(--r-md); background:oklch(0.74 0.080 155 / 0.14); border:1px solid oklch(0.74 0.080 155 / 0.30); display:inline-flex; align-items:center; justify-content:center; color:var(--type-research);"><svg width="22" height="22"><use href="#i-research"/></svg></div>
+            <div><strong style="color:var(--chrome-100); font-family:var(--font-display); font-weight:700;">Research note</strong><div style="font-size:12px; color:var(--chrome-500);">type-research · sage 155°</div></div>
+          </div>
+          <div style="display:flex; gap:14px; align-items:center;">
+            <div style="width:44px; height:44px; border-radius:var(--r-md); background:oklch(0.72 0.110 35 / 0.14); border:1px solid oklch(0.72 0.110 35 / 0.30); display:inline-flex; align-items:center; justify-content:center; color:var(--type-character);"><svg width="22" height="22"><use href="#i-character"/></svg></div>
+            <div><strong style="color:var(--chrome-100); font-family:var(--font-display); font-weight:700;">Character</strong><div style="font-size:12px; color:var(--chrome-500);">type-character · terracotta 35°</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Menus -->
+      <div class="cols2" style="margin-top:24px;">
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>5.1a · Per-item ⋯ menu</strong><span>Opens from row hover</span></div>
+          <div class="artboard-body" style="background:var(--chrome-900); padding:40px; display:flex; gap:20px; align-items:flex-start;">
+            <div style="width:240px; position:relative;">
+              <div class="binder-row indent-1 active">
+                <span class="chev none"></span>
+                <span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span>
+                <span class="title">2. What Cora found</span>
+                <button class="more" style="opacity:1; color:var(--brand);"><svg width="14" height="14"><use href="#i-more"/></svg></button>
+              </div>
+            </div>
+            <div class="popover" style="margin-top:30px;">
+              <div class="item"><span class="ico"><svg width="14" height="14"><use href="#i-pencil"/></svg></span> Rename<span class="kbd">↵</span></div>
+              <div class="item"><span class="ico"><svg width="14" height="14"><use href="#i-copy"/></svg></span> Duplicate<span class="kbd">⌘D</span></div>
+              <div class="item"><span class="ico"><svg width="14" height="14"><use href="#i-move"/></svg></span> Move to…<span class="kbd"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span></div>
+              <div class="item"><span class="ico"><svg width="14" height="14"><use href="#i-pin"/></svg></span> Pin to top</div>
+              <div class="sep"></div>
+              <div class="item danger"><span class="ico"><svg width="14" height="14"><use href="#i-trash"/></svg></span> Delete<span class="kbd" style="color:var(--error); opacity:0.6;">⌫</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>5.1b · + Add menu</strong><span>Anchored to the bottom Add button</span></div>
+          <div class="artboard-body" style="background:var(--chrome-900); padding:40px; display:flex; gap:20px; align-items:flex-end;">
+            <div class="popover" style="min-width:280px;">
+              <div style="padding:4px 10px 8px; font-family:var(--font-mono); font-size:10px; letter-spacing:0.10em; text-transform:uppercase; color:var(--chrome-500);">New item</div>
+              <div class="item">
+                <span class="ico" style="color:var(--type-chapter);"><svg width="14" height="14"><use href="#i-chapter"/></svg></span>
+                <div><strong style="color:var(--chrome-100); font-weight:500;">Chapter</strong><span class="desc">A scene in your manuscript</span></div>
+              </div>
+              <div class="item">
+                <span class="ico" style="color:var(--type-front-matter);"><svg width="14" height="14"><use href="#i-front-matter"/></svg></span>
+                <div><strong style="color:var(--chrome-100); font-weight:500;">Front matter</strong><span class="desc">Title page, dedication, epigraph…</span></div>
+              </div>
+              <div class="item">
+                <span class="ico" style="color:var(--type-back-matter);"><svg width="14" height="14"><use href="#i-back-matter"/></svg></span>
+                <div><strong style="color:var(--chrome-100); font-weight:500;">Back matter</strong><span class="desc">Acknowledgements, about the author…</span></div>
+              </div>
+              <div class="item">
+                <span class="ico" style="color:var(--type-outline);"><svg width="14" height="14"><use href="#i-outline"/></svg></span>
+                <div><strong style="color:var(--chrome-100); font-weight:500;">Outline</strong><span class="desc">Plan beats on a kanban board</span></div>
+              </div>
+              <div class="item">
+                <span class="ico" style="color:var(--type-research);"><svg width="14" height="14"><use href="#i-research"/></svg></span>
+                <div><strong style="color:var(--chrome-100); font-weight:500;">Research note</strong><span class="desc">A page for your worldbuilding</span></div>
+              </div>
+              <div class="item">
+                <span class="ico" style="color:var(--type-character);"><svg width="14" height="14"><use href="#i-character"/></svg></span>
+                <div><strong style="color:var(--chrome-100); font-weight:500;">Character</strong><span class="desc">A profile with bio &amp; arc</span></div>
+              </div>
+            </div>
+            <div style="flex:0 0 220px;">
+              <div style="font-size:12px; color:var(--chrome-500); line-height:1.6;">Selecting a type creates the item under whatever's currently active in the binder, scrolls to it, and enters rename mode immediately.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty binder state -->
+      <div class="artboard">
+        <div class="artboard-header"><strong>Binder empty state</strong><span>Fresh book, before first chapter</span></div>
+        <div class="artboard-body" style="background:var(--chrome-900); padding:60px; display:flex; gap:40px; justify-content:center; align-items:center;">
+          <aside class="binder" style="width:264px; height:520px; border:1px solid var(--chrome-800); border-radius:var(--r-lg); box-shadow:var(--el-2);">
+            <div class="binder-head">
+              <div class="book-meta">Working manuscript · 0 wd</div>
+              <div class="book-title">Untitled novel</div>
+            </div>
+            <div style="flex:1; padding:32px 24px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
+              <div style="width:48px; height:48px; border-radius:var(--r-md); background:var(--brand-soft); border:1px solid oklch(0.85 0.18 90 / 0.3); display:inline-flex; align-items:center; justify-content:center; color:var(--brand); margin-bottom:18px;">
+                <svg width="24" height="24"><use href="#i-chapter"/></svg>
+              </div>
+              <div style="font-family:var(--font-display); font-weight:700; color:var(--chrome-100); font-size:15px; margin-bottom:6px;">No items yet</div>
+              <div style="font-size:12px; color:var(--chrome-500); line-height:1.6; max-width:180px;">Start with a chapter, an outline, or a research note. You can drag-rearrange anything later.</div>
+            </div>
+            <div class="binder-foot">
+              <button class="btn-add" style="justify-content:center;"><svg width="14" height="14"><use href="#i-plus"/></svg>Add your first chapter</button>
+            </div>
+          </aside>
+          <div style="max-width:280px; font-size:13px; color:var(--chrome-400); line-height:1.7;">
+            <div class="md-label" style="margin-bottom:8px;">Why an empty state here</div>
+            The full studio-wide first-time onboarding lives in Prompt&nbsp;3, but the binder itself needs to gracefully render with zero items — and it should encourage rather than nag. A primary Add button + a tiny prompt: that's all.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §5  TOOLBAR                                                   -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-toolbar">
+      <div class="eyebrow"><span class="num">05</span> <span>Surface 5.2 — Editor toolbar</span></div>
+      <h2 class="title">Toolbar.</h2>
+      <p class="lede">
+        26 actions, three zones — FORMAT cluster (six sub-groups, sep-delimited), flex spacer,
+        VIEW cluster (find, history, help, theme, font size, export, analysis, focus).
+        At <code>≤ 1100px</code> width the lower-priority FORMAT groups (alignment, link/underline/highlight) collapse into an overflow ⋯ menu.
+      </p>
+
+      <div class="artboard">
+        <div class="artboard-header"><strong>Toolbar · full width 1100px+</strong><span>Idle</span></div>
+        <div class="artboard-body" style="padding:0;">
+          <div class="toolbar" style="border-bottom:0;">
+            <div class="tb-group">
+              <button class="tbtn"><svg width="16" height="16"><use href="#i-bold"/></svg></button>
+              <button class="tbtn"><svg width="16" height="16"><use href="#i-italic"/></svg></button>
+              <button class="tbtn"><svg width="16" height="16"><use href="#i-strike"/></svg></button>
+            </div>
+            <span class="tb-sep"></span>
+            <div class="tb-group">
+              <button class="tbtn"><svg width="16" height="16"><use href="#i-h1"/></svg></button>
+              <button class="tbtn"><svg width="16" height="16"><use href="#i-h2"/></svg></button>
+              <button class="tbtn"><svg width="16" height="16"><use href="#i-h3"/></svg></button>
+            </div>
+            <span class="tb-sep"></span>
+            <div class="tb-group">
+              <button class="tbtn"><svg width="16" height="16"><use href="#i-list"/></svg></button>
+              <button class="tbtn"><svg width="16" height="16"><use href="#i-list-ord"/></svg></button>
+              <button class="tbtn"><svg width="16" height="16"><use href="#i-quote"/></svg></button>
+              <button class="tbtn"><svg width="16" height="16"><use href="#i-hr"/></svg></button>
+            </div>
+            <span class="tb-sep"></span>
+            <div class="tb-group">
+              <button class="tbtn"><svg width="16" height="16"><use href="#i-undo"/></svg></button>
+              <button class="tbtn" disabled><svg width="16" height="16"><use href="#i-redo"/></svg></button>
+            </div>
+            <span class="tb-sep"></span>
+            <div class="tb-group">
+              <button class="tbtn"><svg width="16" height="16"><use href="#i-underline"/></svg></button>
+              <button class="tbtn"><svg width="16" height="16"><use href="#i-highlight"/></svg></button>
+              <button class="tbtn"><svg width="16" height="16"><use href="#i-link"/></svg></button>
+            </div>
+            <span class="tb-sep"></span>
+            <div class="tb-group">
+              <button class="tbtn"><svg width="16" height="16"><use href="#i-align-l"/></svg></button>
+              <button class="tbtn"><svg width="16" height="16"><use href="#i-align-c"/></svg></button>
+              <button class="tbtn"><svg width="16" height="16"><use href="#i-align-r"/></svg></button>
+            </div>
+            <span class="tb-spacer"></span>
+            <div class="tb-group">
+              <button class="tbtn"><svg width="16" height="16"><use href="#i-search"/></svg></button>
+              <button class="tbtn"><svg width="16" height="16"><use href="#i-history"/></svg></button>
+              <button class="tbtn"><svg width="16" height="16"><use href="#i-help"/></svg></button>
+              <button class="tbtn"><svg width="16" height="16"><use href="#i-sun"/></svg></button>
+            </div>
+            <span class="tb-sep"></span>
+            <button class="tb-select"><span>18 px</span><svg width="10" height="10" style="color:var(--chrome-500);"><use href="#i-chev-down"/></svg></button>
+            <span class="tb-sep"></span>
+            <button class="tbtn has-label"><svg width="14" height="14"><use href="#i-download"/></svg>Export</button>
+            <button class="tbtn"><svg width="16" height="16"><use href="#i-analysis"/></svg></button>
+            <button class="tbtn"><svg width="16" height="16"><use href="#i-maximize"/></svg></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Per-button states -->
+      <div class="artboard">
+        <div class="artboard-header"><strong>Per-button states</strong><span>The 5 states each toolbar button can hold</span></div>
+        <div style="background:var(--chrome-900); display:grid; grid-template-columns:repeat(5, 1fr); gap:0;">
+          <div style="padding:32px; border-right:1px solid var(--chrome-800); display:flex; flex-direction:column; align-items:center; gap:14px;">
+            <div style="background:var(--chrome-850); padding:8px 12px; border-radius:var(--r-md);"><button class="tbtn"><svg width="16" height="16"><use href="#i-bold"/></svg></button></div>
+            <div class="md-label" style="text-align:center; margin:0;">Default</div>
+          </div>
+          <div style="padding:32px; border-right:1px solid var(--chrome-800); display:flex; flex-direction:column; align-items:center; gap:14px;">
+            <div style="background:var(--chrome-850); padding:8px 12px; border-radius:var(--r-md);"><button class="tbtn" style="background:var(--chrome-800); color:var(--chrome-100);"><svg width="16" height="16"><use href="#i-bold"/></svg></button></div>
+            <div class="md-label" style="text-align:center; margin:0;">Hover</div>
+          </div>
+          <div style="padding:32px; border-right:1px solid var(--chrome-800); display:flex; flex-direction:column; align-items:center; gap:14px;">
+            <div style="background:var(--chrome-850); padding:8px 12px; border-radius:var(--r-md);"><button class="tbtn active"><svg width="16" height="16"><use href="#i-bold"/></svg></button></div>
+            <div class="md-label" style="text-align:center; margin:0;">Active (on)</div>
+          </div>
+          <div style="padding:32px; border-right:1px solid var(--chrome-800); display:flex; flex-direction:column; align-items:center; gap:14px;">
+            <div style="background:var(--chrome-850); padding:8px 12px; border-radius:var(--r-md);"><button class="tbtn" disabled><svg width="16" height="16"><use href="#i-bold"/></svg></button></div>
+            <div class="md-label" style="text-align:center; margin:0;">Disabled</div>
+          </div>
+          <div style="padding:32px; display:flex; flex-direction:column; align-items:center; gap:14px;">
+            <div style="background:var(--chrome-850); padding:8px 12px; border-radius:var(--r-md);"><button class="tbtn pressed"><svg width="16" height="16"><use href="#i-bold"/></svg></button></div>
+            <div class="md-label" style="text-align:center; margin:0;">Pressed</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Inline link prompt + font size -->
+      <div class="cols2">
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>Link insertion · inline prompt</strong><span>Replaces window.prompt</span></div>
+          <div class="artboard-body" style="background:var(--chrome-900); padding:50px; display:flex; align-items:flex-start; gap:20px;">
+            <div style="display:flex; flex-direction:column; gap:10px;">
+              <button class="tbtn active" style="align-self:flex-start;"><svg width="16" height="16"><use href="#i-link"/></svg></button>
+              <div style="font-size:11px; font-family:var(--font-mono); color:var(--chrome-500);">↓ opens</div>
+              <div class="popover" style="padding:14px; min-width:300px;">
+                <div class="md-label" style="margin-bottom:8px;">Link URL</div>
+                <input class="md-input" value="https://" style="margin-bottom:10px;"/>
+                <div style="display:flex; gap:8px; justify-content:flex-end;">
+                  <button class="btn ghost">Remove</button>
+                  <button class="btn primary">Apply</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>Font-size selector</strong><span>localStorage-persisted; affects prose only</span></div>
+          <div class="artboard-body" style="background:var(--chrome-900); padding:50px; display:flex; gap:20px; align-items:flex-start;">
+            <button class="tb-select"><span>18 px</span><svg width="10" height="10" style="color:var(--chrome-500);"><use href="#i-chev-down"/></svg></button>
+            <div class="popover" style="min-width:120px;">
+              <div class="item">12 px</div>
+              <div class="item">14 px</div>
+              <div class="item">16 px</div>
+              <div class="item" style="background:var(--brand-soft); color:var(--brand);">18 px<span class="kbd" style="color:var(--brand);"><svg width="10" height="10"><use href="#i-check"/></svg></span></div>
+              <div class="item">20 px</div>
+              <div class="item">24 px</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overflow -->
+      <div class="artboard">
+        <div class="artboard-header"><strong>Responsive collapse · &lt; 1100px</strong><span>Less-used FORMAT groups go into a ⋯ menu</span></div>
+        <div class="artboard-body" style="padding:0;">
+          <div class="toolbar" style="border-bottom:0;">
+            <div class="tb-group">
+              <button class="tbtn"><svg width="16" height="16"><use href="#i-bold"/></svg></button>
+              <button class="tbtn"><svg width="16" height="16"><use href="#i-italic"/></svg></button>
+            </div>
+            <span class="tb-sep"></span>
+            <div class="tb-group">
+              <button class="tbtn"><svg width="16" height="16"><use href="#i-h1"/></svg></button>
+              <button class="tbtn"><svg width="16" height="16"><use href="#i-h2"/></svg></button>
+              <button class="tbtn"><svg width="16" height="16"><use href="#i-h3"/></svg></button>
+            </div>
+            <span class="tb-sep"></span>
+            <div class="tb-group">
+              <button class="tbtn"><svg width="16" height="16"><use href="#i-list"/></svg></button>
+              <button class="tbtn"><svg width="16" height="16"><use href="#i-list-ord"/></svg></button>
+              <button class="tbtn"><svg width="16" height="16"><use href="#i-quote"/></svg></button>
+            </div>
+            <span class="tb-sep"></span>
+            <div class="tb-group">
+              <button class="tbtn"><svg width="16" height="16"><use href="#i-undo"/></svg></button>
+              <button class="tbtn" disabled><svg width="16" height="16"><use href="#i-redo"/></svg></button>
+            </div>
+            <span class="tb-sep"></span>
+            <button class="tbtn" aria-label="More formatting"><svg width="16" height="16"><use href="#i-more"/></svg></button>
+            <span class="tb-spacer"></span>
+            <button class="tbtn"><svg width="16" height="16"><use href="#i-search"/></svg></button>
+            <button class="tbtn"><svg width="16" height="16"><use href="#i-history"/></svg></button>
+            <button class="tbtn"><svg width="16" height="16"><use href="#i-sun"/></svg></button>
+            <span class="tb-sep"></span>
+            <button class="tbtn has-label"><svg width="14" height="14"><use href="#i-download"/></svg>Export</button>
+            <button class="tbtn"><svg width="16" height="16"><use href="#i-maximize"/></svg></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout"><strong>Discoverability.</strong> Every icon-only button keeps its <code>aria-label</code>, and tooltips appear on hover (200ms delay) showing the label + keyboard shortcut. Tooltip styling reuses the popover token; we don't reinvent it.</div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §6  EDITOR BODY                                              -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-editor">
+      <div class="eyebrow"><span class="num">06</span> <span>Surface 5.3 — Editor body</span></div>
+      <h2 class="title">Editor body — the page.</h2>
+      <p class="lede">
+        The surface the writer looks at 95% of the time. Newsreader at 18px / 1.78 line-height, max-width 720px,
+        warm-toned in both themes. Headings in Comfortaa to stay in the brand register, but the prose itself
+        breathes like a book. <code>· · ·</code> for horizontal rule, brand-yellow caret, and a soft mark for highlights.
+      </p>
+
+      <div class="cols2">
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>Light editor · paper</strong><span>cream cream cream</span></div>
+          <div class="artboard-body" style="padding:0;">
+            <div class="editor light paper-grain" style="height:560px;">
+              <div class="prose-wrap" style="padding:48px 56px 40px;">
+                <div class="prose" style="font-size:18px;">
+                  <h1>The chart room</h1>
+                  <h2>A scene begins</h2>
+                  <p>She lit the lamp. She did not light <strong>both lamps</strong> — only the small one over the desk. She was, she told herself, <em>only walking</em>, only standing in a room that had become unaccountably interesting at half past four.</p>
+                  <blockquote>The chart room smelled of cedar and old salt, the way a coat smells when you take it out of a trunk in October.</blockquote>
+                  <p>The paper was heavy and yellow at the edges, the corners blunted from a knife. Three latitudes were written in <mark>a hand that was not her father's</mark>, in red ink that had bled the long way across the page.</p>
+                  <hr/>
+                  <p>She wrote down what she saw, item by item — see <a href="#">the keeper's letter</a> in the next chapter — and then she put the lamp out.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>Dark editor · coffee</strong><span>warm walnut, not slate</span></div>
+          <div class="artboard-body" style="padding:0;">
+            <div class="editor" style="height:560px;">
+              <div class="prose-wrap" style="padding:48px 56px 40px;">
+                <div class="prose" style="font-size:18px;">
+                  <h1>The chart room</h1>
+                  <h2>A scene begins</h2>
+                  <p>She lit the lamp. She did not light <strong>both lamps</strong> — only the small one over the desk. She was, she told herself, <em>only walking</em>, only standing in a room that had become unaccountably interesting at half past four.</p>
+                  <blockquote>The chart room smelled of cedar and old salt, the way a coat smells when you take it out of a trunk in October.</blockquote>
+                  <p>The paper was heavy and yellow at the edges, the corners blunted from a knife. Three latitudes were written in <mark>a hand that was not her father's</mark>, in red ink that had bled the long way across the page.</p>
+                  <hr/>
+                  <p>She wrote down what she saw, item by item — see <a href="#">the keeper's letter</a> in the next chapter — and then she put the lamp out.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty state + Font-size variation -->
+      <div class="cols2" style="margin-top:0;">
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>Empty chapter · placeholder</strong><span>"Start writing…"</span></div>
+          <div class="artboard-body" style="padding:0;">
+            <div class="editor light paper-grain" style="height:340px; display:flex; align-items:flex-start;">
+              <div class="prose-wrap" style="padding:48px 56px;">
+                <div class="prose" style="font-size:18px;">
+                  <h1 style="color:var(--paper-300);">Untitled chapter</h1>
+                  <p><span class="prose-placeholder">Start writing…</span><span class="faux-cursor"></span></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>Read-only · snapshot preview</strong><span>Banner reads in Prompt 3 — body shown muted</span></div>
+          <div class="artboard-body" style="padding:0;">
+            <div style="background:var(--brand-soft); border-bottom:1px solid oklch(0.85 0.18 90 / 0.35); padding:10px 24px; display:flex; align-items:center; gap:10px; color:var(--brand); font-size:13px; font-weight:500;">
+              <svg width="14" height="14"><use href="#i-history"/></svg>
+              Viewing a snapshot from <span style="font-family:var(--font-mono); color:var(--chrome-100);">Today 2:14 PM</span> — read-only.
+              <button class="btn primary" style="margin-left:auto; padding:5px 10px; font-size:11px;">Restore this version</button>
+            </div>
+            <div class="editor light paper-grain" style="height:300px; opacity:0.92; pointer-events:none;">
+              <div class="prose-wrap" style="padding:32px 56px;">
+                <div class="prose" style="font-size:18px;">
+                  <h1>The chart room</h1>
+                  <p>She lit the lamp. She did not light both lamps — only the small one over the desk.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>Prose typography spec.</strong>
+        Body <code>18px</code> · line-height <code>1.78</code> · max-width <code>720px</code> · paragraph margin-bottom <code>1.1em</code> ·
+        kerning + ligatures + old-style numerals enabled.
+        Selection background uses <code>brand-soft</code> at 32% opacity. The caret is brand yellow — that's
+        the single mark of "you are working here" — which carries through into the unsaved-dot in the status bar.
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §7  STATUS BAR                                                -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-status">
+      <div class="eyebrow"><span class="num">07</span> <span>Surface 5.4 — Status bar</span></div>
+      <h2 class="title">Status bar &amp; sprint.</h2>
+      <p class="lede">
+        36px tall. Word-count cluster left, sprint timer right. The sprint timer integrates
+        as a real bar element instead of a floating popover — when running, a 2px gradient
+        rule along the top of the bar shows progress through the sprint.
+      </p>
+
+      <!-- Idle state -->
+      <div class="artboard">
+        <div class="artboard-header"><strong>State 1 · Idle, goal set, sprint idle</strong><span>Dark theme</span></div>
+        <div class="artboard-body" style="padding:0;">
+          <div class="statusbar">
+            <div class="left">
+              <span class="save-dot"></span>
+              <span>Saved</span>
+              <span class="sep"></span>
+              <span style="color:var(--chrome-200); font-weight:500;">1,240 words</span>
+              <span class="sep"></span>
+              <span>45% of <span style="color:var(--chrome-200);">2,000</span> · <span class="goal-bar"><span style="width:45%;"></span></span> · <a href="#" class="edit-link">edit</a></span>
+            </div>
+            <div class="right">
+              <button class="sprint-btn">
+                <svg width="13" height="13"><use href="#i-timer"/></svg>
+                Start sprint
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Saving / Unsaved / Goal unset -->
+      <div class="cols2" style="margin-top:0;">
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>State 2 · Saving…</strong><span>Animated pulse on dot</span></div>
+          <div class="artboard-body" style="padding:0;">
+            <div class="statusbar">
+              <div class="left">
+                <span class="save-dot saving"></span>
+                <span style="color:var(--chrome-400);">Saving…</span>
+                <span class="sep"></span>
+                <span style="color:var(--chrome-200); font-weight:500;">1,240 words</span>
+                <span class="sep"></span>
+                <span>45% of <span style="color:var(--chrome-200);">2,000</span> · <span class="goal-bar"><span style="width:45%;"></span></span></span>
+              </div>
+              <div class="right">
+                <button class="sprint-btn"><svg width="13" height="13"><use href="#i-timer"/></svg>Start sprint</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>State 3 · Unsaved · yellow</strong><span>Loud — the writer must see this</span></div>
+          <div class="artboard-body" style="padding:0;">
+            <div class="statusbar">
+              <div class="left">
+                <span class="save-dot unsaved"></span>
+                <span style="color:var(--brand);">Unsaved</span>
+                <span class="sep"></span>
+                <span style="color:var(--chrome-200); font-weight:500;">1,247 words</span>
+                <span class="sep"></span>
+                <span>46% of <span style="color:var(--chrome-200);">2,000</span> · <span class="goal-bar"><span style="width:46%;"></span></span> · <a href="#" class="edit-link">edit</a></span>
+              </div>
+              <div class="right">
+                <button class="sprint-btn"><svg width="13" height="13"><use href="#i-timer"/></svg>Start sprint</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cols2" style="margin-top:0;">
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>State 4 · Goal unset</strong><span>Link to set one</span></div>
+          <div class="artboard-body" style="padding:0;">
+            <div class="statusbar">
+              <div class="left">
+                <span class="save-dot"></span>
+                <span>Saved</span>
+                <span class="sep"></span>
+                <span style="color:var(--chrome-200); font-weight:500;">1,240 words</span>
+                <span class="sep"></span>
+                <a href="#" class="edit-link">Set word goal →</a>
+              </div>
+              <div class="right">
+                <button class="sprint-btn"><svg width="13" height="13"><use href="#i-timer"/></svg>Start sprint</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>State 5 · Editing goal · inline</strong><span>Number input replaces the goal text</span></div>
+          <div class="artboard-body" style="padding:0;">
+            <div class="statusbar">
+              <div class="left">
+                <span class="save-dot"></span>
+                <span>Saved</span>
+                <span class="sep"></span>
+                <span style="color:var(--chrome-200); font-weight:500;">1,240 words</span>
+                <span class="sep"></span>
+                <span style="display:inline-flex; align-items:center; gap:6px;">
+                  daily goal:
+                  <input value="2000" style="width:64px; height:22px; background:var(--chrome-950); border:1px solid var(--brand); border-radius:var(--r-xs); color:var(--chrome-100); padding:0 6px; font-family:var(--font-mono); font-size:11px; text-align:right; outline:none;"/>
+                  <button class="btn primary" style="padding:3px 8px; font-size:11px;">Save</button>
+                  <button class="btn ghost" style="padding:3px 6px; font-size:11px;">Cancel</button>
+                </span>
+              </div>
+              <div class="right">
+                <button class="sprint-btn"><svg width="13" height="13"><use href="#i-timer"/></svg>Start sprint</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sprint states -->
+      <div class="artboard">
+        <div class="artboard-header"><strong>State 6 · Sprint setup popover</strong><span>From the Start sprint button</span></div>
+        <div class="artboard-body" style="padding:0; position:relative;">
+          <div class="statusbar">
+            <div class="left">
+              <span class="save-dot"></span>
+              <span>Saved</span>
+              <span class="sep"></span>
+              <span style="color:var(--chrome-200); font-weight:500;">1,240 words</span>
+              <span class="sep"></span>
+              <span>45% of <span style="color:var(--chrome-200);">2,000</span> · <span class="goal-bar"><span style="width:45%;"></span></span></span>
+            </div>
+            <div class="right">
+              <button class="sprint-btn"><svg width="13" height="13"><use href="#i-timer"/></svg>Start sprint</button>
+            </div>
+          </div>
+          <div style="position:absolute; right:18px; bottom:48px; z-index:5;">
+            <div class="popover" style="min-width:240px;">
+              <div style="padding:8px 10px; font-family:var(--font-mono); font-size:10px; letter-spacing:0.10em; text-transform:uppercase; color:var(--chrome-500);">Sprint duration</div>
+              <div class="item"><span class="ico" style="color:var(--status-revised);"><svg width="14" height="14"><use href="#i-timer"/></svg></span> 10 minutes<span class="kbd">warmup</span></div>
+              <div class="item" style="background:var(--brand-soft); color:var(--brand);"><span class="ico" style="color:var(--brand);"><svg width="14" height="14"><use href="#i-timer"/></svg></span> 25 minutes<span class="kbd" style="color:var(--brand);">pomodoro</span></div>
+              <div class="item"><span class="ico" style="color:var(--status-final);"><svg width="14" height="14"><use href="#i-timer"/></svg></span> 45 minutes<span class="kbd">deep</span></div>
+              <div class="sep"></div>
+              <div class="item">Custom… <span class="kbd">⌘&#x2192;</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cols2" style="margin-top:0;">
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>State 7 · Sprint running</strong><span>Top progress bar fills L→R; brand yellow chip</span></div>
+          <div class="artboard-body" style="padding:0;">
+            <div class="statusbar">
+              <div class="sprint-progress" style="width: 42%;"></div>
+              <div class="left">
+                <span class="save-dot"></span>
+                <span>Saved</span>
+                <span class="sep"></span>
+                <span style="color:var(--chrome-200); font-weight:500;">1,247 words</span>
+                <span class="sep"></span>
+                <span>46% of <span style="color:var(--chrome-200);">2,000</span></span>
+              </div>
+              <div class="right">
+                <span class="sprint-running">
+                  <svg width="12" height="12"><use href="#i-timer"/></svg>
+                  12:34
+                  <button style="background:transparent; border:0; color:inherit; padding:0 2px; display:inline-flex; cursor:pointer;"><svg width="11" height="11"><use href="#i-pause"/></svg></button>
+                  <button style="background:transparent; border:0; color:inherit; padding:0 2px; display:inline-flex; cursor:pointer;"><svg width="11" height="11"><use href="#i-stop"/></svg></button>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>State 8 · Sprint paused</strong><span>Countdown frozen, resume + stop icons</span></div>
+          <div class="artboard-body" style="padding:0;">
+            <div class="statusbar">
+              <div class="sprint-progress" style="width: 42%; background: linear-gradient(90deg, var(--chrome-600), transparent);"></div>
+              <div class="left">
+                <span class="save-dot"></span>
+                <span>Saved</span>
+                <span class="sep"></span>
+                <span style="color:var(--chrome-200); font-weight:500;">1,247 words</span>
+                <span class="sep"></span>
+                <span>46% of <span style="color:var(--chrome-200);">2,000</span></span>
+              </div>
+              <div class="right">
+                <span class="sprint-running" style="background:var(--chrome-800); color:var(--chrome-300); border-color:var(--chrome-700);">
+                  <svg width="12" height="12"><use href="#i-pause"/></svg>
+                  12:34
+                  <button style="background:transparent; border:0; color:var(--brand); padding:0 2px; display:inline-flex; cursor:pointer;"><svg width="11" height="11"><use href="#i-play"/></svg></button>
+                  <button style="background:transparent; border:0; color:inherit; padding:0 2px; display:inline-flex; cursor:pointer;"><svg width="11" height="11"><use href="#i-stop"/></svg></button>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cols2" style="margin-top:0;">
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>State 9 · Sprint complete</strong><span>Brief celebratory moment</span></div>
+          <div class="artboard-body" style="padding:0;">
+            <div class="statusbar">
+              <div class="sprint-progress" style="width: 100%; background: var(--success);"></div>
+              <div class="left">
+                <span class="save-dot"></span>
+                <span>Saved</span>
+                <span class="sep"></span>
+                <span style="color:var(--chrome-200); font-weight:500;">1,560 words</span>
+                <span class="sep"></span>
+                <span style="color:var(--success); font-weight:500;">+ 320 in this sprint</span>
+              </div>
+              <div class="right">
+                <span class="sprint-running" style="background:oklch(0.72 0.130 152 / 0.18); color:var(--success); border-color:oklch(0.72 0.13 152 / 0.30);">
+                  <svg width="12" height="12"><use href="#i-check"/></svg>
+                  Sprint complete
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>State 10 · Light editor mode</strong><span>Status bar flips paper</span></div>
+          <div class="artboard-body" style="padding:0;">
+            <div class="statusbar light">
+              <div class="sprint-progress" style="width: 42%;"></div>
+              <div class="left">
+                <span class="save-dot"></span>
+                <span>Saved</span>
+                <span class="sep"></span>
+                <span style="color:var(--paper-ink); font-weight:500;">1,247 words</span>
+                <span class="sep"></span>
+                <span>46% of <span style="color:var(--paper-ink);">2,000</span> · <span class="goal-bar"><span style="width:46%;"></span></span></span>
+              </div>
+              <div class="right">
+                <span class="sprint-running" style="background:oklch(0.85 0.18 90 / 0.25); border-color:oklch(0.85 0.18 90 / 0.4); color:oklch(0.40 0.13 70);">
+                  <svg width="12" height="12"><use href="#i-timer"/></svg>
+                  12:34
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §8  METADATA PANEL                                            -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-metadata">
+      <div class="eyebrow"><span class="num">08</span> <span>Surface 5.5 — Right metadata panel</span></div>
+      <h2 class="title">Metadata panel.</h2>
+      <p class="lede">
+        Per-chapter metadata stacked top-to-bottom — title, status, synopsis, scene planner, notes.
+        Publishing details is pinned at the bottom with a visual seam to signal "this is book-wide,
+        not chapter-wide" — the confusion Chris named.
+      </p>
+
+      <!-- Full panel — chapter / non-chapter / empty / publishing expanded / non-premium -->
+      <div class="cols4" style="grid-template-columns: repeat(4, 1fr); gap:20px; margin-top:8px;">
+        <!-- Chapter -->
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>Chapter · default</strong><span></span></div>
+          <div class="artboard-body" style="padding:0; background:var(--chrome-900);">
+            <aside class="metadata" style="height:720px; border-left:0;">
+              <div class="md-section">
+                <div class="md-label">Chapter</div>
+                <div class="md-title">2. What Cora found in the chart room</div>
+              </div>
+              <div class="md-section">
+                <div class="md-label">Status</div>
+                <div class="md-pills">
+                  <span class="status-pill" data-status="idea"><span class="dot"></span>Idea</span>
+                  <span class="status-pill" data-status="outline"><span class="dot"></span>Outline</span>
+                  <span class="status-pill active" data-status="first-draft"><span class="dot" style="background:var(--brand);"></span>First Draft</span>
+                  <span class="status-pill" data-status="revised"><span class="dot"></span>Revised</span>
+                  <span class="status-pill" data-status="final"><span class="dot"></span>Final</span>
+                </div>
+              </div>
+              <div class="md-section">
+                <div class="md-label">Synopsis</div>
+                <textarea class="md-textarea" rows="3">Cora enters her father's chart room before dawn.</textarea>
+              </div>
+              <div class="md-section">
+                <button class="scene-toggle">
+                  Scene Planner
+                  <svg width="12" height="12" style="color:var(--chrome-500);"><use href="#i-chev-right"/></svg>
+                </button>
+              </div>
+              <div class="md-section">
+                <div class="md-label">Notes</div>
+                <textarea class="md-textarea" rows="3">Anchor scene for Cora's arc.</textarea>
+              </div>
+              <div class="publishing">
+                <div class="pub-head">
+                  <span class="chev"><svg width="12" height="12"><use href="#i-chev-right"/></svg></span>
+                  <span class="title">Publishing details</span>
+                  <span class="premium">Premium</span>
+                </div>
+                <div class="pub-subtitle">Applies to the whole book, not just this chapter.</div>
+              </div>
+            </aside>
+          </div>
+        </div>
+
+        <!-- Scene planner expanded -->
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>Scene Planner · expanded</strong><span>chapter type only</span></div>
+          <div class="artboard-body" style="padding:0;">
+            <aside class="metadata" style="height:720px; border-left:0;">
+              <div class="md-section">
+                <div class="md-label">Chapter</div>
+                <div class="md-title">2. What Cora found</div>
+              </div>
+              <div class="md-section">
+                <div class="md-label">Status</div>
+                <div class="md-pills">
+                  <span class="status-pill active" data-status="first-draft"><span class="dot" style="background:var(--brand);"></span>First Draft</span>
+                </div>
+              </div>
+              <div class="md-section">
+                <button class="scene-toggle">
+                  Scene Planner
+                  <svg width="12" height="12" style="color:var(--brand); transform:rotate(90deg);"><use href="#i-chev-right"/></svg>
+                </button>
+                <div class="scene-grid">
+                  <div class="scene-field">
+                    <label>Goal</label>
+                    <textarea class="md-textarea" rows="2">Find proof her father was lying.</textarea>
+                  </div>
+                  <div class="scene-field">
+                    <label>Conflict</label>
+                    <textarea class="md-textarea" rows="2">The lamp's reach is small.</textarea>
+                  </div>
+                  <div class="scene-field">
+                    <label>Outcome</label>
+                    <textarea class="md-textarea" rows="2" placeholder="What changes by the end?"></textarea>
+                  </div>
+                </div>
+              </div>
+              <div class="publishing">
+                <div class="pub-head">
+                  <span class="chev"><svg width="12" height="12"><use href="#i-chev-right"/></svg></span>
+                  <span class="title">Publishing details</span>
+                  <span class="premium">Premium</span>
+                </div>
+                <div class="pub-subtitle">Applies to the whole book.</div>
+              </div>
+            </aside>
+          </div>
+        </div>
+
+        <!-- Publishing expanded · premium -->
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>Publishing · expanded · premium</strong><span></span></div>
+          <div class="artboard-body" style="padding:0;">
+            <aside class="metadata" style="height:720px; border-left:0;">
+              <div class="md-section">
+                <div class="md-label">Chapter</div>
+                <div class="md-title">2. What Cora found</div>
+              </div>
+              <div class="publishing" style="margin-top:auto;">
+                <div class="pub-head">
+                  <span class="chev" style="color:var(--brand); transform:rotate(90deg);"><svg width="12" height="12"><use href="#i-chev-right"/></svg></span>
+                  <span class="title">Publishing details</span>
+                  <span class="premium">Premium</span>
+                  <span style="margin-left:auto; font-family:var(--font-mono); font-size:10px; color:var(--chrome-500);">Saving…</span>
+                </div>
+                <div class="pub-subtitle">Applies to the whole book, not just this chapter.</div>
+                <div class="pub-body">
+                  <div class="row">
+                    <label>Subtitle</label>
+                    <input class="md-input" value="A novel of the Maine coast, 1851"/>
+                  </div>
+                  <div class="row">
+                    <label>ISBN</label>
+                    <input class="md-input" value="978-1-23456-789-0" style="font-family:var(--font-mono); font-size:13px;"/>
+                  </div>
+                  <div class="row">
+                    <label>Publisher</label>
+                    <input class="md-input" value="Beehive Press"/>
+                  </div>
+                  <div class="row">
+                    <label>Dedication</label>
+                    <input class="md-input" placeholder="For…"/>
+                  </div>
+                  <div class="row">
+                    <label>Edition</label>
+                    <input class="md-input" value="1st"/>
+                  </div>
+                  <div class="row">
+                    <label>Author bio</label>
+                    <textarea class="md-textarea" rows="3">Maren writes literary fiction from a small town on the Maine coast.</textarea>
+                  </div>
+                  <div class="row">
+                    <label>Trim size</label>
+                    <button class="tb-select" style="height:32px; font-family:var(--font-ui); font-size:13px;"><span>6 × 9 in</span><svg width="10" height="10" style="color:var(--chrome-500);"><use href="#i-chev-down"/></svg></button>
+                  </div>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </div>
+
+        <!-- Empty (non-chapter active) -->
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>Non-chapter active</strong><span>outline / note / character</span></div>
+          <div class="artboard-body" style="padding:0;">
+            <aside class="metadata" style="height:720px; border-left:0; align-items:center; justify-content:center; display:flex;">
+              <div style="padding:40px 24px; text-align:center;">
+                <div style="width:42px; height:42px; border-radius:var(--r-md); background:var(--chrome-800); border:1px solid var(--chrome-700); display:inline-flex; align-items:center; justify-content:center; color:var(--chrome-500); margin:0 auto 14px;">
+                  <svg width="20" height="20"><use href="#i-chapter"/></svg>
+                </div>
+                <div style="font-family:var(--font-display); font-weight:700; color:var(--chrome-200); font-size:14px; margin-bottom:6px;">No chapter selected</div>
+                <div style="font-size:12px; color:var(--chrome-500); line-height:1.6;">Select a chapter to see details.</div>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status pill anatomy + non-premium upsell -->
+      <div class="cols2" style="margin-top:0;">
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>Status pill · anatomy</strong><span>5 statuses</span></div>
+          <div class="artboard-body" style="background:var(--chrome-900); padding:40px;">
+            <div class="md-pills" style="margin-bottom:24px;">
+              <span class="status-pill" data-status="idea"><span class="dot"></span>Idea</span>
+              <span class="status-pill" data-status="outline"><span class="dot"></span>Outline</span>
+              <span class="status-pill active" data-status="first-draft"><span class="dot" style="background:var(--brand);"></span>First Draft</span>
+              <span class="status-pill" data-status="revised"><span class="dot"></span>Revised</span>
+              <span class="status-pill" data-status="final"><span class="dot"></span>Final</span>
+            </div>
+            <div class="anatomy-legend">
+              <div class="li"><span class="n" style="background:var(--chrome-700); color:var(--chrome-200);">1</span><div><strong>Dot · 6px</strong><br>Carries the status hue. Even when inactive, the dot is colored.</div></div>
+              <div class="li"><span class="n" style="background:var(--chrome-700); color:var(--chrome-200);">2</span><div><strong>Label · Comfortaa 12px</strong><br>Title-cased. Letter-spacing 0.01em.</div></div>
+              <div class="li"><span class="n" style="background:var(--chrome-700); color:var(--chrome-200);">3</span><div><strong>Active state</strong><br>Pill bg becomes brand wash; dot turns brand yellow; el-1 shadow.</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>Publishing · non-premium upsell</strong><span>Replaces form fields</span></div>
+          <div class="artboard-body" style="padding:0; background:var(--chrome-900);">
+            <aside class="metadata" style="height:440px; border-left:0;">
+              <div class="md-section">
+                <div class="md-label">Chapter</div>
+                <div class="md-title">2. What Cora found</div>
+              </div>
+              <div class="publishing" style="margin-top:auto;">
+                <div class="pub-head">
+                  <span class="chev" style="color:var(--brand); transform:rotate(90deg);"><svg width="12" height="12"><use href="#i-chev-right"/></svg></span>
+                  <span class="title">Publishing details</span>
+                  <span class="premium">Premium</span>
+                </div>
+                <div class="pub-subtitle">Applies to the whole book, not just this chapter.</div>
+                <div class="upsell">
+                  <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+                    <svg width="14" height="14" style="color:var(--brand);"><use href="#i-sparkle"/></svg>
+                    <h4 style="margin:0;">Publishing-ready details</h4>
+                  </div>
+                  <p>ISBN, trim size, author bio and dedication — set once and they thread into every export.</p>
+                  <button class="btn-up"><svg width="12" height="12"><use href="#i-sparkle"/></svg>Upgrade to Premium</button>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+
+      <!-- Publishing anatomy callout -->
+      <div class="artboard">
+        <div class="artboard-header"><strong>Publishing expander · anatomy</strong><span>Why the seam matters</span></div>
+        <div class="artboard-body" style="background:var(--chrome-900); padding:48px; display:grid; grid-template-columns: 288px 1fr; gap:48px; align-items:flex-start;">
+          <aside class="metadata" style="border-left:0; height:auto;">
+            <div class="md-section">
+              <div class="md-label">Notes</div>
+              <textarea class="md-textarea" rows="3" placeholder="Private notes — only you can see these.">Anchor scene for Cora's arc.</textarea>
+            </div>
+            <div class="publishing">
+              <div class="pub-head">
+                <span class="chev"><svg width="12" height="12"><use href="#i-chev-right"/></svg></span>
+                <span class="title">Publishing details</span>
+                <span class="premium">Premium</span>
+              </div>
+              <div class="pub-subtitle">Applies to the whole book, not just this chapter.</div>
+            </div>
+          </aside>
+          <div style="font-size:13px; color:var(--chrome-400); line-height:1.7;">
+            <div class="md-label">The seam</div>
+            The gradient fade from <code>chrome-900</code> to <code>chrome-950</code> across the top border of the
+            publishing block creates a physical "this is a different drawer" feel.
+            <br><br>
+            The subtitle text <em>"Applies to the whole book, not just this chapter"</em> is permanent — collapsed or
+            expanded. The Premium pill stays visible at all times so users know the gate exists before they expand.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §9  HIVE PLACEMENT                                            -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-hive">
+      <div class="eyebrow"><span class="num">09</span> <span>Surface 5.6 — Create Hive</span></div>
+      <h2 class="title">Hive entry point · three placements.</h2>
+      <p class="lede">
+        A Hive is per-book, secondary to writing, outbound from the studio. The button should feel
+        adjacent to the binder (where the book lives) but never compete with Add or Export.
+        Three candidates ranked, plus the Create Hive modal.
+      </p>
+
+      <div class="cols3" style="margin-top:8px;">
+
+        <!-- A — Bottom of binder (RECOMMENDED) -->
+        <div class="placement-card recommend">
+          <div class="pc-head">
+            <h4>A · Binder footer <span style="font-family:var(--font-mono); font-size:10px; color:var(--brand); letter-spacing:0.06em; margin-left:6px;">RECOMMENDED</span></h4>
+            <span class="pill">Per-book</span>
+          </div>
+          <div class="pc-body">
+            <aside class="binder" style="width:240px; height:340px; border-radius:var(--r-md); overflow:hidden;">
+              <div class="binder-head" style="padding-bottom:8px;">
+                <div class="book-meta">Working manuscript</div>
+                <div class="book-title" style="font-size:15px;">The Last Cartographer</div>
+              </div>
+              <div class="binder-tree" style="flex:1;">
+                <div class="binder-row"><span class="chev open"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span><span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span><span class="title">Part One</span></div>
+                <div class="binder-row indent-1"><span class="chev none"></span><span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span><span class="title">1. The bell at low tide</span></div>
+                <div class="binder-row indent-1 active"><span class="chev none"></span><span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span><span class="title">2. What Cora found</span></div>
+              </div>
+              <div class="binder-foot">
+                <button class="btn-add"><svg width="14" height="14"><use href="#i-plus"/></svg>Add</button>
+                <button style="display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:var(--r-md); background:transparent; border:1px solid var(--chrome-700); color:var(--chrome-300); font-size:12px; cursor:pointer;">
+                  <svg width="14" height="14"><use href="#i-users"/></svg>
+                  <span style="flex:1; text-align:left;">Hive · 3 members</span>
+                  <svg width="12" height="12" style="color:var(--chrome-500);"><use href="#i-chev-right"/></svg>
+                </button>
+              </div>
+            </aside>
+          </div>
+          <div class="pc-foot">
+            <strong style="color:var(--chrome-100);">Why this wins:</strong> Spatially adjacent to the binder
+            (the book's structure), visually secondary to the bright +Add CTA, and present whether the user
+            has a Hive or not — same affordance, different label.
+          </div>
+        </div>
+
+        <!-- B — Inside binder header -->
+        <div class="placement-card">
+          <div class="pc-head">
+            <h4>B · Binder header chip</h4>
+            <span class="pill">Compact</span>
+          </div>
+          <div class="pc-body">
+            <aside class="binder" style="width:240px; height:340px; border-radius:var(--r-md); overflow:hidden;">
+              <div class="binder-head" style="padding-bottom:14px;">
+                <div class="book-meta">Working manuscript</div>
+                <div class="book-title" style="font-size:15px;">The Last Cartographer</div>
+                <div class="row" style="gap:6px;">
+                  <button class="cork-btn"><svg width="14" height="14"><use href="#i-corkboard"/></svg></button>
+                  <button style="display:inline-flex; align-items:center; gap:5px; height:28px; padding:0 10px; border-radius:var(--r-full); background:var(--brand-soft); border:1px solid oklch(0.85 0.18 90 / 0.30); color:var(--brand); font-family:var(--font-display); font-weight:700; font-size:11px; cursor:pointer;">
+                    <svg width="11" height="11"><use href="#i-users"/></svg>
+                    3
+                  </button>
+                </div>
+              </div>
+              <div class="binder-tree" style="flex:1;">
+                <div class="binder-row"><span class="chev open"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span><span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span><span class="title">Part One</span></div>
+                <div class="binder-row indent-1 active"><span class="chev none"></span><span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span><span class="title">2. What Cora found</span></div>
+              </div>
+              <div class="binder-foot">
+                <button class="btn-add"><svg width="14" height="14"><use href="#i-plus"/></svg>Add</button>
+              </div>
+            </aside>
+          </div>
+          <div class="pc-foot">
+            Saves footer space. <strong style="color:var(--chrome-300);">Tradeoff:</strong> harder to discover
+            when no Hive exists — the empty pill at "0" feels like noise next to the title.
+          </div>
+        </div>
+
+        <!-- C — Inside metadata panel -->
+        <div class="placement-card">
+          <div class="pc-head">
+            <h4>C · Metadata panel section</h4>
+            <span class="pill">Right side</span>
+          </div>
+          <div class="pc-body" style="padding:16px;">
+            <aside class="metadata" style="width:260px; height:340px; border-left:0; border:1px solid var(--chrome-800); border-radius:var(--r-md); overflow:hidden;">
+              <div class="md-section">
+                <div class="md-label">Chapter</div>
+                <div class="md-title" style="font-size:15px;">2. What Cora found</div>
+              </div>
+              <div class="md-section" style="background:linear-gradient(180deg, oklch(0.85 0.18 90 / 0.06), transparent);">
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+                  <svg width="14" height="14" style="color:var(--brand);"><use href="#i-users"/></svg>
+                  <div style="font-family:var(--font-display); font-weight:700; color:var(--chrome-100); font-size:13px;">Hive</div>
+                  <span style="margin-left:auto; font-size:11px; color:var(--chrome-500);">3 members</span>
+                </div>
+                <div style="display:flex; gap:-4px; margin-bottom:10px;">
+                  <span class="chip" style="padding:2px; padding-right:0;"><span class="av">M</span></span>
+                  <span class="chip" style="margin-left:-6px; padding:2px; padding-right:0;"><span class="av" style="background:oklch(0.72 0.11 35 / 0.18); color:var(--type-character);">A</span></span>
+                  <span class="chip" style="margin-left:-6px; padding:2px; padding-right:0;"><span class="av" style="background:oklch(0.74 0.08 155 / 0.18); color:var(--type-research);">J</span></span>
+                </div>
+                <button class="btn" style="width:100%; padding:6px 10px; font-size:12px;">Open Hive →</button>
+              </div>
+              <div class="md-section">
+                <div class="md-label">Status</div>
+                <div class="md-pills">
+                  <span class="status-pill active" data-status="first-draft"><span class="dot" style="background:var(--brand);"></span>Draft</span>
+                </div>
+              </div>
+            </aside>
+          </div>
+          <div class="pc-foot">
+            Rich preview (avatar pile). <strong style="color:var(--chrome-300);">Tradeoff:</strong>
+            metadata panel is per-chapter, so putting a per-book concept there mixes scopes — the same
+            confusion publishing details creates.
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Recommendation rationale -->
+      <div class="callout">
+        <strong>Claude Design recommends A · Binder footer.</strong> Reasoning:
+        (1) Per-book scope mirrors the binder's per-book scope — same drawer.
+        (2) Below the +Add primary CTA, the secondary outline button reads as "what else can I do with this book" without competing.
+        (3) Label shifts gracefully between states: <code>"Share with your Hive"</code> when none exists, <code>"Hive · 3 members"</code> when one does.
+        (4) Survives focus mode gracefully (binder hides; Hive becomes a one-key shortcut documented in the cheatsheet).
+      </div>
+
+      <!-- Modal -->
+      <div class="artboard">
+        <div class="artboard-header"><strong>Create Hive modal</strong><span>From the binder-footer button when no Hive exists yet</span></div>
+        <div class="artboard-body" style="background:rgba(0,0,0,0.45); padding:60px; display:flex; justify-content:center; align-items:flex-start;">
+          <div class="modal-shell">
+            <div class="modal-head">
+              <div style="display:flex; gap:10px; align-items:center; margin-bottom:10px;">
+                <div style="width:36px; height:36px; border-radius:var(--r-md); background:var(--brand-soft); border:1px solid oklch(0.85 0.18 90 / 0.30); display:inline-flex; align-items:center; justify-content:center; color:var(--brand);">
+                  <svg width="18" height="18"><use href="#i-users"/></svg>
+                </div>
+                <h3>Start a Hive</h3>
+              </div>
+              <p>Up to 5 trusted readers can give you feedback on this book. They'll see drafts you share — never the whole manuscript by default.</p>
+            </div>
+            <div class="modal-body">
+              <div style="display:flex; flex-direction:column; gap:6px;">
+                <label style="font-family:var(--font-mono); font-size:10px; letter-spacing:0.10em; text-transform:uppercase; color:var(--chrome-500);">Hive name</label>
+                <input class="md-input" value="Coast Readers"/>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:6px;">
+                <label style="font-family:var(--font-mono); font-size:10px; letter-spacing:0.10em; text-transform:uppercase; color:var(--chrome-500);">Description <span style="text-transform:none; font-family:var(--font-ui); color:var(--chrome-600); letter-spacing:0;">— optional</span></label>
+                <textarea class="md-textarea" rows="2" placeholder="What is this Hive for?">Honest chapter-by-chapter feedback on this novel.</textarea>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:6px;">
+                <label style="font-family:var(--font-mono); font-size:10px; letter-spacing:0.10em; text-transform:uppercase; color:var(--chrome-500);">Invite members <span style="text-transform:none; font-family:var(--font-ui); color:var(--chrome-600); letter-spacing:0;">— 2 of 5</span></label>
+                <div style="display:flex; gap:6px; flex-wrap:wrap; padding:8px; background:var(--chrome-950); border:1px solid var(--chrome-700); border-radius:var(--r-sm);">
+                  <span class="chip"><span class="av" style="background:oklch(0.72 0.11 35 / 0.18); color:var(--type-character);">A</span>anya@hello.dev<button style="background:transparent; border:0; color:var(--chrome-500); cursor:pointer; padding:0 2px; display:inline-flex;"><svg width="10" height="10"><use href="#i-x"/></svg></button></span>
+                  <span class="chip"><span class="av" style="background:oklch(0.74 0.08 155 / 0.18); color:var(--type-research);">J</span>jordan@readers.io<button style="background:transparent; border:0; color:var(--chrome-500); cursor:pointer; padding:0 2px; display:inline-flex;"><svg width="10" height="10"><use href="#i-x"/></svg></button></span>
+                  <input style="flex:1; min-width:160px; background:transparent; border:0; color:var(--chrome-100); font-family:inherit; font-size:13px; outline:none;" placeholder="username or email…"/>
+                </div>
+              </div>
+            </div>
+            <div class="modal-foot">
+              <button class="btn ghost">Cancel</button>
+              <button class="btn primary">Create Hive</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal states (mini grid) -->
+      <div class="states">
+        <div class="state-card">
+          <div class="label"><strong>Submitting</strong><span>busy</span></div>
+          <div class="demo">
+            <div class="modal-shell" style="max-width:240px; transform:scale(0.85); transform-origin:center;">
+              <div class="modal-head"><h3 style="font-size:16px;">Creating Hive…</h3><p>Sending invitations now.</p></div>
+              <div class="modal-foot" style="padding:12px 16px;"><button class="btn primary" disabled style="background:var(--brand); opacity:0.6;">Creating…</button></div>
+            </div>
+          </div>
+        </div>
+        <div class="state-card">
+          <div class="label"><strong>Success</strong><span>Hive is live</span></div>
+          <div class="demo">
+            <div class="modal-shell" style="max-width:240px; transform:scale(0.85); transform-origin:center;">
+              <div class="modal-head" style="display:flex; gap:10px; align-items:center;">
+                <div style="width:32px; height:32px; border-radius:var(--r-md); background:oklch(0.72 0.13 152 / 0.18); color:var(--success); display:inline-flex; align-items:center; justify-content:center;"><svg width="16" height="16"><use href="#i-check"/></svg></div>
+                <div><h3 style="font-size:15px; margin:0;">Hive started</h3><p style="font-size:11px; margin:2px 0 0;">Invites sent to 2 members.</p></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="state-card">
+          <div class="label"><strong>Error</strong><span>Form-level</span></div>
+          <div class="demo">
+            <div class="modal-shell" style="max-width:240px; transform:scale(0.85); transform-origin:center;">
+              <div class="modal-head"><h3 style="font-size:15px;">Couldn't create Hive</h3><p style="color:var(--error);">One of these emails is invalid.</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="state-card">
+          <div class="label"><strong>Premium-gated</strong><span>Free user, more than 5 invites</span></div>
+          <div class="demo">
+            <div class="modal-shell" style="max-width:240px; transform:scale(0.85); transform-origin:center;">
+              <div class="modal-head"><h3 style="font-size:15px;">5-member limit</h3><p>Upgrade to invite more readers.</p></div>
+              <div class="modal-foot" style="padding:12px 16px;"><button class="btn-up"><svg width="11" height="11"><use href="#i-sparkle"/></svg>Upgrade</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §10  TOASTS                                                   -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-toasts">
+      <div class="eyebrow"><span class="num">10</span> <span>Surface 5.7 — Error toasts</span></div>
+      <h2 class="title">Toasts.</h2>
+      <p class="lede">
+        Bottom-right, max-width 360, auto-dismiss after 5s. Reuses the popover token (el-3 shadow,
+        chrome-750 surface) with a category icon tile. Premium-required toast uses brand wash so
+        it visually links to the upgrade upsell.
+      </p>
+
+      <div class="cols2" style="margin-top:8px;">
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>Info</strong><span>neutral</span></div>
+          <div class="artboard-body" style="background:var(--chrome-950); padding:36px; display:flex; justify-content:flex-end;">
+            <div class="toast info">
+              <div class="icon"><svg width="14" height="14"><use href="#i-info"/></svg></div>
+              <div class="body"><strong>Switched to dark mode</strong><em>Saved as your preference.</em></div>
+              <span class="x"><svg width="12" height="12"><use href="#i-x"/></svg></span>
+            </div>
+          </div>
+        </div>
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>Success</strong><span>action confirmed</span></div>
+          <div class="artboard-body" style="background:var(--chrome-950); padding:36px; display:flex; justify-content:flex-end;">
+            <div class="toast success">
+              <div class="icon"><svg width="14" height="14"><use href="#i-check"/></svg></div>
+              <div class="body"><strong>Restored to Today 2:14 PM</strong><em>Version history kept the previous draft.</em></div>
+              <span class="x"><svg width="12" height="12"><use href="#i-x"/></svg></span>
+            </div>
+          </div>
+        </div>
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>Error</strong><span>retryable</span></div>
+          <div class="artboard-body" style="background:var(--chrome-950); padding:36px; display:flex; justify-content:flex-end;">
+            <div class="toast error">
+              <div class="icon"><svg width="14" height="14"><use href="#i-alert"/></svg></div>
+              <div class="body"><strong>Save failed</strong><em>We'll keep retrying in the background.</em></div>
+              <button class="btn" style="padding:4px 10px; font-size:11px; background:transparent; border-color:var(--chrome-700);">Retry</button>
+              <span class="x"><svg width="12" height="12"><use href="#i-x"/></svg></span>
+            </div>
+          </div>
+        </div>
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>Premium-required</strong><span>gated action</span></div>
+          <div class="artboard-body" style="background:var(--chrome-950); padding:36px; display:flex; justify-content:flex-end;">
+            <div class="toast premium">
+              <div class="icon"><svg width="14" height="14"><use href="#i-sparkle"/></svg></div>
+              <div class="body"><strong>Premium required to restore</strong><em>Version history is a Premium feature.</em></div>
+              <button class="btn-up" style="padding:4px 10px; font-size:11px;">Upgrade</button>
+              <span class="x"><svg width="12" height="12"><use href="#i-x"/></svg></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stacking + dismiss -->
+      <div class="artboard">
+        <div class="artboard-header"><strong>Multiple toasts · stacking</strong><span>Newest at the bottom, older toasts slide up</span></div>
+        <div class="artboard-body" style="background:var(--chrome-950); padding:60px 36px 36px; display:flex; flex-direction:column; gap:10px; align-items:flex-end;">
+          <div class="toast info" style="opacity:0.65; transform:scale(0.96);">
+            <div class="icon"><svg width="14" height="14"><use href="#i-info"/></svg></div>
+            <div class="body"><strong>Backed up to cloud</strong></div>
+          </div>
+          <div class="toast success" style="opacity:0.85;">
+            <div class="icon"><svg width="14" height="14"><use href="#i-check"/></svg></div>
+            <div class="body"><strong>Snapshot taken</strong><em>You can restore this version anytime.</em></div>
+          </div>
+          <div class="toast error">
+            <div class="icon"><svg width="14" height="14"><use href="#i-alert"/></svg></div>
+            <div class="body"><strong>Connection unstable</strong><em>Working offline — changes will sync when you're back.</em></div>
+            <span class="x"><svg width="12" height="12"><use href="#i-x"/></svg></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §11  SHELL UNDER MODES                                        -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-modes">
+      <div class="eyebrow"><span class="num">11</span> <span>§6 — Modes that affect the shell</span></div>
+      <h2 class="title">Shell behaviour under modes.</h2>
+      <p class="lede">
+        Prompt 3 will detail focus, corkboard, version history, find &amp; replace and writing-analysis surfaces — but the shell needs to know how to disassemble for them. Recommendations here.
+      </p>
+
+      <!-- Focus mode -->
+      <div class="artboard">
+        <div class="artboard-header"><strong>Focus mode</strong><span>Binder + metadata panel hidden; editor expands</span></div>
+        <div class="studio" style="height:560px;">
+          <header class="topnav">
+            <div class="left">
+              <a class="logo" href="#"><span class="hex"><svg width="18" height="18" style="color:var(--brand);"><use href="#i-hive"/></svg></span> Beehive</a>
+              <nav><a class="active" href="#">Studio</a></nav>
+            </div>
+            <div class="right">
+              <span style="font-family:var(--font-mono); font-size:11px; color:var(--chrome-500); letter-spacing:0.08em;">FOCUS · ESC TO EXIT</span>
+              <div class="avatar">M</div>
+            </div>
+          </header>
+          <div style="display:grid; grid-template-rows: var(--toolbar-h) 1fr var(--statusbar-h);">
+            <div class="toolbar">
+              <div class="tb-group">
+                <button class="tbtn"><svg width="16" height="16"><use href="#i-bold"/></svg></button>
+                <button class="tbtn"><svg width="16" height="16"><use href="#i-italic"/></svg></button>
+                <button class="tbtn"><svg width="16" height="16"><use href="#i-strike"/></svg></button>
+              </div>
+              <span class="tb-sep"></span>
+              <div class="tb-group">
+                <button class="tbtn"><svg width="16" height="16"><use href="#i-h1"/></svg></button>
+                <button class="tbtn"><svg width="16" height="16"><use href="#i-h2"/></svg></button>
+              </div>
+              <span class="tb-spacer"></span>
+              <button class="tbtn"><svg width="16" height="16"><use href="#i-sun"/></svg></button>
+              <button class="tbtn active" aria-label="Exit focus"><svg width="16" height="16"><use href="#i-maximize"/></svg></button>
+            </div>
+            <div class="editor light paper-grain">
+              <div class="prose-wrap">
+                <div class="prose" style="font-size:19px;">
+                  <h1>2. What Cora found in the chart room</h1>
+                  <p>The bell had stopped before sunrise — Cora was sure of it, the way you are sure of a thing the moment after you have learned to be sure of nothing else.</p>
+                  <p>Down the kitchen stairs in stocking feet. Past the umbrellas. Past the boots her father had not worn in five winters.<span class="faux-cursor"></span></p>
+                </div>
+              </div>
+            </div>
+            <div class="statusbar light">
+              <div class="sprint-progress" style="width: 42%;"></div>
+              <div class="left">
+                <span class="save-dot"></span><span>Saved</span><span class="sep"></span>
+                <span style="color:var(--paper-ink); font-weight:500;">1,247 words</span><span class="sep"></span>
+                <span>46% of 2,000</span>
+              </div>
+              <div class="right">
+                <span class="sprint-running" style="background:oklch(0.85 0.18 90 / 0.25); border-color:oklch(0.85 0.18 90 / 0.4); color:oklch(0.40 0.13 70);">
+                  <svg width="12" height="12"><use href="#i-timer"/></svg>12:34
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Corkboard mode (replaces center body) + version history (replaces metadata) -->
+      <div class="cols2">
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>Corkboard mode</strong><span>Toolbar + status bar stay; binder + metadata stay</span></div>
+          <div class="artboard-body" style="padding:0;">
+            <div style="display:grid; grid-template-rows: var(--toolbar-h) 1fr var(--statusbar-h); height:480px; background:var(--canvas-dark-100);">
+              <div class="toolbar" style="background:var(--chrome-850);">
+                <div style="font-family:var(--font-mono); font-size:11px; color:var(--chrome-500); letter-spacing:0.08em;">CORKBOARD · PART ONE — 4 CHAPTERS</div>
+                <span class="tb-spacer"></span>
+                <button class="tbtn active"><svg width="16" height="16"><use href="#i-corkboard"/></svg></button>
+              </div>
+              <div style="padding:24px; display:grid; grid-template-columns: repeat(2, 1fr); gap:16px; overflow:hidden;">
+                <div style="background:var(--paper-100); border-radius:var(--r-md); padding:16px; box-shadow:var(--el-paper); transform:rotate(-0.4deg);">
+                  <div style="font-family:var(--font-display); font-weight:700; color:var(--paper-ink-strong); font-size:14px; margin-bottom:4px;">1. The bell at low tide</div>
+                  <div class="md-pills" style="margin-bottom:8px;"><span class="status-pill" data-status="revised" style="background:oklch(0.74 0.08 155 / 0.18); border-color:oklch(0.74 0.08 155 / 0.35); color:var(--status-revised);"><span class="dot" style="background:var(--status-revised);"></span>Revised</span></div>
+                  <div style="font-size:12px; color:var(--paper-ink-muted); line-height:1.5;">Cora hears the bell at the low-tide line and knows something is wrong.</div>
+                </div>
+                <div style="background:var(--paper-100); border-radius:var(--r-md); padding:16px; box-shadow:var(--el-paper); transform:rotate(0.3deg);">
+                  <div style="font-family:var(--font-display); font-weight:700; color:var(--paper-ink-strong); font-size:14px; margin-bottom:4px;">2. What Cora found</div>
+                  <div class="md-pills" style="margin-bottom:8px;"><span class="status-pill active" data-status="first-draft" style="background:var(--brand-soft); color:var(--brand); border-color:oklch(0.85 0.18 90 / 0.4);"><span class="dot" style="background:var(--brand);"></span>First Draft</span></div>
+                  <div style="font-size:12px; color:var(--paper-ink-muted); line-height:1.5;">She lights the lamp, finds her father's chart room annotated in a hand that isn't his.</div>
+                </div>
+                <div style="background:var(--paper-100); border-radius:var(--r-md); padding:16px; box-shadow:var(--el-paper); transform:rotate(-0.2deg);">
+                  <div style="font-family:var(--font-display); font-weight:700; color:var(--paper-ink-strong); font-size:14px; margin-bottom:4px;">3. The keeper's letter</div>
+                  <div class="md-pills" style="margin-bottom:8px;"><span class="status-pill" data-status="outline" style="background:oklch(0.74 0.07 295 / 0.18); border-color:oklch(0.74 0.07 295 / 0.35); color:var(--status-outline);"><span class="dot" style="background:var(--status-outline);"></span>Outline</span></div>
+                  <div style="font-size:12px; color:var(--paper-ink-muted); line-height:1.5;">An envelope tucked into a chart-tube. The handwriting matches.</div>
+                </div>
+                <div style="background:var(--paper-100); border-radius:var(--r-md); padding:16px; box-shadow:var(--el-paper); transform:rotate(0.5deg);">
+                  <div style="font-family:var(--font-display); font-weight:700; color:var(--paper-ink-strong); font-size:14px; margin-bottom:4px;">4. The empty inlet</div>
+                  <div class="md-pills" style="margin-bottom:8px;"><span class="status-pill" data-status="idea" style="background:oklch(0.74 0.045 245 / 0.18); border-color:oklch(0.74 0.045 245 / 0.35); color:var(--status-idea);"><span class="dot" style="background:var(--status-idea);"></span>Idea</span></div>
+                  <div style="font-size:12px; color:var(--paper-ink-muted); line-height:1.5;">She rows out at first light. The inlet is dry. Someone has been here.</div>
+                </div>
+              </div>
+              <div class="statusbar"><div class="left"><span class="save-dot"></span><span>Saved</span><span class="sep"></span><span>4 chapters · 7,460 words in Part One</span></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>Version history drawer</strong><span>Replaces metadata panel; toolbar history btn active</span></div>
+          <div class="artboard-body" style="padding:0;">
+            <div style="display:grid; grid-template-columns: 1fr 280px; height:480px;">
+              <div style="background:var(--canvas-dark-100); padding:32px; opacity:0.6;">
+                <div class="prose" style="font-size:14px; font-family:var(--font-prose); color:var(--canvas-dark-ink-muted);">
+                  <h1 style="font-family:var(--font-display); font-size:20px;">2. What Cora found</h1>
+                  <p>She lit the lamp. She did not light both lamps — only the small one over the desk.</p>
+                  <p>Down the kitchen stairs in stocking feet…</p>
+                </div>
+              </div>
+              <aside class="metadata">
+                <div class="md-section" style="display:flex; justify-content:space-between; align-items:center;">
+                  <div>
+                    <div class="md-label">Version history</div>
+                    <div style="font-family:var(--font-display); font-weight:700; color:var(--chrome-100); font-size:15px;">Today</div>
+                  </div>
+                  <button class="tbtn"><svg width="14" height="14"><use href="#i-x"/></svg></button>
+                </div>
+                <div style="padding:8px 12px; display:flex; flex-direction:column; gap:4px;">
+                  <div style="padding:10px 12px; border-radius:var(--r-md); background:var(--brand-soft); border:1px solid oklch(0.85 0.18 90 / 0.3);">
+                    <div style="font-size:12px; font-family:var(--font-mono); color:var(--brand);">2:14 PM · 1,247 wd</div>
+                    <div style="font-size:11px; color:var(--chrome-400); margin-top:2px;">Auto · "the lamp's reach is small"</div>
+                  </div>
+                  <div style="padding:10px 12px; border-radius:var(--r-md); cursor:pointer;">
+                    <div style="font-size:12px; font-family:var(--font-mono); color:var(--chrome-300);">1:42 PM · 1,180 wd</div>
+                    <div style="font-size:11px; color:var(--chrome-500); margin-top:2px;">Auto</div>
+                  </div>
+                  <div style="padding:10px 12px; border-radius:var(--r-md); cursor:pointer;">
+                    <div style="font-size:12px; font-family:var(--font-mono); color:var(--chrome-300);">12:50 PM · 980 wd</div>
+                    <div style="font-size:11px; color:var(--chrome-500); margin-top:2px;">Manual snapshot</div>
+                  </div>
+                  <div style="padding:10px 12px; border-radius:var(--r-md); cursor:pointer;">
+                    <div style="font-size:12px; font-family:var(--font-mono); color:var(--chrome-300);">11:01 AM · 612 wd</div>
+                    <div style="font-size:11px; color:var(--chrome-500); margin-top:2px;">Auto · sprint complete</div>
+                  </div>
+                </div>
+              </aside>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>Mode-impact summary.</strong>
+        Focus mode hides binder + metadata; toolbar + status bar persist (lower-priority toolbar buttons collapse).
+        Corkboard replaces the editor body only; binder + metadata + toolbar + status bar all stay.
+        Version history replaces metadata only; binder + editor + toolbar + status bar all stay; history toolbar button shows the active state.
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §12  HANDOFF                                                  -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-handoff">
+      <div class="eyebrow"><span class="num">12</span> <span>Handoff &amp; open questions</span></div>
+      <h2 class="title">For Prompts 2 &amp; 3.</h2>
+      <p class="lede">
+        Tokens, depth, type, and the chrome/paper duality established here are inherited downstream.
+        These are the things to carry forward — and the things to decide before Prompt 2.
+      </p>
+
+      <div class="cols2" style="gap:24px;">
+        <div style="background:var(--chrome-900); border:1px solid var(--chrome-800); border-radius:var(--r-lg); padding:24px;">
+          <div class="md-label" style="color:var(--brand);">What's locked from this brief</div>
+          <ul style="margin:0; padding-left:20px; color:var(--chrome-300); font-size:14px; line-height:1.7;">
+            <li>Token names + values (<code>tokens.css</code>).</li>
+            <li>Type pairing: Comfortaa · Geist · Newsreader · JetBrains Mono.</li>
+            <li>Elevation scale el-0 → el-4 + el-paper.</li>
+            <li>Chrome (warm walnut) vs canvas (paper / coffee) split.</li>
+            <li>6 binder type colors · 5 status colors · 3 validation colors.</li>
+            <li>Popover, modal, toast, pill, input, button primitives.</li>
+            <li>Hive button placement (binder footer).</li>
+          </ul>
+        </div>
+        <div style="background:var(--chrome-900); border:1px solid var(--chrome-800); border-radius:var(--r-lg); padding:24px;">
+          <div class="md-label" style="color:var(--brand);">Open questions for Chris</div>
+          <ul style="margin:0; padding-left:20px; color:var(--chrome-300); font-size:14px; line-height:1.7;">
+            <li>Light editor mode is paper-only — does the chrome ever flip to a true light theme for accessibility users? (Recommendation: no, keep chrome dark; add a high-contrast variant of dark instead.)</li>
+            <li>Should the sprint timer offer a "blackout" Pomodoro mode that hides word count until the sprint ends? (Out of scope here; flag for Prompt 3.)</li>
+            <li>The corkboard cards above borrow the paper surface even when the editor is in dark mode — confirm that's desirable. (My pick: yes — the corkboard is a planning artifact, not the writing.)</li>
+            <li>Premium badge style: pill (current) vs subtle sparkle next to label — settle on one for consistency across Prompt 3 (export, history, analysis).</li>
+            <li>Font-size selector currently affects only prose. Should the toolbar offer a separate UI density toggle (cozy / standard / compact)? Hold for now.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div style="margin-top:32px; padding:24px; border-radius:var(--r-lg); background:linear-gradient(180deg, var(--brand-soft), transparent); border:1px solid oklch(0.85 0.18 90 / 0.25);">
+        <div class="md-label" style="color:var(--brand);">Coming in Prompts 2 &amp; 3</div>
+        <div class="cols2" style="margin-top:8px; gap:24px;">
+          <div>
+            <strong style="font-family:var(--font-display); color:var(--chrome-100); font-size:15px;">Prompt 2 — Specialized editor surfaces</strong>
+            <p style="font-size:13px; color:var(--chrome-400); margin:6px 0 0; line-height:1.6;">Front Matter forms · Back Matter forms · Outline Kanban · Research Notes · Character profile. These will reuse this doc's tokens, status pills, type system, and elevation scale verbatim.</p>
+          </div>
+          <div>
+            <strong style="font-family:var(--font-display); color:var(--chrome-100); font-size:15px;">Prompt 3 — Overlays &amp; modes</strong>
+            <p style="font-size:13px; color:var(--chrome-400); margin:6px 0 0; line-height:1.6;">Focus · Corkboard (full version) · Find &amp; Replace · Writing analysis · Keyboard cheatsheet · Export · Version history drawer · snapshot banner · empty / first-time states.</p>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:48px; padding-top:24px; border-top:1px solid var(--chrome-800); font-size:12px; color:var(--chrome-500); font-family:var(--font-mono); letter-spacing:0.04em; display:flex; justify-content:space-between;">
+        <span>BEEHIVE STUDIO · STUDIO SHELL · PROMPT 1 OF 3</span>
+        <span>CLAUDE DESIGN · 2026-05-26</span>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+</body>
+</html>

@@ -364,7 +364,7 @@ The item-type icon should tint per type. Map type → token:
 - `research_note` → `var(--type-research)` (sage)
 - `character` → `var(--type-character)` (terracotta)
 
-Apply as inline style or className with `text-[var(--type-*)]` pattern.
+Apply as inline style — `style={{ color: 'var(--type-chapter)' }}` etc. Do NOT use the Tailwind arbitrary-value syntax `text-[var(--type-chapter)]` because Tailwind v4 scans the docs folder and would generate CSS for any placeholder examples written here. Inline `style={}` is safer for token-driven colors.
 
 Preserve existing functionality: rename trigger, drag handle, chevron for collapse/expand, ⋯ menu trigger on hover, link to chapter on click.
 

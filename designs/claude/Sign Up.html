@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Join the hive — Beehive Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          bg: '#141414', card: '#1c1c1c', elev: '#252525', inset: '#1e1e1e',
+          line: '#2a2a2a', brand: '#FFC300', brandHi: '#FFD040', brandLo: '#e0ac01',
+        },
+        fontFamily: {
+          display: ['Comfortaa', 'sans-serif'],
+          sans: ['Geist', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        },
+        borderRadius: { xl: '14px', '2xl': '18px', '3xl': '22px' },
+      }
+    }
+  }
+</script>
+<style>
+  html, body { background: #141414; color: white; }
+  body { font-family: 'Geist', ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  .font-display { font-family: 'Comfortaa', sans-serif; }
+
+  .paper-stack {
+    border: 1px solid #2a2a2a;
+    border-bottom-color: #111;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.04) inset,
+      0 3px 0 rgba(0,0,0,0.32),
+      0 40px 80px -40px rgba(0,0,0,0.6);
+  }
+
+  .hex-bg {
+    background-image:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='52' viewBox='0 0 60 52'><path d='M15 1 L45 1 L60 26 L45 51 L15 51 L0 26 Z' fill='none' stroke='%23FFC300' stroke-opacity='0.08' stroke-width='1'/></svg>");
+    background-size: 60px 52px;
+  }
+
+  .auth-glow {
+    background:
+      radial-gradient(ellipse 50% 40% at 50% 30%, rgba(255,195,0,0.10), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 50% 80%, rgba(255,195,0,0.04), transparent 60%);
+  }
+
+  .field {
+    background: #252525; border: 1px solid #2a2a2a; color: white;
+    border-radius: 14px; padding: 14px 16px; width: 100%;
+    transition: border-color .15s, box-shadow .15s, background-color .15s;
+    font-size: 15px;
+  }
+  .field::placeholder { color: rgba(255,255,255,0.3); }
+  .field:focus { outline: none; border-color: rgba(255,195,0,0.5); box-shadow: 0 0 0 4px rgba(255,195,0,0.12); }
+  .field.error { border-color: rgba(248,113,113,0.5); box-shadow: 0 0 0 4px rgba(248,113,113,0.1); }
+
+  .btn-primary {
+    background: #FFC300; color: #0a0a0a; font-weight: 700; font-family: 'Comfortaa', sans-serif;
+    transition: background-color .15s ease, transform .15s ease, box-shadow .15s ease;
+    box-shadow: 0 6px 24px -10px rgba(255,195,0,0.55);
+  }
+  .btn-primary:hover { background: #FFD040; transform: translateY(-1px); }
+  .btn-primary:active { background: #e0ac01; transform: translateY(0); }
+
+  .btn-social {
+    background: #252525; border: 1px solid #2a2a2a; color: white;
+    border-radius: 14px; padding: 12px 16px; width: 100%;
+    transition: border-color .15s, background-color .15s, color .15s;
+    font-weight: 500; font-size: 14.5px;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    min-height: 48px;
+  }
+  .btn-social:hover { border-color: rgba(255,195,0,0.35); background: #2a2a2a; }
+  .btn-social:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-social:disabled:hover { border-color: #2a2a2a; background: #252525; }
+
+  .link-brand { color: #FFC300; }
+  .link-brand:hover { text-decoration: underline; text-underline-offset: 4px; }
+
+  /* Strength meter segments */
+  .seg { height: 4px; flex: 1; border-radius: 999px; background: #2a2a2a; transition: background-color .2s ease; }
+  .seg.weak { background: #ef4444; }
+  .seg.fair { background: #FFC300; }
+  .seg.strong { background: #22c55e; }
+
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: #FFC300; border-radius: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+</style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+<div class="fixed inset-0 hex-bg opacity-50 pointer-events-none [mask-image:radial-gradient(ellipse_60%_50%_at_50%_40%,black,transparent_75%)]"></div>
+<div class="fixed inset-0 auth-glow pointer-events-none"></div>
+
+<header class="relative z-10">
+  <div class="max-w-7xl mx-auto px-6 lg:px-8 h-16 flex items-center justify-between">
+    <a href="Landing Page.html" class="flex items-center gap-2.5">
+      <span class="relative inline-flex items-center justify-center w-9 h-9 rounded-xl bg-brand/15 border border-brand/30">
+        <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="#FFC300" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 L20 6.5 L20 15.5 L12 20 L4 15.5 L4 6.5 Z"/>
+          <path d="M12 9 L16 11 L16 14.5 L12 16.5 L8 14.5 L8 11 Z" fill="#FFC300" fill-opacity="0.6" stroke="none"/>
+        </svg>
+      </span>
+      <span class="font-display font-bold text-[17px] tracking-tight">Beehive Studio</span>
+    </a>
+    <a href="Sign In.html" class="text-sm text-white/60 hover:text-white">Sign in</a>
+  </div>
+</header>
+
+<main class="relative z-10 flex-1 flex items-center justify-center px-6 py-10">
+  <div class="w-full max-w-md">
+    <div class="paper-stack bg-card rounded-2xl p-8 sm:p-10">
+      <div class="mb-7 text-center">
+        <span class="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-brand/15 border border-brand/30 mb-5">
+          <svg viewBox="0 0 24 24" class="w-6 h-6" fill="none" stroke="#FFC300" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2 L20 6.5 L20 15.5 L12 20 L4 15.5 L4 6.5 Z"/>
+            <path d="M12 9 L16 11 L16 14.5 L12 16.5 L8 14.5 L8 11 Z" fill="#FFC300" fill-opacity="0.6" stroke="none"/>
+          </svg>
+        </span>
+        <h1 class="font-display font-bold text-[30px] leading-tight">Join the hive</h1>
+        <p class="text-white/60 text-[14.5px] mt-2">Free forever for solo writers. No credit card.</p>
+      </div>
+
+      <div class="space-y-2.5">
+        <button type="button" class="btn-social">
+          <svg viewBox="0 0 24 24" class="w-[18px] h-[18px]" aria-hidden="true">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.75h3.57c2.08-1.92 3.28-4.74 3.28-8.07Z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.75c-.99.66-2.25 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A10.99 10.99 0 0 0 12 23Z" fill="#34A853"/>
+            <path d="M5.84 14.12A6.6 6.6 0 0 1 5.48 12c0-.74.13-1.45.36-2.12V7.04H2.18A11 11 0 0 0 1 12c0 1.78.43 3.46 1.18 4.96l3.66-2.84Z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.04l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38Z" fill="#EA4335"/>
+          </svg>
+          Sign up with Google
+        </button>
+
+        <button type="button" disabled class="btn-social relative">
+          <svg viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor" aria-hidden="true">
+            <path d="M16.365 12.71c-.02-2.07 1.69-3.06 1.77-3.11-.96-1.41-2.47-1.6-3.01-1.62-1.28-.13-2.5.75-3.15.75-.65 0-1.66-.73-2.73-.71-1.4.02-2.69.82-3.41 2.07-1.46 2.52-.37 6.24 1.04 8.28.69.99 1.5 2.11 2.57 2.07 1.04-.04 1.43-.67 2.69-.67s1.6.67 2.7.65c1.12-.02 1.83-1.01 2.51-2.01.79-1.16 1.12-2.29 1.14-2.35-.03-.01-2.19-.84-2.21-3.35ZM14.31 6.69c.57-.69.95-1.65.85-2.6-.82.03-1.81.55-2.4 1.24-.53.61-.99 1.59-.87 2.52.91.07 1.84-.47 2.42-1.16Z"/>
+          </svg>
+          <span>Sign up with Apple</span>
+          <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] uppercase tracking-wider font-semibold text-brand bg-brand/10 border border-brand/30 rounded-full px-2 py-0.5">
+            Soon
+          </span>
+        </button>
+      </div>
+
+      <div class="flex items-center gap-3 my-6">
+        <div class="flex-1 h-px bg-line"></div>
+        <span class="text-[11.5px] uppercase tracking-wider text-white/40 font-medium">or continue with email</span>
+        <div class="flex-1 h-px bg-line"></div>
+      </div>
+
+      <form class="space-y-4" onsubmit="event.preventDefault();">
+        <div>
+          <label for="email" class="block text-[13px] font-medium text-white/80 mb-1.5">Email</label>
+          <input id="email" type="email" autocomplete="email" placeholder="you@example.com" class="field" />
+        </div>
+
+        <div>
+          <label for="password" class="block text-[13px] font-medium text-white/80 mb-1.5">Password</label>
+          <div class="relative">
+            <input id="password" type="password" autocomplete="new-password" placeholder="At least 8 characters" class="field pr-12" />
+            <button type="button" id="togglePw" aria-label="Show password" class="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-colors">
+              <svg id="pwEye" viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 12s3-8 10-8 10 8 10 8-3 8-10 8-10-8-10-8Z"/><circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Strength meter -->
+          <div class="mt-2.5">
+            <div class="flex items-center gap-1.5">
+              <div id="seg1" class="seg"></div>
+              <div id="seg2" class="seg"></div>
+              <div id="seg3" class="seg"></div>
+            </div>
+            <div class="flex items-center justify-between mt-1.5">
+              <span id="strengthLabel" class="text-[11.5px] text-white/45">8+ chars, an uppercase letter, and a number</span>
+              <span id="strengthValue" class="text-[11.5px] font-medium text-white/45 tnum">—</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label for="confirm" class="block text-[13px] font-medium text-white/80 mb-1.5">Confirm password</label>
+          <div class="relative">
+            <input id="confirm" type="password" autocomplete="new-password" placeholder="Re-enter your password" class="field pr-12" />
+            <span id="confirmIcon" class="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center opacity-0 transition-opacity">
+              <svg viewBox="0 0 24 24" class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            </span>
+          </div>
+          <p id="confirmHint" class="text-[11.5px] text-white/45 mt-1.5 opacity-0 transition-opacity">Passwords match</p>
+        </div>
+
+        <button type="submit" class="btn-primary rounded-full w-full px-5 py-3.5 text-[15px] inline-flex items-center justify-center gap-2 mt-2">
+          Create account
+          <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </button>
+
+        <p class="text-center text-[12px] text-white/40 leading-relaxed pt-1">
+          By creating an account you agree to our
+          <a href="#" class="link-brand">Terms</a> and
+          <a href="#" class="link-brand">Privacy Policy</a>.
+        </p>
+      </form>
+    </div>
+
+    <p class="text-center text-[14px] text-white/60 mt-6">
+      Already have an account?
+      <a href="Sign In.html" class="link-brand font-medium ml-1">Sign in</a>
+    </p>
+  </div>
+</main>
+
+<footer class="relative z-10 py-6">
+  <div class="max-w-7xl mx-auto px-6 lg:px-8 flex flex-wrap items-center justify-between gap-3 text-[12px] text-white/40">
+    <div>© 2026 Beehive Studio</div>
+    <div class="flex items-center gap-5">
+      <a href="#" class="hover:text-white/70">Privacy</a>
+      <a href="#" class="hover:text-white/70">Terms</a>
+      <span class="flex items-center gap-1.5">
+        <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span>
+        All systems honey
+      </span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Password show/hide
+  (function () {
+    const btn = document.getElementById('togglePw');
+    const input = document.getElementById('password');
+    const eye = document.getElementById('pwEye');
+    const EYE_OPEN = '<path d="M2 12s3-8 10-8 10 8 10 8-3 8-10 8-10-8-10-8Z"/><circle cx="12" cy="12" r="3"/>';
+    const EYE_OFF = '<path d="M9.88 9.88a3 3 0 0 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/>';
+    btn.addEventListener('click', () => {
+      const showing = input.type === 'text';
+      input.type = showing ? 'password' : 'text';
+      eye.innerHTML = showing ? EYE_OPEN : EYE_OFF;
+      btn.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+    });
+  })();
+
+  // Strength meter — 3 states (weak / fair / strong)
+  (function () {
+    const pw = document.getElementById('password');
+    const segs = [document.getElementById('seg1'), document.getElementById('seg2'), document.getElementById('seg3')];
+    const label = document.getElementById('strengthLabel');
+    const value = document.getElementById('strengthValue');
+    const confirm = document.getElementById('confirm');
+    const confirmIcon = document.getElementById('confirmIcon');
+    const confirmHint = document.getElementById('confirmHint');
+
+    function score(p) {
+      if (!p) return 0;
+      let s = 0;
+      if (p.length >= 8) s++;
+      if (/[A-Z]/.test(p)) s++;
+      if (/[0-9]/.test(p)) s++;
+      if (/[^A-Za-z0-9]/.test(p) || p.length >= 12) s++;
+      // collapse to 0-3
+      if (s <= 1) return 1;
+      if (s === 2) return 2;
+      return 3;
+    }
+
+    function paint() {
+      const s = pw.value ? score(pw.value) : 0;
+      const classes = ['weak', 'fair', 'strong'];
+      segs.forEach((seg, i) => {
+        seg.classList.remove('weak', 'fair', 'strong');
+        if (s > i) seg.classList.add(classes[s - 1]);
+      });
+      const labels = { 0: ['8+ chars, an uppercase letter, and a number', '—', 'text-white/45'],
+                       1: ['Too weak — add length or a number', 'Weak', 'text-red-400'],
+                       2: ['Getting there — try adding a symbol', 'Fair', 'text-brand'],
+                       3: ['Nice. Solid password.', 'Strong', 'text-green-400'] };
+      const [hint, name, color] = labels[s];
+      label.textContent = hint;
+      value.textContent = name;
+      value.className = 'text-[11.5px] font-medium tnum ' + color;
+      checkMatch();
+    }
+
+    function checkMatch() {
+      const ok = pw.value && confirm.value && pw.value === confirm.value;
+      confirmIcon.style.opacity = ok ? '1' : '0';
+      confirmHint.style.opacity = ok ? '1' : '0';
+      confirmHint.className = 'text-[11.5px] mt-1.5 transition-opacity text-green-400';
+      if (confirm.value && !ok) {
+        confirm.classList.add('error');
+        confirmHint.textContent = 'Passwords don\u2019t match yet';
+        confirmHint.className = 'text-[11.5px] mt-1.5 transition-opacity text-red-400 opacity-100';
+      } else {
+        confirm.classList.remove('error');
+        if (ok) confirmHint.textContent = 'Passwords match';
+      }
+    }
+
+    pw.addEventListener('input', paint);
+    confirm.addEventListener('input', checkMatch);
+  })();
+</script>
+
+</body>
+</html>

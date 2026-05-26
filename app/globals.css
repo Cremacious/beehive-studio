@@ -1,6 +1,12 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Exclude docs/ from Tailwind v4 source scanning. Plan/spec docs sometimes
+   contain class-shaped strings (e.g. `text-[var(--type-*)]` as wildcards)
+   that would otherwise be picked up by JIT and produce invalid CSS. */
+@source not "../docs";
+@source not "../designs";
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

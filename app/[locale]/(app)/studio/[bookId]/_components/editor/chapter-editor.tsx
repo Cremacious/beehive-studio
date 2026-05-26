@@ -22,6 +22,8 @@ import { CharacterProfile } from './character-profile'
 import { FrontBackMatterRenderer, shouldUseFrontBackMatterRenderer } from '../front-back-matter'
 import { OutlineBoard } from '../outline/outline-board'
 import { NoteEditor } from '../notes/note-editor'
+import { EmptyState } from '../empty-state'
+import { BookOpen } from 'lucide-react'
 
 const CHAPTER_TYPES = new Set(['chapter', 'front_matter', 'back_matter'])
 
@@ -67,33 +69,34 @@ function EmptyStartChapter() {
 
   if (hasAnyChapters) {
     return (
-      <main className="flex-1 flex items-center justify-center p-8">
-        <div className="max-w-md text-center flex flex-col items-center gap-2">
-          <h1 className="text-lg font-medium text-foreground/80">Select a chapter to write</h1>
-          <p className="text-sm text-muted-foreground">
-            Pick a chapter from the binder on the left, or click <span className="text-brand font-semibold">+ Add</span> to create a new one.
-          </p>
-        </div>
+      <main className="flex-1 flex">
+        <EmptyState
+          title="Select a chapter to write"
+          body={
+            <>
+              Pick a chapter from the binder on the left, or click{' '}
+              <span className="text-brand font-semibold">+ Add</span> to create a new one.
+            </>
+          }
+          onEditorCanvas
+        />
       </main>
     )
   }
 
   return (
-    <main className="flex-1 flex items-center justify-center p-8">
-      <div className="max-w-md text-center flex flex-col items-center gap-4">
-        <h1 className="text-2xl font-bold font-comfortaa text-foreground">Start your first chapter</h1>
-        <p className="text-sm text-muted-foreground">
-          Your binder is empty. Create a chapter — you can rename it anytime.
-        </p>
-        <button
-          onClick={createFirstChapter}
-          disabled={creating}
-          className="inline-flex items-center gap-2 rounded-md bg-brand hover:bg-brand-hover px-4 py-2 text-sm font-semibold text-background transition-colors shadow-sm disabled:opacity-50"
-        >
-          <span className="text-base leading-none">+</span>
-          <span>{creating ? 'Creating…' : 'Start your first chapter'}</span>
-        </button>
-      </div>
+    <main className="flex-1 flex">
+      <EmptyState
+        icon={<BookOpen size={20} />}
+        title="Start your first chapter"
+        body="Your binder is empty. Create a chapter — you can rename it anytime."
+        cta={{
+          label: creating ? 'Creating…' : '+ Start your first chapter',
+          onClick: createFirstChapter,
+          disabled: creating,
+        }}
+        onEditorCanvas
+      />
     </main>
   )
 }

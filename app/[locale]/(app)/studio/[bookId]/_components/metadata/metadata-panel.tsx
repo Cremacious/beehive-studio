@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useBookEditor } from '../book-editor-provider'
+import { EmptyState } from '../empty-state'
 import { updateBinderItemAction } from '@/lib/actions/binder.actions'
 import {
   getPublishingMetadataAction,
@@ -29,11 +30,7 @@ type ChapterMeta = {
 }
 
 function EmptyPlaceholder() {
-  return (
-    <div className="flex-1 flex items-center justify-center p-4">
-      <p className="text-xs text-muted-foreground text-center">Select a chapter to see details.</p>
-    </div>
-  )
+  return <EmptyState title="No chapter selected" body="Select a chapter to see details." />
 }
 
 function ChapterMetadata() {

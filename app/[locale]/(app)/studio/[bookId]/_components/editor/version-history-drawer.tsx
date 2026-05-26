@@ -10,6 +10,7 @@ import {
   getSnapshotContentAction,
   type SnapshotSummary,
 } from '@/lib/actions/snapshot.actions'
+import { EmptyState } from '../empty-state'
 
 function formatSnapshotDate(d: Date): string {
   const now = new Date()
@@ -134,9 +135,11 @@ export function VersionHistoryDrawer() {
         )}
 
         {!loading && snapshots && snapshots.length === 0 && (
-          <p className="px-4 py-3 text-xs text-muted-foreground leading-relaxed">
-            No snapshots yet — keep writing and your chapters will be saved here automatically every minute.
-          </p>
+          <EmptyState
+            icon={<Clock size={20} />}
+            title="No snapshots yet"
+            body="Keep writing and your chapters will be saved here automatically every minute."
+          />
         )}
 
         {!loading && snapshots && snapshots.length > 0 && (

@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
+import { EmptyState } from '../empty-state'
 
 // ---------------------------------------------------------------------------
 // Text extraction helper
@@ -127,7 +128,7 @@ export function WritingAnalysis({ editorText, isOpen, onClose }: Props) {
       </div>
 
       {editorText.trim().length === 0 ? (
-        <p className="text-xs text-muted-foreground p-4">Start writing to see analysis.</p>
+        <EmptyState title="Nothing to analyze yet" body="Start writing to see analysis." />
       ) : (
         <div className="p-4 flex flex-col gap-5">
           {/* Readability */}

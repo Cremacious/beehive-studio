@@ -36,21 +36,11 @@ function EmptyPlaceholder() {
 }
 
 function ChapterMetadata() {
-  const { activeItem, activeItemId, activeChapter, wordCount, updateChapterStatus, updateChapterNotes, updateBinderItem } = useBookEditor()
+  const { activeItem, activeItemId, activeChapter, updateChapterStatus, updateChapterNotes, updateBinderItem } = useBookEditor()
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [scenePlannerOpen, setScenePlannerOpen] = useState(false)
   const titleInputRef = useRef<HTMLInputElement>(null)
   const metaTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const [wordGoal, setWordGoalState] = useState(() => {
-    if (typeof window === 'undefined') return 0
-    return parseInt(localStorage.getItem(`wcg:${activeItem!.id}`) ?? '0', 10)
-  })
-
-  function setWordGoal(val: number) {
-    setWordGoalState(val)
-    localStorage.setItem(`wcg:${activeItem!.id}`, String(val))
-  }
 
   const meta: ChapterMeta =
     activeItem?.content && typeof activeItem.content === 'object' && !Array.isArray(activeItem.content)
@@ -162,38 +152,6 @@ function ChapterMetadata() {
             ))}
           </div>
         )}
-      </div>
-
-      {wordCount > 0 && (
-        <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Words</span>
-          <span className="text-sm text-foreground">{wordCount.toLocaleString()}</span>
-        </div>
-      )}
-
-      <div className="flex flex-col gap-1.5">
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Word Goal</span>
-          {wordGoal > 0 && (
-            <span className="text-xs text-muted-foreground">{Math.round((wordCount / wordGoal) * 100)}%</span>
-          )}
-        </div>
-        {wordGoal > 0 && (
-          <div className="h-1.5 bg-surface rounded-full">
-            <div
-              className="h-full bg-brand rounded-full transition-all"
-              style={{ width: `${Math.min(100, (wordCount / wordGoal) * 100)}%` }}
-            />
-          </div>
-        )}
-        <input
-          type="number"
-          value={wordGoal || ''}
-          onChange={e => setWordGoal(parseInt(e.target.value) || 0)}
-          placeholder="Set word goal…"
-          className="bg-surface-inset border border-border rounded px-2 py-1 text-xs outline-none focus:border-brand/40 text-foreground w-full"
-          min={0}
-        />
       </div>
 
       <div className="flex flex-col gap-1.5 flex-1">

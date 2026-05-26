@@ -13,6 +13,7 @@ import TextAlign from '@tiptap/extension-text-align'
 import type { CharacterCountStorage } from '@tiptap/extensions'
 import { useBookEditor } from '../book-editor-provider'
 import { EditorToolbar } from './editor-toolbar'
+import { EditorStatusBar } from './editor-status-bar'
 import { SprintTimer } from './sprint-timer'
 import { WritingAnalysis, extractPlainText } from './writing-analysis'
 import { updateBinderItemAction, createBinderItemAction } from '@/lib/actions/binder.actions'
@@ -292,6 +293,7 @@ export function ChapterEditor() {
           />
         )}
       </div>
+      {editor && <EditorStatusBar editor={editor} />}
       <SprintTimer currentWordCount={charCount?.words() ?? wordCount} />
     </main>
   )

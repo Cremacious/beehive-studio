@@ -6,7 +6,6 @@ import type { Editor } from '@tiptap/react'
 // Side-effect import: pulls in module augmentations for all StarterKit commands
 import '@tiptap/starter-kit'
 import { useBookEditor } from '../book-editor-provider'
-import type { CharacterCountStorage } from '@tiptap/extensions'
 import { ExportModal } from '../export-modal'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import {
@@ -72,7 +71,7 @@ function Separator() {
 }
 
 export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggleFind, findOpen }: Props) {
-  const { saveStatus, wordCount, focusMode, toggleFocusMode, editorTheme, toggleEditorTheme } = useBookEditor()
+  const { focusMode, toggleFocusMode, editorTheme, toggleEditorTheme } = useBookEditor()
 
   const [showExport, setShowExport] = useState(false)
 
@@ -99,8 +98,6 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
       if (url) editor.chain().focus().setLink({ href: url }).run()
     }
   }
-
-  const charCount = editor.storage.characterCount as CharacterCountStorage | undefined
 
   return (
     <TooltipProvider>
@@ -264,25 +261,6 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
             Status + view zones sit together so Export doesn't get pushed
             off-screen by symmetric flex-1 padding. */}
         <span className="flex-1" />
-
-        {/* STATUS — fixed-width inner spans prevent toolbar shift on save/word-count
-            changes; no outer min-width so the status sits snugly next to the View zone. */}
-        <span data-slot="editor-status" className="flex items-center gap-2 text-xs text-foreground/40 tabular-nums mx-2">
-          <span
-            className={cn(
-              'inline-flex items-center gap-1 w-[64px] justify-end',
-              saveStatus === 'unsaved' && 'text-brand',
-              saveStatus === 'saving' && 'text-foreground/40 animate-pulse',
-            )}
-          >
-            {saveStatus === 'saved' && '● Saved'}
-            {saveStatus === 'saving' && '○ Saving…'}
-            {saveStatus === 'unsaved' && '● Unsaved'}
-          </span>
-          <span className="inline-block w-[64px] text-right">
-            {charCount ? `${charCount.words()} words` : wordCount > 0 ? `${wordCount.toLocaleString()} words` : ''}
-          </span>
-        </span>
 
         {/* VIEW zone (right) */}
         <div className="flex items-center gap-1">

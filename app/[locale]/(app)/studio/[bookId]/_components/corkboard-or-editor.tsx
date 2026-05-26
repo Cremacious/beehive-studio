@@ -52,9 +52,22 @@ export function CorkboardOrEditor() {
             border-color: #d0d0c8;
             color: #1a1a1a;
           }
-          [data-editor-theme="light"] [data-slot="editor-status"],
-          [data-editor-theme="light"] [data-slot="editor-status"] span {
+          /* Bottom status bar */
+          [data-editor-theme="light"] [data-slot="editor-status-bar"] {
+            background-color: #f4f4ee;
+            border-top-color: #e0e0d8;
             color: rgba(26, 26, 26, 0.7);
+          }
+          [data-editor-theme="light"] [data-slot="editor-status-bar"] button {
+            color: rgba(26, 26, 26, 0.7);
+          }
+          [data-editor-theme="light"] [data-slot="editor-status-bar"] button:hover {
+            color: #1a1a1a;
+          }
+          [data-editor-theme="light"] [data-slot="editor-status-bar"] input {
+            background-color: #fcfcfa;
+            border-color: #d0d0c8;
+            color: #1a1a1a;
           }
 
           /* ProseMirror prose body */

@@ -129,6 +129,33 @@ export async function getUserHivesAction(): Promise<ActionResult<HiveSummary[]>>
   return { success: true, data: summaries }
 }
 
+export type MyHiveSummary = {
+  id: string
+  name: string
+  memberCount: number
+  isPublic: boolean
+}
+
+export async function getMyHivesAction(): Promise<ActionResult<MyHiveSummary[]>> {
+  const userId = await requireAuth()
+
+  const memberships = await db.query.hiveMembers.findMany({
+    where: eq(hiveMembers.userId, userId),
+    with: { hive: true },
+  })
+
+  const summaries = await Promise.all(
+    memberships.map(async m => ({
+      id: m.hive.id,
+      name: m.hive.name,
+      memberCount: await getHiveMemberCount(m.hive.id),
+      isPublic: m.hive.visibility === 'PUBLIC',
+    })),
+  )
+
+  return { success: true, data: summaries }
+}
+
 export async function updateHiveAction(hiveId: string, input: {
   name?: string
   description?: string | null

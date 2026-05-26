@@ -104,6 +104,11 @@ export function ChapterEditor() {
   const [analysisOpen, setAnalysisOpen] = useState(false)
   const [findOpen, setFindOpen] = useState(false)
   const [editorText, setEditorText] = useState('')
+  // Used by the Cmd+F/Cmd+S keydown handler to scope shortcuts to focus
+  // inside the editor (or on document.body when user is between actions).
+  // Without the guard, typing in a metadata-panel textarea + Cmd+F would
+  // intercept the browser's native Find and toggle the editor's find panel.
+  const editorContainerRef = useRef<HTMLDivElement>(null)
 
   const researchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -150,10 +155,19 @@ export function ChapterEditor() {
     [activeItemId],
   )
 
-  // Keyboard shortcuts: Cmd/Ctrl+F (find), Cmd/Ctrl+S (force save)
+  // Keyboard shortcuts: Cmd/Ctrl+F (find), Cmd/Ctrl+S (force save).
+  // Scoped: only fire when focus is inside the editor container OR on
+  // document.body (which means no input is focused — user is between
+  // actions and global editor shortcuts are still appropriate). Activity
+  // inside the metadata-panel textareas is ignored.
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (!(e.metaKey || e.ctrlKey)) return
+
+      const active = document.activeElement
+      const inEditor = editorContainerRef.current?.contains(active) ?? false
+      const onBody = active === document.body || active === null
+      if (!inEditor && !onBody) return
 
       if (e.key === 'f' && editor && !editor.isDestroyed) {
         e.preventDefault()
@@ -255,6 +269,7 @@ export function ChapterEditor() {
       {findOpen && editor && <FindReplace editor={editor} onClose={() => setFindOpen(false)} />}
       <div className="flex flex-1 overflow-hidden">
         <div
+          ref={editorContainerRef}
           className="flex-1 overflow-y-auto cursor-text"
           onClick={() => {
             if (editor && !editor.isDestroyed) editor.commands.focus()

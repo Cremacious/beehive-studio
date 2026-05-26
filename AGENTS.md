@@ -14,9 +14,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-26
 >
-> **Current focus:** Editor audit COMPLETE — ready for Claude Design pass
+> **Current focus:** Phase 7.5 Community feed COMPLETE — awaiting Claude Design mocks (Prompts 2+3 churning); Phase 8 (Stripe) queued in parallel
 > **Active branch:** `main` (pushed to origin/main)
-> **Last commit:** fix(studio): add Help button + capture-phase keydown for cheatsheet (SP6 follow-up)
+> **Last commit:** feat(community): wire feed + sidebar into new /community page (Task 5)
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.
@@ -54,7 +54,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 >
 > **SP6 dev premium override:** Set `DEV_FORCE_PREMIUM=true` in `.env.local` to simulate premium status without modifying `userBilling`. Guarded to `NODE_ENV !== 'production'`. See `lib/premium.ts`.
 >
-> **Next concrete step when resuming:** kick off the Claude Design pass — provide them the current studio screenshots + brand tokens; they redesign visually, we mechanically import the result.
+> **Community/Discover boundary:** /community lives in (app) — authenticated-only personal feed. /discover lives in (public) — unauthenticated browsing. Same data (books, sparks, hives) shown differently. Don't duplicate features across both surfaces — Community shows YOUR follows' activity; Discover shows everything.
+>
+> **Next concrete step when resuming:** when Claude Design Prompts 2+3 finish churning, mocks arrive → write design-implementation plan and mechanically import. In parallel, Phase 8 (Stripe monetization) is queued and can be started anytime.
 
 ## ⚙️ Working Agreement (read this every session)
 
@@ -115,6 +117,18 @@ Files created:
 - **Notification wiring** — `NEW_FOLLOWER`, `NEW_LIKE`, `NEW_COMMENT`, `SPARK_WIN` fired inline from server actions
 - DB: `sparkVotes` (composite PK prevents double-voting), `sparkEntryComments`, `sparks` gains `wordLimit`/`creatorChoiceEntryId`/`winnerEntryId`, `sparkEntries` gains `content`/`wordCount`
 - Key files: `lib/actions/sparks.actions.ts`, `lib/actions/user-profile.actions.ts`
+
+### Phase 7.5 — Community Feed ✅ COMPLETE
+Repositioned /community from a redundant public-Hives list into the user's personal feed of activity from writers they follow, plus a right sidebar containing My Hives, Suggested Writers, and Active Sparks.
+
+- New page composition: `SuggestedWritersStrip` (top) + `FeedList` (chronological feed with cursor pagination + Load more) + right sidebar with three panels.
+- Three feed item variants: `NewChapterFeedItem`, `NewBookFeedItem`, `NewSparkFeedItem` — 30-day window.
+- New server actions in `lib/actions/community.actions.ts`: `getCommunityFeedAction`, `getSuggestedWritersAction`, `getMyActiveSparksAction`.
+- New `getMyHivesAction` in `lib/actions/hive.actions.ts` (the existing `getUserHivesAction` had a hardcoded memberCount of 0; the new one queries real counts).
+- New types in `lib/types/community.ts`.
+- Schema field name discoveries: `follows.followeeId` (not followingId), `userProfiles.avatarUrl` (not image), `books.coverUrl` (not coverImage), `books.status='PUBLISHED'` (not publishedAt), `sparkEntries.userId` (not authorId), `sparks.title` (aliased to sparkPrompt).
+- No DB migrations.
+- 119/119 tests, tsc clean.
 
 ## What's Next
 

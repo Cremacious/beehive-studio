@@ -1,126 +1,257 @@
 'use client'
 
-import { useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { cn } from '@/lib/utils'
-import type { OutlineCard } from '@/lib/outline/board'
+import { GripVertical, Trash2, Link as LinkIcon } from 'lucide-react'
+import type { Beat, BeatStatus } from './outline-board'
 
 type Props = {
-  card: OutlineCard
-  onChange: (patch: Partial<OutlineCard>) => void
+  beat: Beat
+  index: number
+  isLast: boolean
+  chapterAvailable: boolean
+  chapterTitle: string | null
+  onChange: (patch: Partial<Beat>) => void
   onDelete: () => void
-  onOpenLinkPopover: () => void   // wired in Task 4
+  onCycleStatus: () => void
+  onOpenLinkPopover: () => void
   onUnlink: () => void
   onJumpToChapter: () => void
-  chapterAvailable: boolean
 }
 
-export function OutlineCardView({
-  card, onChange, onDelete, onOpenLinkPopover, onUnlink, onJumpToChapter, chapterAvailable,
-}: Props) {
-  const [editingSynopsis, setEditingSynopsis] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
+// Status token map. Three tints from existing --status-* palette per spec §Task 4.
+// idea → cloud blue · drafting → warm yellow · done → terracotta.
+const STATUS_TOKEN: Record<BeatStatus, string> = {
+  idea: '--status-idea',
+  drafting: '--status-first-draft',
+  done: '--status-final',
+}
 
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: card.id })
-  const style = {
+export function OutlineBeatRow({
+  beat, index, isLast, chapterAvailable, chapterTitle,
+  onChange, onDelete, onCycleStatus, onOpenLinkPopover, onUnlink, onJumpToChapter,
+}: Props) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: beat.id })
+  const rowStyle = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.4 : 1,
   }
 
+  const status: BeatStatus = beat.status ?? 'idea'
+  const statusToken = STATUS_TOKEN[status]
+  const linked = !!beat.linkedChapterId
+
   return (
-    <div ref={setNodeRef} style={style} className="bg-surface-elevated border border-border rounded-md p-3 flex flex-col gap-2 group relative">
-      {/* Drag handle */}
-      <span
-        {...attributes}
-        {...listeners}
-        className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 cursor-grab text-muted-foreground text-xs"
-        aria-label="Drag card"
+    <div
+      ref={setNodeRef}
+      style={rowStyle}
+      className="group relative grid gap-3 py-3 px-2 rounded-md transition-colors"
+      data-slot="beat-row"
+      // grid-template-columns: gutter (number + drag handle) | body
+      // matches mockup .beat
+    >
+      <div
+        className="grid"
+        style={{ gridTemplateColumns: '42px 1fr', gap: 12, position: 'relative' }}
       >
-        ⠿
-      </span>
-
-      {/* Title */}
-      <input
-        type="text"
-        value={card.title}
-        onChange={e => onChange({ title: e.target.value })}
-        placeholder="Card title"
-        className="bg-transparent text-sm font-medium text-foreground outline-none placeholder-muted-foreground px-5"
-      />
-
-      {/* Synopsis */}
-      {editingSynopsis ? (
-        <textarea
-          autoFocus
-          value={card.synopsis ?? ''}
-          onChange={e => onChange({ synopsis: e.target.value })}
-          onBlur={() => setEditingSynopsis(false)}
-          onKeyDown={e => { if (e.key === 'Escape') setEditingSynopsis(false) }}
-          placeholder="Add a synopsis…"
-          rows={4}
-          className="resize-none bg-surface-inset border border-border rounded p-2 text-xs text-foreground/80 outline-none focus:border-brand/40"
-        />
-      ) : (
-        <p
-          onClick={() => setEditingSynopsis(true)}
-          className={cn(
-            'text-xs leading-relaxed cursor-text line-clamp-3 min-h-[2.5em]',
-            card.synopsis ? 'text-foreground/70' : 'text-muted-foreground/50 italic',
-          )}
+        {/* Gutter: numbered pill + drag handle + connector line down */}
+        <div
+          className="flex flex-col items-center gap-1.5 pt-0.5 relative"
+          aria-hidden
         >
-          {card.synopsis || 'Add a synopsis…'}
-        </p>
-      )}
-
-      {/* Chapter link */}
-      {card.linkedChapterId && (
-        <button
-          onClick={onJumpToChapter}
-          className={cn(
-            'text-[11px] text-left hover:underline',
-            chapterAvailable ? 'text-brand' : 'text-destructive/70',
+          {/* connector line */}
+          {!isLast && (
+            <span
+              aria-hidden
+              style={{
+                position: 'absolute',
+                left: '50%',
+                top: 30,
+                bottom: -16,
+                width: 1,
+                background: 'var(--sheet-rule-soft)',
+                transform: 'translateX(-50%)',
+              }}
+            />
           )}
-        >
-          {chapterAvailable ? '→ View chapter' : '→ Chapter unavailable'}
-        </button>
-      )}
-
-      {/* ⋯ menu trigger */}
-      <button
-        onClick={() => setMenuOpen(o => !o)}
-        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground text-xs px-1"
-        aria-label="Card actions"
-      >
-        ⋯
-      </button>
-
-      {menuOpen && (
-        <div className="absolute top-7 right-2 bg-surface-elevated border border-border rounded-md shadow-lg p-1 w-44 z-10">
-          {!card.linkedChapterId ? (
-            <button
-              onClick={() => { setMenuOpen(false); onOpenLinkPopover() }}
-              className="block w-full text-left text-xs px-2 py-1.5 rounded hover:bg-surface text-foreground/80 hover:text-foreground"
-            >
-              Link to chapter…
-            </button>
-          ) : (
-            <button
-              onClick={() => { setMenuOpen(false); onUnlink() }}
-              className="block w-full text-left text-xs px-2 py-1.5 rounded hover:bg-surface text-foreground/80 hover:text-foreground"
-            >
-              Unlink chapter
-            </button>
-          )}
-          <button
-            onClick={() => { setMenuOpen(false); onDelete() }}
-            className="block w-full text-left text-xs px-2 py-1.5 rounded hover:bg-surface text-destructive hover:text-destructive"
+          <span
+            className="inline-flex items-center justify-center font-mono font-semibold"
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: 999,
+              fontSize: 11,
+              zIndex: 1,
+              background: linked ? 'var(--color-brand)' : 'var(--sheet-bg)',
+              color: linked ? 'var(--brand-ink, oklch(0.18 0.02 60))' : 'var(--sheet-ink-muted)',
+              border: linked
+                ? '1px solid var(--color-brand)'
+                : '1px solid var(--sheet-rule)',
+              boxShadow: linked
+                ? '0 0 0 3px oklch(from var(--color-brand) l c h / 0.18)'
+                : undefined,
+            }}
           >
-            Delete card
+            {index}
+          </span>
+          <button
+            type="button"
+            {...attributes}
+            {...listeners}
+            className="opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
+            aria-label="Drag beat"
+            style={{ color: 'var(--sheet-ink-muted)' }}
+          >
+            <GripVertical className="w-3.5 h-4" />
           </button>
         </div>
-      )}
+
+        {/* Body card */}
+        <div
+          className="relative px-4 py-3 rounded-md"
+          style={{
+            background: 'var(--sheet-bg)',
+            border: '1px solid var(--sheet-rule)',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.12)',
+          }}
+        >
+          {/* Title */}
+          <h4
+            contentEditable
+            suppressContentEditableWarning
+            onBlur={e => {
+              const next = (e.currentTarget.textContent ?? '').trim()
+              if (next !== (beat.title ?? '').trim()) onChange({ title: next })
+            }}
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                ;(e.currentTarget as HTMLElement).blur()
+              }
+            }}
+            className="m-0 outline-none"
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: 15,
+              fontWeight: 600,
+              color: 'var(--sheet-ink-strong)',
+              lineHeight: 1.3,
+              letterSpacing: '-0.005em',
+            }}
+            data-placeholder="Beat title"
+          >
+            {beat.title}
+          </h4>
+
+          {/* Description */}
+          <div
+            contentEditable
+            suppressContentEditableWarning
+            onBlur={e => {
+              const next = (e.currentTarget.textContent ?? '').trim()
+              if (next !== (beat.description ?? '').trim()) onChange({ description: next })
+            }}
+            className="mt-1.5 outline-none"
+            style={{
+              fontFamily: 'var(--font-prose)',
+              fontSize: 14,
+              lineHeight: 1.55,
+              color: 'var(--sheet-ink-muted)',
+              minHeight: '1.4em',
+              whiteSpace: 'pre-wrap',
+            }}
+            data-placeholder="What happens in this beat?"
+          >
+            {beat.description ?? ''}
+          </div>
+
+          {/* Row: chapter chip + status pill */}
+          <div className="mt-2.5 flex items-center gap-2 flex-wrap">
+            {/* Linked-chapter chip */}
+            {linked ? (
+              <button
+                type="button"
+                onClick={chapterAvailable ? onJumpToChapter : undefined}
+                onDoubleClick={onUnlink}
+                title={chapterAvailable ? 'Click to open · double-click to unlink' : 'Chapter unavailable · double-click to unlink'}
+                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full"
+                style={{
+                  background: chapterAvailable
+                    ? 'oklch(from var(--color-brand) l c h / 0.18)'
+                    : 'oklch(from var(--destructive) l c h / 0.15)',
+                  color: chapterAvailable
+                    ? 'var(--color-brand)'
+                    : 'var(--destructive)',
+                  border: '1px solid oklch(from var(--color-brand) l c h / 0.28)',
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 600,
+                  fontSize: 11.5,
+                }}
+              >
+                <LinkIcon className="w-2.5 h-2.5 opacity-60" />
+                {chapterAvailable ? (chapterTitle ?? 'Linked chapter') : 'Chapter unavailable'}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={onOpenLinkPopover}
+                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full transition-colors"
+                style={{
+                  background: 'transparent',
+                  color: 'var(--sheet-ink-muted)',
+                  border: '1px dashed var(--sheet-rule)',
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 600,
+                  fontSize: 11.5,
+                }}
+              >
+                <LinkIcon className="w-2.5 h-2.5 opacity-60" />
+                Link chapter
+              </button>
+            )}
+
+            {/* Status pill — clickable, cycles idea → drafting → done → idea */}
+            <button
+              type="button"
+              onClick={onCycleStatus}
+              title="Click to cycle status"
+              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-mono lowercase"
+              style={{
+                fontSize: 10.5,
+                letterSpacing: '0.04em',
+                color: `var(${statusToken})`,
+                backgroundColor: `oklch(from var(${statusToken}) l c h / 0.18)`,
+                borderColor: `oklch(from var(${statusToken}) l c h / 0.40)`,
+                borderWidth: 1,
+                borderStyle: 'solid',
+              }}
+            >
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: 2,
+                  background: `var(${statusToken})`,
+                  display: 'inline-block',
+                }}
+              />
+              {status}
+            </button>
+          </div>
+
+          {/* Delete button — appears on hover */}
+          <button
+            type="button"
+            onClick={onDelete}
+            aria-label="Delete beat"
+            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded"
+            style={{ color: 'var(--sheet-ink-muted)' }}
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

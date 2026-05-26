@@ -9,124 +9,152 @@ import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent,
 } from '@dnd-kit/core'
 import {
-  SortableContext, horizontalListSortingStrategy,
+  SortableContext, arrayMove, verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
-import {
-  type OutlineContent, type OutlineCard, type OutlineColumn,
-  seedOutline, moveCard, moveColumn,
-} from '@/lib/outline/board'
+import { Plus } from 'lucide-react'
 import { SaveStatusBadge, type FormSaveStatus } from '../front-back-matter/save-status-badge'
-import { OutlineColumnView } from './outline-column'
+import { OutlineBeatRow } from './outline-card'
 import { ChapterLinkPopover } from './chapter-link-popover'
+
+// DP3 Task 4 — Outline Kanban → beat-sheet. Vertical sortable list of beats.
+// Legacy {columns, cards} content is flattened at render time (column order
+// preserved, column grouping discarded, status defaulted to 'idea'). The
+// first save after a legacy item is opened writes the new flat {beats} shape.
+
+// ── Types ────────────────────────────────────────────────────────────────────
+
+export type BeatStatus = 'idea' | 'drafting' | 'done'
+
+export type Beat = {
+  id: string
+  title: string
+  description?: string
+  status?: BeatStatus
+  linkedChapterId?: string | null
+}
+
+export type OutlineContent = { beats: Beat[] }
+
+type LegacyCard = {
+  id: string
+  columnId: string
+  title: string
+  description?: string
+  synopsis?: string
+  linkedChapterId?: string
+}
+type LegacyColumn = { id: string; title: string; cards?: LegacyCard[] }
+type LegacyOutlineContent = {
+  columns?: LegacyColumn[]
+  // some legacy shapes had cards as a flat array with a columnId pointer.
+  cards?: LegacyCard[]
+}
+
+export function readBeats(raw: unknown): Beat[] {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return []
+  const c = raw as Partial<OutlineContent> & LegacyOutlineContent
+  if (Array.isArray(c.beats)) return c.beats
+  // Legacy migration: flatten cards in column order. Column grouping is
+  // discarded (accepted per spec §4.5b). All migrated beats start at 'idea'.
+  if (Array.isArray(c.columns)) {
+    // Cards live either nested under columns[].cards (current shape) or as a
+    // flat top-level cards array with columnId pointers (older shape).
+    const nestedCards: LegacyCard[] = c.columns.flatMap(col => (col.cards ?? []).map(card => ({ ...card, columnId: card.columnId ?? col.id })))
+    const flatCards = Array.isArray(c.cards) ? c.cards : []
+    const allCards: LegacyCard[] = nestedCards.length > 0 ? nestedCards : flatCards
+    const colOrder = c.columns.map(col => col.id)
+    return [...allCards]
+      .sort((a, b) => {
+        const ai = colOrder.indexOf(a.columnId)
+        const bi = colOrder.indexOf(b.columnId)
+        return (ai < 0 ? colOrder.length : ai) - (bi < 0 ? colOrder.length : bi)
+      })
+      .map(card => ({
+        id: card.id,
+        title: card.title ?? '',
+        description: card.description ?? card.synopsis,
+        status: 'idea' as const,
+        linkedChapterId: card.linkedChapterId ?? null,
+      }))
+  }
+  return []
+}
+
+const STATUS_CYCLE: BeatStatus[] = ['idea', 'drafting', 'done']
+function nextStatus(s: BeatStatus | undefined): BeatStatus {
+  const i = STATUS_CYCLE.indexOf((s ?? 'idea') as BeatStatus)
+  return STATUS_CYCLE[(i + 1) % STATUS_CYCLE.length]!
+}
+
+// ── Component ────────────────────────────────────────────────────────────────
 
 type Props = { item: BinderItemRow }
 
 export function OutlineBoard({ item }: Props) {
   const { binderItems, setActiveItemId, updateBinderItem } = useBookEditor()
-  const [outline, setOutline] = useState<OutlineContent>(() => {
-    const c = item.content as OutlineContent | null
-    if (c && Array.isArray(c.columns)) return c
-    return seedOutline()
-  })
+  const [beats, setBeats] = useState<Beat[]>(() => readBeats(item.content))
   const [saveStatus, setSaveStatus] = useState<FormSaveStatus>('idle')
-  const [linkingCardId, setLinkingCardId] = useState<{ columnId: string; cardId: string } | null>(null)
+  const [linkingBeatId, setLinkingBeatId] = useState<string | null>(null)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
-  // Persist seeded content for legacy items so subsequent reloads don't re-seed.
+  // First-open migration: if content was legacy-shaped, persist the flat shape
+  // immediately so subsequent reads are stable.
   useEffect(() => {
-    const c = item.content as OutlineContent | null
-    if (!c || !Array.isArray(c.columns)) {
-      void updateBinderItemAction(item.id, { content: outline })
-      updateBinderItem(item.id, { content: outline })
+    const c = item.content as Partial<OutlineContent> | null
+    if (!c || !Array.isArray((c as OutlineContent).beats)) {
+      const next: OutlineContent = { beats }
+      void updateBinderItemAction(item.id, { content: next })
+      updateBinderItem(item.id, { content: next })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  function commit(next: OutlineContent) {
-    setOutline(next)
+  function commit(next: Beat[]) {
+    setBeats(next)
     setSaveStatus('unsaved')
     if (saveTimer.current) clearTimeout(saveTimer.current)
+    const content: OutlineContent = { beats: next }
     saveTimer.current = setTimeout(async () => {
       setSaveStatus('saving')
-      updateBinderItem(item.id, { content: next })
-      const result = await updateBinderItemAction(item.id, { content: next })
+      updateBinderItem(item.id, { content })
+      const result = await updateBinderItemAction(item.id, { content })
       setSaveStatus(result.success ? 'saved' : 'unsaved')
     }, 2000)
   }
 
-  // ─── Column ops ────────────────────────────────────────────────────────────
-  function addColumn() {
-    commit({ columns: [...outline.columns, { id: createId(), title: 'New column', cards: [] }] })
+  function addBeat() {
+    commit([...beats, { id: createId(), title: '', description: '', status: 'idea', linkedChapterId: null }])
   }
-  function patchColumn(id: string, patch: Partial<OutlineColumn>) {
-    commit({ columns: outline.columns.map(c => c.id === id ? { ...c, ...patch } : c) })
+  function patchBeat(id: string, patch: Partial<Beat>) {
+    commit(beats.map(b => b.id === id ? { ...b, ...patch } : b))
   }
-  function deleteColumn(id: string) {
-    commit({ columns: outline.columns.filter(c => c.id !== id) })
+  function deleteBeat(id: string) {
+    commit(beats.filter(b => b.id !== id))
   }
-
-  // ─── Card ops ──────────────────────────────────────────────────────────────
-  function addCard(columnId: string) {
-    commit({
-      columns: outline.columns.map(c => c.id === columnId
-        ? { ...c, cards: [...c.cards, { id: createId(), title: '' }] }
-        : c),
-    })
-  }
-  function patchCard(columnId: string, cardId: string, patch: Partial<OutlineCard>) {
-    commit({
-      columns: outline.columns.map(c => c.id === columnId
-        ? { ...c, cards: c.cards.map(card => card.id === cardId ? { ...card, ...patch } : card) }
-        : c),
-    })
-  }
-  function deleteCard(columnId: string, cardId: string) {
-    commit({
-      columns: outline.columns.map(c => c.id === columnId
-        ? { ...c, cards: c.cards.filter(card => card.id !== cardId) }
-        : c),
-    })
+  function cycleStatus(id: string) {
+    const b = beats.find(x => x.id === id)
+    if (!b) return
+    patchBeat(id, { status: nextStatus(b.status) })
   }
 
-  // ─── Drag and drop ─────────────────────────────────────────────────────────
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
     if (!over || active.id === over.id) return
-
-    const activeId = String(active.id)
-    const overId = String(over.id)
-
-    // Was a column dragged?
-    const isColumnDrag = outline.columns.some(c => c.id === activeId)
-    if (isColumnDrag) {
-      const toIndex = outline.columns.findIndex(c => c.id === overId)
-      if (toIndex < 0) return
-      commit(moveColumn(outline, activeId, toIndex))
-      return
-    }
-
-    // Otherwise it's a card drag. Find source column.
-    const sourceCol = outline.columns.find(c => c.cards.some(card => card.id === activeId))
-    if (!sourceCol) return
-
-    // The over.id may be another card OR a column id (when dropping onto a column itself).
-    const targetColAsCol = outline.columns.find(c => c.id === overId)
-    if (targetColAsCol) {
-      commit(moveCard(outline, { columnId: sourceCol.id, cardId: activeId }, { columnId: targetColAsCol.id, index: targetColAsCol.cards.length }))
-      return
-    }
-
-    const targetCol = outline.columns.find(c => c.cards.some(card => card.id === overId))
-    if (!targetCol) return
-    const targetIndex = targetCol.cards.findIndex(c => c.id === overId)
-    commit(moveCard(outline, { columnId: sourceCol.id, cardId: activeId }, { columnId: targetCol.id, index: targetIndex }))
+    const from = beats.findIndex(b => b.id === active.id)
+    const to = beats.findIndex(b => b.id === over.id)
+    if (from < 0 || to < 0) return
+    commit(arrayMove(beats, from, to))
   }
 
-  // Chapter link helpers (popover wired in Task 4)
-  function isChapterAvailable(chapterId: string | undefined): boolean {
+  function isChapterAvailable(chapterId: string | null | undefined): boolean {
     if (!chapterId) return false
     return binderItems.some(b => b.type === 'chapter' && b.chapterId === chapterId)
+  }
+  function chapterTitleFor(chapterId: string | null | undefined): string | null {
+    if (!chapterId) return null
+    const bi = binderItems.find(b => b.type === 'chapter' && b.chapterId === chapterId)
+    return bi?.title ?? null
   }
   function jumpToChapter(chapterId: string) {
     const binderItem = binderItems.find(b => b.type === 'chapter' && b.chapterId === chapterId)
@@ -134,55 +162,156 @@ export function OutlineBoard({ item }: Props) {
   }
 
   return (
-    <main className="flex-1 flex flex-col overflow-hidden">
-      <header className="flex items-center justify-between px-6 py-3 border-b border-border">
-        <div>
-          <h2 className="text-sm font-medium text-foreground">{item.title}</h2>
-          <p className="text-[10px] text-muted-foreground">Outline · Kanban board</p>
-        </div>
+    <main
+      data-slot="outline-pane"
+      key={item.id}
+      className="flex-1 flex flex-col overflow-hidden"
+    >
+      {/* Theme-aware surface vars — same bridge pattern as character-profile.
+          Dark mode: warm walnut canvas + canvas-dark inks. Light mode: cream
+          paper + paper-ink-strong for crispness. */}
+      <style>{`
+        [data-slot="outline-pane"] {
+          --sheet-canvas:     var(--background);
+          --sheet-bg:         var(--canvas-dark-100);
+          --sheet-bg-hover:   var(--canvas-dark-200);
+          --sheet-ink:        var(--canvas-dark-ink);
+          --sheet-ink-strong: var(--canvas-dark-ink-strong);
+          --sheet-ink-muted:  var(--canvas-dark-ink-muted);
+          --sheet-rule:       var(--canvas-dark-300);
+          --sheet-rule-soft:  oklch(from var(--canvas-dark-300) l c h / 0.55);
+        }
+        [data-editor-theme="light"] [data-slot="outline-pane"] {
+          --sheet-canvas:     var(--paper-200);
+          --sheet-bg:         var(--paper-100);
+          --sheet-bg-hover:   var(--paper-50);
+          --sheet-ink:        var(--paper-ink-strong);
+          --sheet-ink-strong: var(--paper-ink-strong);
+          --sheet-ink-muted:  var(--paper-ink);
+          --sheet-rule:       var(--paper-300);
+          --sheet-rule-soft:  oklch(from var(--paper-300) l c h / 0.7);
+        }
+        [data-slot="outline-pane"] [contenteditable]:focus {
+          outline: 2px solid oklch(from var(--color-brand) l c h / 0.45);
+          outline-offset: 2px;
+          border-radius: 4px;
+        }
+        [data-slot="outline-pane"] [contenteditable][data-placeholder]:empty::before {
+          content: attr(data-placeholder);
+          color: var(--sheet-ink-muted);
+          opacity: 0.55;
+          font-style: italic;
+          pointer-events: none;
+        }
+      `}</style>
+
+      <header
+        data-slot="outline-surface-head"
+        className="flex items-center gap-3 px-6 py-2.5 border-b border-border bg-surface"
+      >
+        <span
+          className="inline-block w-2 h-2 rounded-sm"
+          style={{ backgroundColor: 'var(--type-outline, oklch(0.68 0.10 200))' }}
+          aria-hidden
+        />
+        <span className="text-[10px] font-mono uppercase tracking-[0.08em] text-muted-foreground">
+          Outline
+        </span>
+        <span className="text-sm font-medium text-foreground/90 truncate">{item.title}</span>
+        <span className="text-[11px] text-muted-foreground/70">
+          · {beats.length} beat{beats.length === 1 ? '' : 's'}
+        </span>
+        <div className="flex-1" />
+        <button
+          type="button"
+          onClick={addBeat}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold"
+          style={{
+            background: 'var(--color-brand)',
+            color: 'var(--brand-ink, oklch(0.18 0.02 60))',
+          }}
+        >
+          <Plus className="w-3.5 h-3.5" />
+          Add beat
+        </button>
         <SaveStatusBadge status={saveStatus} />
       </header>
 
-      <div className="flex-1 overflow-x-auto overflow-y-hidden p-4">
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={outline.columns.map(c => c.id)} strategy={horizontalListSortingStrategy}>
-            <div className="flex items-start gap-4 h-full min-h-0">
-              {outline.columns.map(col => (
-                <OutlineColumnView
-              key={col.id}
-              column={col}
-              onChange={patch => patchColumn(col.id, patch)}
-              onDelete={() => deleteColumn(col.id)}
-              onAddCard={() => addCard(col.id)}
-              onCardChange={(cardId, patch) => patchCard(col.id, cardId, patch)}
-              onCardDelete={cardId => deleteCard(col.id, cardId)}
-              onCardOpenLinkPopover={cardId => setLinkingCardId({ columnId: col.id, cardId })}
-              onCardUnlink={cardId => patchCard(col.id, cardId, { linkedChapterId: undefined })}
-              onCardJumpToChapter={cardId => {
-                const card = col.cards.find(c => c.id === cardId)
-                if (card?.linkedChapterId) jumpToChapter(card.linkedChapterId)
+      <div
+        data-slot="outline-pane-body"
+        className="flex-1 overflow-y-auto"
+        style={{ background: 'var(--sheet-canvas)' }}
+      >
+        <div
+          className="mx-auto px-8 py-6"
+          style={{ maxWidth: 760 }}
+        >
+          {beats.length === 0 ? (
+            <button
+              type="button"
+              onClick={addBeat}
+              className="w-full mt-4 px-4 py-6 rounded-md text-sm font-semibold italic transition-colors"
+              style={{
+                background: 'transparent',
+                border: '1.5px dashed var(--sheet-rule)',
+                color: 'var(--sheet-ink-muted)',
+                fontFamily: 'var(--font-display)',
               }}
-              isChapterAvailable={isChapterAvailable}
-            />
-          ))}
+            >
+              + Add your first beat
+            </button>
+          ) : (
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={beats.map(b => b.id)} strategy={verticalListSortingStrategy}>
+                <div className="flex flex-col gap-1.5">
+                  {beats.map((beat, idx) => (
+                    <OutlineBeatRow
+                      key={beat.id}
+                      beat={beat}
+                      index={idx + 1}
+                      isLast={idx === beats.length - 1}
+                      chapterAvailable={isChapterAvailable(beat.linkedChapterId)}
+                      chapterTitle={chapterTitleFor(beat.linkedChapterId)}
+                      onChange={patch => patchBeat(beat.id, patch)}
+                      onDelete={() => deleteBeat(beat.id)}
+                      onCycleStatus={() => cycleStatus(beat.id)}
+                      onOpenLinkPopover={() => setLinkingBeatId(beat.id)}
+                      onUnlink={() => patchBeat(beat.id, { linkedChapterId: null })}
+                      onJumpToChapter={() => {
+                        if (beat.linkedChapterId) jumpToChapter(beat.linkedChapterId)
+                      }}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          )}
 
-              <button
-                onClick={addColumn}
-                className="text-xs text-muted-foreground hover:text-foreground border border-dashed border-border rounded-lg py-2 px-4 w-48 flex-shrink-0 self-start"
-              >
-                + Column
-              </button>
-            </div>
-          </SortableContext>
-        </DndContext>
+          {beats.length > 0 && (
+            <button
+              type="button"
+              onClick={addBeat}
+              className="w-full mt-3 px-4 py-3 rounded-md text-sm font-semibold italic transition-colors flex items-center justify-center gap-2"
+              style={{
+                background: 'transparent',
+                border: '1.5px dashed var(--sheet-rule)',
+                color: 'var(--sheet-ink-muted)',
+                fontFamily: 'var(--font-display)',
+              }}
+            >
+              <Plus className="w-4 h-4" />
+              Add a beat
+            </button>
+          )}
+        </div>
       </div>
 
-      {linkingCardId && (
+      {linkingBeatId && (
         <ChapterLinkPopover
           onPick={chapterId => {
-            patchCard(linkingCardId.columnId, linkingCardId.cardId, { linkedChapterId: chapterId })
+            patchBeat(linkingBeatId, { linkedChapterId: chapterId })
           }}
-          onClose={() => setLinkingCardId(null)}
+          onClose={() => setLinkingBeatId(null)}
         />
       )}
     </main>

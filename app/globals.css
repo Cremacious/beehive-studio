@@ -312,54 +312,10 @@ body {
   height: 0;
 }
 
-/* ───────────────────────────────────────────────────────────────────────────
-   Light-mode for the editor content area + its toolbar.
-   Scoped to data-editor-theme="light" so the rest of the app stays dark.
-   Toggled via the Sun/Moon button in the toolbar.
-   ─────────────────────────────────────────────────────────────────────────── */
-
-[data-editor-theme="light"] {
-  background-color: #fcfcfa;
-  color: #1a1a1a;
-}
-
-[data-editor-theme="light"] .ProseMirror {
-  color: #1a1a1a;
-  caret-color: var(--color-brand);
-}
-
-[data-editor-theme="light"] .ProseMirror h1,
-[data-editor-theme="light"] .ProseMirror h2,
-[data-editor-theme="light"] .ProseMirror h3 {
-  color: #0a0a0a;
-}
-
-[data-editor-theme="light"] .ProseMirror blockquote {
-  color: #333;
-}
-
-[data-editor-theme="light"] .ProseMirror strong {
-  color: #0a0a0a;
-}
-
-/* Editor toolbar background flips to light. Targets the [data-slot] added
-   in Task 3 so we don't accidentally style other toolbars elsewhere. */
-[data-editor-theme="light"] [data-slot="editor-toolbar"] {
-  background-color: #f4f4ee;
-  border-bottom-color: #e0e0d8;
-  color: #1a1a1a;
-}
-
-[data-editor-theme="light"] [data-slot="editor-toolbar"] button {
-  color: rgba(26, 26, 26, 0.6);
-}
-[data-editor-theme="light"] [data-slot="editor-toolbar"] button:hover {
-  color: #1a1a1a;
-  background-color: #e8e8e0;
-}
-
-/* Separator strokes lighter in light mode */
-[data-editor-theme="light"] [data-slot="editor-toolbar"] .bg-border {
-  background-color: #d0d0c8;
-}
+/* Light-mode for the editor area is applied via inline styles + a
+   React-injected <style> tag in corkboard-or-editor.tsx. The earlier
+   attempt to scope rules via `[data-editor-theme="light"] .ProseMirror`
+   here didn't reach descendants reliably (cause unclear), so we moved
+   the light-mode color injection into the component tree. See
+   corkboard-or-editor.tsx and editor-toolbar.tsx for the actual styles. */
 

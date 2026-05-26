@@ -260,14 +260,17 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
           </ToolbarButton>
         </div>
 
+        {/* Single spacer pushes everything after it to the right.
+            Status + view zones sit together so Export doesn't get pushed
+            off-screen by symmetric flex-1 padding. */}
         <span className="flex-1" />
 
-        {/* STATUS zone (center) — fixed-width to prevent toolbar shift
-            when status text or word count changes width */}
-        <span className="flex items-center gap-3 text-xs text-foreground/40 min-w-[180px] justify-end tabular-nums">
+        {/* STATUS — fixed-width inner spans prevent toolbar shift on save/word-count
+            changes; no outer min-width so the status sits snugly next to the View zone. */}
+        <span data-slot="editor-status" className="flex items-center gap-2 text-xs text-foreground/40 tabular-nums mx-2">
           <span
             className={cn(
-              'inline-flex items-center gap-1 w-[72px] justify-end',
+              'inline-flex items-center gap-1 w-[64px] justify-end',
               saveStatus === 'unsaved' && 'text-brand',
               saveStatus === 'saving' && 'text-foreground/40 animate-pulse',
             )}
@@ -276,12 +279,10 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
             {saveStatus === 'saving' && '○ Saving…'}
             {saveStatus === 'unsaved' && '● Unsaved'}
           </span>
-          <span className="inline-block w-[80px] text-right">
+          <span className="inline-block w-[64px] text-right">
             {charCount ? `${charCount.words()} words` : wordCount > 0 ? `${wordCount.toLocaleString()} words` : ''}
           </span>
         </span>
-
-        <span className="flex-1" />
 
         {/* VIEW zone (right) */}
         <div className="flex items-center gap-1">

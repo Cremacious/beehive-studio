@@ -39,6 +39,25 @@ type ToolbarButtonProps = {
   children: React.ReactNode
 }
 
+// Shared className builder so ad-hoc buttons (Sun/Moon, font-select, Export,
+// Analysis, Focus) get the same hover/active/disabled treatment as the
+// ToolbarButton wrapper. Mockup spec: 30x30 icon button, r-md (10px), chrome-400
+// default, chrome-100 + chrome-800 on hover. Active state moves to solid
+// brand-yellow per the 5-sanctioned-uses rule (vs the mockup's brand-soft tint).
+function tbtnClass({
+  isActive = false,
+  disabled = false,
+  hasLabel = false,
+}: { isActive?: boolean; disabled?: boolean; hasLabel?: boolean } = {}) {
+  return cn(
+    'inline-flex items-center justify-center rounded-[10px] transition-colors',
+    hasLabel ? 'h-[30px] gap-1.5 px-2.5 text-xs font-medium' : 'h-[30px] w-[30px]',
+    'text-foreground/65 hover:text-foreground hover:bg-surface-elevated',
+    isActive && 'bg-brand text-brand-ink hover:bg-brand-hover hover:text-brand-ink',
+    disabled && 'opacity-40 cursor-not-allowed hover:bg-transparent hover:text-foreground/65',
+  )
+}
+
 function ToolbarButton({ onClick, disabled, isActive, title, children }: ToolbarButtonProps) {
   const button = (
     <button
@@ -51,11 +70,7 @@ function ToolbarButton({ onClick, disabled, isActive, title, children }: Toolbar
       onClick={onClick}
       disabled={disabled}
       aria-label={title}
-      className={cn(
-        'text-xs px-2 py-1 rounded transition-colors',
-        'text-foreground/60 hover:text-foreground hover:bg-surface-elevated',
-        isActive && 'bg-brand/20 text-brand',
-      )}
+      className={tbtnClass({ isActive, disabled })}
     >
       {children}
     </button>
@@ -70,7 +85,7 @@ function ToolbarButton({ onClick, disabled, isActive, title, children }: Toolbar
 }
 
 function Separator() {
-  return <span className="w-px h-4 bg-border mx-1" />
+  return <span className="w-px h-[18px] bg-border mx-1.5" />
 }
 
 export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggleFind, findOpen }: Props) {
@@ -106,10 +121,10 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
     <TooltipProvider>
       <div
         data-slot="editor-toolbar"
-        className="flex items-center gap-1 px-3 py-1.5 border-b border-border bg-surface"
+        className="flex items-center gap-1 h-12 px-3.5 border-b border-border bg-surface"
       >
         {/* FORMAT zone (left) */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5">
           {/* Inline */}
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleBold().run()}
@@ -266,7 +281,7 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
         <span className="flex-1" />
 
         {/* VIEW zone (right) */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5">
           {/* Find & Replace */}
           <ToolbarButton onClick={onToggleFind} isActive={findOpen} title="Find & replace (⌘F)">
             <Search size={14} />
@@ -291,7 +306,7 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
               <button
                 onClick={toggleEditorTheme}
                 aria-label={editorTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-                className="text-xs px-2 py-1 rounded transition-colors text-foreground/60 hover:text-foreground hover:bg-surface-elevated"
+                className={tbtnClass()}
               >
                 {editorTheme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
               </button>
@@ -301,11 +316,15 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
             </TooltipContent>
           </Tooltip>
 
-          {/* Font size control */}
+          {/* Font size control — native select styled to match toolbar
+              buttons. We keep native dropdown behavior (no custom popover);
+              the rounded paper-card surface + border match the mockup's
+              .tb-select rule. */}
           <select
             value={fontSize}
             onChange={e => setFontSize(Number(e.target.value))}
-            className="text-xs bg-surface border border-border rounded px-1 py-0.5 text-foreground/60"
+            aria-label="Font size"
+            className="h-[30px] rounded-[10px] bg-surface-elevated border border-border px-2 text-xs text-foreground/80 hover:text-foreground hover:border-foreground/30 transition-colors cursor-pointer focus:outline-none focus:ring-1 focus:ring-brand/40"
           >
             {[12, 14, 16, 18, 20, 24].map(s => (
               <option key={s} value={s}>{s}px</option>
@@ -319,7 +338,7 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
                 onMouseDown={e => e.preventDefault()}
                 onClick={() => setShowExport(true)}
                 aria-label="Export book"
-                className="flex items-center gap-1 rounded px-2 py-1 text-xs text-foreground/60 hover:text-foreground hover:bg-surface-elevated transition-colors"
+                className={tbtnClass({ hasLabel: true })}
               >
                 <Download size={14} />
                 <span>Export</span>
@@ -335,12 +354,7 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
                 onMouseDown={e => e.preventDefault()}
                 onClick={onToggleAnalysis}
                 aria-label="Writing analysis"
-                className={cn(
-                  'text-xs px-2 py-1 rounded transition-colors',
-                  analysisOpen
-                    ? 'text-brand bg-brand/20'
-                    : 'text-foreground/60 hover:text-foreground hover:bg-surface-elevated',
-                )}
+                className={tbtnClass({ isActive: analysisOpen })}
               >
                 <BarChart3 size={14} />
               </button>
@@ -355,12 +369,7 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
                 onMouseDown={e => e.preventDefault()}
                 onClick={toggleFocusMode}
                 aria-label={focusMode ? 'Exit focus mode' : 'Enter focus mode'}
-                className={cn(
-                  'text-xs px-2 py-1 rounded transition-colors',
-                  focusMode
-                    ? 'text-brand bg-brand/20'
-                    : 'text-foreground/60 hover:text-foreground hover:bg-surface-elevated',
-                )}
+                className={tbtnClass({ isActive: focusMode })}
               >
                 {focusMode ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
               </button>

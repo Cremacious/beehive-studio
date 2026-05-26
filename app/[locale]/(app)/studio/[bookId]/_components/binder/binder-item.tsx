@@ -141,6 +141,7 @@ export function BinderItem({ node, depth }: Props) {
         {isCollapsible && (
           <button
             onClick={e => { e.stopPropagation(); toggleCollapsed(node.id) }}
+            aria-label={isCollapsed ? 'Expand' : 'Collapse'}
             className="text-muted-foreground text-xs w-3"
           >
             {isCollapsed ? '▸' : '▾'}

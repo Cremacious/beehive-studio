@@ -199,6 +199,7 @@ export function BinderItemMenu({ node, onRenameStart }: Props) {
       <DropdownMenuTrigger asChild>
         <button
           onClick={e => e.stopPropagation()}
+          aria-label="Item options"
           className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground text-xs ml-auto px-0.5 rounded"
         >
           ⋯

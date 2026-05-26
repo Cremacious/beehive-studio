@@ -213,6 +213,7 @@ export function BinderTree() {
             <button
               onClick={toggleCorkboardMode}
               title={corkboardMode ? 'Exit corkboard' : 'Corkboard view'}
+              aria-label={corkboardMode ? 'Exit corkboard' : 'Corkboard view'}
               className={cn("text-xs text-muted-foreground hover:text-foreground transition-colors p-0.5 rounded", corkboardMode && "text-brand")}
             >
               ⊞

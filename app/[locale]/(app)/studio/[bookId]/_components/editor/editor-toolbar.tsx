@@ -49,6 +49,7 @@ function ToolbarButton({ onClick, disabled, isActive, title, children }: Toolbar
       onMouseDown={e => e.preventDefault()}
       onClick={onClick}
       disabled={disabled}
+      aria-label={title}
       className={cn(
         'text-xs px-2 py-1 rounded transition-colors',
         'text-foreground/60 hover:text-foreground hover:bg-surface-elevated',
@@ -280,6 +281,7 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
             <TooltipTrigger asChild>
               <button
                 onClick={toggleEditorTheme}
+                aria-label={editorTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
                 className="text-xs px-2 py-1 rounded transition-colors text-foreground/60 hover:text-foreground hover:bg-surface-elevated"
               >
                 {editorTheme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
@@ -307,6 +309,7 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
               <button
                 onMouseDown={e => e.preventDefault()}
                 onClick={() => setShowExport(true)}
+                aria-label="Export book"
                 className="flex items-center gap-1 rounded px-2 py-1 text-xs text-foreground/60 hover:text-foreground hover:bg-surface-elevated transition-colors"
               >
                 <Download size={14} />
@@ -322,6 +325,7 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
               <button
                 onMouseDown={e => e.preventDefault()}
                 onClick={onToggleAnalysis}
+                aria-label="Writing analysis"
                 className={cn(
                   'text-xs px-2 py-1 rounded transition-colors',
                   analysisOpen
@@ -341,6 +345,7 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
               <button
                 onMouseDown={e => e.preventDefault()}
                 onClick={toggleFocusMode}
+                aria-label={focusMode ? 'Exit focus mode' : 'Enter focus mode'}
                 className={cn(
                   'text-xs px-2 py-1 rounded transition-colors',
                   focusMode

@@ -12,6 +12,7 @@ import {
   DropdownMenuContent,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { MoreHorizontal, Pencil, Plus, FolderInput, Trash2, ChevronLeft, ArrowUp, BookOpen } from 'lucide-react'
 
 type Props = { node: TreeNode; onRenameStart: () => void }
@@ -60,7 +61,6 @@ export function BinderItemMenu({ node, onRenameStart }: Props) {
   function handleOpenChange(next: boolean) {
     setOpen(next)
     if (!next) {
-      setConfirmingDelete(false)
       setShowMoveTo(false)
     }
   }
@@ -110,11 +110,14 @@ export function BinderItemMenu({ node, onRenameStart }: Props) {
     const result = await deleteBinderItemAction(node.id)
     if (result.success) {
       removeBinderItem(node.id)
-      setOpen(false)
     } else {
       console.error('deleteBinderItemAction failed:', result.error)
-      setConfirmingDelete(false)
     }
+  }
+
+  function openDeleteConfirm() {
+    setOpen(false)
+    setConfirmingDelete(true)
   }
 
   const menuItems = (() => {
@@ -222,30 +225,19 @@ export function BinderItemMenu({ node, onRenameStart }: Props) {
       >
         {menuItems}
 
-        {confirmingDelete ? (
-          <div className="text-xs px-2 py-1">
-            <div className="text-foreground/80 mb-1.5">Delete "{node.title}"?</div>
-            <div className="flex gap-2">
-              <button
-                onClick={handleDeleteConfirm}
-                className="text-destructive hover:text-destructive font-medium"
-              >
-                Yes
-              </button>
-              <button
-                onClick={() => setConfirmingDelete(false)}
-                className="text-foreground/60 hover:text-foreground"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        ) : (
-          <MenuItem destructive onClick={() => setConfirmingDelete(true)}>
-            <Trash2 size={14} /> Delete
-          </MenuItem>
-        )}
+        <MenuItem destructive onClick={openDeleteConfirm}>
+          <Trash2 size={14} /> Delete
+        </MenuItem>
       </DropdownMenuContent>
+      <ConfirmDialog
+        open={confirmingDelete}
+        onOpenChange={setConfirmingDelete}
+        variant="destructive"
+        title="Delete item?"
+        description={`This will permanently delete "${node.title}" and any nested items. This cannot be undone.`}
+        confirmLabel="Delete"
+        onConfirm={handleDeleteConfirm}
+      />
     </DropdownMenu>
   )
 }

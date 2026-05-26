@@ -12,34 +12,39 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-05-22
+> **Last updated:** 2026-05-26
 >
-> **Current focus:** SP4 Toolbar + modes — not started
-> **Active branch:** `main`
-> **Last commit:** feat(studio): route research_note to NoteEditor; close SP3
+> **Current focus:** SP5 Metadata + persistence — not started
+> **Active branch:** `main` (pushed to origin/main)
+> **Last commit:** fix(studio): three columns fill viewport instead of stopping at 80%
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.
 >
 > 1. ~~**SP1 Stability Pass**~~ DONE.
 > 2. ~~**SP2 Binder UX**~~ DONE.
-> 3. ~~**SP3 Specialized Editors**~~ **DONE** (2026-05-22) — Front/Back Matter (B), Outline editor (C), Research notes UX (D). All three specialized binder editors live, using the same `binderItems.content` jsonb pattern. ~113 tests, tsc clean.
-> 4. **SP4 Toolbar + modes (NEXT)** — spec drafted at `docs/superpowers/specs/2026-05-22-studio-toolbar-modes-design.md`. Reconfirm via /brainstorming. Also pick up the deferred font-size mark from SP1.
-> 5. **SP5 Metadata + persistence** — synopsis/scene-planner/notes/word-goal/status/publishing-details correctness, bottom status-bar consolidation.
+> 3. ~~**SP3 Specialized Editors**~~ DONE — Front/Back Matter, Outline, Research notes.
+> 4. ~~**SP4 Toolbar + modes**~~ **DONE** (2026-05-26) — ambient sounds finally removed; lucide icons across the entire toolbar; three-zone Format/Status/View layout; raw hex → semantic tokens; Cmd+F/Cmd+S scoped to editor; editor-area light-mode toggle (Sun/Moon, persisted to localStorage); studio columns now fill viewport. Font-size mark deferred indefinitely — Chris skipped during execution. 113/113 tests, tsc clean.
+> 5. **SP5 Metadata + persistence (NEXT)** — synopsis/scene-planner/notes/word-goal/status/publishing-details correctness, bottom status-bar consolidation.
 > 6. **SP6 New surfaces** — Snapshot UI, mobile/tablet responsive, accessibility audit (aria-labels, contrast, ? keyboard cheatsheet).
 >
 > After all six: Claude Design redesigns visually, mechanical import. Then Phase 8 (Stripe monetization) resumes.
 >
-> **Chris's working preferences (confirmed across SP1–SP3):**
+> **Chris's working preferences (confirmed across SP1–SP4):**
 > - Commits go straight to `main`, no feature branches.
 > - Per-task manual verification (don't batch).
 > - Subagent-driven execution preserves context window.
+> - Push to GitHub when asked.
 >
 > **Bug-fix posture:** the global error boundary at `app/[locale]/error.tsx` logs errors with stack + message + digest. Always start with the console error before guessing causes.
 >
 > **Specialized-editor pattern (now load-bearing):** FM/BM, Outline, and Notes all use `binderItems.content` jsonb + a render-branch in `chapter-editor.tsx`'s `!isChapterType` block. New specialized editors for other types should follow the same shape.
 >
-> **Next concrete step when resuming:** invoke `/brainstorming` against the SP4 draft spec at `docs/superpowers/specs/2026-05-22-studio-toolbar-modes-design.md` to reconfirm scope (the spec was drafted from a /design-critique pass before SP2; some items may need updating since the toolbar has been touched several times during SP1-SP3 work).
+> **SP4 light-mode gotcha:** `[data-editor-theme="light"]` rules in `globals.css` didn't apply to descendants (root cause unclear — other rules in the same file work). The working approach: inline styles on the wrapper in `corkboard-or-editor.tsx` + a React-injected `<style>` tag in the same file. Anything that needs to flip per editor theme should be added inside that `<style>` tag.
+>
+> **Studio layout note:** the studio page's outer flex now uses `h-[calc(100vh-56px)]` (nav is `h-14`) instead of `h-full`, because the parent `(app)/layout.tsx` uses `min-h-screen` not `h-screen`. Other (app) routes are unaffected.
+>
+> **Next concrete step when resuming:** invoke `/brainstorming` for SP5 (Metadata + persistence). Audit the right-side metadata panel (synopsis, scene-planner, notes, status, word-goal, publishing-details) for correctness, then design the bottom status-bar consolidation.
 
 ## ⚙️ Working Agreement (read this every session)
 

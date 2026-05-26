@@ -1,11 +1,15 @@
 'use client'
 
-import { useState } from 'react'
-import { Pin, Star, Palette, Check } from 'lucide-react'
+import { Pin, Star } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { NOTE_COLORS, NOTE_COLOR_HEX, type NoteColor } from '@/lib/notes/note-content'
+
+// TODO(DP3 follow-up): the mockup includes a hashtag-style "tag chips" row
+// with an "+ add tag" affordance. The current data model
+// (lib/notes/note-content.ts) only stores pinned/color/favorited — no tags
+// field. Tags are intentionally NOT shipped in this visual port. Adding
+// them requires a ResearchNoteContent shape extension + UI; track separately.
 
 type Props = {
   pinned: boolean
@@ -20,87 +24,82 @@ export function NoteAttributeControls({
   pinned, color, favorited,
   onPinChange, onColorChange, onFavoriteChange,
 }: Props) {
-  const [colorOpen, setColorOpen] = useState(false)
-
   return (
     <TooltipProvider>
-      <div className="flex items-center gap-1">
-        {/* Pin */}
+      <div
+        data-slot="note-attrs"
+        className="flex items-center flex-wrap gap-2"
+      >
+        {/* Color swatch row — pill container with 5 swatches + clear */}
+        <div
+          data-slot="note-swatchrow"
+          className="inline-flex items-center gap-1 px-1.5 py-1 rounded-full border"
+          style={{
+            background: 'oklch(0.78 0.04 60 / 0.10)',
+            borderColor: 'oklch(0.78 0.04 60 / 0.20)',
+          }}
+        >
+          {NOTE_COLORS.map(c => {
+            const active = color === c
+            return (
+              <Tooltip key={c}>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => onColorChange(active ? null : c)}
+                    aria-label={`Color ${c}${active ? ' (active)' : ''}`}
+                    aria-pressed={active}
+                    className={cn(
+                      'w-[14px] h-[14px] rounded-full transition-transform hover:scale-110',
+                      'border-[1.5px]',
+                    )}
+                    style={{
+                      backgroundColor: NOTE_COLOR_HEX[c],
+                      borderColor: active ? 'var(--paper-ink-strong)' : 'transparent',
+                      boxShadow: active ? '0 0 0 2px var(--paper-100)' : undefined,
+                    }}
+                  />
+                </TooltipTrigger>
+                <TooltipContent className="capitalize">{c}</TooltipContent>
+              </Tooltip>
+            )
+          })}
+        </div>
+
+        {/* Pin toggle — dashed pill off, solid brand-soft pill on */}
         <Tooltip>
           <TooltipTrigger asChild>
             <button
               onClick={() => onPinChange(!pinned)}
+              aria-pressed={pinned}
               className={cn(
-                'p-1.5 rounded transition-colors',
+                'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wide transition-colors',
                 pinned
-                  ? 'bg-brand/20 text-brand'
-                  : 'text-foreground/60 hover:text-foreground hover:bg-surface-elevated',
+                  ? 'bg-brand-soft text-brand-active border border-brand/40'
+                  : 'border border-dashed border-foreground/30 text-foreground/55 hover:text-foreground hover:border-foreground/50',
               )}
+              style={{ fontFamily: 'var(--font-display)' }}
             >
-              <Pin size={14} />
+              <Pin size={11} />
+              {pinned ? 'Pinned' : 'Pin'}
             </button>
           </TooltipTrigger>
           <TooltipContent>{pinned ? 'Unpin from top' : 'Pin to top'}</TooltipContent>
         </Tooltip>
 
-        {/* Color picker */}
-        <Popover open={colorOpen} onOpenChange={setColorOpen}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <PopoverTrigger asChild>
-                <button
-                  className={cn(
-                    'p-1.5 rounded transition-colors text-foreground/60 hover:text-foreground hover:bg-surface-elevated relative',
-                  )}
-                >
-                  <Palette size={14} />
-                  {color && (
-                    <span
-                      className="absolute bottom-0 right-0 w-1.5 h-1.5 rounded-full border border-surface"
-                      style={{ backgroundColor: NOTE_COLOR_HEX[color] }}
-                    />
-                  )}
-                </button>
-              </PopoverTrigger>
-            </TooltipTrigger>
-            <TooltipContent>Color tag</TooltipContent>
-          </Tooltip>
-          <PopoverContent className="w-auto p-2" align="end">
-            <div className="flex items-center gap-1.5">
-              {NOTE_COLORS.map(c => (
-                <button
-                  key={c}
-                  onClick={() => { onColorChange(c); setColorOpen(false) }}
-                  className="w-6 h-6 rounded-full border border-border hover:scale-110 transition-transform flex items-center justify-center"
-                  style={{ backgroundColor: NOTE_COLOR_HEX[c] }}
-                  title={c}
-                >
-                  {color === c && <Check size={12} className="text-background" />}
-                </button>
-              ))}
-              <button
-                onClick={() => { onColorChange(null); setColorOpen(false) }}
-                className="text-xs px-2 py-1 rounded text-muted-foreground hover:text-foreground hover:bg-surface-elevated ml-1"
-              >
-                Clear
-              </button>
-            </div>
-          </PopoverContent>
-        </Popover>
-
-        {/* Favorite */}
+        {/* Favorite toggle — preserves current behavior (mockup omits it; we keep) */}
         <Tooltip>
           <TooltipTrigger asChild>
             <button
               onClick={() => onFavoriteChange(!favorited)}
+              aria-pressed={favorited}
               className={cn(
-                'p-1.5 rounded transition-colors',
+                'inline-flex items-center justify-center w-[28px] h-[28px] rounded-full transition-colors',
                 favorited
-                  ? 'bg-brand/20 text-brand'
-                  : 'text-foreground/60 hover:text-foreground hover:bg-surface-elevated',
+                  ? 'bg-brand-soft text-brand-active'
+                  : 'text-foreground/55 hover:text-foreground hover:bg-surface-elevated',
               )}
             >
-              <Star size={14} fill={favorited ? 'currentColor' : 'none'} />
+              <Star size={13} fill={favorited ? 'currentColor' : 'none'} />
             </button>
           </TooltipTrigger>
           <TooltipContent>{favorited ? 'Remove favorite' : 'Mark as favorite'}</TooltipContent>

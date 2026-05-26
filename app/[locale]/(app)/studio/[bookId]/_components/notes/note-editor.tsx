@@ -91,38 +91,141 @@ export function NoteEditor({ item }: Props) {
   }
 
   return (
-    <main className="flex-1 flex flex-col overflow-hidden">
-      <header className="flex items-center justify-between px-6 py-3 border-b border-border">
-        <div className="flex items-center gap-2">
-          <h2 className="text-sm font-medium text-foreground">{item.title}</h2>
-          <span className="text-[10px] text-muted-foreground">· Research note</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <NoteAttributeControls
-            pinned={pinned}
-            color={color}
-            favorited={favorited}
-            onPinChange={v => commitAttrs({ pinned: v })}
-            onColorChange={v => commitAttrs({ color: v })}
-            onFavoriteChange={v => commitAttrs({ favorited: v })}
-          />
-          <SaveStatusBadge status={saveStatus} />
-        </div>
+    <main
+      data-slot="note-editor"
+      className="flex-1 flex flex-col overflow-hidden"
+    >
+      {/* Paper-card prose overrides — beats globals.css's .ProseMirror dark-canvas
+         palette so the note body reads on cream paper. Note cards are always
+         paper regardless of editor theme (they represent a physical note). */}
+      <style>{`
+        [data-slot="note-card"] .ProseMirror { color: var(--paper-ink); caret-color: var(--color-brand); outline: none; }
+        [data-slot="note-card"] .ProseMirror h1,
+        [data-slot="note-card"] .ProseMirror h2,
+        [data-slot="note-card"] .ProseMirror h3 { color: var(--paper-ink-strong); font-family: var(--font-display); }
+        [data-slot="note-card"] .ProseMirror h2 { font-size: 18px; margin: 1.4em 0 0.4em; }
+        [data-slot="note-card"] .ProseMirror strong { color: var(--paper-ink-strong); font-weight: 600; }
+        [data-slot="note-card"] .ProseMirror em { font-style: italic; }
+        [data-slot="note-card"] .ProseMirror blockquote { color: var(--paper-ink-muted); border-left: 3px solid oklch(0.78 0.04 60 / 0.45); padding-left: 0.9em; margin: 0.6em 0; }
+        [data-slot="note-card"] .ProseMirror p { margin: 0 0 1em; text-wrap: pretty; }
+        [data-slot="note-card"] .ProseMirror ul,
+        [data-slot="note-card"] .ProseMirror ol { padding-left: 1.2em; margin: 0 0 1em; }
+        [data-slot="note-card"] .ProseMirror li { margin: 0.3em 0; }
+        [data-slot="note-card"] .ProseMirror p.is-editor-empty:first-child::before { color: var(--paper-ink-muted); }
+      `}</style>
+      {/* Surface header — breadcrumb + name + toolbar + save badge.
+         Mirrors mockup §10's surface-head row. */}
+      <header
+        data-slot="note-surface-head"
+        className="flex items-center gap-3 px-6 py-2.5 border-b border-border bg-surface"
+      >
+        <span
+          className="inline-block w-2 h-2 rounded-sm"
+          style={{ backgroundColor: 'oklch(0.62 0.10 30)' }}
+          aria-hidden
+        />
+        <span className="text-[10px] font-mono uppercase tracking-[0.08em] text-muted-foreground">Research</span>
+        <span className="text-sm font-medium text-foreground/90 truncate">{item.title}</span>
+        <div className="flex-1" />
+        <SaveStatusBadge status={saveStatus} />
       </header>
 
-      {editor && <NoteToolbar editor={editor} />}
-
+      {/* Note pane — softly tinted canvas, scrolls. */}
       <div
+        data-slot="note-pane"
         className="flex-1 overflow-y-auto cursor-text"
         onClick={() => {
           if (editor && !editor.isDestroyed) editor.commands.focus()
         }}
+        style={{
+          background:
+            'radial-gradient(ellipse at 50% 0%, oklch(0.85 0.18 90 / 0.04), transparent 50%), var(--background)',
+        }}
       >
-        <EditorContent
-          editor={editor}
-          className="min-h-full p-6 max-w-2xl mx-auto prose prose-invert prose-sm focus:outline-none"
-          style={{ fontSize: '15px', lineHeight: '1.7' }}
-        />
+        <div className="flex flex-col items-center px-6 pt-9 pb-16">
+          {/* Toolbar floats above the card, left-aligned to the card. */}
+          <div className="w-full max-w-[600px] mb-3 flex justify-start">
+            {editor && <NoteToolbar editor={editor} />}
+          </div>
+
+          {/* The note card — paper, ruled-pad guides, red margin rule. */}
+          <article
+            data-slot="note-card"
+            className="relative w-full max-w-[600px] rounded-lg px-14 pt-16 pb-20"
+            style={{
+              background: 'var(--paper-100)',
+              color: 'var(--paper-ink)',
+              boxShadow:
+                '0 1px 0 var(--paper-50) inset, 0 2px 6px rgba(0,0,0,0.3), 0 22px 60px -16px rgba(0,0,0,0.55)',
+              backgroundImage:
+                'repeating-linear-gradient(180deg, transparent 0 27px, oklch(0.78 0.04 60 / 0.20) 27px 28px)',
+              backgroundPosition: '0 92px',
+            }}
+          >
+            {/* Red margin rule, full height */}
+            <span
+              aria-hidden
+              className="absolute top-0 bottom-0 w-px"
+              style={{ left: '44px', background: 'oklch(0.66 0.18 25 / 0.20)' }}
+            />
+
+            <h1
+              data-slot="note-title"
+              className="m-0 mb-1.5 leading-tight"
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: '28px',
+                fontWeight: 700,
+                letterSpacing: '-0.015em',
+                color: 'var(--paper-ink-strong)',
+              }}
+            >
+              {item.title}
+            </h1>
+            <div
+              data-slot="note-meta"
+              className="mb-5"
+              style={{
+                fontFamily: 'var(--font-mono, ui-monospace, monospace)',
+                fontSize: '11px',
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: 'var(--paper-400)',
+              }}
+            >
+              Research note{pinned ? ' · Pinned' : ''}
+            </div>
+
+            {/* Attribute strip — beneath title, divider line below. */}
+            <div
+              data-slot="note-attrs-strip"
+              className="flex items-center flex-wrap gap-2 pt-2 pb-4 mb-7"
+              style={{ borderBottom: '1px solid oklch(0.78 0.04 60 / 0.40)' }}
+            >
+              <NoteAttributeControls
+                pinned={pinned}
+                color={color}
+                favorited={favorited}
+                onPinChange={v => commitAttrs({ pinned: v })}
+                onColorChange={v => commitAttrs({ color: v })}
+                onFavoriteChange={v => commitAttrs({ favorited: v })}
+              />
+            </div>
+
+            {/* Note body — Newsreader prose. The legal-pad guides bleed through. */}
+            <EditorContent
+              editor={editor}
+              data-slot="note-body"
+              className="focus:outline-none"
+              style={{
+                fontFamily: 'var(--font-prose)',
+                fontSize: '16.5px',
+                lineHeight: 1.78,
+                color: 'var(--paper-ink)',
+              }}
+            />
+          </article>
+        </div>
       </div>
     </main>
   )

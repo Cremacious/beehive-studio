@@ -3,10 +3,26 @@
 import type { Editor } from '@tiptap/react'
 import '@tiptap/starter-kit'
 import { cn } from '@/lib/utils'
-import { Bold, Italic, List, ListOrdered } from 'lucide-react'
+import { Bold, Italic, List, ListOrdered, Quote } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 type Props = { editor: Editor }
+
+// Local copy of the tbtnClass pattern from editor/editor-toolbar.tsx (DP2).
+// Kept duplicated rather than imported per DP3 Task 1 Step 3 — the chapter
+// toolbar's helper is not exported and ad-hoc duplication is fine for now.
+function tbtnClass({
+  isActive = false,
+  disabled = false,
+}: { isActive?: boolean; disabled?: boolean } = {}) {
+  return cn(
+    'inline-flex items-center justify-center rounded-[10px] transition-colors',
+    'h-[28px] w-[28px]',
+    'text-foreground/65 hover:text-foreground hover:bg-surface-elevated',
+    isActive && 'bg-brand text-brand-ink hover:bg-brand-hover hover:text-brand-ink',
+    disabled && 'opacity-40 cursor-not-allowed hover:bg-transparent hover:text-foreground/65',
+  )
+}
 
 function Btn({ onClick, isActive, title, children }: {
   onClick: () => void
@@ -20,11 +36,8 @@ function Btn({ onClick, isActive, title, children }: {
         <button
           onMouseDown={e => e.preventDefault()}
           onClick={onClick}
-          className={cn(
-            'text-xs px-2 py-1 rounded transition-colors',
-            'text-foreground/60 hover:text-foreground hover:bg-surface-elevated',
-            isActive && 'bg-brand/20 text-brand',
-          )}
+          aria-label={title}
+          className={tbtnClass({ isActive })}
         >
           {children}
         </button>
@@ -37,18 +50,21 @@ function Btn({ onClick, isActive, title, children }: {
 export function NoteToolbar({ editor }: Props) {
   return (
     <TooltipProvider>
-      <div className="flex items-center gap-1 px-4 py-1.5 border-b border-border bg-surface">
+      <div
+        data-slot="note-toolbar"
+        className="inline-flex items-center gap-0.5 p-1 mx-6 mt-3 bg-surface border border-border rounded-[10px] shadow-sm self-start"
+      >
         <Btn
           onClick={() => editor.chain().focus().toggleBold().run()}
           isActive={editor.isActive('bold')}
-          title="Bold (⌘B)"
+          title="Bold (Cmd+B)"
         >
           <Bold size={14} />
         </Btn>
         <Btn
           onClick={() => editor.chain().focus().toggleItalic().run()}
           isActive={editor.isActive('italic')}
-          title="Italic (⌘I)"
+          title="Italic (Cmd+I)"
         >
           <Italic size={14} />
         </Btn>
@@ -65,6 +81,13 @@ export function NoteToolbar({ editor }: Props) {
           title="Numbered list"
         >
           <ListOrdered size={14} />
+        </Btn>
+        <Btn
+          onClick={() => editor.chain().focus().toggleBlockquote().run()}
+          isActive={editor.isActive('blockquote')}
+          title="Quote"
+        >
+          <Quote size={14} />
         </Btn>
       </div>
     </TooltipProvider>

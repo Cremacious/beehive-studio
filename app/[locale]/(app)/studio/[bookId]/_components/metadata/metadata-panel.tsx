@@ -124,35 +124,37 @@ function ChapterMetadata() {
         />
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <button
-          onClick={() => setScenePlannerOpen(o => !o)}
-          className="flex items-center justify-between text-xs text-muted-foreground uppercase tracking-wide font-medium hover:text-foreground transition-colors"
-        >
-          <span>Scene Planner</span>
-          <span>{scenePlannerOpen ? '▾' : '▸'}</span>
-        </button>
-        {scenePlannerOpen && (
-          <div className="flex flex-col gap-2">
-            {[
-              { key: 'sceneGoal', label: 'Goal', placeholder: "What does the POV character want?" },
-              { key: 'sceneConflict', label: 'Conflict', placeholder: "What stands in their way?" },
-              { key: 'sceneOutcome', label: 'Outcome', placeholder: "How does the scene end?" },
-            ].map(({ key, label, placeholder }) => (
-              <div key={key} className="flex flex-col gap-1">
-                <span className="text-xs text-muted-foreground">{label}</span>
-                <textarea
-                  key={activeItemId + '-' + key}
-                  className="resize-none bg-surface-inset rounded-md p-2 text-xs text-foreground/80 outline-none border border-border focus:border-brand/40 transition-colors leading-relaxed min-h-12"
-                  placeholder={placeholder}
-                  defaultValue={(meta as Record<string, string>)[key] ?? ''}
-                  onChange={e => handleMetaChange({ [key]: e.target.value } as Partial<ChapterMeta>)}
-                />
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      {activeItem!.type === 'chapter' && (
+        <div className="flex flex-col gap-1.5">
+          <button
+            onClick={() => setScenePlannerOpen(o => !o)}
+            className="flex items-center justify-between text-xs text-muted-foreground uppercase tracking-wide font-medium hover:text-foreground transition-colors"
+          >
+            <span>Scene Planner</span>
+            <span>{scenePlannerOpen ? '▾' : '▸'}</span>
+          </button>
+          {scenePlannerOpen && (
+            <div className="flex flex-col gap-2">
+              {[
+                { key: 'sceneGoal', label: 'Goal', placeholder: "What does the POV character want?" },
+                { key: 'sceneConflict', label: 'Conflict', placeholder: "What stands in their way?" },
+                { key: 'sceneOutcome', label: 'Outcome', placeholder: "How does the scene end?" },
+              ].map(({ key, label, placeholder }) => (
+                <div key={key} className="flex flex-col gap-1">
+                  <span className="text-xs text-muted-foreground">{label}</span>
+                  <textarea
+                    key={activeItemId + '-' + key}
+                    className="resize-none bg-surface-inset rounded-md p-2 text-xs text-foreground/80 outline-none border border-border focus:border-brand/40 transition-colors leading-relaxed min-h-12"
+                    placeholder={placeholder}
+                    defaultValue={(meta as Record<string, string>)[key] ?? ''}
+                    onChange={e => handleMetaChange({ [key]: e.target.value } as Partial<ChapterMeta>)}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="flex flex-col gap-1.5 flex-1">
         <span className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Notes</span>
@@ -211,13 +213,16 @@ function PublishingSection({ bookId }: { bookId: string }) {
         onClick={handleExpand}
         className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-[#1a1a1a] transition-colors"
       >
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-[#666]">
-            {expanded ? '▾' : '▸'} Publishing details
-          </span>
-          <span className="rounded-sm bg-[#1f1a00] px-1.5 py-0.5 text-[9px] font-semibold text-[#FFC300] border border-[#3a2e00]">
-            Premium
-          </span>
+        <div className="flex flex-col gap-0.5">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-[#666]">
+              {expanded ? '▾' : '▸'} Publishing details
+            </span>
+            <span className="rounded-sm bg-[#1f1a00] px-1.5 py-0.5 text-[9px] font-semibold text-[#FFC300] border border-[#3a2e00]">
+              Premium
+            </span>
+          </div>
+          <span className="text-[10px] text-[#555]">Applies to the whole book, not just this chapter</span>
         </div>
         {saving && <span className="text-[9px] text-[#555]">Saving…</span>}
       </button>

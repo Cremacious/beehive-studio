@@ -98,7 +98,7 @@ function EmptyStartChapter() {
 }
 
 export function ChapterEditor() {
-  const { activeItemId, activeItem, activeChapter, updateChapterContent, updateBinderItem, wordCount, flushPendingSave, pushFlash, editorTheme } =
+  const { activeItemId, activeItem, activeChapter, updateChapterContent, updateBinderItem, wordCount, flushPendingSave, pushFlash } =
     useBookEditor()
 
   const [analysisOpen, setAnalysisOpen] = useState(false)
@@ -256,10 +256,7 @@ export function ChapterEditor() {
   const charCount = editor?.storage.characterCount as CharacterCountStorage | undefined
 
   return (
-    <main
-      data-editor-theme={editorTheme}
-      className="flex-1 flex flex-col overflow-hidden relative"
-    >
+    <main className="flex-1 flex flex-col overflow-hidden relative">
       {editor && (
         <EditorToolbar
           editor={editor}

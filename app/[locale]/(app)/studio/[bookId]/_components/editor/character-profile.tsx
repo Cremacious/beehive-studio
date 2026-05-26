@@ -129,11 +129,29 @@ export function CharacterProfile({ item }: Props) {
       key={item.id}
       className="flex-1 flex flex-col overflow-hidden"
     >
-      {/* Paper-context overrides — the entire sheet renders on cream paper,
-          so we explicitly style focus rings + contenteditable placeholders in
-          paper-ink tokens. Without this, focus rings would pick up the dark
-          chrome ring color which clashes. */}
+      {/* Theme-aware surface vars. Dark editor mode: warm-coffee canvas-dark
+          chrome with high-contrast ink. Light editor mode: cream paper with
+          paper-ink-strong (one step darker than the default paper-ink) for
+          better long-prose readability — Chris's preference. */}
       <style>{`
+        [data-slot="character-sheet-pane"] {
+          --sheet-bg:         var(--canvas-dark-100);
+          --sheet-bg-inset:   var(--canvas-dark-200);
+          --sheet-canvas:     var(--background);
+          --sheet-ink:        var(--canvas-dark-ink);
+          --sheet-ink-strong: var(--canvas-dark-ink-strong);
+          --sheet-ink-muted:  var(--canvas-dark-ink-muted);
+          --sheet-rule:       var(--canvas-dark-300);
+        }
+        [data-editor-theme="light"] [data-slot="character-sheet-pane"] {
+          --sheet-bg:         var(--paper-100);
+          --sheet-bg-inset:   var(--paper-50);
+          --sheet-canvas:     var(--paper-200);
+          --sheet-ink:        var(--paper-ink-strong);
+          --sheet-ink-strong: var(--paper-ink-strong);
+          --sheet-ink-muted:  var(--paper-ink);
+          --sheet-rule:       var(--paper-300);
+        }
         [data-slot="character-sheet-pane"] [contenteditable]:focus {
           outline: 2px solid oklch(from var(--color-brand) l c h / 0.45);
           outline-offset: 2px;
@@ -141,7 +159,7 @@ export function CharacterProfile({ item }: Props) {
         }
         [data-slot="character-sheet-pane"] [contenteditable][data-placeholder]:empty::before {
           content: attr(data-placeholder);
-          color: var(--paper-ink-muted);
+          color: var(--sheet-ink-muted);
           opacity: 0.55;
           font-style: italic;
           pointer-events: none;
@@ -172,7 +190,7 @@ export function CharacterProfile({ item }: Props) {
         className="flex-1 overflow-y-auto"
         style={{
           background:
-            'radial-gradient(ellipse at 50% 0%, oklch(0.85 0.18 90 / 0.04), transparent 40%), var(--background)',
+            'radial-gradient(ellipse at 50% 0%, oklch(0.85 0.18 90 / 0.04), transparent 40%), var(--sheet-canvas)',
         }}
       >
         <div className="mx-auto max-w-[720px] px-8 pt-7 pb-14">
@@ -182,8 +200,8 @@ export function CharacterProfile({ item }: Props) {
             className="grid items-center gap-[22px] px-8 pt-7 pb-6"
             style={{
               gridTemplateColumns: '96px 1fr',
-              background: 'var(--paper-100)',
-              color: 'var(--paper-ink)',
+              background: 'var(--sheet-bg)',
+              color: 'var(--sheet-ink)',
               borderRadius: '10px 10px 4px 4px',
               boxShadow:
                 '0 1px 0 var(--paper-50) inset, 0 2px 6px rgba(0,0,0,0.3), 0 12px 32px -10px rgba(0,0,0,0.4)',
@@ -239,7 +257,7 @@ export function CharacterProfile({ item }: Props) {
                   fontWeight: 700,
                   letterSpacing: '-0.02em',
                   lineHeight: 1.1,
-                  color: 'var(--paper-ink-strong)',
+                  color: 'var(--sheet-ink-strong)',
                 }}
                 data-placeholder="Character name"
               >
@@ -252,7 +270,7 @@ export function CharacterProfile({ item }: Props) {
                   fontSize: 11.5,
                   letterSpacing: '0.06em',
                   textTransform: 'uppercase',
-                  color: 'var(--paper-ink-muted)',
+                  color: 'var(--sheet-ink-muted)',
                 }}
               >
                 <MetaPill
@@ -266,7 +284,7 @@ export function CharacterProfile({ item }: Props) {
                   placeholder="Age"
                   onCommit={v => setField('age', v || null)}
                 />
-                <span style={{ color: 'var(--paper-400)' }}>·</span>
+                <span style={{ color: 'var(--sheet-ink-muted)' }}>·</span>
                 <MetaText
                   value={c.pronouns ?? ''}
                   placeholder="Pronouns"
@@ -319,8 +337,8 @@ export function CharacterProfile({ item }: Props) {
               className="relative px-6 pt-[22px] pb-6"
               style={{
                 gridColumn: '1 / -1',
-                background: 'var(--paper-100)',
-                color: 'var(--paper-ink)',
+                background: 'var(--sheet-bg)',
+                color: 'var(--sheet-ink)',
                 borderRadius: 8,
                 boxShadow:
                   '0 1px 0 var(--paper-50) inset, 0 2px 4px rgba(0,0,0,0.25), 0 12px 24px -8px rgba(0,0,0,0.35)',
@@ -332,7 +350,7 @@ export function CharacterProfile({ item }: Props) {
                   fontSize: 10.5,
                   letterSpacing: '0.20em',
                   textTransform: 'uppercase',
-                  color: 'var(--paper-400)',
+                  color: 'var(--sheet-ink-muted)',
                   marginBottom: 4,
                 }}
               >
@@ -343,7 +361,7 @@ export function CharacterProfile({ item }: Props) {
                   fontFamily: 'var(--font-display)',
                   fontSize: 17,
                   fontWeight: 700,
-                  color: 'var(--paper-ink-strong)',
+                  color: 'var(--sheet-ink-strong)',
                   margin: '0 0 12px',
                 }}
               >
@@ -354,7 +372,7 @@ export function CharacterProfile({ item }: Props) {
                   style={{
                     fontFamily: 'var(--font-prose)',
                     fontSize: 14,
-                    color: 'var(--paper-ink-muted)',
+                    color: 'var(--sheet-ink-muted)',
                     fontStyle: 'italic',
                     margin: 0,
                   }}
@@ -396,14 +414,14 @@ export function CharacterProfile({ item }: Props) {
                           fontFamily: 'var(--font-display)',
                           fontSize: 14,
                           fontWeight: 600,
-                          color: 'var(--paper-ink-strong)',
+                          color: 'var(--sheet-ink-strong)',
                         }}
                       >
                         {rel.targetCharacterId}
                       </span>
                       <span
                         style={{
-                          color: 'var(--paper-400)',
+                          color: 'var(--sheet-ink-muted)',
                           fontFamily: 'var(--font-mono, ui-monospace, monospace)',
                         }}
                       >
@@ -414,10 +432,10 @@ export function CharacterProfile({ item }: Props) {
                           fontFamily: 'var(--font-mono, ui-monospace, monospace)',
                           fontSize: 11,
                           letterSpacing: '0.04em',
-                          color: 'var(--paper-ink-muted)',
+                          color: 'var(--sheet-ink-muted)',
                           padding: '2px 9px',
                           borderRadius: 999,
-                          background: 'var(--paper-100)',
+                          background: 'var(--sheet-bg)',
                           border: '1px solid oklch(0.78 0.04 60 / 0.25)',
                           textTransform: 'lowercase',
                         }}
@@ -432,7 +450,7 @@ export function CharacterProfile({ item }: Props) {
                         style={{
                           width: 20,
                           height: 20,
-                          color: 'var(--paper-400)',
+                          color: 'var(--sheet-ink-muted)',
                           borderRadius: 4,
                         }}
                       >
@@ -456,7 +474,7 @@ export function CharacterProfile({ item }: Props) {
                   borderRadius: 6,
                   background: 'transparent',
                   border: '1.5px dashed oklch(0.78 0.04 60 / 0.40)',
-                  color: 'var(--paper-ink-muted)',
+                  color: 'var(--sheet-ink-muted)',
                   fontFamily: 'var(--font-display)',
                   fontWeight: 600,
                   fontSize: 13,
@@ -507,8 +525,8 @@ function SectionCard({
       className="relative px-6 pt-[22px] pb-6"
       style={{
         gridColumn: full ? '1 / -1' : undefined,
-        background: 'var(--paper-100)',
-        color: 'var(--paper-ink)',
+        background: 'var(--sheet-bg)',
+        color: 'var(--sheet-ink)',
         borderRadius: 8,
         boxShadow:
           '0 1px 0 var(--paper-50) inset, 0 2px 4px rgba(0,0,0,0.25), 0 12px 24px -8px rgba(0,0,0,0.35)',
@@ -520,7 +538,7 @@ function SectionCard({
           fontSize: 10.5,
           letterSpacing: '0.20em',
           textTransform: 'uppercase',
-          color: 'var(--paper-400)',
+          color: 'var(--sheet-ink-muted)',
           marginBottom: 4,
         }}
       >
@@ -531,7 +549,7 @@ function SectionCard({
           fontFamily: 'var(--font-display)',
           fontSize: 17,
           fontWeight: 700,
-          color: 'var(--paper-ink-strong)',
+          color: 'var(--sheet-ink-strong)',
           margin: '0 0 12px',
         }}
       >
@@ -549,7 +567,7 @@ function SectionCard({
           fontFamily: 'var(--font-prose)',
           fontSize: 15,
           lineHeight: 1.65,
-          color: 'var(--paper-ink)',
+          color: 'var(--sheet-ink)',
           minHeight: '2.4em',
         }}
         data-placeholder={placeholder}
@@ -591,7 +609,7 @@ function MetaPill({
       style={{
         padding: '3px 9px',
         background: hasValue ? 'oklch(0.72 0.110 35 / 0.18)' : 'transparent',
-        color: hasValue ? 'oklch(0.42 0.110 35)' : 'var(--paper-ink-muted)',
+        color: hasValue ? 'oklch(0.42 0.110 35)' : 'var(--sheet-ink-muted)',
         borderRadius: 999,
         fontWeight: 600,
         border: hasValue ? 'none' : '1px dashed oklch(0.78 0.04 60 / 0.40)',
@@ -630,7 +648,7 @@ function MetaText({
       }}
       className="outline-none"
       style={{
-        color: 'var(--paper-ink)',
+        color: 'var(--sheet-ink)',
         fontWeight: 500,
         minWidth: 40,
       }}

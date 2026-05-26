@@ -55,6 +55,13 @@ type BookEditorContextValue = {
   setPendingRenameId: (id: string | null) => void
   editorTheme: 'dark' | 'light'
   toggleEditorTheme: () => void
+  historyOpen: boolean
+  toggleHistory: () => void
+  previewSnapshotId: string | null
+  previewSnapshotContent: unknown
+  previewSnapshotCreatedAt: Date | null
+  enterPreview: (snapshot: { id: string; content: unknown; createdAt: Date }) => void
+  exitPreview: () => void
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
@@ -93,6 +100,31 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     if (typeof window === 'undefined') return 'dark'
     return localStorage.getItem('editor-theme') === 'light' ? 'light' : 'dark'
   })
+
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [previewSnapshotId, setPreviewSnapshotId] = useState<string | null>(null)
+  const [previewSnapshotContent, setPreviewSnapshotContent] = useState<unknown>(null)
+  const [previewSnapshotCreatedAt, setPreviewSnapshotCreatedAt] = useState<Date | null>(null)
+
+  const toggleHistory = useCallback(() => {
+    setHistoryOpen(o => !o)
+  }, [])
+
+  const enterPreview = useCallback((snapshot: {
+    id: string
+    content: unknown
+    createdAt: Date
+  }) => {
+    setPreviewSnapshotId(snapshot.id)
+    setPreviewSnapshotContent(snapshot.content)
+    setPreviewSnapshotCreatedAt(snapshot.createdAt)
+  }, [])
+
+  const exitPreview = useCallback(() => {
+    setPreviewSnapshotId(null)
+    setPreviewSnapshotContent(null)
+    setPreviewSnapshotCreatedAt(null)
+  }, [])
 
   const toggleEditorTheme = useCallback(() => {
     setEditorTheme(prev => {
@@ -170,6 +202,11 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     // save lands on the correct chapter even after this switch completes.
     void flushPendingSave()
 
+    // Exit any active snapshot preview — switching items always returns to live.
+    setPreviewSnapshotId(null)
+    setPreviewSnapshotContent(null)
+    setPreviewSnapshotCreatedAt(null)
+
     if (id === null) {
       setActiveItemIdState(null)
       return
@@ -208,6 +245,11 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
   }, [])
 
   const updateChapterContent = useCallback((content: unknown) => {
+    // While a snapshot is being previewed, ignore all content updates —
+    // TipTap's onUpdate still fires from programmatic setContent calls,
+    // and we must not let snapshot content overwrite the live draft.
+    if (previewSnapshotId !== null) return
+
     setSaveStatus('unsaved')
 
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
@@ -223,7 +265,7 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
       pendingSaveRef.current = null
       await performSave(pending.itemId, pending.content)
     }, 2000)
-  }, [activeItemId, performSave])
+  }, [activeItemId, performSave, previewSnapshotId])
 
   const updateChapterStatus = useCallback(async (status: ChapterData['status']) => {
     if (!activeItemId) return
@@ -340,6 +382,13 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     setPendingRenameId,
     editorTheme,
     toggleEditorTheme,
+    historyOpen,
+    toggleHistory,
+    previewSnapshotId,
+    previewSnapshotContent,
+    previewSnapshotCreatedAt,
+    enterPreview,
+    exitPreview,
   }), [
     bookId,
     bookTitle,
@@ -370,6 +419,13 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     pendingRenameId,
     editorTheme,
     toggleEditorTheme,
+    historyOpen,
+    toggleHistory,
+    previewSnapshotId,
+    previewSnapshotContent,
+    previewSnapshotCreatedAt,
+    enterPreview,
+    exitPreview,
   ])
 
   return <BookEditorContext.Provider value={value}>{children}</BookEditorContext.Provider>

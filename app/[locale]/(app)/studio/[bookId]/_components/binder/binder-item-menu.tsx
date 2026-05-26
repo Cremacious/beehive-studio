@@ -12,6 +12,7 @@ import {
   DropdownMenuContent,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
+import { MoreHorizontal, Pencil, Plus, FolderInput, Trash2, ChevronLeft, ArrowUp, BookOpen } from 'lucide-react'
 
 type Props = { node: TreeNode; onRenameStart: () => void }
 
@@ -29,10 +30,10 @@ function MenuItem({
       role="menuitem"
       onClick={onClick}
       className={cn(
-        'text-xs px-3 py-1.5 rounded cursor-pointer hover:bg-surface flex items-center gap-2',
+        'text-[13px] px-2.5 py-2 rounded-md cursor-pointer flex items-center gap-2.5 transition-colors',
         destructive
-          ? 'text-destructive hover:text-destructive'
-          : 'text-foreground/80 hover:text-foreground',
+          ? 'text-destructive hover:bg-destructive/10 [&_svg]:text-destructive'
+          : 'text-foreground hover:bg-surface-elevated [&_svg]:text-muted-foreground hover:[&_svg]:text-foreground',
       )}
     >
       {children}
@@ -122,10 +123,10 @@ export function BinderItemMenu({ node, onRenameStart }: Props) {
         return (
           <>
             <MenuItem onClick={() => handleAddChild('chapter', 'Untitled Chapter')}>
-              Add Chapter
+              <Plus size={14} /> Add Chapter
             </MenuItem>
             <MenuItem onClick={handleRenameStart}>
-              Rename
+              <Pencil size={14} /> Rename
             </MenuItem>
             <DropdownMenuSeparator />
           </>
@@ -134,16 +135,16 @@ export function BinderItemMenu({ node, onRenameStart }: Props) {
         return (
           <>
             <MenuItem onClick={() => handleAddChild('research_note', 'Untitled Note')}>
-              Add Note
+              <Plus size={14} /> Add Note
             </MenuItem>
             <MenuItem onClick={() => handleAddChild('character', 'Untitled Character')}>
-              Add Character
+              <Plus size={14} /> Add Character
             </MenuItem>
             <MenuItem onClick={() => handleAddChild('outline', 'Untitled Outline')}>
-              Add Outline
+              <Plus size={14} /> Add Outline
             </MenuItem>
             <MenuItem onClick={handleRenameStart}>
-              Rename
+              <Pencil size={14} /> Rename
             </MenuItem>
             <DropdownMenuSeparator />
           </>
@@ -157,18 +158,18 @@ export function BinderItemMenu({ node, onRenameStart }: Props) {
           return (
             <>
               <MenuItem onClick={() => setShowMoveTo(false)}>
-                ← Back
+                <ChevronLeft size={14} /> Back
               </MenuItem>
               <DropdownMenuSeparator />
               {currentParent !== null && (
                 <MenuItem onClick={() => handleMove(null)}>
-                  ↑ Move to top level
+                  <ArrowUp size={14} /> Move to top level
                 </MenuItem>
               )}
               {collections.map(c => (
                 c.id !== currentParent ? (
                   <MenuItem key={c.id} onClick={() => handleMove(c.id)}>
-                    📖 {c.title}
+                    <BookOpen size={14} /> {c.title}
                   </MenuItem>
                 ) : null
               ))}
@@ -180,11 +181,11 @@ export function BinderItemMenu({ node, onRenameStart }: Props) {
         return (
           <>
             <MenuItem onClick={handleRenameStart}>
-              Rename
+              <Pencil size={14} /> Rename
             </MenuItem>
             {canMove && (
               <MenuItem onClick={() => setShowMoveTo(true)}>
-                Move to Collection…
+                <FolderInput size={14} /> Move to Collection…
               </MenuItem>
             )}
             <DropdownMenuSeparator />
@@ -200,14 +201,14 @@ export function BinderItemMenu({ node, onRenameStart }: Props) {
         <button
           onClick={e => e.stopPropagation()}
           aria-label="Item options"
-          className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground text-xs ml-auto px-0.5 rounded"
+          className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground hover:bg-surface inline-flex items-center justify-center w-5 h-5 rounded transition-colors"
         >
-          ⋯
+          <MoreHorizontal size={14} />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="start"
-        className="w-44 p-1"
+        className="w-52 p-1.5 rounded-lg border border-border bg-popover shadow-lg"
         onClick={e => e.stopPropagation()}
         onCloseAutoFocus={e => {
           // Only suppress focus-restoration when closing because Rename was
@@ -241,7 +242,7 @@ export function BinderItemMenu({ node, onRenameStart }: Props) {
           </div>
         ) : (
           <MenuItem destructive onClick={() => setConfirmingDelete(true)}>
-            Delete
+            <Trash2 size={14} /> Delete
           </MenuItem>
         )}
       </DropdownMenuContent>

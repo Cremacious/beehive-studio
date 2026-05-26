@@ -17,10 +17,11 @@ import { cn } from '@/lib/utils'
 import { useBookEditor } from '../book-editor-provider'
 import { BinderAddMenu } from './binder-add-menu'
 import { BinderItem } from './binder-item'
+import { BinderHiveFooter } from './binder-hive-footer'
 import { reorderBinderItemsAction } from '@/lib/actions/binder.actions'
 import { updateBookAction } from '@/lib/actions/book.actions'
 import type { BinderItemRow } from '@/lib/actions/binder.actions'
-import { CreateHiveButton } from '../create-hive-button'
+import { LayoutGrid } from 'lucide-react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -88,7 +89,7 @@ function flattenVisible(nodes: TreeNode[], collapsed: Set<string>): string[] {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function BinderTree() {
-  const { bookId, bookTitle, locale, binderItems, setBinderItems, focusMode, corkboardMode, toggleCorkboardMode } = useBookEditor()
+  const { bookId, bookTitle, binderItems, setBinderItems, focusMode, corkboardMode, toggleCorkboardMode } = useBookEditor()
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
 
   // Book title inline rename (double-click the title in the binder header)
@@ -184,52 +185,50 @@ export function BinderTree() {
 
   return (
     <BinderTreeContext.Provider value={ctxValue}>
-      <aside className="w-60 flex-shrink-0 flex flex-col bg-card border-r border-border overflow-hidden">
-        <div className="flex items-center justify-between gap-2 px-3 py-2.5 border-b border-border">
-          <span className="flex items-center gap-1.5 flex-1 min-w-0">
-            <span className="text-brand text-xs flex-shrink-0">✦</span>
-            {isRenamingBook ? (
-              <input
-                ref={bookTitleInputRef}
-                defaultValue={localBookTitle}
-                className="flex-1 min-w-0 bg-transparent border-b border-brand text-xs font-bold font-comfortaa uppercase tracking-wide outline-none text-foreground"
-                onKeyDown={e => {
-                  if (e.key === 'Enter') commitBookRename()
-                  if (e.key === 'Escape') setIsRenamingBook(false)
-                }}
-                onBlur={commitBookRename}
-              />
-            ) : (
-              <span
-                className="text-xs font-bold text-foreground font-comfortaa uppercase tracking-wide truncate cursor-pointer hover:text-brand transition-colors"
-                onDoubleClick={() => setIsRenamingBook(true)}
-                title="Double-click to rename"
-              >
-                {localBookTitle}
-              </span>
-            )}
-          </span>
-          <div className="flex items-center gap-1 flex-shrink-0">
+      <aside className="w-60 flex-shrink-0 flex flex-col bg-surface border-r border-border overflow-hidden">
+        <div className="px-3.5 pt-4 pb-3 border-b border-border">
+          <div className="text-[10px] font-mono uppercase tracking-[0.10em] text-muted-foreground mb-1.5">
+            Book
+          </div>
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              {isRenamingBook ? (
+                <input
+                  ref={bookTitleInputRef}
+                  defaultValue={localBookTitle}
+                  className="w-full bg-transparent border-b border-brand text-[15px] font-bold font-comfortaa tracking-tight outline-none text-foreground leading-tight"
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') commitBookRename()
+                    if (e.key === 'Escape') setIsRenamingBook(false)
+                  }}
+                  onBlur={commitBookRename}
+                />
+              ) : (
+                <h2
+                  className="text-[15px] font-bold text-foreground font-comfortaa tracking-tight leading-tight truncate cursor-pointer hover:text-brand transition-colors"
+                  onDoubleClick={() => setIsRenamingBook(true)}
+                  title="Double-click to rename"
+                >
+                  {localBookTitle}
+                </h2>
+              )}
+            </div>
             <button
               onClick={toggleCorkboardMode}
               title={corkboardMode ? 'Exit corkboard' : 'Corkboard view'}
               aria-label={corkboardMode ? 'Exit corkboard' : 'Corkboard view'}
-              className={cn("text-xs text-muted-foreground hover:text-foreground transition-colors p-0.5 rounded", corkboardMode && "text-brand")}
+              className={cn(
+                'flex-shrink-0 w-7 h-7 inline-flex items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-surface-elevated hover:text-foreground transition-colors',
+                corkboardMode && 'bg-brand/15 border-brand/30 text-brand',
+              )}
             >
-              ⊞
+              <LayoutGrid size={14} />
             </button>
-            <BinderAddMenu />
           </div>
-        </div>
-        <div className="px-3 py-2 border-b border-border flex flex-col gap-1">
-          <CreateHiveButton bookId={bookId} locale={locale} />
-          <p className="text-[10px] text-muted-foreground leading-snug">
-            Invite readers to give feedback on your drafts.
-          </p>
         </div>
 
         {!corkboardMode && (
-          <div className="flex-1 overflow-y-auto py-1">
+          <div className="flex-1 overflow-y-auto py-2 px-1.5 flex flex-col gap-px">
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
@@ -243,6 +242,11 @@ export function BinderTree() {
             </DndContext>
           </div>
         )}
+
+        <div className="border-t border-border px-2.5 py-3 flex flex-col gap-2 bg-surface">
+          <BinderAddMenu />
+          <BinderHiveFooter />
+        </div>
 
       </aside>
     </BinderTreeContext.Provider>

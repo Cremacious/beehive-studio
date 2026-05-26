@@ -9,27 +9,39 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
 } from '@/components/ui/dropdown-menu'
+import {
+  Plus,
+  FileText,
+  BookOpen,
+  ScrollText,
+  Folder,
+  StickyNote,
+  User as UserIcon,
+  Layout as LayoutIcon,
+  type LucideIcon,
+} from 'lucide-react'
 
 type AddOption = {
   type: BinderItemRow['type']
   label: string
   defaultTitle: string
   subtitle: string
-  icon: string
+  Icon: LucideIcon
+  tint: string
 }
 
 const MANUSCRIPT_OPTIONS: AddOption[] = [
-  { type: 'chapter',      label: 'Chapter',        defaultTitle: 'Untitled Chapter',    subtitle: 'The actual prose. Opens in the editor.',     icon: '📄' },
-  { type: 'part',         label: 'Collection',     defaultTitle: 'Untitled Collection', subtitle: 'A group of chapters (e.g., "Part One").',    icon: '📖' },
-  { type: 'front_matter', label: 'Front matter',   defaultTitle: 'Front matter',        subtitle: 'Title page, dedication, copyright.',         icon: '📑' },
-  { type: 'back_matter',  label: 'Back matter',    defaultTitle: 'Back matter',         subtitle: 'Acknowledgments, about the author.',         icon: '📑' },
+  { type: 'chapter',      label: 'Chapter',        defaultTitle: 'Untitled Chapter',    subtitle: 'The actual prose. Opens in the editor.',     Icon: FileText,   tint: 'var(--type-chapter)' },
+  { type: 'part',         label: 'Collection',     defaultTitle: 'Untitled Collection', subtitle: 'A group of chapters (e.g., "Part One").',    Icon: BookOpen,   tint: 'var(--type-chapter)' },
+  { type: 'front_matter', label: 'Front matter',   defaultTitle: 'Front matter',        subtitle: 'Title page, dedication, copyright.',         Icon: ScrollText, tint: 'var(--type-front-matter)' },
+  { type: 'back_matter',  label: 'Back matter',    defaultTitle: 'Back matter',         subtitle: 'Acknowledgments, about the author.',         Icon: ScrollText, tint: 'var(--type-back-matter)' },
 ]
 
 const RESEARCH_OPTIONS: AddOption[] = [
-  { type: 'research_folder', label: 'Research folder', defaultTitle: 'Research',           subtitle: 'Container for your reference materials.',     icon: '📁' },
-  { type: 'research_note',   label: 'Research note',   defaultTitle: 'Untitled note',      subtitle: 'Freeform notes — world-building, ideas.',     icon: '📝' },
-  { type: 'character',       label: 'Character',       defaultTitle: 'Untitled Character', subtitle: 'Name, traits, backstory for one character.',  icon: '👤' },
-  { type: 'outline',         label: 'Outline',         defaultTitle: 'Untitled Outline',   subtitle: 'Outline of a chapter or arc.',                icon: '📋' },
+  { type: 'research_folder', label: 'Research folder', defaultTitle: 'Research',           subtitle: 'Container for your reference materials.',     Icon: Folder,      tint: 'var(--type-research)' },
+  { type: 'research_note',   label: 'Research note',   defaultTitle: 'Untitled note',      subtitle: 'Freeform notes — world-building, ideas.',     Icon: StickyNote,  tint: 'var(--type-research)' },
+  { type: 'character',       label: 'Character',       defaultTitle: 'Untitled Character', subtitle: 'Name, traits, backstory for one character.',  Icon: UserIcon,    tint: 'var(--type-character)' },
+  { type: 'outline',         label: 'Outline',         defaultTitle: 'Untitled Outline',   subtitle: 'Outline of a chapter or arc.',                Icon: LayoutIcon,  tint: 'var(--type-outline)' },
 ]
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -51,12 +63,14 @@ function MenuItem({
     <div
       role="menuitem"
       onClick={onClick}
-      className="px-3 py-2 rounded cursor-pointer hover:bg-surface text-foreground/80 hover:text-foreground flex items-start gap-2"
+      className="px-2.5 py-2 rounded-md cursor-pointer hover:bg-surface-elevated text-foreground flex items-start gap-2.5 transition-colors"
     >
-      <span className="text-sm mt-0.5">{option.icon}</span>
-      <div className="flex flex-col">
-        <span className="text-xs font-medium leading-tight">{option.label}</span>
-        <span className="text-[10px] text-muted-foreground leading-tight mt-0.5">{option.subtitle}</span>
+      <span className="mt-0.5 flex-shrink-0 inline-flex items-center justify-center" style={{ color: option.tint }}>
+        <option.Icon size={14} />
+      </span>
+      <div className="flex flex-col min-w-0">
+        <span className="text-[13px] font-medium leading-tight">{option.label}</span>
+        <span className="text-[11px] text-muted-foreground leading-tight mt-0.5">{option.subtitle}</span>
       </div>
     </div>
   )
@@ -112,14 +126,14 @@ export function BinderAddMenu() {
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <button
-          className="inline-flex items-center gap-1 rounded-md bg-brand hover:bg-brand-hover px-2.5 py-1 text-xs font-semibold text-background transition-colors shadow-sm"
+          className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-brand hover:bg-brand-hover px-3 py-2 text-[13px] font-bold font-comfortaa text-brand-ink transition-colors shadow-sm tracking-tight"
           title="Add chapter, collection, character, and more"
         >
-          <span className="text-sm leading-none">+</span>
+          <Plus size={14} strokeWidth={2.5} />
           <span>Add</span>
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-72 p-1">
+      <DropdownMenuContent align="start" side="top" className="w-72 p-1.5 rounded-lg border border-border bg-popover shadow-lg">
         <SectionLabel>Manuscript</SectionLabel>
         {MANUSCRIPT_OPTIONS.map(opt => (
           <MenuItem key={opt.type} option={opt} onClick={() => handleAdd(opt)} />

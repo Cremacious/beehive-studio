@@ -10,6 +10,20 @@ import { BinderItemMenu } from './binder-item-menu'
 import { updateBinderItemAction } from '@/lib/actions/binder.actions'
 import type { BinderItemRow } from '@/lib/actions/binder.actions'
 import { NOTE_COLOR_HEX } from '@/lib/notes/note-content'
+import {
+  BookOpen,
+  FileText,
+  ScrollText,
+  Folder,
+  StickyNote,
+  User as UserIcon,
+  Layout as LayoutIcon,
+  ChevronRight,
+  GripVertical,
+  Pin,
+  Star,
+  type LucideIcon,
+} from 'lucide-react'
 
 // ─── Note decorations ─────────────────────────────────────────────────────────
 
@@ -40,15 +54,26 @@ function getNoteDecorations(item: BinderItemRow): NoteDecorations {
 
 // ─── Icon mapping ─────────────────────────────────────────────────────────────
 
-const ICONS: Record<BinderItemRow['type'], string> = {
-  part: '📖',
-  chapter: '📄',
-  front_matter: '📄',
-  back_matter: '📄',
-  research_folder: '📁',
-  research_note: '📝',
-  character: '👤',
-  outline: '📋',
+const ICONS: Record<BinderItemRow['type'], LucideIcon> = {
+  part: BookOpen,
+  chapter: FileText,
+  front_matter: ScrollText,
+  back_matter: ScrollText,
+  research_folder: Folder,
+  research_note: StickyNote,
+  character: UserIcon,
+  outline: LayoutIcon,
+}
+
+const ICON_TINTS: Record<BinderItemRow['type'], string> = {
+  part: 'var(--type-chapter)',
+  chapter: 'var(--type-chapter)',
+  front_matter: 'var(--type-front-matter)',
+  back_matter: 'var(--type-back-matter)',
+  research_folder: 'var(--type-research)',
+  research_note: 'var(--type-research)',
+  character: 'var(--type-character)',
+  outline: 'var(--type-outline)',
 }
 
 const COLLAPSIBLE_TYPES = new Set<BinderItemRow['type']>(['part', 'research_folder'])
@@ -72,7 +97,8 @@ export function BinderItem({ node, depth }: Props) {
   const isActive = activeItemId === node.id
   const isCollapsible = COLLAPSIBLE_TYPES.has(node.type)
   const isCollapsed = collapsed.has(node.id)
-  const icon = ICONS[node.type]
+  const Icon = ICONS[node.type]
+  const iconTint = ICON_TINTS[node.type]
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: node.id })
   const style = {
@@ -123,9 +149,10 @@ export function BinderItem({ node, depth }: Props) {
     <div ref={setNodeRef} style={style}>
       <div
         className={cn(
-          'group flex items-center gap-1 px-2 py-1 rounded-md cursor-pointer select-none',
-          'hover:bg-surface-elevated transition-colors',
-          isActive && 'bg-brand/10 border border-brand/20',
+          'group flex items-center gap-2 h-8 pr-2 rounded-md cursor-pointer select-none transition-colors relative',
+          'text-foreground hover:bg-surface-elevated',
+          isActive && 'bg-brand/15 text-foreground shadow-[inset_2px_0_0_var(--brand)]',
+          isRenaming && 'bg-surface-elevated',
         )}
         style={{ paddingLeft: `${8 + depth * 12}px` }}
         onClick={() => setActiveItemId(node.id)}
@@ -133,19 +160,25 @@ export function BinderItem({ node, depth }: Props) {
         <span
           {...attributes}
           {...listeners}
-          className="opacity-0 group-hover:opacity-100 cursor-grab text-muted-foreground text-xs mr-0.5"
+          className="opacity-0 group-hover:opacity-100 cursor-grab text-muted-foreground flex-shrink-0"
+          aria-label="Drag to reorder"
         >
-          ⠿
+          <GripVertical size={12} />
         </span>
 
-        {isCollapsible && (
+        {isCollapsible ? (
           <button
             onClick={e => { e.stopPropagation(); toggleCollapsed(node.id) }}
             aria-label={isCollapsed ? 'Expand' : 'Collapse'}
-            className="text-muted-foreground text-xs w-3"
+            className="text-muted-foreground flex-shrink-0 inline-flex items-center justify-center w-3.5 h-3.5"
           >
-            {isCollapsed ? '▸' : '▾'}
+            <ChevronRight
+              size={12}
+              style={{ transform: isCollapsed ? 'rotate(0deg)' : 'rotate(90deg)', transition: 'transform 0.15s' }}
+            />
           </button>
+        ) : (
+          <span className="w-3.5 flex-shrink-0" aria-hidden />
         )}
 
         {(() => {
@@ -153,26 +186,34 @@ export function BinderItem({ node, depth }: Props) {
           if (deco.colorHex) {
             return (
               <span
-                className="inline-block w-2 h-2 rounded-full mr-0.5"
+                className="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0"
                 style={{ backgroundColor: deco.colorHex }}
                 aria-label="Note color"
               />
             )
           }
-          return <span className="text-xs">{icon}</span>
+          return (
+            <span className="flex-shrink-0 inline-flex items-center justify-center" style={{ color: iconTint }}>
+              <Icon size={14} />
+            </span>
+          )
         })()}
 
         {isRenaming ? (
           <input
             ref={inputRef}
             defaultValue={node.title}
-            className="flex-1 bg-transparent border-b border-brand text-xs outline-none text-foreground"
+            className="flex-1 min-w-0 bg-background border border-brand rounded-sm text-[13px] outline-none text-foreground px-2 py-0.5 shadow-[0_0_0_3px_var(--brand-soft)]"
             onKeyDown={handleRenameKeyDown}
             onBlur={handleRenameBlur}
+            onClick={e => e.stopPropagation()}
           />
         ) : (
           <span
-            className={cn('flex-1 text-xs truncate', isActive ? 'text-brand' : 'text-foreground/70')}
+            className={cn(
+              'flex-1 text-[13px] truncate',
+              isActive ? 'font-medium text-foreground' : 'text-foreground',
+            )}
             onDoubleClick={e => {
               e.stopPropagation()
               setIsRenaming(true)
@@ -187,10 +228,10 @@ export function BinderItem({ node, depth }: Props) {
           return (
             <>
               {deco.pinned && (
-                <span className="text-[10px] text-muted-foreground mr-0.5" title="Pinned">📌</span>
+                <Pin size={10} className="text-brand flex-shrink-0" aria-label="Pinned" />
               )}
               {deco.favorited && (
-                <span className="text-[10px] text-brand mr-0.5" title="Favorite">⭐</span>
+                <Star size={10} className="text-brand flex-shrink-0" aria-label="Favorite" />
               )}
             </>
           )

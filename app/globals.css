@@ -465,6 +465,20 @@ body {
   height: 0;
 }
 
+/* Contenteditable placeholder utility — used by FM/BM previews, character
+   profile sections, and any other inline-edit surface that wants ghost text
+   when the element is empty. Scoped by `data-placeholder` attribute so it
+   doesn't fire for every empty contenteditable on the page. Per-surface
+   overrides (different ink color, italic, etc.) are layered inside that
+   surface's `<style>` block — see corkboard-or-editor.tsx, page-wrapper.tsx,
+   and character-profile.tsx. */
+[contenteditable][data-placeholder]:empty::before {
+  content: attr(data-placeholder);
+  color: var(--paper-ink-muted);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
 /* Light-mode for the editor area is applied via inline styles + a
    React-injected <style> tag in corkboard-or-editor.tsx. The earlier
    attempt to scope rules via `[data-editor-theme="light"] .ProseMirror`

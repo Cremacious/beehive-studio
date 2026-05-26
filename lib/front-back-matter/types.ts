@@ -35,12 +35,16 @@ export type DedicationFields = {
   text: string
 }
 
+// `text` may be either a legacy string (old textarea forms) or a TipTap
+// JSONContent object (new WYSIWYG previews). Stored as `unknown` to avoid
+// taking a hard dependency on TipTap's exported types in the type module.
 export type AcknowledgmentsFields = {
-  text: string
+  text: unknown
 }
 
+// `bio` follows the same legacy-string / TipTap-JSON pattern as Acknowledgments.
 export type AboutAuthorFields = {
-  bio: string
+  bio: unknown
   photoUrl?: string
   links?: Array<{ label: string; url: string }>
 }

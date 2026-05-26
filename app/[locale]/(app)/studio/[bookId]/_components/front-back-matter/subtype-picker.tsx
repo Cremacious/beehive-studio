@@ -8,42 +8,77 @@ import {
   type Subtype,
 } from '@/lib/front-back-matter/types'
 
+// DP3 Task 3 — Pill-toolbar subtype picker.
+//
+// One of the 5 sanctioned brand-yellow uses: the active subtype pill is
+// solid `bg-brand text-brand-ink`. Inactive pills are chrome-neutral. Sits
+// above the book page on the FM/BM pane. Renders for both the empty
+// (no-subtype) and active states; in the empty state, no pill is active.
+
 type Props = {
   itemId: string
   itemType: 'front_matter' | 'back_matter'
+  activeSubtype?: Subtype | null
 }
 
-export function SubtypePicker({ itemId, itemType }: Props) {
+export function SubtypePicker({ itemId, itemType, activeSubtype }: Props) {
   const { updateBinderItem } = useBookEditor()
   const options = itemType === 'front_matter' ? FRONT_MATTER_OPTIONS : BACK_MATTER_OPTIONS
-  const heading = itemType === 'front_matter'
-    ? 'What kind of front matter is this?'
-    : 'What kind of back matter is this?'
 
   async function pick(subtype: Subtype) {
+    if (subtype === activeSubtype) return
     const newContent = { subtype, fields: {} }
-    // Optimistic update so the picker is replaced by the form immediately
     updateBinderItem(itemId, { content: newContent })
     await updateBinderItemAction(itemId, { content: newContent })
   }
 
   return (
-    <main className="flex-1 flex items-center justify-center p-8">
-      <div className="max-w-xl w-full">
-        <h2 className="text-lg font-semibold text-foreground mb-4 text-center">{heading}</h2>
-        <div className="flex flex-col gap-2">
-          {options.map(opt => (
+    <div
+      data-slot="fbm-subtype-bar"
+      className="flex items-center justify-center px-6 py-3 border-b border-border bg-surface"
+    >
+      <div
+        className="inline-flex items-center gap-0 p-1 rounded-full"
+        style={{
+          background: 'var(--chrome-950, var(--background))',
+          border: '1px solid var(--border)',
+          boxShadow: 'inset 0 1px 0 rgba(0,0,0,0.3)',
+        }}
+        role="tablist"
+        aria-label={itemType === 'front_matter' ? 'Front-matter subtype' : 'Back-matter subtype'}
+      >
+        {options.map(opt => {
+          const isActive = opt.subtype === activeSubtype
+          return (
             <button
               key={opt.subtype}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
               onClick={() => pick(opt.subtype)}
-              className="flex flex-col items-start gap-1 rounded-lg border border-border p-4 text-left hover:border-brand/40 hover:bg-surface-elevated transition-colors"
+              title={opt.description}
+              className="inline-flex items-center gap-1.5 whitespace-nowrap transition-colors"
+              style={{
+                padding: '6px 14px',
+                borderRadius: 9999,
+                fontFamily: 'var(--font-display)',
+                fontSize: 13,
+                fontWeight: 600,
+                letterSpacing: '0.005em',
+                background: isActive ? 'var(--color-brand)' : 'transparent',
+                color: isActive
+                  ? 'var(--brand-ink, oklch(0.18 0.022 50))'
+                  : 'var(--muted-foreground)',
+                border: 0,
+                cursor: 'pointer',
+                boxShadow: isActive ? '0 2px 6px rgba(0,0,0,0.25)' : undefined,
+              }}
             >
-              <span className="text-sm font-medium text-foreground">{opt.label}</span>
-              <span className="text-xs text-muted-foreground">{opt.description}</span>
+              {opt.label}
             </button>
-          ))}
-        </div>
+          )
+        })}
       </div>
-    </main>
+    </div>
   )
 }

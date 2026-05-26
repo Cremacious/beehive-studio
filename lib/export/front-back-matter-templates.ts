@@ -7,6 +7,44 @@ import type {
   AboutAuthorFields,
 } from '@/lib/front-back-matter/types'
 
+// DP3 Task 3: Acknowledgments.text and AboutAuthor.bio are now `unknown` —
+// either a legacy string (from the old textarea forms) or a TipTap JSONContent
+// object (from the new WYSIWYG previews). Coerce to plain text for export so
+// the existing paragraph-splitting logic still works.
+function toPlainText(value: unknown): string {
+  if (typeof value === 'string') return value
+  if (!value || typeof value !== 'object') return ''
+  // Recursive walk over a TipTap JSON doc — pull text nodes, separate blocks
+  // with blank lines so the paragraph split below still produces <p> per block.
+  const lines: string[] = []
+  function walk(node: unknown, isBlock: boolean): void {
+    if (!node || typeof node !== 'object') return
+    const n = node as { type?: string; text?: string; content?: unknown[] }
+    if (typeof n.text === 'string') {
+      if (lines.length === 0) lines.push('')
+      lines[lines.length - 1] += n.text
+      return
+    }
+    const blockTypes = new Set([
+      'paragraph',
+      'heading',
+      'blockquote',
+      'listItem',
+      'codeBlock',
+    ])
+    const isOwnBlock = !!n.type && blockTypes.has(n.type)
+    if (isOwnBlock) lines.push('')
+    if (Array.isArray(n.content)) {
+      for (const child of n.content) walk(child, isOwnBlock || isBlock)
+    }
+  }
+  walk(value, false)
+  return lines
+    .map(l => l.trim())
+    .filter(Boolean)
+    .join('\n\n')
+}
+
 // Each function returns an HTML string. The docx pipeline (lib/export/docx.ts)
 // converts HTML to docx via html-to-docx; the epub pipeline embeds HTML directly.
 // All user-supplied fields are HTML-escaped to prevent injection.
@@ -60,9 +98,9 @@ export function renderDedication(f: DedicationFields): string {
 }
 
 export function renderAcknowledgments(f: AcknowledgmentsFields): string {
-  const paragraphs = f.text
+  const paragraphs = toPlainText(f.text)
     .split(/\n\n+/)
-    .map(p => `<p>${escapeHtml(p)}</p>`)
+    .map((p: string) => `<p>${escapeHtml(p)}</p>`)
     .join('')
   return `<div style="page-break-after:always">
     <h1 style="font-size:14pt">Acknowledgments</h1>
@@ -79,9 +117,9 @@ export function renderAboutAuthor(f: AboutAuthorFields): string {
       `<img src="${escapeHtml(f.photoUrl)}" alt="" style="max-width:2in; float:left; margin:0 12pt 6pt 0">`,
     )
   }
-  const bioParas = f.bio
+  const bioParas = toPlainText(f.bio)
     .split(/\n\n+/)
-    .map(p => `<p>${escapeHtml(p)}</p>`)
+    .map((p: string) => `<p>${escapeHtml(p)}</p>`)
     .join('')
   parts.push(bioParas)
   if (f.links && f.links.length > 0) {

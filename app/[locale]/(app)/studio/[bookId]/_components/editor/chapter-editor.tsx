@@ -10,11 +10,9 @@ import Link from '@tiptap/extension-link'
 import Typography from '@tiptap/extension-typography'
 import CharacterCount from '@tiptap/extension-character-count'
 import TextAlign from '@tiptap/extension-text-align'
-import type { CharacterCountStorage } from '@tiptap/extensions'
 import { useBookEditor } from '../book-editor-provider'
 import { EditorToolbar } from './editor-toolbar'
 import { EditorStatusBar } from './editor-status-bar'
-import { SprintTimer } from './sprint-timer'
 import { WritingAnalysis, extractPlainText } from './writing-analysis'
 import { updateBinderItemAction, createBinderItemAction } from '@/lib/actions/binder.actions'
 import { FindReplace } from './find-replace'
@@ -101,7 +99,7 @@ function EmptyStartChapter() {
 }
 
 export function ChapterEditor() {
-  const { activeItemId, activeItem, activeChapter, updateChapterContent, updateBinderItem, wordCount, flushPendingSave, pushFlash, previewSnapshotId, previewSnapshotContent } =
+  const { activeItemId, activeItem, activeChapter, updateChapterContent, updateBinderItem, flushPendingSave, pushFlash, previewSnapshotId, previewSnapshotContent } =
     useBookEditor()
 
   const [analysisOpen, setAnalysisOpen] = useState(false)
@@ -285,8 +283,6 @@ export function ChapterEditor() {
     )
   }
 
-  const charCount = editor?.storage.characterCount as CharacterCountStorage | undefined
-
   return (
     <main className="flex-1 flex flex-col overflow-hidden relative">
       {editor && (
@@ -326,7 +322,6 @@ export function ChapterEditor() {
         )}
       </div>
       {editor && <EditorStatusBar editor={editor} />}
-      <SprintTimer currentWordCount={charCount?.words() ?? wordCount} />
       <KeyboardCheatsheet />
     </main>
   )

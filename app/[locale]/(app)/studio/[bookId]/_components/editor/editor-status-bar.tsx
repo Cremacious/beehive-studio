@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import { useBookEditor } from '../book-editor-provider'
 import { updateChapterWordGoalAction } from '@/lib/actions/chapter.actions'
 import { migrateLegacyWordGoal } from '@/lib/word-goal-migration'
+import { SprintControls } from './sprint-controls'
 
 type Props = { editor: Editor }
 
@@ -63,7 +64,7 @@ export function EditorStatusBar({ editor }: Props) {
       data-slot="editor-status-bar"
       className="flex items-center justify-between gap-3 px-4 py-1.5 border-t border-border bg-surface text-xs text-foreground/60 tabular-nums"
     >
-      <div className="flex items-center gap-3">
+      <div data-slot="status-left" className="flex items-center gap-3">
         {/* Save status */}
         <span
           className={cn(
@@ -82,9 +83,9 @@ export function EditorStatusBar({ editor }: Props) {
 
         {/* Word count */}
         <span>{wordCount.toLocaleString()} words</span>
-      </div>
 
-      <div className="flex items-center gap-2">
+        <span className="text-foreground/30">·</span>
+
         {/* Word goal */}
         {editing ? (
           <>
@@ -131,6 +132,10 @@ export function EditorStatusBar({ editor }: Props) {
             Set word goal
           </button>
         )}
+      </div>
+
+      <div data-slot="status-right" className="flex items-center gap-2">
+        <SprintControls currentWordCount={wordCount} />
       </div>
     </div>
   )

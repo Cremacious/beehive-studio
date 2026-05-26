@@ -25,76 +25,76 @@ export function CorkboardOrEditor() {
     <div
       data-editor-theme={editorTheme}
       className="flex-1 flex flex-col overflow-hidden"
-      style={isLight ? { backgroundColor: '#fcfcfa', color: '#1a1a1a' } : undefined}
+      style={isLight ? { backgroundColor: 'var(--paper-100)', color: 'var(--paper-ink-strong)' } : undefined}
     >
       {isLight && (
         <style>{`
           /* Toolbar */
           [data-editor-theme="light"] [data-slot="editor-toolbar"] {
-            background-color: #f4f4ee;
-            border-bottom-color: #e0e0d8;
+            background-color: var(--paper-200);
+            border-bottom-color: var(--paper-300);
           }
           [data-editor-theme="light"] [data-slot="editor-toolbar"] button {
-            color: rgba(26, 26, 26, 0.7);
+            color: var(--paper-ink-muted);
           }
           [data-editor-theme="light"] [data-slot="editor-toolbar"] button:hover {
-            color: #1a1a1a;
-            background-color: #e8e8e0;
+            color: var(--paper-ink-strong);
+            background-color: var(--paper-200);
           }
           [data-editor-theme="light"] [data-slot="editor-toolbar"] button:disabled {
-            color: rgba(26, 26, 26, 0.3);
+            color: oklch(from var(--paper-ink) l c h / 0.3);
           }
           [data-editor-theme="light"] [data-slot="editor-toolbar"] .bg-border {
-            background-color: #d0d0c8;
+            background-color: var(--paper-400);
           }
           [data-editor-theme="light"] [data-slot="editor-toolbar"] select {
-            background-color: #fcfcfa;
-            border-color: #d0d0c8;
-            color: #1a1a1a;
+            background-color: var(--paper-50);
+            border-color: var(--paper-400);
+            color: var(--paper-ink-strong);
           }
           /* Bottom status bar */
           [data-editor-theme="light"] [data-slot="editor-status-bar"] {
-            background-color: #f4f4ee;
-            border-top-color: #e0e0d8;
-            color: rgba(26, 26, 26, 0.7);
+            background-color: var(--paper-200);
+            border-top-color: var(--paper-300);
+            color: var(--paper-ink-muted);
           }
           [data-editor-theme="light"] [data-slot="editor-status-bar"] button {
-            color: rgba(26, 26, 26, 0.7);
+            color: var(--paper-ink-muted);
           }
           [data-editor-theme="light"] [data-slot="editor-status-bar"] button:hover {
-            color: #1a1a1a;
+            color: var(--paper-ink-strong);
           }
           [data-editor-theme="light"] [data-slot="editor-status-bar"] input {
-            background-color: #fcfcfa;
-            border-color: #d0d0c8;
-            color: #1a1a1a;
+            background-color: var(--paper-50);
+            border-color: var(--paper-400);
+            color: var(--paper-ink-strong);
           }
 
           /* ProseMirror prose body */
-          [data-editor-theme="light"] .tiptap.ProseMirror { color: #1a1a1a; caret-color: var(--color-brand); }
+          [data-editor-theme="light"] .tiptap.ProseMirror { color: var(--paper-ink-strong); caret-color: var(--color-brand); }
           [data-editor-theme="light"] .tiptap.ProseMirror h1,
           [data-editor-theme="light"] .tiptap.ProseMirror h2,
-          [data-editor-theme="light"] .tiptap.ProseMirror h3 { color: #0a0a0a; }
-          [data-editor-theme="light"] .tiptap.ProseMirror strong { color: #0a0a0a; }
-          [data-editor-theme="light"] .tiptap.ProseMirror blockquote { color: #333; }
+          [data-editor-theme="light"] .tiptap.ProseMirror h3 { color: var(--paper-ink-strong); }
+          [data-editor-theme="light"] .tiptap.ProseMirror strong { color: var(--paper-ink-strong); }
+          [data-editor-theme="light"] .tiptap.ProseMirror blockquote { color: var(--paper-ink); }
 
           /* Version history drawer */
           [data-editor-theme="light"] [data-slot="version-history-drawer"] {
-            background-color: #f4f4ee;
-            border-left-color: #e0e0d8;
-            color: #1a1a1a;
+            background-color: var(--paper-200);
+            border-left-color: var(--paper-300);
+            color: var(--paper-ink-strong);
           }
           [data-editor-theme="light"] [data-slot="version-history-drawer"] button {
-            color: rgba(26, 26, 26, 0.7);
+            color: var(--paper-ink-muted);
           }
           [data-editor-theme="light"] [data-slot="version-history-drawer"] button:hover {
-            color: #1a1a1a;
-            background-color: #e8e8e0;
+            color: var(--paper-ink-strong);
+            background-color: var(--paper-200);
           }
           [data-editor-theme="light"] [data-slot="preview-banner"] {
-            background-color: rgba(255, 195, 0, 0.12);
-            border-bottom-color: rgba(255, 195, 0, 0.4);
-            color: #1a1a1a;
+            background-color: oklch(from var(--brand) l c h / 0.12);
+            border-bottom-color: oklch(from var(--brand) l c h / 0.4);
+            color: var(--paper-ink-strong);
           }
         `}</style>
       )}

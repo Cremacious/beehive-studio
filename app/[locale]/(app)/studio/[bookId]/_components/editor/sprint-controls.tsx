@@ -100,7 +100,7 @@ export function SprintControls({ currentWordCount }: Props) {
       <button
         onClick={() => setState({ type: 'setup' })}
         aria-label="Start writing sprint"
-        className="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded text-foreground/70 hover:text-foreground hover:bg-surface-elevated transition-colors"
+        className="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded text-foreground/80 hover:text-brand hover:bg-brand/10 transition-colors"
       >
         <Timer size={12} />
         <span>Start sprint</span>
@@ -111,12 +111,12 @@ export function SprintControls({ currentWordCount }: Props) {
   if (state.type === 'setup') {
     return (
       <div className="relative inline-flex items-center gap-1">
-        <span className="text-xs text-foreground/60 mr-1">Sprint:</span>
+        <span className="text-xs text-foreground mr-1">Sprint:</span>
         {DEFAULT_DURATIONS.map(m => (
           <button
             key={m}
             onClick={() => start(m)}
-            className="text-xs px-2 py-1 rounded border border-border text-foreground/80 hover:bg-surface-elevated transition-colors"
+            className="text-xs px-2 py-1 rounded border border-border text-foreground hover:text-brand hover:border-brand/40 hover:bg-brand/10 transition-colors"
           >
             {m}m
           </button>
@@ -124,7 +124,7 @@ export function SprintControls({ currentWordCount }: Props) {
         <button
           onClick={() => setState({ type: 'idle' })}
           aria-label="Cancel sprint setup"
-          className="text-xs px-1.5 py-1 text-muted-foreground hover:text-foreground transition-colors"
+          className="text-xs px-1.5 py-1 text-foreground/70 hover:text-foreground transition-colors"
         >
           Cancel
         </button>
@@ -135,20 +135,24 @@ export function SprintControls({ currentWordCount }: Props) {
   if (state.type === 'running' || state.type === 'paused') {
     return (
       <div className="inline-flex items-center gap-2">
-        <span className="inline-flex items-center gap-1 text-xs tabular-nums text-foreground/80">
+        <span
+          data-slot="sprint-time"
+          className="inline-flex items-center gap-1 text-xs tabular-nums"
+          style={{ color: 'var(--chrome-300)' }}
+        >
           <Timer size={12} className="text-brand" />
           {formatTime(state.remainingMs)}
         </span>
         {state.type === 'running' ? (
-          <button onClick={pause} aria-label="Pause sprint" className="text-foreground/60 hover:text-foreground transition-colors">
+          <button onClick={pause} aria-label="Pause sprint" className="text-foreground/80 hover:text-brand transition-colors">
             <Pause size={12} />
           </button>
         ) : (
-          <button onClick={resume} aria-label="Resume sprint" className="text-foreground/60 hover:text-foreground transition-colors">
+          <button onClick={resume} aria-label="Resume sprint" className="text-foreground/80 hover:text-brand transition-colors">
             <Play size={12} />
           </button>
         )}
-        <button onClick={stop} aria-label="Stop sprint" className="text-foreground/60 hover:text-foreground transition-colors">
+        <button onClick={stop} aria-label="Stop sprint" className="text-foreground/80 hover:text-brand transition-colors">
           <Square size={12} />
         </button>
       </div>

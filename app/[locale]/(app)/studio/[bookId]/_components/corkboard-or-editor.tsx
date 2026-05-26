@@ -69,6 +69,10 @@ export function CorkboardOrEditor() {
             border-color: var(--paper-400);
             color: var(--paper-ink-strong);
           }
+          /* Sprint time runs one shade darker than muted in both modes. */
+          [data-editor-theme="light"] [data-slot="sprint-time"] {
+            color: var(--paper-ink) !important;
+          }
 
           /* ProseMirror prose body */
           [data-editor-theme="light"] .tiptap.ProseMirror { color: var(--paper-ink-strong); caret-color: var(--color-brand); }

@@ -14,9 +14,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-26
 >
-> **Current focus:** SP6 New surfaces — not started
+> **Current focus:** Editor audit COMPLETE — ready for Claude Design pass
 > **Active branch:** `main` (pushed to origin/main)
-> **Last commit:** feat(studio): hide Scene Planner on front/back matter; label Publishing as book-level
+> **Last commit:** fix(studio): add Help button + capture-phase keydown for cheatsheet (SP6 follow-up)
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.
@@ -25,10 +25,10 @@ This version has breaking changes — APIs, conventions, and file structure may 
 > 2. ~~**SP2 Binder UX**~~ DONE.
 > 3. ~~**SP3 Specialized Editors**~~ DONE — Front/Back Matter, Outline, Research notes.
 > 4. ~~**SP4 Toolbar + modes**~~ DONE — ambient sounds removed; lucide icons; three-zone Format/Status/View; semantic tokens; Cmd+F/Cmd+S scoped to editor; editor light-mode toggle; studio columns fill viewport.
-> 5. ~~**SP5 Metadata + persistence**~~ **DONE** (2026-05-26) — bottom status bar (save indicator + word count + inline-editable word goal) replaces toolbar STATUS zone and metadata-panel Words/Word-Goal sections; word goal moved from per-device localStorage to `chapters.wordGoal` DB column with lazy migration helper; Publishing details expander gained "Applies to the whole book" subtitle; Scene Planner now only renders for `type === 'chapter'` (hidden on Front/Back Matter). 119/119 tests, tsc clean.
-> 6. **SP6 New surfaces (NEXT)** — Snapshot UI, mobile/tablet responsive, accessibility audit (aria-labels, contrast, ? keyboard cheatsheet).
+> 5. ~~**SP5 Metadata + persistence**~~ DONE — bottom status bar (save indicator + word count + inline-editable word goal); word goal moved to `chapters.wordGoal` DB column with lazy migration helper; Publishing details labeled as book-level; Scene Planner hidden on Front/Back Matter.
+> 6. ~~**SP6 New surfaces**~~ **DONE** (2026-05-26) — Snapshot UI (right-side drawer, preview-then-confirm restore, premium-gated with upsell); aria-labels on all icon-only editor buttons; `?` keyboard cheatsheet modal (Ctrl+/ + Help button trigger). Mobile/tablet responsive deferred — Claude Design pass will repaint the studio. 119/119 tests, tsc clean.
 >
-> After all six: Claude Design redesigns visually, mechanical import. Then Phase 8 (Stripe monetization) resumes.
+> All six audit sub-projects complete. **Next: Claude Design visual pass**, then Phase 8 (Stripe monetization) resumes.
 >
 > **Chris's working preferences (confirmed across SP1–SP4):**
 > - Commits go straight to `main`, no feature branches.
@@ -46,7 +46,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
 >
 > **SP5 word-goal pattern:** word goal lives on `chapters.wordGoal` (int, default 0 = "no goal"). The bottom status bar (`editor-status-bar.tsx`) owns the UI; `lib/word-goal-migration.ts` is a pure helper that ports pre-SP5 `wcg:<binderItemId>` localStorage keys to DB on first chapter load, then deletes the key. Future per-chapter settings should follow the same shape (DB column + chapter action + status-bar inline edit) rather than localStorage.
 >
-> **Next concrete step when resuming:** invoke `/brainstorming` for SP6 (New surfaces — Snapshot UI, mobile/tablet responsive, accessibility audit).
+> **SP6 snapshot-preview pattern:** `previewSnapshotId` in the provider gates `updateChapterContent` so autosave can't clobber the live draft while previewing a snapshot. Exit re-renders live content via a `wasPreviewingRef` so typing isn't reset every keystroke.
+>
+> **SP6 right-panel slot pattern:** `RightPanelSlot` client component (in `_components/right-panel-slot.tsx`) switches between `MetadataPanel` and `VersionHistoryDrawer` based on `historyOpen`. Future right-side overlays should follow the same shape.
+>
+> **SP6 cheatsheet trigger gotcha:** Bare `?` doesn't work in writing apps because the editor surface is contenteditable and `?` types into prose. We use Ctrl+/ (modifier) + a Help button (HelpCircle) in the toolbar that dispatches a `beehive:toggle-cheatsheet` custom event the modal listens for.
+>
+> **SP6 dev premium override:** Set `DEV_FORCE_PREMIUM=true` in `.env.local` to simulate premium status without modifying `userBilling`. Guarded to `NODE_ENV !== 'production'`. See `lib/premium.ts`.
+>
+> **Next concrete step when resuming:** kick off the Claude Design pass — provide them the current studio screenshots + brand tokens; they redesign visually, we mechanically import the result.
 
 ## ⚙️ Working Agreement (read this every session)
 

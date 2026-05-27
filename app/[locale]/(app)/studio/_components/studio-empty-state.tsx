@@ -5,8 +5,6 @@ type Props = {
   templates: { id: string; name: string; genre: string | null }[]
 }
 
-const TEMPLATE_CHIPS = ['Novel', 'Memoir', 'Short stories', 'Non-fiction'] as const
-
 function PlaceholderSlot() {
   return (
     <div
@@ -296,45 +294,6 @@ export function StudioEmptyState({ locale, templates: _templates }: Props) {
               </Link>
             </div>
 
-            {/* Template hint chips — link to the new-book page. Template
-                preselection is not yet wired through the new flow.
-                TODO(library-v2): wire preselect template by name. */}
-            <div
-              className="uppercase flex items-center gap-3.5 justify-center flex-wrap"
-              style={{
-                marginTop: '28px',
-                fontFamily: 'var(--font-mono)',
-                fontSize: '11px',
-                letterSpacing: '0.10em',
-                color: 'var(--canvas-dark-ink-muted)',
-              }}
-            >
-              <span>Start from a template</span>
-              <span style={{ width: '3px', height: '3px', borderRadius: '50%', background: 'var(--canvas-dark-300)' }} />
-              <div className="inline-flex gap-2 items-center flex-wrap justify-center">
-                {TEMPLATE_CHIPS.map((label) => (
-                  <Link
-                    key={label}
-                    href={`/${locale}/studio/new`}
-                    className="inline-flex items-center gap-1.5 no-underline"
-                    style={{
-                      padding: '5px 12px',
-                      borderRadius: 'var(--r-full)',
-                      background: 'var(--canvas-dark-100)',
-                      border: '1px solid var(--canvas-dark-300)',
-                      color: 'var(--canvas-dark-ink)',
-                      textTransform: 'none',
-                      letterSpacing: '0.01em',
-                      fontFamily: 'var(--font-ui)',
-                      fontSize: '11px',
-                      fontWeight: 500,
-                    }}
-                  >
-                    {label}
-                  </Link>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
       </div>

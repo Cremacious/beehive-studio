@@ -14,9 +14,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-27
 >
-> **Current focus:** AppNav avatar now opens a shadcn DropdownMenu — header shows name + email; items link to Studio and Billing; destructive Sign out invokes better-auth's `authClient.signOut()` then `router.replace('/sign-in')` + `refresh()`. Previously shipped this session: book creation moved from a modal to a full-page flow at `/[locale]/studio/new` (server page fetches templates; client form with three full-page steps + direction-aware slide+fade transitions; sticky top header with clickable step pills + close-X; reuses existing StepOne/Two/Three; old `create-book-modal.tsx` deleted; "Create book" CTA added to library controls bar; empty-state CTAs + template chips link to `/studio/new`). 126/126 tests, tsc clean.
+> **Current focus:** Removed the "Start from a template · Novel / Memoir / Short stories / Non-fiction" chip row from the /studio empty state (and dropped the now-unused `TEMPLATE_CHIPS` constant). Previously shipped this session: AppNav avatar opens a shadcn DropdownMenu (name + email header, Studio + Billing links, destructive Sign out → better-auth `authClient.signOut()` then redirect to /sign-in); book creation moved from a modal to a full-page flow at `/[locale]/studio/new` (three full-page steps + direction-aware slide+fade transitions, "Create book" CTA in library controls bar, old `create-book-modal.tsx` deleted). 126/126 tests, tsc clean.
 > **Active branch:** `main` (pushed)
-> **Last commit:** feat(nav): account dropdown on avatar with sign-out
+> **Last commit:** chore(studio): drop template chips from empty state
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.

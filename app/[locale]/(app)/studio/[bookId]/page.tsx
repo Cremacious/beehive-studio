@@ -1,6 +1,9 @@
 import { notFound } from 'next/navigation'
+import { headers } from 'next/headers'
+import { auth } from '@/lib/auth'
 import { getBookAction } from '@/lib/actions/book.actions'
 import { getBinderTreeAction } from '@/lib/actions/binder.actions'
+import { isBookOverflow } from '@/lib/billing/book-overflow'
 import { BookEditorProvider } from './_components/book-editor-provider'
 import { BinderTree } from './_components/binder/binder-tree'
 import { CorkboardOrEditor } from './_components/corkboard-or-editor'
@@ -28,12 +31,18 @@ export default async function BookEditorPage({ params }: Props) {
 
   if (!bookResult!.success || !binderResult!.success) notFound()
 
+  const session = await auth.api.getSession({ headers: await headers() })
+  const bookOverflow = session?.user
+    ? await isBookOverflow(session.user.id, bookId)
+    : false
+
   return (
     <BookEditorProvider
       bookId={bookId}
       bookTitle={bookResult!.data.title}
       locale={locale}
       initialBinderItems={binderResult!.data}
+      bookOverflow={bookOverflow}
     >
       {/* The (app) layout uses min-h-screen (not h-screen), so h-full on a
           flex-1 ancestor resolves to content-height — not viewport. Pin the

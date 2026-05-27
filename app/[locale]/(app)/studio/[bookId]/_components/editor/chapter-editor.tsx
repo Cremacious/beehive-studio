@@ -17,6 +17,7 @@ import { WritingAnalysis, extractPlainText } from './writing-analysis'
 import { createBinderItemAction } from '@/lib/actions/binder.actions'
 import { FindReplace } from './find-replace'
 import { PreviewBanner } from './preview-banner'
+import { OverflowBanner } from '../overflow-banner'
 import { KeyboardCheatsheet } from './keyboard-cheatsheet'
 import { CharacterProfile } from './character-profile'
 import { FrontBackMatterRenderer, shouldUseFrontBackMatterRenderer } from '../front-back-matter'
@@ -102,7 +103,7 @@ function EmptyStartChapter() {
 }
 
 export function ChapterEditor() {
-  const { activeItemId, activeItem, activeChapter, updateChapterContent, flushPendingSave, pushFlash, previewSnapshotId, previewSnapshotContent } =
+  const { activeItemId, activeItem, activeChapter, updateChapterContent, flushPendingSave, pushFlash, previewSnapshotId, previewSnapshotContent, bookOverflow } =
     useBookEditor()
 
   const [analysisOpen, setAnalysisOpen] = useState(false)
@@ -225,6 +226,15 @@ export function ChapterEditor() {
     }
   }, [previewSnapshotId, previewSnapshotContent, activeChapter, editor])
 
+  // Read-only when this book is in free-tier overflow. Skipped while a snapshot
+  // preview is active (that effect already owns setEditable in that mode and
+  // exits cleanly when preview ends).
+  useEffect(() => {
+    if (!editor || editor.isDestroyed) return
+    if (previewSnapshotId) return
+    editor.setEditable(!bookOverflow)
+  }, [bookOverflow, editor, previewSnapshotId])
+
   if (activeItemId === null) {
     return <EmptyStartChapter />
   }
@@ -266,6 +276,7 @@ export function ChapterEditor() {
 
   return (
     <main className="flex-1 flex flex-col overflow-hidden relative">
+      {bookOverflow && <OverflowBanner />}
       {editor && (
         <EditorToolbar
           editor={editor}

@@ -63,6 +63,7 @@ type BookEditorContextValue = {
   enterPreview: (snapshot: { id: string; content: unknown; createdAt: Date }) => void
   exitPreview: () => void
   reloadActiveChapter: () => Promise<void>
+  bookOverflow: boolean
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
@@ -82,10 +83,11 @@ type Props = {
   bookTitle: string
   locale: string
   initialBinderItems: BinderItemRow[]
+  bookOverflow?: boolean
   children: React.ReactNode
 }
 
-export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderItems, children }: Props) {
+export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderItems, bookOverflow = false, children }: Props) {
   const [binderItems, setBinderItems] = useState<BinderItemRow[]>(initialBinderItems)
   const [activeItemId, setActiveItemIdState] = useState<string | null>(null)
   const [chapterCache, setChapterCache] = useState<Map<string, ChapterData>>(new Map())
@@ -406,6 +408,7 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     enterPreview,
     exitPreview,
     reloadActiveChapter,
+    bookOverflow,
   }), [
     bookId,
     bookTitle,
@@ -444,6 +447,7 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     enterPreview,
     exitPreview,
     reloadActiveChapter,
+    bookOverflow,
   ])
 
   return <BookEditorContext.Provider value={value}>{children}</BookEditorContext.Provider>

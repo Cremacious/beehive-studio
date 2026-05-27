@@ -5,6 +5,7 @@ import { books, binderItems, chapters } from '@/db/schema'
 import { eq, and, asc } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { assertBookOwner } from './_helpers'
+import { isBookOverflow } from '@/lib/billing/book-overflow'
 import {
   createBinderItemSchema,
   updateBinderItemSchema,
@@ -116,6 +117,10 @@ export async function createBinderItemAction(input: {
 
   await assertBookOwner(parsed.data.bookId, userId)
 
+  if (await isBookOverflow(userId, parsed.data.bookId)) {
+    return { success: false, error: 'FREE_LIMIT_REACHED' }
+  }
+
   const binderId = createId()
 
   const result = await db.transaction(async (tx) => {
@@ -167,7 +172,11 @@ export async function updateBinderItemAction(
     return { success: false, error: parsed.error.issues[0].message }
   }
 
-  await assertBinderOwner(id, userId)
+  const { bookId: ownerBookId } = await assertBinderOwner(id, userId)
+
+  if (await isBookOverflow(userId, ownerBookId)) {
+    return { success: false, error: 'FREE_LIMIT_REACHED' }
+  }
 
   const updates: Record<string, unknown> = {}
   if (parsed.data.title !== undefined) updates.title = parsed.data.title
@@ -191,6 +200,10 @@ export async function updateBinderItemAction(
 export async function deleteBinderItemAction(id: string): Promise<ActionResult> {
   const userId = await requireAuth()
   const { bookId } = await assertBinderOwner(id, userId)
+
+  if (await isBookOverflow(userId, bookId)) {
+    return { success: false, error: 'FREE_LIMIT_REACHED' }
+  }
 
   // Delete child binder items and their associated chapter documents
   // (binder_items.parent_id uses onDelete: 'set null', not cascade)
@@ -232,6 +245,10 @@ export async function reorderBinderItemsAction(
   }
 
   await assertBookOwner(bookId, userId)
+
+  if (await isBookOverflow(userId, bookId)) {
+    return { success: false, error: 'FREE_LIMIT_REACHED' }
+  }
 
   // Run all updates in parallel within the same book scope
   await Promise.all(

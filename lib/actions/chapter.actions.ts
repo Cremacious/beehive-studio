@@ -5,6 +5,7 @@ import { books, chapters, chapterSnapshots } from '@/db/schema'
 import { eq, desc } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { getUserPremiumStatus } from '@/lib/premium'
+import { isBookOverflow } from '@/lib/billing/book-overflow'
 import { extractWordCount } from '@/lib/tiptap-utils'
 import { updateChapterNotesSchema, chapterStatusSchema, updateChapterWordGoalSchema } from '@/lib/validations/book'
 import type { ActionResult } from './book.actions'
@@ -85,6 +86,10 @@ export async function saveChapterAction(
 ): Promise<ActionResult<{ wordCount: number }>> {
   const userId = await requireAuth()
   const { chapter } = await assertChapterOwner(chapterId, userId)
+
+  if (await isBookOverflow(userId, chapter.bookId)) {
+    return { success: false, error: 'FREE_LIMIT_REACHED' }
+  }
 
   if (typeof content !== 'object' || content === null || (content as Record<string, unknown>).type !== 'doc') {
     return { success: false, error: 'Invalid chapter content format' }

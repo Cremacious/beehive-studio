@@ -190,20 +190,24 @@
   --prose-max: 720px;
 
   /* ── Shadcn bridge — semantic tokens map to new chrome ─────────── */
+  /* Text tier bumped up one step (chrome-200 → chrome-100, chrome-400 →
+     chrome-300) because cool neutral grays read perceptually dimmer than
+     warm walnut at equal L. Primary text now near-white; muted text
+     bright enough to read comfortably on chrome-950 background. */
   --background:           var(--chrome-950);
-  --foreground:           var(--chrome-200);
+  --foreground:           var(--chrome-100);
   --card:                 var(--chrome-900);
-  --card-foreground:      var(--chrome-200);
+  --card-foreground:      var(--chrome-100);
   --popover:              var(--chrome-800);
-  --popover-foreground:   var(--chrome-200);
+  --popover-foreground:   var(--chrome-100);
   --primary:              var(--brand);
   --primary-foreground:   var(--brand-ink);
   --secondary:            var(--chrome-800);
-  --secondary-foreground: var(--chrome-200);
+  --secondary-foreground: var(--chrome-100);
   --muted:                var(--chrome-800);
-  --muted-foreground:     var(--chrome-400);
+  --muted-foreground:     var(--chrome-300);
   --accent:               var(--chrome-800);
-  --accent-foreground:    var(--chrome-200);
+  --accent-foreground:    var(--chrome-100);
   --destructive:          var(--error);
   --border:               var(--chrome-700);
   --input:                var(--chrome-800);

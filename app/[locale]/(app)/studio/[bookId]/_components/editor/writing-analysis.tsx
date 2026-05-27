@@ -205,9 +205,9 @@ export function WritingAnalysis({ editorText, isOpen, onClose }: Props) {
         [data-slot="writing-analysis"] {
           --wa-bg: var(--chrome-900);
           --wa-border: var(--chrome-800);
-          --wa-ink: var(--chrome-300);
+          --wa-ink: var(--chrome-200);
           --wa-ink-strong: var(--chrome-100);
-          --wa-ink-muted: var(--chrome-500);
+          --wa-ink-muted: var(--chrome-400);
           --wa-section-sep: var(--chrome-800);
           --wa-stat-bg: var(--chrome-800);
           --wa-stat-border: var(--chrome-800);

@@ -253,6 +253,13 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
   }, [pushError, flushPendingSave])
 
   const addBinderItem = useCallback((item: BinderItemRow) => {
+    // Sync ref update so a `setActiveItemId(item.id)` call in the same tick
+    // (the create-and-open path in BinderAddMenu + EmptyStartChapter) can
+    // resolve the item immediately and kick off the chapter fetch. Without
+    // this, the ref only updates on the next render commit, the lookup
+    // misses, and chapter creations get stuck on the loading skeleton until
+    // a page refresh.
+    binderItemsRef.current = [...binderItemsRef.current, item]
     setBinderItems(prev => [...prev, item])
   }, [])
 

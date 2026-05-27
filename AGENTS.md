@@ -14,9 +14,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-27
 >
-> **Current focus:** Post-Phase 8 design polish. Chrome retoned cool neutral (hue 256°, anchored on #1E1E1E/#252525). Writing analysis panel pinned to dark chrome. Text bumped one step brighter (foreground chrome-200→100, muted chrome-400→300; wa-ink chrome-300→200) because cool grays read perceptually dimmer than warm walnut at equal L. Cream paper untouched. NEXT: /studio book grid landing page redesign — currently mid-brainstorm.
-> **Active branch:** `main` (pushed to origin/main)
-> **Last commit:** docs(spec): /studio book grid library redesign
+> **Current focus:** /studio library redesign — spec + plan committed. Ready to execute 5 atomic tasks (data layer → BookCard+empty state → BookGrid client → StudioHeader → page wire-up).
+> **Active branch:** `main` (local; plan not yet pushed)
+> **Last commit:** docs(plan): /studio library redesign implementation plan
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.

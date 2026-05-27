@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Timer, Pause, Play, Square } from 'lucide-react'
+import { Timer, Pause, Play, Square, X } from 'lucide-react'
 
 type SprintState =
   | { type: 'idle' }
@@ -110,24 +110,120 @@ export function SprintControls({ currentWordCount }: Props) {
 
   if (state.type === 'setup') {
     return (
-      <div className="relative inline-flex items-center gap-1">
-        <span className="text-xs text-foreground mr-1">Sprint:</span>
-        {DEFAULT_DURATIONS.map(m => (
-          <button
-            key={m}
-            onClick={() => start(m)}
-            className="text-xs px-2 py-1 rounded border border-border text-foreground hover:text-brand hover:border-brand/40 hover:bg-brand/10 transition-colors"
-          >
-            {m}m
-          </button>
-        ))}
-        <button
-          onClick={() => setState({ type: 'idle' })}
-          aria-label="Cancel sprint setup"
-          className="text-xs px-1.5 py-1 text-foreground/70 hover:text-foreground transition-colors"
+      <div className="relative inline-block">
+        {/* Anchor placeholder — keeps the setup state in flow */}
+        <span
+          className="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded text-brand"
+          style={{ background: 'var(--brand-soft)' }}
         >
-          Cancel
-        </button>
+          <Timer size={12} />
+          <span>Choose duration…</span>
+        </span>
+        {/* Popover surface — anchored above the anchor */}
+        <div
+          role="dialog"
+          aria-label="Sprint duration"
+          className="absolute z-50"
+          style={{
+            bottom: 'calc(100% + 10px)',
+            right: 0,
+            width: 260,
+            background: 'var(--chrome-750)',
+            border: '1px solid var(--chrome-700)',
+            borderRadius: 12,
+            boxShadow: '0 12px 32px rgba(0,0,0,0.45), 0 4px 8px rgba(0,0,0,0.3)',
+            padding: 14,
+          }}
+        >
+          {/* Callout tail */}
+          <span
+            aria-hidden
+            className="absolute"
+            style={{
+              bottom: -7,
+              right: 18,
+              width: 14,
+              height: 14,
+              background: 'var(--chrome-750)',
+              borderRight: '1px solid var(--chrome-700)',
+              borderBottom: '1px solid var(--chrome-700)',
+              transform: 'rotate(45deg)',
+            }}
+          />
+          <div className="flex items-start justify-between mb-1">
+            <div
+              className="inline-flex items-center gap-2"
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontWeight: 700,
+                fontSize: 13,
+                color: 'var(--chrome-100)',
+                letterSpacing: '-0.005em',
+              }}
+            >
+              <Timer size={13} className="text-brand" />
+              Writing sprint
+            </div>
+            <button
+              onClick={() => setState({ type: 'idle' })}
+              aria-label="Cancel sprint setup"
+              className="inline-flex items-center justify-center rounded transition-colors hover:bg-surface-elevated"
+              style={{ width: 22, height: 22, color: 'var(--chrome-400)' }}
+            >
+              <X size={12} />
+            </button>
+          </div>
+          <p
+            className="mb-3"
+            style={{ fontSize: 11, color: 'var(--chrome-400)' }}
+          >
+            Pick a focused writing block — pause anytime.
+          </p>
+          <div className="grid grid-cols-3 gap-1.5">
+            {DEFAULT_DURATIONS.map(m => (
+              <button
+                key={m}
+                onClick={() => start(m)}
+                className="text-center rounded-md transition-colors group"
+                style={{
+                  padding: '10px 6px',
+                  background: 'var(--chrome-700)',
+                  border: '1px solid var(--chrome-700)',
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.borderColor = 'var(--color-brand)'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = 'var(--chrome-700)'
+                }}
+              >
+                <div
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: 18,
+                    fontWeight: 600,
+                    color: 'var(--chrome-100)',
+                    lineHeight: 1,
+                  }}
+                >
+                  {m}
+                </div>
+                <div
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: 9,
+                    letterSpacing: '0.10em',
+                    textTransform: 'uppercase',
+                    color: 'var(--chrome-500)',
+                    marginTop: 3,
+                  }}
+                >
+                  Min
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     )
   }

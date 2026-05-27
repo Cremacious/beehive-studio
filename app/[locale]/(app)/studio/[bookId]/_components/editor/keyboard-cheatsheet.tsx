@@ -10,6 +10,48 @@ function getMod(): string {
   return navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'
 }
 
+// Paper-key <kbd> visual — raised pill with subtle top highlight + bottom shadow,
+// per overlays-modes/styles.css `.kbcap`. Renders one cap per key with a thin
+// monospaced "+" between caps.
+function KbCombo({ keys }: { keys: string }) {
+  const parts = keys.split('+')
+  return (
+    <span className="inline-flex items-center gap-1">
+      {parts.map((k, i) => (
+        <span key={i} className="inline-flex items-center gap-1">
+          {i > 0 && (
+            <span
+              className="font-mono text-[10px]"
+              style={{ color: 'var(--chrome-500)' }}
+            >
+              +
+            </span>
+          )}
+          <kbd
+            className="inline-flex items-center justify-center font-mono"
+            style={{
+              minWidth: 22,
+              height: 24,
+              padding: '0 7px',
+              fontSize: 11.5,
+              fontWeight: 500,
+              color: 'var(--chrome-100)',
+              background:
+                'linear-gradient(180deg, var(--chrome-800), var(--chrome-850))',
+              border: '1px solid var(--chrome-700)',
+              borderRadius: 4,
+              boxShadow:
+                '0 1px 0 rgba(255,255,255,0.06) inset, 0 -1px 0 rgba(0,0,0,0.3) inset, 0 1px 0 rgba(0,0,0,0.6), 0 2px 3px rgba(0,0,0,0.35)',
+            }}
+          >
+            {k}
+          </kbd>
+        </span>
+      ))}
+    </span>
+  )
+}
+
 export function KeyboardCheatsheet() {
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -87,28 +129,58 @@ export function KeyboardCheatsheet() {
     >
       <div
         ref={containerRef}
-        className="w-[480px] max-w-[90vw] rounded-lg border border-border bg-card shadow-xl"
+        className="w-[480px] max-w-[90vw] rounded-lg border border-border bg-popover shadow-xl"
       >
-        <div className="flex items-center justify-between px-5 py-3 border-b border-border">
-          <h2 id="cheatsheet-title" className="text-sm font-semibold text-foreground">Keyboard shortcuts</h2>
+        <div className="flex items-center justify-between px-[22px] pt-[18px] pb-[14px] gap-[18px]">
+          <h3
+            id="cheatsheet-title"
+            className="text-foreground m-0"
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: 20,
+              fontWeight: 700,
+              letterSpacing: '-0.005em',
+            }}
+          >
+            Keyboard shortcuts
+          </h3>
           <button
             onClick={() => setOpen(false)}
             aria-label="Close shortcuts"
-            className="text-foreground/60 hover:text-foreground transition-colors"
+            className="inline-flex items-center justify-center rounded-md transition-colors hover:bg-surface-elevated"
+            style={{
+              width: 30,
+              height: 30,
+              color: 'var(--chrome-400)',
+            }}
           >
             <X size={14} />
           </button>
         </div>
-        <ul className="p-5 flex flex-col gap-2">
-          {shortcuts.map(s => (
-            <li key={s.keys} className="flex items-center justify-between text-xs">
-              <span className="text-foreground/80">{s.action}</span>
-              <kbd className="rounded border border-border bg-surface-elevated px-2 py-0.5 text-foreground/90 font-mono">
-                {s.keys}
-              </kbd>
-            </li>
-          ))}
-        </ul>
+        <div className="px-[22px] pb-[18px]">
+          <ul
+            className="grid items-center"
+            style={{
+              gridTemplateColumns: '1fr auto',
+              rowGap: 2,
+              columnGap: 16,
+            }}
+          >
+            {shortcuts.map(s => (
+              <li key={s.keys} className="contents">
+                <span
+                  className="py-2 text-foreground/85"
+                  style={{ fontSize: 13 }}
+                >
+                  {s.action}
+                </span>
+                <span className="py-2 text-right">
+                  <KbCombo keys={s.keys} />
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </div>
   )

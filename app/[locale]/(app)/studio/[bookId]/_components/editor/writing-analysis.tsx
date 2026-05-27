@@ -1,8 +1,10 @@
 'use client'
 
-import { useMemo } from 'react'
-import { X } from 'lucide-react'
+import { useMemo, useState, type ReactNode } from 'react'
+import { X, HelpCircle, Info } from 'lucide-react'
 import { EmptyState } from '../empty-state'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 // ---------------------------------------------------------------------------
 // Text extraction helper
@@ -126,7 +128,15 @@ function Section({ label, children }: { label: string; children: React.ReactNode
   )
 }
 
-function StatRow({ value, label }: { value: number | string; label: string }) {
+function StatRow({
+  value,
+  label,
+  trailing,
+}: {
+  value: number | string
+  label: string
+  trailing?: ReactNode
+}) {
   return (
     <div
       className="flex items-center gap-3 px-2.5 py-2 rounded-md"
@@ -148,6 +158,7 @@ function StatRow({ value, label }: { value: number | string; label: string }) {
       <span className="flex-1 text-xs" style={{ color: 'var(--wa-ink)' }}>
         {label}
       </span>
+      {trailing}
     </div>
   )
 }
@@ -168,6 +179,7 @@ export function WritingAnalysis({ editorText, isOpen, onClose }: Props) {
   const adverbs = useMemo(() => findAdverbs(editorText), [editorText])
   const passive = useMemo(() => findPassiveVoice(editorText), [editorText])
   const cliches = useMemo(() => findCliches(editorText), [editorText])
+  const [clichesListOpen, setClichesListOpen] = useState(false)
   const hist = useMemo(() => sentenceLengthHistogram(editorText), [editorText])
 
   if (!isOpen) return null
@@ -227,14 +239,64 @@ export function WritingAnalysis({ editorText, isOpen, onClose }: Props) {
         >
           Writing analysis
         </h2>
-        <button
-          onClick={onClose}
-          aria-label="Close writing analysis"
-          className="transition-colors p-1 -mr-1 rounded hover:opacity-100"
-          style={{ color: 'var(--wa-ink-muted)' }}
-        >
-          <X size={14} />
-        </button>
+        <div className="flex items-center gap-1">
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                aria-label="How writing analysis works"
+                className="transition-colors p-1 rounded hover:opacity-100"
+                style={{ color: 'var(--wa-ink-muted)' }}
+              >
+                <HelpCircle size={14} />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent side="bottom" align="end" className="w-80 text-xs leading-relaxed">
+              <h4
+                className="text-sm mb-2"
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 700,
+                  color: 'var(--chrome-100)',
+                }}
+              >
+                How this works
+              </h4>
+              <p className="mb-3" style={{ color: 'var(--chrome-200)' }}>
+                Quick heuristic metrics — not linguistic analysis. Use as nudges, not rules.
+              </p>
+              <dl className="flex flex-col gap-2.5">
+                <div>
+                  <dt className="font-semibold" style={{ color: 'var(--chrome-100)' }}>Readability</dt>
+                  <dd style={{ color: 'var(--chrome-200)' }}>Flesch-Kincaid grade level — higher = more complex sentences/words. 60-70 is &quot;plain English.&quot;</dd>
+                </div>
+                <div>
+                  <dt className="font-semibold" style={{ color: 'var(--chrome-100)' }}>Sentence length</dt>
+                  <dd style={{ color: 'var(--chrome-200)' }}>Histogram of words per sentence in 5-word bins. Varied lengths = better rhythm.</dd>
+                </div>
+                <div>
+                  <dt className="font-semibold" style={{ color: 'var(--chrome-100)' }}>Adverbs (-ly)</dt>
+                  <dd style={{ color: 'var(--chrome-200)' }}>Words ending in -ly. Catches false positives like <em>family</em>, <em>holy</em> — about ~5-10% noise.</dd>
+                </div>
+                <div>
+                  <dt className="font-semibold" style={{ color: 'var(--chrome-100)' }}>Passive voice</dt>
+                  <dd style={{ color: 'var(--chrome-200)' }}>&quot;To-be&quot; verb (was/were/is/are/etc.) followed by a past participle ending in -ed. Misses irregular participles (&quot;was given&quot;).</dd>
+                </div>
+                <div>
+                  <dt className="font-semibold" style={{ color: 'var(--chrome-100)' }}>Clichés</dt>
+                  <dd style={{ color: 'var(--chrome-200)' }}>Substring match against a curated list of ~30 common phrases. Click the info icon on the Clichés row to view the list.</dd>
+                </div>
+              </dl>
+            </PopoverContent>
+          </Popover>
+          <button
+            onClick={onClose}
+            aria-label="Close writing analysis"
+            className="transition-colors p-1 -mr-1 rounded hover:opacity-100"
+            style={{ color: 'var(--wa-ink-muted)' }}
+          >
+            <X size={14} />
+          </button>
+        </div>
       </div>
 
       {editorText.trim().length === 0 ? (
@@ -317,7 +379,20 @@ export function WritingAnalysis({ editorText, isOpen, onClose }: Props) {
             <div className="flex flex-col gap-2 mt-1">
               <StatRow value={adverbs.length} label="Adverbs (-ly)" />
               <StatRow value={passive.length} label="Passive voice" />
-              <StatRow value={cliches.length} label="Clichés" />
+              <StatRow
+                value={cliches.length}
+                label="Clichés"
+                trailing={
+                  <button
+                    onClick={() => setClichesListOpen(true)}
+                    aria-label="View cliché list"
+                    className="p-1 rounded transition-colors hover:opacity-100"
+                    style={{ color: 'var(--wa-ink-muted)' }}
+                  >
+                    <Info size={12} />
+                  </button>
+                }
+              />
             </div>
           </Section>
 
@@ -385,6 +460,31 @@ export function WritingAnalysis({ editorText, isOpen, onClose }: Props) {
           )}
         </div>
       )}
+
+      {/* Cliché list viewer — full list the app checks against. */}
+      <Dialog open={clichesListOpen} onOpenChange={setClichesListOpen}>
+        <DialogContent className="sm:max-w-[480px] max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle style={{ fontFamily: 'var(--font-display)' }}>
+              Cliché list
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-xs text-muted-foreground mb-2">
+            The app checks your prose against these {CLICHES.length} phrases (case-insensitive substring match). The list is curated, not exhaustive — meant as a nudge, not a rule.
+          </p>
+          <ul className="flex flex-col gap-1 overflow-y-auto pr-2 flex-1">
+            {[...CLICHES].sort().map((c, i) => (
+              <li
+                key={i}
+                className="text-sm italic"
+                style={{ fontFamily: 'var(--font-prose)' }}
+              >
+                &ldquo;{c}&rdquo;
+              </li>
+            ))}
+          </ul>
+        </DialogContent>
+      </Dialog>
     </aside>
   )
 }

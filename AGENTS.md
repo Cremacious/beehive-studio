@@ -14,9 +14,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-27
 >
-> **Current focus:** Studio Library v1 shipped (Hero + 3-tile stats + controls + grid + empty state) but visually dull. Claude Design brief for v2 visual redesign committed at `designs/claude/studio-library/BRIEF.md` — awaiting Claude Design output (library.html + library-empty.html + optional narrow). Once returned, port surface-by-surface following the DP2 playbook.
-> **Active branch:** `main` (local; ahead of origin)
-> **Last commit:** docs(design): Claude Design brief for /studio Library v2 redesign
+> **Current focus:** Library v2 design ported. Claude Design's `studio-library` mockup (library.html + library-empty.html) translated 1:1 across 7 atomic commits — new AppNav (brand-mark + crumb + centered nav + Hive link), ContinueWritingHero (rotated paper cover with crown stamp + eyebrow pulse + progress bar + Resume CTA), StudioStats (3-tile vertical stack with spines/sparkline/ring viz), BookCard (rounded card with status stripe + paper-warm cover composition + always-visible info band), StudioEmptyState (shelf scene with floating paper hero book + template chips), page rewrite (no top bar — AppNav owns chrome; controls + filter chips + 5-col grid + shelf-foot). 126/126 tests, tsc clean.
+> **Active branch:** `main` (pushed)
+> **Last commit:** docs: refresh Resume Here for Library v2 ship
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.
@@ -66,7 +66,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 >
 > **Light-mode editor default (2026-05-26):** Editor theme defaults to `light` (cream paper) for all new sessions. Users with `localStorage['editor-theme'] === 'dark'` keep dark mode. The change reflects the on-brand "writer's desk by day" experience the Claude Design pass established. Dark mode remains accessible via the toolbar Moon icon.
 >
-> **Studio Library pattern:** `/[locale]/studio` is the user's bookshelf — Continue-Writing hero + 4-stat strip header, search + sort + filter chips, hover-overlay book cards revealing status/last-edited/chapter-count/genre/progress. Hero/stats data via `getStudioStatsAction`; book projection extended with `summarizeBookStatus()` helper that rolls chapter statuses up to a single book label (Drafting/Revised/Published). Same helper drives card overlays AND filter chip counts so they stay in sync. Cards: paper-warm covers on cool gray chrome (the only "warm" element on the page; everything else uses chrome tokens).
+> **Studio Library pattern:** `/[locale]/studio` is the user's bookshelf — Continue-Writing hero + 3-tile vertical stats stack header (spines/sparkline/ring viz per tile), search + sort + view-switch + filter chips, paper-warm book cards with status stripe + always-visible info band (no hover overlay). Hero/stats data via `getStudioStatsAction`; book projection extended with `summarizeBookStatus()` helper that rolls chapter statuses up to a single book label (Drafting/Revised/Published). Same helper drives card status pills AND filter chip counts so they stay in sync.
+>
+> **Library v2 design pattern (2026-05-27):** Page bg locked to `#1E1E1E`; lifted surfaces use `--canvas-dark-100/150/200/300` directly via inline `style={{ background: 'var(--canvas-dark-100)' }}` (chrome shadcn-bridge isn't pixel-perfect for this page). Brand yellow restrained to 4 uses: hero Resume CTA + active filter chip + hover title accent + empty-state Start CTA. Status colors variate the page via per-card stripes + per-tile accents. AppNav now owns the only chrome on the page — no page-level top bar. JetBrains Mono added via `next/font/google` → `--font-jetbrains-mono` → wired into `--font-mono`. `--canvas-dark-150` added to globals.css as the search-focus surface tone.
 >
 > **Next concrete step when resuming:** Open for what's next — Phase 9 candidates (referral codes, growth analytics, plan-upgrade nudges, polish), continued post-launch work, or configure the Stripe dashboard webhook for the live monetization flow.
 

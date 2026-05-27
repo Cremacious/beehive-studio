@@ -14,9 +14,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-27
 >
-> **Current focus:** Design Port complete (DP1-DP4 shipped). Phase 8 Stripe monetization is next.
+> **Current focus:** P8A Foundations complete; P8B Pricing page + checkout flow next.
 > **Active branch:** `main` (pushed to origin/main)
-> **Last commit:** docs: close DP4 + design-port pass complete (all four sub-projects shipped)
+> **Last commit:** feat(stripe): webhook scaffold + AGENTS.md close-out (P8A Task 5)
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.
@@ -66,7 +66,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 >
 > **Light-mode editor default (2026-05-26):** Editor theme defaults to `light` (cream paper) for all new sessions. Users with `localStorage['editor-theme'] === 'dark'` keep dark mode. The change reflects the on-brand "writer's desk by day" experience the Claude Design pass established. Dark mode remains accessible via the toolbar Moon icon.
 >
-> **Next concrete step when resuming:** invoke /brainstorming for Phase 8 Stripe monetization — pricing page, checkout flow, webhook handling, billing portal.
+> **Next concrete step when resuming:** invoke /brainstorming for P8B Pricing page + checkout flow — public /[locale]/pricing page with monthly/annual CTAs invoking createCheckoutSessionAction.
 
 ## ⚙️ Working Agreement (read this every session)
 
@@ -203,9 +203,25 @@ No DB changes. No new dependencies. 119/119 tests, tsc clean.
 
 **Next:** Phase 8 Stripe monetization — pricing page, subscriptions, webhooks, billing portal.
 
+### P8A — Stripe Foundations ✅ COMPLETE (2026-05-27)
+First of four Phase 8 sub-projects (P8A → P8D). Lands the Stripe infrastructure.
+
+- **Schema:** `userBilling` extended with `stripeCustomerId`, `stripeSubscriptionId`, `subscriptionStatus` (enum), `currentPeriodEnd`. `premium: boolean` dropped — entitlement now derives from `subscriptionStatus IN ('active', 'trialing')` via `getUserPremiumStatus()`.
+- **SDK:** `stripe` npm package installed; `lib/stripe/client.ts` is a singleton with pinned `apiVersion` + runtime key-prefix sanity check (fails loud if test key in prod or live key in dev).
+- **Server actions:** `createCheckoutSessionAction({ priceKey, locale })` and `createBillingPortalSessionAction({ locale })` in `lib/actions/billing.actions.ts`. Lazy customer creation on first checkout.
+- **Webhook scaffold:** `/api/webhooks/stripe` with signature verification + no-op handlers (P8C wires real entitlement sync). DO NOT configure Stripe dashboard webhook URL until P8C ships.
+- **Env vars:** `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID_MONTHLY`, `STRIPE_PRICE_ID_ANNUAL`, `NEXT_PUBLIC_APP_URL` documented in `.env.example`.
+- **`DEV_FORCE_PREMIUM=true` preserved** — short-circuits before DB read in non-production builds.
+
+No UI ships in P8A. P8B will build the pricing page; P8C wires real webhook handlers; P8D wires Settings → Billing portal.
+
+**Next:** P8B Pricing page + checkout flow.
+
 ## What's Next
 
-- Phase 8: Stripe monetization
+- P8B: Pricing page + checkout flow
+- P8C: Webhook handlers (real entitlement sync)
+- P8D: Settings → Billing portal
 
 ## Completed UI Work (pre-Phase 3)
 
@@ -229,6 +245,9 @@ HTML design files in `designs/` were ported to pages. Key patterns for future UI
 ### Premium Errors
 - `{ success: false, error: 'FREE_LIMIT_REACHED' }` — show upgrade prompt
 - `{ success: false, error: 'PREMIUM_REQUIRED:<feature>' }` — show upgrade prompt
+
+### P8A Stripe pattern
+Premium derives from `userBilling.subscriptionStatus IN ('active', 'trialing')` — no denormalized boolean. Stripe customer creation is lazy (first checkout creates the customer; stored on `userBilling.stripeCustomerId`). `lib/stripe/client.ts` is the singleton with pinned `apiVersion` + runtime key-prefix sanity check (`sk_live_` in prod, `sk_test_` in dev). Webhook endpoint at `/api/webhooks/stripe` is signature-verified but no-op in P8A (P8C wires handlers — do NOT configure Stripe dashboard webhook URL until then or events get lost). `DEV_FORCE_PREMIUM=true` env override still works for local testing without Stripe.
 
 ### Brand Tokens (defined in `app/globals.css`)
 - Background: `#141414` (`--background`)

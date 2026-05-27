@@ -1,9 +1,9 @@
 import { db } from '@/db'
 import { bookTemplates } from '@/db/schema'
 import { eq } from 'drizzle-orm'
-import { getUserBooksAction, getStudioStatsAction } from '@/lib/actions/book.actions'
+import { getUserBooksAction } from '@/lib/actions/book.actions'
 import { StudioEmptyState } from './_components/studio-empty-state'
-import { StudioHeader } from './_components/studio-header'
+import { ContinueWritingHero } from './_components/continue-writing-hero'
 import { BookGrid } from './_components/book-grid'
 
 export default async function StudioPage({
@@ -13,20 +13,16 @@ export default async function StudioPage({
 }) {
   const { locale } = await params
 
-  const [templates, booksResult, statsResult] = await Promise.all([
+  const [templates, booksResult] = await Promise.all([
     db
       .select({ id: bookTemplates.id, name: bookTemplates.name, genre: bookTemplates.genre })
       .from(bookTemplates)
       .where(eq(bookTemplates.isSystemTemplate, true))
       .orderBy(bookTemplates.name),
     getUserBooksAction(),
-    getStudioStatsAction(),
   ])
 
   const books = booksResult.success ? booksResult.data : []
-  const stats = statsResult.success
-    ? statsResult.data
-    : { totalWords: 0, booksInProgress: 0, wordsThisWeek: 0, chaptersPublished: 0 }
 
   if (books.length === 0) {
     return <StudioEmptyState locale={locale} templates={templates} />
@@ -49,7 +45,9 @@ export default async function StudioPage({
     >
       <div style={{ height: '40px' }} />
 
-      <StudioHeader recentBook={recentBook} stats={stats} locale={locale} />
+      <section style={{ marginBottom: '36px' }}>
+        <ContinueWritingHero book={recentBook} locale={locale} />
+      </section>
 
       <BookGrid books={books} locale={locale} />
     </main>

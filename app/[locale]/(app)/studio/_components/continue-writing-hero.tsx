@@ -10,14 +10,16 @@ function formatRelative(d: Date): string {
   const diff = Date.now() - new Date(d).getTime()
   const hours = Math.floor(diff / 3_600_000)
   if (hours < 1) return 'just now'
-  if (hours < 24) return `${hours}h ago`
+  if (hours === 1) return '1 hour ago'
+  if (hours < 24) return `${hours} hours ago`
   const days = Math.floor(hours / 24)
-  if (days < 7) return `${days}d ago`
+  if (days === 1) return 'yesterday'
+  if (days < 7) return `${days} days ago`
   if (days < 30) return `${Math.floor(days / 7)}w ago`
   return `${Math.floor(days / 30)}mo ago`
 }
 
-/** Map BookSummaryStatus → status-* token + label for the hero genre tag. */
+/** Map BookSummaryStatus → status-* token + label. */
 function statusToken(status: BookSummary['status']): { token: string; label: string } {
   switch (status) {
     case 'Published': return { token: 'var(--status-final)', label: 'Published' }
@@ -26,6 +28,14 @@ function statusToken(status: BookSummary['status']): { token: string; label: str
   }
 }
 
+/**
+ * Continue-Writing hero — Library v2.2.
+ *
+ * Full-width manuscript panel (no longer a 2-col with cover thumbnail).
+ * Surface: canvas-dark-150 (one step lighter than the page bg).
+ * Layout: top meta strip (eyebrow + status pill + last-edited) → body grid
+ *   (title block left, progress + Resume CTA right).
+ */
 export function ContinueWritingHero({ book, locale }: Props) {
   const { token: statusColor, label: statusLabel } = statusToken(book.status)
 
@@ -36,106 +46,40 @@ export function ContinueWritingHero({ book, locale }: Props) {
   const pct = Math.min(100, Math.round((book.wordCount / WORD_GOAL) * 100))
 
   // We don't currently track the last-edited chapter title — show the
-  // chapter count instead so the row reads cleanly with the data we have.
+  // chapter count instead. The serif body line reads "Chapter N" with a
+  // following name. For now, show "—" (em dash) instead of a name we
+  // don't have.
   // TODO(library-v2): wire up last-edited chapter title.
-  const chapterLabel =
-    book.chapterCount > 0
-      ? `Chapter ${book.chapterCount}`
-      : 'No chapters yet'
-
-  // Author byline — we don't have a top-level "byline" on BookSummary; the
-  // cover uses a neutral placeholder until we wire up the user's pen name.
-  const byline = ''
+  const hasChapters = book.chapterCount > 0
 
   return (
     <Link
       href={`/${locale}/studio/${book.id}`}
       aria-label={`Continue writing: ${book.title}`}
-      className="group relative overflow-hidden no-underline grid"
+      className="group relative block w-full no-underline overflow-hidden transition-[transform,box-shadow,border-color] duration-150 hover:-translate-y-px"
       style={{
-        gridTemplateColumns: '240px 1fr',
-        minHeight: '340px',
+        padding: '40px 48px 44px',
         borderRadius: 'var(--r-2xl)',
-        background: 'var(--canvas-dark-100)',
+        background: 'var(--canvas-dark-150)',
         border: '1px solid var(--canvas-dark-300)',
+        color: 'var(--canvas-dark-ink)',
+        fontFamily: 'var(--font-ui)',
         boxShadow: 'var(--el-2)',
-        color: 'inherit',
       }}
     >
-      {/* LEFT — rotated paper cover */}
-      <div className="relative z-[1] flex items-center" style={{ padding: '36px 0 36px 36px' }}>
-        <div
-          className="relative flex flex-col justify-between"
-          style={{
-            width: '180px',
-            height: '268px',
-            borderRadius: '4px 8px 8px 4px',
-            boxShadow: 'var(--el-paper)',
-            background: 'var(--paper-100)',
-            backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(95,60,20,0.04) 1px, transparent 0)',
-            backgroundSize: '22px 22px',
-            padding: '26px 18px 22px',
-            fontFamily: 'var(--font-display)',
-            color: 'var(--paper-ink-strong)',
-            transform: 'rotate(-1.2deg)',
-            transformOrigin: 'bottom right',
-          }}
-          aria-hidden="true"
-        >
-          {/* spine shadow */}
-          <span
-            className="absolute left-0 top-0 bottom-0"
-            style={{
-              width: '8px',
-              background: 'linear-gradient(90deg, oklch(0.65 0.025 60 / 0.30) 0%, oklch(0.78 0.022 78 / 0.18) 40%, transparent 100%)',
-              borderRadius: '4px 0 0 4px',
-            }}
-          />
-          {/* Crown stamp */}
-          <div className="mt-4 mx-auto" style={{ width: '64px', height: '64px', color: 'var(--paper-ink-strong)', opacity: 0.85 }}>
-            <svg viewBox="0 0 64 64" width="64" height="64" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" strokeLinecap="round">
-              <path d="M10 44 L14 22 L24 32 L32 16 L40 32 L50 22 L54 44 Z" fill="currentColor" fillOpacity="0.18" />
-              <circle cx="14" cy="20" r="1.6" fill="currentColor" />
-              <circle cx="32" cy="14" r="1.6" fill="currentColor" />
-              <circle cx="50" cy="20" r="1.6" fill="currentColor" />
-              <path d="M10 48 L54 48" />
-            </svg>
-          </div>
-          <div>
-            <div
-              className="text-center"
-              style={{ fontSize: '22px', fontWeight: 700, letterSpacing: '-0.01em', lineHeight: 1.05, textWrap: 'balance' as const }}
-            >
-              {book.title}
-            </div>
-            <div className="mx-auto" style={{ width: '36px', height: '1px', background: 'var(--paper-ink-strong)', margin: '12px auto 10px', opacity: 0.5 }} />
-            <div
-              className="text-center uppercase"
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '9px',
-                letterSpacing: '0.24em',
-                color: 'var(--paper-ink-muted)',
-              }}
-            >
-              {byline || book.genre || 'Beehive Studio'}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* RIGHT — body */}
-      <div className="relative z-[1] flex flex-col" style={{ padding: '32px 36px 32px 40px' }}>
-        {/* Eyebrow */}
-        <div
-          className="inline-flex items-center gap-2.5 uppercase mb-3.5"
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: '11px',
-            fontWeight: 500,
-            letterSpacing: '0.16em',
-            color: 'var(--canvas-dark-ink-muted)',
-          }}
+      {/* Top meta strip */}
+      <div
+        className="flex items-center gap-3.5 uppercase mb-4"
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: '11px',
+          letterSpacing: '0.16em',
+          color: 'var(--canvas-dark-ink-muted)',
+        }}
+      >
+        <span
+          className="inline-flex items-center gap-2"
+          style={{ color: 'var(--canvas-dark-ink-strong)', fontWeight: 600 }}
         >
           <span
             className="inline-block"
@@ -147,119 +91,208 @@ export function ContinueWritingHero({ book, locale }: Props) {
               boxShadow: '0 0 0 3px var(--brand-soft)',
             }}
           />
-          <span>Continue writing</span>
-        </div>
-
-        {/* Title */}
-        <h2
-          className="m-0 mb-4"
+          Continue writing
+        </span>
+        <span style={{ width: '1px', height: '12px', background: 'var(--canvas-dark-300)' }} />
+        <span
+          className="inline-flex items-center gap-1.5 uppercase"
           style={{
+            padding: '3px 9px 3px 7px',
+            borderRadius: 'var(--r-full)',
+            background: `oklch(from ${statusColor} l c h / 0.16)`,
+            border: `1px solid oklch(from ${statusColor} l c h / 0.32)`,
+            color: statusColor,
             fontFamily: 'var(--font-display)',
+            fontSize: '10px',
             fontWeight: 700,
-            fontSize: '38px',
-            letterSpacing: '-0.025em',
-            lineHeight: 1.05,
-            color: 'var(--canvas-dark-ink-strong)',
-            textWrap: 'balance' as const,
+            letterSpacing: '0.06em',
           }}
         >
-          {book.title}
-        </h2>
+          <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: statusColor }} />
+          {statusLabel}
+        </span>
+        <span style={{ width: '1px', height: '12px', background: 'var(--canvas-dark-300)' }} />
+        <span>Last edited {formatRelative(book.lastEditedAt)}</span>
+      </div>
 
-        {/* Chapter context row */}
-        <div
-          className="flex items-center gap-3 flex-wrap mb-7"
-          style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: '15px',
-            fontWeight: 500,
-            color: 'var(--canvas-dark-ink)',
-            lineHeight: 1.45,
-          }}
-        >
-          <span
-            className="inline-flex items-center gap-[7px] uppercase"
+      {/* Body — two columns */}
+      <div
+        className="grid items-end relative"
+        style={{
+          gridTemplateColumns: 'minmax(0, 1.4fr) minmax(280px, 1fr)',
+          gap: '48px',
+        }}
+      >
+        {/* LEFT — title block */}
+        <div style={{ minWidth: 0 }}>
+          <h2
+            className="m-0 mb-3"
             style={{
-              padding: '5px 11px 5px 9px',
-              borderRadius: 'var(--r-full)',
-              background: `oklch(from ${statusColor} l c h / 0.16)`,
-              border: `1px solid oklch(from ${statusColor} l c h / 0.32)`,
-              color: statusColor,
               fontFamily: 'var(--font-display)',
-              fontSize: '11px',
               fontWeight: 700,
-              letterSpacing: '0.04em',
+              fontSize: '44px',
+              letterSpacing: '-0.03em',
+              lineHeight: 1.0,
+              color: 'var(--canvas-dark-ink-strong)',
+              textWrap: 'balance' as const,
             }}
           >
-            <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: statusColor }} />
-            {statusLabel}
-          </span>
-          <span style={{ color: 'var(--canvas-dark-ink-strong)', fontWeight: 600 }}>{chapterLabel}</span>
-          <span style={{ width: '3px', height: '3px', borderRadius: '50%', background: 'var(--canvas-dark-300)' }} />
-          <span>Last edited {formatRelative(book.lastEditedAt)}</span>
+            {book.title}
+          </h2>
+          <p
+            className="m-0"
+            style={{
+              fontFamily: 'var(--font-prose)',
+              fontSize: '18px',
+              lineHeight: 1.35,
+              color: 'var(--canvas-dark-ink)',
+            }}
+          >
+            {hasChapters ? (
+              <>
+                <em
+                  style={{
+                    fontFamily: 'var(--font-display)',
+                    fontStyle: 'normal',
+                    fontWeight: 700,
+                    fontSize: '14px',
+                    letterSpacing: '0.02em',
+                    textTransform: 'uppercase',
+                    color: 'var(--canvas-dark-ink-muted)',
+                    marginRight: '8px',
+                  }}
+                >
+                  Chapter {book.chapterCount}
+                </em>
+                {/* TODO(library-v2): last-edited chapter title */}
+                {book.genre ?? '—'}
+              </>
+            ) : (
+              <span style={{ color: 'var(--canvas-dark-ink-muted)', fontStyle: 'italic' }}>
+                No chapters yet — open the book to add your first.
+              </span>
+            )}
+          </p>
         </div>
 
-        {/* Progress */}
-        <div className="flex flex-col gap-2.5" aria-label="Word goal progress">
-          <div
-            className="relative overflow-hidden"
-            style={{
-              height: '8px',
-              borderRadius: 'var(--r-full)',
-              background: 'var(--canvas-dark-200)',
-              boxShadow: 'inset 0 1px 0 rgba(0,0,0,0.3)',
-            }}
-          >
-            <span
-              className="absolute left-0 top-0 bottom-0"
+        {/* RIGHT — action stack */}
+        <div className="flex flex-col gap-4">
+          {/* Progress */}
+          <div className="flex flex-col gap-2" aria-label="Word goal progress">
+            <div
+              className="flex items-baseline justify-between"
               style={{
-                width: `${pct}%`,
-                background: statusColor,
-                borderRadius: 'var(--r-full)',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '11px',
+                letterSpacing: '0.04em',
+                color: 'var(--canvas-dark-ink-muted)',
               }}
-            />
+            >
+              <span>
+                <b
+                  style={{
+                    color: 'var(--canvas-dark-ink-strong)',
+                    fontFamily: 'var(--font-display)',
+                    fontSize: '14px',
+                    fontWeight: 700,
+                    letterSpacing: 0,
+                    marginRight: '4px',
+                  }}
+                >
+                  {book.wordCount.toLocaleString()}
+                </b>
+                of{' '}
+                <b
+                  style={{
+                    color: 'var(--canvas-dark-ink-strong)',
+                    fontFamily: 'var(--font-display)',
+                    fontSize: '14px',
+                    fontWeight: 700,
+                    letterSpacing: 0,
+                    marginRight: '4px',
+                  }}
+                >
+                  {WORD_GOAL.toLocaleString()}
+                </b>
+                words
+              </span>
+              <span>
+                <b
+                  style={{
+                    color: 'var(--canvas-dark-ink-strong)',
+                    fontFamily: 'var(--font-display)',
+                    fontSize: '14px',
+                    fontWeight: 700,
+                    letterSpacing: 0,
+                    marginRight: '4px',
+                  }}
+                >
+                  {pct}%
+                </b>
+                to first draft
+              </span>
+            </div>
+            <div
+              className="relative overflow-hidden"
+              style={{
+                height: '8px',
+                borderRadius: 'var(--r-full)',
+                background: 'var(--canvas-dark-300)',
+              }}
+            >
+              <span
+                className="absolute left-0 top-0 bottom-0"
+                style={{
+                  width: `${pct}%`,
+                  background: statusColor,
+                  borderRadius: 'var(--r-full)',
+                }}
+              >
+                {/* dark notch at the end — reads like a paper marker */}
+                <span
+                  className="absolute"
+                  style={{
+                    right: 0,
+                    top: '-2px',
+                    bottom: '-2px',
+                    width: '2px',
+                    background: `oklch(from ${statusColor} calc(l - 0.15) c h)`,
+                  }}
+                />
+              </span>
+            </div>
           </div>
-          <div
-            className="flex items-baseline justify-between"
-            style={{
-              fontSize: '13px',
-              color: 'var(--canvas-dark-ink-muted)',
-              fontFamily: 'var(--font-mono)',
-              letterSpacing: '0.04em',
-            }}
-          >
-            <span>
-              {book.wordCount.toLocaleString()} of {WORD_GOAL.toLocaleString()} words
-            </span>
-            <span style={{ color: 'var(--canvas-dark-ink)' }}>
-              <b style={{ color: 'var(--canvas-dark-ink-strong)', fontWeight: 700, fontFamily: 'var(--font-display)', fontSize: '15px', letterSpacing: 0 }}>
-                {pct}%
-              </b>
-              &nbsp;to first draft
-            </span>
-          </div>
-        </div>
 
-        {/* Actions */}
-        <div className="mt-7 flex items-center gap-[18px]">
+          {/* [BRAND USE 2/5] Resume CTA — full width with circular arrow */}
           <span
-            className="inline-flex items-center gap-2.5 group-hover:[background:var(--brand-hover)] transition-colors"
+            className="inline-flex items-center justify-between w-full transition-colors group-hover:[background:var(--brand-hover)]"
             style={{
-              padding: '12px 20px',
-              borderRadius: 'var(--r-full)',
+              gap: '16px',
+              padding: '13px 18px',
+              borderRadius: 'var(--r-md)',
               background: 'var(--brand)',
               color: 'var(--brand-ink)',
               fontFamily: 'var(--font-display)',
               fontWeight: 700,
-              fontSize: '14px',
+              fontSize: '15px',
               letterSpacing: '0.005em',
-              boxShadow: 'var(--el-2)',
             }}
           >
             Resume writing
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M5 12h14M13 6l6 6-6 6" />
-            </svg>
+            <span
+              className="inline-flex items-center justify-center"
+              style={{
+                width: '26px',
+                height: '26px',
+                borderRadius: 'var(--r-full)',
+                background: 'var(--brand-ink)',
+                color: 'var(--brand)',
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14M13 6l6 6-6 6" />
+              </svg>
+            </span>
           </span>
         </div>
       </div>

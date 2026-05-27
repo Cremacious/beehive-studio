@@ -14,9 +14,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-27
 >
-> **Current focus:** P8D Billing portal + downgrade UX — spec approved (`9916985`), pending implementation plan + execute. Last Phase 8 sub-project. POST-DEPLOY: configure Stripe dashboard webhook (see Key Patterns).
+> **Current focus:** P8D Billing portal + downgrade UX — spec + plan committed (`29e8b6f`), pending execute. Last Phase 8 sub-project. POST-DEPLOY: configure Stripe dashboard webhook (see Key Patterns).
 > **Active branch:** `main` (pushed to origin/main)
-> **Last commit:** docs(spec): P8D Billing portal + downgrade UX (FINAL Phase 8 sub-project)
+> **Last commit:** docs(plan): P8D Billing portal + downgrade UX implementation plan
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.
@@ -66,7 +66,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 >
 > **Light-mode editor default (2026-05-26):** Editor theme defaults to `light` (cream paper) for all new sessions. Users with `localStorage['editor-theme'] === 'dark'` keep dark mode. The change reflects the on-brand "writer's desk by day" experience the Claude Design pass established. Dark mode remains accessible via the toolbar Moon icon.
 >
-> **Next concrete step when resuming:** approve P8D spec (`docs/superpowers/specs/2026-05-27-p8d-billing-portal-downgrade-design.md`) → write plan → execute. P8D locks: single billing page at `/settings/billing` (no Settings shell), hero status + manage button (opens Stripe Portal via P8A action), soft-lock books beyond FREE_BOOK_LIMIT (oldest 3 stay editable; "Upgrade to edit" banner), hive invites blocked when over FREE_HIVE_MEMBER_LIMIT but existing members keep posting, `past_due` added to PREMIUM_STATUSES so users keep premium during Stripe's grace period. ALSO STILL PENDING: configure the Stripe dashboard webhook URL after P8C deploys — subscribe to customer.subscription.{created,updated,deleted}, copy signing secret to Vercel env STRIPE_WEBHOOK_SECRET, test from dashboard.
+> **Next concrete step when resuming:** execute P8D plan (`docs/superpowers/plans/2026-05-27-p8d-billing-portal-downgrade.md`) — 4 tasks subagent-driven. Task 1: add `past_due` to PREMIUM_STATUSES + test. Task 2: build `/settings/billing` page (5 state branches) + ManageButton. Task 3: book-overflow soft-lock (isBookOverflow helper + chapter/binder action gates + OverflowBanner + editor.setEditable(false) when overflow). Task 4: confirm hive invite gate + AGENTS.md close-out + push. ALSO STILL PENDING: configure the Stripe dashboard webhook URL after P8C deploys — subscribe to customer.subscription.{created,updated,deleted}, copy signing secret to Vercel env STRIPE_WEBHOOK_SECRET, test from dashboard.
 
 ## ⚙️ Working Agreement (read this every session)
 

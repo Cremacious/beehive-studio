@@ -197,7 +197,10 @@ export function WritingAnalysis({ editorText, isOpen, onClose }: Props) {
         color: 'var(--wa-ink)',
       }}
     >
-      {/* Theme-aware bridge — paper context for light mode */}
+      {/* Writing analysis is always dark-themed regardless of editor mode.
+          The panel is a tools/analytics surface; dark chrome reads better
+          for charts + stat rows than the cream paper context that DP4
+          originally applied. */}
       <style>{`
         [data-slot="writing-analysis"] {
           --wa-bg: var(--chrome-900);
@@ -210,18 +213,6 @@ export function WritingAnalysis({ editorText, isOpen, onClose }: Props) {
           --wa-stat-border: var(--chrome-800);
           --wa-bar-bg: var(--chrome-800);
           --wa-pill-bg: oklch(from var(--color-brand) l c h / 0.15);
-        }
-        [data-editor-theme="light"] [data-slot="writing-analysis"] {
-          --wa-bg: var(--paper-100);
-          --wa-border: var(--paper-300);
-          --wa-ink: var(--paper-ink);
-          --wa-ink-strong: var(--paper-ink-strong);
-          --wa-ink-muted: var(--paper-ink-muted);
-          --wa-section-sep: oklch(0.80 0.040 70 / 0.45);
-          --wa-stat-bg: oklch(0.78 0.04 60 / 0.10);
-          --wa-stat-border: oklch(0.78 0.04 60 / 0.25);
-          --wa-bar-bg: oklch(0.78 0.04 60 / 0.20);
-          --wa-pill-bg: oklch(from var(--color-brand) l c h / 0.22);
         }
       `}</style>
 

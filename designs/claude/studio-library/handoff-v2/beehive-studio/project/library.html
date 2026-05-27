@@ -1,0 +1,1202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1440" />
+<title>Beehive Studio — Library</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&family=Geist:wght@300;400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ─────────────────────────────────────────────────────────────────────
+   /studio Library — DP4 v2
+   Maps 1:1 to app/globals.css. Page now anchors on #1E1E1E with the
+   canvas-dark scale providing the lifted surfaces. Color is brought in
+   by status-tinted stat tiles + cover accents; brand yellow remains
+   restrained (CTAs + active filter chip only).
+   ───────────────────────────────────────────────────────────────────── */
+:root {
+  /* Page bg — locked to the #1E1E1E reference */
+  --page-bg: #1E1E1E;
+
+  /* Canvas-dark (cool neutral, hue 256°) — the surfaces of this page.
+     Page bg = #1E1E1E; cards lift to canvas-dark-100/200; edges = 300.
+     Ink ramp is the bright "canvas-dark-ink-*" series so copy reads
+     close to white. */
+  --canvas-dark-100:        oklch(0.255 0.003 256);
+  --canvas-dark-150:        oklch(0.275 0.003 256);
+  --canvas-dark-200:        oklch(0.290 0.003 256);
+  --canvas-dark-300:        oklch(0.350 0.003 256);
+  --canvas-dark-ink-muted:  oklch(0.680 0.003 256);
+  --canvas-dark-ink:        oklch(0.880 0.003 256);
+  --canvas-dark-ink-strong: oklch(0.965 0.003 256);
+
+  /* Chrome — retained for the topbar gradient + a couple of accents
+     where the page bg needs to sink into a darker plate. */
+  --chrome-950: oklch(0.165 0.003 256);
+  --chrome-900: oklch(0.205 0.003 256);
+  --chrome-800: oklch(0.275 0.003 256);
+  --chrome-700: oklch(0.350 0.003 256);
+  --chrome-500: oklch(0.530 0.003 256);
+
+  /* Paper — warm cream (book covers + hero accent only) */
+  --paper-50:  oklch(0.985 0.012 88);
+  --paper-100: oklch(0.965 0.018 85);
+  --paper-200: oklch(0.935 0.022 82);
+  --paper-300: oklch(0.880 0.020 80);
+  --paper-400: oklch(0.760 0.022 78);
+  --paper-ink-muted:  oklch(0.520 0.022 60);
+  --paper-ink:        oklch(0.265 0.020 55);
+  --paper-ink-strong: oklch(0.180 0.022 50);
+
+  /* Brand — 5 uses across the page, max */
+  --brand:        #FFC300;
+  --brand-hover:  #FFD040;
+  --brand-active: #E0AC01;
+  --brand-soft:   oklch(0.85 0.18 90 / 0.18);
+  --brand-ink:    oklch(0.20 0.05 75);
+
+  /* Status — provides color variety across the page */
+  --status-idea:        oklch(0.74 0.045 245);
+  --status-outline:     oklch(0.74 0.070 295);
+  --status-first-draft: oklch(0.80 0.140 88);
+  --status-revised:     oklch(0.74 0.080 155);
+  --status-final:       oklch(0.68 0.130 35);
+
+  /* Type */
+  --font-display: 'Comfortaa', system-ui, sans-serif;
+  --font-ui:      'Geist', ui-sans-serif, system-ui, sans-serif;
+  --font-prose:   'Newsreader', 'Source Serif 4', Georgia, serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, monospace;
+  --t-2xs: 11px; --t-xs: 12px; --t-sm: 13px; --t-md: 14px;
+  --t-lg: 16px;  --t-xl: 18px; --t-2xl: 22px; --t-3xl: 28px;
+
+  /* Radii */
+  --r-xs: 4px; --r-sm: 6px; --r-md: 10px; --r-lg: 14px;
+  --r-xl: 18px; --r-2xl: 22px; --r-3xl: 28px; --r-full: 9999px;
+
+  /* Elevation */
+  --el-1: 0 1px 0 rgba(255,255,255,0.05) inset, 0 1px 0 rgba(0,0,0,0.40);
+  --el-2: 0 1px 0 rgba(255,255,255,0.05) inset, 0 2px 0 rgba(0,0,0,0.32),
+          0 6px 16px -8px rgba(0,0,0,0.45);
+  --el-3: 0 1px 0 rgba(255,255,255,0.06) inset, 0 3px 0 rgba(0,0,0,0.30),
+          0 16px 40px -16px rgba(0,0,0,0.55);
+  --el-paper:
+      0 1px 0 rgba(255,255,255,0.8) inset,
+      0 1px 2px rgba(60,40,20,0.10),
+      0 8px 22px -10px rgba(60,40,20,0.30);
+
+  --topnav-h: 56px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--page-bg);
+  color: var(--canvas-dark-ink-strong);
+  font-family: var(--font-ui);
+  font-size: var(--t-md);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  min-height: 100vh;
+}
+
+/* Faint grain — adds room-light noise on the page bg without warmth */
+body::before {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.012) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+/* Warm halo removed per request — chrome stays cool, no glow. */
+.page-halo { display: none; }
+
+main {
+  position: relative; z-index: 1;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 32px 96px;
+}
+
+/* ── Top bar ────────────────────────────────────────────────────── */
+.topbar {
+  position: sticky; top: 0; z-index: 10;
+  height: var(--topnav-h);
+  background: oklch(0.235 0.003 256 / 0.85);
+  backdrop-filter: blur(12px) saturate(120%);
+  border-bottom: 1px solid var(--canvas-dark-300);
+}
+.topbar-inner {
+  max-width: 1280px; margin: 0 auto;
+  padding: 0 32px;
+  height: 100%;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.brand-mark { display: flex; align-items: center; gap: 10px; }
+.brand-mark .hex {
+  width: 28px; height: 28px; border-radius: 8px;
+  background: var(--brand-soft);
+  border: 1px solid oklch(0.85 0.18 90 / 0.30);
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--brand);
+}
+.brand-mark .lockup {
+  display: flex; align-items: baseline; gap: 10px;
+  font-family: var(--font-display); font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.brand-mark .lockup .home {
+  font-size: 15px; color: var(--canvas-dark-ink-strong);
+}
+.brand-mark .lockup .crumb {
+  font-family: var(--font-mono); font-weight: 500;
+  font-size: 11px; letter-spacing: 0.10em; text-transform: uppercase;
+  color: var(--canvas-dark-ink-muted);
+}
+.brand-mark .lockup .crumb::before {
+  content: '/'; margin-right: 10px; color: var(--canvas-dark-300);
+}
+.topbar nav {
+  display: flex; gap: 4px;
+  position: absolute; left: 50%; transform: translateX(-50%);
+}
+.topbar nav a {
+  padding: 6px 14px; border-radius: var(--r-full);
+  font-size: var(--t-sm); font-weight: 500;
+  color: var(--canvas-dark-ink-muted);
+  text-decoration: none;
+}
+.topbar nav a:hover { color: var(--canvas-dark-ink-strong); }
+.topbar nav a.active {
+  color: var(--canvas-dark-ink-strong);
+  background: var(--canvas-dark-200);
+}
+.topbar-right { display: flex; align-items: center; gap: 14px; }
+.avatar {
+  width: 30px; height: 30px; border-radius: var(--r-full);
+  background: var(--brand-soft);
+  border: 1px solid oklch(0.85 0.18 90 / 0.30);
+  color: var(--brand);
+  font-family: var(--font-display); font-weight: 700; font-size: 12px;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+
+/* [BRAND USE 1/5] Primary CTA — New Book */
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 14px;
+  border-radius: var(--r-full);
+  background: var(--brand);
+  color: var(--brand-ink);
+  font-family: var(--font-display); font-weight: 700;
+  font-size: var(--t-sm);
+  border: 0; cursor: pointer;
+  box-shadow: var(--el-2);
+  letter-spacing: 0.005em;
+}
+.btn-primary:hover { background: var(--brand-hover); }
+
+.btn-ghost {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 14px;
+  border-radius: var(--r-md);
+  background: var(--canvas-dark-100);
+  border: 1px solid var(--canvas-dark-300);
+  color: var(--canvas-dark-ink);
+  font-size: var(--t-sm); font-weight: 500;
+  cursor: pointer;
+}
+.btn-ghost:hover { background: var(--canvas-dark-200); color: var(--canvas-dark-ink-strong); }
+.btn-ghost.icon-only { width: 36px; height: 36px; padding: 0; justify-content: center; }
+
+.page-top-spacer { height: 40px; }
+
+/* ── Hero + stats row ───────────────────────────────────────────── */
+.hero-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+  gap: 16px;
+  margin-bottom: 36px;
+}
+
+/* ══════════ Hero + stats — redesigned as TWO horizontal bands ══════════
+   The hero is now a FULL-WIDTH paper-styled manuscript panel — the
+   warm cream surface is itself "the page" so we no longer need a
+   separate book-cover thumbnail. Stats stack as a 3-column metric
+   strip BELOW the hero instead of beside it. New rhythm, new color
+   balance, same information.
+   ══════════════════════════════════════════════════════════════════════ */
+
+.hero-row {
+  display: block;
+  margin-bottom: 36px;
+}
+
+/* ═══ Hero — dark panel, one step lighter than the page bg ═══ */
+.hero {
+  position: relative;
+  display: block;
+  width: 100%;
+  border-radius: var(--r-2xl);
+  background: var(--canvas-dark-150);
+  border: 1px solid var(--canvas-dark-300);
+  color: var(--canvas-dark-ink);
+  font-family: var(--font-ui);
+  text-decoration: none;
+  padding: 40px 48px 44px;
+  box-shadow: var(--el-2);
+  margin-bottom: 0;
+  overflow: hidden;
+  transition: transform .15s, box-shadow .15s, border-color .15s;
+}
+.hero:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--el-3);
+  border-color: oklch(0.40 0.003 256);
+}
+
+/* Top meta row */
+.hero-meta {
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 18px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--canvas-dark-ink-muted);
+}
+.hero-meta .eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  color: var(--canvas-dark-ink-strong);
+  font-weight: 600;
+}
+.hero-meta .eyebrow .pulse {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand-soft);
+}
+.hero-meta .divider {
+  width: 1px; height: 12px;
+  background: var(--canvas-dark-300);
+}
+.hero-meta .status-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 9px 3px 7px;
+  border-radius: var(--r-full);
+  background: oklch(from var(--status-first-draft) l c h / 0.16);
+  border: 1px solid oklch(from var(--status-first-draft) l c h / 0.32);
+  color: var(--status-first-draft);
+  font-family: var(--font-display);
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.hero-meta .status-pill .d {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--status-first-draft);
+}
+
+/* Body — two columns: title block left, action stack right */
+.hero-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr);
+  gap: 48px;
+  align-items: end;
+  position: relative;
+}
+.hero-title-block { min-width: 0; }
+.hero-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 44px;
+  letter-spacing: -0.03em;
+  line-height: 1.0;
+  color: var(--canvas-dark-ink-strong);
+  margin: 0 0 12px;
+  text-wrap: balance;
+}
+.hero-chapter {
+  font-family: var(--font-prose);
+  font-size: 18px;
+  line-height: 1.35;
+  color: var(--canvas-dark-ink);
+  margin: 0;
+}
+.hero-chapter em {
+  font-family: var(--font-display);
+  font-style: normal;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--canvas-dark-ink-muted);
+  margin-right: 8px;
+}
+.hero-when {
+  margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--paper-ink-muted);
+  letter-spacing: 0.04em;
+}
+
+/* Right column — progress + Resume CTA */
+.hero-actions { display: flex; flex-direction: column; gap: 16px; }
+
+.hero-progress {
+  display: flex; flex-direction: column; gap: 8px;
+}
+.hero-progress .row {
+  display: flex; align-items: baseline; justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--canvas-dark-ink-muted);
+}
+.hero-progress .row b {
+  color: var(--canvas-dark-ink-strong);
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0;
+  margin-right: 4px;
+}
+.hero-progress .track {
+  position: relative;
+  height: 8px; border-radius: var(--r-full);
+  background: var(--canvas-dark-300);
+  overflow: hidden;
+}
+.hero-progress .track .fill {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 15.5%;
+  background: var(--status-first-draft);
+  border-radius: var(--r-full);
+}
+.hero-progress .track .fill::after {
+  /* small dark notch at the end — reads like a paper marker */
+  content: ''; position: absolute; right: 0; top: -2px; bottom: -2px;
+  width: 2px;
+  background: oklch(from var(--status-first-draft) calc(l - 0.15) c h);
+}
+
+/* [BRAND USE 2/5] Hero Resume CTA */
+.btn-resume {
+  display: inline-flex; align-items: center; justify-content: space-between; gap: 16px;
+  width: 100%;
+  padding: 13px 18px;
+  border-radius: var(--r-md);
+  background: var(--brand);
+  color: var(--brand-ink);
+  font-family: var(--font-display); font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.005em;
+  border: 0; cursor: pointer;
+  text-decoration: none;
+  transition: background .12s;
+}
+.btn-resume .arrow {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px;
+  border-radius: var(--r-full);
+  background: var(--brand-ink);
+  color: var(--brand);
+}
+.btn-resume:hover { background: var(--brand-hover); }
+.btn-resume:hover .arrow { background: oklch(0.12 0.020 50); }
+
+/* ═══ Stats — 3-column metric strip below the hero ═══ */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.stat {
+  position: relative;
+  background: var(--canvas-dark-100);
+  border: 1px solid var(--canvas-dark-300);
+  border-radius: var(--r-xl);
+  padding: 18px 22px;
+  display: flex; flex-direction: column;
+  gap: 4px;
+  overflow: hidden;
+}
+/* tiny status tab sticking out of the top-left corner — the only color
+   per tile beyond the value/viz */
+.stat::before {
+  content: '';
+  position: absolute; left: 22px; top: 0;
+  width: 28px; height: 3px;
+  background: var(--accent, var(--canvas-dark-300));
+  border-radius: 0 0 3px 3px;
+}
+.stat[data-tone="books"]    { --accent: var(--status-first-draft); }
+.stat[data-tone="words"]    { --accent: var(--status-revised); }
+.stat[data-tone="chapters"] { --accent: var(--status-final); }
+
+.stat .label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--canvas-dark-ink-muted);
+}
+.stat .value-row {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
+}
+.stat .value {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 38px;
+  letter-spacing: -0.03em;
+  color: var(--canvas-dark-ink-strong);
+  line-height: 1;
+  display: flex; align-items: baseline; gap: 6px;
+}
+.stat .value .unit {
+  font-size: 13px; color: var(--canvas-dark-ink-muted);
+  font-weight: 500; letter-spacing: 0.02em;
+  font-family: var(--font-ui);
+}
+.stat .trend {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  padding: 3px 7px;
+  border-radius: var(--r-xs);
+  background: oklch(from var(--accent) l c h / 0.14);
+}
+.stat .sub {
+  font-size: 12px;
+  color: var(--canvas-dark-ink-muted);
+  margin-top: 2px;
+}
+.stat .sub b {
+  color: var(--canvas-dark-ink);
+  font-weight: 500;
+}
+
+
+/* ── Controls bar ───────────────────────────────────────────────── */
+.controls {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 14px;
+}
+.search { position: relative; flex: 1; }
+.search svg {
+  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  color: var(--canvas-dark-ink-muted);
+}
+.search input {
+  width: 100%;
+  height: 44px;
+  padding: 0 16px 0 42px;
+  border-radius: var(--r-md);
+  background: var(--canvas-dark-100);
+  border: 1px solid var(--canvas-dark-300);
+  color: var(--canvas-dark-ink-strong);
+  font-family: inherit;
+  font-size: var(--t-md);
+  outline: none;
+  transition: border-color .12s, background .12s;
+}
+.search input::placeholder { color: var(--canvas-dark-ink-muted); }
+.search input:hover { border-color: oklch(0.40 0.003 256); }
+.search input:focus { border-color: oklch(0.45 0.003 256); background: var(--canvas-dark-150); }
+.search .kbd {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  font-family: var(--font-mono); font-size: 10px;
+  padding: 3px 7px;
+  border-radius: var(--r-xs);
+  background: var(--canvas-dark-200);
+  border: 1px solid var(--canvas-dark-300);
+  color: var(--canvas-dark-ink-muted);
+  letter-spacing: 0.04em;
+}
+
+.sort {
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 44px; padding: 0 14px;
+  border-radius: var(--r-md);
+  background: var(--canvas-dark-100);
+  border: 1px solid var(--canvas-dark-300);
+  color: var(--canvas-dark-ink);
+  font-size: var(--t-sm); font-weight: 500;
+  cursor: pointer;
+}
+.sort:hover { border-color: oklch(0.40 0.003 256); }
+.sort .lbl { color: var(--canvas-dark-ink-muted); font-size: var(--t-xs); }
+
+.view-switch {
+  display: inline-flex; gap: 2px; padding: 3px;
+  border-radius: var(--r-md);
+  background: var(--canvas-dark-100);
+  border: 1px solid var(--canvas-dark-300);
+}
+.view-switch button {
+  width: 34px; height: 34px;
+  border-radius: 7px;
+  background: transparent;
+  border: 0;
+  color: var(--canvas-dark-ink-muted);
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.view-switch button:hover { color: var(--canvas-dark-ink-strong); }
+.view-switch button.active {
+  background: var(--canvas-dark-200);
+  color: var(--canvas-dark-ink-strong);
+}
+
+/* ── Filter chips ───────────────────────────────────────────────── */
+.chips {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--canvas-dark-300);
+}
+.chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 14px 8px 12px;
+  border-radius: var(--r-full);
+  background: transparent;
+  border: 1px solid var(--canvas-dark-300);
+  color: var(--canvas-dark-ink-muted);
+  font-family: var(--font-display);
+  font-size: var(--t-sm); font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.005em;
+}
+.chip:hover { color: var(--canvas-dark-ink-strong); border-color: oklch(0.40 0.003 256); }
+.chip .ct {
+  font-family: var(--font-mono); font-weight: 500;
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: var(--r-xs);
+  background: var(--canvas-dark-200);
+  color: var(--canvas-dark-ink-muted);
+  letter-spacing: 0.02em;
+}
+/* [BRAND USE 3/5] Active filter chip */
+.chip.active {
+  background: var(--brand-soft);
+  border-color: oklch(0.85 0.18 90 / 0.35);
+  color: var(--brand);
+  box-shadow: var(--el-1);
+}
+.chip.active .ct {
+  background: var(--brand);
+  color: var(--brand-ink);
+}
+.chip .dot {
+  width: 7px; height: 7px; border-radius: 50%;
+}
+.chip[data-status="drafting"]  .dot { background: var(--status-first-draft); }
+.chip[data-status="revised"]   .dot { background: var(--status-revised); }
+.chip[data-status="published"] .dot { background: var(--status-final); }
+
+/* ════════════════════════════════════════════════════════════════
+   BOOK CARD — modern, rounded, color-forward
+   Card = rounded surface on canvas-dark-100. Cover sits in the top
+   ~62% of the card with a paper-warm bg + a thick color stripe at the
+   very top in the book's status color. Info section below carries
+   status pill + title + meta. Always-visible status, no skeuomorphic
+   spine or shelf metaphor.
+   ════════════════════════════════════════════════════════════════ */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 22px;
+}
+
+.book-card {
+  position: relative;
+  display: flex; flex-direction: column;
+  background: var(--canvas-dark-100);
+  border: 1px solid var(--canvas-dark-300);
+  border-radius: var(--r-2xl);
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: transform .2s cubic-bezier(.2,.7,.3,1),
+              box-shadow .2s,
+              border-color .15s;
+  box-shadow: var(--el-1);
+}
+.book-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--el-3);
+  border-color: oklch(0.40 0.003 256);
+}
+
+/* Top color stripe — book's status color, 4px tall, full-bleed */
+.book-card .stripe {
+  height: 4px;
+  background: var(--accent, var(--canvas-dark-300));
+}
+.book-card[data-status="drafting"]  { --accent: var(--status-first-draft); }
+.book-card[data-status="revised"]   { --accent: var(--status-revised); }
+.book-card[data-status="published"] { --accent: var(--status-final); }
+.book-card[data-status="memoir"]    { --accent: var(--status-outline); }
+.book-card[data-status="idea"]      { --accent: var(--status-idea); }
+
+/* Cover — paper-warm canvas */
+.book-card-cover {
+  position: relative;
+  aspect-ratio: 5 / 6;
+  background: var(--paper-100);
+  color: var(--paper-ink-strong);
+  font-family: var(--font-display);
+  overflow: hidden;
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(95,60,20,0.045) 1px, transparent 0);
+  background-size: 22px 22px;
+  transition: filter .25s;
+}
+.book-card.tone-ivory  .book-card-cover { background-color: var(--paper-50); }
+.book-card.tone-cream  .book-card-cover { background-color: var(--paper-100); }
+.book-card.tone-vellum .book-card-cover { background-color: var(--paper-200); }
+.book-card.tone-tan    .book-card-cover { background-color: var(--paper-300); }
+.book-card.tone-warm   .book-card-cover { background-color: oklch(0.92 0.018 78); }
+
+/* Status pill — always visible, top-left of the cover */
+.book-card .status-pill {
+  position: absolute; top: 12px; left: 12px;
+  z-index: 2;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px 4px 8px;
+  border-radius: var(--r-full);
+  background: oklch(from var(--accent) l c h / 0.18);
+  border: 1px solid oklch(from var(--accent) l c h / 0.32);
+  color: oklch(from var(--accent) calc(l - 0.08) c h);
+  font-family: var(--font-display);
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  backdrop-filter: blur(4px);
+}
+.book-card .status-pill .d {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--accent);
+}
+.book-card .status-pill.on-light {
+  /* on the cream paper, soften to a paper-ink palette */
+  background: oklch(from var(--accent) l c h / 0.20);
+  border-color: oklch(from var(--accent) calc(l - 0.10) c h / 0.45);
+  color: oklch(from var(--accent) calc(l - 0.30) c h);
+}
+
+/* Cover compositions */
+.cover-comp {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  padding: 36px 22px 24px;
+}
+.cover-comp .eyebrow {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.30em;
+  text-transform: uppercase;
+  color: var(--paper-ink-muted);
+  text-align: center;
+}
+.cover-comp .stamp {
+  margin: auto;
+  color: var(--paper-ink-strong);
+}
+.cover-comp .title-block {
+  text-align: center;
+  margin-bottom: 4px;
+}
+.cover-comp .title-block .t {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  color: var(--paper-ink-strong);
+  line-height: 1.05;
+  text-wrap: balance;
+}
+.cover-comp .title-block .t.large { font-size: 21px; }
+.cover-comp .title-block .t.small { font-size: 14px; }
+.cover-comp .title-block .t.serif {
+  font-family: var(--font-prose);
+  font-weight: 600;
+  font-style: italic;
+}
+.cover-comp .title-block .rule {
+  width: 28px; height: 1px;
+  background: var(--paper-ink-strong);
+  margin: 10px auto;
+  opacity: 0.55;
+}
+.cover-comp .byline {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--paper-ink-muted);
+}
+
+/* Sideways title — Last Train Home */
+.cover-comp.sideways {
+  padding: 0;
+  display: block;
+}
+.cover-comp.sideways .vertical {
+  position: absolute;
+  left: 18px;
+  top: 50px;   /* clears the status pill above */
+  bottom: 50px;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: 0.04em;
+  color: var(--paper-ink-strong);
+  display: flex; align-items: center;
+}
+.cover-comp.sideways .byline {
+  position: absolute;
+  right: 18px; bottom: 18px;
+  text-align: right;
+  line-height: 1.5;
+}
+
+/* Apiary — hex motif */
+.cover-comp.apiary { justify-content: space-between; padding-top: 44px; }
+.cover-comp.apiary .hexes {
+  display: flex; justify-content: center; gap: 7px;
+  margin: 4px 0 8px;
+}
+.cover-comp.apiary .hexes svg {
+  color: var(--paper-ink-strong);
+}
+
+/* Untitled draft */
+.cover-comp.untitled {
+  align-items: center; justify-content: center;
+  background-image: repeating-linear-gradient(
+    -8deg, transparent 0 16px,
+    rgba(95,60,20,0.05) 16px 17px);
+}
+.cover-comp.untitled .t {
+  font-family: var(--font-prose);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 22px;
+  color: var(--paper-ink-muted);
+  opacity: 0.8;
+}
+
+/* Info — always-visible meta band below the cover */
+.book-card-info {
+  padding: 16px 18px 18px;
+  display: flex; flex-direction: column;
+  gap: 6px;
+  border-top: 1px solid var(--canvas-dark-300);
+}
+.book-card-info .meta-top {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.10em; text-transform: uppercase;
+  color: var(--canvas-dark-ink-muted);
+}
+.book-card-info .meta-top .genre {
+  color: var(--canvas-dark-ink);
+}
+.book-card-info .meta-top .sep {
+  width: 3px; height: 3px; border-radius: 50%;
+  background: var(--canvas-dark-300);
+}
+.book-card-info .title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  color: var(--canvas-dark-ink-strong);
+  line-height: 1.2;
+  margin: 2px 0 4px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  transition: color .15s;
+}
+.book-card:hover .title { color: var(--brand); }  /* [BRAND USE 4/5: hover-only title accent] */
+.book-card-info .stats-row {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  color: var(--canvas-dark-ink-muted);
+}
+.book-card-info .stats-row b {
+  color: var(--canvas-dark-ink);
+  font-weight: 600;
+  font-family: var(--font-display);
+}
+.book-card-info .stats-row .sep {
+  width: 3px; height: 3px; border-radius: 50%;
+  background: var(--canvas-dark-300);
+}
+
+/* ── Footer note ────────────────────────────────────────────────── */
+.shelf-foot {
+  margin-top: 56px;
+  display: flex; justify-content: space-between; align-items: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.10em; text-transform: uppercase;
+  color: var(--canvas-dark-ink-muted);
+  padding-top: 20px;
+  border-top: 1px solid var(--canvas-dark-300);
+}
+.shelf-foot a { color: var(--canvas-dark-ink); text-decoration: none; }
+.shelf-foot a:hover { color: var(--brand); }
+
+/* ── Token mapping (for traceability back to globals.css) ───────── */
+/* page bg                         → #1E1E1E
+   card surfaces (hero/stat/book)  → var(--canvas-dark-100)
+   borders                         → var(--canvas-dark-300)
+   primary text                    → var(--canvas-dark-ink-strong) (0.965)
+   body text                       → var(--canvas-dark-ink)        (0.880)
+   muted text / labels             → var(--canvas-dark-ink-muted)  (0.680)
+   stat accent (per tile)          → status-first-draft|revised|final
+   hero status accent stripe       → var(--status-first-draft)
+   book cover stripe (per book)    → var(--status-*)
+   genre-tag chip (hero)           → status-first-draft tint
+   topbar [+ New book]             → var(--brand)
+   hero [Resume writing]           → var(--brand)
+   active filter chip              → var(--brand)
+   title hover accent              → var(--brand)
+*/
+</style>
+</head>
+<body>
+
+<!-- ════════════════════ Top bar ════════════════════ -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand-mark">
+      <span class="hex" aria-hidden="true">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 L20 6.5 L20 15.5 L12 20 L4 15.5 L4 6.5 Z"/>
+          <path d="M12 9 L16 11 L16 14.5 L12 16.5 L8 14.5 L8 11 Z" fill="currentColor" fill-opacity="0.55" stroke="none"/>
+        </svg>
+      </span>
+      <div class="lockup">
+        <span class="home">Beehive Studio</span>
+        <span class="crumb">Library</span>
+      </div>
+    </div>
+
+    <nav>
+      <a href="#" class="active">Studio</a>
+      <a href="#">Discover</a>
+      <a href="#">Community</a>
+      <a href="#">Hive</a>
+    </nav>
+
+    <div class="topbar-right">
+      <button class="btn-ghost icon-only" aria-label="Notifications">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
+        </svg>
+      </button>
+      <!-- [BRAND USE 1/5] Primary CTA: New Book — removed per request -->
+      <span class="avatar">JM</span>
+    </div>
+  </div>
+</header>
+
+<div class="page-halo" aria-hidden="true" hidden></div>
+
+<main>
+
+  <div class="page-top-spacer"></div>
+
+  <!-- ════════════════════ Hero + stats ════════════════════ -->
+  <section class="hero-row">
+
+    <!-- ── Hero: paper-styled manuscript panel ── -->
+    <a href="#" class="hero" aria-label="Continue writing: The Hollow King">
+
+      <!-- Top meta strip — eyebrow + status + when -->
+      <div class="hero-meta">
+        <span class="eyebrow"><span class="pulse"></span>Continue writing</span>
+        <span class="divider"></span>
+        <span class="status-pill"><span class="d"></span>Drafting</span>
+        <span class="divider"></span>
+        <span>Last edited 2 hours ago</span>
+      </div>
+
+      <!-- Two-column body: title block left, action stack right -->
+      <div class="hero-body">
+        <div class="hero-title-block">
+          <h2 class="hero-title">The Hollow King</h2>
+          <p class="hero-chapter">
+            <em>Chapter 8</em>The Crown that Bled
+          </p>
+        </div>
+
+        <div class="hero-actions">
+          <div class="hero-progress" aria-label="Word goal progress">
+            <div class="row">
+              <span><b>12,402</b>of <b>80,000</b>words</span>
+              <span><b>15%</b>to first draft</span>
+            </div>
+            <div class="track"><span class="fill"></span></div>
+          </div>
+
+          <!-- [BRAND USE 2/5] -->
+          <button class="btn-resume" type="button">
+            Resume writing
+            <span class="arrow">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14M13 6l6 6-6 6"/>
+              </svg>
+            </span>
+          </button>
+        </div>
+      </div>
+    </a>
+
+    <!-- ── Stat strip removed per request ── -->
+  </section>
+
+  <!-- ════════════════════ Controls ════════════════════ -->
+  <div class="controls">
+    <label class="search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
+      </svg>
+      <input type="text" placeholder="Search your library — titles, characters, notes…" />
+      <span class="kbd">⌘ K</span>
+    </label>
+    <button class="sort">
+      <span class="lbl">Sort:</span>
+      Recently edited
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 12 15 18 9"/>
+      </svg>
+    </button>
+    <div class="view-switch" role="tablist" aria-label="View">
+      <button class="active" aria-label="Grid">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+      </button>
+      <button aria-label="List">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ════════════════════ Filter chips ════════════════════ -->
+  <div class="chips" role="tablist">
+    <!-- [BRAND USE 3/5] Active filter chip -->
+    <button class="chip active" role="tab" aria-selected="true">
+      All <span class="ct">5</span>
+    </button>
+    <button class="chip" data-status="drafting" role="tab" aria-selected="false">
+      <span class="dot"></span> Drafting <span class="ct">3</span>
+    </button>
+    <button class="chip" data-status="revised" role="tab" aria-selected="false">
+      <span class="dot"></span> Revised <span class="ct">1</span>
+    </button>
+    <button class="chip" data-status="published" role="tab" aria-selected="false">
+      <span class="dot"></span> Published <span class="ct">0</span>
+    </button>
+  </div>
+
+  <!-- ════════════════════ Book grid (NEW design) ════════════════════ -->
+  <section class="grid" aria-label="Books">
+
+    <!-- Book 1 — The Hollow King -->
+    <a href="#" class="book-card tone-vellum" data-status="drafting">
+      <span class="stripe" aria-hidden="true"></span>
+      <div class="book-card-cover">
+        <span class="status-pill on-light">
+          <span class="d"></span> Drafting
+        </span>
+        <div class="cover-comp">
+          <div class="eyebrow">Book One</div>
+          <div class="stamp" aria-hidden="true">
+            <svg width="48" height="48" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round">
+              <path d="M10 44 L14 22 L24 32 L32 16 L40 32 L50 22 L54 44 Z" fill="currentColor" fill-opacity="0.18"/>
+              <circle cx="14" cy="20" r="1.4" fill="currentColor"/>
+              <circle cx="32" cy="14" r="1.4" fill="currentColor"/>
+              <circle cx="50" cy="20" r="1.4" fill="currentColor"/>
+              <path d="M10 48 L54 48"/>
+            </svg>
+          </div>
+          <div class="title-block">
+            <div class="t">The Hollow King</div>
+            <div class="rule"></div>
+            <div class="byline">Jules Marlowe</div>
+          </div>
+        </div>
+      </div>
+      <div class="book-card-info">
+        <div class="meta-top">
+          <span class="genre">Fantasy</span>
+          <span class="sep"></span>
+          <span>2h ago</span>
+        </div>
+        <div class="title">The Hollow King</div>
+        <div class="stats-row">
+          <span><b>12,402</b> words</span>
+          <span class="sep"></span>
+          <span><b>8</b> chapters</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Book 2 — Saltwater Hours -->
+    <a href="#" class="book-card tone-ivory" data-status="revised">
+      <span class="stripe" aria-hidden="true"></span>
+      <div class="book-card-cover">
+        <span class="status-pill on-light">
+          <span class="d"></span> Revised
+        </span>
+        <div class="cover-comp">
+          <div class="eyebrow">A collection</div>
+          <div class="stamp" aria-hidden="true">
+            <svg width="50" height="14" viewBox="0 0 60 14" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round">
+              <path d="M2 7 L58 7"/>
+              <circle cx="30" cy="7" r="2" fill="currentColor"/>
+            </svg>
+          </div>
+          <div class="title-block">
+            <div class="t large">Saltwater<br/>Hours</div>
+            <div class="rule"></div>
+            <div class="byline">Jules Marlowe</div>
+          </div>
+        </div>
+      </div>
+      <div class="book-card-info">
+        <div class="meta-top">
+          <span class="genre">Literary fiction</span>
+          <span class="sep"></span>
+          <span>3d ago</span>
+        </div>
+        <div class="title">Saltwater Hours</div>
+        <div class="stats-row">
+          <span><b>24,180</b> words</span>
+          <span class="sep"></span>
+          <span><b>14</b> chapters</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Book 3 — Last Train Home -->
+    <a href="#" class="book-card tone-tan" data-status="memoir">
+      <span class="stripe" aria-hidden="true"></span>
+      <div class="book-card-cover">
+        <span class="status-pill on-light">
+          <span class="d"></span> Drafting
+        </span>
+        <div class="cover-comp sideways">
+          <div class="vertical">LAST TRAIN HOME</div>
+          <div class="byline">A memoir<br/>J. Marlowe</div>
+        </div>
+      </div>
+      <div class="book-card-info">
+        <div class="meta-top">
+          <span class="genre">Memoir</span>
+          <span class="sep"></span>
+          <span>1w ago</span>
+        </div>
+        <div class="title">Last Train Home</div>
+        <div class="stats-row">
+          <span><b>4,038</b> words</span>
+          <span class="sep"></span>
+          <span><b>6</b> chapters</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Book 4 — The Apiary -->
+    <a href="#" class="book-card tone-warm" data-status="drafting">
+      <span class="stripe" aria-hidden="true"></span>
+      <div class="book-card-cover">
+        <span class="status-pill on-light">
+          <span class="d"></span> Drafting
+        </span>
+        <div class="cover-comp apiary">
+          <div>
+            <div class="eyebrow" style="margin-bottom:8px">Stories</div>
+            <div class="hexes" aria-hidden="true">
+              <svg width="14" height="16" viewBox="0 0 14 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"><path d="M7 1 L13 4.5 L13 11.5 L7 15 L1 11.5 L1 4.5 Z" fill="currentColor" fill-opacity="0.20"/></svg>
+              <svg width="14" height="16" viewBox="0 0 14 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"><path d="M7 1 L13 4.5 L13 11.5 L7 15 L1 11.5 L1 4.5 Z" fill="currentColor" fill-opacity="0.38"/></svg>
+              <svg width="14" height="16" viewBox="0 0 14 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"><path d="M7 1 L13 4.5 L13 11.5 L7 15 L1 11.5 L1 4.5 Z" fill="currentColor" fill-opacity="0.20"/></svg>
+            </div>
+          </div>
+          <div class="title-block" style="margin-bottom:0">
+            <div class="t">The Apiary</div>
+            <div class="rule"></div>
+            <div class="byline">Twelve&nbsp;Stories</div>
+          </div>
+        </div>
+      </div>
+      <div class="book-card-info">
+        <div class="meta-top">
+          <span class="genre">Short stories</span>
+          <span class="sep"></span>
+          <span>2w ago</span>
+        </div>
+        <div class="title">The Apiary</div>
+        <div class="stats-row">
+          <span><b>1,800</b> words</span>
+          <span class="sep"></span>
+          <span><b>4</b> chapters</span>
+        </div>
+      </div>
+    </a>
+
+    <!-- Book 5 — Untitled draft -->
+    <a href="#" class="book-card tone-cream" data-status="idea">
+      <span class="stripe" aria-hidden="true"></span>
+      <div class="book-card-cover">
+        <span class="status-pill on-light">
+          <span class="d"></span> Idea
+        </span>
+        <div class="cover-comp untitled">
+          <span class="t">Untitled</span>
+        </div>
+      </div>
+      <div class="book-card-info">
+        <div class="meta-top">
+          <span class="genre" style="font-style: italic; color: var(--canvas-dark-ink-muted)">No genre yet</span>
+          <span class="sep"></span>
+          <span>today</span>
+        </div>
+        <div class="title" style="color: var(--canvas-dark-ink-muted); font-style: italic;">Untitled</div>
+        <div class="stats-row">
+          <span><b>0</b> words</span>
+          <span class="sep"></span>
+          <span>just started</span>
+        </div>
+      </div>
+    </a>
+
+  </section>
+
+  <!-- ════════════════════ Footer ════════════════════ -->
+  <div class="shelf-foot">
+    <span>Showing 5 books · sorted by recently edited</span>
+    <span><a href="#">View archive →</a></span>
+  </div>
+
+</main>
+
+</body>
+</html>

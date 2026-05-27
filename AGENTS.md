@@ -14,9 +14,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-27
 >
-> **Current focus:** /studio library redesign — executing 5-task plan. Tasks 1-4 shipped (data layer, BookCard+EmptyState, BookGrid, StudioHeader=Hero+Stats). 1 task remains: page.tsx wire-up + AGENTS.md close-out + push.
-> **Active branch:** `main` (local; not yet pushed)
-> **Last commit:** feat(studio): StudioHeader = Hero + Stats (Library Task 4)
+> **Current focus:** Studio Library redesign complete. /studio is now a richer bookshelf surface with Continue-Writing hero + stats + hover-overlay cards + search/sort/filter.
+> **Active branch:** `main` (pushed to origin/main)
+> **Last commit:** feat(studio): wire library page composition + close (Library Task 5)
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.
@@ -66,7 +66,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 >
 > **Light-mode editor default (2026-05-26):** Editor theme defaults to `light` (cream paper) for all new sessions. Users with `localStorage['editor-theme'] === 'dark'` keep dark mode. The change reflects the on-brand "writer's desk by day" experience the Claude Design pass established. Dark mode remains accessible via the toolbar Moon icon.
 >
-> **Next concrete step when resuming:** /studio redesign spec committed (`0bf3ae7`, `docs/superpowers/specs/2026-05-27-studio-library-redesign-design.md`). Awaiting Chris's review → then write implementation plan → execute. Spec locks: Continue-Writing hero + 4-stat strip header (totalWords / booksInProgress / wordsThisWeek / chaptersPublished), search + sort + filter chips controls, hover-overlay book cards (status / last edited / chapter count / genre / progress), reference-style empty state, paper-warm covers on cool gray chrome. New helpers: summarizeBookStatus() in lib/books, getStudioStatsAction in lib/actions/book.actions.ts. BookSummary projection extended (genre/lastEditedAt/chapterCount/status). No DB migrations. Also still pending: configure the Stripe dashboard webhook URL — subscribe to customer.subscription.{created,updated,deleted}, copy signing secret to Vercel env STRIPE_WEBHOOK_SECRET, test the live flow.
+> **Studio Library pattern:** `/[locale]/studio` is the user's bookshelf — Continue-Writing hero + 4-stat strip header, search + sort + filter chips, hover-overlay book cards revealing status/last-edited/chapter-count/genre/progress. Hero/stats data via `getStudioStatsAction`; book projection extended with `summarizeBookStatus()` helper that rolls chapter statuses up to a single book label (Drafting/Revised/Published). Same helper drives card overlays AND filter chip counts so they stay in sync. Cards: paper-warm covers on cool gray chrome (the only "warm" element on the page; everything else uses chrome tokens).
+>
+> **Next concrete step when resuming:** Open for what's next — Phase 9 candidates (referral codes, growth analytics, plan-upgrade nudges, polish), continued post-launch work, or configure the Stripe dashboard webhook for the live monetization flow.
 
 ## ⚙️ Working Agreement (read this every session)
 
@@ -272,6 +274,18 @@ No DB schema changes. Tests at 126 (+1 past_due test).
 4. Test the live flow with a real test-mode subscription.
 
 **Next:** Phase 9 — TBD. Candidates: referral codes, growth analytics, plan-upgrade nudges, polish.
+
+### Studio Library Redesign ✅ COMPLETE (2026-05-27)
+Replaces the bare card grid at `/[locale]/studio` with a richer library surface.
+
+- **Header section:** ContinueWritingHero (most-recently-edited book — cover + title + word count + Resume writing CTA) + StudioStats (4 tiles: Total words / Books in progress / Words this week / Chapters published).
+- **Controls row:** search input (filters by title/genre) + sort dropdown (Recent / A→Z / Word count) + filter chips with counts (All / Drafting / Revised / Published).
+- **Cards:** minimal at rest (cover + title + word count); hover overlay reveals status pill (--status-* tinted), genre pill, last-edited relative time, chapter count. CSS-only via `group-hover` — no JS state.
+- **Paper-warm covers** (paper-100 + paper-ink-strong) on cool gray chrome. Only "warm" element on the page.
+- **Empty state:** rounded-card BookOpen icon + "Your stories start here" + dual CTAs (Start writing / Explore books). Replaces the floating illustration.
+- **Data shape additions:** `BookSummary` projection extended with `genre`, `lastEditedAt`, `chapterCount`, `status` (computed via new `summarizeBookStatus()` helper). New `getStudioStatsAction` aggregates 4 stats.
+
+No DB schema changes. No new dependencies. 126/126 tests, tsc clean.
 
 ## What's Next
 

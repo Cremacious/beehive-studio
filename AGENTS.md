@@ -14,9 +14,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-27
 >
-> **Current focus:** P8D in progress — Task 1 complete (`766b2ce`: past_due added to PREMIUM_STATUSES + test, 126/126 pass). Tasks 2-4 pending: billing page → book overflow soft-lock → hive gate + close. POST-DEPLOY: configure Stripe dashboard webhook (see Key Patterns).
+> **Current focus:** P8D in progress — Tasks 1+2 complete (`766b2ce` past_due premium, `901cff2` billing page with 5 state branches + ManageButton). Tasks 3-4 pending: book overflow soft-lock → hive gate + close. POST-DEPLOY: configure Stripe dashboard webhook (see Key Patterns).
 > **Active branch:** `main` (pushed to origin/main)
-> **Last commit:** feat(premium): past_due is premium (extends grace period) (P8D Task 1)
+> **Last commit:** feat(billing): /settings/billing page (P8D Task 2)
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.
@@ -66,7 +66,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 >
 > **Light-mode editor default (2026-05-26):** Editor theme defaults to `light` (cream paper) for all new sessions. Users with `localStorage['editor-theme'] === 'dark'` keep dark mode. The change reflects the on-brand "writer's desk by day" experience the Claude Design pass established. Dark mode remains accessible via the toolbar Moon icon.
 >
-> **Next concrete step when resuming:** continue P8D execution. Task 1 done. Task 2 next: build `/settings/billing` page (5 state branches — free / active+trialing / past_due / canceled / other) + ManageButton client component invoking `createBillingPortalSessionAction`. Task 3: book-overflow soft-lock (isBookOverflow helper + chapter/binder action gates + OverflowBanner + editor.setEditable(false)). Task 4: confirm hive invite gate + AGENTS.md close-out + push. ALSO STILL PENDING: configure the Stripe dashboard webhook URL after P8C deploys — subscribe to customer.subscription.{created,updated,deleted}, copy signing secret to Vercel env STRIPE_WEBHOOK_SECRET, test from dashboard.
+> **Next concrete step when resuming:** continue P8D execution. Tasks 1+2 done. Task 3 next (the largest): book-overflow soft-lock — new `lib/billing/book-overflow.ts` (isBookOverflow helper, createdAt ASC ordering so oldest 3 stay editable), gates added to saveChapterAction + binder write actions, new OverflowBanner component mounted in chapter-editor.tsx, editor.setEditable(false) when book is overflow. Task 4: confirm hive invite gate (P8C audit said both already gate, just verify) + AGENTS.md close-out + push (closes Phase 8). ALSO STILL PENDING: configure the Stripe dashboard webhook URL after P8C deploys — subscribe to customer.subscription.{created,updated,deleted}, copy signing secret to Vercel env STRIPE_WEBHOOK_SECRET, test from dashboard.
 
 ## ⚙️ Working Agreement (read this every session)
 

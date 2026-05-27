@@ -14,9 +14,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-27
 >
-> **Current focus:** /studio library redesign — executing 5-task plan. Tasks 1-3 shipped (data layer + BookCard + EmptyState + BookGrid client). 2 tasks remain (StudioHeader → page wire-up).
+> **Current focus:** /studio library redesign — executing 5-task plan. Tasks 1-4 shipped (data layer, BookCard+EmptyState, BookGrid, StudioHeader=Hero+Stats). 1 task remains: page.tsx wire-up + AGENTS.md close-out + push.
 > **Active branch:** `main` (local; not yet pushed)
-> **Last commit:** feat(studio): BookGrid with search + sort + filter chips (Library Task 3)
+> **Last commit:** feat(studio): StudioHeader = Hero + Stats (Library Task 4)
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.

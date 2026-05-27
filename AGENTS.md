@@ -14,9 +14,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-27
 >
-> **Current focus:** P8B Pricing page + checkout flow complete; P8C Webhooks + entitlement next.
+> **Current focus:** P8C Webhooks + entitlement IN PROGRESS — Tasks 1+2 complete (handler module + dispatch wired; unit tests added). Task 3 (premium audit) + Task 4 (close+push) pending.
 > **Active branch:** `main` (pushed to origin/main)
-> **Last commit:** docs: close P8B Pricing + Checkout (Phase 8 second sub-project shipped)
+> **Last commit:** test(stripe): handle-subscription-event unit tests (P8C Task 2)
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.
@@ -66,7 +66,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 >
 > **Light-mode editor default (2026-05-26):** Editor theme defaults to `light` (cream paper) for all new sessions. Users with `localStorage['editor-theme'] === 'dark'` keep dark mode. The change reflects the on-brand "writer's desk by day" experience the Claude Design pass established. Dark mode remains accessible via the toolbar Moon icon.
 >
-> **Next concrete step when resuming:** invoke /brainstorming for P8C Webhooks + entitlement — wire real handler logic in /api/webhooks/stripe, sync subscriptionStatus from Stripe events, audit existing premium-gated server actions.
+> **Next concrete step when resuming:** continue P8C — Task 3 is the premium audit (grep getUserPremiumStatus callers for drift after P8A's refactor; likely zero edits). Task 4 closes P8C with AGENTS.md + push + post-deploy webhook configuration instructions for the Stripe dashboard. P8C plan: docs/superpowers/plans/2026-05-27-p8c-webhooks-entitlement.md. Notable Task 1 finding: Stripe SDK type union for subscription.status includes `paused` — enum was extended via npm run db:push to cover it. `current_period_end` lives on `subscription.items.data[0]` in API version 2026-02-25.clover, not on subscription directly. 125/125 tests pass.
 
 ## ⚙️ Working Agreement (read this every session)
 

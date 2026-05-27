@@ -357,6 +357,21 @@ export function BookCreationForm({ locale, templates }: Props) {
                 />
               )}
             </div>
+
+            {/* Footer reassurance — every field here is editable later from
+                the book's Book details page (settings cog in the binder). */}
+            <p
+              className="text-center"
+              style={{
+                marginTop: 20,
+                fontFamily: 'var(--font-mono)',
+                fontSize: 11,
+                letterSpacing: '0.08em',
+                color: 'var(--canvas-dark-ink-muted, #777)',
+              }}
+            >
+              You can edit everything here later from Book details (⚙ in the binder).
+            </p>
           </div>
         </div>
       </div>

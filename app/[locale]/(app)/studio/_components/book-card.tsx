@@ -1,4 +1,7 @@
+'use client'
+
 import Link from 'next/link'
+import { BookCardMenu } from './book-card-menu'
 import type { BookSummary } from '@/lib/actions/book.actions'
 
 type Props = {
@@ -45,9 +48,8 @@ export function BookCard({ book, locale }: Props) {
   const tone = paperTone(book.id)
 
   return (
-    <Link
-      href={`/${locale}/studio/${book.id}`}
-      className="group relative flex flex-col overflow-hidden no-underline transition-all"
+    <div
+      className="group relative flex flex-col overflow-hidden transition-all"
       style={{
         background: 'var(--canvas-dark-100)',
         border: '1px solid var(--canvas-dark-300)',
@@ -67,6 +69,16 @@ export function BookCard({ book, locale }: Props) {
         e.currentTarget.style.borderColor = 'var(--canvas-dark-300)'
       }}
     >
+      {/* Kebab menu — absolute, sits above the link */}
+      <div className="absolute z-10" style={{ top: 12, right: 12 }}>
+        <BookCardMenu locale={locale} bookId={book.id} />
+      </div>
+
+      <Link
+        href={`/${locale}/studio/${book.id}`}
+        className="flex flex-col no-underline color-inherit"
+        style={{ color: 'inherit' }}
+      >
       {/* Top status stripe */}
       <span aria-hidden="true" style={{ height: '4px', background: accent }} />
 
@@ -238,6 +250,7 @@ export function BookCard({ book, locale }: Props) {
           </span>
         </div>
       </div>
-    </Link>
+      </Link>
+    </div>
   )
 }

@@ -32,6 +32,32 @@ export const updateBookSchema = z.object({
   coverUrl: z.string().url().optional().nullable(),
 })
 
+// Full book-details edit form. Covers every field captured at creation
+// EXCEPT templateId (one-time binder seed, not a current setting) and the
+// premium-gated publishing-metadata fields (subtitle/publisherName/trimSize/
+// edition/isbn/authorBio/dedication) which already have their own action.
+export const updateBookDetailsSchema = z.object({
+  // Basics
+  title: z.string().min(1, 'Title is required').max(200),
+  synopsis: z.string().max(2000).nullable(),
+  coverUrl: z.string().url().nullable(),
+  // Discovery
+  genre: z.string().max(50).nullable(),
+  subgenre: z.string().max(100).nullable(),
+  tags: z.array(z.string().max(50)).max(10),
+  targetAudience: z.string().max(50).nullable(),
+  contentWarnings: z.array(z.string().max(100)).max(20),
+  compTitles: z.array(z.string().max(200)).max(5),
+  language: z.string().max(50).nullable(),
+  // Structure
+  seriesName: z.string().max(200).nullable(),
+  seriesNumber: z.number().int().min(1).max(9999).nullable(),
+  // Subtitle is exceptionally non-premium for creation; allow it here too
+  // to keep parity. The remaining publishing fields are premium-gated and
+  // handled by updatePublishingMetadataAction.
+  subtitle: z.string().max(200).nullable(),
+})
+
 export const createBinderItemSchema = z.object({
   bookId: z.string().min(1),
   parentId: z.string().optional().nullable(),

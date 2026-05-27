@@ -21,7 +21,9 @@ import { BinderHiveFooter } from './binder-hive-footer'
 import { reorderBinderItemsAction } from '@/lib/actions/binder.actions'
 import { updateBookAction } from '@/lib/actions/book.actions'
 import type { BinderItemRow } from '@/lib/actions/binder.actions'
-import { LayoutGrid } from 'lucide-react'
+import Link from 'next/link'
+import { useParams } from 'next/navigation'
+import { LayoutGrid, Settings } from 'lucide-react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -90,6 +92,8 @@ function flattenVisible(nodes: TreeNode[], collapsed: Set<string>): string[] {
 
 export function BinderTree() {
   const { bookId, bookTitle, binderItems, setBinderItems, focusMode, corkboardMode, toggleCorkboardMode } = useBookEditor()
+  const params = useParams<{ locale: string }>()
+  const locale = params?.locale ?? 'en'
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
 
   // Book title inline rename (double-click the title in the binder header)
@@ -220,17 +224,27 @@ export function BinderTree() {
                 </h2>
               )}
             </div>
-            <button
-              onClick={toggleCorkboardMode}
-              title={corkboardMode ? 'Exit corkboard' : 'Corkboard view'}
-              aria-label={corkboardMode ? 'Exit corkboard' : 'Corkboard view'}
-              className={cn(
-                'flex-shrink-0 w-7 h-7 inline-flex items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-surface-elevated hover:text-foreground transition-colors',
-                corkboardMode && 'bg-brand/15 border-brand/30 text-brand',
-              )}
-            >
-              <LayoutGrid size={14} />
-            </button>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <Link
+                href={`/${locale}/studio/${bookId}/details`}
+                title="Book details"
+                aria-label="Book details"
+                className="w-7 h-7 inline-flex items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-surface-elevated hover:text-foreground transition-colors no-underline"
+              >
+                <Settings size={14} />
+              </Link>
+              <button
+                onClick={toggleCorkboardMode}
+                title={corkboardMode ? 'Exit corkboard' : 'Corkboard view'}
+                aria-label={corkboardMode ? 'Exit corkboard' : 'Corkboard view'}
+                className={cn(
+                  'w-7 h-7 inline-flex items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-surface-elevated hover:text-foreground transition-colors',
+                  corkboardMode && 'bg-brand/15 border-brand/30 text-brand',
+                )}
+              >
+                <LayoutGrid size={14} />
+              </button>
+            </div>
           </div>
         </div>
 

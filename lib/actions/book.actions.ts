@@ -8,7 +8,7 @@ import { eq, and, count, inArray, gt, ne, sql } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { assertBookOwner } from './_helpers'
 import { getUserPremiumStatus, FREE_BOOK_LIMIT } from '@/lib/premium'
-import { createBookSchema, updateBookSchema } from '@/lib/validations/book'
+import { createBookSchema, updateBookSchema, updateBookDetailsSchema } from '@/lib/validations/book'
 import { createId } from '@paralleldrive/cuid2'
 import { summarizeBookStatus, type BookSummaryStatus } from '@/lib/books/summarize-status'
 
@@ -445,6 +445,155 @@ export async function deleteBookAction(bookId: string): Promise<ActionResult> {
   await assertBookOwner(bookId, userId)
 
   await db.delete(books).where(and(eq(books.id, bookId), eq(books.userId, userId)))
+
+  return { success: true, data: undefined }
+}
+
+// ─── Book details (full edit form) ────────────────────────────────────────────
+
+export type BookDetails = {
+  // Basics
+  id: string
+  title: string
+  synopsis: string | null
+  coverUrl: string | null
+  // Discovery
+  genre: string | null
+  subgenre: string | null
+  tags: string[]
+  targetAudience: string | null
+  contentWarnings: string[]
+  compTitles: string[]
+  language: string | null
+  // Structure
+  seriesName: string | null
+  seriesNumber: number | null
+  // Publishing (premium-gated for edits other than subtitle)
+  subtitle: string | null
+  publisherName: string | null
+  trimSize: string | null
+  edition: string | null
+  isbn: string | null
+  authorBio: string | null
+  dedication: string | null
+}
+
+/**
+ * Returns the full book detail set — both `books` columns and the optional
+ * `bookPublishingMetadata` row — for the Book Details editor page.
+ */
+export async function getBookDetailsAction(
+  bookId: string,
+): Promise<ActionResult<BookDetails>> {
+  const userId = await requireAuth()
+  await assertBookOwner(bookId, userId)
+
+  const book = await db.query.books.findFirst({ where: eq(books.id, bookId) })
+  if (!book) return { success: false, error: 'Book not found' }
+
+  const pm = await db.query.bookPublishingMetadata.findFirst({
+    where: eq(bookPublishingMetadata.bookId, bookId),
+  })
+
+  return {
+    success: true,
+    data: {
+      id: book.id,
+      title: book.title,
+      synopsis: book.synopsis,
+      coverUrl: book.coverUrl,
+      genre: book.genre,
+      subgenre: book.subgenre,
+      tags: book.tags ?? [],
+      targetAudience: book.targetAudience,
+      contentWarnings: book.contentWarnings ?? [],
+      compTitles: book.compTitles ?? [],
+      language: book.language,
+      seriesName: book.seriesName,
+      seriesNumber: book.seriesNumber,
+      subtitle: pm?.subtitle ?? null,
+      publisherName: pm?.publisherName ?? null,
+      trimSize: pm?.trimSize ?? null,
+      edition: pm?.edition ?? null,
+      isbn: pm?.isbn ?? null,
+      authorBio: pm?.authorBio ?? null,
+      dedication: pm?.dedication ?? null,
+    },
+  }
+}
+
+/**
+ * Updates every field captured at creation EXCEPT the premium-gated
+ * publishing fields beyond subtitle (publisherName/trimSize/edition/isbn/
+ * authorBio/dedication go through updatePublishingMetadataAction).
+ *
+ * Writes to both `books` and `bookPublishingMetadata` in a transaction.
+ * If no publishing metadata row exists yet (legacy book), one is upserted.
+ */
+export async function updateBookDetailsAction(
+  bookId: string,
+  input: {
+    title: string
+    synopsis: string | null
+    coverUrl: string | null
+    genre: string | null
+    subgenre: string | null
+    tags: string[]
+    targetAudience: string | null
+    contentWarnings: string[]
+    compTitles: string[]
+    language: string | null
+    seriesName: string | null
+    seriesNumber: number | null
+    subtitle: string | null
+  },
+): Promise<ActionResult> {
+  const userId = await requireAuth()
+  await assertBookOwner(bookId, userId)
+
+  const parsed = updateBookDetailsSchema.safeParse(input)
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0].message }
+  }
+  const d = parsed.data
+
+  await db.transaction(async (tx) => {
+    await tx
+      .update(books)
+      .set({
+        title: d.title,
+        synopsis: d.synopsis,
+        coverUrl: d.coverUrl,
+        genre: d.genre,
+        subgenre: d.subgenre,
+        tags: d.tags,
+        targetAudience: d.targetAudience,
+        contentWarnings: d.contentWarnings,
+        compTitles: d.compTitles,
+        language: d.language,
+        seriesName: d.seriesName,
+        seriesNumber: d.seriesNumber,
+        updatedAt: new Date(),
+      })
+      .where(eq(books.id, bookId))
+
+    // Upsert subtitle on the publishing metadata row. Other fields on that
+    // row stay untouched (premium-gated; updatePublishingMetadataAction owns them).
+    const existing = await tx.query.bookPublishingMetadata.findFirst({
+      where: eq(bookPublishingMetadata.bookId, bookId),
+    })
+    if (existing) {
+      await tx
+        .update(bookPublishingMetadata)
+        .set({ subtitle: d.subtitle, updatedAt: new Date() })
+        .where(eq(bookPublishingMetadata.bookId, bookId))
+    } else {
+      await tx.insert(bookPublishingMetadata).values({
+        bookId,
+        subtitle: d.subtitle,
+      })
+    }
+  })
 
   return { success: true, data: undefined }
 }

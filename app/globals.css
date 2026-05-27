@@ -79,6 +79,7 @@
      as the chrome scale so the dark editor body sits cleanly inside the
      dark UI. Cream paper (light mode) is untouched. */
   --canvas-dark-100: oklch(0.255 0.003 256);
+  --canvas-dark-150: oklch(0.275 0.003 256);
   --canvas-dark-200: oklch(0.290 0.003 256);
   --canvas-dark-300: oklch(0.350 0.003 256);
   --canvas-dark-ink-muted:  oklch(0.680 0.003 256);
@@ -116,7 +117,7 @@
   --font-display: var(--font-comfortaa), system-ui, sans-serif;
   --font-ui:      var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-prose:   var(--font-newsreader), 'Source Serif 4', Georgia, serif;
-  --font-mono:    'JetBrains Mono', ui-monospace, monospace;
+  --font-mono:    var(--font-jetbrains-mono), 'JetBrains Mono', ui-monospace, monospace;
 
   /* ── Type scale ────────────────────────────────────────────────── */
   --t-2xs: 11px;

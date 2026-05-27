@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import Link from 'next/link'
 import { BookCard } from './book-card'
 import type { BookSummary } from '@/lib/actions/book.actions'
 
@@ -146,6 +147,28 @@ export function BookGrid({ books, locale }: Props) {
             <polyline points="6 9 12 15 18 9" />
           </svg>
         </div>
+
+        {/* Create book */}
+        <Link
+          href={`/${locale}/studio/new`}
+          className="inline-flex items-center gap-2 no-underline"
+          style={{
+            height: '44px',
+            padding: '0 18px',
+            borderRadius: 'var(--r-md)',
+            background: 'var(--brand)',
+            color: 'var(--brand-ink)',
+            fontFamily: 'var(--font-display)',
+            fontWeight: 700,
+            fontSize: '13px',
+            boxShadow: 'var(--el-1)',
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          Create book
+        </Link>
 
         {/* View switch */}
         <div

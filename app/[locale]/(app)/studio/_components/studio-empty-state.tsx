@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { CreateBookModal } from './create-book-modal'
 
 type Props = {
   locale: string
@@ -46,7 +45,7 @@ function PlaceholderSlot() {
   )
 }
 
-export function StudioEmptyState({ locale, templates }: Props) {
+export function StudioEmptyState({ locale, templates: _templates }: Props) {
   return (
     <main
       className="relative z-[1] flex flex-col"
@@ -254,28 +253,27 @@ export function StudioEmptyState({ locale, templates }: Props) {
               sentence find you. Your library will fill itself.
             </p>
             <div className="flex gap-3 justify-center flex-wrap">
-              <CreateBookModal locale={locale} templates={templates}>
-                <button
-                  className="inline-flex items-center gap-2.5"
-                  style={{
-                    padding: '13px 24px',
-                    borderRadius: 'var(--r-full)',
-                    background: 'var(--brand)',
-                    color: 'var(--brand-ink)',
-                    fontFamily: 'var(--font-display)',
-                    fontWeight: 700,
-                    fontSize: '14px',
-                    border: 0,
-                    cursor: 'pointer',
-                    boxShadow: 'var(--el-2)',
-                  }}
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 5v14M5 12h14" />
-                  </svg>
-                  Start writing
-                </button>
-              </CreateBookModal>
+              <Link
+                href={`/${locale}/studio/new`}
+                className="inline-flex items-center gap-2.5 no-underline"
+                style={{
+                  padding: '13px 24px',
+                  borderRadius: 'var(--r-full)',
+                  background: 'var(--brand)',
+                  color: 'var(--brand-ink)',
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 700,
+                  fontSize: '14px',
+                  border: 0,
+                  cursor: 'pointer',
+                  boxShadow: 'var(--el-2)',
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+                Start writing
+              </Link>
               <Link
                 href={`/${locale}/discover`}
                 className="inline-flex items-center gap-2.5 no-underline"
@@ -298,9 +296,8 @@ export function StudioEmptyState({ locale, templates }: Props) {
               </Link>
             </div>
 
-            {/* Template hint chips — open the create-book modal. We don't have
-                template-preselection plumbed through CreateBookModal yet so
-                the chips currently open the wizard with no preselection.
+            {/* Template hint chips — link to the new-book page. Template
+                preselection is not yet wired through the new flow.
                 TODO(library-v2): wire preselect template by name. */}
             <div
               className="uppercase flex items-center gap-3.5 justify-center flex-wrap"
@@ -316,27 +313,25 @@ export function StudioEmptyState({ locale, templates }: Props) {
               <span style={{ width: '3px', height: '3px', borderRadius: '50%', background: 'var(--canvas-dark-300)' }} />
               <div className="inline-flex gap-2 items-center flex-wrap justify-center">
                 {TEMPLATE_CHIPS.map((label) => (
-                  <CreateBookModal key={label} locale={locale} templates={templates}>
-                    <button
-                      type="button"
-                      className="inline-flex items-center gap-1.5"
-                      style={{
-                        padding: '5px 12px',
-                        borderRadius: 'var(--r-full)',
-                        background: 'var(--canvas-dark-100)',
-                        border: '1px solid var(--canvas-dark-300)',
-                        color: 'var(--canvas-dark-ink)',
-                        textTransform: 'none',
-                        letterSpacing: '0.01em',
-                        fontFamily: 'var(--font-ui)',
-                        fontSize: '11px',
-                        fontWeight: 500,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      {label}
-                    </button>
-                  </CreateBookModal>
+                  <Link
+                    key={label}
+                    href={`/${locale}/studio/new`}
+                    className="inline-flex items-center gap-1.5 no-underline"
+                    style={{
+                      padding: '5px 12px',
+                      borderRadius: 'var(--r-full)',
+                      background: 'var(--canvas-dark-100)',
+                      border: '1px solid var(--canvas-dark-300)',
+                      color: 'var(--canvas-dark-ink)',
+                      textTransform: 'none',
+                      letterSpacing: '0.01em',
+                      fontFamily: 'var(--font-ui)',
+                      fontSize: '11px',
+                      fontWeight: 500,
+                    }}
+                  >
+                    {label}
+                  </Link>
                 ))}
               </div>
             </div>

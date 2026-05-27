@@ -14,9 +14,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-27
 >
-> **Current focus:** Library v2.2 — Hero rewritten as full-width manuscript panel (no more rotated cover thumbnail; surface canvas-dark-150; top meta strip with eyebrow/status pill/last-edited; body grid with 44px title + Newsreader chapter line on left, progress bar + full-width Resume CTA with circular arrow on right). StudioStats + StudioHeader removed entirely per the updated design. 126/126 tests, tsc clean.
+> **Current focus:** Book creation moved from a modal to a full-page flow at `/[locale]/studio/new`. Server page fetches templates; client form renders three full-page steps with direction-aware slide+fade transitions (CSS keyframes, honors `prefers-reduced-motion`). Sticky top header with clickable step pills + close-X. Reuses existing StepOne/Two/Three components inside the new shell so validation/behavior is unchanged. "Create book" CTA added to library controls bar (next to view switch). Empty state CTAs + template chips now link to `/studio/new`; old `create-book-modal.tsx` deleted. 126/126 tests, tsc clean.
 > **Active branch:** `main` (ahead of origin)
-> **Last commit:** feat(studio): Library v2.2 hero rewrite + drop stats strip
+> **Last commit:** feat(studio): full-page book creation wizard at /studio/new
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.

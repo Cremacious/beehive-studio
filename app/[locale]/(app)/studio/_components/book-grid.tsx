@@ -309,7 +309,6 @@ export function BookGrid({ books, locale }: Props) {
           Showing {visible.length} {visible.length === 1 ? 'book' : 'books'} · sorted by{' '}
           {SORT_LABELS[sort].toLowerCase()}
         </span>
-        <span style={{ color: 'var(--canvas-dark-ink)' }}>View archive →</span>
       </div>
     </div>
   )

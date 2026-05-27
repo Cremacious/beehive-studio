@@ -56,16 +56,23 @@ describe('getHiveMemberLimitForTier', () => {
 })
 
 describe('getUserPremiumStatus', () => {
-  // TODO(P8A Task 3): rewrite these tests to assert subscriptionStatus-based
-  // entitlement once getUserPremiumStatus is refactored. Task 1 dropped the
-  // premium column and stubbed the function to always return false.
-  it.skip('returns true when billing row has premium=true', async () => {
-    mockFindFirst.mockResolvedValue({ premium: true })
+  it('returns true when subscriptionStatus is active', async () => {
+    mockFindFirst.mockResolvedValue({ subscriptionStatus: 'active' })
     expect(await getUserPremiumStatus('user-1')).toBe(true)
   })
 
-  it('returns false in the Task 1 stub regardless of billing state', async () => {
-    mockFindFirst.mockResolvedValue({ premium: false })
+  it('returns true when subscriptionStatus is trialing', async () => {
+    mockFindFirst.mockResolvedValue({ subscriptionStatus: 'trialing' })
+    expect(await getUserPremiumStatus('user-1')).toBe(true)
+  })
+
+  it('returns false when subscriptionStatus is canceled', async () => {
+    mockFindFirst.mockResolvedValue({ subscriptionStatus: 'canceled' })
+    expect(await getUserPremiumStatus('user-1')).toBe(false)
+  })
+
+  it('returns false when subscriptionStatus is null', async () => {
+    mockFindFirst.mockResolvedValue({ subscriptionStatus: null })
     expect(await getUserPremiumStatus('user-1')).toBe(false)
   })
 

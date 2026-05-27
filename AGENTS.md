@@ -14,9 +14,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-27
 >
-> **Current focus:** P8D in progress — Tasks 1+2+3 complete (`766b2ce` past_due premium, `901cff2` billing page, `0927966` book overflow soft-lock). Task 4 (final) pending: confirm hive gate + AGENTS.md close-out + push (closes Phase 8). POST-DEPLOY: configure Stripe dashboard webhook (see Key Patterns).
+> **Current focus:** Phase 8 COMPLETE. Stripe monetization fully shipped (P8A foundations → P8B pricing+checkout → P8C webhooks → P8D billing portal+downgrade).
 > **Active branch:** `main` (pushed to origin/main)
-> **Last commit:** feat(billing): book overflow soft-lock (P8D Task 3)
+> **Last commit:** docs: close P8D + Phase 8 complete (Stripe monetization shipped)
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.
@@ -66,7 +66,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 >
 > **Light-mode editor default (2026-05-26):** Editor theme defaults to `light` (cream paper) for all new sessions. Users with `localStorage['editor-theme'] === 'dark'` keep dark mode. The change reflects the on-brand "writer's desk by day" experience the Claude Design pass established. Dark mode remains accessible via the toolbar Moon icon.
 >
-> **Next concrete step when resuming:** dispatch P8D Task 4 (final — closes Phase 8). Confirm hive invite + join actions still gate at FREE_HIVE_MEMBER_LIMIT (P8C audit said yes, but double-check during impl). Update AGENTS.md with the Phase-8-complete entry — full P8D entry + "Phase 8 (Stripe monetization) COMPLETE" summary. Push to origin/main. ALSO STILL PENDING: configure the Stripe dashboard webhook URL after P8C deploys — subscribe to customer.subscription.{created,updated,deleted}, copy signing secret to Vercel env STRIPE_WEBHOOK_SECRET, test from dashboard.
+> **Next concrete step when resuming:** Configure the Stripe dashboard webhook URL (subscribe to customer.subscription.{created,updated,deleted}, copy signing secret to Vercel env STRIPE_WEBHOOK_SECRET). Test the live flow with a real test-mode subscription. Then close out Phase 8 and plan Phase 9.
 
 ## ⚙️ Working Agreement (read this every session)
 
@@ -251,9 +251,31 @@ No new server actions.
 
 **Next:** P8D — Settings → Billing portal + downgrade UX (soft-lock when premium loss pushes user >FREE_BOOK_LIMIT or >FREE_HIVE_LIMIT).
 
+### P8D — Billing Portal + Downgrade UX ✅ COMPLETE (2026-05-27)
+Fourth and FINAL Phase 8 sub-project. Closes Phase 8.
+
+- **`/settings/billing` page:** server component with 5 state branches (free / active+trialing / past_due / canceled / other). Hero status display + Manage button (opens Stripe Portal via P8A's createBillingPortalSessionAction). past_due shows a warning card; canceled shows "Subscription ended" + Resubscribe CTA. dynamic='force-dynamic' so the page always reflects current state.
+- **Soft-lock for overflow books:** `lib/billing/book-overflow.ts::isBookOverflow(userId, bookId)`. Non-premium users with >FREE_BOOK_LIMIT books get the oldest 3 active; 4th+ become read-only. Gated at saveChapterAction + all binder write actions (create/update/delete/reorder binderItem). OverflowBanner mounts in chapter-editor.tsx (brand-yellow band + Upgrade CTA); TipTap editor set to non-editable via setEditable(false) effect. createdAt ASC for stability across edits.
+- **Threading:** bookOverflow computed in studio page server component → BookEditorProvider prop → exposed via useBookEditor() context → ChapterEditor consumes.
+- **Hive invite gate:** existing `inviteAction` + `joinHiveByLinkAction` already check member count vs FREE_HIVE_MEMBER_LIMIT — confirmed in P8C audit + re-verified in P8D Task 4. Existing members in an over-limit hive keep editing; new invites/joins are blocked.
+- **Premium semantics:** `PREMIUM_STATUSES` set in `lib/premium.ts` extended to `{active, trialing, past_due}`. Stripe's grace period (~3 weeks of payment retries) preserves access; once Stripe gives up the retry, the webhook flips status to 'canceled' and the user becomes free-tier.
+
+No DB schema changes. Tests at 126 (+1 past_due test).
+
+**Phase 8 (Stripe monetization) COMPLETE.** End-to-end flow:
+- /pricing → Stripe Checkout → /welcome → subscription syncs via webhook → /settings/billing for management → Stripe Portal for plan changes/cancellation → downgrade triggers soft-lock if user is over free-tier limits.
+
+**Post-deploy reminders:**
+1. Configure Stripe dashboard webhook at `https://{prod-domain}/api/webhooks/stripe`.
+2. Subscribe to: `customer.subscription.{created,updated,deleted}`.
+3. Copy signing secret → Vercel env `STRIPE_WEBHOOK_SECRET`.
+4. Test the live flow with a real test-mode subscription.
+
+**Next:** Phase 9 — TBD. Candidates: referral codes, growth analytics, plan-upgrade nudges, polish.
+
 ## What's Next
 
-- P8D: Settings → Billing portal + downgrade UX
+- Phase 9 — TBD (candidates: referral codes, growth analytics, plan-upgrade nudges, polish)
 
 ## Completed UI Work (pre-Phase 3)
 
@@ -286,6 +308,9 @@ Public `/[locale]/pricing` page fetches Stripe prices server-side with `revalida
 
 ### P8C webhook pattern
 `lib/stripe/handle-subscription-event.ts` is the single entry point for `customer.subscription.{created,updated,deleted}` events. Idempotent by construction (upserts `userBilling`). Race-recovery: if the userBilling row is missing for a `stripeCustomerId`, fetch the Stripe customer's `metadata.userId` and upsert. Throws on unknown subscription status (prevents DB corruption when Stripe adds new statuses) or hard failures; webhook route returns 500 → Stripe retries up to 3 days. **DO NOT add side effects** (welcome emails, etc.) without first adding event-ID deduplication — Stripe retries fire side effects multiple times. Stripe API 2026-02-25.clover moved `current_period_end` onto `subscription.items.data[0]` — handler reads it from there.
+
+### P8D billing/downgrade pattern
+`/settings/billing` renders one of 5 state branches based on `userBilling.subscriptionStatus`: free / active+trialing / past_due (warning) / canceled / other. ManageButton invokes `createBillingPortalSessionAction` (P8A). Soft-lock on overflow books: `isBookOverflow(userId, bookId)` from `lib/billing/book-overflow.ts` — non-premium users with >`FREE_BOOK_LIMIT` books get oldest 3 active, others read-only via the OverflowBanner + `editor.setEditable(false)`. createdAt ASC chosen for stability (updatedAt would shift overflow set on every keystroke). `bookOverflow` flows server-page → BookEditorProvider prop → context → ChapterEditor. Hive invite/join actions block when current member count exceeds `FREE_HIVE_MEMBER_LIMIT` — existing members keep editing. `past_due` is treated as premium in `PREMIUM_STATUSES` so Stripe's grace period (~3 weeks of retries) preserves access.
 
 ### Brand Tokens (defined in `app/globals.css`)
 - Background: `#141414` (`--background`)

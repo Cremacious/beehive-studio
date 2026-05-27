@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type Stripe from 'stripe'
 import { stripe } from '@/lib/stripe/client'
+import { handleSubscriptionEvent } from '@/lib/stripe/handle-subscription-event'
 
 // Stripe signature verification requires Node runtime crypto.
 export const runtime = 'nodejs'
@@ -34,19 +35,25 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     )
   }
 
-  // P8A scaffold — log known event types; P8C wires real handlers.
-  switch (event.type) {
-    case 'customer.subscription.created':
-    case 'customer.subscription.updated':
-    case 'customer.subscription.deleted':
-    case 'invoice.paid':
-    case 'invoice.payment_failed':
-      console.log(
-        `[stripe webhook] received ${event.type} (no-op until P8C wires handlers)`,
-      )
-      break
-    default:
-      console.log(`[stripe webhook] ignored ${event.type}`)
+  try {
+    switch (event.type) {
+      case 'customer.subscription.created':
+      case 'customer.subscription.updated':
+      case 'customer.subscription.deleted':
+        await handleSubscriptionEvent(event.data.object)
+        break
+      default:
+        console.log(`[stripe webhook] ignored ${event.type}`)
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown handler error'
+    console.error(`[stripe webhook] handler error on ${event.type}:`, message)
+    // Return 500 so Stripe retries. Most DB issues self-heal. Persistent
+    // failures show up in Vercel logs + Stripe retry queue.
+    return NextResponse.json(
+      { error: `Handler failed: ${message}` },
+      { status: 500 },
+    )
   }
 
   return NextResponse.json({ received: true })

@@ -12,6 +12,7 @@ export const subscriptionStatusEnum = pgEnum('subscription_status', [
   'incomplete',
   'incomplete_expired',
   'unpaid',
+  'paused',
 ])
 
 export const users = pgTable('users', {

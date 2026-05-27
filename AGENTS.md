@@ -12,11 +12,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-05-26
+> **Last updated:** 2026-05-27
 >
-> **Current focus:** DP3 Specialized Editor Surfaces complete; DP4 Overlays / Modes / Modals next.
+> **Current focus:** Design Port complete (DP1-DP4 shipped). Phase 8 Stripe monetization is next.
 > **Active branch:** `main` (pushed to origin/main)
-> **Last commit:** feat(studio): remove generic textarea fallback + DP3 close-out (Task 5)
+> **Last commit:** docs: close DP4 + design-port pass complete (all four sub-projects shipped)
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.
@@ -62,7 +62,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 >
 > **DP1 design-port pattern:** Claude Design's tokens.css ported into `app/globals.css` `:root` as oklch primitives (chrome/paper/canvas scales, status, type colors). Shadcn semantic tokens (`--card`, `--background`, etc.) bridge to the new chrome scale so existing components inherit walnut automatically. The SP4 light-mode workaround in `corkboard-or-editor.tsx` references `--paper-*` tokens directly. Source of truth for future updates: `designs/claude/studio-shell/tokens.css`. The bonus pages (Landing / Sign In / Sign Up) Claude Design produced separately are deferred.
 >
-> **Next concrete step when resuming:** invoke /brainstorming for DP4 Overlays / Modes / Modals — port corkboard view, focus mode, history drawer, find/replace overlay, writing analysis panel, keyboard cheatsheet modal, export modal, confirmation dialogs, empty states.
+> **DP4 overlays/modes/modals pattern:** Transient surfaces ported. Two new shared components: ConfirmDialog (built on shadcn Dialog primitive — used for destructive flows like binder delete) and EmptyState (studio-scoped, theme-aware via `onEditorCanvas` prop). Modals (cheatsheet/export/sprint-setup), overlays (find/replace), drawers (history), banners (preview), and panels (writing analysis) each got the new visual treatment with theme-aware ink where they cover the editor canvas. Corkboard pixel-perfect with paper index-cards + alternating ±1° rotation on warm desk-surface bg. Focus mode gained 200ms width/translate/opacity transitions. Sprint finished plays a one-time CSS pulse-glow (`@keyframes sprintFinished` in globals.css).
+>
+> **Light-mode editor default (2026-05-26):** Editor theme defaults to `light` (cream paper) for all new sessions. Users with `localStorage['editor-theme'] === 'dark'` keep dark mode. The change reflects the on-brand "writer's desk by day" experience the Claude Design pass established. Dark mode remains accessible via the toolbar Moon icon.
+>
+> **Next concrete step when resuming:** invoke /brainstorming for Phase 8 Stripe monetization — pricing page, checkout flow, webhook handling, billing portal.
 
 ## ⚙️ Working Agreement (read this every session)
 
@@ -178,6 +182,26 @@ Files deleted: 5 FM/BM form components, `outline/outline-column.tsx`. Data shape
 119/119 tests, tsc clean.
 
 **Next:** DP4 Overlays / Modes / Modals (corkboard, focus, history drawer, find/replace, writing analysis, cheatsheet, export, confirmations, empty states).
+
+### DP4 — Design Port Overlays / Modes / Modals ✅ COMPLETE (2026-05-26)
+Fourth and final design-port sub-project. Ports the remaining transient surfaces.
+
+- **New `ConfirmDialog` component** (`components/ui/confirm-dialog.tsx`): unified destructive-action confirmation built on shadcn Dialog. Refactored binder-item delete to use it; standard a11y (focus trap + Esc + click-outside).
+- **New `EmptyState` component** (`studio/[bookId]/_components/empty-state.tsx`): studio-scoped shared empty state. Theme-aware via `onEditorCanvas` prop. Used by chapter-editor's empty-book + no-chapter-selected, metadata-panel's empty placeholder, version-history-drawer's no-snapshots, writing-analysis's no-prose.
+- **Modals restyled:** keyboard cheatsheet (raised paper-key `<kbd>` caps with 4-layer shadow stack for 3D feel), export modal (format picker with lucide icons + sub-preset picker), sprint setup popover (260px anchored popover with 45°-rotated callout tail + 3-up duration tiles).
+- **Overlays + drawers restyled:** find & replace strip with paper-context bridge (paper-50 input bg, paper-ink-strong text in light mode), version history drawer chrome (snapshot rows as paper-card pills with 2px brand-yellow accent on active row; free-tier upsell card with radial brand gradient + Sparkles + Upgrade CTA), snapshot preview banner (gradient band with 4px brand left accent + glow, theme-aware ink for legibility on cream), writing analysis panel (section cards with 44px brand-yellow readability headline, sentence-length histogram, adverb chips, passive-voice quote blocks, cliché list).
+- **Corkboard (pixel-perfect):** paper index-card grid on warm desk-surface (radial vignette + dotted coffee-tone layers). Alternating deterministic ±1° rotation. Hover lifts + rotates to 0° with deeper shadow. Active card brand-yellow outline + "Editing" mono-pill ribbon. Empty state via EmptyState.
+- **Focus mode polish:** 200ms width + opacity + translate transitions on sidebars. Smooth slide-in / slide-out.
+- **Sprint finished celebration:** one-time `@keyframes sprintFinished` pulse-glow on the finished pill. Soft, paper-feeling, not confetti-noisy. Animation replays each time a sprint completes (fresh JSX mount per state transition).
+- **Editor theme default:** light is now the default writing surface; dark is opt-in via Moon icon. Reflects the on-brand "writer's desk by day" feel.
+
+Two minor scope notes (not blocking; deferred): status pills per corkboard card (needs provider plumbing for chapter-status batch load), drag-to-reorder in corkboard (was never wired in legacy code).
+
+No DB changes. No new dependencies. 119/119 tests, tsc clean.
+
+**Design Port pass complete.** All four sub-projects (DP1-DP4) shipped. Studio UI fully matches the new design system established by Claude Design.
+
+**Next:** Phase 8 Stripe monetization — pricing page, subscriptions, webhooks, billing portal.
 
 ## What's Next
 

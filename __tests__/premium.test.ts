@@ -66,6 +66,11 @@ describe('getUserPremiumStatus', () => {
     expect(await getUserPremiumStatus('user-1')).toBe(true)
   })
 
+  it('returns true when subscription is past_due (grace period)', async () => {
+    mockFindFirst.mockResolvedValue({ subscriptionStatus: 'past_due' })
+    expect(await getUserPremiumStatus('user-1')).toBe(true)
+  })
+
   it('returns false when subscriptionStatus is canceled', async () => {
     mockFindFirst.mockResolvedValue({ subscriptionStatus: 'canceled' })
     expect(await getUserPremiumStatus('user-1')).toBe(false)

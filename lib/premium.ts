@@ -6,7 +6,7 @@ export const FREE_BOOK_LIMIT = 3
 export const FREE_HIVE_LIMIT = 3
 export const FREE_HIVE_MEMBER_LIMIT = 5
 
-const PREMIUM_STATUSES = new Set(['active', 'trialing'])
+const PREMIUM_STATUSES = new Set(['active', 'trialing', 'past_due'])
 
 /** Returns the max number of active books for the given tier. */
 export function getBookLimitForTier(isPremium: boolean): number {
@@ -24,10 +24,14 @@ export function getHiveMemberLimitForTier(isPremium: boolean): number {
 }
 
 /**
- * Queries whether the given user has an active premium subscription.
- * Derives entitlement from userBilling.subscriptionStatus — true when the
- * status is 'active' or 'trialing'. Returns false if the userBilling row
- * doesn't exist yet (new users) or the status is anything else.
+ * Returns true if the user has an active or trialing subscription, OR is in
+ * Stripe's grace period (past_due). The grace period typically lasts ~3 weeks
+ * while Stripe retries failed payments. Treating past_due as premium prevents
+ * a card hiccup from immediately cutting off access; once Stripe gives up the
+ * retry cycle, the webhook sets the status to 'canceled' and access reverts.
+ *
+ * Returns false if the userBilling row doesn't exist yet (new users) or the
+ * status is anything else.
  *
  * Dev override: set DEV_FORCE_PREMIUM=true in .env.local to force premium
  * for any logged-in user. Only honored when NODE_ENV !== 'production'.

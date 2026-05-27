@@ -14,9 +14,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-27
 >
-> **Current focus:** Book creation moved from a modal to a full-page flow at `/[locale]/studio/new`. Server page fetches templates; client form renders three full-page steps with direction-aware slide+fade transitions (CSS keyframes, honors `prefers-reduced-motion`). Sticky top header with clickable step pills + close-X. Reuses existing StepOne/Two/Three components inside the new shell so validation/behavior is unchanged. "Create book" CTA added to library controls bar (next to view switch). Empty state CTAs + template chips now link to `/studio/new`; old `create-book-modal.tsx` deleted. 126/126 tests, tsc clean.
-> **Active branch:** `main` (ahead of origin)
-> **Last commit:** feat(studio): full-page book creation wizard at /studio/new
+> **Current focus:** AppNav avatar now opens a shadcn DropdownMenu — header shows name + email; items link to Studio and Billing; destructive Sign out invokes better-auth's `authClient.signOut()` then `router.replace('/sign-in')` + `refresh()`. Previously shipped this session: book creation moved from a modal to a full-page flow at `/[locale]/studio/new` (server page fetches templates; client form with three full-page steps + direction-aware slide+fade transitions; sticky top header with clickable step pills + close-X; reuses existing StepOne/Two/Three; old `create-book-modal.tsx` deleted; "Create book" CTA added to library controls bar; empty-state CTAs + template chips link to `/studio/new`). 126/126 tests, tsc clean.
+> **Active branch:** `main` (pushed)
+> **Last commit:** feat(nav): account dropdown on avatar with sign-out
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.
@@ -70,7 +70,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 >
 > **Library v2 design pattern (2026-05-27):** Page bg locked to `#1E1E1E`; lifted surfaces use `--canvas-dark-100/150/200/300` directly via inline `style={{ background: 'var(--canvas-dark-100)' }}` (chrome shadcn-bridge isn't pixel-perfect for this page). Brand yellow restrained to 4 uses: hero Resume CTA + active filter chip + hover title accent + empty-state Start CTA. Status colors variate the page via per-card stripes + per-tile accents. AppNav now owns the only chrome on the page — no page-level top bar. JetBrains Mono added via `next/font/google` → `--font-jetbrains-mono` → wired into `--font-mono`. `--canvas-dark-150` added to globals.css as the search-focus surface tone.
 >
-> **Next concrete step when resuming:** Open for what's next — Phase 9 candidates (referral codes, growth analytics, plan-upgrade nudges, polish), continued post-launch work, or configure the Stripe dashboard webhook for the live monetization flow.
+> **Next concrete step when resuming:** Open for what's next — Phase 9 candidates (referral codes, growth analytics, plan-upgrade nudges, polish), continued post-launch work, configuring the Stripe dashboard webhook for the live monetization flow, or building out a real `/settings` index page (the avatar dropdown currently links only to `/settings/billing` since `/settings` doesn't exist yet).
 
 ## ⚙️ Working Agreement (read this every session)
 

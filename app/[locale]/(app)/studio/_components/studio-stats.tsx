@@ -20,8 +20,7 @@ function StatTile({ value, label }: { value: number; label: string }) {
 
 export function StudioStats({ stats }: { stats: StudioStats }) {
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      <StatTile value={stats.totalWords} label="Total words" />
+    <div className="grid grid-cols-3 gap-3">
       <StatTile value={stats.booksInProgress} label="Books in progress" />
       <StatTile value={stats.wordsThisWeek} label="Words this week" />
       <StatTile value={stats.chaptersPublished} label="Chapters published" />

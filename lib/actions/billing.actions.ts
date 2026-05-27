@@ -70,7 +70,7 @@ export async function createCheckoutSessionAction(args: {
     customer: customerId,
     mode: 'subscription',
     line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${baseUrl}/${args.locale}/settings/billing?checkout=success`,
+    success_url: `${baseUrl}/${args.locale}/welcome?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${baseUrl}/${args.locale}/pricing?checkout=cancel`,
     allow_promotion_codes: true,
     client_reference_id: userId,

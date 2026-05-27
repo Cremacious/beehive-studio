@@ -4,6 +4,16 @@ import { relations } from 'drizzle-orm'
 
 export const userRoleEnum = pgEnum('user_role', ['member', 'moderator', 'admin'])
 
+export const subscriptionStatusEnum = pgEnum('subscription_status', [
+  'active',
+  'trialing',
+  'past_due',
+  'canceled',
+  'incomplete',
+  'incomplete_expired',
+  'unpaid',
+])
+
 export const users = pgTable('users', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
   name: text('name'),
@@ -31,11 +41,10 @@ export const userProfiles = pgTable('user_profiles', {
 
 export const userBilling = pgTable('user_billing', {
   userId: text('user_id').primaryKey().references(() => users.id, { onDelete: 'cascade' }),
-  premium: boolean('premium').default(false).notNull(),
-  stripeCustomerId: text('stripe_customer_id').unique(),
-  stripeSubscriptionId: text('stripe_subscription_id').unique(),
-  stripePriceId: text('stripe_price_id'),
-  stripeCurrentPeriodEnd: timestamp('stripe_current_period_end'),
+  stripeCustomerId: text('stripe_customer_id'),
+  stripeSubscriptionId: text('stripe_subscription_id'),
+  subscriptionStatus: subscriptionStatusEnum('subscription_status'),
+  currentPeriodEnd: timestamp('current_period_end'),
 })
 
 export const sessions = pgTable('sessions', {

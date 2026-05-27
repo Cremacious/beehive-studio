@@ -1,7 +1,3 @@
-import { db } from '@/db'
-import { userBilling } from '@/db/schema'
-import { eq } from 'drizzle-orm'
-
 export const FREE_BOOK_LIMIT = 3
 export const FREE_HIVE_LIMIT = 3
 export const FREE_HIVE_MEMBER_LIMIT = 5
@@ -28,15 +24,14 @@ export function getHiveMemberLimitForTier(isPremium: boolean): number {
  * Dev override: set DEV_FORCE_PREMIUM=true in .env.local to force premium
  * for any logged-in user. Only honored when NODE_ENV !== 'production'.
  */
-export async function getUserPremiumStatus(userId: string): Promise<boolean> {
+export async function getUserPremiumStatus(_userId: string): Promise<boolean> {
   if (process.env.NODE_ENV !== 'production' && process.env.DEV_FORCE_PREMIUM === 'true') {
     return true
   }
-  const billing = await db.query.userBilling.findFirst({
-    where: eq(userBilling.userId, userId),
-    columns: { premium: true },
-  })
-  return billing?.premium ?? false
+  // TODO(P8A Task 3): derive from subscriptionStatus IN ('active', 'trialing').
+  // Task 1 dropped the premium boolean column; this is a temporary stub so
+  // tsc passes between Task 1 and Task 3.
+  return false
 }
 
 /**

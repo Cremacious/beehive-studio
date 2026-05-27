@@ -144,18 +144,6 @@ export function BookCreationForm({ locale, templates }: Props) {
           background: 'var(--canvas-dark-100, #1a1a1a)',
         }}
       >
-        <div
-          className="uppercase"
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: '10px',
-            letterSpacing: '0.18em',
-            color: 'var(--canvas-dark-ink-muted, #777)',
-          }}
-        >
-          New Book
-        </div>
-
         <div className="flex-1 flex items-center justify-center gap-2">
           {([1, 2, 3] as const).map((n, i) => {
             const reached = step >= n

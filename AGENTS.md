@@ -14,9 +14,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-27
 >
-> **Current focus:** Removed the "Start from a template · Novel / Memoir / Short stories / Non-fiction" chip row from the /studio empty state (and dropped the now-unused `TEMPLATE_CHIPS` constant). Previously shipped this session: AppNav avatar opens a shadcn DropdownMenu (name + email header, Studio + Billing links, destructive Sign out → better-auth `authClient.signOut()` then redirect to /sign-in); book creation moved from a modal to a full-page flow at `/[locale]/studio/new` (three full-page steps + direction-aware slide+fade transitions, "Create book" CTA in library controls bar, old `create-book-modal.tsx` deleted). 126/126 tests, tsc clean.
+> **Current focus:** Removed the "New Book" eyebrow from the top-left of the /studio/new header bar; the step-pill row now centers cleanly with just the close-X on the right. Previously shipped this session: dropped the "Start from a template" chip row from the /studio empty state; AppNav avatar opens a shadcn DropdownMenu (name + email header, Studio + Billing links, destructive Sign out → better-auth `authClient.signOut()` then redirect to /sign-in); book creation moved from a modal to a full-page flow at `/[locale]/studio/new` (three full-page steps + direction-aware slide+fade transitions, "Create book" CTA in library controls bar, old `create-book-modal.tsx` deleted). 126/126 tests, tsc clean.
 > **Active branch:** `main` (pushed)
-> **Last commit:** chore(studio): drop template chips from empty state
+> **Last commit:** chore(studio): remove "New Book" eyebrow from /studio/new header
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.

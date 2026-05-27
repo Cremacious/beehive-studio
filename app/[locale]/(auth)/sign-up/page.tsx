@@ -1,10 +1,29 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
+import { auth } from '@/lib/auth'
+import { safeNextPath } from '@/lib/utils'
 import { SignUpForm } from './_components/sign-up-form'
 
 export const metadata = { title: 'Join the hive — Beehive Studio' }
 
-export default async function SignUpPage({ params }: { params: Promise<{ locale: string }> }) {
+type Props = {
+  params: Promise<{ locale: string }>
+  searchParams: Promise<{ next?: string }>
+}
+
+export default async function SignUpPage({ params, searchParams }: Props) {
   const { locale } = await params
+  const { next: rawNext } = await searchParams
+
+  // Already-signed-in users have no reason to be on the sign-up page.
+  // Honor ?next= if provided (e.g., they followed an Upgrade link while
+  // already authed); otherwise send them to the studio.
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (session?.user) {
+    const next = safeNextPath(rawNext ?? null, `/${locale}/studio`)
+    redirect(next)
+  }
 
   return (
     <div className="min-h-screen flex flex-col">

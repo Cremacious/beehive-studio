@@ -14,27 +14,15 @@ interface AppNavProps {
 }
 
 /**
- * Maps the current pathname (minus locale) to a Library-style breadcrumb
- * label. The crumb sits next to the "Beehive Studio" lockup with a slash
- * separator. Falls back to "Studio" when nothing matches so the chrome
- * always looks intentional.
+ * Returns the first path segment after the locale (lowercased), e.g.
+ * "/en/studio/abc" → "studio". The crumb renders as "/<segment>" next to
+ * the brand lockup, so it always reflects the current route. Falls back
+ * to "studio" at the locale root.
  */
 function crumbFor(pathname: string, locale: string): string {
   const trimmed = pathname.replace(new RegExp(`^/${locale}`), '') || '/'
   const seg = trimmed.split('/').filter(Boolean)[0] ?? ''
-  switch (seg) {
-    case '':         return 'Library'
-    case 'studio':   return 'Library'
-    case 'discover': return 'Discover'
-    case 'community': return 'Community'
-    case 'hive':     return 'Hive'
-    case 'hives':    return 'Hives'
-    case 'welcome':  return 'Welcome'
-    case 'settings': return 'Settings'
-    case 'u':        return 'Profile'
-    case 'pricing':  return 'Pricing'
-    default:         return seg.charAt(0).toUpperCase() + seg.slice(1)
-  }
+  return (seg || 'studio').toLowerCase()
 }
 
 export function AppNav({ locale, user }: AppNavProps) {
@@ -76,12 +64,12 @@ export function AppNav({ locale, user }: AppNavProps) {
           <div className="flex items-baseline gap-2.5" style={{ fontFamily: 'var(--font-display)', fontWeight: 700, letterSpacing: '-0.01em' }}>
             <span className="text-[15px]" style={{ color: 'var(--canvas-dark-ink-strong)' }}>Beehive Studio</span>
             <span
-              className="hidden sm:inline-flex items-center gap-2.5 uppercase"
+              className="hidden sm:inline-flex items-center lowercase"
               style={{
                 fontFamily: 'var(--font-mono)',
                 fontWeight: 500,
                 fontSize: '11px',
-                letterSpacing: '0.10em',
+                letterSpacing: '0.04em',
                 color: 'var(--canvas-dark-ink-muted)',
               }}
             >

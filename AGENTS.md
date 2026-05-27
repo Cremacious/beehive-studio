@@ -14,9 +14,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-27
 >
-> **Current focus:** P8A Foundations complete; P8B Pricing page + checkout flow next.
+> **Current focus:** P8B Pricing page + checkout flow complete; P8C Webhooks + entitlement next.
 > **Active branch:** `main` (pushed to origin/main)
-> **Last commit:** feat(stripe): webhook scaffold + AGENTS.md close-out (P8A Task 5)
+> **Last commit:** docs: close P8B Pricing + Checkout (Phase 8 second sub-project shipped)
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.
@@ -66,7 +66,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 >
 > **Light-mode editor default (2026-05-26):** Editor theme defaults to `light` (cream paper) for all new sessions. Users with `localStorage['editor-theme'] === 'dark'` keep dark mode. The change reflects the on-brand "writer's desk by day" experience the Claude Design pass established. Dark mode remains accessible via the toolbar Moon icon.
 >
-> **Next concrete step when resuming:** invoke /brainstorming for P8B Pricing page + checkout flow — public /[locale]/pricing page with monthly/annual CTAs invoking createCheckoutSessionAction.
+> **Next concrete step when resuming:** invoke /brainstorming for P8C Webhooks + entitlement — wire real handler logic in /api/webhooks/stripe, sync subscriptionStatus from Stripe events, audit existing premium-gated server actions.
 
 ## ⚙️ Working Agreement (read this every session)
 
@@ -217,9 +217,21 @@ No UI ships in P8A. P8B will build the pricing page; P8C wires real webhook hand
 
 **Next:** P8B Pricing page + checkout flow.
 
+### P8B — Pricing Page + Checkout Flow ✅ COMPLETE (2026-05-27)
+Second of four Phase 8 sub-projects. Builds the public `/[locale]/pricing` page wired to P8A's `createCheckoutSessionAction`, routes logged-out users through sign-up first, lands a `/welcome` celebration page Stripe redirects to post-checkout.
+
+- **Public pricing page** at `app/[locale]/(public)/pricing/page.tsx`: server component, `revalidate: 3600` ISR, fetches live Stripe prices via `stripe.prices.retrieve()` for monthly + annual. Single Premium tier with monthly/annual toggle pill (`PlanCard` client component). Dynamically computed annual savings percentage. Premium feature list with brand-y framing (Never lose a draft, Publish your book, Build your library, Grow your circle). Free-tier callout pinned below.
+- **CTA flow:** logged-in users → `createCheckoutSessionAction` → Stripe-hosted Checkout. Logged-out users → `Link` to `/${locale}/sign-up?next=/${locale}/pricing` (sanitized via `safeNextPath` — same-origin paths only).
+- **Sign-up `?next=` plumbing:** `safeNextPath()` helper in `lib/url-helpers.ts` validates same-origin paths (rejects protocol-prefixed, double-slash, and external URLs). Sign-up form sanitizes `?next=` via `safeNextPath` but Path 2 was taken — onboarding always redirects to `/studio`. The follow-up commit also added a server-side check on `/sign-up` that bounces already-authed users to `?next=` (so logged-in users clicking Upgrade get straight to /pricing).
+- **Welcome page** at `app/[locale]/(app)/welcome/page.tsx`: celebration page Stripe redirects to on successful checkout (`success_url` updated to point here). One-time confetti CSS animation + "Continue to Studio" CTA.
+- **Studio upsell href audit:** only one studio reference to `/pricing` (`version-history-drawer.tsx` free-tier Premium card) — already correctly locale-prefixed. No bare `/pricing` hrefs in app code.
+- **Live Stripe checkout test deferred** — Chris will exercise the end-to-end flow manually with his own Stripe account. Until P8C wires real webhook handlers, paid users are technically not premium until P8C catches up (Stripe retries events for up to 3 days).
+- 121/121 tests, tsc clean.
+
+**Next:** P8C Webhook handlers (real entitlement sync).
+
 ## What's Next
 
-- P8B: Pricing page + checkout flow
 - P8C: Webhook handlers (real entitlement sync)
 - P8D: Settings → Billing portal
 
@@ -248,6 +260,9 @@ HTML design files in `designs/` were ported to pages. Key patterns for future UI
 
 ### P8A Stripe pattern
 Premium derives from `userBilling.subscriptionStatus IN ('active', 'trialing')` — no denormalized boolean. Stripe customer creation is lazy (first checkout creates the customer; stored on `userBilling.stripeCustomerId`). `lib/stripe/client.ts` is the singleton with pinned `apiVersion` + runtime key-prefix sanity check (`sk_live_` in prod, `sk_test_` in dev). Webhook endpoint at `/api/webhooks/stripe` is signature-verified but no-op in P8A (P8C wires handlers — do NOT configure Stripe dashboard webhook URL until then or events get lost). `DEV_FORCE_PREMIUM=true` env override still works for local testing without Stripe.
+
+### P8B pricing pattern
+Public `/[locale]/pricing` page fetches Stripe prices server-side with `revalidate: 3600` ISR. PlanCard client component handles the monthly/annual toggle + dynamically computed savings percentage. Logged-in users invoke `createCheckoutSessionAction` and redirect to Stripe; logged-out users go to `/sign-up?next=/pricing` (sanitized via `safeNextPath`). The sign-up page server-checks session and bounces already-authed users to `next` (so authed users clicking Upgrade get straight to /pricing without seeing the form). Stripe success_url points at `/[locale]/welcome` (P8B-shipped celebration page). Until P8C wires real webhook handlers, paid users are technically not premium until P8C catches up — Stripe retries events for up to 3 days.
 
 ### Brand Tokens (defined in `app/globals.css`)
 - Background: `#141414` (`--background`)

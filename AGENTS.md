@@ -14,9 +14,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-27
 >
-> **Current focus:** P8C Webhooks + entitlement IN PROGRESS — Tasks 1+2 complete (handler module + dispatch wired; unit tests added). Task 3 (premium audit) + Task 4 (close+push) pending.
+> **Current focus:** P8C Webhooks + entitlement complete; P8D Billing portal + downgrade UX next. POST-DEPLOY: configure Stripe dashboard webhook (see Key Patterns).
 > **Active branch:** `main` (pushed to origin/main)
-> **Last commit:** test(stripe): handle-subscription-event unit tests (P8C Task 2)
+> **Last commit:** docs: close P8C Webhooks + Entitlement (Phase 8 third sub-project shipped)
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.
@@ -66,7 +66,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 >
 > **Light-mode editor default (2026-05-26):** Editor theme defaults to `light` (cream paper) for all new sessions. Users with `localStorage['editor-theme'] === 'dark'` keep dark mode. The change reflects the on-brand "writer's desk by day" experience the Claude Design pass established. Dark mode remains accessible via the toolbar Moon icon.
 >
-> **Next concrete step when resuming:** continue P8C — Task 3 is the premium audit (grep getUserPremiumStatus callers for drift after P8A's refactor; likely zero edits). Task 4 closes P8C with AGENTS.md + push + post-deploy webhook configuration instructions for the Stripe dashboard. P8C plan: docs/superpowers/plans/2026-05-27-p8c-webhooks-entitlement.md. Notable Task 1 finding: Stripe SDK type union for subscription.status includes `paused` — enum was extended via npm run db:push to cover it. `current_period_end` lives on `subscription.items.data[0]` in API version 2026-02-25.clover, not on subscription directly. 125/125 tests pass.
+> **Next concrete step when resuming:** invoke /brainstorming for P8D Billing portal + downgrade UX. ALSO: after this deploys, configure the Stripe dashboard webhook URL — subscribe to customer.subscription.{created,updated,deleted}, copy signing secret to Vercel env STRIPE_WEBHOOK_SECRET, test from dashboard.
 
 ## ⚙️ Working Agreement (read this every session)
 
@@ -230,10 +230,30 @@ Second of four Phase 8 sub-projects. Builds the public `/[locale]/pricing` page 
 
 **Next:** P8C Webhook handlers (real entitlement sync).
 
+### P8C — Webhooks + Entitlement ✅ COMPLETE (2026-05-27)
+Third of four Phase 8 sub-projects.
+
+- **Subscription event handler** (`lib/stripe/handle-subscription-event.ts`): processes `customer.subscription.{created,updated,deleted}` events. Upserts `userBilling.subscriptionStatus`, `stripeSubscriptionId`, `currentPeriodEnd`. Idempotent by construction (same event re-applied = same final state).
+- **Race-recovery branch:** if `userBilling` row is missing for a `stripeCustomerId`, the handler fetches the Stripe customer to read `metadata.userId` (set by P8A's `ensureStripeCustomer`) and upserts. Self-healing.
+- **Hard failure modes:** unknown subscription status (Stripe added a value we haven't enumerated) or missing customer metadata → throws → webhook returns 500 → Stripe retries up to 3 days. Logs the customer ID for triage.
+- **Webhook route** (`app/api/webhooks/stripe/route.ts`): now dispatches to the handler. Other events still logged + ignored.
+- **Schema:** `subscription_status` enum extended with `paused` (Stripe SDK v20 includes it in the type union; missed in P8A's enumeration). Applied via `npm run db:push`.
+- **Premium audit:** 9 call sites of `getUserPremiumStatus`/`requirePremium` reviewed across snapshot/publishing/book/hive/chapter actions. All correctly awaited, gated before writes, using right error codes (`PREMIUM_REQUIRED:<feature>` or `FREE_LIMIT_REACHED`). No drift found.
+- **Unit tests:** 4 new tests for the handler (happy path, race recovery, missing metadata, unknown status). Total: 125 (was 121).
+
+No new server actions.
+
+**Post-deploy (NOT in code — Chris does in Stripe dashboard):**
+1. Configure webhook endpoint at `https://{prod-domain}/api/webhooks/stripe`.
+2. Subscribe to: `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`.
+3. Copy signing secret → Vercel env `STRIPE_WEBHOOK_SECRET`.
+4. Test from dashboard's "Send test webhook" UI.
+
+**Next:** P8D — Settings → Billing portal + downgrade UX (soft-lock when premium loss pushes user >FREE_BOOK_LIMIT or >FREE_HIVE_LIMIT).
+
 ## What's Next
 
-- P8C: Webhook handlers (real entitlement sync)
-- P8D: Settings → Billing portal
+- P8D: Settings → Billing portal + downgrade UX
 
 ## Completed UI Work (pre-Phase 3)
 
@@ -263,6 +283,9 @@ Premium derives from `userBilling.subscriptionStatus IN ('active', 'trialing')` 
 
 ### P8B pricing pattern
 Public `/[locale]/pricing` page fetches Stripe prices server-side with `revalidate: 3600` ISR. PlanCard client component handles the monthly/annual toggle + dynamically computed savings percentage. Logged-in users invoke `createCheckoutSessionAction` and redirect to Stripe; logged-out users go to `/sign-up?next=/pricing` (sanitized via `safeNextPath`). The sign-up page server-checks session and bounces already-authed users to `next` (so authed users clicking Upgrade get straight to /pricing without seeing the form). Stripe success_url points at `/[locale]/welcome` (P8B-shipped celebration page). Until P8C wires real webhook handlers, paid users are technically not premium until P8C catches up — Stripe retries events for up to 3 days.
+
+### P8C webhook pattern
+`lib/stripe/handle-subscription-event.ts` is the single entry point for `customer.subscription.{created,updated,deleted}` events. Idempotent by construction (upserts `userBilling`). Race-recovery: if the userBilling row is missing for a `stripeCustomerId`, fetch the Stripe customer's `metadata.userId` and upsert. Throws on unknown subscription status (prevents DB corruption when Stripe adds new statuses) or hard failures; webhook route returns 500 → Stripe retries up to 3 days. **DO NOT add side effects** (welcome emails, etc.) without first adding event-ID deduplication — Stripe retries fire side effects multiple times. Stripe API 2026-02-25.clover moved `current_period_end` onto `subscription.items.data[0]` — handler reads it from there.
 
 ### Brand Tokens (defined in `app/globals.css`)
 - Background: `#141414` (`--background`)

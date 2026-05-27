@@ -20,6 +20,7 @@ import { PreviewBanner } from './preview-banner'
 import { OverflowBanner } from '../overflow-banner'
 import { KeyboardCheatsheet } from './keyboard-cheatsheet'
 import { CharacterProfile } from './character-profile'
+import { ContainerView } from './container-view'
 import { FrontBackMatterRenderer, shouldUseFrontBackMatterRenderer } from '../front-back-matter'
 import { OutlineBoard } from '../outline/outline-board'
 import { NoteEditor } from '../notes/note-editor'
@@ -252,6 +253,9 @@ export function ChapterEditor() {
     }
     if (activeItem.type === 'character') {
       return <CharacterProfile item={activeItem} />
+    }
+    if (activeItem.type === 'part' || activeItem.type === 'research_folder') {
+      return <ContainerView item={activeItem} />
     }
     // All known non-chapter types are routed above. If we hit this in dev,
     // log a warning; in prod, render nothing (silent fallback).

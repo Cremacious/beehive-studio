@@ -148,6 +148,15 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
   const chapterCacheRef = useRef(chapterCache)
   chapterCacheRef.current = chapterCache
 
+  // Mirror of binderItems for synchronous reads in callbacks. Required because
+  // `setActiveItemId` is called immediately after `addBinderItem` from the
+  // Add menu (same tick) — the closure over `binderItems` is stale at that
+  // moment and the item lookup would otherwise silently bail. The ref lets
+  // callbacks read the freshest array without re-creating themselves on every
+  // binderItems change.
+  const binderItemsRef = useRef(binderItems)
+  binderItemsRef.current = binderItems
+
   const pushError = useCallback((msg: string) => {
     setErrors(prev => [...prev, msg])
   }, [])
@@ -217,12 +226,18 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
       return
     }
 
-    const item = binderItems.find(x => x.id === id)
-    if (!item) return
+    // Read from the ref so this callback works even when invoked in the same
+    // tick as `addBinderItem` (the closure over `binderItems` would be stale).
+    const item = binderItemsRef.current.find(x => x.id === id)
 
+    // Always set the active id, even if the item isn't in the ref yet (rare
+    // ordering edge case). The downstream renderers handle a missing item
+    // gracefully; the worst case is one render with empty state before the
+    // ref catches up, vs the previous bug which left activeItemId frozen
+    // forever and silently routed edits to the previous chapter.
     setActiveItemIdState(id)
 
-    if (!CHAPTER_TYPES.has(item.type)) return
+    if (!item || !CHAPTER_TYPES.has(item.type)) return
 
     // Cache hit — nothing to do
     if (chapterCacheRef.current.has(id)) return
@@ -235,7 +250,7 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
         pushError(`Couldn't load chapter: ${result.error}`)
       }
     })
-  }, [binderItems, pushError, flushPendingSave])
+  }, [pushError, flushPendingSave])
 
   const addBinderItem = useCallback((item: BinderItemRow) => {
     setBinderItems(prev => [...prev, item])

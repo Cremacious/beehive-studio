@@ -1,0 +1,2094 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Beehive Studio — Specialized Surfaces (Prompt 2)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&family=Geist:wght@300;400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- Icons (same defs as Prompt 1 + a few additions) -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <defs>
+    <symbol id="i-hive" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L20 6.5 L20 15.5 L12 20 L4 15.5 L4 6.5 Z"/><path d="M12 9 L16 11 L16 14.5 L12 16.5 L8 14.5 L8 11 Z" fill="currentColor" fill-opacity="0.55" stroke="none"/></symbol>
+    <symbol id="i-chev-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></symbol>
+    <symbol id="i-chev-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></symbol>
+    <symbol id="i-chev-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="5" cy="12" r="1.4" fill="currentColor"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/><circle cx="19" cy="12" r="1.4" fill="currentColor"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-corkboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></symbol>
+    <symbol id="i-chapter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h12a3 3 0 0 1 3 3v13H7a3 3 0 0 1-3-3z"/><path d="M4 4v13a3 3 0 0 0 3 3"/><path d="M9 8h6M9 12h6"/></symbol>
+    <symbol id="i-front-matter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h6M8 17h4"/><path d="M4 8h16" stroke-dasharray="2 2"/></symbol>
+    <symbol id="i-back-matter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 7h8M8 11h6"/><path d="M4 15h16" stroke-dasharray="2 2"/><path d="M8 19h4"/></symbol>
+    <symbol id="i-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="5" height="14" rx="1"/><rect x="10" y="5" width="5" height="9" rx="1"/><rect x="17" y="5" width="4" height="12" rx="1"/></symbol>
+    <symbol id="i-research" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h9a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a3 3 0 0 1-3-3V8"/><path d="M8 4v3a1 1 0 0 1-1 1H4"/><path d="M9 13h6M9 17h4"/></symbol>
+    <symbol id="i-character" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="3.5"/><path d="M5 20c1.5-3.5 4-5 7-5s5.5 1.5 7 5"/></symbol>
+    <symbol id="i-bold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 5h6a3.5 3.5 0 0 1 0 7H7zM7 12h7.5a3.5 3.5 0 0 1 0 7H7z"/></symbol>
+    <symbol id="i-italic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 5h6M10 19H4M15 5L9 19"/></symbol>
+    <symbol id="i-strike" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16"/><path d="M16 6.5c-1.5-2-7-2.5-9 0a3 3 0 0 0 1.5 4.5"/><path d="M8 17.5c1.5 2 7 2.5 9 0a3 3 0 0 0-1.5-4.5"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h12M9 12h12M9 18h12"/><circle cx="4" cy="6" r="1" fill="currentColor"/><circle cx="4" cy="12" r="1" fill="currentColor"/><circle cx="4" cy="18" r="1" fill="currentColor"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 0 1 0-5l3-3a4 4 0 0 1 6 6l-1.5 1.5"/><path d="M14 10a4 4 0 0 1 0 5l-3 3a4 4 0 0 1-6-6l1.5-1.5"/></symbol>
+    <symbol id="i-quote" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6c-3 1-4 4-4 7v4h4v-5H7c0-3 1-4 3-5z" fill="currentColor" fill-opacity="0.25"/><path d="M19 6c-3 1-4 4-4 7v4h4v-5h-2c0-3 1-4 3-5z" fill="currentColor" fill-opacity="0.25"/></symbol>
+    <symbol id="i-align-c" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M6 12h12M5 18h14"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v7l4 4v3H8v-3l4-4V2"/><path d="M9 2h6"/><path d="M12 16v6"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></symbol>
+    <symbol id="i-pencil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4l6 6-11 11H3v-6z"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 4 2c-1 .8-1.5 1.4-1.5 3"/><circle cx="12" cy="17" r="0.6" fill="currentColor"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><circle cx="12" cy="8" r="0.6" fill="currentColor"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m4 18 5-5 4 4 3-3 4 4"/></symbol>
+    <symbol id="i-grip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="6" r="1" fill="currentColor"/><circle cx="15" cy="6" r="1" fill="currentColor"/><circle cx="9" cy="12" r="1" fill="currentColor"/><circle cx="15" cy="12" r="1" fill="currentColor"/><circle cx="9" cy="18" r="1" fill="currentColor"/><circle cx="15" cy="18" r="1" fill="currentColor"/></symbol>
+    <!-- Additions for this doc -->
+    <symbol id="i-paperclip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5 12.5 20a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7"/></symbol>
+    <symbol id="i-tag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9z"/><circle cx="8" cy="8" r="1.5"/></symbol>
+    <symbol id="i-arc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19c4-12 14-12 18 0"/><circle cx="12" cy="6" r="1.4" fill="currentColor"/></symbol>
+    <symbol id="i-list-num" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h12M9 12h12M9 18h12"/><path d="M4 5v3M3 5h2"/><path d="M3 12h2c0 1-2 1.5-2 2.5V15h2"/><path d="M3 18h2v1.5h-1m1 0v1.5h-2"/></symbol>
+    <symbol id="i-title-page" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M9 9h6M8 13h8M11 17h2"/></symbol>
+    <symbol id="i-copyright" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 9a4 4 0 1 0 0 6"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.7A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></symbol>
+    <symbol id="i-thanks" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11c0 5-9 9-9 9s-9-4-9-9a4 4 0 0 1 7-2.7A4 4 0 0 1 21 11z"/><path d="M9 11h6M9 14h4"/></symbol>
+    <symbol id="i-user-page" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="1.5"/><circle cx="12" cy="10" r="2.2"/><path d="M8 17c1-2 2.5-3 4-3s3 1 4 3"/></symbol>
+    <symbol id="i-link-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></symbol>
+    <symbol id="i-mind" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="4" cy="6" r="1.6"/><circle cx="20" cy="6" r="1.6"/><circle cx="4" cy="18" r="1.6"/><circle cx="20" cy="18" r="1.6"/><path d="m6 7 4 4M18 7l-4 4M6 17l4-4M18 17l-4-4"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14 0 18M12 3c-3 3.5-3 14 0 18"/></symbol>
+    <symbol id="i-at" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M16 12v1.5a2.5 2.5 0 0 0 5 0V12a9 9 0 1 0-3.5 7.1"/></symbol>
+  </defs>
+</svg>
+
+<!-- ============================================================== -->
+<!--  Document shell                                                  -->
+<!-- ============================================================== -->
+<div class="doc">
+
+  <!-- ── Sticky TOC ─────────────────────────────────────────────── -->
+  <aside class="toc">
+    <h1>Beehive Studio</h1>
+    <div class="sub">SPECIALIZED SURFACES · PROMPT 2/3</div>
+    <ol>
+      <li><a href="#s-intro">Specialized surfaces overview</a></li>
+      <li><a href="#s-fmbm">Front / Back Matter</a></li>
+      <li><a href="#s-subtypes">FM/BM subtypes (×5)</a></li>
+      <li><a href="#s-fmbm-states">FM/BM states &amp; chrome</a></li>
+      <li><a href="#s-outline">Outline — three views</a></li>
+      <li><a href="#s-beatsheet">Beat Sheet (primary)</a></li>
+      <li><a href="#s-arc-cork">Story Arc &amp; Corkboard</a></li>
+      <li><a href="#s-beat-anatomy">Beat anatomy &amp; states</a></li>
+      <li><a href="#s-linkpopover">Chapter-link popover</a></li>
+      <li><a href="#s-notes">Research Notes</a></li>
+      <li><a href="#s-character">Character Profile</a></li>
+      <li><a href="#s-fallback">Generic fallback</a></li>
+      <li><a href="#s-extensions">Design system extensions</a></li>
+      <li><a href="#s-metadata">Metadata-panel variants</a></li>
+      <li><a href="#s-handoff">Handoff &amp; open questions</a></li>
+    </ol>
+    <div style="margin-top:28px; padding-top:18px; border-top:1px solid var(--chrome-800); font-size:11px; color:var(--chrome-500); line-height:1.6;">
+      Drafted by Claude Design · 2026-05-26 · For Chris @ Beehive Studio.
+      Inherits tokens, type, depth, and chrome from <a href="../studio-shell/Studio Shell.html" style="color:var(--chrome-300);">Prompt 1 — Studio Shell</a>.
+    </div>
+  </aside>
+
+  <!-- ── Main column ────────────────────────────────────────────── -->
+  <main class="main">
+
+    <!-- Hero -->
+    <section class="s" style="padding-top:48px; padding-bottom: 24px;">
+      <div class="eyebrow"><span class="num">02/15</span> <span>Brief — Specialized editor surfaces</span></div>
+      <h2 class="title">Different pages —<br><em>same beautifully bound book.</em></h2>
+      <p class="lede">
+        A novel's chapters are the room a writer lives in most. But around them sit the
+        other pages that make a manuscript a book: the title page that opens it, the
+        outline that planned it, the notes pinned to the wall while it was written,
+        the character sheets that ran alongside.
+      </p>
+      <p class="lede" style="margin-top:-12px;">
+        This document designs every one of those non-chapter surfaces. They sit inside
+        the same shell from Prompt 1 — binder, toolbar, status bar, metadata — and
+        share its tokens verbatim. Each one is its own page in the writer's notebook,
+        not a settings screen wearing a costume.
+      </p>
+
+      <div class="cols-3-2" style="margin-top:32px;">
+        <div class="spec-card">
+          <div class="md-label" style="color:var(--brand);">Five surfaces · one family</div>
+          <p style="color:var(--chrome-300); font-size:14.5px; line-height:1.65; margin:0;">
+            <strong style="color:var(--chrome-100); font-weight:500;">Front &amp; Back Matter</strong> become live, WYSIWYG book pages — the title page actually looks like a title page, the dedication sits alone on a sheet centered and italic, the copyright reads as a copyright. No more "Book title:" input next to "Author:" input.
+            <strong style="color:var(--chrome-100); font-weight:500;">Outline</strong> trades its generic Kanban for a Beat Sheet — vertical, structured, anchored to act labels. Two alternates ride the same data: a Story Arc plotted along a curve, and a refreshed Corkboard of paper index cards on a peg-board ground.
+            <strong style="color:var(--chrome-100); font-weight:500;">Research Notes</strong> get a legal-pad treatment with a paperclip and a red margin rule. <strong style="color:var(--chrome-100); font-weight:500;">Character Profiles</strong> become a sectioned writer's notebook page with a portrait, sectional cards, and a relationships block. The <strong style="color:var(--chrome-100); font-weight:500;">Generic fallback</strong> is a single cream sheet — a soft holding pen until a proper renderer ships.
+          </p>
+        </div>
+        <div class="spec-card">
+          <div class="md-label" style="color:var(--brand);">What carries through unchanged</div>
+          <ul style="margin:0; padding-left:18px; color:var(--chrome-300); font-size:13px; line-height:1.65;">
+            <li>Three-column shell · 264 / 1fr / 288.</li>
+            <li>Chrome — warm walnut, never slate.</li>
+            <li>Save badge — green dot · yellow dot · pulsing gray.</li>
+            <li>Editor light / dark — paper or coffee canvas.</li>
+            <li>Status pills, popovers, modals, toasts.</li>
+            <li>Type — Comfortaa · Geist · Newsreader · JBM.</li>
+          </ul>
+          <div class="md-label" style="color:var(--brand); margin-top:16px;">What we add</div>
+          <ul style="margin:0; padding-left:18px; color:var(--chrome-300); font-size:13px; line-height:1.65;">
+            <li>Book-page card — taller-than-wide paper.</li>
+            <li>Index-card variant — short, ruled, pinned.</li>
+            <li>Subtype pill bar &amp; chapter-link popover.</li>
+            <li>Tag chips, color swatches, drag handles.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §1  Overview                                                  -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-intro">
+      <div class="eyebrow"><span class="num">01</span> <span>The shared pattern</span></div>
+      <h2 class="title">Five renderers, one dispatcher.</h2>
+      <p class="lede">
+        Architecturally every specialized surface is a render branch off the active
+        binder item's type. Visually they share a small set of conventions so the
+        user feels they are flipping pages in one book, not opening different apps.
+      </p>
+
+      <div class="cols2" style="gap:20px; margin-top:8px;">
+        <div class="spec-card">
+          <h4>The pane header — every non-chapter surface starts here.</h4>
+          <p>A 56px strip at the top of the center pane. Carries the type-color dot, the type label, the item title, and the save badge. Replaces the chapter toolbar on surfaces where formatting tools aren't relevant.</p>
+          <div style="margin-top:14px; border:1px solid var(--chrome-800); border-radius:var(--r-md); overflow:hidden;">
+            <div class="surface-head" style="height:52px;">
+              <div class="crumb"><span class="typecolor" style="background:var(--type-front-matter);"></span> Front Matter</div>
+              <div class="name">Title Page</div>
+              <div class="grow"></div>
+              <span class="save-badge"><span class="dot"></span> Saved · 2s ago</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="spec-card">
+          <h4>Save badge — three states, shared with the chapter editor.</h4>
+          <p>Same vocabulary as the bottom status bar's save indicator: green dot for Saved, yellow dot (the brand) for Unsaved, pulsing gray for Saving. On the specialized surfaces it lives in the pane header instead of the bottom strip — closer to the document.</p>
+          <div style="display:flex; gap:12px; margin-top:14px; flex-wrap:wrap;">
+            <span class="save-badge"><span class="dot"></span>Saved · 12s</span>
+            <span class="save-badge saving"><span class="dot"></span>Saving…</span>
+            <span class="save-badge unsaved"><span class="dot"></span>Unsaved</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-top:24px;">
+        <strong>Surface rule of thumb.</strong>
+        Surfaces where the user is writing prose (FM/BM previews, Note bodies, Character bios) sit on cream paper.
+        Surfaces where the user is <em>organizing</em> work (Outline) sit on dark chrome — they're a desk, not a page.
+        Both light and dark editor toggles are honoured everywhere the user produces text.
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §2  Front / Back Matter — Studio context                       -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-fmbm">
+      <div class="eyebrow"><span class="num">02</span> <span>Front matter · Back matter</span></div>
+      <h2 class="title">Flip the page —<br><em>and the page is what's there.</em></h2>
+      <p class="lede">
+        The biggest win in this prompt. We retire the per-subtype form panels and
+        replace them with live previews of the actual book page that exports. The
+        user types <em>onto</em> the title page, not into a "Book title" input that
+        renders the title page somewhere else.
+      </p>
+
+      <!-- Full studio shell with FM open -->
+      <div class="artboard" style="margin-top:28px;">
+        <div class="artboard-header"><strong>Studio shell · Front Matter — Title Page</strong><span>1440 × 880 · in shell context · dark editor</span></div>
+        <div class="studio">
+          <header class="topnav">
+            <div class="left">
+              <a class="logo" href="#"><span class="hex"><svg width="18" height="18" style="color:var(--brand);"><use href="#i-hive"/></svg></span> Beehive</a>
+              <nav>
+                <a class="active" href="#">Studio</a>
+                <a href="#">Community</a>
+                <a href="#">Discover</a>
+              </nav>
+            </div>
+            <div class="right">
+              <button class="tbtn" style="width:32px; height:32px;" aria-label="Notifications"><svg width="18" height="18"><use href="#i-bell"/></svg></button>
+              <div class="avatar">M</div>
+            </div>
+          </header>
+          <div class="shell">
+            <aside class="binder">
+              <div class="binder-head">
+                <div class="book-meta">Working manuscript · 41,820 wd</div>
+                <div class="book-title">The Last Cartographer</div>
+              </div>
+              <div class="binder-tree">
+                <div class="binder-row"><span class="chev open"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span><span class="icon" style="color:var(--type-front-matter)"><svg width="14" height="14"><use href="#i-front-matter"/></svg></span><span class="title" style="font-weight:500;">Front Matter</span></div>
+                <div class="binder-row indent-1 active"><span class="chev none"></span><span class="icon" style="color:var(--type-front-matter)"><svg width="14" height="14"><use href="#i-front-matter"/></svg></span><span class="title">Title Page</span></div>
+                <div class="binder-row indent-1"><span class="chev none"></span><span class="icon" style="color:var(--type-front-matter)"><svg width="14" height="14"><use href="#i-front-matter"/></svg></span><span class="title">Copyright</span></div>
+                <div class="binder-row indent-1"><span class="chev none"></span><span class="icon" style="color:var(--type-front-matter)"><svg width="14" height="14"><use href="#i-front-matter"/></svg></span><span class="title">Dedication</span></div>
+                <div class="binder-row"><span class="chev"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span><span class="icon" style="color:var(--type-outline)"><svg width="14" height="14"><use href="#i-outline"/></svg></span><span class="title">Outline</span></div>
+                <div class="binder-row"><span class="chev open"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span><span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span><span class="title">Part One — The Coast</span></div>
+                <div class="binder-row indent-1"><span class="chev none"></span><span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span><span class="title">1. The bell at low tide</span></div>
+                <div class="binder-row indent-1"><span class="chev none"></span><span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span><span class="title">2. What Cora found…</span></div>
+                <div class="binder-row indent-1"><span class="chev none"></span><span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span><span class="title">3. The lighthouse…</span></div>
+                <div class="binder-row"><span class="chev"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span><span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span><span class="title" style="font-weight:500;">Part Two — The Inland</span></div>
+                <div class="binder-row"><span class="chev"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span><span class="icon" style="color:var(--type-research)"><svg width="14" height="14"><use href="#i-research"/></svg></span><span class="title">Research</span></div>
+                <div class="binder-row"><span class="chev"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span><span class="icon" style="color:var(--type-character)"><svg width="14" height="14"><use href="#i-character"/></svg></span><span class="title">Characters</span></div>
+                <div class="binder-row"><span class="chev"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span><span class="icon" style="color:var(--type-back-matter)"><svg width="14" height="14"><use href="#i-back-matter"/></svg></span><span class="title">Back Matter</span></div>
+              </div>
+              <div class="binder-foot">
+                <button class="btn-add"><svg width="14" height="14"><use href="#i-plus"/></svg>Add to Binder</button>
+              </div>
+            </aside>
+
+            <div class="center">
+              <!-- Pane head replaces toolbar -->
+              <div class="surface-head" style="height:48px;">
+                <div class="crumb"><span class="typecolor" style="background:var(--type-front-matter);"></span> Front Matter</div>
+                <div class="name">Title Page</div>
+                <div style="display:inline-flex; gap:6px; margin-left:14px;">
+                  <div class="subtype-bar" style="padding:2px;">
+                    <button class="pill active" style="padding:4px 10px; font-size:11.5px;"><span class="ico"><svg width="12" height="12"><use href="#i-title-page"/></svg></span>Title</button>
+                    <button class="pill" style="padding:4px 10px; font-size:11.5px;"><span class="ico"><svg width="12" height="12"><use href="#i-copyright"/></svg></span>Copyright</button>
+                    <button class="pill" style="padding:4px 10px; font-size:11.5px;"><span class="ico"><svg width="12" height="12"><use href="#i-heart"/></svg></span>Dedication</button>
+                  </div>
+                </div>
+                <div class="grow"></div>
+                <span class="save-badge"><span class="dot"></span>Saved · 4s ago</span>
+              </div>
+
+              <!-- The desk + page -->
+              <div class="surface-pane" style="overflow-y:auto;">
+                <div class="book-page dark" style="margin-top:36px; margin-bottom:36px;">
+                  <div class="bp-title-block">
+                    <h1 class="bp-title bp-field">The Last Cartographer</h1>
+                    <p class="bp-subtitle bp-field">A novel of charts that knew more than the cartographers who drew them</p>
+                  </div>
+                  <div class="bp-byline bp-field">A novel by</div>
+                  <div class="bp-author bp-field">Maya Quintero</div>
+                  <div class="bp-ornament">· · ·</div>
+                </div>
+              </div>
+
+              <div class="statusbar">
+                <div class="left"><span style="font-family:var(--font-mono); letter-spacing:0.06em; font-size:11px;">FRONT MATTER</span><span class="sep"></span><span>Title page · 12 words</span></div>
+                <div class="right"><span>Edits saved</span></div>
+              </div>
+            </div>
+
+            <aside class="metadata">
+              <div class="md-section">
+                <div class="md-label">Front Matter · Title Page</div>
+                <div class="md-title">Title Page</div>
+              </div>
+              <div class="md-section">
+                <div class="md-label">Position in book</div>
+                <div style="font-size:13px; color:var(--chrome-300); line-height:1.5;">Front matter <strong style="color:var(--chrome-100); font-weight:500;">#1 of 3</strong> — appears before <span style="color:var(--chrome-200);">Copyright</span>.</div>
+              </div>
+              <div class="md-section">
+                <div class="md-label">Synopsis</div>
+                <textarea class="md-textarea" rows="3" placeholder="Optional — private note about this page…"></textarea>
+              </div>
+              <div class="md-section">
+                <div class="md-label">Notes</div>
+                <textarea class="md-textarea" rows="4" placeholder="Private notes — only you can see these.">Confirm subtitle with Helena before galley pass.</textarea>
+              </div>
+              <div class="publishing">
+                <div class="pub-head">
+                  <span class="chev"><svg width="12" height="12"><use href="#i-chev-right"/></svg></span>
+                  <span class="title">Publishing details</span>
+                  <span class="premium">Premium</span>
+                </div>
+                <div class="pub-subtitle">Book-wide settings · author, ISBN, edition.</div>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>What changed.</strong>
+        The chapter toolbar is replaced by a slimmer surface header that holds the
+        subtype picker — the user can flip between Title / Copyright / Dedication
+        without leaving the page. The page itself is the editor: hover any field
+        to see its edit hairline; click to type.
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §3  Subtype previews — 5 of them                              -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-subtypes">
+      <div class="eyebrow"><span class="num">03</span> <span>FM/BM subtypes · 5</span></div>
+      <h2 class="title">Five book pages, drawn once.</h2>
+      <p class="lede">
+        Each subtype is a render of the same paper rectangle, with type and field
+        layout calibrated to the convention of that book page. Click any field to
+        edit it; everything you see is what exports to PDF / EPUB / DOCX.
+      </p>
+
+      <div class="cols2" style="gap:24px; margin-top:8px;">
+
+        <!-- TITLE PAGE -->
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>Title page · light</strong><span>Centered · serif subtitle · ornament</span></div>
+          <div class="surface-pane" style="padding:0 0 20px;">
+            <div class="book-page" style="margin-top:24px; margin-bottom:24px; transform: scale(0.86); transform-origin: top center;">
+              <div class="bp-title-block">
+                <h1 class="bp-title bp-field">The Last Cartographer</h1>
+                <p class="bp-subtitle bp-field">A novel of charts that knew more than the cartographers who drew them</p>
+              </div>
+              <div class="bp-byline bp-field">A novel by</div>
+              <div class="bp-author bp-field">Maya Quintero</div>
+              <div class="bp-ornament">· · ·</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- COPYRIGHT -->
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>Copyright · light</strong><span>Centered · 13pt prose · upper-third anchor</span></div>
+          <div class="surface-pane" style="padding:0 0 20px;">
+            <div class="book-page" style="margin-top:24px; margin-bottom:24px; transform: scale(0.86); transform-origin: top center;">
+              <div class="bp-copy">
+                <p><span class="bp-field" style="display:inline;">© 2026 Maya Quintero</span>. <span class="bp-field" style="display:inline;">All rights reserved.</span></p>
+                <p style="margin-top:18px;"><span class="bp-field" style="display:inline;">First Edition · March 2026</span></p>
+                <p>Published by <span class="bp-field" style="display:inline;">Coastline Books</span></p>
+                <p style="font-family:var(--font-mono); font-size:11px; letter-spacing:0.04em; color:var(--paper-ink-muted);"><span class="bp-field" style="display:inline;">ISBN 978-1-23456-789-0</span></p>
+                <p class="small bp-field">No part of this book may be reproduced or transmitted in any form or by any means, electronic or mechanical, without written permission from the publisher, except in the case of brief quotations embodied in critical reviews.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DEDICATION -->
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>Dedication · light</strong><span>Single field · italic · vertically centered</span></div>
+          <div class="surface-pane" style="padding:0 0 20px;">
+            <div class="book-page" style="margin-top:24px; margin-bottom:24px; transform: scale(0.86); transform-origin: top center;">
+              <p class="bp-dedication bp-field">For Helena —<br>who said I should write this,<br>and meant it.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ACKNOWLEDGMENTS -->
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>Acknowledgments · light</strong><span>Heading + body · multi-paragraph prose</span></div>
+          <div class="surface-pane" style="padding:0 0 20px;">
+            <div class="book-page" style="margin-top:24px; margin-bottom:24px; padding:88px 64px; transform: scale(0.86); transform-origin: top center;">
+              <h2 class="bp-heading bp-field">Acknowledgments</h2>
+              <div class="bp-rule"></div>
+              <div class="bp-body bp-field">
+                <p>This book lived inside other rooms first. To <strong>Helena Marsh</strong>, who read every draft with the patience of a much older sister — thank you. To my editor <strong>Daniel Park</strong>, whose marginalia ran longer than the chapters they corrected: you made the book finish.</p>
+                <p>To the keepers of the Newhaven archive — for the unhurried mornings with their charts. To my parents, who never quite asked when this would be done. To Sam.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ABOUT AUTHOR -->
+        <div class="artboard" style="margin:0; grid-column: 1 / -1;">
+          <div class="artboard-header"><strong>About the Author · light</strong><span>Portrait · bio prose · social links</span></div>
+          <div class="surface-pane" style="padding:0 0 20px;">
+            <div class="book-page" style="margin-top:24px; margin-bottom:24px; padding:80px 96px; width:560px;">
+              <div class="bp-author-photo">MQ</div>
+              <h2 class="bp-heading bp-field" style="font-size:24px; letter-spacing:0.18em;">About the Author</h2>
+              <div class="bp-rule"></div>
+              <div class="bp-body bp-field" style="text-align:center; font-size:15.5px;">
+                <p><strong>Maya Quintero</strong> is a writer and cartographer based on the Newhaven coast. Her short fiction has appeared in <em>Grain</em> and <em>The Tin Drum Review</em>. <em>The Last Cartographer</em> is her first novel.</p>
+                <p>She lives with her partner and a Bernese mountain dog named Felix.</p>
+              </div>
+              <div class="bp-links">
+                <span class="lnk bp-field"><svg width="11" height="11"><use href="#i-globe"/></svg> mayaquintero.com</span>
+                <span class="lnk bp-field"><svg width="11" height="11"><use href="#i-at"/></svg> @mayaquintero</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Subtype picker variants -->
+      <h3 style="font-family:var(--font-display); font-size:18px; color:var(--chrome-200); margin:40px 0 12px;">The subtype picker</h3>
+      <p class="note" style="margin-bottom:14px;">
+        A pill bar in the surface header. The 5 options sit in one rail; switching is instantaneous (the page rewrites). Switching to a subtype whose data model is incompatible (e.g. Title → Copyright) prompts a discard confirmation — see <em>states</em> below.
+      </p>
+
+      <div style="background:var(--chrome-900); border:1px solid var(--chrome-800); border-radius:var(--r-lg); padding:28px;">
+        <div class="md-label" style="margin-bottom:12px;">Default — Title selected</div>
+        <div class="subtype-bar">
+          <button class="pill active"><span class="ico"><svg width="13" height="13"><use href="#i-title-page"/></svg></span>Title</button>
+          <button class="pill"><span class="ico"><svg width="13" height="13"><use href="#i-copyright"/></svg></span>Copyright</button>
+          <button class="pill"><span class="ico"><svg width="13" height="13"><use href="#i-heart"/></svg></span>Dedication</button>
+          <button class="pill"><span class="ico"><svg width="13" height="13"><use href="#i-thanks"/></svg></span>Acknowledgments</button>
+          <button class="pill"><span class="ico"><svg width="13" height="13"><use href="#i-user-page"/></svg></span>About the Author</button>
+        </div>
+
+        <div class="md-label" style="margin:24px 0 12px;">Hover — about-the-author</div>
+        <div class="subtype-bar">
+          <button class="pill"><span class="ico"><svg width="13" height="13"><use href="#i-title-page"/></svg></span>Title</button>
+          <button class="pill"><span class="ico"><svg width="13" height="13"><use href="#i-copyright"/></svg></span>Copyright</button>
+          <button class="pill"><span class="ico"><svg width="13" height="13"><use href="#i-heart"/></svg></span>Dedication</button>
+          <button class="pill"><span class="ico"><svg width="13" height="13"><use href="#i-thanks"/></svg></span>Acknowledgments</button>
+          <button class="pill" style="color:var(--chrome-100); background:var(--chrome-800);"><span class="ico"><svg width="13" height="13"><use href="#i-user-page"/></svg></span>About the Author</button>
+        </div>
+
+        <div class="md-label" style="margin:24px 0 12px;">Unset — picker is the only thing on the page</div>
+        <div class="subtype-bar" style="padding:6px;">
+          <span style="font-family:var(--font-mono); font-size:11px; color:var(--brand); padding:6px 10px; letter-spacing:0.08em; text-transform:uppercase;">Pick →</span>
+          <button class="pill" style="background:var(--brand-soft); color:var(--brand-active);"><span class="ico"><svg width="13" height="13"><use href="#i-title-page"/></svg></span>Title</button>
+          <button class="pill"><span class="ico"><svg width="13" height="13"><use href="#i-copyright"/></svg></span>Copyright</button>
+          <button class="pill"><span class="ico"><svg width="13" height="13"><use href="#i-heart"/></svg></span>Dedication</button>
+          <button class="pill"><span class="ico"><svg width="13" height="13"><use href="#i-thanks"/></svg></span>Acknowledgments</button>
+          <button class="pill"><span class="ico"><svg width="13" height="13"><use href="#i-user-page"/></svg></span>About the Author</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §4 FM/BM states                                               -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-fmbm-states">
+      <div class="eyebrow"><span class="num">04</span> <span>FM/BM states</span></div>
+      <h2 class="title">Empty, typing, switching, saving.</h2>
+      <p class="lede">Every state of the title-page subtype, side by side. The other four subtypes follow the same vocabulary — placeholder text, focused-field outline, save badge transitions, discard confirmation.</p>
+
+      <div class="cols2" style="gap:20px;">
+        <!-- Empty state -->
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>Title · empty</strong><span>All fields placeholder</span></div>
+          <div class="surface-pane" style="padding:0 0 20px;">
+            <div class="book-page" style="margin-top:24px; margin-bottom:24px; transform: scale(0.78); transform-origin: top center;">
+              <div class="bp-title-block">
+                <h1 class="bp-title bp-field placeholder">Your book's title</h1>
+                <p class="bp-subtitle bp-field placeholder">A subtitle, if you have one</p>
+              </div>
+              <div class="bp-byline bp-field placeholder">A novel by</div>
+              <div class="bp-author bp-field placeholder">Author name</div>
+            </div>
+          </div>
+        </div>
+        <!-- Active typing -->
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>Title · active typing</strong><span>Caret on title · field focused</span></div>
+          <div class="surface-pane" style="padding:0 0 20px;">
+            <div class="book-page" style="margin-top:24px; margin-bottom:24px; transform: scale(0.78); transform-origin: top center;">
+              <div class="bp-title-block">
+                <h1 class="bp-title bp-field focused">The Last Cartograph<span class="faux-cursor"></span></h1>
+                <p class="bp-subtitle bp-field placeholder">A subtitle, if you have one</p>
+              </div>
+              <div class="bp-byline bp-field placeholder">A novel by</div>
+              <div class="bp-author bp-field placeholder">Author name</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dark mode -->
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>Title · dark editor</strong><span>Same page on the coffee canvas</span></div>
+          <div class="surface-pane dark-canvas" style="padding:0 0 20px;">
+            <div class="book-page dark" style="margin-top:24px; margin-bottom:24px; transform: scale(0.78); transform-origin: top center;">
+              <div class="bp-title-block">
+                <h1 class="bp-title bp-field">The Last Cartographer</h1>
+                <p class="bp-subtitle bp-field">A novel of charts that knew more than the cartographers who drew them</p>
+              </div>
+              <div class="bp-byline bp-field">A novel by</div>
+              <div class="bp-author bp-field">Maya Quintero</div>
+              <div class="bp-ornament">· · ·</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- No subtype chosen -->
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>No subtype chosen</strong><span>Picker is prominent — explainer beneath</span></div>
+          <div class="surface-pane" style="padding:0 0 20px; min-height: 460px;">
+            <div style="padding:32px 0 0; text-align:center;">
+              <div class="subtype-bar" style="margin: 0 auto;">
+                <button class="pill"><span class="ico"><svg width="13" height="13"><use href="#i-title-page"/></svg></span>Title</button>
+                <button class="pill"><span class="ico"><svg width="13" height="13"><use href="#i-copyright"/></svg></span>Copyright</button>
+                <button class="pill"><span class="ico"><svg width="13" height="13"><use href="#i-heart"/></svg></span>Dedication</button>
+                <button class="pill"><span class="ico"><svg width="13" height="13"><use href="#i-thanks"/></svg></span>Acknowledgments</button>
+                <button class="pill"><span class="ico"><svg width="13" height="13"><use href="#i-user-page"/></svg></span>About</button>
+              </div>
+            </div>
+            <div class="bp-empty">
+              <div class="ico"><svg width="34" height="34"><use href="#i-front-matter"/></svg></div>
+              <h3>What kind of page is this?</h3>
+              <p>Pick a subtype above to lay out this front-matter sheet. You can switch any time — your text travels where it can.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Subtype switch confirm modal -->
+      <h3 style="font-family:var(--font-display); font-size:18px; color:var(--chrome-200); margin:40px 0 12px;">Switching subtypes — confirmation</h3>
+      <p class="note" style="margin-bottom:18px;">
+        When the user switches between subtypes whose schemas overlap (Title ↔ About — both have a name field), fields migrate silently. When the schemas don't overlap and existing content would be discarded (Copyright → Dedication), a modal asks.
+      </p>
+      <div style="background:var(--chrome-900); border:1px solid var(--chrome-800); border-radius:var(--r-lg); padding:36px; display:flex; justify-content:center;">
+        <div class="modal-shell" style="max-width:440px;">
+          <div class="modal-head">
+            <h3>Switch to Dedication?</h3>
+            <p>The copyright, ISBN, publisher and rights statement on this page don't apply to a dedication. They'll be set aside in case you switch back within this session.</p>
+          </div>
+          <div class="modal-body" style="padding-bottom:14px;">
+            <div style="display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:var(--r-md); background:var(--chrome-950); border:1px solid var(--chrome-800);">
+              <svg width="16" height="16" style="color:var(--warning); flex-shrink:0;"><use href="#i-info"/></svg>
+              <span style="font-size:var(--t-sm); color:var(--chrome-300);">5 copyright fields will be hidden until you switch back.</span>
+            </div>
+          </div>
+          <div class="modal-foot">
+            <button class="btn ghost">Cancel</button>
+            <button class="btn primary">Switch to Dedication</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §5  Outline — overview of 3 layouts                            -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-outline">
+      <div class="eyebrow"><span class="num">05</span> <span>Outline — replace the Kanban</span></div>
+      <h2 class="title">A planning desk —<br><em>not a project board.</em></h2>
+      <p class="lede">
+        Kanban works for shipping software. It's the wrong metaphor for a novelist
+        plotting a story. Three columns labelled by act lose the through-line; a
+        card called "Climax" sitting between two cards called "Decision" tells you
+        nothing about what the story <em>does</em>.
+      </p>
+      <p class="lede" style="margin-top:-12px;">
+        We propose <strong style="color:var(--chrome-100); font-weight:500;">one primary view — the Beat Sheet</strong> — and
+        two view-mode alternates that ride the same data and ship as toggleable views
+        once primary lands. All three are richer than the Kanban they replace, and
+        all three feel like a writer's room, not a Jira board.
+      </p>
+
+      <div class="cols3" style="gap:18px; margin-top:8px;">
+        <div class="spec-card recommend">
+          <div class="rec-flag">Primary</div>
+          <h4>Beat Sheet</h4>
+          <p>A vertical list of story beats keyed to a structure template (Three-Act default, with Save-the-Cat and Hero's Journey alternates). Each beat is a card with title, description, optional chapter link, tags. Act labels divide the rail.</p>
+          <ul>
+            <li>Works for any novel length — short stories to 100k+.</li>
+            <li>Vertical scroll is familiar; reads top-to-bottom like the story will.</li>
+            <li>The connector line down the gutter <em>is</em> the through-line.</li>
+            <li>Tightest data → ink ratio of the three.</li>
+          </ul>
+        </div>
+
+        <div class="spec-card">
+          <div style="display:inline-flex; align-items:center; gap:6px; padding:2px 8px; background:var(--chrome-800); color:var(--chrome-300); border-radius:var(--r-full); font-family:var(--font-mono); font-size:9.5px; letter-spacing:0.10em; text-transform:uppercase; font-weight:700; margin-bottom:8px;">Alternate · view-mode</div>
+          <h4>Story Arc</h4>
+          <p>Cards plotted along a literal rising-action curve — beats at lower altitude on the setup side, climax at peak, denouement falling. Best for visual planners who think in shapes.</p>
+          <ul>
+            <li>Drag cards laterally to reposition along the chronology.</li>
+            <li>Visual altitude = tension; horizontal = time.</li>
+            <li>Caps practical at ~25 beats — wider grids get crowded.</li>
+          </ul>
+        </div>
+
+        <div class="spec-card">
+          <div style="display:inline-flex; align-items:center; gap:6px; padding:2px 8px; background:var(--chrome-800); color:var(--chrome-300); border-radius:var(--r-full); font-family:var(--font-mono); font-size:9.5px; letter-spacing:0.10em; text-transform:uppercase; font-weight:700; margin-bottom:8px;">Alternate · view-mode</div>
+          <h4>Corkboard</h4>
+          <p>Paper index cards on a peg-board ground. Each beat is a ruled card with a yellow pin; the whole grid can be reordered by drag. The most literal "writer's notebook" of the three; great for moodboarding stretches of a draft.</p>
+          <ul>
+            <li>Most tactile — leans into the cozy brief.</li>
+            <li>Less precise for sequencing; great for clustering.</li>
+            <li>Reuses paper-card surface from FM/BM.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>Recommendation.</strong>
+        Ship the <strong>Beat Sheet</strong> as the default outline view. Wire the data model
+        — title, description, position, chapter-link, tags, status — so the same items
+        render through Story Arc and Corkboard. Add the view switcher as a header
+        control; let the user pick which feels best for their project.
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §6  Beat Sheet — full studio render + zoomed                   -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-beatsheet">
+      <div class="eyebrow"><span class="num">06</span> <span>Outline — primary view</span></div>
+      <h2 class="title">The Beat Sheet.</h2>
+      <p class="lede">In studio context. The pane header carries the outline title, the view switcher, and the +&nbsp;Beat action. The metadata panel adopts outline-specific fields (act count, linked-chapter count, last-edited).</p>
+
+      <div class="artboard" style="margin-top:28px;">
+        <div class="artboard-header"><strong>Studio shell · Outline open · Beat Sheet view</strong><span>1440 × 880 · dark editor</span></div>
+        <div class="studio">
+          <header class="topnav">
+            <div class="left">
+              <a class="logo" href="#"><span class="hex"><svg width="18" height="18" style="color:var(--brand);"><use href="#i-hive"/></svg></span> Beehive</a>
+              <nav><a class="active" href="#">Studio</a><a href="#">Community</a><a href="#">Discover</a></nav>
+            </div>
+            <div class="right">
+              <button class="tbtn" style="width:32px; height:32px;" aria-label="Notifications"><svg width="18" height="18"><use href="#i-bell"/></svg></button>
+              <div class="avatar">M</div>
+            </div>
+          </header>
+          <div class="shell">
+            <aside class="binder">
+              <div class="binder-head">
+                <div class="book-meta">Working manuscript · 41,820 wd</div>
+                <div class="book-title">The Last Cartographer</div>
+              </div>
+              <div class="binder-tree">
+                <div class="binder-row"><span class="chev"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span><span class="icon" style="color:var(--type-front-matter)"><svg width="14" height="14"><use href="#i-front-matter"/></svg></span><span class="title">Front Matter</span></div>
+                <div class="binder-row active"><span class="chev open"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span><span class="icon" style="color:var(--type-outline)"><svg width="14" height="14"><use href="#i-outline"/></svg></span><span class="title" style="font-weight:500;">Outline</span></div>
+                <div class="binder-row indent-1"><span class="chev none"></span><span class="icon" style="color:var(--type-outline); opacity:0.6"><svg width="14" height="14"><use href="#i-outline"/></svg></span><span class="title" style="color:var(--chrome-400)">Main beat sheet</span></div>
+                <div class="binder-row"><span class="chev open"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span><span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span><span class="title">Part One — The Coast</span></div>
+                <div class="binder-row indent-1"><span class="chev none"></span><span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span><span class="title">1. The bell at low tide</span></div>
+                <div class="binder-row indent-1"><span class="chev none"></span><span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span><span class="title">2. What Cora found…</span></div>
+                <div class="binder-row indent-1"><span class="chev none"></span><span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span><span class="title">3. The lighthouse keeper's…</span></div>
+                <div class="binder-row indent-1"><span class="chev none"></span><span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span><span class="title">4. The empty inlet</span></div>
+                <div class="binder-row"><span class="chev"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span><span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span><span class="title">Part Two — The Inland</span></div>
+                <div class="binder-row"><span class="chev"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span><span class="icon" style="color:var(--type-research)"><svg width="14" height="14"><use href="#i-research"/></svg></span><span class="title">Research</span></div>
+                <div class="binder-row"><span class="chev"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span><span class="icon" style="color:var(--type-character)"><svg width="14" height="14"><use href="#i-character"/></svg></span><span class="title">Characters</span></div>
+                <div class="binder-row"><span class="chev"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span><span class="icon" style="color:var(--type-back-matter)"><svg width="14" height="14"><use href="#i-back-matter"/></svg></span><span class="title">Back Matter</span></div>
+              </div>
+              <div class="binder-foot">
+                <button class="btn-add"><svg width="14" height="14"><use href="#i-plus"/></svg>Add to Binder</button>
+              </div>
+            </aside>
+
+            <div class="center">
+              <div class="surface-head">
+                <div class="crumb"><span class="typecolor" style="background:var(--type-outline);"></span> Outline</div>
+                <div class="name">Main beat sheet</div>
+                <div style="margin-left:14px;">
+                  <div class="viewswitch">
+                    <button class="v active"><svg width="11" height="11"><use href="#i-list-num"/></svg>Beat Sheet</button>
+                    <button class="v"><svg width="11" height="11"><use href="#i-arc"/></svg>Arc</button>
+                    <button class="v"><svg width="11" height="11"><use href="#i-corkboard"/></svg>Cork</button>
+                  </div>
+                </div>
+                <div class="grow"></div>
+                <button class="tb-select" style="border:1px solid var(--chrome-700); height:30px; padding:0 10px;"><span>Three-Act</span><svg width="10" height="10"><use href="#i-chev-down"/></svg></button>
+                <button class="btn primary" style="padding:6px 12px; font-size:12px;"><svg width="12" height="12" style="margin-right:4px;"><use href="#i-plus"/></svg>Beat</button>
+                <span class="save-badge" style="margin-left:10px;"><span class="dot"></span>Saved · 9s</span>
+              </div>
+
+              <div class="outline-pane" style="overflow-y:auto;">
+                <div class="beat-sheet">
+                  <!-- ACT I -->
+                  <div class="bs-act">
+                    <span class="label">Act I</span>
+                    <span class="num">·  Beats 1–5</span>
+                    <span class="line"></span>
+                    <span class="meta">Setup</span>
+                  </div>
+                  <div class="beat linked">
+                    <div class="gutter"><span class="num">1</span><span class="grab"><svg width="12" height="20"><use href="#i-grip"/></svg></span></div>
+                    <div class="body">
+                      <h4 class="title">Opening image — the bell at low tide</h4>
+                      <p class="desc">Cora at fifteen, watching the buoy bell roll on its side at the edge of the bay. Establish coast, family, and the missing father in three pages.</p>
+                      <div class="row">
+                        <a href="#" class="link-tag"><svg width="11" height="11"><use href="#i-link-arrow"/></svg>Ch. 1 — The bell at low tide</a>
+                        <span class="tag"><span class="swatch" style="background:var(--type-character)"></span>Cora</span>
+                        <span class="tag"><span class="swatch" style="background:var(--status-final)"></span>opening</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="beat linked">
+                    <div class="gutter"><span class="num">2</span><span class="grab"><svg width="12" height="20"><use href="#i-grip"/></svg></span></div>
+                    <div class="body">
+                      <h4 class="title">Inciting — Cora finds the second chart</h4>
+                      <p class="desc">Pre-dawn in the chart room. A coast she's never seen, drawn in a hand that isn't her father's. The first crack in the family story.</p>
+                      <div class="row">
+                        <a href="#" class="link-tag"><svg width="11" height="11"><use href="#i-link-arrow"/></svg>Ch. 2 — What Cora found…</a>
+                        <span class="tag"><span class="swatch" style="background:var(--type-character)"></span>Cora</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="beat selected">
+                    <div class="gutter"><span class="num">3</span><span class="grab"><svg width="12" height="20"><use href="#i-grip"/></svg></span></div>
+                    <div class="body">
+                      <h4 class="title">Debate — the keeper's letter</h4>
+                      <p class="desc">The lighthouse keeper gives Cora a sealed letter from her father, ten years old. She doesn't open it yet. She knows what's inside is also what she's afraid of.</p>
+                      <div class="row">
+                        <a href="#" class="link-tag"><svg width="11" height="11"><use href="#i-link-arrow"/></svg>Ch. 3 — The lighthouse keeper's letter</a>
+                        <span class="tag"><span class="swatch" style="background:var(--type-character)"></span>Cora</span>
+                        <span class="tag"><span class="swatch" style="background:oklch(0.7 0.075 330)"></span>letter</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="beat">
+                    <div class="gutter"><span class="num">4</span><span class="grab"><svg width="12" height="20"><use href="#i-grip"/></svg></span></div>
+                    <div class="body">
+                      <h4 class="title">Break into Act II — leaving Newhaven</h4>
+                      <p class="desc">She opens the letter. It names a place inland. She buys the ticket. Mom doesn't know.</p>
+                    </div>
+                  </div>
+                  <div class="beat placeholder">
+                    <div class="gutter"><span class="num" style="opacity:0.4">5</span></div>
+                    <div class="body"><svg width="14" height="14"><use href="#i-plus"/></svg>Add a beat to Act I</div>
+                  </div>
+
+                  <!-- ACT II -->
+                  <div class="bs-act">
+                    <span class="label">Act II</span>
+                    <span class="num">·  Beats 6–14</span>
+                    <span class="line"></span>
+                    <span class="meta">Confrontation</span>
+                  </div>
+                  <div class="beat linked">
+                    <div class="gutter"><span class="num">6</span><span class="grab"><svg width="12" height="20"><use href="#i-grip"/></svg></span></div>
+                    <div class="body">
+                      <h4 class="title">Fun &amp; games — the inland archive</h4>
+                      <p class="desc">A long week with old charts and a stranger who knows more than he says.</p>
+                      <div class="row">
+                        <span class="tag"><span class="swatch" style="background:var(--type-character)"></span>Cora</span>
+                        <span class="tag"><span class="swatch" style="background:var(--type-research)"></span>archive</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="beat">
+                    <div class="gutter"><span class="num">7</span><span class="grab"><svg width="12" height="20"><use href="#i-grip"/></svg></span></div>
+                    <div class="body">
+                      <h4 class="title">Midpoint — the cartographer was a woman</h4>
+                      <p class="desc">A name on the back of a chart. Not her father's name. Not even his contemporary. The whole story reframes.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Outline-specific metadata panel -->
+            <aside class="metadata">
+              <div class="md-section">
+                <div class="md-label">Outline</div>
+                <div class="md-title">Main beat sheet</div>
+              </div>
+              <div class="md-section">
+                <div class="md-label">Structure</div>
+                <div style="display:flex; flex-direction:column; gap:6px; margin-top:6px;">
+                  <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--chrome-200); cursor:pointer;"><span style="width:14px; height:14px; border-radius:50%; border:4px solid var(--brand); background:var(--chrome-950);"></span>Three-Act</label>
+                  <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--chrome-400); cursor:pointer;"><span style="width:14px; height:14px; border-radius:50%; border:1px solid var(--chrome-700);"></span>Save the Cat (15)</label>
+                  <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--chrome-400); cursor:pointer;"><span style="width:14px; height:14px; border-radius:50%; border:1px solid var(--chrome-700);"></span>Hero's Journey (12)</label>
+                  <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--chrome-400); cursor:pointer;"><span style="width:14px; height:14px; border-radius:50%; border:1px solid var(--chrome-700);"></span>Freeform</label>
+                </div>
+              </div>
+              <div class="md-section">
+                <div class="md-label">Stats</div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px 18px; margin-top:6px;">
+                  <div><div style="font-family:var(--font-display); font-weight:700; font-size:22px; color:var(--chrome-100);">14</div><div style="font-size:11px; color:var(--chrome-500); letter-spacing:0.04em; text-transform:uppercase;">Beats</div></div>
+                  <div><div style="font-family:var(--font-display); font-weight:700; font-size:22px; color:var(--chrome-100);">9</div><div style="font-size:11px; color:var(--chrome-500); letter-spacing:0.04em; text-transform:uppercase;">Linked to chapters</div></div>
+                  <div><div style="font-family:var(--font-display); font-weight:700; font-size:22px; color:var(--chrome-100);">3</div><div style="font-size:11px; color:var(--chrome-500); letter-spacing:0.04em; text-transform:uppercase;">Acts</div></div>
+                  <div><div style="font-family:var(--font-display); font-weight:700; font-size:22px; color:var(--chrome-100);">5</div><div style="font-size:11px; color:var(--chrome-500); letter-spacing:0.04em; text-transform:uppercase;">Unlinked</div></div>
+                </div>
+              </div>
+              <div class="md-section">
+                <div class="md-label">Tag legend</div>
+                <div style="display:flex; flex-direction:column; gap:8px; margin-top:6px;">
+                  <div style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--chrome-300);"><span style="width:10px; height:10px; border-radius:3px; background:var(--type-character)"></span>Cora <span style="color:var(--chrome-500); margin-left:auto; font-family:var(--font-mono); font-size:11px;">9</span></div>
+                  <div style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--chrome-300);"><span style="width:10px; height:10px; border-radius:3px; background:oklch(0.7 0.075 330)"></span>Letter arc <span style="color:var(--chrome-500); margin-left:auto; font-family:var(--font-mono); font-size:11px;">4</span></div>
+                  <div style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--chrome-300);"><span style="width:10px; height:10px; border-radius:3px; background:var(--type-research)"></span>Archive <span style="color:var(--chrome-500); margin-left:auto; font-family:var(--font-mono); font-size:11px;">3</span></div>
+                </div>
+              </div>
+              <div class="md-section">
+                <div class="md-label">Last edited</div>
+                <div style="font-size:13px; color:var(--chrome-300);">2 minutes ago · <span style="color:var(--chrome-500);">beat 3 "the keeper's letter"</span></div>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>Status bar on the outline.</strong>
+        No word count — this is not a writing surface. We replace it with beat counts
+        and a "Open in Chapter →" shortcut that jumps to the linked chapter for the
+        selected beat. See the status bar at the bottom of the studio render above.
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §7  Story Arc + Corkboard alternates                           -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-arc-cork">
+      <div class="eyebrow"><span class="num">07</span> <span>Outline — view-mode alternates</span></div>
+      <h2 class="title">Same data, different desk.</h2>
+      <p class="lede">Both alternates ride the Beat Sheet data model and are reached through the view switcher in the pane header.</p>
+
+      <!-- Story Arc -->
+      <div class="artboard">
+        <div class="artboard-header"><strong>Story Arc view</strong><span>Cards plotted along a rising-action curve · drag to reposition</span></div>
+        <div class="surface-head" style="border-radius:0;">
+          <div class="crumb"><span class="typecolor" style="background:var(--type-outline);"></span> Outline</div>
+          <div class="name">Main beat sheet</div>
+          <div style="margin-left:14px;">
+            <div class="viewswitch">
+              <button class="v"><svg width="11" height="11"><use href="#i-list-num"/></svg>Beat Sheet</button>
+              <button class="v active"><svg width="11" height="11"><use href="#i-arc"/></svg>Arc</button>
+              <button class="v"><svg width="11" height="11"><use href="#i-corkboard"/></svg>Cork</button>
+            </div>
+          </div>
+          <div class="grow"></div>
+          <span class="save-badge"><span class="dot"></span>Saved · 9s</span>
+        </div>
+        <div class="outline-pane" style="background-image:none; padding:24px 32px 48px;">
+          <div class="story-arc">
+            <svg class="curve" viewBox="0 0 1000 460" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="arcgrad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0" stop-color="oklch(0.85 0.18 90 / 0.0)"/>
+                  <stop offset="0.5" stop-color="oklch(0.85 0.18 90 / 0.7)"/>
+                  <stop offset="1" stop-color="oklch(0.85 0.18 90 / 0.0)"/>
+                </linearGradient>
+              </defs>
+              <path d="M 40 380 Q 280 380 380 240 Q 480 80 600 80 Q 720 80 760 200 Q 820 380 960 380"
+                    stroke="url(#arcgrad)" stroke-width="2" fill="none" stroke-linecap="round"/>
+              <!-- soft fill under curve -->
+              <path d="M 40 380 Q 280 380 380 240 Q 480 80 600 80 Q 720 80 760 200 Q 820 380 960 380 L 960 460 L 40 460 Z"
+                    fill="oklch(0.85 0.18 90 / 0.05)"/>
+            </svg>
+            <div class="arc-card" style="left:6%; top:80%;">
+              <div class="num">Beat 1 · Act I</div>
+              <div class="t">Opening — the bell at low tide</div>
+              <div class="d">Cora at fifteen. Coast established.</div>
+            </div>
+            <div class="arc-card" style="left:22%; top:68%;">
+              <div class="num">Beat 2 · Act I</div>
+              <div class="t">Inciting — the second chart</div>
+              <div class="d">Pre-dawn. A hand that isn't her father's.</div>
+            </div>
+            <div class="arc-card" style="left:34%; top:48%; border-color:var(--brand); box-shadow: 0 0 0 3px var(--brand-soft), var(--el-2);">
+              <div class="num">Beat 3 · Act I</div>
+              <div class="t">Debate — the keeper's letter</div>
+              <div class="d">Ten years old, sealed. Selected.</div>
+            </div>
+            <div class="arc-card" style="left:46%; top:30%;">
+              <div class="num">Beat 4 · → Act II</div>
+              <div class="t">Break — leaving Newhaven</div>
+              <div class="d">She opens it. She buys the ticket.</div>
+            </div>
+            <div class="arc-card" style="left:60%; top:14%;">
+              <div class="num">Beat 7 · Midpoint</div>
+              <div class="t">The cartographer was a woman</div>
+              <div class="d">The whole story reframes.</div>
+            </div>
+            <div class="arc-card" style="left:78%; top:42%;">
+              <div class="num">Beat 10 · Act III</div>
+              <div class="t">Climax — the cliff path</div>
+              <div class="d">She refuses to finish her father's map.</div>
+            </div>
+            <div class="arc-card" style="left:92%; top:74%;">
+              <div class="num">Beat 14 · Coda</div>
+              <div class="t">Closing — the bell, again</div>
+              <div class="d">Same bell, different hand.</div>
+            </div>
+            <div class="arc-axis">
+              <span class="tick" style="left:6%"></span>
+              <span class="tick" style="left:22%"></span>
+              <span class="tick" style="left:34%"></span>
+              <span class="tick" style="left:46%"></span>
+              <span class="tick" style="left:60%"></span>
+              <span class="tick" style="left:78%"></span>
+              <span class="tick" style="left:92%"></span>
+              <span class="label" style="left:6%">Setup</span>
+              <span class="label" style="left:46%">Break to II</span>
+              <span class="label" style="left:60%">Midpoint</span>
+              <span class="label" style="left:78%">Climax</span>
+              <span class="label" style="left:92%">Coda</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Corkboard -->
+      <div class="artboard">
+        <div class="artboard-header"><strong>Corkboard view</strong><span>Index cards on a peg-board ground · drag to rearrange</span></div>
+        <div class="surface-head" style="border-radius:0;">
+          <div class="crumb"><span class="typecolor" style="background:var(--type-outline);"></span> Outline</div>
+          <div class="name">Main beat sheet</div>
+          <div style="margin-left:14px;">
+            <div class="viewswitch">
+              <button class="v"><svg width="11" height="11"><use href="#i-list-num"/></svg>Beat Sheet</button>
+              <button class="v"><svg width="11" height="11"><use href="#i-arc"/></svg>Arc</button>
+              <button class="v active"><svg width="11" height="11"><use href="#i-corkboard"/></svg>Cork</button>
+            </div>
+          </div>
+          <div class="grow"></div>
+          <span class="save-badge"><span class="dot"></span>Saved · 9s</span>
+        </div>
+        <div class="corkboard">
+          <div class="index-cards">
+            <div class="index-card linked" style="--tilt:-1.2deg;">
+              <div class="pin"></div>
+              <div class="num">Beat 1 · Act I</div>
+              <div class="t">Opening image — the bell at low tide</div>
+              <div class="d">Cora at fifteen, the buoy bell on its side. Coast, family, missing father — all in three pages.</div>
+              <div class="foot"><span class="swatch" style="background:var(--type-character)"></span><span class="link">→ Ch. 1</span></div>
+            </div>
+            <div class="index-card linked" style="--tilt:0.8deg;">
+              <div class="pin"></div>
+              <div class="num">Beat 2 · Act I</div>
+              <div class="t">Inciting — Cora finds the second chart</div>
+              <div class="d">Pre-dawn in the chart room. A coast she's never seen, drawn by someone else.</div>
+              <div class="foot"><span class="swatch" style="background:var(--type-character)"></span><span class="link">→ Ch. 2</span></div>
+            </div>
+            <div class="index-card linked" style="--tilt:-0.6deg; box-shadow: 0 0 0 3px var(--brand-soft), 0 1px 0 var(--paper-50) inset, 0 2px 4px rgba(0,0,0,0.3), 0 14px 28px -10px rgba(0,0,0,0.45);">
+              <div class="pin"></div>
+              <div class="num">Beat 3 · Act I</div>
+              <div class="t">Debate — the keeper's letter</div>
+              <div class="d">Ten years old, sealed. She knows what's inside. <strong>Selected.</strong></div>
+              <div class="foot"><span class="swatch" style="background:var(--type-character)"></span><span class="swatch" style="background:oklch(0.7 0.075 330)"></span><span class="link">→ Ch. 3</span></div>
+            </div>
+            <div class="index-card" style="--tilt:1.4deg;">
+              <div class="pin"></div>
+              <div class="num">Beat 4 · → Act II</div>
+              <div class="t">Break into Act II — leaving Newhaven</div>
+              <div class="d">She opens the letter. It names a place. She buys the ticket. Mom doesn't know.</div>
+            </div>
+            <div class="index-card linked" style="--tilt:-0.4deg;">
+              <div class="pin"></div>
+              <div class="num">Beat 6 · Act II</div>
+              <div class="t">Fun &amp; games — the inland archive</div>
+              <div class="d">A long week with old charts. A stranger who knows more than he says.</div>
+              <div class="foot"><span class="swatch" style="background:var(--type-character)"></span><span class="swatch" style="background:var(--type-research)"></span></div>
+            </div>
+            <div class="index-card" style="--tilt:0.6deg;">
+              <div class="pin"></div>
+              <div class="num">Beat 7 · Midpoint</div>
+              <div class="t">The cartographer was a woman</div>
+              <div class="d">A name on the back of a chart. Not her father's. The whole story reframes.</div>
+            </div>
+            <div class="index-card" style="--tilt:-1.0deg;">
+              <div class="pin"></div>
+              <div class="num">Beat 8 · Act II</div>
+              <div class="t">Bad guys close in — the second visitor</div>
+              <div class="d">Someone else is looking for the same chart. Cora is not the only one with a question.</div>
+            </div>
+            <div class="index-card" style="--tilt:0.4deg; opacity:0.55; border:1.5px dashed var(--paper-400); background:transparent; box-shadow:none; color:var(--chrome-500); display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-weight:700; gap:8px;">
+              <svg width="16" height="16"><use href="#i-plus"/></svg>Add a card
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>Why we recommend the Beat Sheet first.</strong>
+        It scales better than the Arc (which crowds past ~25 beats) and is more
+        precise than the Corkboard (which trades sequencing for clustering). Both
+        alternates remain useful — they ship as toggle views once the primary lands.
+        The data is the same in all three; the user can plot in the Arc, write in
+        the Sheet, and brainstorm in the Cork without re-entering anything.
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §8  Beat anatomy + states                                      -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-beat-anatomy">
+      <div class="eyebrow"><span class="num">08</span> <span>Card · beat · node</span></div>
+      <h2 class="title">Anatomy of a beat.</h2>
+      <p class="lede">The same fields render in all three views. Anatomy below is the Beat Sheet form, which is the densest expression. The Arc card and Corkboard card compress it but never strip a field.</p>
+
+      <div class="cols-3-2" style="margin-top:8px;">
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>Beat — Beat Sheet form</strong><span>Selected · linked to chapter</span></div>
+          <div style="padding:48px 56px; background:var(--chrome-950); position:relative;">
+            <div class="anatomy" style="width:600px; max-width:100%; margin:0 auto; position:relative;">
+              <div class="beat selected" style="cursor:default;">
+                <div class="gutter"><span class="num">3</span><span class="grab" style="opacity:1;"><svg width="12" height="20"><use href="#i-grip"/></svg></span></div>
+                <div class="body">
+                  <h4 class="title">Debate — the keeper's letter</h4>
+                  <p class="desc">The lighthouse keeper gives Cora a sealed letter from her father, ten years old. She doesn't open it yet. She knows what's inside is also what she's afraid of.</p>
+                  <div class="row">
+                    <a href="#" class="link-tag"><svg width="11" height="11"><use href="#i-link-arrow"/></svg>Ch. 3 — The lighthouse keeper's letter</a>
+                    <span class="tag"><span class="swatch" style="background:var(--type-character)"></span>Cora</span>
+                    <span class="tag"><span class="swatch" style="background:oklch(0.7 0.075 330)"></span>letter</span>
+                  </div>
+                </div>
+              </div>
+              <div class="marker" style="left:-8px; top:6px;">1</div>
+              <div class="marker" style="left:-8px; top:42px;">2</div>
+              <div class="marker" style="left:40px; top:46px;">3</div>
+              <div class="marker" style="right:-10px; top:0;">4</div>
+              <div class="marker" style="left:48px; top:108px;">5</div>
+              <div class="marker" style="left:48px; top:160px;">6</div>
+            </div>
+            <div class="anatomy-legend" style="margin-top:36px;">
+              <div class="li"><span class="n">1</span><div><strong>Position number</strong><br/>Auto-numbered down the rail. Renders as a brand-yellow pill when the beat is linked to a chapter; otherwise stays neutral.</div></div>
+              <div class="li"><span class="n">2</span><div><strong>Gutter connector</strong><br/>A 1px line down the gutter joins beats vertically. The through-line of the story, made visible.</div></div>
+              <div class="li"><span class="n">3</span><div><strong>Drag handle</strong><br/>Surfaces on hover. Drag to reposition the beat anywhere — even across acts (the act label updates).</div></div>
+              <div class="li"><span class="n">4</span><div><strong>Selection ring</strong><br/>Brand-yellow outline + soft-yellow halo. Same selection treatment as the Arc card and the Corkboard card.</div></div>
+              <div class="li"><span class="n">5</span><div><strong>Chapter link</strong><br/>A clickable pill. Click → jump to that chapter in the editor. Click X to unlink. Empty = no link (and the position pill stays neutral).</div></div>
+              <div class="li"><span class="n">6</span><div><strong>Tags</strong><br/>Color-keyed labels. Color comes from the supporting palette; copy is freeform. Click to filter the sheet by that tag.</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- States -->
+        <div>
+          <div class="md-label">Beat states</div>
+          <div style="display:flex; flex-direction:column; gap:12px; margin-top:12px;">
+            <div class="state-card">
+              <div class="label"><strong>Default · linked</strong><span>brand pill, body card</span></div>
+              <div class="demo" style="background:var(--chrome-950); padding:16px;">
+                <div class="beat linked" style="cursor:default;">
+                  <div class="gutter"><span class="num">2</span></div>
+                  <div class="body" style="padding:10px 12px;">
+                    <h4 class="title" style="font-size:13px;">Inciting — the second chart</h4>
+                    <p class="desc" style="font-size:12px; -webkit-line-clamp:1; display:-webkit-box; -webkit-box-orient:vertical; overflow:hidden;">Pre-dawn. A hand that isn't her father's…</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="state-card">
+              <div class="label"><strong>Default · unlinked</strong><span>neutral pill</span></div>
+              <div class="demo" style="background:var(--chrome-950); padding:16px;">
+                <div class="beat" style="cursor:default;">
+                  <div class="gutter"><span class="num">5</span></div>
+                  <div class="body" style="padding:10px 12px;">
+                    <h4 class="title" style="font-size:13px;">Setup beat — to be drafted</h4>
+                    <p class="desc" style="font-size:12px;">Not linked to a chapter yet.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="state-card">
+              <div class="label"><strong>Hover</strong><span>handle reveals</span></div>
+              <div class="demo" style="background:var(--chrome-950); padding:16px;">
+                <div class="beat" style="cursor:default; background:oklch(0.25 0.013 56 / 0.6);">
+                  <div class="gutter"><span class="num">5</span><span class="grab" style="opacity:1;"><svg width="12" height="20"><use href="#i-grip"/></svg></span></div>
+                  <div class="body" style="padding:10px 12px; border-color:var(--chrome-700);">
+                    <h4 class="title" style="font-size:13px;">Setup beat</h4>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="state-card">
+              <div class="label"><strong>Dragging</strong><span>lift + tilt</span></div>
+              <div class="demo" style="background:var(--chrome-950); padding:16px; position:relative;">
+                <div class="drop-indicator" style="position:absolute; left:60px; right:24px; top:22px;"></div>
+                <div class="beat" style="cursor:grabbing; transform: rotate(-1deg) translateY(4px);">
+                  <div class="gutter"><span class="num">5</span></div>
+                  <div class="body" style="padding:10px 12px; box-shadow: var(--el-3); background:var(--chrome-750);">
+                    <h4 class="title" style="font-size:13px;">Setup beat</h4>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="state-card">
+              <div class="label"><strong>Empty / placeholder</strong><span>"+ Add a beat"</span></div>
+              <div class="demo" style="background:var(--chrome-950); padding:16px;">
+                <div class="beat placeholder" style="cursor:default;">
+                  <div class="gutter"><span class="num" style="opacity:0.4">6</span></div>
+                  <div class="body" style="padding:10px 12px;"><svg width="12" height="12"><use href="#i-plus"/></svg>Add a beat to Act I</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §9  Chapter-link popover                                       -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-linkpopover">
+      <div class="eyebrow"><span class="num">09</span> <span>Linking a beat</span></div>
+      <h2 class="title">The chapter-link popover.</h2>
+      <p class="lede">Open from any beat (or any character relationship, see §11). A 320×min-height search + list. Keyboard: ⌘K to open from a selected beat, ↑↓ to move, ↩ to link, ⌫ to unlink the current.</p>
+
+      <div class="cols3" style="gap:20px; margin-top:8px;">
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>Open · no query</strong><span>Most-recent first</span></div>
+          <div style="padding:40px 32px; background:var(--chrome-950); display:flex; justify-content:center;">
+            <div class="link-pop">
+              <div class="search">
+                <svg width="14" height="14"><use href="#i-search"/></svg>
+                <input placeholder="Find a chapter…" />
+                <svg width="13" height="13" style="color:var(--chrome-500)"><use href="#i-x"/></svg>
+              </div>
+              <div class="results">
+                <div class="res selected">
+                  <span class="ico"><svg width="14" height="14"><use href="#i-chapter"/></svg></span>
+                  <span class="t"><span class="pref">Ch 3</span>The lighthouse keeper's letter</span>
+                  <span class="status"><span class="dot" style="background:var(--status-first-draft)"></span>1st Draft</span>
+                </div>
+                <div class="res">
+                  <span class="ico"><svg width="14" height="14"><use href="#i-chapter"/></svg></span>
+                  <span class="t"><span class="pref">Ch 4</span>The empty inlet</span>
+                  <span class="status"><span class="dot" style="background:var(--status-outline)"></span>Outline</span>
+                </div>
+                <div class="res">
+                  <span class="ico"><svg width="14" height="14"><use href="#i-chapter"/></svg></span>
+                  <span class="t"><span class="pref">Ch 1</span>The bell at low tide</span>
+                  <span class="status"><span class="dot" style="background:var(--status-final)"></span>Final</span>
+                </div>
+                <div class="res">
+                  <span class="ico"><svg width="14" height="14"><use href="#i-chapter"/></svg></span>
+                  <span class="t"><span class="pref">Ch 2</span>What Cora found in the chart room</span>
+                  <span class="status"><span class="dot" style="background:var(--status-revised)"></span>Revised</span>
+                </div>
+                <div class="res">
+                  <span class="ico"><svg width="14" height="14"><use href="#i-chapter"/></svg></span>
+                  <span class="t"><span class="pref">Ch 5</span>The morning train</span>
+                  <span class="status"><span class="dot" style="background:var(--status-idea)"></span>Idea</span>
+                </div>
+              </div>
+              <div class="foot">
+                <span>↑↓ navigate · ↩ link</span>
+                <span class="kbd">esc</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>Searching</strong><span>Live filter · highlighted match</span></div>
+          <div style="padding:40px 32px; background:var(--chrome-950); display:flex; justify-content:center;">
+            <div class="link-pop">
+              <div class="search">
+                <svg width="14" height="14"><use href="#i-search"/></svg>
+                <input value="letter" />
+                <svg width="13" height="13" style="color:var(--chrome-500)"><use href="#i-x"/></svg>
+              </div>
+              <div class="results">
+                <div class="res selected">
+                  <span class="ico"><svg width="14" height="14"><use href="#i-chapter"/></svg></span>
+                  <span class="t"><span class="pref">Ch 3</span>The lighthouse keeper's <mark style="background:var(--brand-soft); color:var(--brand); padding:0 2px; border-radius:2px;">letter</mark></span>
+                  <span class="status"><span class="dot" style="background:var(--status-first-draft)"></span>1st</span>
+                </div>
+                <div class="res">
+                  <span class="ico"><svg width="14" height="14"><use href="#i-research"/></svg></span>
+                  <span class="t"><span class="pref">Rsch</span>Father's <mark style="background:var(--brand-soft); color:var(--brand); padding:0 2px; border-radius:2px;">letter</mark>s — provenance</span>
+                  <span class="status"><span class="dot" style="background:var(--type-research)"></span>Note</span>
+                </div>
+              </div>
+              <div class="foot">
+                <span>2 matches</span>
+                <span><span class="kbd">↩</span> link</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>No results</strong><span>+ Quick-create offered</span></div>
+          <div style="padding:40px 32px; background:var(--chrome-950); display:flex; justify-content:center;">
+            <div class="link-pop">
+              <div class="search">
+                <svg width="14" height="14"><use href="#i-search"/></svg>
+                <input value="newhaven cliff scene" />
+                <svg width="13" height="13" style="color:var(--chrome-500)"><use href="#i-x"/></svg>
+              </div>
+              <div class="empty">
+                No chapter matches "newhaven cliff scene".
+              </div>
+              <div style="padding:6px;">
+                <div class="res selected">
+                  <span class="ico" style="color:var(--brand);"><svg width="14" height="14"><use href="#i-plus"/></svg></span>
+                  <span class="t" style="color:var(--brand);">Create chapter — "Newhaven cliff scene"</span>
+                  <span class="status"><span class="kbd" style="background:var(--brand-soft); color:var(--brand);">↩</span></span>
+                </div>
+              </div>
+              <div class="foot">
+                <span>0 matches</span>
+                <span class="kbd">esc</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §10  Research Notes                                            -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-notes">
+      <div class="eyebrow"><span class="num">10</span> <span>Research notes</span></div>
+      <h2 class="title">Legal pad on the desk —<br><em>paperclip in the corner.</em></h2>
+      <p class="lede">
+        A note is not a book page. It's the thing pinned to the wall while the book
+        is being written. The chapter editor's prose treatment is too formal here;
+        the FM/BM book page is too iconic. So we give notes a ruled-pad look — red
+        margin rule, faint horizontal lines starting under the title, a paperclip in
+        the top corner. Same cream paper, smaller, less precious.
+      </p>
+
+      <!-- In-shell render -->
+      <div class="artboard" style="margin-top:28px;">
+        <div class="artboard-header"><strong>Research note · in studio shell · light editor</strong><span>Paperclip, ruled lines, attribute strip beneath title</span></div>
+        <div class="studio">
+          <header class="topnav">
+            <div class="left">
+              <a class="logo" href="#"><span class="hex"><svg width="18" height="18" style="color:var(--brand);"><use href="#i-hive"/></svg></span> Beehive</a>
+              <nav><a class="active" href="#">Studio</a><a href="#">Community</a><a href="#">Discover</a></nav>
+            </div>
+            <div class="right">
+              <button class="tbtn" style="width:32px; height:32px;" aria-label="Notifications"><svg width="18" height="18"><use href="#i-bell"/></svg></button>
+              <div class="avatar">M</div>
+            </div>
+          </header>
+          <div class="shell">
+            <aside class="binder">
+              <div class="binder-head">
+                <div class="book-meta">Working manuscript · 41,820 wd</div>
+                <div class="book-title">The Last Cartographer</div>
+              </div>
+              <div class="binder-tree">
+                <div class="binder-row"><span class="chev"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span><span class="icon" style="color:var(--type-front-matter)"><svg width="14" height="14"><use href="#i-front-matter"/></svg></span><span class="title">Front Matter</span></div>
+                <div class="binder-row"><span class="chev"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span><span class="icon" style="color:var(--type-outline)"><svg width="14" height="14"><use href="#i-outline"/></svg></span><span class="title">Outline</span></div>
+                <div class="binder-row"><span class="chev"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span><span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span><span class="title">Part One — The Coast</span></div>
+                <div class="binder-row"><span class="chev open"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span><span class="icon" style="color:var(--type-research)"><svg width="14" height="14"><use href="#i-research"/></svg></span><span class="title" style="font-weight:500;">Research</span></div>
+                <div class="binder-row indent-1 active" style="position:relative;"><span class="chev none"></span><span class="icon" style="color:var(--type-research)"><svg width="14" height="14"><use href="#i-research"/></svg></span><span class="title">Father's letters — provenance</span><svg class="pin" width="12" height="12" style="position:absolute; right:36px; top:10px; color:var(--brand);"><use href="#i-pin"/></svg></div>
+                <div class="binder-row indent-1"><span class="chev none"></span><span class="icon" style="color:var(--type-research)"><svg width="14" height="14"><use href="#i-research"/></svg></span><span class="title">Newhaven archive — opening hours</span></div>
+                <div class="binder-row indent-1"><span class="chev none"></span><span class="icon" style="color:var(--type-research)"><svg width="14" height="14"><use href="#i-research"/></svg></span><span class="title">Coastal navigation · 1880s</span></div>
+                <div class="binder-row indent-1"><span class="chev none"></span><span class="icon" style="color:var(--type-research)"><svg width="14" height="14"><use href="#i-research"/></svg></span><span class="title">Scene ideas — the cliff path</span></div>
+                <div class="binder-row"><span class="chev"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span><span class="icon" style="color:var(--type-character)"><svg width="14" height="14"><use href="#i-character"/></svg></span><span class="title">Characters</span></div>
+                <div class="binder-row"><span class="chev"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span><span class="icon" style="color:var(--type-back-matter)"><svg width="14" height="14"><use href="#i-back-matter"/></svg></span><span class="title">Back Matter</span></div>
+              </div>
+              <div class="binder-foot">
+                <button class="btn-add"><svg width="14" height="14"><use href="#i-plus"/></svg>Add to Binder</button>
+              </div>
+            </aside>
+
+            <div class="center">
+              <div class="surface-head">
+                <div class="crumb"><span class="typecolor" style="background:var(--type-research);"></span> Research</div>
+                <div class="name">Father's letters — provenance</div>
+                <div class="grow"></div>
+                <!-- small note toolbar inline -->
+                <div class="note-toolbar" style="margin:0;">
+                  <button class="tbtn"><svg width="14" height="14"><use href="#i-bold"/></svg></button>
+                  <button class="tbtn"><svg width="14" height="14"><use href="#i-italic"/></svg></button>
+                  <button class="tbtn"><svg width="14" height="14"><use href="#i-list"/></svg></button>
+                  <button class="tbtn"><svg width="14" height="14"><use href="#i-quote"/></svg></button>
+                  <button class="tbtn"><svg width="14" height="14"><use href="#i-link"/></svg></button>
+                </div>
+                <span class="save-badge" style="margin-left:10px;"><span class="dot"></span>Saved · 14s</span>
+              </div>
+
+              <div class="note-pane">
+                <div class="note-card">
+                  <span class="paperclip"><svg width="36" height="36"><use href="#i-paperclip"/></svg></span>
+                  <h1 class="note-title">Father's letters — provenance</h1>
+                  <div class="note-meta">Created 14 Oct · 312 words · Pinned</div>
+                  <div class="note-attrs">
+                    <span class="tag-chip"><span class="hash">#</span>cora</span>
+                    <span class="tag-chip"><span class="hash">#</span>letters</span>
+                    <span class="tag-chip"><span class="hash">#</span>part-1</span>
+                    <span class="tag-chip add"><svg width="10" height="10"><use href="#i-plus"/></svg>tag</span>
+                    <div class="swatchrow">
+                      <button class="color-swatch" style="background:oklch(0.74 0.045 245)" title="Blue"></button>
+                      <button class="color-swatch" style="background:oklch(0.74 0.070 295)" title="Plum"></button>
+                      <button class="color-swatch active" style="background:oklch(0.80 0.140 88)" title="Yellow"></button>
+                      <button class="color-swatch" style="background:oklch(0.74 0.080 155)" title="Sage"></button>
+                      <button class="color-swatch" style="background:oklch(0.72 0.110 35)" title="Terracotta"></button>
+                    </div>
+                    <button class="pin-tog active"><svg width="11" height="11"><use href="#i-pin"/></svg>Pinned</button>
+                  </div>
+                  <div class="note-body">
+                    <p>Three letters survive. <strong>1898</strong>, <strong>1903</strong>, and <strong>1910</strong>. Only the last is dated in his hand — the other two are dated by the recipient on the outside of the envelope. The Newhaven archive holds 1903; the keeper has 1910; the 1898 letter is in our family. Maya is the only person alive who has read all three in one sitting.</p>
+                    <h2>What's in each</h2>
+                    <p>The 1898 letter is short — a hand-drawn coastline above a single sentence, "if you've read this you have the start of it." For years she thought this was a riddle; it might be an instruction. <em>Reread before chapter 7 rewrite.</em></p>
+                    <p>The 1903 letter is the longest. It contains the latitudes that — if I'm right — are the latitudes of the second chart. Verify against the archive catalogue (Mon).</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="statusbar light">
+                <div class="left"><span style="font-family:var(--font-mono); letter-spacing:0.06em; font-size:11px;">RESEARCH</span><span class="sep"></span><span>312 words · 1,420 chars</span></div>
+                <div class="right"><span>Saved · 14s</span></div>
+              </div>
+            </div>
+
+            <!-- Note-specific metadata panel -->
+            <aside class="metadata">
+              <div class="md-section">
+                <div class="md-label">Research note</div>
+                <div class="md-title">Father's letters — provenance</div>
+              </div>
+              <div class="md-section">
+                <div class="md-label">Tags · 3</div>
+                <div class="md-pills" style="margin-top:6px;">
+                  <span class="pill" style="background:var(--chrome-800);">#cora</span>
+                  <span class="pill" style="background:var(--chrome-800);">#letters</span>
+                  <span class="pill" style="background:var(--chrome-800);">#part-1</span>
+                  <span class="pill" style="background:transparent; border-color:var(--chrome-700); border-style:dashed; cursor:pointer;"><svg width="9" height="9" style="margin-right:2px;"><use href="#i-plus"/></svg>add</span>
+                </div>
+              </div>
+              <div class="md-section">
+                <div class="md-label">Color</div>
+                <div style="display:flex; gap:8px; margin-top:8px;">
+                  <button class="color-swatch" style="background:oklch(0.74 0.045 245); width:20px; height:20px;"></button>
+                  <button class="color-swatch" style="background:oklch(0.74 0.070 295); width:20px; height:20px;"></button>
+                  <button class="color-swatch active" style="background:oklch(0.80 0.140 88); width:20px; height:20px; border-color:var(--chrome-100); box-shadow: 0 0 0 2px var(--chrome-900);"></button>
+                  <button class="color-swatch" style="background:oklch(0.74 0.080 155); width:20px; height:20px;"></button>
+                  <button class="color-swatch" style="background:oklch(0.72 0.110 35); width:20px; height:20px;"></button>
+                </div>
+              </div>
+              <div class="md-section">
+                <div class="md-label">Properties</div>
+                <div style="display:flex; flex-direction:column; gap:6px; margin-top:6px; font-size:13px;">
+                  <div style="display:flex; justify-content:space-between;"><span style="color:var(--chrome-500);">Pinned</span><span style="color:var(--brand); font-weight:500;">Yes</span></div>
+                  <div style="display:flex; justify-content:space-between;"><span style="color:var(--chrome-500);">Created</span><span style="color:var(--chrome-300); font-family:var(--font-mono); font-size:11.5px;">14 Oct 2025</span></div>
+                  <div style="display:flex; justify-content:space-between;"><span style="color:var(--chrome-500);">Edited</span><span style="color:var(--chrome-300); font-family:var(--font-mono); font-size:11.5px;">2 min ago</span></div>
+                  <div style="display:flex; justify-content:space-between;"><span style="color:var(--chrome-500);">Words</span><span style="color:var(--chrome-300); font-family:var(--font-mono); font-size:11.5px;">312</span></div>
+                </div>
+              </div>
+              <div class="md-section">
+                <div class="md-label">Linked from</div>
+                <div style="display:flex; flex-direction:column; gap:6px; margin-top:4px;">
+                  <a href="#" class="link-tag" style="font-size:11.5px; padding:3px 9px; align-self:flex-start;"><svg width="10" height="10"><use href="#i-link-arrow"/></svg>Beat 2 — Inciting</a>
+                  <a href="#" class="link-tag" style="font-size:11.5px; padding:3px 9px; align-self:flex-start;"><svg width="10" height="10"><use href="#i-link-arrow"/></svg>Ch. 3 — keeper's letter</a>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+
+      <!-- Note states + attributes detail -->
+      <div class="cols-2-1" style="margin-top:28px;">
+        <div>
+          <div class="md-label">Note attribute strip — anatomy</div>
+          <div class="anatomy" style="margin-top:14px; background:var(--paper-100); border-radius:8px; padding:32px 40px; position:relative; box-shadow: var(--el-paper);">
+            <div class="note-attrs" style="margin-bottom:0; border-bottom:0; padding:0; flex-wrap:nowrap; overflow-x:auto;">
+              <span class="tag-chip"><span class="hash">#</span>cora</span>
+              <span class="tag-chip"><span class="hash">#</span>letters</span>
+              <span class="tag-chip add"><svg width="10" height="10"><use href="#i-plus"/></svg>tag</span>
+              <div class="swatchrow">
+                <button class="color-swatch" style="background:oklch(0.74 0.045 245)"></button>
+                <button class="color-swatch" style="background:oklch(0.74 0.070 295)"></button>
+                <button class="color-swatch active" style="background:oklch(0.80 0.140 88)"></button>
+                <button class="color-swatch" style="background:oklch(0.74 0.080 155)"></button>
+                <button class="color-swatch" style="background:oklch(0.72 0.110 35)"></button>
+              </div>
+              <button class="pin-tog active"><svg width="11" height="11"><use href="#i-pin"/></svg>Pinned</button>
+            </div>
+            <div class="marker" style="left:20px; top:14px;">1</div>
+            <div class="marker" style="left:184px; top:14px;">2</div>
+            <div class="marker" style="left:300px; top:14px;">3</div>
+            <div class="marker" style="right:54px; top:14px;">4</div>
+          </div>
+          <div class="anatomy-legend">
+            <div class="li"><span class="n">1</span><div><strong>Tag chips</strong><br/>Multi-select. Lowercase, hash-prefixed, mono face. Click to remove; click + chip to add. Same chips render in the metadata panel and the binder row tooltip.</div></div>
+            <div class="li"><span class="n">2</span><div><strong>Add tag</strong><br/>Dashed-border chip with a +. Opens a chip picker (existing tags) or accepts free text.</div></div>
+            <div class="li"><span class="n">3</span><div><strong>Color label</strong><br/>5-swatch row. The 5 colors are the supporting palette (status colors at chroma 0.07). The picked color tints the binder row's left bar and the note's edge.</div></div>
+            <div class="li"><span class="n">4</span><div><strong>Pin toggle</strong><br/>Off (dashed outline, muted) → On (filled yellow, solid). Pinned notes float to the top of their binder folder and pick up a pin icon in the binder row.</div></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="md-label">States</div>
+          <div style="display:flex; flex-direction:column; gap:12px; margin-top:14px;">
+            <div class="state-card">
+              <div class="label"><strong>Empty note</strong><span>caret in title</span></div>
+              <div class="demo" style="background:var(--chrome-950); padding:24px;">
+                <div style="width:100%; padding:24px; background:var(--paper-100); border-radius:4px; box-shadow:var(--el-paper);">
+                  <div style="font-family:var(--font-display); font-size:18px; font-weight:700; color:var(--paper-ink-muted); font-style:italic;">Untitled note<span class="faux-cursor"></span></div>
+                  <div style="font-size:10px; font-family:var(--font-mono); letter-spacing:0.06em; text-transform:uppercase; color:var(--paper-400); margin-top:4px;">Just now · 0 words</div>
+                </div>
+              </div>
+            </div>
+            <div class="state-card">
+              <div class="label"><strong>Dark editor</strong><span>note on coffee canvas</span></div>
+              <div class="demo" style="background:var(--canvas-dark-100); padding:24px;">
+                <div style="width:100%; padding:24px; background:var(--canvas-dark-100); border-radius:4px;
+                            background-image: repeating-linear-gradient(180deg, transparent 0 23px, oklch(0.42 0.018 55) 23px 24px);
+                            background-position: 0 56px; position:relative; border-left:1px solid oklch(0.66 0.18 25 / 0.3); padding-left:38px;">
+                  <div style="font-family:var(--font-display); font-size:16px; font-weight:700; color:var(--canvas-dark-ink-strong);">Father's letters — provenance</div>
+                  <div style="font-size:10px; font-family:var(--font-mono); letter-spacing:0.06em; text-transform:uppercase; color:var(--canvas-dark-ink-muted); margin-top:4px;">Pinned · 312 words</div>
+                  <div style="font-family:var(--font-prose); font-size:13px; line-height:1.7; color:var(--canvas-dark-ink); margin-top:14px;">Three letters survive. 1898, 1903, 1910…</div>
+                </div>
+              </div>
+            </div>
+            <div class="state-card">
+              <div class="label"><strong>Pinned (binder)</strong><span>pin icon · sorted to top</span></div>
+              <div class="demo" style="background:var(--chrome-900); padding:14px;">
+                <div class="binder-row" style="position:relative;"><span class="chev none"></span><span class="icon" style="color:var(--type-research)"><svg width="14" height="14"><use href="#i-research"/></svg></span><span class="title">Father's letters — provenance</span><svg class="pin" width="12" height="12" style="position:absolute; right:36px; top:11px; color:var(--brand);"><use href="#i-pin"/></svg></div>
+                <div class="binder-row"><span class="chev none"></span><span class="icon" style="color:var(--type-research)"><svg width="14" height="14"><use href="#i-research"/></svg></span><span class="title">Newhaven archive</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §11  Character Profile                                         -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-character">
+      <div class="eyebrow"><span class="num">11</span> <span>Character profile</span></div>
+      <h2 class="title">A writer's notebook page —<br><em>not a database row.</em></h2>
+      <p class="lede">
+        Three layouts evaluated (sheet, card grid, narrative). We recommend the
+        <strong style="color:var(--chrome-100); font-weight:500;">Sectioned Card Grid</strong> — a portrait
+        header on one cream sheet, then a two-column grid of section cards beneath it.
+        Each card is its own field (Appearance, Personality, Backstory, Arc, Notes,
+        Relationships), draggable to reorder, collapsible. Notes sits full-width at
+        the bottom.
+      </p>
+
+      <div class="cols3" style="gap:18px; margin-top:8px;">
+        <div class="spec-card recommend">
+          <div class="rec-flag">Recommend</div>
+          <h4>Sectioned Card Grid</h4>
+          <p>Each field is a paper card. Section order is the user's. Easy to scan, easy to extend (new section = new card). Works at any depth — a sparse profile shows only the cards the user has filled in; a deep one keeps a long sheet legible.</p>
+        </div>
+        <div class="spec-card">
+          <h4>Sheet style</h4>
+          <p>Closer to a tabletop RPG sheet. One paper rectangle, labeled fields, hand-drawn rules. Stronger metaphor, but stiff — every character looks the same and adding a field costs a lot of layout.</p>
+        </div>
+        <div class="spec-card">
+          <h4>Narrative profile</h4>
+          <p>Free-flowing inline text — section labels in-line with prose, like a Wikipedia article. Cool but discoverability suffers: a user looking up "what colour are her eyes" has to read.</p>
+        </div>
+      </div>
+
+      <div class="artboard" style="margin-top:28px;">
+        <div class="artboard-header"><strong>Character — Sectioned Card Grid</strong><span>In studio shell · light editor</span></div>
+        <div class="studio">
+          <header class="topnav">
+            <div class="left">
+              <a class="logo" href="#"><span class="hex"><svg width="18" height="18" style="color:var(--brand);"><use href="#i-hive"/></svg></span> Beehive</a>
+              <nav><a class="active" href="#">Studio</a><a href="#">Community</a><a href="#">Discover</a></nav>
+            </div>
+            <div class="right">
+              <button class="tbtn" style="width:32px; height:32px;" aria-label="Notifications"><svg width="18" height="18"><use href="#i-bell"/></svg></button>
+              <div class="avatar">M</div>
+            </div>
+          </header>
+          <div class="shell">
+            <aside class="binder">
+              <div class="binder-head">
+                <div class="book-meta">Working manuscript · 41,820 wd</div>
+                <div class="book-title">The Last Cartographer</div>
+              </div>
+              <div class="binder-tree">
+                <div class="binder-row"><span class="chev"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span><span class="icon" style="color:var(--type-front-matter)"><svg width="14" height="14"><use href="#i-front-matter"/></svg></span><span class="title">Front Matter</span></div>
+                <div class="binder-row"><span class="chev"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span><span class="icon" style="color:var(--type-outline)"><svg width="14" height="14"><use href="#i-outline"/></svg></span><span class="title">Outline</span></div>
+                <div class="binder-row"><span class="chev"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span><span class="icon" style="color:var(--type-chapter)"><svg width="14" height="14"><use href="#i-chapter"/></svg></span><span class="title">Part One — The Coast</span></div>
+                <div class="binder-row"><span class="chev"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span><span class="icon" style="color:var(--type-research)"><svg width="14" height="14"><use href="#i-research"/></svg></span><span class="title">Research</span></div>
+                <div class="binder-row"><span class="chev open"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span><span class="icon" style="color:var(--type-character)"><svg width="14" height="14"><use href="#i-character"/></svg></span><span class="title" style="font-weight:500;">Characters</span></div>
+                <div class="binder-row indent-1 active"><span class="chev none"></span><span class="icon" style="color:var(--type-character)"><svg width="14" height="14"><use href="#i-character"/></svg></span><span class="title">Cora Maren</span></div>
+                <div class="binder-row indent-1"><span class="chev none"></span><span class="icon" style="color:var(--type-character)"><svg width="14" height="14"><use href="#i-character"/></svg></span><span class="title">Helena (her mother)</span></div>
+                <div class="binder-row indent-1"><span class="chev none"></span><span class="icon" style="color:var(--type-character)"><svg width="14" height="14"><use href="#i-character"/></svg></span><span class="title">The lighthouse keeper</span></div>
+                <div class="binder-row indent-1"><span class="chev none"></span><span class="icon" style="color:var(--type-character)"><svg width="14" height="14"><use href="#i-character"/></svg></span><span class="title">Niall — the stranger</span></div>
+                <div class="binder-row"><span class="chev"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span><span class="icon" style="color:var(--type-back-matter)"><svg width="14" height="14"><use href="#i-back-matter"/></svg></span><span class="title">Back Matter</span></div>
+              </div>
+              <div class="binder-foot">
+                <button class="btn-add"><svg width="14" height="14"><use href="#i-plus"/></svg>Add to Binder</button>
+              </div>
+            </aside>
+
+            <div class="center">
+              <div class="surface-head">
+                <div class="crumb"><span class="typecolor" style="background:var(--type-character);"></span> Character</div>
+                <div class="name">Cora Maren</div>
+                <div class="grow"></div>
+                <button class="btn" style="padding:6px 10px; font-size:12px;"><svg width="11" height="11" style="margin-right:4px;"><use href="#i-plus"/></svg>Section</button>
+                <span class="save-badge" style="margin-left:10px;"><span class="dot"></span>Saved · 6s</span>
+              </div>
+
+              <div class="char-pane" style="overflow-y:auto;">
+                <div class="char-sheet">
+                  <div class="char-header">
+                    <div class="char-avatar">CM</div>
+                    <div>
+                      <h2 class="char-name">Cora Maren</h2>
+                      <div class="char-sub char-role-set">
+                        <span class="role">Protagonist</span>
+                        <span class="age">25 years · she/her</span>
+                      </div>
+                    </div>
+                    <div class="char-actions">
+                      <button class="btn" style="padding:5px 10px; font-size:11.5px;"><svg width="11" height="11" style="margin-right:4px;"><use href="#i-image"/></svg>Photo</button>
+                      <button class="btn ghost" style="padding:5px 10px; font-size:11.5px; color:var(--paper-ink-muted)"><svg width="11" height="11" style="margin-right:4px;"><use href="#i-pencil"/></svg>Edit</button>
+                    </div>
+                  </div>
+
+                  <div class="char-sections">
+                    <div class="char-section">
+                      <span class="grab"><svg width="14" height="14"><use href="#i-grip"/></svg></span>
+                      <div class="sec-label">01 · Description</div>
+                      <h3>Appearance</h3>
+                      <div class="field">
+                        <p>Tall for her family. Sun-kept skin, salt-bleached hair she keeps short. Her father's hands — broad, blunt at the fingers. Wears the same canvas jacket from her grandmother in every season she can.</p>
+                      </div>
+                    </div>
+                    <div class="char-section">
+                      <span class="grab"><svg width="14" height="14"><use href="#i-grip"/></svg></span>
+                      <div class="sec-label">02 · Inner</div>
+                      <h3>Personality</h3>
+                      <div class="field">
+                        <p>Slow to talk; faster than she lets on. Reads everything. Tends to <em>trust the map more than the territory</em> — a habit she has to break.</p>
+                      </div>
+                    </div>
+                    <div class="char-section">
+                      <span class="grab"><svg width="14" height="14"><use href="#i-grip"/></svg></span>
+                      <div class="sec-label">03 · Want</div>
+                      <h3>Motivation</h3>
+                      <div class="field">
+                        <p>To finish her father's last chart. To understand the second hand on it. To stop being the person who only watches the bay.</p>
+                      </div>
+                    </div>
+                    <div class="char-section">
+                      <span class="grab"><svg width="14" height="14"><use href="#i-grip"/></svg></span>
+                      <div class="sec-label">04 · Before</div>
+                      <h3>Backstory</h3>
+                      <div class="field">
+                        <p>Born and raised in Newhaven. Father a cartographer; missing since she was thirteen. Apprenticed at the Newhaven archive for two years; refused the offer of a permanent post. Has never been more than a day's travel inland.</p>
+                      </div>
+                    </div>
+                    <div class="char-section full">
+                      <span class="grab"><svg width="14" height="14"><use href="#i-grip"/></svg></span>
+                      <div class="sec-label">05 · Change</div>
+                      <h3>Character arc</h3>
+                      <div class="field">
+                        <p>Begins certain that to know the coast is to know everything. Ends knowing that the most important map of her life was made by someone else. Stops finishing her father's chart and starts her own — a coast she has walked, not inherited.</p>
+                      </div>
+                    </div>
+                    <div class="char-section full">
+                      <span class="grab"><svg width="14" height="14"><use href="#i-grip"/></svg></span>
+                      <div class="sec-label">06 · People</div>
+                      <h3>Relationships</h3>
+                      <div class="char-rel-list">
+                        <div class="char-rel">
+                          <div class="av">HM</div>
+                          <span class="name">Helena Maren</span>
+                          <span class="arrow">→</span>
+                          <span class="rtype">mother</span>
+                          <svg class="x" width="14" height="14"><use href="#i-x"/></svg>
+                        </div>
+                        <div class="char-rel">
+                          <div class="av">LK</div>
+                          <span class="name">The lighthouse keeper</span>
+                          <span class="arrow">→</span>
+                          <span class="rtype">mentor figure</span>
+                          <svg class="x" width="14" height="14"><use href="#i-x"/></svg>
+                        </div>
+                        <div class="char-rel">
+                          <div class="av">N</div>
+                          <span class="name">Niall</span>
+                          <span class="arrow">→</span>
+                          <span class="rtype">rival / ally</span>
+                          <svg class="x" width="14" height="14"><use href="#i-x"/></svg>
+                        </div>
+                      </div>
+                      <button class="char-add-btn"><svg width="12" height="12"><use href="#i-plus"/></svg>Link a character</button>
+                    </div>
+                    <div class="char-section full">
+                      <span class="grab"><svg width="14" height="14"><use href="#i-grip"/></svg></span>
+                      <div class="sec-label">07 · Loose</div>
+                      <h3>Notes</h3>
+                      <div class="field">
+                        <p>Reread <em>Father's letters — provenance</em> before the chapter 7 rewrite. The phrase "you have the start of it" might be a sailing instruction — verify with the archive's coastal-language glossary.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="statusbar light">
+                <div class="left"><span style="font-family:var(--font-mono); letter-spacing:0.06em; font-size:11px;">CHARACTER</span><span class="sep"></span><span>7 sections · 3 relationships</span></div>
+                <div class="right"><span>Saved · 6s</span></div>
+              </div>
+            </div>
+
+            <aside class="metadata">
+              <div class="md-section">
+                <div class="md-label">Character</div>
+                <div class="md-title">Cora Maren</div>
+              </div>
+              <div class="md-section">
+                <div class="md-label">Role</div>
+                <div class="md-pills">
+                  <span class="status-pill active" style="background:oklch(0.72 0.110 35 / 0.18); border-color:oklch(0.72 0.110 35 / 0.4); color:oklch(0.5 0.10 35);"><span class="dot" style="background:var(--type-character);"></span>Protagonist</span>
+                  <span class="status-pill"><span class="dot" style="background:var(--status-final)"></span>Antagonist</span>
+                  <span class="status-pill"><span class="dot" style="background:var(--status-revised)"></span>Supporting</span>
+                </div>
+              </div>
+              <div class="md-section">
+                <div class="md-label">Appears in</div>
+                <div style="display:flex; flex-direction:column; gap:6px; margin-top:6px;">
+                  <a href="#" class="link-tag" style="font-size:11.5px; padding:3px 9px; align-self:flex-start;"><svg width="10" height="10"><use href="#i-link-arrow"/></svg>9 chapters</a>
+                  <a href="#" class="link-tag" style="font-size:11.5px; padding:3px 9px; align-self:flex-start;"><svg width="10" height="10"><use href="#i-link-arrow"/></svg>12 beats</a>
+                </div>
+              </div>
+              <div class="md-section">
+                <div class="md-label">Sections</div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px 12px; margin-top:6px; font-size:12px;">
+                  <span style="color:var(--chrome-300);">Appearance ✓</span>
+                  <span style="color:var(--chrome-300);">Personality ✓</span>
+                  <span style="color:var(--chrome-300);">Motivation ✓</span>
+                  <span style="color:var(--chrome-300);">Backstory ✓</span>
+                  <span style="color:var(--chrome-300);">Arc ✓</span>
+                  <span style="color:var(--chrome-300);">Notes ✓</span>
+                  <span style="color:var(--chrome-500); font-style:italic;">— add Voice</span>
+                </div>
+              </div>
+              <div class="md-section">
+                <div class="md-label">Last edited</div>
+                <div style="font-size:13px; color:var(--chrome-300);">6 seconds ago</div>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section card anatomy -->
+      <div class="cols-2-1" style="margin-top:28px;">
+        <div>
+          <div class="md-label">Section card · anatomy</div>
+          <div class="anatomy" style="margin-top:14px; padding:48px 32px; background:var(--chrome-950); border-radius:var(--r-lg); border:1px solid var(--chrome-800);">
+            <div class="char-section" style="max-width:380px; margin:0 auto; position:relative;">
+              <span class="grab" style="opacity:1;"><svg width="14" height="14"><use href="#i-grip"/></svg></span>
+              <div class="sec-label">02 · Inner</div>
+              <h3>Personality</h3>
+              <div class="field">
+                <p>Slow to talk; faster than she lets on. Reads everything. Tends to <em>trust the map more than the territory</em>.</p>
+              </div>
+            </div>
+            <div class="marker" style="left:38px; top:50px;">1</div>
+            <div class="marker" style="left:38px; top:96px;">2</div>
+            <div class="marker" style="left:38px; top:142px;">3</div>
+            <div class="marker" style="right:38px; top:50px;">4</div>
+          </div>
+          <div class="anatomy-legend">
+            <div class="li"><span class="n">1</span><div><strong>Section index + nickname</strong><br/>Tiny mono label — "02 · Inner". Numbering is auto from order; the nickname is freeform (defaults shown but the user can rewrite).</div></div>
+            <div class="li"><span class="n">2</span><div><strong>Section heading</strong><br/>Comfortaa 17/700. The user can rename a section heading inline — these aren't fixed taxonomy.</div></div>
+            <div class="li"><span class="n">3</span><div><strong>Field body</strong><br/>Newsreader prose at 15px. Rich text (bold, italic, lists, link). Multi-paragraph okay. Empty = placeholder ("How does this character look?").</div></div>
+            <div class="li"><span class="n">4</span><div><strong>Drag handle</strong><br/>Surfaces on hover. Drag to reorder the section within the grid. Sections can also be removed via a kebab menu on the heading.</div></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="md-label">States</div>
+          <div style="display:flex; flex-direction:column; gap:12px; margin-top:14px;">
+            <div class="state-card">
+              <div class="label"><strong>Empty character</strong><span>just a name + role</span></div>
+              <div class="demo paper" style="padding:18px;">
+                <div class="char-header" style="grid-template-columns: 64px 1fr; padding:16px 18px; gap:14px; box-shadow:var(--el-paper);">
+                  <div class="char-avatar empty" style="width:64px; height:64px; font-size:9px;">Drop photo</div>
+                  <div>
+                    <h2 class="char-name" style="font-size:20px;">New character</h2>
+                    <div class="char-sub"><span class="role">Pick a role</span></div>
+                  </div>
+                </div>
+                <p style="font-size:11px; color:var(--paper-ink-muted); margin:12px 0 0; text-align:center; font-style:italic;">Add a section to start filling them in →</p>
+              </div>
+            </div>
+            <div class="state-card">
+              <div class="label"><strong>Empty section</strong><span>placeholder prompt</span></div>
+              <div class="demo paper" style="padding:18px;">
+                <div class="char-section" style="padding:14px 16px; box-shadow:var(--el-paper);">
+                  <div class="sec-label">04 · Before</div>
+                  <h3 style="margin-bottom:6px;">Backstory</h3>
+                  <div class="field placeholder">Where does this character come from? What shaped them?</div>
+                </div>
+              </div>
+            </div>
+            <div class="state-card">
+              <div class="label"><strong>Collapsed section</strong><span>only heading visible</span></div>
+              <div class="demo paper" style="padding:18px;">
+                <div class="char-section collapsed" style="padding:14px 16px; box-shadow:var(--el-paper); min-height:0;">
+                  <div class="sec-label">04 · Before</div>
+                  <h3 style="margin-bottom:0;">Backstory</h3>
+                  <svg class="toggle" width="14" height="14" style="opacity:1;"><use href="#i-chev-down"/></svg>
+                </div>
+              </div>
+            </div>
+            <div class="state-card">
+              <div class="label"><strong>Dragging</strong><span>tilt + drop indicator</span></div>
+              <div class="demo" style="background:var(--chrome-950); padding:18px;">
+                <div class="drop-indicator"></div>
+                <div class="char-section" style="padding:12px 14px; transform: rotate(-1deg); box-shadow:var(--el-3); margin-top:6px;">
+                  <div class="sec-label">02 · Inner</div>
+                  <h3 style="font-size:14px;">Personality</h3>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §12  Generic fallback                                          -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-fallback">
+      <div class="eyebrow"><span class="num">12</span> <span>Generic fallback</span></div>
+      <h2 class="title">A holding pen, not a home.</h2>
+      <p class="lede">For binder item types the dispatcher doesn't recognize yet. A single cream page with a title, a free-form textarea, and a small notice. Coherent with the rest of the system; deliberately under-specified so the user doesn't lean on it.</p>
+
+      <div class="cols2" style="gap:24px;">
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>Fallback · light</strong><span>Title + raw textarea</span></div>
+          <div class="surface-pane" style="padding:0;">
+            <div class="fallback-card">
+              <div class="notice"><svg width="11" height="11"><use href="#i-info"/></svg>Basic editor</div>
+              <h1>Untitled timeline</h1>
+              <div class="type-meta">item type · timeline · v0</div>
+              <textarea>This binder item type doesn't have a specialized editor yet, so you've landed on the basic textarea — your text saves the same way; only the formatting tools wait for a proper renderer to ship.&#10;&#10;You can put anything here.</textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="artboard" style="margin:0;">
+          <div class="artboard-header"><strong>Fallback · dark</strong><span>Same canvas, coffee mode</span></div>
+          <div class="surface-pane dark-canvas" style="padding:0;">
+            <div class="fallback-card" style="background:var(--canvas-dark-100); color:var(--canvas-dark-ink); box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 4px 20px -2px rgba(0,0,0,0.5), 0 28px 60px -20px rgba(0,0,0,0.7);">
+              <div class="notice" style="background:oklch(0.80 0.140 80 / 0.14); border-color:oklch(0.80 0.140 80 / 0.30); color:var(--warning);"><svg width="11" height="11"><use href="#i-info"/></svg>Basic editor</div>
+              <h1 style="color:var(--canvas-dark-ink-strong);">Untitled timeline</h1>
+              <div class="type-meta" style="color:var(--canvas-dark-ink-muted);">item type · timeline · v0</div>
+              <textarea style="color:var(--canvas-dark-ink);">This binder item type doesn't have a specialized editor yet…</textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>Outlook.</strong> The fallback is intentionally less inviting than the
+        specialized surfaces. Visual coherence (paper, type, save-badge), no extra
+        affordances. Once every binder type ships a proper renderer, this surface
+        retires; until then it lets the binder grow without breaking the editor.
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §13  Design system extensions                                  -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-extensions">
+      <div class="eyebrow"><span class="num">13</span> <span>Design system · extensions</span></div>
+      <h2 class="title">New components, all built from old tokens.</h2>
+      <p class="lede">Everything below adds vocabulary, not values. Zero new colours, zero new type sizes, zero new spacing — every new component sits on the Prompt 1 token foundation.</p>
+
+      <!-- Paper card variants -->
+      <h3 style="font-family:var(--font-display); font-size:18px; color:var(--chrome-200); margin:32px 0 12px;">Paper-card variants — three, plus the existing prose page</h3>
+      <div class="cols4" style="gap:18px;">
+        <div class="state-card">
+          <div class="label"><strong>Prose page (Prompt 1)</strong><span>chapter editor</span></div>
+          <div class="demo" style="background:var(--paper-100); padding:24px; min-height:160px;">
+            <div style="font-family:var(--font-prose); font-size:14px; line-height:1.7; color:var(--paper-ink);">Two lines of body prose at the chapter editor's measure…<br/>… and another for rhythm.</div>
+          </div>
+        </div>
+        <div class="state-card">
+          <div class="label"><strong>Book page</strong><span>FM/BM · §3</span></div>
+          <div class="demo" style="background:var(--chrome-950); padding:18px;">
+            <div style="width:100%; min-height:130px; background:var(--paper-100); border-radius:4px; padding:18px; box-shadow:var(--el-paper); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
+              <div style="font-family:var(--font-display); font-size:16px; font-weight:700; color:var(--paper-ink-strong);">A Title</div>
+              <div style="font-family:var(--font-prose); font-style:italic; font-size:11px; color:var(--paper-ink-muted); margin-top:4px;">a subtitle</div>
+            </div>
+          </div>
+        </div>
+        <div class="state-card">
+          <div class="label"><strong>Note (legal pad)</strong><span>§10</span></div>
+          <div class="demo" style="background:var(--chrome-950); padding:18px;">
+            <div style="width:100%; min-height:130px; background:var(--paper-100); border-radius:4px; padding:18px 18px 18px 28px; box-shadow:var(--el-paper); background-image: repeating-linear-gradient(180deg, transparent 0 21px, oklch(0.78 0.04 60 / 0.30) 21px 22px); background-position: 0 36px; position:relative;">
+              <div style="position:absolute; left:18px; top:0; bottom:0; width:1px; background:oklch(0.66 0.18 25 / 0.30);"></div>
+              <div style="font-family:var(--font-display); font-size:14px; font-weight:700; color:var(--paper-ink-strong);">A note title</div>
+              <div style="font-family:var(--font-prose); font-size:11.5px; color:var(--paper-ink); margin-top:8px; line-height:1.7;">Three lines of note text…<br/>…with ruled guides.<br/>The clip would sit above.</div>
+            </div>
+          </div>
+        </div>
+        <div class="state-card">
+          <div class="label"><strong>Index card</strong><span>corkboard · §7</span></div>
+          <div class="demo" style="background:var(--chrome-950); padding:18px;">
+            <div class="index-card" style="--tilt:-1deg; min-height:130px; width:100%;">
+              <div class="pin" style="top:-6px;"></div>
+              <div class="num">Beat · sample</div>
+              <div class="t">A beat title</div>
+              <div class="d">A short description on ruled lines.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Specialized headings -->
+      <h3 style="font-family:var(--font-display); font-size:18px; color:var(--chrome-200); margin:32px 0 12px;">Specialized headings — 4 levels, one type family</h3>
+      <div class="cols2" style="gap:18px;">
+        <div class="state-card">
+          <div class="label"><strong>Chapter title</strong><span>Prompt 1</span></div>
+          <div class="demo paper" style="padding:32px; min-height:120px;">
+            <h1 style="font-family:var(--font-display); font-weight:700; font-size:30px; color:var(--paper-ink-strong); margin:0; letter-spacing:-0.015em;">2. What Cora found</h1>
+          </div>
+        </div>
+        <div class="state-card">
+          <div class="label"><strong>Note title</strong><span>§10</span></div>
+          <div class="demo paper" style="padding:32px; min-height:120px;">
+            <h1 style="font-family:var(--font-display); font-weight:700; font-size:24px; color:var(--paper-ink-strong); margin:0; letter-spacing:-0.015em;">Father's letters — provenance</h1>
+            <div style="font-family:var(--font-mono); font-size:10px; letter-spacing:0.08em; text-transform:uppercase; color:var(--paper-400); margin-top:4px;">Created 14 Oct · 312 words</div>
+          </div>
+        </div>
+        <div class="state-card">
+          <div class="label"><strong>Character name</strong><span>§11</span></div>
+          <div class="demo paper" style="padding:32px; min-height:120px;">
+            <h1 style="font-family:var(--font-display); font-weight:700; font-size:28px; color:var(--paper-ink-strong); margin:0; letter-spacing:-0.02em;">Cora Maren</h1>
+            <div style="font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.06em; text-transform:uppercase; color:var(--paper-ink-muted); margin-top:6px;"><span style="display:inline-block; padding:2px 8px; background:oklch(0.72 0.11 35 / 0.18); color:oklch(0.42 0.11 35); border-radius:999px; font-weight:600;">Protagonist</span> · 25 years · she/her</div>
+          </div>
+        </div>
+        <div class="state-card">
+          <div class="label"><strong>Book-page heading</strong><span>FM/BM acks · §3</span></div>
+          <div class="demo paper" style="padding:32px; min-height:120px; text-align:center;">
+            <h1 style="font-family:var(--font-display); font-weight:700; font-size:22px; color:var(--paper-ink-strong); margin:0; letter-spacing:0.20em; text-transform:uppercase;">Acknowledgments</h1>
+            <div style="width:32px; height:1px; background:var(--paper-400); margin:14px auto 0;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tag chip + color label -->
+      <h3 style="font-family:var(--font-display); font-size:18px; color:var(--chrome-200); margin:32px 0 12px;">Tag chip · color swatch · drag handle · drop indicator</h3>
+      <div class="cols2" style="gap:18px;">
+        <div class="state-card">
+          <div class="label"><strong>Tag chip</strong><span>4 contexts</span></div>
+          <div class="demo" style="background:var(--chrome-950); padding:20px; flex-direction:column; gap:14px; align-items:stretch;">
+            <div style="display:flex; flex-wrap:wrap; gap:6px;">
+              <span class="tag-chip"><span class="hash">#</span>cora</span>
+              <span class="tag-chip"><span class="hash">#</span>letters</span>
+              <span class="tag-chip add"><svg width="10" height="10"><use href="#i-plus"/></svg>tag</span>
+              <span style="font-family:var(--font-mono); font-size:10px; color:var(--paper-400); align-self:center; margin-left:6px;">on paper</span>
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:6px; background:var(--canvas-dark-100); padding:10px; border-radius:var(--r-md);">
+              <span class="tag-chip" style="background:var(--canvas-dark-200); border-color:var(--canvas-dark-300); color:var(--canvas-dark-ink);"><span class="hash" style="color:var(--canvas-dark-ink-muted)">#</span>cora</span>
+              <span class="tag-chip add" style="color:var(--canvas-dark-ink-muted); border-color:var(--canvas-dark-300);"><svg width="10" height="10"><use href="#i-plus"/></svg>tag</span>
+              <span style="font-family:var(--font-mono); font-size:10px; color:var(--canvas-dark-ink-muted); align-self:center; margin-left:6px;">on dark canvas</span>
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:6px;">
+              <span class="tag" style="font-size:11px;"><span class="swatch" style="background:var(--type-character)"></span>cora</span>
+              <span class="tag" style="font-size:11px;"><span class="swatch" style="background:oklch(0.7 0.075 330)"></span>letter arc</span>
+              <span class="tag" style="font-size:11px;"><span class="swatch" style="background:var(--type-research)"></span>archive</span>
+              <span style="font-family:var(--font-mono); font-size:10px; color:var(--chrome-500); align-self:center; margin-left:6px;">on chrome (outline)</span>
+            </div>
+          </div>
+        </div>
+        <div class="state-card">
+          <div class="label"><strong>Color swatch · 5</strong><span>supporting palette</span></div>
+          <div class="demo" style="background:var(--paper-100); padding:24px; flex-direction:column; gap:18px;">
+            <div class="swatchrow" style="background:transparent; padding:0;">
+              <button class="color-swatch" style="background:oklch(0.74 0.045 245)"></button>
+              <button class="color-swatch" style="background:oklch(0.74 0.070 295)"></button>
+              <button class="color-swatch active" style="background:oklch(0.80 0.140 88)"></button>
+              <button class="color-swatch" style="background:oklch(0.74 0.080 155)"></button>
+              <button class="color-swatch" style="background:oklch(0.72 0.110 35)"></button>
+            </div>
+            <p style="font-size:11px; color:var(--paper-ink-muted); font-family:var(--font-mono); letter-spacing:0.04em; margin:0; line-height:1.5;">cloud · plum · honey · sage · terracotta<br/>oklch(0.74 0.07 · 0.045 / 0.070 / 0.140 / 0.080 / 0.110)</p>
+          </div>
+        </div>
+      </div>
+      <div class="cols2" style="gap:18px; margin-top:18px;">
+        <div class="state-card">
+          <div class="label"><strong>Drag handle</strong><span>6-dot grip · two surfaces</span></div>
+          <div class="demo" style="background:var(--chrome-950); padding:20px; gap:20px;">
+            <div style="display:flex; align-items:center; gap:12px; padding:8px 12px; background:var(--chrome-900); border:1px solid var(--chrome-800); border-radius:var(--r-md);">
+              <span class="drag-handle"><svg width="12" height="20"><use href="#i-grip"/></svg></span>
+              <span style="font-size:13px; color:var(--chrome-300);">draggable row · on chrome</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px; padding:8px 12px; background:var(--paper-100); border-radius:var(--r-md);">
+              <span class="drag-handle" style="color:var(--paper-400);"><svg width="12" height="20"><use href="#i-grip"/></svg></span>
+              <span style="font-size:13px; color:var(--paper-ink);">draggable row · on paper</span>
+            </div>
+          </div>
+        </div>
+        <div class="state-card">
+          <div class="label"><strong>Drop indicator</strong><span>2px brand line · dot terminator</span></div>
+          <div class="demo" style="background:var(--chrome-950); padding:20px; flex-direction:column; gap:0;">
+            <div style="padding:8px 12px; font-size:13px; color:var(--chrome-300); background:var(--chrome-900); border:1px solid var(--chrome-800); border-radius:var(--r-md);">Item A</div>
+            <div class="drop-indicator" style="margin: 8px 0;"></div>
+            <div style="padding:8px 12px; font-size:13px; color:var(--chrome-300); background:var(--chrome-900); border:1px solid var(--chrome-800); border-radius:var(--r-md);">Item B (drop here)</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §14  Metadata-panel variants                                   -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-metadata">
+      <div class="eyebrow"><span class="num">14</span> <span>Metadata-panel variants</span></div>
+      <h2 class="title">The right rail, adapted.</h2>
+      <p class="lede">In Prompt 1, the metadata panel was tuned for chapters (status pills, synopsis, scene planner, notes). Non-chapter items get their own variants. The chrome stays identical; only the section content changes.</p>
+
+      <div class="cols4" style="gap:14px; margin-top:8px;">
+
+        <!-- FM/BM -->
+        <div class="state-card" style="overflow:visible;">
+          <div class="label"><strong>FM/BM</strong><span>reuses chapter sections</span></div>
+          <div class="demo" style="background:var(--chrome-900); padding:0; min-height:auto; align-items:stretch;">
+            <aside class="metadata" style="border-left:0; border-right:0;">
+              <div class="md-section">
+                <div class="md-label">Front Matter · Title</div>
+                <div class="md-title" style="font-size:16px;">Title Page</div>
+              </div>
+              <div class="md-section">
+                <div class="md-label">Position</div>
+                <div style="font-size:12.5px; color:var(--chrome-300);">FM #1 of 3 · before Copyright</div>
+              </div>
+              <div class="md-section">
+                <div class="md-label">Notes</div>
+                <textarea class="md-textarea" rows="2" placeholder="Private notes…">Confirm subtitle.</textarea>
+              </div>
+              <div class="md-section" style="border:0;">
+                <div class="md-label" style="color:var(--chrome-500);">Synopsis hidden · not relevant for title pages</div>
+              </div>
+            </aside>
+          </div>
+        </div>
+
+        <!-- Outline -->
+        <div class="state-card" style="overflow:visible;">
+          <div class="label"><strong>Outline</strong><span>structure · stats · tags</span></div>
+          <div class="demo" style="background:var(--chrome-900); padding:0; min-height:auto; align-items:stretch;">
+            <aside class="metadata" style="border-left:0; border-right:0;">
+              <div class="md-section">
+                <div class="md-label">Outline</div>
+                <div class="md-title" style="font-size:16px;">Main beat sheet</div>
+              </div>
+              <div class="md-section">
+                <div class="md-label">Structure</div>
+                <div style="font-size:12.5px; color:var(--chrome-300); margin-top:6px;">Three-Act <span style="color:var(--chrome-500);">· change</span></div>
+              </div>
+              <div class="md-section">
+                <div class="md-label">Stats</div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px 12px; margin-top:6px;">
+                  <div><div style="font-family:var(--font-display); font-weight:700; font-size:18px; color:var(--chrome-100);">14</div><div style="font-size:10px; color:var(--chrome-500); letter-spacing:0.04em; text-transform:uppercase;">beats</div></div>
+                  <div><div style="font-family:var(--font-display); font-weight:700; font-size:18px; color:var(--chrome-100);">9</div><div style="font-size:10px; color:var(--chrome-500); letter-spacing:0.04em; text-transform:uppercase;">linked</div></div>
+                </div>
+              </div>
+              <div class="md-section" style="border:0;">
+                <div class="md-label">Tag legend · 3</div>
+                <div style="display:flex; flex-direction:column; gap:6px; margin-top:6px; font-size:12px;">
+                  <div style="display:flex; align-items:center; gap:6px; color:var(--chrome-300);"><span style="width:8px; height:8px; border-radius:2px; background:var(--type-character)"></span>Cora <span style="margin-left:auto; color:var(--chrome-500); font-family:var(--font-mono); font-size:10px;">9</span></div>
+                  <div style="display:flex; align-items:center; gap:6px; color:var(--chrome-300);"><span style="width:8px; height:8px; border-radius:2px; background:oklch(0.7 0.075 330)"></span>letters <span style="margin-left:auto; color:var(--chrome-500); font-family:var(--font-mono); font-size:10px;">4</span></div>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </div>
+
+        <!-- Note -->
+        <div class="state-card" style="overflow:visible;">
+          <div class="label"><strong>Note</strong><span>tags · color · pin · backrefs</span></div>
+          <div class="demo" style="background:var(--chrome-900); padding:0; min-height:auto; align-items:stretch;">
+            <aside class="metadata" style="border-left:0; border-right:0;">
+              <div class="md-section">
+                <div class="md-label">Research note</div>
+                <div class="md-title" style="font-size:15px;">Father's letters — provenance</div>
+              </div>
+              <div class="md-section">
+                <div class="md-label">Tags · 3</div>
+                <div style="display:flex; gap:4px; flex-wrap:wrap; margin-top:6px;">
+                  <span class="pill" style="background:var(--chrome-800); font-size:10px;">#cora</span>
+                  <span class="pill" style="background:var(--chrome-800); font-size:10px;">#letters</span>
+                  <span class="pill" style="background:var(--chrome-800); font-size:10px;">#part-1</span>
+                </div>
+              </div>
+              <div class="md-section">
+                <div class="md-label">Color · pin</div>
+                <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
+                  <span style="width:14px; height:14px; border-radius:50%; background:oklch(0.80 0.140 88); box-shadow:0 0 0 2px var(--chrome-900), 0 0 0 3px var(--chrome-100);"></span>
+                  <span style="color:var(--brand); font-size:12px;"><svg width="11" height="11" style="vertical-align:-1px;"><use href="#i-pin"/></svg> Pinned</span>
+                </div>
+              </div>
+              <div class="md-section" style="border:0;">
+                <div class="md-label">Linked from · 2</div>
+                <div style="font-size:11px; color:var(--chrome-300); margin-top:4px;">Beat 2 · Ch. 3</div>
+              </div>
+            </aside>
+          </div>
+        </div>
+
+        <!-- Character -->
+        <div class="state-card" style="overflow:visible;">
+          <div class="label"><strong>Character</strong><span>role · appearances · sections</span></div>
+          <div class="demo" style="background:var(--chrome-900); padding:0; min-height:auto; align-items:stretch;">
+            <aside class="metadata" style="border-left:0; border-right:0;">
+              <div class="md-section">
+                <div class="md-label">Character</div>
+                <div class="md-title" style="font-size:16px;">Cora Maren</div>
+              </div>
+              <div class="md-section">
+                <div class="md-label">Role</div>
+                <span class="status-pill active" style="background:oklch(0.72 0.110 35 / 0.18); border-color:oklch(0.72 0.110 35 / 0.4); color:oklch(0.5 0.10 35); font-size:11px;"><span class="dot" style="background:var(--type-character);"></span>Protagonist</span>
+              </div>
+              <div class="md-section">
+                <div class="md-label">Appears in</div>
+                <div style="font-size:12.5px; color:var(--chrome-300); margin-top:4px;">9 chapters · 12 beats</div>
+              </div>
+              <div class="md-section" style="border:0;">
+                <div class="md-label">Sections · 7 / 8</div>
+                <div style="font-size:11px; color:var(--chrome-500); margin-top:4px;">Add <em>Voice</em></div>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-top:24px;">
+        <strong>Fallback case.</strong> The generic fallback surface (§12) shows the binder item title in the right-rail and nothing else — same "Select a chapter to see details" empty pattern from Prompt 1, but the surface itself is unrecognized rather than unselected. We render the variants above with their own section content rather than holding to the chapter shape.
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §15  Handoff                                                   -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-handoff">
+      <div class="eyebrow"><span class="num">15</span> <span>Handoff &amp; open questions</span></div>
+      <h2 class="title">What's locked, what's still open.</h2>
+      <p class="lede">Same hand-off format as Prompt 1. Locked items feed forward to engineering and to Prompt 3 (overlays / modes). Open questions are for Chris to settle before the corresponding ticket lands.</p>
+
+      <div class="cols2" style="gap:24px;">
+        <div class="spec-card">
+          <div class="md-label" style="color:var(--brand);">Locked from this brief</div>
+          <ul style="margin:0; padding-left:20px; color:var(--chrome-300); font-size:14px; line-height:1.7;">
+            <li>FM/BM as live WYSIWYG book pages — one page per subtype; pill-bar picker.</li>
+            <li>Outline ships with the <strong style="color:var(--chrome-100); font-weight:500;">Beat Sheet</strong> primary view. Story Arc and Corkboard are view-mode toggles riding the same data.</li>
+            <li>Surface header (replacing the chapter toolbar on non-chapter surfaces) — type chip · name · save badge · contextual actions.</li>
+            <li>Save badge — three states, position is the surface header (FM/BM, Note, Character) or the right side of the outline header (Outline).</li>
+            <li>Tag chips, color label swatch (5), drag handle, drop indicator — new components; tokens unchanged.</li>
+            <li>Chapter-link popover — used in both Outline beats and Character relationships.</li>
+            <li>Generic fallback design — exists only until every type ships a renderer.</li>
+          </ul>
+        </div>
+        <div class="spec-card">
+          <div class="md-label" style="color:var(--brand);">Open questions for Chris</div>
+          <ul style="margin:0; padding-left:20px; color:var(--chrome-300); font-size:14px; line-height:1.7;">
+            <li>FM/BM <em>page-settings</em> affordance — font choice / alignment per page. Recommend deferring until export brief (Prompt 3) to keep the surface clean. Reasonable? (My pick: yes.)</li>
+            <li>Subtype schema migration on switch — silent vs modal threshold. Current rule: discard prompts only when a field would be lost. Want to confirm copy/UX.</li>
+            <li>Outline status bar — replace "word count" with "beat count + linked-chapter shortcut"? Or hide entirely? (My pick: replace.)</li>
+            <li>Character section taxonomy — ship with seven default sections (Appearance, Personality, Motivation, Backstory, Arc, Relationships, Notes) or just three (Bio, Arc, Relationships) and let users add more? (My pick: ship 7, let users remove.)</li>
+            <li>Corkboard tilt — keep the playful per-card tilt or always-axial? Tilt feels cozy; axial reads more legibly at high beat count. Could expose as a setting.</li>
+            <li>Note pin-state in binder — currently a yellow pin glyph on the row. Should pinned notes also float to the top of their folder automatically, or stay in user-set order? (My pick: float, with manual override.)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div style="margin-top:32px; padding:24px; border-radius:var(--r-lg); background:linear-gradient(180deg, var(--brand-soft), transparent); border:1px solid oklch(0.85 0.18 90 / 0.25);">
+        <div class="md-label" style="color:var(--brand);">Coming next</div>
+        <div class="cols2" style="margin-top:8px; gap:24px;">
+          <div>
+            <strong style="font-family:var(--font-display); color:var(--chrome-100); font-size:15px;">Prompt 3 — Overlays &amp; modes</strong>
+            <p style="font-size:13px; color:var(--chrome-400); margin:6px 0 0; line-height:1.6;">Focus mode · Corkboard full-screen · Find &amp; Replace · Writing analysis · Export · Version history drawer · Snapshot banner · Empty / first-time states. Everything in Prompt 3 sits on top of the shell (Prompt 1) and the surfaces (Prompt 2) without redefining either.</p>
+          </div>
+          <div>
+            <strong style="font-family:var(--font-display); color:var(--chrome-100); font-size:15px;">Inherited downstream</strong>
+            <p style="font-size:13px; color:var(--chrome-400); margin:6px 0 0; line-height:1.6;">Paper-card variants (book-page, note, index-card, profile-section), tag chip, color label, drag handle, drop indicator, chapter-link popover. Every overlay that needs to surface these will reuse them verbatim.</p>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:48px; padding-top:24px; border-top:1px solid var(--chrome-800); font-size:12px; color:var(--chrome-500); font-family:var(--font-mono); letter-spacing:0.04em; display:flex; justify-content:space-between;">
+        <span>BEEHIVE STUDIO · SPECIALIZED SURFACES · PROMPT 2 OF 3</span>
+        <span>CLAUDE DESIGN · 2026-05-26</span>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+</body>
+</html>

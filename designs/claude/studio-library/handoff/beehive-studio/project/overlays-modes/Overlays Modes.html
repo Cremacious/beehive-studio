@@ -1,0 +1,2252 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Beehive Studio — Overlays, Modes &amp; Modals (Prompt 3)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&family=Geist:wght@300;400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ───── Icons (inherits the lucide-style set from Prompts 1 + 2; only the ones used here) ───── -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <defs>
+    <symbol id="i-hive" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L20 6.5 L20 15.5 L12 20 L4 15.5 L4 6.5 Z"/><path d="M12 9 L16 11 L16 14.5 L12 16.5 L8 14.5 L8 11 Z" fill="currentColor" fill-opacity="0.55" stroke="none"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-chev-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></symbol>
+    <symbol id="i-chev-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></symbol>
+    <symbol id="i-chev-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 15 12 9 18 15"/></symbol>
+    <symbol id="i-arr-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m6 11 6-6 6 6"/></symbol>
+    <symbol id="i-arr-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m6 13 6 6 6-6"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-history" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-corkboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></symbol>
+    <symbol id="i-maximize" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+    <symbol id="i-minimize" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 4 2c-1 .8-1.5 1.4-1.5 3"/><circle cx="12" cy="17" r="0.6" fill="currentColor"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><circle cx="12" cy="8" r="0.6" fill="currentColor"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 22 20H2z"/><path d="M12 10v5"/><circle cx="12" cy="18" r="0.6" fill="currentColor"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></symbol>
+    <symbol id="i-analysis" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></symbol>
+    <symbol id="i-restore" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-timer" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="14" r="7"/><path d="M12 11v3l2 1"/><path d="M9 3h6"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="1.5"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linejoin="round"><polygon points="6 4 20 12 6 20" fill="currentColor"/></symbol>
+    <symbol id="i-flame" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"><path d="M12 3c0 4-5 5-5 11a5 5 0 0 0 10 0c0-3-2-4-2-7 0 2-3 2-3-4z" fill="currentColor" fill-opacity="0.25"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></symbol>
+    <symbol id="i-replace" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h9l-2-2M14 7l-3 3"/><path d="M20 17h-9l2 2M10 17l3-3"/></symbol>
+    <symbol id="i-pdf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><path d="M8 13h3M8 16h6"/></symbol>
+    <symbol id="i-epub" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-2z"/><path d="M4 5v14"/><path d="M9 8h6M9 12h6"/></symbol>
+    <symbol id="i-docx" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><path d="M8.5 12l1 5 1.5-3 1.5 3 1-5"/></symbol>
+    <symbol id="i-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M6 14V10l2 2 2-2v4"/><path d="M13 10v4M13 14l2-2 2 2v-4"/></symbol>
+    <symbol id="i-txt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><path d="M9 12h6M9 15h6M9 18h4"/></symbol>
+    <symbol id="i-sparkle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v7l4 4v3H8v-3l4-4V2"/><path d="M9 2h6"/><path d="M12 16v6"/></symbol>
+    <symbol id="i-filter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8v6l-4-2v-4z"/></symbol>
+    <symbol id="i-feather" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4c-7 0-12 4-14 11l-2 6 6-2c7-2 11-7 11-14z"/><path d="M16 7 8 15M16 11l-5 5"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v18H6a2 2 0 0 0-2 2z"/><path d="M4 5v14"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+    <symbol id="i-pencil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4l6 6-11 11H3v-6z"/></symbol>
+    <symbol id="i-cmd" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h6v6h-6z"/><path d="M9 6V4a2 2 0 1 0-2 2zM15 6V4a2 2 0 1 1 2 2zM9 12v2a2 2 0 1 1-2-2zM15 12v2a2 2 0 1 0 2-2z"/></symbol>
+    <symbol id="i-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 22 20H2z"/><path d="M12 10v5"/><circle cx="12" cy="18" r="0.7" fill="currentColor"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12c4 0 7-3 7-7 0 4 3 7 7 7-4 0-7 3-7 7 0-4-3-7-7-7z" fill="currentColor" fill-opacity="0.2"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 0 1 0-5l3-3a4 4 0 0 1 6 6l-1.5 1.5"/><path d="M14 10a4 4 0 0 1 0 5l-3 3a4 4 0 0 1-6-6l1.5-1.5"/></symbol>
+    <symbol id="i-chapter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h12a3 3 0 0 1 3 3v13H7a3 3 0 0 1-3-3z"/><path d="M4 4v13a3 3 0 0 0 3 3"/><path d="M9 8h6M9 12h6"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13"/><path d="m7 8 5-5 5 5"/><path d="M5 13v6h14v-6"/></symbol>
+  </defs>
+</svg>
+
+<!-- ============================================================== -->
+<!--  Document shell                                                  -->
+<!-- ============================================================== -->
+<div class="doc">
+
+  <!-- ── Sticky TOC ─────────────────────────────────────────────── -->
+  <aside class="toc">
+    <h1>Beehive Studio</h1>
+    <div class="sub">OVERLAYS &amp; MODES · PROMPT 3/3</div>
+    <ol>
+      <li><a href="#s-intro">Overlay taxonomy</a></li>
+      <li><a href="#s-stack">Z-index &amp; backdrop</a></li>
+      <li><a href="#s-motion">Motion specs</a></li>
+      <li><a href="#s-corkboard">Corkboard mode</a></li>
+      <li><a href="#s-focus">Focus mode</a></li>
+      <li><a href="#s-history">Version history drawer</a></li>
+      <li><a href="#s-snap">Snapshot preview banner</a></li>
+      <li><a href="#s-find">Find &amp; Replace overlay</a></li>
+      <li><a href="#s-analysis">Writing analysis panel</a></li>
+      <li><a href="#s-cheat">Keyboard cheatsheet</a></li>
+      <li><a href="#s-export">Export modal</a></li>
+      <li><a href="#s-confirm">Confirmation dialogs</a></li>
+      <li><a href="#s-empty">Empty &amp; first-time states</a></li>
+      <li><a href="#s-sprint">Sprint timer states</a></li>
+      <li><a href="#s-handoff">Handoff &amp; open Qs</a></li>
+    </ol>
+    <div style="margin-top:28px; padding-top:18px; border-top:1px solid var(--chrome-800); font-size:11px; color:var(--chrome-500); line-height:1.6;">
+      Drafted by Claude Design · 2026-05-26 · For Chris @ Beehive Studio.
+      Inherits tokens, type, depth, and components from
+      <a href="../studio-shell/Studio Shell.html" style="color:var(--chrome-300);">Prompt 1</a> and
+      <a href="../specialized-surfaces/Specialized Surfaces.html" style="color:var(--chrome-300);">Prompt 2</a>.
+    </div>
+  </aside>
+
+  <!-- ── Main column ────────────────────────────────────────────── -->
+  <main class="main">
+
+    <!-- ============================================================ -->
+    <!--  Hero                                                          -->
+    <!-- ============================================================ -->
+    <section class="s" style="padding-top:48px; padding-bottom: 24px;">
+      <div class="eyebrow"><span class="num">03/15</span> <span>Brief — Overlays, modes &amp; modals</span></div>
+      <h2 class="title">Everything that lives —<br><em>on top of the desk.</em></h2>
+      <p class="lede">
+        Prompts 1 and 2 built the room — the walnut shell, the cream pages, the
+        binder and the specialised surfaces inside it. Prompt 3 is everything else:
+        the corkboard you flip the desk over for; the lamp dimming when you call up a
+        modal; the version history that slides in from the right; the sprint timer
+        that finishes with a small ceremony. Eleven surfaces, but the same room.
+      </p>
+      <p class="lede" style="margin-top:-12px;">
+        None of this is new visual language — it's the established system pressed
+        into transient duty. A modal is a paper card lifted off the desk. A
+        drawer is the metadata panel swapped at the seam. The corkboard is the
+        index-card from Prompt 2, full-bleed, pinned to a real ground. The
+        sprint celebration is a single candle and a small toast — not confetti
+        cannons.
+      </p>
+
+      <div class="cols-3-2" style="margin-top:32px;">
+        <div class="spec-card">
+          <div class="md-label" style="color:var(--brand);">Eleven surfaces · five patterns</div>
+          <p style="color:var(--chrome-300); font-size:14.5px; line-height:1.65; margin:0;">
+            The brief lists eleven surfaces. Behind them are only five patterns we need to design once and reuse:
+            <strong style="color:var(--chrome-100); font-weight:500;">mode</strong> (replaces a region of the shell — corkboard, focus),
+            <strong style="color:var(--chrome-100); font-weight:500;">drawer</strong> (panel swapped into an existing slot — version history, writing analysis),
+            <strong style="color:var(--chrome-100); font-weight:500;">overlay</strong> (floats over the editor without dimming — find &amp; replace, snapshot banner),
+            <strong style="color:var(--chrome-100); font-weight:500;">modal</strong> (centered card with backdrop dim — cheatsheet, export, confirm),
+            <strong style="color:var(--chrome-100); font-weight:500;">popover</strong> (small, anchored — sprint setup).
+            Empty states and the sprint celebration aren't patterns; they're the brand's voice expressed at the moments
+            the product is otherwise silent.
+          </p>
+        </div>
+        <div class="spec-card">
+          <div class="md-label" style="color:var(--brand);">What this doc adds to the system</div>
+          <ul style="margin:0; padding-left:18px; color:var(--chrome-300); font-size:13px; line-height:1.65;">
+            <li>Backdrop dim + blur · one recipe.</li>
+            <li>Modal shell · S / M / L · 420 · 520 · 720.</li>
+            <li>Paper-key <code style="font-family:var(--font-mono); font-size:11px; color:var(--brand);">&lt;kbd&gt;</code> — light + dark.</li>
+            <li>Snapshot banner · brand-yellow informational.</li>
+            <li>Confirm dialog · destructive + warn + info icons.</li>
+            <li>Welcome card · open-notebook illustration.</li>
+            <li>Sprint celebration · candle + toast + soft confetti.</li>
+            <li>Z-index ladder · 5 layers.</li>
+            <li>Motion · one curve, three durations.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §1  Overlay taxonomy                                          -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-intro">
+      <div class="eyebrow"><span class="num">01</span> <span>The taxonomy</span></div>
+      <h2 class="title">Five patterns, one room.</h2>
+      <p class="lede">
+        Every transient surface in Beehive falls into one of five buckets. We decide which by answering one
+        question: <em>how much of the room is the user still in?</em> A mode replaces a region; a drawer
+        swaps a slot; an overlay floats; a modal interrupts; a popover whispers. The same paper cards and
+        walnut chrome dress all five — what changes is whether the rest of the studio is still operable.
+      </p>
+
+      <div class="tax-chart" style="margin-top:28px;">
+        <div class="row-h"></div>
+        <div class="col-h">Mode<span class="sub">replaces region</span></div>
+        <div class="col-h">Drawer<span class="sub">swaps slot</span></div>
+        <div class="col-h">Overlay<span class="sub">floats</span></div>
+        <div class="col-h">Modal<span class="sub">interrupts</span></div>
+        <div class="col-h">Popover<span class="sub">anchored</span></div>
+
+        <div class="row-h">Examples</div>
+        <div class="cell">Corkboard · Focus</div>
+        <div class="cell">Version history · Writing analysis</div>
+        <div class="cell">Find &amp; replace · Snapshot banner · Sprint celebration banner</div>
+        <div class="cell">Cheatsheet · Export · Confirm</div>
+        <div class="cell">Sprint setup · Binder add-menu · Item menu</div>
+
+        <div class="row-h">Backdrop dim</div>
+        <div class="cell n">none</div>
+        <div class="cell n">none</div>
+        <div class="cell n">none</div>
+        <div class="cell y">62% + 4px blur</div>
+        <div class="cell n">none</div>
+
+        <div class="row-h">Shell still usable</div>
+        <div class="cell y">Yes (other regions)</div>
+        <div class="cell y">Yes</div>
+        <div class="cell y">Yes (read-only when banner)</div>
+        <div class="cell n">No</div>
+        <div class="cell y">Yes</div>
+
+        <div class="row-h">Close on click-out</div>
+        <div class="cell n">No · explicit exit</div>
+        <div class="cell n">No · explicit close (×)</div>
+        <div class="cell n">No · Esc / explicit close</div>
+        <div class="cell y">Yes · Esc · click-out · ×</div>
+        <div class="cell y">Yes · Esc · click-out</div>
+
+        <div class="row-h">Motion</div>
+        <div class="cell">340ms · region cross-fade</div>
+        <div class="cell">260ms · slide in from edge</div>
+        <div class="cell">180ms · slide-down + fade</div>
+        <div class="cell">220ms · backdrop + scale 0.96→1</div>
+        <div class="cell">140ms · scale 0.94→1 from anchor</div>
+
+        <div class="row-h">Focus trap</div>
+        <div class="cell n">no</div>
+        <div class="cell n">no (tab cycles within)</div>
+        <div class="cell n">no</div>
+        <div class="cell y">yes · returns on close</div>
+        <div class="cell y">soft · Esc returns</div>
+      </div>
+
+      <div class="callout" style="margin-top:24px;">
+        <strong>Rule of thumb.</strong>
+        If the action can be done without taking the writer's attention off the prose, it's an
+        <em>overlay</em>. If it needs the writer's whole attention, it's a <em>modal</em>. If it changes
+        what the writer is looking at without losing the binder, it's a <em>mode</em> or a <em>drawer</em>.
+        We earn the user's full attention sparingly — only Confirm / Export / Cheatsheet use the backdrop.
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §2  Z-index & backdrop                                        -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-stack">
+      <div class="eyebrow"><span class="num">02</span> <span>Stack &amp; backdrop</span></div>
+      <h2 class="title">Five layers, one dim.</h2>
+      <p class="lede">
+        A single stacking ladder for the studio. Any new element that needs to elevate picks one of these
+        five values and inherits the matching shadow + backdrop behaviour. Confirmation dialogs sit above
+        everything; they are the only surface that can interrupt another modal (rare — for restore + delete-during-export).
+      </p>
+
+      <div class="cols-2-1" style="gap:32px; margin-top:24px;">
+        <div>
+          <div class="stack">
+            <div class="layer l1">
+              <div class="z">z 0</div>
+              <div><div class="name">Base chrome</div><div class="role">shell, binder, editor, metadata, status bar</div></div>
+              <div class="role">flat / el-0</div>
+              <div class="swatch"></div>
+            </div>
+            <div class="layer l2">
+              <div class="z">z 10</div>
+              <div><div class="name">Banner / overlay</div><div class="role">snapshot banner · find &amp; replace · sprint progress strip</div></div>
+              <div class="role">el-1 + drop</div>
+              <div class="swatch"></div>
+            </div>
+            <div class="layer l3">
+              <div class="z">z 30</div>
+              <div><div class="name">Popover</div><div class="role">sprint setup · add menu · item menu · color picker</div></div>
+              <div class="role">el-3</div>
+              <div class="swatch"></div>
+            </div>
+            <div class="layer l4">
+              <div class="z">z 50</div>
+              <div><div class="name">Modal (+ backdrop)</div><div class="role">cheatsheet · export · confirm · upsell</div></div>
+              <div class="role">el-4 over dim</div>
+              <div class="swatch"></div>
+            </div>
+            <div class="layer l5">
+              <div class="z">z 70</div>
+              <div><div class="name">Toast / celebration</div><div class="role">sprint complete · saved · error toasts</div></div>
+              <div class="role">el-3 — always on top</div>
+              <div class="swatch"></div>
+            </div>
+          </div>
+          <p class="note" style="margin-top:14px;">
+            <strong>Rule.</strong> Drawers sit inside the metadata panel slot at the base chrome layer — they don't elevate, they replace.
+            That's why version-history and analysis can stay live next to the editor without competing with it visually.
+          </p>
+        </div>
+
+        <div>
+          <div class="md-label" style="color:var(--brand);">Backdrop · one recipe</div>
+          <p style="font-size:14px; color:var(--chrome-300); line-height:1.6; margin: 8px 0 18px;">
+            Modals dim and blur the room beneath them. The same recipe everywhere:
+            <strong style="color:var(--chrome-100);">rgba(15,12,8,0.62)</strong> + <strong style="color:var(--chrome-100);">4px blur</strong> +
+            <strong style="color:var(--chrome-100);">0.85 saturation</strong>. The slight desat is what makes the
+            yellow on the modal feel like the new focal point.
+          </p>
+
+          <div class="dimstage">
+            <div class="stage-shell" style="background:
+              linear-gradient(180deg, var(--chrome-900), var(--chrome-950));
+              display:grid; grid-template-rows: 36px 1fr 28px;">
+              <div style="background:var(--chrome-900); border-bottom:1px solid var(--chrome-800); display:flex; align-items:center; padding:0 16px; gap:10px;">
+                <svg width="16" height="16" style="color:var(--brand);"><use href="#i-hive"/></svg>
+                <span style="font-family:var(--font-display); font-weight:700; font-size:13px; color:var(--chrome-100);">The Bell at Low Tide</span>
+                <span style="margin-left:auto; font-family:var(--font-mono); font-size:10px; color:var(--chrome-500);">CH 12 · 3,240 WD</span>
+              </div>
+              <div style="background:var(--canvas-dark-100); padding:32px 64px; font-family:var(--font-prose); font-size:14px; line-height:1.7; color:var(--canvas-dark-ink-muted);">
+                <div style="font-family:var(--font-display); font-weight:700; font-size:18px; color:var(--canvas-dark-ink-strong); margin-bottom:14px;">12. The Confession</div>
+                <p style="margin:0 0 10px;">By the time the lamp had burned half-down he had told her three of the four things he had carried with him from the lighthouse, and she had asked him for none of them.</p>
+                <p style="margin:0;">The fourth he was going to keep — she could see that as plain as the sea outside.</p>
+              </div>
+              <div style="background:var(--chrome-850); border-top:1px solid var(--chrome-800);"></div>
+            </div>
+            <div class="modal-over">
+              <div class="modal sm" style="width:380px;">
+                <div class="modal-h">
+                  <div style="display:flex; gap:12px; align-items:flex-start;">
+                    <div class="confirm-icon danger"><svg width="20" height="20"><use href="#i-trash"/></svg></div>
+                    <div>
+                      <h3>Delete chapter?</h3>
+                    </div>
+                  </div>
+                  <button class="x"><svg width="16" height="16"><use href="#i-x"/></svg></button>
+                </div>
+                <div class="modal-b" style="padding-top:0;">
+                  This will permanently delete <strong>Chapter&nbsp;12: The Confession</strong> and its 3,240 words.
+                  This action cannot be undone.
+                </div>
+                <div class="modal-f">
+                  <div class="grow"></div>
+                  <button class="btn-x ghost">Cancel</button>
+                  <button class="btn-x danger"><svg width="14" height="14"><use href="#i-trash"/></svg>Delete chapter</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §3  Motion specs                                              -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-motion">
+      <div class="eyebrow"><span class="num">03</span> <span>Motion</span></div>
+      <h2 class="title">Gentle, never snappy.</h2>
+      <p class="lede">
+        Three durations — 140, 220, 340ms — paired with one curve: <code style="font-family:var(--font-mono); color:var(--brand); background:oklch(0.85 0.18 90 / 0.10); padding:1px 6px; border-radius:4px;">cubic-bezier(.22,1,.36,1)</code>, a soft decelerate that lands without overshooting. Nothing in the studio uses linear motion and nothing bounces. Cozy means the room doesn't jump when you open a drawer in it.
+      </p>
+
+      <div class="artboard" style="margin-top:24px;">
+        <div class="artboard-header"><strong>Motion specs</strong><span>duration · curve · property · direction</span></div>
+        <div class="artboard-body" style="padding:16px 8px;">
+          <table class="motion-table">
+            <thead>
+              <tr><th>Surface</th><th>Trigger → Visible</th><th>Visible → Trigger</th><th>Property</th><th>Easing</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="surface">Modal</td><td><code>220ms</code> backdrop fade + card scale 0.96→1</td><td><code>180ms</code> reverse</td><td>opacity · transform</td><td><code>ease-out</code></td></tr>
+              <tr><td class="surface">Drawer (panel swap)</td><td><code>260ms</code> slide-in from right + 60ms cross-fade</td><td><code>220ms</code> reverse</td><td>transform: translateX</td><td><code>ease-out</code></td></tr>
+              <tr><td class="surface">Mode (focus / corkboard)</td><td><code>340ms</code> region cross-fade · sidebars slide off</td><td><code>340ms</code> reverse</td><td>grid-template · opacity</td><td><code>ease-in-out</code></td></tr>
+              <tr><td class="surface">Overlay (find &amp; replace)</td><td><code>180ms</code> slide-down + opacity 0→1</td><td><code>140ms</code> reverse</td><td>transform: translateY</td><td><code>ease-out</code></td></tr>
+              <tr><td class="surface">Snapshot banner</td><td><code>180ms</code> slide-down + 4px shadow grow</td><td><code>180ms</code> reverse</td><td>transform · box-shadow</td><td><code>ease-out</code></td></tr>
+              <tr><td class="surface">Popover</td><td><code>140ms</code> scale 0.94→1 from anchor + opacity</td><td><code>120ms</code> reverse</td><td>transform-origin · opacity</td><td><code>ease-out</code></td></tr>
+              <tr><td class="surface">Toast / celebration</td><td><code>340ms</code> slide-up 12px + bloom (yellow halo 0→0.10)</td><td><code>220ms</code> fade only</td><td>transform · box-shadow</td><td><code>ease-out</code></td></tr>
+              <tr><td class="surface">Sprint progress strip</td><td>continuous · width 0%→100% over sprint length</td><td>instant 0% on stop</td><td>width</td><td><code>linear</code></td></tr>
+              <tr><td class="surface">Save dot · saving pulse</td><td>opacity 1↔0.35 · 1200ms infinite</td><td>fade to green</td><td>opacity</td><td><code>ease-in-out</code></td></tr>
+              <tr><td class="surface">Sprint complete confetti</td><td>9 strips drift 600ms with rotate + fade</td><td>auto-removed at 4s</td><td>transform · opacity</td><td><code>ease-out</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <p class="note" style="margin-top:14px;">
+        <strong>Reduced-motion.</strong> When <code style="font-family:var(--font-mono); font-size:11px; color:var(--brand);">prefers-reduced-motion: reduce</code> is set,
+        every transform-based transition collapses to a <code style="font-family:var(--font-mono); font-size:11px; color:var(--brand);">120ms</code> opacity fade. The candle still
+        lights at sprint end; the confetti does not appear. The user still gets the moment, just not the choreography.
+      </p>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §4  Corkboard mode (full)                                     -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-corkboard">
+      <div class="eyebrow"><span class="num">04</span> <span>Surface — Corkboard mode</span></div>
+      <h2 class="title">Flip the desk —<br><em>and the corkboard is what's underneath.</em></h2>
+      <p class="lede">
+        Prompt 1 sketched it in miniature; Prompt 2 mocked the Outline's corkboard sibling at planning scale. Here it is at
+        full bleed: the chapters of the book, pinned to a real cork ground, with the binder and the metadata panel still on
+        the sides. It is the only surface in the studio that lets the writer see the whole novel at once.
+      </p>
+
+      <div class="artboard">
+        <div class="artboard-header"><strong>Corkboard mode · in studio context</strong><span>center pane replaced · binder + metadata still present</span></div>
+        <div class="artboard-body" style="padding:0; background:var(--chrome-950);">
+          <div class="studio" style="height:720px;">
+            <!-- topnav (compressed) -->
+            <div class="topnav">
+              <div class="left">
+                <span class="logo"><span class="hex"><svg width="16" height="16" style="color:var(--brand);"><use href="#i-hive"/></svg></span>Beehive</span>
+                <nav><a href="#" class="active">Studio</a><a href="#">Library</a><a href="#">Account</a></nav>
+              </div>
+              <div class="right">
+                <span style="font-family:var(--font-mono); font-size:11px; color:var(--chrome-400);">The Bell at Low Tide · A Maren novel</span>
+                <span class="avatar">CM</span>
+              </div>
+            </div>
+
+            <div class="shell">
+              <!-- binder (still on) -->
+              <aside class="binder">
+                <div class="binder-head">
+                  <div class="book-meta">PART ONE · 7 CHAPTERS</div>
+                  <div class="book-title">The Bell at Low Tide</div>
+                  <div class="row">
+                    <button class="cork-btn" style="background:var(--brand); color:var(--brand-ink); border-color:var(--brand);" title="Corkboard ON"><svg width="14" height="14"><use href="#i-corkboard"/></svg></button>
+                    <span style="font-family:var(--font-mono); font-size:10px; color:var(--brand); letter-spacing:0.08em;">CORKBOARD</span>
+                  </div>
+                </div>
+                <div class="binder-tree">
+                  <div class="binder-row"><span class="chev open"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span><span class="icon" style="color:var(--type-front-matter);"><svg width="13" height="13"><use href="#i-chev-down"/></svg></span><span class="title" style="color:var(--chrome-200); font-weight:500;">Front Matter</span><span></span></div>
+                  <div class="binder-row indent-1"><span class="chev open"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span><span class="icon" style="color:var(--type-chapter);"><svg width="14" height="14"><use href="#i-chapter"/></svg></span><span class="title">Part One</span><span></span></div>
+                  <div class="binder-row indent-2"><span class="chev none"></span><span class="icon" style="color:var(--type-chapter);"><svg width="13" height="13"><use href="#i-chapter"/></svg></span><span class="title">1. The bell at low tide</span><span></span></div>
+                  <div class="binder-row indent-2"><span class="chev none"></span><span class="icon" style="color:var(--type-chapter);"><svg width="13" height="13"><use href="#i-chapter"/></svg></span><span class="title">2. What Cora found</span><span></span></div>
+                  <div class="binder-row indent-2"><span class="chev none"></span><span class="icon" style="color:var(--type-chapter);"><svg width="13" height="13"><use href="#i-chapter"/></svg></span><span class="title">3. The keeper's letter</span><span></span></div>
+                  <div class="binder-row indent-2 active"><span class="chev none"></span><span class="icon" style="color:var(--brand);"><svg width="13" height="13"><use href="#i-chapter"/></svg></span><span class="title">4. The empty inlet</span><span></span></div>
+                  <div class="binder-row indent-2"><span class="chev none"></span><span class="icon" style="color:var(--type-chapter);"><svg width="13" height="13"><use href="#i-chapter"/></svg></span><span class="title">5. Smoke at first light</span><span></span></div>
+                  <div class="binder-row indent-2"><span class="chev none"></span><span class="icon" style="color:var(--type-chapter);"><svg width="13" height="13"><use href="#i-chapter"/></svg></span><span class="title">6. Letter in the chart-tube</span><span></span></div>
+                  <div class="binder-row indent-2"><span class="chev none"></span><span class="icon" style="color:var(--type-chapter);"><svg width="13" height="13"><use href="#i-chapter"/></svg></span><span class="title">7. The keeper's daughter</span><span></span></div>
+                </div>
+                <div class="binder-foot">
+                  <button class="btn-add"><svg width="14" height="14"><use href="#i-plus"/></svg>Add</button>
+                </div>
+              </aside>
+
+              <!-- center: corkboard surface -->
+              <div class="cork-surface" style="overflow-y:auto; overflow-x:hidden;">
+                <div class="cork-head">
+                  <div>
+                    <div class="t">All chapters</div>
+                    <div class="meta">PART ONE · 7 CHAPTERS · 24,610 WORDS</div>
+                  </div>
+                  <span class="grow"></span>
+                  <button class="filter"><svg width="13" height="13"><use href="#i-filter"/></svg>All statuses<svg width="10" height="10"><use href="#i-chev-down"/></svg></button>
+                  <button class="filter">Sort: position<svg width="10" height="10"><use href="#i-chev-down"/></svg></button>
+                  <button class="exit"><svg width="13" height="13"><use href="#i-x"/></svg>Exit corkboard</button>
+                </div>
+
+                <div class="cork-grid">
+                  <article class="cb-card" style="--tilt:-0.6deg;">
+                    <span class="pin"></span>
+                    <div class="num">CH 1</div>
+                    <h4 class="t">The bell at low tide</h4>
+                    <p class="syn">Cora hears the lighthouse bell at the low-tide line and knows something is wrong. She rows out before dawn, the lamp swinging on its hook.</p>
+                    <div class="foot">
+                      <span class="status-pill" data-status="revised" style="background:oklch(0.74 0.08 155 / 0.18); color:oklch(0.42 0.10 155); border-color:oklch(0.74 0.08 155 / 0.4);"><span class="dot" style="background:var(--status-revised);"></span>Revised</span>
+                      <span class="wc">3,240 wd</span>
+                    </div>
+                  </article>
+
+                  <article class="cb-card clip" style="--tilt:0.4deg;">
+                    <span class="pin" style="left:auto; right:24px; background:radial-gradient(circle at 35% 30%, oklch(0.92 0.13 35), oklch(0.62 0.13 35));"></span>
+                    <div class="num">CH 2</div>
+                    <h4 class="t">What Cora found</h4>
+                    <p class="syn">She lit the lamp. She did not light both lamps — only the small one over the desk. Below stairs, her father's chart room was annotated in a hand that wasn't his.</p>
+                    <div class="foot">
+                      <span class="status-pill active" style="background:var(--brand-soft); color:var(--brand); border-color:oklch(0.85 0.18 90 / 0.4);"><span class="dot" style="background:var(--brand);"></span>First Draft</span>
+                      <span class="wc">2,840 wd</span>
+                    </div>
+                  </article>
+
+                  <article class="cb-card" style="--tilt:-0.2deg;">
+                    <span class="pin"></span>
+                    <div class="num">CH 3</div>
+                    <h4 class="t">The keeper's letter</h4>
+                    <p class="syn">An envelope tucked into a chart-tube. The handwriting matches the marginalia. She does not open it until she has rowed back to shore.</p>
+                    <div class="foot">
+                      <span class="status-pill" data-status="outline" style="background:oklch(0.74 0.07 295 / 0.18); color:oklch(0.45 0.10 295); border-color:oklch(0.74 0.07 295 / 0.4);"><span class="dot" style="background:var(--status-outline);"></span>Outline</span>
+                      <span class="wc">240 wd</span>
+                    </div>
+                  </article>
+
+                  <article class="cb-card active" style="--tilt:0.5deg;">
+                    <span class="pin" style="background:radial-gradient(circle at 35% 30%, oklch(0.92 0.18 90), var(--brand-active));"></span>
+                    <div class="num">CH 4</div>
+                    <h4 class="t">The empty inlet</h4>
+                    <p class="syn">She rows out at first light. The inlet is dry. Someone has been here — there are tracks in the silt and a stack of letters where the boats are usually drawn up.</p>
+                    <div class="foot">
+                      <span class="status-pill" data-status="idea" style="background:oklch(0.74 0.045 245 / 0.18); color:oklch(0.40 0.08 245); border-color:oklch(0.74 0.045 245 / 0.4);"><span class="dot" style="background:var(--status-idea);"></span>Idea</span>
+                      <span class="wc">90 wd</span>
+                    </div>
+                  </article>
+
+                  <article class="cb-card" style="--tilt:-0.3deg;">
+                    <span class="pin"></span>
+                    <div class="num">CH 5</div>
+                    <h4 class="t">Smoke at first light</h4>
+                    <p class="syn">From the inlet she sees smoke above the bluff and runs up the path. The keeper's cottage is empty. The kettle is still warm.</p>
+                    <div class="foot">
+                      <span class="status-pill" data-status="first-draft" style="background:var(--brand-soft); color:var(--brand); border-color:oklch(0.85 0.18 90 / 0.4);"><span class="dot" style="background:var(--brand);"></span>First Draft</span>
+                      <span class="wc">1,720 wd</span>
+                    </div>
+                  </article>
+
+                  <article class="cb-card" style="--tilt:0.3deg;">
+                    <span class="pin"></span>
+                    <div class="num">CH 6</div>
+                    <h4 class="t">Letter in the chart-tube</h4>
+                    <p class="syn">She reads the letter for the first time at the kitchen table. The signature is her mother's. The date is three years after she died.</p>
+                    <div class="foot">
+                      <span class="status-pill" data-status="first-draft" style="background:var(--brand-soft); color:var(--brand); border-color:oklch(0.85 0.18 90 / 0.4);"><span class="dot" style="background:var(--brand);"></span>First Draft</span>
+                      <span class="wc">2,640 wd</span>
+                    </div>
+                  </article>
+
+                  <article class="cb-card" style="--tilt:-0.5deg;">
+                    <span class="pin"></span>
+                    <div class="num">CH 7</div>
+                    <h4 class="t">The keeper's daughter</h4>
+                    <p class="syn">A woman she has never seen comes up the path at noon, carrying the same lamp Cora's father gave away the winter before he died.</p>
+                    <div class="foot">
+                      <span class="status-pill" data-status="final" style="background:oklch(0.68 0.13 35 / 0.20); color:oklch(0.45 0.13 35); border-color:oklch(0.68 0.13 35 / 0.4);"><span class="dot" style="background:var(--status-final);"></span>Final</span>
+                      <span class="wc">3,180 wd</span>
+                    </div>
+                  </article>
+                </div>
+              </div>
+
+              <!-- metadata panel still present, showing the active card's details -->
+              <aside class="metadata">
+                <div class="md-section">
+                  <div class="md-label">Chapter · selected</div>
+                  <div class="md-title">4. The empty inlet</div>
+                  <div style="margin-top:8px; font-family:var(--font-mono); font-size:11px; color:var(--chrome-500);">Position 4 of 7 · Part One</div>
+                </div>
+                <div class="md-section">
+                  <div class="md-label">Status</div>
+                  <div class="md-pills">
+                    <span class="status-pill active" data-status="idea" style="background:oklch(0.74 0.045 245 / 0.18); color:oklch(0.40 0.08 245); border-color:oklch(0.74 0.045 245 / 0.4);"><span class="dot" style="background:var(--status-idea);"></span>Idea</span>
+                  </div>
+                </div>
+                <div class="md-section">
+                  <div class="md-label">Synopsis</div>
+                  <textarea class="md-textarea" rows="3" placeholder="Synopsis…">She rows out at first light. The inlet is dry. Someone has been here.</textarea>
+                </div>
+                <div class="md-section" style="border:0;">
+                  <div class="md-label">Word count</div>
+                  <div style="font-family:var(--font-display); font-weight:700; font-size:18px; color:var(--chrome-100); margin-top:4px;">90 <span style="font-size:11px; color:var(--chrome-500); font-family:var(--font-mono); letter-spacing:0.04em; font-weight:400;">/ ~3,000 target</span></div>
+                </div>
+              </aside>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="anatomy-grid">
+        <div class="item"><span class="n">1</span><div><strong>Cork ground</strong><p>Two layered dot patterns over a warm walnut base — the corkboard reads at a glance without crowding the cards. Vignette pulls the eye to center.</p></div></div>
+        <div class="item"><span class="n">2</span><div><strong>Header strip</strong><p>Blurred bar with title + chapter count + filter / sort + an explicit Exit (yellow primary). The yellow exit is the most obvious thing on the page — corkboard is a detour, not a destination.</p></div></div>
+        <div class="item"><span class="n">3</span><div><strong>Index card · paper-100</strong><p>The same index-card from Prompt 2's outline view, sized up. Ruled lines, micro-tilt (±0.6°), brass pin or paperclip metaphor. Title · synopsis (3 lines) · status pill · word count · CH N label.</p></div></div>
+        <div class="item"><span class="n">4</span><div><strong>Active card</strong><p>The chapter currently open in the editor is outlined in brand-yellow with a small "Editing" tag at the top-left. Clicking it does nothing; clicking any other card exits corkboard into that chapter.</p></div></div>
+        <div class="item"><span class="n">5</span><div><strong>Pin / clip variants</strong><p>The default is a brass-yellow push-pin. Some cards (variable, deterministic-by-id) get a paperclip instead. Adds variety without random chaos.</p></div></div>
+        <div class="item"><span class="n">6</span><div><strong>Binder + metadata stay</strong><p>The corkboard is a center-pane mode only. The binder is still on the left; the metadata panel updates to reflect whichever card is currently highlighted. The toolbar collapses to nothing — corkboard has no formatting context.</p></div></div>
+      </div>
+
+      <!-- Corkboard states -->
+      <h3 style="margin-top:48px; font-family:var(--font-display); font-weight:700; font-size:20px; color:var(--chrome-100); letter-spacing:-0.01em;">States</h3>
+      <p class="note" style="margin-bottom:18px;">
+        Hover, dragging, dropgap, empty, and filtered. Each preserves the corkboard ground; only the cards change.
+      </p>
+
+      <div class="cols4" style="gap:18px;">
+        <div class="state-card" style="background:transparent; border:1px solid var(--chrome-800);">
+          <div class="label"><strong>Hover</strong><span>tilt → 0, lift 4px</span></div>
+          <div class="demo cork-surface" style="min-height:200px; padding:24px;">
+            <div style="display:grid; grid-template-columns:1fr; gap:0; place-items:center;">
+              <article class="cb-card" style="--tilt:0deg; min-height:160px; width:180px; transform:rotate(0) translateY(-4px); box-shadow: 0 1px 0 var(--paper-50) inset, 0 2px 4px rgba(0,0,0,0.35), 0 28px 50px -10px rgba(0,0,0,0.65);">
+                <span class="pin"></span>
+                <div class="num">CH 2</div>
+                <h4 class="t" style="font-size:13px;">What Cora found</h4>
+                <p class="syn" style="font-size:11.5px;">She lit the lamp. She did not light both lamps — only the small one over the desk.</p>
+                <div class="foot" style="left:14px; right:14px; bottom:10px;">
+                  <span class="status-pill" style="background:var(--brand-soft); color:var(--brand); border-color:oklch(0.85 0.18 90 / 0.4); font-size:9px;"><span class="dot" style="background:var(--brand);"></span>Draft</span>
+                  <span class="wc" style="font-size:9px;">2,840</span>
+                </div>
+              </article>
+            </div>
+          </div>
+        </div>
+
+        <div class="state-card" style="background:transparent; border:1px solid var(--chrome-800);">
+          <div class="label"><strong>Dragging</strong><span>tilt -2°, deeper shadow, gap behind</span></div>
+          <div class="demo cork-surface" style="min-height:200px; padding:24px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; width:100%;">
+              <div class="cb-card dropgap" style="min-height:140px;"></div>
+              <article class="cb-card dragging" style="--tilt:-2deg; min-height:140px;">
+                <span class="pin"></span>
+                <div class="num">CH 4</div>
+                <h4 class="t" style="font-size:12px;">The empty inlet</h4>
+                <p class="syn" style="font-size:11px;">She rows out at first light.</p>
+              </article>
+            </div>
+          </div>
+        </div>
+
+        <div class="state-card" style="background:transparent; border:1px solid var(--chrome-800);">
+          <div class="label"><strong>Filtered</strong><span>only Draft + Revised</span></div>
+          <div class="demo cork-surface" style="min-height:200px; padding:18px; align-items:flex-start; justify-content:flex-start;">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; width:100%;">
+              <article class="cb-card" style="--tilt:-0.4deg; min-height:120px; padding:16px 12px 10px;">
+                <span class="pin"></span>
+                <div class="num" style="font-size:9px;">CH 2</div>
+                <h4 class="t" style="font-size:11.5px;">What Cora found</h4>
+                <div class="foot" style="left:12px; right:12px; bottom:8px;"><span class="status-pill" style="background:var(--brand-soft); color:var(--brand); font-size:9px; border-color:oklch(0.85 0.18 90 / 0.4);"><span class="dot" style="background:var(--brand);"></span>Draft</span></div>
+              </article>
+              <article class="cb-card" style="--tilt:0.4deg; min-height:120px; padding:16px 12px 10px;">
+                <span class="pin"></span>
+                <div class="num" style="font-size:9px;">CH 1</div>
+                <h4 class="t" style="font-size:11.5px;">The bell at low tide</h4>
+                <div class="foot" style="left:12px; right:12px; bottom:8px;"><span class="status-pill" style="background:oklch(0.74 0.08 155 / 0.18); color:oklch(0.42 0.10 155); border-color:oklch(0.74 0.08 155 / 0.4); font-size:9px;"><span class="dot" style="background:var(--status-revised);"></span>Revised</span></div>
+              </article>
+            </div>
+            <div style="margin-top:10px; font-family:var(--font-mono); font-size:9.5px; color:oklch(0.66 0.02 60); letter-spacing:0.08em; align-self:flex-start;">SHOWING 2 OF 7 · CLEAR FILTERS</div>
+          </div>
+        </div>
+
+        <div class="state-card" style="background:transparent; border:1px solid var(--chrome-800);">
+          <div class="label"><strong>Empty</strong><span>no chapters yet</span></div>
+          <div class="demo cork-surface" style="min-height:200px; padding:16px;">
+            <div class="cb-empty" style="padding:28px 18px; min-height:0;">
+              <h3 style="font-size:15px;">An empty board</h3>
+              <p style="font-size:11.5px; margin-bottom:14px;">Add a chapter to start pinning.</p>
+              <button class="b" style="padding:6px 10px; font-size:11px;"><svg width="11" height="11"><use href="#i-plus"/></svg>Start your first chapter</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-top:24px;">
+        <strong>Filter / sort.</strong> The brief asks whether to bloat MVP with these. <strong>Recommendation: ship filter, defer sort.</strong>
+        Sorting by anything other than position is rare; filtering by status is something writers ask for the first day they have a board.
+        The pill bar is a single dropdown, not a row of always-visible chips, so the cards stay the loudest thing.
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §5  Focus mode                                                -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-focus">
+      <div class="eyebrow"><span class="num">05</span> <span>Surface — Focus mode</span></div>
+      <h2 class="title">Sidebars away —<br><em>and the lamp dims, just a little.</em></h2>
+      <p class="lede">
+        Focus mode is the simplest surface in this document and the most opinionated. It hides the binder and metadata
+        panel, keeps the toolbar and status bar visible, and applies one small refinement Chris asked us to consider:
+        a 12% fade on the chrome that isn't the editor. The result is a centered prose column that looks more like a
+        sheet of paper than at any other moment in the studio.
+      </p>
+
+      <div class="focus-stage" style="margin-top:24px;">
+
+        <div>
+          <div class="md-label" style="color:var(--chrome-500); margin-bottom:8px;">Before — three-column shell</div>
+          <div class="focus-mini normal" style="position:relative;">
+            <div class="mini-topnav"><span>BEEHIVE</span><span style="margin-left:auto;">FOCUS · OFF</span></div>
+            <div class="mini-shell-body">
+              <div class="mini-binder">
+                <div style="font-family:var(--font-display); font-weight:700; font-size:11px; color:var(--chrome-100); margin-bottom:6px;">Part One</div>
+                <div class="row"><span class="dot"></span>1. The bell</div>
+                <div class="row active"><span class="dot" style="background:var(--brand);"></span>2. Cora</div>
+                <div class="row"><span class="dot"></span>3. Letter</div>
+                <div class="row"><span class="dot"></span>4. Inlet</div>
+                <div class="row"><span class="dot"></span>5. Smoke</div>
+              </div>
+              <div class="mini-editor">
+                <h1>2. What Cora found</h1>
+                <p>She lit the lamp. She did not light both lamps — only the small one over the desk.</p>
+                <p>Down the kitchen stairs in stocking feet, the air below the floor was colder than the morning above it.</p>
+                <p>Her father's chart room was annotated in a hand that wasn't his.</p>
+              </div>
+              <div class="mini-meta">
+                <div style="font-family:var(--font-mono); font-size:9px; color:var(--chrome-500); letter-spacing:0.10em;">STATUS</div>
+                <div style="font-size:10px; color:var(--brand); margin-top:4px;">First Draft</div>
+                <div style="margin-top:10px; font-family:var(--font-mono); font-size:9px; color:var(--chrome-500); letter-spacing:0.10em;">SYNOPSIS</div>
+                <div style="font-size:9px; color:var(--chrome-400); margin-top:4px; white-space:normal; line-height:1.4;">She lights the lamp, finds her father's chart room…</div>
+              </div>
+            </div>
+            <div class="label-strip">Normal · 264 · 1fr · 288</div>
+          </div>
+        </div>
+
+        <div>
+          <div class="md-label" style="color:var(--brand); margin-bottom:8px;">After — focus on</div>
+          <div class="focus-mini focus" style="position:relative;">
+            <div class="mini-topnav" style="opacity:0.6;"><span>BEEHIVE</span><span style="margin-left:auto;" class="y">FOCUS · ON</span></div>
+            <div class="mini-shell-body">
+              <div class="mini-binder"></div>
+              <div class="mini-editor">
+                <h1>2. What Cora found</h1>
+                <p>She lit the lamp. She did not light both lamps — only the small one over the desk.</p>
+                <p>Down the kitchen stairs in stocking feet, the air below the floor was colder than the morning above it.</p>
+                <p>Her father's chart room was annotated in a hand that wasn't his. The notes were precise, in margin-tight script, in answers to questions he had only ever asked aloud.</p>
+                <p>She read the same page three times. The lamp's reach was small and she had to lean for the next page.</p>
+              </div>
+              <div class="mini-meta"></div>
+            </div>
+            <div class="label-strip">Focus · 0 · 1fr · 0</div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="callout" style="margin-top:20px;">
+        <strong>Transition.</strong>
+        On enter, the binder and metadata grid tracks animate to <code style="font-family:var(--font-mono); font-size:11px; color:var(--brand);">0</code> over <strong>340ms</strong> with our standard curve.
+        The editor's left/right padding grows to fill the freed space; the toolbar fades 12% (brand chip and the maximize button stay full
+        opacity for affordance). On exit, the same animation in reverse — and if there's a sprint running, the progress strip seamlessly
+        re-anchors to the bottom bar without flickering.
+      </div>
+
+      <div class="cols-2-1" style="margin-top:32px; gap:24px;">
+        <div class="spec-card">
+          <h4 style="font-family:var(--font-display); font-weight:700; font-size:15px; color:var(--chrome-100); margin:0 0 8px;">Toolbar in focus mode</h4>
+          <p style="font-size:13.5px; color:var(--chrome-400); line-height:1.6; margin: 0 0 14px;">
+            The full toolbar stays visible at <strong style="color:var(--chrome-200);">88% opacity</strong>; on hover anywhere along its row it returns to 100%. The minimize button replaces the maximize, the cheatsheet hint shifts to the centre right, and the lower-priority "Find" / "History" / "Analysis" buttons stay live — Focus is not a kiosk, it's a layout choice.
+          </p>
+          <div style="border:1px solid var(--chrome-800); border-radius:var(--r-md); overflow:hidden;">
+            <div class="toolbar" style="opacity:0.88;">
+              <div class="tb-group">
+                <button class="tbtn" title="Undo"><svg width="14" height="14"><use href="#i-arr-up"/></svg></button>
+                <button class="tbtn" title="Redo"><svg width="14" height="14"><use href="#i-arr-down"/></svg></button>
+              </div>
+              <span class="tb-sep"></span>
+              <select class="tb-select" style="pointer-events:none;"><option>H1</option></select>
+              <span class="tb-sep"></span>
+              <div class="tb-group">
+                <button class="tbtn"><strong style="font-family:var(--font-display); font-weight:700;">B</strong></button>
+                <button class="tbtn"><em style="font-style:italic; font-family:var(--font-prose);">I</em></button>
+              </div>
+              <span class="tb-spacer"></span>
+              <div class="tb-group">
+                <button class="tbtn" title="Find"><svg width="14" height="14"><use href="#i-search"/></svg></button>
+                <button class="tbtn" title="History"><svg width="14" height="14"><use href="#i-history"/></svg></button>
+                <button class="tbtn" title="Analysis"><svg width="14" height="14"><use href="#i-analysis"/></svg></button>
+                <button class="tbtn active" title="Exit focus"><svg width="14" height="14"><use href="#i-minimize"/></svg></button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="spec-card">
+          <h4 style="font-family:var(--font-display); font-weight:700; font-size:15px; color:var(--chrome-100); margin:0 0 8px;">What we chose against</h4>
+          <ul style="margin:0; padding-left:18px; color:var(--chrome-300); font-size:13.5px; line-height:1.7;">
+            <li><strong style="color:var(--chrome-200);">Wider prose.</strong> The brief proposes letting the prose stretch. We don't — line length is a typographic choice and 720px is right at 18px Newsreader. Hiding the sidebars just frees the air around it.</li>
+            <li><strong style="color:var(--chrome-200);">Hide toolbar on idle.</strong> The brief calls this a "minimal sub-mode." We didn't ship it. Writers reach for Bold mid-sentence; the cost of hiding the toolbar is hover discovery on every formatting reach.</li>
+            <li><strong style="color:var(--chrome-200);">Hide status bar.</strong> Word count + save dot + sprint are <em>productive</em> reassurance. They stay.</li>
+            <li><strong style="color:var(--chrome-200);">Tinting the chrome.</strong> The remaining chrome is fade-to-88%, not tinted. Tinting the toolbar warmer in focus made it feel like a second app — keeping the same color but reducing presence felt right.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §6  Version history drawer                                    -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-history">
+      <div class="eyebrow"><span class="num">06</span> <span>Surface — Version history drawer</span></div>
+      <h2 class="title">A spine of timestamps —<br><em>on the right rail.</em></h2>
+      <p class="lede">
+        Premium. Snapshots fire every minute of active writing — the drawer is where the writer goes to look at, compare,
+        and restore them. It occupies the metadata panel's slot exactly: same 288px width, same chrome, same border seam,
+        same scroll behaviour. The chapter editor doesn't move; only the right rail changes what it's showing.
+      </p>
+
+      <div class="artboard">
+        <div class="artboard-header"><strong>Version history · drawer state</strong><span>premium · populated · today active</span></div>
+        <div class="artboard-body" style="padding:0;">
+          <div class="studio" style="height:680px;">
+            <div class="topnav">
+              <div class="left">
+                <span class="logo"><span class="hex"><svg width="16" height="16" style="color:var(--brand);"><use href="#i-hive"/></svg></span>Beehive</span>
+                <nav><a href="#" class="active">Studio</a><a href="#">Library</a><a href="#">Account</a></nav>
+              </div>
+              <div class="right">
+                <span style="font-family:var(--font-mono); font-size:11px; color:var(--chrome-400);">The Bell at Low Tide</span>
+                <span class="avatar">CM</span>
+              </div>
+            </div>
+            <div class="shell">
+              <aside class="binder">
+                <div class="binder-head">
+                  <div class="book-meta">PART ONE · 7 CHAPTERS</div>
+                  <div class="book-title">The Bell at Low Tide</div>
+                </div>
+                <div class="binder-tree">
+                  <div class="binder-row"><span class="chev open"><svg width="10" height="10"><use href="#i-chev-right"/></svg></span><span class="icon" style="color:var(--type-chapter);"><svg width="13" height="13"><use href="#i-chev-down"/></svg></span><span class="title" style="color:var(--chrome-200); font-weight:500;">Part One</span><span></span></div>
+                  <div class="binder-row indent-1"><span class="chev none"></span><span class="icon" style="color:var(--type-chapter);"><svg width="13" height="13"><use href="#i-chapter"/></svg></span><span class="title">1. The bell at low tide</span><span></span></div>
+                  <div class="binder-row indent-1 active"><span class="chev none"></span><span class="icon" style="color:var(--brand);"><svg width="13" height="13"><use href="#i-chapter"/></svg></span><span class="title">2. What Cora found</span><span></span></div>
+                  <div class="binder-row indent-1"><span class="chev none"></span><span class="icon" style="color:var(--type-chapter);"><svg width="13" height="13"><use href="#i-chapter"/></svg></span><span class="title">3. The keeper's letter</span><span></span></div>
+                  <div class="binder-row indent-1"><span class="chev none"></span><span class="icon" style="color:var(--type-chapter);"><svg width="13" height="13"><use href="#i-chapter"/></svg></span><span class="title">4. The empty inlet</span><span></span></div>
+                  <div class="binder-row indent-1"><span class="chev none"></span><span class="icon" style="color:var(--type-chapter);"><svg width="13" height="13"><use href="#i-chapter"/></svg></span><span class="title">5. Smoke at first light</span><span></span></div>
+                </div>
+                <div class="binder-foot"><button class="btn-add"><svg width="14" height="14"><use href="#i-plus"/></svg>Add</button></div>
+              </aside>
+
+              <div class="center">
+                <div class="toolbar">
+                  <button class="tbtn" title="Undo"><svg width="14" height="14"><use href="#i-arr-up"/></svg></button>
+                  <button class="tbtn" title="Redo"><svg width="14" height="14"><use href="#i-arr-down"/></svg></button>
+                  <span class="tb-sep"></span>
+                  <select class="tb-select"><option>H1</option></select>
+                  <span class="tb-sep"></span>
+                  <button class="tbtn"><strong>B</strong></button>
+                  <button class="tbtn"><em style="font-style:italic; font-family:var(--font-prose);">I</em></button>
+                  <span class="tb-spacer"></span>
+                  <button class="tbtn"><svg width="14" height="14"><use href="#i-search"/></svg></button>
+                  <button class="tbtn active"><svg width="14" height="14"><use href="#i-history"/></svg></button>
+                  <button class="tbtn"><svg width="14" height="14"><use href="#i-analysis"/></svg></button>
+                  <button class="tbtn"><svg width="14" height="14"><use href="#i-maximize"/></svg></button>
+                  <button class="tbtn"><svg width="14" height="14"><use href="#i-download"/></svg></button>
+                  <button class="tbtn"><svg width="14" height="14"><use href="#i-help"/></svg></button>
+                </div>
+                <div class="editor">
+                  <div class="prose-wrap">
+                    <div class="prose">
+                      <h1>2. What Cora found</h1>
+                      <p>She lit the lamp. She did not light both lamps — only the small one over the desk. <span class="faux-cursor"></span></p>
+                      <p>Down the kitchen stairs in stocking feet, the air below the floor was colder than the morning above it. Her father's chart room was annotated in a hand that wasn't his.</p>
+                      <p>The notes were precise, in margin-tight script, in answers to questions he had only ever asked aloud.</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="statusbar">
+                  <div class="left">
+                    <span class="save-dot"></span><span>Saved</span><span class="sep"></span>
+                    <span style="color:var(--chrome-200);">1,247 words</span><span class="sep"></span>
+                    <span>62% of 2,000</span>
+                  </div>
+                  <div class="right">
+                    <span class="sprint-btn"><svg width="12" height="12"><use href="#i-timer"/></svg>Start sprint</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- right slot: history drawer -->
+              <aside class="metadata vhdrawer" style="padding:0;">
+                <div class="vh-head">
+                  <span class="ico"><svg width="16" height="16"><use href="#i-history"/></svg></span>
+                  <div class="name"><div class="t">Version history</div><div class="s">CH 2 · 14 SNAPSHOTS · TODAY</div></div>
+                  <button class="tbtn" title="Close"><svg width="14" height="14"><use href="#i-x"/></svg></button>
+                </div>
+                <div class="vh-list">
+                  <div class="vh-group">Today</div>
+                  <div class="vh-row active">
+                    <span class="dot"></span>
+                    <div>
+                      <div class="time">2:14 PM</div>
+                      <div class="meta">1,247 words · just now</div>
+                    </div>
+                    <span class="badge manual">live</span>
+                  </div>
+                  <div class="vh-row">
+                    <span class="dot"></span>
+                    <div>
+                      <div class="time">2:08 PM</div>
+                      <div class="meta">1,228 words</div>
+                    </div>
+                    <span class="badge">auto</span>
+                  </div>
+                  <div class="vh-row">
+                    <span class="dot"></span>
+                    <div>
+                      <div class="time">2:00 PM</div>
+                      <div class="meta">1,180 words · sprint</div>
+                    </div>
+                    <span class="badge sprint">25m</span>
+                  </div>
+                  <div class="vh-row">
+                    <span class="dot"></span>
+                    <div>
+                      <div class="time">1:42 PM</div>
+                      <div class="meta">972 words</div>
+                    </div>
+                    <span class="badge">auto</span>
+                  </div>
+                  <div class="vh-row">
+                    <span class="dot"></span>
+                    <div>
+                      <div class="time">12:50 PM</div>
+                      <div class="meta">780 words · "before re-write"</div>
+                    </div>
+                    <span class="badge manual">manual</span>
+                  </div>
+                  <div class="vh-row">
+                    <span class="dot"></span>
+                    <div>
+                      <div class="time">11:01 AM</div>
+                      <div class="meta">612 words · sprint</div>
+                    </div>
+                    <span class="badge sprint">15m</span>
+                  </div>
+
+                  <div class="vh-group">Yesterday</div>
+                  <div class="vh-row">
+                    <span class="dot"></span>
+                    <div>
+                      <div class="time">May 25 · 8:42 PM</div>
+                      <div class="meta">410 words</div>
+                    </div>
+                    <span class="badge">auto</span>
+                  </div>
+                  <div class="vh-row">
+                    <span class="dot"></span>
+                    <div>
+                      <div class="time">May 25 · 8:08 PM</div>
+                      <div class="meta">240 words · first opened</div>
+                    </div>
+                    <span class="badge manual">start</span>
+                  </div>
+                </div>
+              </aside>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="margin-top:48px; font-family:var(--font-display); font-weight:700; font-size:20px; color:var(--chrome-100); letter-spacing:-0.01em;">States</h3>
+      <p class="note">Loading, populated, empty, free-tier upsell, and error. The drawer chrome stays identical across all five — the body is what swaps.</p>
+
+      <div class="cols4" style="gap:16px; margin-top:18px;">
+        <div class="state-card">
+          <div class="label"><strong>Loading</strong><span>initial fetch</span></div>
+          <div class="demo" style="padding:0; background:var(--chrome-900);">
+            <div class="vhdrawer" style="width:100%; height:300px;">
+              <div class="vh-head">
+                <span class="ico"><svg width="16" height="16"><use href="#i-history"/></svg></span>
+                <div class="name"><div class="t">Version history</div><div class="s">LOADING…</div></div>
+              </div>
+              <div style="padding:14px;">
+                <div style="height:48px; border-radius:6px; background:linear-gradient(90deg, var(--chrome-800), var(--chrome-750), var(--chrome-800)); background-size: 200% 100%; animation: shim 1.6s infinite; margin-bottom:8px;"></div>
+                <div style="height:48px; border-radius:6px; background:linear-gradient(90deg, var(--chrome-800), var(--chrome-750), var(--chrome-800)); background-size: 200% 100%; animation: shim 1.6s infinite 0.2s; margin-bottom:8px;"></div>
+                <div style="height:48px; border-radius:6px; background:linear-gradient(90deg, var(--chrome-800), var(--chrome-750), var(--chrome-800)); background-size: 200% 100%; animation: shim 1.6s infinite 0.4s;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="state-card">
+          <div class="label"><strong>Empty</strong><span>brand-new chapter</span></div>
+          <div class="demo" style="padding:0; background:var(--chrome-900);">
+            <div class="vhdrawer" style="width:100%; height:300px;">
+              <div class="vh-head">
+                <span class="ico"><svg width="16" height="16"><use href="#i-history"/></svg></span>
+                <div class="name"><div class="t">Version history</div><div class="s">CH 4 · 0 SNAPSHOTS</div></div>
+              </div>
+              <div class="vh-empty">
+                <span class="clock"><svg width="22" height="22"><use href="#i-history"/></svg></span>
+                <h4>Nothing here yet</h4>
+                <p>Keep writing — your chapter saves itself every minute, and the snapshots will appear here.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="state-card">
+          <div class="label"><strong>Free tier</strong><span>upsell card</span></div>
+          <div class="demo" style="padding:0; background:var(--chrome-900);">
+            <div class="vhdrawer" style="width:100%; height:300px;">
+              <div class="vh-head">
+                <span class="ico"><svg width="16" height="16"><use href="#i-history"/></svg></span>
+                <div class="name"><div class="t">Version history</div></div>
+              </div>
+              <div class="vh-upsell">
+                <span class="stack-thumb">⌘</span>
+                <span class="pro-pill"><svg width="9" height="9"><use href="#i-sparkle"/></svg>Premium</span>
+                <h4>Restore any version of your chapter.</h4>
+                <p>Beehive auto-saves your writing every minute. With Premium you can look at — and restore — every snapshot of every chapter going back through your edits.</p>
+                <button class="up-btn">Upgrade<svg width="13" height="13"><use href="#i-chev-right"/></svg></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="state-card">
+          <div class="label"><strong>Error</strong><span>fetch failed · retry</span></div>
+          <div class="demo" style="padding:0; background:var(--chrome-900);">
+            <div class="vhdrawer" style="width:100%; height:300px;">
+              <div class="vh-head">
+                <span class="ico" style="background:oklch(0.66 0.18 25 / 0.18); color:var(--error);"><svg width="16" height="16"><use href="#i-alert"/></svg></span>
+                <div class="name"><div class="t">Version history</div><div class="s" style="color:var(--error);">COULDN'T LOAD</div></div>
+              </div>
+              <div class="vh-empty">
+                <span class="clock" style="background:oklch(0.66 0.18 25 / 0.10); color:var(--error);"><svg width="22" height="22"><use href="#i-alert"/></svg></span>
+                <h4>We couldn't load your history</h4>
+                <p style="margin-bottom:14px;">Check your connection and try again. Your latest draft is safe on this device.</p>
+                <button class="btn-x ghost" style="padding:6px 12px; font-size:11px;"><svg width="12" height="12"><use href="#i-restore"/></svg>Retry</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <style>@keyframes shim { from { background-position: 200% 0; } to { background-position: -200% 0; } }</style>
+
+      <div class="callout" style="margin-top:24px;">
+        <strong>Snapshot row anatomy.</strong>
+        Each row is two lines: <strong style="color:var(--chrome-100); font-weight:500;">time</strong> in JBM (relative for today/yesterday, absolute thereafter) and
+        <strong style="color:var(--chrome-100); font-weight:500;">meta</strong> in Geist (word count + optional cause: sprint, manual, first-open). A gutter dot connects rows visually, like a timeline.
+        Manual snapshots can take a label — when they do, the label shows in quotes after the word count.
+        Sprint snapshots are tagged with the sprint duration.
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §7  Snapshot preview banner                                   -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-snap">
+      <div class="eyebrow"><span class="num">07</span> <span>Surface — Snapshot preview banner</span></div>
+      <h2 class="title">"You're looking at —<br><em>an earlier version."</em></h2>
+      <p class="lede">
+        Click a snapshot in the drawer and the editor enters preview mode. A thin yellow banner appears between the
+        toolbar and the prose body. The prose is the snapshot's content; the writer can read but not type; autosave
+        is paused. Two actions: <strong style="color:var(--chrome-100);">Restore this version</strong> (yellow, primary)
+        and <strong style="color:var(--chrome-100);">Back to current</strong> (ghost). Both are explicit; there is no
+        "click-out to dismiss."
+      </p>
+
+      <div class="artboard">
+        <div class="artboard-header"><strong>Snapshot preview banner · default state · dark editor</strong><span>between toolbar &amp; prose body</span></div>
+        <div class="artboard-body" style="padding:0; background:var(--chrome-950);">
+          <div style="display:grid; grid-template-rows: var(--toolbar-h) auto 1fr var(--statusbar-h); height:480px;">
+            <div class="toolbar" style="opacity:0.55;">
+              <button class="tbtn" disabled><svg width="14" height="14"><use href="#i-arr-up"/></svg></button>
+              <button class="tbtn" disabled><svg width="14" height="14"><use href="#i-arr-down"/></svg></button>
+              <span class="tb-sep"></span>
+              <select class="tb-select" disabled><option>H1</option></select>
+              <span class="tb-sep"></span>
+              <button class="tbtn" disabled><strong>B</strong></button>
+              <button class="tbtn" disabled><em style="font-style:italic; font-family:var(--font-prose);">I</em></button>
+              <span class="tb-spacer"></span>
+              <button class="tbtn active"><svg width="14" height="14"><use href="#i-history"/></svg></button>
+            </div>
+            <div class="snap-banner">
+              <span class="icon"><svg width="16" height="16"><use href="#i-history"/></svg></span>
+              <div class="label">Previewing version from <strong>Today · 12:50 PM</strong> · 780 words<span class="ro">Read-only</span></div>
+              <div class="actions">
+                <button class="b ghost">Back to current</button>
+                <button class="b primary"><svg width="13" height="13"><use href="#i-restore"/></svg>Restore this version</button>
+              </div>
+            </div>
+            <div class="editor" style="background:var(--canvas-dark-100); cursor:default;">
+              <div class="prose-wrap">
+                <div class="prose" style="user-select:none;">
+                  <h1>2. What Cora found <span style="font-family:var(--font-mono); font-size:11px; color:var(--canvas-dark-ink-muted); font-weight:400; letter-spacing:0.04em; margin-left:8px; padding:2px 8px; background:oklch(0.85 0.18 90 / 0.10); border-radius:var(--r-xs); vertical-align:middle;">snapshot</span></h1>
+                  <p style="opacity:0.85;">She lit the lamp. The kitchen below the floor was colder than the morning above it.</p>
+                  <p style="opacity:0.85;">Her father's notes ran down both margins of the chart, in a hand that wasn't his.</p>
+                </div>
+              </div>
+            </div>
+            <div class="statusbar">
+              <div class="left">
+                <span class="save-dot" style="background:var(--chrome-500); box-shadow:0 0 0 3px var(--chrome-800);"></span>
+                <span>Autosave paused · preview</span><span class="sep"></span>
+                <span style="color:var(--chrome-300);">780 words</span>
+              </div>
+              <div class="right">
+                <span style="font-family:var(--font-mono); font-size:11px; color:var(--brand);">Snapshot from May 26 · 12:50 PM</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="margin-top:48px; font-family:var(--font-display); font-weight:700; font-size:20px; color:var(--chrome-100); letter-spacing:-0.01em;">States &amp; light parity</h3>
+      <p class="note">Default · restoring · error · light editor. Each banner spans the editor's full width; the buttons stay right-aligned.</p>
+
+      <div style="display:flex; flex-direction:column; gap:12px; margin-top:18px;">
+        <div class="snap-banner">
+          <span class="icon"><svg width="16" height="16"><use href="#i-history"/></svg></span>
+          <div class="label">Previewing version from <strong>Today · 12:50 PM</strong> · 780 words<span class="ro">Read-only</span></div>
+          <div class="actions">
+            <button class="b ghost">Back to current</button>
+            <button class="b primary"><svg width="13" height="13"><use href="#i-restore"/></svg>Restore this version</button>
+          </div>
+        </div>
+        <div class="snap-banner">
+          <span class="icon"><svg width="16" height="16"><use href="#i-restore"/></svg></span>
+          <div class="label">Restoring version from <strong>Today · 12:50 PM</strong> — saving your current draft first…</div>
+          <div class="actions">
+            <button class="b primary loading" disabled style="opacity:0.85;"><span class="spin" style="border-color:var(--brand-ink); border-right-color:transparent;"></span>Restoring…</button>
+          </div>
+        </div>
+        <div class="snap-banner error">
+          <span class="icon"><svg width="16" height="16"><use href="#i-alert"/></svg></span>
+          <div class="label"><strong>Couldn't restore version.</strong> Your live draft is unchanged. Please check your connection and try again.</div>
+          <div class="actions">
+            <button class="b ghost" style="border-color:oklch(0.66 0.18 25 / 0.4); color:var(--chrome-200);">Dismiss</button>
+            <button class="b primary"><svg width="13" height="13"><use href="#i-restore"/></svg>Retry</button>
+          </div>
+        </div>
+        <div class="snap-banner paper">
+          <span class="icon"><svg width="16" height="16"><use href="#i-history"/></svg></span>
+          <div class="label">Previewing version from <strong>Today · 12:50 PM</strong> · 780 words<span class="ro">Read-only</span></div>
+          <div class="actions">
+            <button class="b ghost">Back to current</button>
+            <button class="b primary"><svg width="13" height="13"><use href="#i-restore"/></svg>Restore this version</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-top:24px;">
+        <strong>Restore is reversible.</strong>
+        Restoring an old snapshot first writes the <em>current</em> live draft as a manual snapshot labelled "before restore," then loads the chosen
+        version into the editor and resumes autosave. So even though the banner copy reads "restore this version," nothing is destroyed —
+        which is why we kept the action yellow (informational primary) rather than red (destructive). The confirmation dialog
+        for restore is the lighter "Are you sure?" variant; see §12.
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §8  Find &amp; Replace overlay                                   -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-find">
+      <div class="eyebrow"><span class="num">08</span> <span>Surface — Find &amp; Replace overlay</span></div>
+      <h2 class="title">A drawer that lives —<br><em>at the top of the page.</em></h2>
+      <p class="lede">
+        Same family as VS Code / Google Docs — a thin strip that slides down between the toolbar and the prose,
+        autofocuses the search input, and highlights matches in the body. We slimmed it: no busy icon-button row,
+        no nested popovers. Match case · Whole word · Regex all live in the bar; Replace is a toggle that expands a
+        second row. <strong style="color:var(--chrome-200);">Light + dark parity</strong> is non-negotiable, so we
+        spec both.
+      </p>
+
+      <div class="artboard">
+        <div class="artboard-header"><strong>Find &amp; Replace · dark editor · replace expanded</strong><span>between toolbar &amp; prose</span></div>
+        <div class="artboard-body" style="padding:0; background:var(--chrome-950);">
+          <div style="display:grid; grid-template-rows: var(--toolbar-h) 1fr; height:420px;">
+            <div class="toolbar">
+              <button class="tbtn"><svg width="14" height="14"><use href="#i-arr-up"/></svg></button>
+              <button class="tbtn"><svg width="14" height="14"><use href="#i-arr-down"/></svg></button>
+              <span class="tb-sep"></span>
+              <select class="tb-select"><option>Body</option></select>
+              <span class="tb-sep"></span>
+              <button class="tbtn"><strong>B</strong></button>
+              <button class="tbtn"><em style="font-style:italic; font-family:var(--font-prose);">I</em></button>
+              <span class="tb-spacer"></span>
+              <button class="tbtn active"><svg width="14" height="14"><use href="#i-search"/></svg></button>
+              <button class="tbtn"><svg width="14" height="14"><use href="#i-history"/></svg></button>
+              <button class="tbtn"><svg width="14" height="14"><use href="#i-help"/></svg></button>
+            </div>
+            <div style="position:relative; background:var(--canvas-dark-100); padding-top:14px;">
+              <div style="position:absolute; left:50%; top:14px; transform:translateX(-50%); z-index:10;">
+                <div class="find-bar">
+                  <span class="icon"><svg width="14" height="14"><use href="#i-search"/></svg></span>
+                  <input class="input focused" value="lamp" />
+                  <span class="count">3 of 12</span>
+                  <button class="ibtn" title="Previous"><svg width="12" height="12"><use href="#i-chev-up"/></svg></button>
+                  <button class="ibtn" title="Next"><svg width="12" height="12"><use href="#i-chev-down"/></svg></button>
+                  <span class="v-sep"></span>
+                  <button class="ibtn active" title="Match case"><span class="ic-aa">A<em>a</em></span></button>
+                  <button class="ibtn" title="Whole word">"a"</button>
+                  <button class="ibtn" title="Regex">.*</button>
+                  <span class="v-sep"></span>
+                  <button class="ibtn active" title="Replace"><svg width="12" height="12"><use href="#i-replace"/></svg></button>
+                  <button class="ibtn" title="Close"><svg width="12" height="12"><use href="#i-x"/></svg></button>
+                </div>
+                <div class="find-bar-2">
+                  <span class="icon"><svg width="14" height="14"><use href="#i-replace"/></svg></span>
+                  <input class="input" placeholder="Replace…" value="candle" />
+                  <button class="btn-x ghost" style="padding:6px 12px; font-size:12px;">Replace</button>
+                  <button class="btn-x" style="padding:6px 12px; font-size:12px;">Replace all</button>
+                </div>
+              </div>
+              <div style="padding:64px 80px 24px; font-family:var(--font-prose); font-size:16px; line-height:1.78; color:var(--canvas-dark-ink); max-width:640px; margin: 100px auto 0;">
+                <p style="margin:0 0 1em;">She lit the <mark style="background:oklch(0.85 0.18 90 / 0.42); color:inherit; padding:0 2px; border-radius:3px;">lamp</mark>. She did not light both <mark style="background:oklch(0.85 0.18 90 / 0.22); color:inherit; padding:0 2px; border-radius:3px;">lamps</mark> — only the small one over the desk.</p>
+                <p style="margin:0 0 1em;">The <mark style="background:oklch(0.85 0.18 90 / 0.22); color:inherit; padding:0 2px; border-radius:3px;">lamp's</mark> reach was small and she had to lean for the next page.</p>
+                <p style="margin:0;">She raised the <mark style="background:oklch(0.85 0.18 90 / 0.22); color:inherit; padding:0 2px; border-radius:3px;">lamp</mark> and the room found its corners.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="margin-top:48px; font-family:var(--font-display); font-weight:700; font-size:20px; color:var(--chrome-100); letter-spacing:-0.01em;">States &amp; light parity</h3>
+
+      <div style="display:flex; flex-direction:column; gap:16px; align-items:center; margin-top:18px;">
+        <!-- closed/just open -->
+        <div class="find-bar">
+          <span class="icon"><svg width="14" height="14"><use href="#i-search"/></svg></span>
+          <input class="input focused" placeholder="Find in chapter…" />
+          <span class="count" style="color:var(--chrome-600);">—</span>
+          <button class="ibtn" disabled><svg width="12" height="12"><use href="#i-chev-up"/></svg></button>
+          <button class="ibtn" disabled><svg width="12" height="12"><use href="#i-chev-down"/></svg></button>
+          <span class="v-sep"></span>
+          <button class="ibtn"><span class="ic-aa">A<em>a</em></span></button>
+          <button class="ibtn">"a"</button>
+          <button class="ibtn">.*</button>
+          <span class="v-sep"></span>
+          <button class="ibtn"><svg width="12" height="12"><use href="#i-replace"/></svg></button>
+          <button class="ibtn"><svg width="12" height="12"><use href="#i-x"/></svg></button>
+        </div>
+        <!-- typing, count -->
+        <div class="find-bar">
+          <span class="icon"><svg width="14" height="14"><use href="#i-search"/></svg></span>
+          <input class="input" value="father" />
+          <span class="count">5 of 18</span>
+          <button class="ibtn"><svg width="12" height="12"><use href="#i-chev-up"/></svg></button>
+          <button class="ibtn"><svg width="12" height="12"><use href="#i-chev-down"/></svg></button>
+          <span class="v-sep"></span>
+          <button class="ibtn"><span class="ic-aa">A<em>a</em></span></button>
+          <button class="ibtn">"a"</button>
+          <button class="ibtn">.*</button>
+          <span class="v-sep"></span>
+          <button class="ibtn"><svg width="12" height="12"><use href="#i-replace"/></svg></button>
+          <button class="ibtn"><svg width="12" height="12"><use href="#i-x"/></svg></button>
+        </div>
+        <!-- no results -->
+        <div class="find-bar">
+          <span class="icon" style="color:var(--error);"><svg width="14" height="14"><use href="#i-search"/></svg></span>
+          <input class="input" value="cathedral" style="border-color:var(--error); box-shadow: 0 0 0 3px oklch(0.66 0.18 25 / 0.2);" />
+          <span class="count none">No results</span>
+          <button class="ibtn" disabled><svg width="12" height="12"><use href="#i-chev-up"/></svg></button>
+          <button class="ibtn" disabled><svg width="12" height="12"><use href="#i-chev-down"/></svg></button>
+          <span class="v-sep"></span>
+          <button class="ibtn"><span class="ic-aa">A<em>a</em></span></button>
+          <button class="ibtn">"a"</button>
+          <button class="ibtn">.*</button>
+          <span class="v-sep"></span>
+          <button class="ibtn"><svg width="12" height="12"><use href="#i-replace"/></svg></button>
+          <button class="ibtn"><svg width="12" height="12"><use href="#i-x"/></svg></button>
+        </div>
+        <!-- paper -->
+        <div class="find-bar paper">
+          <span class="icon"><svg width="14" height="14"><use href="#i-search"/></svg></span>
+          <input class="input" value="lamp" />
+          <span class="count">3 of 12</span>
+          <button class="ibtn"><svg width="12" height="12"><use href="#i-chev-up"/></svg></button>
+          <button class="ibtn"><svg width="12" height="12"><use href="#i-chev-down"/></svg></button>
+          <span class="v-sep"></span>
+          <button class="ibtn active"><span class="ic-aa">A<em>a</em></span></button>
+          <button class="ibtn">"a"</button>
+          <button class="ibtn">.*</button>
+          <span class="v-sep"></span>
+          <button class="ibtn active"><svg width="12" height="12"><use href="#i-replace"/></svg></button>
+          <button class="ibtn"><svg width="12" height="12"><use href="#i-x"/></svg></button>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-top:24px;">
+        <strong>Highlight palette.</strong>
+        Current match: <span style="background:oklch(0.85 0.18 90 / 0.50); padding:0 4px; border-radius:3px; color:var(--chrome-100);">brand-yellow 50%</span> with a 1px inset darker outline.
+        Other matches: <span style="background:oklch(0.85 0.18 90 / 0.22); padding:0 4px; border-radius:3px; color:var(--chrome-100);">brand-yellow 22%</span> — same hue, half the intensity. Both work on cream paper and warm coffee; we tested at 0.18 chroma and the same alpha values held.
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §9  Writing analysis panel                                    -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-analysis">
+      <div class="eyebrow"><span class="num">09</span> <span>Surface — Writing analysis panel</span></div>
+      <h2 class="title">Hand-drawn stats —<br><em>not a terminal.</em></h2>
+      <p class="lede">
+        Reading level, sentence-length distribution, pacing, adverb / passive / filler counts, and a short list of
+        most-used words. The brief warns against "Bloomberg terminal" charts. We took the warning seriously: histograms
+        feel ruled and ink-stamped, stat rows are paper-coloured cards, the headline score is in Comfortaa not a pie chart.
+        This panel <em>pushes</em> the prose narrower rather than overlaying it — writers want to see both at once.
+      </p>
+
+      <div class="artboard">
+        <div class="artboard-header"><strong>Writing analysis · panel open · dark editor</strong><span>320px panel · slides in from right · pushes prose</span></div>
+        <div class="artboard-body" style="padding:0;">
+          <div style="display:grid; grid-template-columns: 1fr 320px; height:560px; background:var(--chrome-950);">
+            <div style="background:var(--canvas-dark-100); padding:48px 56px; font-family:var(--font-prose); font-size:16px; line-height:1.78; color:var(--canvas-dark-ink); overflow:hidden;">
+              <div style="font-family:var(--font-display); font-weight:700; font-size:22px; color:var(--canvas-dark-ink-strong); margin-bottom:14px; letter-spacing:-0.015em;">2. What Cora found</div>
+              <p style="margin:0 0 1em;">She lit the lamp. She did not light both lamps — only the small one over the desk. <strong>Down the kitchen stairs in stocking feet,</strong> the air below the floor was colder than the morning above it.</p>
+              <p style="margin:0 0 1em;">Her father's chart room was annotated in a hand that wasn't his. The notes were precise, in margin-tight script, in answers to questions he had only ever asked aloud. <em>She read the same page three times.</em></p>
+              <p style="margin:0;">The lamp's reach was small and she had to lean for the next page. She raised it and the room found its corners.</p>
+            </div>
+            <div class="analysis">
+              <div class="an-head">
+                <span style="width:28px; height:28px; border-radius:var(--r-md); background:var(--brand-soft); color:var(--brand); display:inline-flex; align-items:center; justify-content:center;"><svg width="15" height="15"><use href="#i-analysis"/></svg></span>
+                <span class="t">Writing analysis</span>
+                <button class="tbtn"><svg width="14" height="14"><use href="#i-x"/></svg></button>
+              </div>
+              <div class="an-body">
+                <div class="an-section">
+                  <div class="lab">Readability · Flesch–Kincaid</div>
+                  <div class="an-score">
+                    <span class="big">72</span>
+                    <div>
+                      <span class="small">Fairly easy</span>
+                      <div class="hint">~8th-grade level · good for popular fiction</div>
+                    </div>
+                  </div>
+                  <div class="an-bar" title="0 = dense academic · 100 = easy">
+                    <div class="fill" style="width:72%;"></div>
+                    <div class="marker" style="left:72%;"></div>
+                  </div>
+                </div>
+
+                <div class="an-section">
+                  <div class="lab">Sentence length · 6 to 28 words</div>
+                  <div class="an-hist">
+                    <div class="b" style="height:18%;"></div>
+                    <div class="b" style="height:36%;"></div>
+                    <div class="b" style="height:74%;"></div>
+                    <div class="b" style="height:92%;"></div>
+                    <div class="b" style="height:60%;"></div>
+                    <div class="b" style="height:44%;"></div>
+                    <div class="b" style="height:28%;"></div>
+                    <div class="b muted" style="height:14%;"></div>
+                  </div>
+                  <div class="an-hist-labels">
+                    <span>0–4</span><span>5–9</span><span>10–14</span><span>15–19</span><span>20–24</span><span>25–29</span><span>30–34</span><span>35+</span>
+                  </div>
+                  <div class="hint" style="font-size:11px; color:var(--chrome-500); margin-top:6px; font-family:var(--font-prose); font-style:italic;">Average 16 words · varied rhythm.</div>
+                </div>
+
+                <div class="an-section">
+                  <div class="lab">Voice · pacing</div>
+                  <div class="an-stats">
+                    <div class="an-stat"><span class="num">3</span><span class="nm">Adverbs <span style="color:var(--chrome-500); font-size:11px; font-family:var(--font-mono);">slowly · only · still</span></span><span class="trend down">−2</span></div>
+                    <div class="an-stat"><span class="num">2</span><span class="nm">Passive voice</span><span class="trend down">−1</span></div>
+                    <div class="an-stat"><span class="num">4</span><span class="nm">Filler words</span><span class="trend up">+1</span></div>
+                    <div class="an-stat"><span class="num">14m</span><span class="nm">Estimated read time</span><span class="trend">—</span></div>
+                  </div>
+                </div>
+
+                <div class="an-section">
+                  <div class="lab">Most-used words · skipping common</div>
+                  <div class="an-cloud">
+                    <span class="w" style="font-size:22px;">lamp<span class="n">12</span></span>
+                    <span class="w" style="font-size:18px;">father<span class="n">9</span></span>
+                    <span class="w" style="font-size:17px;">she<span class="n">28</span></span>
+                    <span class="w" style="font-size:15px;">chart<span class="n">7</span></span>
+                    <span class="w" style="font-size:13px;">letter<span class="n">5</span></span>
+                    <span class="w" style="font-size:13px;">desk<span class="n">5</span></span>
+                    <span class="w" style="font-size:12px;">cold<span class="n">4</span></span>
+                    <span class="w" style="font-size:12px;">below<span class="n">4</span></span>
+                    <span class="w" style="font-size:11px;">notes<span class="n">3</span></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="margin-top:48px; font-family:var(--font-display); font-weight:700; font-size:20px; color:var(--chrome-100); letter-spacing:-0.01em;">States &amp; light parity</h3>
+
+      <div class="cols2" style="gap:18px; margin-top:18px;">
+        <div class="state-card">
+          <div class="label"><strong>Empty</strong><span>not enough prose</span></div>
+          <div class="demo" style="padding:0; background:var(--chrome-900); min-height:300px;">
+            <div class="analysis" style="width:100%; height:300px;">
+              <div class="an-head">
+                <span style="width:28px; height:28px; border-radius:var(--r-md); background:var(--brand-soft); color:var(--brand); display:inline-flex; align-items:center; justify-content:center;"><svg width="15" height="15"><use href="#i-analysis"/></svg></span>
+                <span class="t">Writing analysis</span>
+                <button class="tbtn"><svg width="14" height="14"><use href="#i-x"/></svg></button>
+              </div>
+              <div class="vh-empty" style="border-top:0;">
+                <span class="clock"><svg width="22" height="22"><use href="#i-feather"/></svg></span>
+                <h4>A little more, first.</h4>
+                <p>Write at least 200 words and we can take a closer look at your sentences.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="state-card">
+          <div class="label"><strong>Light editor parity</strong><span>analysis on cream paper</span></div>
+          <div class="demo paper" style="padding:0; min-height:300px;">
+            <div class="analysis paper" style="width:100%; height:300px;">
+              <div class="an-head">
+                <span style="width:28px; height:28px; border-radius:var(--r-md); background:oklch(0.85 0.18 90 / 0.25); color:oklch(0.42 0.13 70); display:inline-flex; align-items:center; justify-content:center;"><svg width="15" height="15"><use href="#i-analysis"/></svg></span>
+                <span class="t">Writing analysis</span>
+                <button class="tbtn" style="color:var(--paper-ink-muted);"><svg width="14" height="14"><use href="#i-x"/></svg></button>
+              </div>
+              <div class="an-body">
+                <div class="an-section">
+                  <div class="lab">Readability</div>
+                  <div class="an-score">
+                    <span class="big" style="color:oklch(0.45 0.13 60);">72</span>
+                    <div><span class="small">Fairly easy</span></div>
+                  </div>
+                  <div class="an-bar"><div class="fill" style="width:72%;"></div><div class="marker" style="left:72%;"></div></div>
+                </div>
+                <div class="an-section" style="border-bottom:0;">
+                  <div class="lab">Sentence length</div>
+                  <div class="an-hist">
+                    <div class="b" style="height:18%; background:oklch(0.55 0.13 70);"></div>
+                    <div class="b" style="height:36%; background:oklch(0.55 0.13 70);"></div>
+                    <div class="b" style="height:74%; background:oklch(0.55 0.13 70);"></div>
+                    <div class="b" style="height:92%; background:oklch(0.55 0.13 70);"></div>
+                    <div class="b" style="height:60%; background:oklch(0.55 0.13 70);"></div>
+                    <div class="b" style="height:44%; background:oklch(0.55 0.13 70);"></div>
+                    <div class="b muted" style="height:28%;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §10  Keyboard cheatsheet                                      -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-cheat">
+      <div class="eyebrow"><span class="num">10</span> <span>Surface — Keyboard cheatsheet</span></div>
+      <h2 class="title">A friendly reminder —<br><em>not a manual.</em></h2>
+      <p class="lede">
+        A centred modal that lists the studio's shortcuts. The brief asked for keys that feel like physical paper.
+        We built a <code style="font-family:var(--font-mono); color:var(--brand); background:oklch(0.85 0.18 90 / 0.10); padding:1px 6px; border-radius:4px;">&lt;kbd&gt;</code> with a slight bevel, a top highlight, and a sharp bottom edge —
+        the same depth language as our paper cards, just smaller. Platform-aware (⌘ on Mac, Ctrl on Windows/Linux). Grouped by intent.
+      </p>
+
+      <div class="cols-2-1" style="margin-top:24px; gap:32px; align-items:start;">
+        <div class="dimstage" style="height:600px;">
+          <div class="stage-shell" style="background:linear-gradient(180deg, var(--chrome-900), var(--chrome-950)); display:grid; grid-template-rows:48px 1fr 36px;">
+            <div style="background:var(--chrome-850); border-bottom:1px solid var(--chrome-800);"></div>
+            <div style="background:var(--canvas-dark-100); padding:32px 64px; opacity:0.6;">
+              <div style="font-family:var(--font-display); font-weight:700; font-size:18px; color:var(--canvas-dark-ink-strong); margin-bottom:14px;">2. What Cora found</div>
+              <p style="font-family:var(--font-prose); margin:0 0 8px; color:var(--canvas-dark-ink-muted);">She lit the lamp. The kitchen below the floor was colder than the morning above it.</p>
+            </div>
+            <div style="background:var(--chrome-850); border-top:1px solid var(--chrome-800);"></div>
+          </div>
+          <div class="modal-over">
+            <div class="modal md">
+              <div class="modal-h">
+                <div style="display:flex; gap:12px; align-items:center;">
+                  <span style="width:32px; height:32px; border-radius:var(--r-md); background:var(--brand-soft); color:var(--brand); display:inline-flex; align-items:center; justify-content:center;"><svg width="17" height="17"><use href="#i-cmd"/></svg></span>
+                  <h3>Keyboard shortcuts</h3>
+                </div>
+                <button class="x"><svg width="16" height="16"><use href="#i-x"/></svg></button>
+              </div>
+              <div class="modal-b" style="padding-top:6px;">
+                <div class="cheat-list">
+                  <div class="grp-head">Writing</div>
+                  <div class="action"><span class="ico"><svg width="14" height="14"><use href="#i-feather"/></svg></span>Save</div>
+                  <div class="combo"><span class="kbcombo"><span class="kbcap">⌘</span><span class="plus">+</span><span class="kbcap">S</span></span></div>
+                  <div class="action"><span class="ico"><strong style="font-family:var(--font-display);">B</strong></span>Bold</div>
+                  <div class="combo"><span class="kbcombo"><span class="kbcap">⌘</span><span class="plus">+</span><span class="kbcap">B</span></span></div>
+                  <div class="action"><span class="ico"><em style="font-style:italic; font-family:var(--font-prose);">I</em></span>Italic</div>
+                  <div class="combo"><span class="kbcombo"><span class="kbcap">⌘</span><span class="plus">+</span><span class="kbcap">I</span></span></div>
+                  <div class="action"><span class="ico"><span style="text-decoration:underline; font-family:var(--font-display);">U</span></span>Underline</div>
+                  <div class="combo"><span class="kbcombo"><span class="kbcap">⌘</span><span class="plus">+</span><span class="kbcap">U</span></span></div>
+                  <div class="action"><span class="ico"><svg width="14" height="14"><use href="#i-arr-up"/></svg></span>Undo</div>
+                  <div class="combo"><span class="kbcombo"><span class="kbcap">⌘</span><span class="plus">+</span><span class="kbcap">Z</span></span></div>
+                  <div class="action"><span class="ico"><svg width="14" height="14"><use href="#i-arr-down"/></svg></span>Redo</div>
+                  <div class="combo"><span class="kbcombo"><span class="kbcap">⌘</span><span class="plus">+</span><span class="kbcap">⇧</span><span class="plus">+</span><span class="kbcap">Z</span></span></div>
+
+                  <div class="grp-head">Navigation &amp; mode</div>
+                  <div class="action"><span class="ico"><svg width="14" height="14"><use href="#i-search"/></svg></span>Find &amp; replace</div>
+                  <div class="combo"><span class="kbcombo"><span class="kbcap">⌘</span><span class="plus">+</span><span class="kbcap">F</span></span></div>
+                  <div class="action"><span class="ico"><svg width="14" height="14"><use href="#i-maximize"/></svg></span>Toggle focus mode</div>
+                  <div class="combo"><span class="kbcombo"><span class="kbcap">⌘</span><span class="plus">+</span><span class="kbcap">.</span></span></div>
+                  <div class="action"><span class="ico"><svg width="14" height="14"><use href="#i-corkboard"/></svg></span>Toggle corkboard</div>
+                  <div class="combo"><span class="kbcombo"><span class="kbcap">⌘</span><span class="plus">+</span><span class="kbcap">⇧</span><span class="plus">+</span><span class="kbcap">C</span></span></div>
+                  <div class="action"><span class="ico"><svg width="14" height="14"><use href="#i-x"/></svg></span>Close panels / overlay</div>
+                  <div class="combo"><span class="kbcombo"><span class="kbcap wide">Esc</span></span></div>
+
+                  <div class="grp-head">Help</div>
+                  <div class="action"><span class="ico"><svg width="14" height="14"><use href="#i-help"/></svg></span>This cheatsheet</div>
+                  <div class="combo"><span class="kbcombo"><span class="kbcap">⌘</span><span class="plus">+</span><span class="kbcap">/</span></span></div>
+                </div>
+              </div>
+              <div class="modal-f">
+                <span class="hint">Press <span class="kbcap" style="display:inline-flex; height:18px; min-width:auto; padding:0 5px; font-size:10px;">Esc</span> to close</span>
+                <div class="grow"></div>
+                <button class="btn-x">Got it</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="md-label" style="color:var(--brand);">The paper-key</div>
+          <p style="font-size:14px; color:var(--chrome-300); line-height:1.6; margin:6px 0 14px;">
+            Single key. Modifier. Wide cap. Chord. Same primitive everywhere — toasts, tooltips, hints, find &amp; replace footer.
+          </p>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; padding:18px; border:1px solid var(--chrome-800); border-radius:var(--r-md); background:var(--chrome-900);">
+            <span class="kbcap">A</span>
+            <span class="kbcap">B</span>
+            <span class="kbcap">⌘</span>
+            <span class="kbcap">⇧</span>
+            <span class="kbcap">⌥</span>
+            <span class="kbcap">⌃</span>
+            <span class="kbcap wide">Esc</span>
+            <span class="kbcap wide">Enter</span>
+            <span class="kbcap wide">Tab</span>
+            <span class="kbcombo"><span class="kbcap">⌘</span><span class="plus">+</span><span class="kbcap">S</span></span>
+            <span class="kbcombo"><span class="kbcap">⌘</span><span class="plus">+</span><span class="kbcap">⇧</span><span class="plus">+</span><span class="kbcap">Z</span></span>
+          </div>
+
+          <div class="md-label" style="color:var(--brand); margin-top:24px;">On paper</div>
+          <p style="font-size:14px; color:var(--chrome-300); line-height:1.6; margin:6px 0 14px;">
+            Same construction, cream cap, soft sepia bevel — for the find-bar footer when the editor is in light mode.
+          </p>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; padding:18px; border-radius:var(--r-md); background:var(--paper-100);">
+            <span class="kbcap paper">A</span>
+            <span class="kbcap paper">⌘</span>
+            <span class="kbcap paper">⇧</span>
+            <span class="kbcap paper wide">Esc</span>
+            <span class="kbcombo"><span class="kbcap paper">⌘</span><span class="plus" style="color:var(--paper-ink-muted);">+</span><span class="kbcap paper">F</span></span>
+          </div>
+
+          <p class="note" style="margin-top:24px;">
+            <strong>Platform symbols.</strong>
+            ⌘ (Cmd), ⇧ (Shift), ⌥ (Opt), ⌃ (Ctrl) on macOS. <span class="kbcap" style="display:inline-flex; height:18px; min-width:auto; padding:0 5px; font-size:10px;">Ctrl</span>, <span class="kbcap" style="display:inline-flex; height:18px; min-width:auto; padding:0 5px; font-size:10px;">Shift</span>, <span class="kbcap" style="display:inline-flex; height:18px; min-width:auto; padding:0 5px; font-size:10px;">Alt</span> on Windows / Linux. Detection is OS-level, not browser-level — Cmd+B on a Mac stays Cmd+B even on a Linux build.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §11  Export modal                                              -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-export">
+      <div class="eyebrow"><span class="num">11</span> <span>Surface — Export modal</span></div>
+      <h2 class="title">Pick a format, pick a look —<br><em>then a yellow button.</em></h2>
+      <p class="lede">
+        A 720px-wide modal in three steps: <strong style="color:var(--chrome-200);">Format</strong> (PDF · EPUB · DOCX · Markdown · Text),
+        <strong style="color:var(--chrome-200);">Preset</strong> (only visible when a format with presets is chosen),
+        <strong style="color:var(--chrome-200);">Options</strong> (front/back matter, page numbers, table of contents). One CTA, one cancel.
+        Preset thumbnails are tiny live mocks — not stock screenshots — so the user can tell Classic Novel from Modern Minimal at a glance.
+      </p>
+
+      <div class="artboard">
+        <div class="artboard-header"><strong>Export modal · open · PDF selected · Classic preset</strong><span>720px · over dimmed shell</span></div>
+        <div class="artboard-body" style="padding:0;">
+          <div class="dimstage" style="height:780px; border-radius:0; border:0;">
+            <div class="stage-shell" style="background:linear-gradient(180deg, var(--chrome-900), var(--chrome-950)); display:grid; grid-template-rows:48px 1fr 36px;">
+              <div style="background:var(--chrome-850); border-bottom:1px solid var(--chrome-800);"></div>
+              <div style="background:var(--canvas-dark-100); padding:24px 64px; opacity:0.55;">
+                <div style="font-family:var(--font-display); font-weight:700; font-size:22px; color:var(--canvas-dark-ink-strong); margin-bottom:14px;">2. What Cora found</div>
+                <p style="font-family:var(--font-prose); font-size:16px; line-height:1.78; margin:0 0 1em; color:var(--canvas-dark-ink-muted);">She lit the lamp. She did not light both lamps — only the small one over the desk.</p>
+              </div>
+              <div style="background:var(--chrome-850); border-top:1px solid var(--chrome-800);"></div>
+            </div>
+            <div class="modal-over">
+              <div class="modal lg">
+                <div class="modal-h">
+                  <div style="display:flex; gap:12px; align-items:center;">
+                    <span style="width:32px; height:32px; border-radius:var(--r-md); background:var(--brand-soft); color:var(--brand); display:inline-flex; align-items:center; justify-content:center;"><svg width="17" height="17"><use href="#i-download"/></svg></span>
+                    <h3>Export book</h3>
+                  </div>
+                  <button class="x"><svg width="16" height="16"><use href="#i-x"/></svg></button>
+                </div>
+                <div class="modal-b">
+                  <div class="modal-section-h">Format</div>
+                  <div class="fmt-grid">
+                    <div class="fmt-card active">
+                      <div class="ico">PDF</div>
+                      <div class="name">PDF</div>
+                      <div class="meta">Print &amp; e-readers · paginated</div>
+                    </div>
+                    <div class="fmt-card">
+                      <div class="ico">EPB</div>
+                      <div class="name">EPUB</div>
+                      <div class="meta">Reflowable · Kindle, Kobo, Apple Books</div>
+                    </div>
+                    <div class="fmt-card">
+                      <div class="ico">DCX</div>
+                      <div class="name">DOCX</div>
+                      <div class="meta">Word · editor / agent handoff</div>
+                    </div>
+                    <div class="fmt-card">
+                      <div class="ico">MD</div>
+                      <div class="name">Markdown</div>
+                      <div class="meta">Plain text · for power users</div>
+                    </div>
+                    <div class="fmt-card">
+                      <div class="ico">TXT</div>
+                      <div class="name">Plain text</div>
+                      <div class="meta">No formatting · backup / portable</div>
+                    </div>
+                    <div class="fmt-card premium">
+                      <div class="ico" style="background:linear-gradient(180deg, oklch(0.40 0.018 60), oklch(0.32 0.018 60));">IDD</div>
+                      <div class="name">InDesign IDML</div>
+                      <div class="meta">Typeset master · pro publishing</div>
+                    </div>
+                  </div>
+
+                  <div class="modal-section-h">Preset · 3 designs for PDF</div>
+                  <div class="preset-row">
+                    <div class="preset-card active">
+                      <div class="preset-thumb classic">
+                        <div class="pt-title">The Bell at Low Tide</div>
+                        <div class="pt-sub">A Maren novel</div>
+                        <div class="pt-rule"></div>
+                        <div class="pt-by">A novel by</div>
+                        <div class="pt-author">Cora Maren</div>
+                      </div>
+                      <div class="pname">Classic novel</div>
+                      <div class="pmeta">Serif body · centred title page · drop-caps</div>
+                    </div>
+                    <div class="preset-card">
+                      <div class="preset-thumb modern">
+                        <div class="pt-title" style="text-align:left;">The Bell<br>at Low<br>Tide</div>
+                        <div class="pt-rule"></div>
+                        <div class="pt-sub" style="text-align:left;">A novel by Cora Maren</div>
+                      </div>
+                      <div class="pname">Modern minimal</div>
+                      <div class="pmeta">Sans display · left-aligned · brand accent</div>
+                    </div>
+                    <div class="preset-card">
+                      <div class="preset-thumb academic">
+                        <div class="pt-by">Maren</div>
+                        <div class="pt-title">The Bell at Low Tide</div>
+                        <div class="pt-rule"></div>
+                        <div class="pt-by" style="margin-top:auto;">May 2026 · Draft 4</div>
+                      </div>
+                      <div class="pname">Manuscript</div>
+                      <div class="pmeta">Courier · double-spaced · standard submission</div>
+                    </div>
+                  </div>
+
+                  <div class="modal-section-h">Options</div>
+                  <div class="opt-row">
+                    <div class="opt"><span class="toggle on"></span>Include front matter</div>
+                    <div class="opt"><span class="toggle on"></span>Include back matter</div>
+                    <div class="opt"><span class="toggle on"></span>Page numbers</div>
+                    <div class="opt"><span class="toggle"></span>Table of contents</div>
+                    <div class="opt"><span class="toggle"></span>Chapter on new page</div>
+                    <div class="opt"><span class="toggle"></span>Embed fonts</div>
+                  </div>
+                </div>
+                <div class="modal-f">
+                  <span class="hint">Export size · <strong style="color:var(--chrome-200);">~ 280 pages · 3.4 MB</strong></span>
+                  <div class="grow"></div>
+                  <button class="btn-x ghost">Cancel</button>
+                  <button class="btn-x primary"><svg width="14" height="14"><use href="#i-download"/></svg>Export PDF</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="margin-top:48px; font-family:var(--font-display); font-weight:700; font-size:20px; color:var(--chrome-100); letter-spacing:-0.01em;">States</h3>
+
+      <div class="cols2" style="gap:18px; margin-top:18px;">
+        <div class="state-card">
+          <div class="label"><strong>Submitting</strong><span>spinner on primary · disabled cancel</span></div>
+          <div class="demo" style="padding:24px; background:var(--chrome-900);">
+            <div class="modal-f" style="background:transparent; border:0; margin:0; padding:0; width:100%;">
+              <span class="hint">Generating · <strong style="color:var(--chrome-200);">Page 84 of 280</strong></span>
+              <div class="grow"></div>
+              <button class="btn-x ghost" disabled style="opacity:0.55;">Cancel</button>
+              <button class="btn-x primary loading" disabled><span class="spin" style="border-color:var(--brand-ink); border-right-color:transparent;"></span>Exporting…</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="state-card">
+          <div class="label"><strong>Success toast</strong><span>fires after modal closes</span></div>
+          <div class="demo" style="padding:24px; background:var(--chrome-900);">
+            <div class="toast success">
+              <span class="icon"><svg width="16" height="16"><use href="#i-check"/></svg></span>
+              <div class="body">
+                <strong>Exported The Bell at Low Tide.pdf</strong>
+                <em>3.4 MB · 280 pages · download started</em>
+              </div>
+              <span class="x"><svg width="14" height="14"><use href="#i-x"/></svg></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="state-card">
+          <div class="label"><strong>Error</strong><span>inline · keeps the modal open</span></div>
+          <div class="demo" style="padding:24px; background:var(--chrome-900);">
+            <div style="padding:12px 14px; border-radius:var(--r-md); background:oklch(0.66 0.18 25 / 0.10); border:1px solid oklch(0.66 0.18 25 / 0.30); color:var(--chrome-100); font-size:13px; display:flex; align-items:flex-start; gap:10px;">
+              <span style="color:var(--error); flex-shrink:0; margin-top:1px;"><svg width="14" height="14"><use href="#i-alert"/></svg></span>
+              <span><strong style="color:var(--error);">We couldn't generate the PDF.</strong> One of your images is missing — see <strong style="color:var(--chrome-200);">Acknowledgements</strong>. Try again or remove the broken image.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="state-card">
+          <div class="label"><strong>Premium-required</strong><span>preset gated</span></div>
+          <div class="demo" style="padding:24px; background:var(--chrome-900);">
+            <div class="preset-card" style="width:200px;">
+              <div class="preset-thumb modern" style="filter:saturate(0.6);">
+                <div class="pt-title">Premium look</div>
+                <div class="pt-rule"></div>
+                <div class="pt-sub">Editor-grade preset</div>
+              </div>
+              <div class="pname" style="display:flex; align-items:center; gap:6px;">Editor's edition <span style="font-family:var(--font-mono); font-size:9px; letter-spacing:0.10em; background:var(--brand); color:var(--brand-ink); padding:1px 5px; border-radius:3px;">PRO</span></div>
+              <div class="pmeta">Upgrade to unlock</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-top:24px;">
+        <strong>Premium gating recommendation.</strong>
+        Free → all formats, default preset only. Premium → all presets. This is opinion: monetising format <em>variety</em> drives more upgrade conversion than gating PDF entirely, and it doesn't hurt anyone who only ever wanted to email a PDF to themselves. The PRO chip on premium presets is the same chip used in the version-history upsell — single brand for the whole gate.
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §12  Confirmation dialogs                                     -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-confirm">
+      <div class="eyebrow"><span class="num">12</span> <span>Surface — Confirmation dialogs</span></div>
+      <h2 class="title">Three weights —<br><em>destructive, warn, info.</em></h2>
+      <p class="lede">
+        One dialog shape, three icon + button treatments. <strong style="color:var(--chrome-200);">Destructive</strong> uses
+        the <code style="font-family:var(--font-mono); color:var(--error); background:oklch(0.66 0.18 25 / 0.10); padding:1px 6px; border-radius:4px;">--error</code> red for icon + primary button — exclusively for deletion.
+        <strong style="color:var(--chrome-200);">Warn</strong> uses the supporting amber for restore-type "you might want to think first" moments — yellow icon, yellow button (brand). <strong style="color:var(--chrome-200);">Info</strong> uses brand-yellow for happy-path confirms — overwrite this preset, etc. Cancel is always ghost; never compete with the action.
+      </p>
+
+      <div class="cols3" style="margin-top:24px; gap:20px;">
+        <!-- Destructive -->
+        <div class="state-card" style="overflow:visible; background:transparent;">
+          <div class="label"><strong>Destructive · delete</strong><span>red icon · red button</span></div>
+          <div class="demo" style="padding:24px; background:var(--chrome-950); min-height:auto;">
+            <div class="modal sm" style="width:100%; max-width:420px;">
+              <div class="modal-h" style="padding-bottom:8px;">
+                <div style="display:flex; gap:14px; align-items:flex-start;">
+                  <div class="confirm-icon danger"><svg width="20" height="20"><use href="#i-trash"/></svg></div>
+                  <div><h3>Delete chapter?</h3></div>
+                </div>
+                <button class="x"><svg width="16" height="16"><use href="#i-x"/></svg></button>
+              </div>
+              <div class="modal-b">
+                This will permanently delete <strong>Chapter&nbsp;12: The Confession</strong> and its 3,240 words.
+                This action cannot be undone.
+              </div>
+              <div class="modal-f">
+                <div class="grow"></div>
+                <button class="btn-x ghost">Cancel</button>
+                <button class="btn-x danger"><svg width="14" height="14"><use href="#i-trash"/></svg>Delete chapter</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Warn -->
+        <div class="state-card" style="overflow:visible; background:transparent;">
+          <div class="label"><strong>Warn · restore</strong><span>amber icon · yellow button</span></div>
+          <div class="demo" style="padding:24px; background:var(--chrome-950); min-height:auto;">
+            <div class="modal sm" style="width:100%; max-width:420px;">
+              <div class="modal-h" style="padding-bottom:8px;">
+                <div style="display:flex; gap:14px; align-items:flex-start;">
+                  <div class="confirm-icon warn"><svg width="20" height="20"><use href="#i-restore"/></svg></div>
+                  <div><h3>Restore older version?</h3></div>
+                </div>
+                <button class="x"><svg width="16" height="16"><use href="#i-x"/></svg></button>
+              </div>
+              <div class="modal-b">
+                Your live draft will be saved as a snapshot first — you can come back to it later. The chapter
+                will then load the version from <strong>Today · 12:50 PM</strong> (780 words).
+              </div>
+              <div class="modal-f">
+                <div class="grow"></div>
+                <button class="btn-x ghost">Cancel</button>
+                <button class="btn-x primary"><svg width="14" height="14"><use href="#i-restore"/></svg>Restore version</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Info -->
+        <div class="state-card" style="overflow:visible; background:transparent;">
+          <div class="label"><strong>Info · discard</strong><span>yellow icon · yellow button</span></div>
+          <div class="demo" style="padding:24px; background:var(--chrome-950); min-height:auto;">
+            <div class="modal sm" style="width:100%; max-width:420px;">
+              <div class="modal-h" style="padding-bottom:8px;">
+                <div style="display:flex; gap:14px; align-items:flex-start;">
+                  <div class="confirm-icon info"><svg width="20" height="20"><use href="#i-info"/></svg></div>
+                  <div><h3>Discard unsaved changes?</h3></div>
+                </div>
+                <button class="x"><svg width="16" height="16"><use href="#i-x"/></svg></button>
+              </div>
+              <div class="modal-b">
+                You've made changes since your last snapshot. If you close the chapter now, the last 48 words won't be saved.
+              </div>
+              <div class="modal-f">
+                <div class="grow"></div>
+                <button class="btn-x ghost">Keep editing</button>
+                <button class="btn-x primary">Discard changes</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-top:24px;">
+        <strong>Copy voice.</strong>
+        Every confirm dialog is one short sentence + a body sentence that names what's affected by number ("3,240 words", "48 words", "780 words"). Never "this item" or "this content." The body is a writer's room — the dialog uses the writer's currency.
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §13  Empty &amp; first-time states                                -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-empty">
+      <div class="eyebrow"><span class="num">13</span> <span>Empty &amp; first-time states</span></div>
+      <h2 class="title">Welcome the writer —<br><em>don't lecture them.</em></h2>
+      <p class="lede">
+        Four moments: <strong style="color:var(--chrome-200);">empty book</strong> (no binder items),
+        <strong style="color:var(--chrome-200);">none selected</strong> (binder items exist, none open),
+        <strong style="color:var(--chrome-200);">empty metadata</strong> (non-chapter active item),
+        <strong style="color:var(--chrome-200);">empty binder</strong> (zero items in left rail).
+        A new writer can sit on these for hours. Treat them as the first chapter of the user's relationship with Beehive.
+      </p>
+
+      <div class="artboard">
+        <div class="artboard-header"><strong>Empty book · "Start your first chapter"</strong><span>brand-new book · zero binder items · open notebook illustration</span></div>
+        <div class="artboard-body" style="padding:0;">
+          <div class="studio" style="height:620px;">
+            <div class="topnav">
+              <div class="left">
+                <span class="logo"><span class="hex"><svg width="16" height="16" style="color:var(--brand);"><use href="#i-hive"/></svg></span>Beehive</span>
+                <nav><a href="#" class="active">Studio</a><a href="#">Library</a></nav>
+              </div>
+              <div class="right">
+                <span style="font-family:var(--font-mono); font-size:11px; color:var(--chrome-400);">Untitled book · 0 words</span>
+                <span class="avatar">CM</span>
+              </div>
+            </div>
+            <div class="shell">
+              <aside class="binder">
+                <div class="binder-head">
+                  <div class="book-meta">NEW BOOK · 0 ITEMS</div>
+                  <div class="book-title">Untitled book</div>
+                </div>
+                <div class="binder-tree" style="position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 16px;">
+                  <div style="font-family:var(--font-prose); font-style:italic; font-size:13px; color:var(--chrome-500); text-align:center; line-height:1.5;">Your binder is empty.<br>Use the button below to begin.</div>
+                  <div style="margin-top:14px; font-size:11px; color:var(--chrome-600); display:flex; align-items:center; gap:6px;"><svg width="18" height="18" style="transform:scaleY(-1) rotate(-12deg);"><use href="#i-arr-up"/></svg></div>
+                </div>
+                <div class="binder-foot">
+                  <button class="btn-add" style="box-shadow: var(--el-2), 0 0 0 6px oklch(0.85 0.18 90 / 0.15);"><svg width="14" height="14"><use href="#i-plus"/></svg>Start your first chapter</button>
+                </div>
+              </aside>
+
+              <div class="editor" style="background:var(--canvas-dark-100);">
+                <div class="welcome">
+                  <div class="art">
+                    <!-- Open-notebook illustration in SVG (paper + ribbon + pen) -->
+                    <svg viewBox="0 0 200 160" width="100%" height="100%">
+                      <defs>
+                        <linearGradient id="page" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0" stop-color="oklch(0.97 0.020 85)"/>
+                          <stop offset="1" stop-color="oklch(0.92 0.022 82)"/>
+                        </linearGradient>
+                        <linearGradient id="page2" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0" stop-color="oklch(0.96 0.020 85)"/>
+                          <stop offset="1" stop-color="oklch(0.90 0.022 82)"/>
+                        </linearGradient>
+                      </defs>
+                      <!-- back page -->
+                      <rect x="22" y="22" width="156" height="120" rx="3" fill="url(#page2)" stroke="oklch(0.82 0.020 78)" />
+                      <!-- spine shadow -->
+                      <rect x="98" y="22" width="4" height="120" fill="oklch(0.78 0.020 78)" opacity="0.4"/>
+                      <!-- front pages (left + right open) -->
+                      <g transform="rotate(-1.4 100 80)">
+                        <rect x="20" y="30" width="80" height="108" rx="2" fill="url(#page)" stroke="oklch(0.82 0.020 78)"/>
+                        <line x1="32" y1="50" x2="92" y2="50" stroke="oklch(0.84 0.04 60)" stroke-width="0.6"/>
+                        <line x1="32" y1="60" x2="92" y2="60" stroke="oklch(0.84 0.04 60)" stroke-width="0.6"/>
+                        <line x1="32" y1="70" x2="88" y2="70" stroke="oklch(0.84 0.04 60)" stroke-width="0.6"/>
+                        <line x1="32" y1="80" x2="92" y2="80" stroke="oklch(0.84 0.04 60)" stroke-width="0.6"/>
+                        <line x1="32" y1="90" x2="84" y2="90" stroke="oklch(0.84 0.04 60)" stroke-width="0.6"/>
+                        <line x1="32" y1="100" x2="92" y2="100" stroke="oklch(0.84 0.04 60)" stroke-width="0.6"/>
+                        <line x1="32" y1="110" x2="76" y2="110" stroke="oklch(0.84 0.04 60)" stroke-width="0.6"/>
+                      </g>
+                      <g transform="rotate(1.6 100 80)">
+                        <rect x="100" y="30" width="80" height="108" rx="2" fill="url(#page)" stroke="oklch(0.82 0.020 78)"/>
+                        <!-- handwritten-feel scribble -->
+                        <path d="M112 52 q12 -4 24 0 t24 0" stroke="oklch(0.28 0.04 55)" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+                        <path d="M112 64 q14 -3 22 1 t22 -1" stroke="oklch(0.28 0.04 55)" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+                        <path d="M112 76 q10 -2 18 1 t14 -1" stroke="oklch(0.28 0.04 55)" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+                        <path d="M112 88 q14 -3 26 0" stroke="oklch(0.28 0.04 55)" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+                      </g>
+                      <!-- yellow ribbon bookmark -->
+                      <path d="M104 22 L104 64 L110 58 L116 64 L116 22 Z" fill="var(--brand)" stroke="var(--brand-active)" stroke-width="0.6"/>
+                      <!-- pen -->
+                      <g transform="rotate(30 152 130)">
+                        <rect x="118" y="126" width="50" height="6" rx="3" fill="oklch(0.32 0.02 55)" stroke="oklch(0.18 0.01 55)" stroke-width="0.6"/>
+                        <polygon points="168,126 178,129 168,132" fill="var(--brand)" stroke="var(--brand-active)" stroke-width="0.6"/>
+                      </g>
+                    </svg>
+                  </div>
+                  <h2>Start your first chapter.</h2>
+                  <p>Your binder is empty. Create a chapter — you can rename it anytime, drag it around, and split it into scenes once it gets long enough.</p>
+                  <button class="b"><svg width="14" height="14"><use href="#i-plus"/></svg>Start your first chapter</button>
+                  <div class="hint">or press <kbd>⌘</kbd> + <kbd>N</kbd></div>
+                </div>
+              </div>
+
+              <aside class="metadata">
+                <div class="quiet-empty">Add a chapter to the binder — its details will show up here.</div>
+              </aside>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="margin-top:48px; font-family:var(--font-display); font-weight:700; font-size:20px; color:var(--chrome-100); letter-spacing:-0.01em;">All four moments</h3>
+
+      <div class="cols2" style="gap:18px; margin-top:18px;">
+        <div class="state-card">
+          <div class="label"><strong>None selected</strong><span>chapters exist · none open</span></div>
+          <div class="demo dark" style="padding:0; height:300px;">
+            <div class="welcome" style="position:relative;">
+              <h2 style="font-size:22px;">Pick a chapter to write.</h2>
+              <p style="font-size:14px;">Choose from the binder on the left — or press <span style="font-family:var(--font-mono); font-size:11px; background:var(--chrome-800); padding:2px 8px; border-radius:4px; border:1px solid var(--chrome-700); color:var(--chrome-200);">⌘</span> <span style="font-family:var(--font-mono); font-size:11px; background:var(--chrome-800); padding:2px 8px; border-radius:4px; border:1px solid var(--chrome-700); color:var(--chrome-200);">P</span> to jump.</p>
+              <div class="arrow-cue">
+                <span class="ar"></span>
+                <span>your binder lives here</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="state-card">
+          <div class="label"><strong>Light editor</strong><span>welcome on cream paper</span></div>
+          <div class="demo paper" style="padding:0; height:300px;">
+            <div class="welcome paper">
+              <div class="art" style="width:140px; height:110px;">
+                <svg viewBox="0 0 200 160" width="100%" height="100%">
+                  <rect x="22" y="22" width="156" height="120" rx="3" fill="oklch(0.92 0.022 82)" stroke="oklch(0.80 0.020 78)" stroke-width="1"/>
+                  <g transform="rotate(-1.4 100 80)">
+                    <rect x="20" y="30" width="80" height="108" rx="2" fill="oklch(0.97 0.020 85)" stroke="oklch(0.80 0.020 78)"/>
+                    <line x1="32" y1="55" x2="92" y2="55" stroke="oklch(0.78 0.04 60)" stroke-width="0.6"/>
+                    <line x1="32" y1="68" x2="92" y2="68" stroke="oklch(0.78 0.04 60)" stroke-width="0.6"/>
+                    <line x1="32" y1="81" x2="84" y2="81" stroke="oklch(0.78 0.04 60)" stroke-width="0.6"/>
+                  </g>
+                  <g transform="rotate(1.6 100 80)">
+                    <rect x="100" y="30" width="80" height="108" rx="2" fill="oklch(0.97 0.020 85)" stroke="oklch(0.80 0.020 78)"/>
+                    <path d="M112 55 q14 -3 22 1 t22 -1" stroke="oklch(0.28 0.04 55)" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+                    <path d="M112 70 q10 -2 18 1 t14 -1" stroke="oklch(0.28 0.04 55)" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+                  </g>
+                  <path d="M104 22 L104 60 L110 54 L116 60 L116 22 Z" fill="var(--brand)" stroke="var(--brand-active)" stroke-width="0.6"/>
+                </svg>
+              </div>
+              <h2 style="font-size:22px;">Start your first chapter.</h2>
+              <p style="font-size:14px;">Your binder is empty. Create a chapter — you can rename it anytime.</p>
+              <button class="b"><svg width="14" height="14"><use href="#i-plus"/></svg>Start your first chapter</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="state-card">
+          <div class="label"><strong>Empty metadata</strong><span>non-chapter active</span></div>
+          <div class="demo" style="padding:0; background:var(--chrome-900); height:300px;">
+            <aside class="metadata" style="width:100%; border:0;">
+              <div class="quiet-empty" style="padding-top:80px;">Outlines, notes and characters don't have a chapter sidebar.<br><br>Open a chapter to see its details here.</div>
+            </aside>
+          </div>
+        </div>
+
+        <div class="state-card">
+          <div class="label"><strong>Empty binder</strong><span>matches center pane illustration</span></div>
+          <div class="demo" style="padding:0; background:var(--chrome-900); height:300px;">
+            <aside class="binder" style="width:100%; border:0; height:100%;">
+              <div class="binder-head">
+                <div class="book-meta">NEW BOOK · 0 ITEMS</div>
+                <div class="book-title">Untitled book</div>
+              </div>
+              <div class="binder-tree" style="position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:32px 16px;">
+                <div style="font-family:var(--font-prose); font-style:italic; font-size:12.5px; color:var(--chrome-500); text-align:center; line-height:1.5;">Your binder is empty.<br>Use the button below to begin.</div>
+              </div>
+              <div class="binder-foot">
+                <button class="btn-add" style="box-shadow: var(--el-2), 0 0 0 6px oklch(0.85 0.18 90 / 0.15);"><svg width="14" height="14"><use href="#i-plus"/></svg>Start your first chapter</button>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-top:24px;">
+        <strong>Illustration spec.</strong>
+        One drawing — an open notebook with a yellow ribbon bookmark and a pen at the corner. Inline SVG, ~200×160px, cream paper + brand-yellow accent. Reused at smaller size on the binder's empty state. Three colors total (paper + ink + brand). No emoji, no stock vector — the same restraint applied to every paper-card in the system.
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §14  Sprint timer states                                       -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-sprint">
+      <div class="eyebrow"><span class="num">14</span> <span>Surface — Sprint timer states</span></div>
+      <h2 class="title">A ritual —<br><em>with a small ceremony at the end.</em></h2>
+      <p class="lede">
+        Five states, in order: <strong style="color:var(--chrome-200);">idle</strong> (just a Start button — covered in Prompt 1),
+        <strong style="color:var(--chrome-200);">setup</strong> (a small popover anchored to that button),
+        <strong style="color:var(--chrome-200);">running</strong> (a pill with countdown and controls, a yellow strip growing along the top of the status bar),
+        <strong style="color:var(--chrome-200);">paused</strong> (gray pill, resume + stop),
+        <strong style="color:var(--chrome-200);">finished</strong> (a single candle, a small toast, a paper-confetti drift). Cancelling resets quietly to idle — no celebration.
+      </p>
+
+      <!-- Setup popover anchored to status bar button -->
+      <h3 style="margin-top:32px; font-family:var(--font-display); font-weight:700; font-size:18px; color:var(--chrome-100); letter-spacing:-0.005em;">Setup popover</h3>
+
+      <div class="artboard">
+        <div class="artboard-header"><strong>Click "Start sprint" → popover</strong><span>anchored above the button · status bar still visible</span></div>
+        <div class="artboard-body" style="padding:0; background:var(--chrome-950);">
+          <div style="display:grid; grid-template-rows: 1fr var(--statusbar-h); height:320px; position:relative;">
+            <div style="background:var(--canvas-dark-100); padding:32px 64px; font-family:var(--font-prose); font-size:14px; line-height:1.7; color:var(--canvas-dark-ink-muted); opacity:0.6;">
+              <div style="font-family:var(--font-display); font-weight:700; font-size:18px; color:var(--canvas-dark-ink-strong); margin-bottom:14px;">2. What Cora found</div>
+              <p>She lit the lamp. She did not light both lamps — only the small one over the desk.</p>
+            </div>
+            <div class="statusbar" style="position:relative;">
+              <div class="left">
+                <span class="save-dot"></span><span>Saved</span><span class="sep"></span>
+                <span style="color:var(--chrome-200);">1,247 words</span>
+              </div>
+              <div class="right">
+                <span class="sprint-btn" style="background:var(--chrome-750); color:var(--chrome-100); border-color:var(--chrome-700);"><svg width="12" height="12"><use href="#i-timer"/></svg>Start sprint</span>
+              </div>
+            </div>
+            <!-- popover -->
+            <div style="position:absolute; right:18px; bottom:48px;">
+              <div class="sprint-pop">
+                <div class="h"><svg width="16" height="16" style="color:var(--brand);"><use href="#i-timer"/></svg>Sprint length</div>
+                <div class="sub">A focused stretch of writing. The bell rings when time's up.</div>
+                <div class="opts">
+                  <div class="opt"><div class="n">15</div><div class="u">min · warm-up</div></div>
+                  <div class="opt active"><div class="n">25</div><div class="u">min · pomodoro</div></div>
+                  <div class="opt"><div class="n">50</div><div class="u">min · deep</div></div>
+                  <div class="opt"><div class="n">90</div><div class="u">min · long</div></div>
+                </div>
+                <div class="custom">
+                  Custom <input value="25" /> minutes
+                </div>
+                <button class="start"><svg width="13" height="13"><use href="#i-play"/></svg>Start 25-minute sprint</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Running and paused -->
+      <h3 style="margin-top:48px; font-family:var(--font-display); font-weight:700; font-size:18px; color:var(--chrome-100); letter-spacing:-0.005em;">Running &amp; paused</h3>
+
+      <div class="artboard">
+        <div class="artboard-header"><strong>Sprint running · yellow strip · countdown pill</strong><span>progress strip along top of status bar</span></div>
+        <div class="artboard-body" style="padding:0; background:var(--chrome-950);">
+          <div style="display:grid; grid-template-rows: 1fr var(--statusbar-h); height:280px;">
+            <div style="background:var(--canvas-dark-100); padding:32px 64px; font-family:var(--font-prose); font-size:14px; line-height:1.7; color:var(--canvas-dark-ink-muted); opacity:0.6;">
+              <div style="font-family:var(--font-display); font-weight:700; font-size:18px; color:var(--canvas-dark-ink-strong); margin-bottom:14px;">2. What Cora found</div>
+              <p>She lit the lamp. She did not light both lamps — only the small one over the desk. <span class="faux-cursor"></span></p>
+            </div>
+            <div class="statusbar" style="position:relative;">
+              <div class="sprint-progress-strip" style="width:46%;"></div>
+              <div class="left">
+                <span class="save-dot"></span><span>Saved</span><span class="sep"></span>
+                <span style="color:var(--chrome-200);">1,247 words</span><span class="sep"></span>
+                <span style="color:var(--brand);">+183 in sprint</span>
+              </div>
+              <div class="right">
+                <span class="sprint-running-bar">
+                  <span class="num">13:24</span>
+                  <button class="iconb alt" title="Pause"><svg width="11" height="11"><use href="#i-pause"/></svg></button>
+                  <button class="iconb" title="End"><svg width="11" height="11"><use href="#i-stop"/></svg></button>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cols2" style="gap:18px; margin-top:14px;">
+        <div class="state-card">
+          <div class="label"><strong>Running · pill</strong><span>brand pill · pause + stop</span></div>
+          <div class="demo" style="padding:24px;">
+            <span class="sprint-running-bar">
+              <span class="num">13:24</span>
+              <button class="iconb alt"><svg width="11" height="11"><use href="#i-pause"/></svg></button>
+              <button class="iconb"><svg width="11" height="11"><use href="#i-stop"/></svg></button>
+            </span>
+          </div>
+        </div>
+        <div class="state-card">
+          <div class="label"><strong>Paused · pill</strong><span>gray pill · resume + stop</span></div>
+          <div class="demo" style="padding:24px;">
+            <span class="sprint-running-bar paused">
+              <span class="num">13:24 · paused</span>
+              <button class="iconb" title="Resume"><svg width="11" height="11"><use href="#i-play"/></svg></button>
+              <button class="iconb alt" style="color:var(--chrome-300);"><svg width="11" height="11"><use href="#i-stop"/></svg></button>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sprint complete celebration -->
+      <h3 style="margin-top:48px; font-family:var(--font-display); font-weight:700; font-size:18px; color:var(--chrome-100); letter-spacing:-0.005em;">Sprint complete · the small ceremony</h3>
+      <p class="note" style="margin-bottom:18px;">
+        Two layers. <strong style="color:var(--chrome-200);">A toast</strong> with a single candle in a paper card, the word count earned, and two follow-ups: Start another · See history. <strong style="color:var(--chrome-200);">A confetti drift</strong> — nine paper strips in the brand palette, gentle, 600ms fall, 4s to clear. Reduced motion: the toast appears but the confetti doesn't. The toast lives 7 seconds, then fades — long enough to be seen, short enough not to crowd the next page.
+      </p>
+
+      <div class="artboard">
+        <div class="artboard-header"><strong>Sprint complete · 25-minute · +320 words</strong><span>candle + toast + confetti · status bar transitions back to idle</span></div>
+        <div class="artboard-body" style="padding:0; background:var(--chrome-950);">
+          <div style="position:relative; height:360px; background:var(--canvas-dark-100); overflow:hidden;">
+            <div style="padding:32px 64px; font-family:var(--font-prose); font-size:14px; line-height:1.7; color:var(--canvas-dark-ink-muted); opacity:0.7;">
+              <div style="font-family:var(--font-display); font-weight:700; font-size:18px; color:var(--canvas-dark-ink-strong); margin-bottom:14px;">2. What Cora found</div>
+              <p>She lit the lamp. She did not light both lamps — only the small one over the desk.</p>
+              <p>Down the kitchen stairs in stocking feet, the air below the floor was colder than the morning above it.</p>
+              <p>Her father's chart room was annotated in a hand that wasn't his.</p>
+            </div>
+            <div class="confetti">
+              <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <div style="position:absolute; right:24px; bottom:24px; z-index:10;">
+              <div class="celebrate">
+                <div class="candle"><svg width="28" height="28"><use href="#i-flame"/></svg></div>
+                <div class="body">
+                  <h4>Sprint complete.</h4>
+                  <div class="stats"><strong>25 min</strong><span class="dot">·</span><strong>+320 words</strong><span class="dot">·</span>12.8 wpm</div>
+                  <div class="actions">
+                    <button class="ab primary"><svg width="11" height="11"><use href="#i-play"/></svg>Start another</button>
+                    <button class="ab">See history</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Celebration banner (alternative · brief recommends choosing one) -->
+      <h3 style="margin-top:48px; font-family:var(--font-display); font-weight:700; font-size:18px; color:var(--chrome-100); letter-spacing:-0.005em;">Alternative · in-place banner</h3>
+      <p class="note" style="margin-bottom:18px;">
+        For the writer who finishes a sprint with the editor on screen, a quieter pattern: a banner spanning the top of the editor body (same family as the snapshot banner) instead of a corner toast. <strong style="color:var(--chrome-200);">Recommendation: toast (above) for default; banner (below) for users who have opted into "celebrate quietly" — a Prompt-1 user preference we'd love to add.</strong>
+      </p>
+
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div class="celebration-banner">
+          <div class="icon"><svg width="24" height="24"><use href="#i-flame"/></svg></div>
+          <div class="body">
+            <h4>Sprint complete · 25 minutes</h4>
+            <div class="num-line">You added <strong>320 words</strong> to <em>Chapter 2: What Cora found</em>. That's a candle's worth.</div>
+          </div>
+          <button class="ab ghost">Dismiss</button>
+          <button class="ab primary"><svg width="12" height="12"><use href="#i-play"/></svg>Another sprint</button>
+        </div>
+        <div class="celebration-banner paper">
+          <div class="icon"><svg width="24" height="24"><use href="#i-flame"/></svg></div>
+          <div class="body">
+            <h4>Sprint complete · 25 minutes</h4>
+            <div class="num-line">You added <strong>320 words</strong> to <em>Chapter 2: What Cora found</em>. That's a candle's worth.</div>
+          </div>
+          <button class="ab ghost">Dismiss</button>
+          <button class="ab primary"><svg width="12" height="12"><use href="#i-play"/></svg>Another sprint</button>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-top:24px;">
+        <strong>Why a candle, not confetti cannons.</strong>
+        The brief warned us off "childish." Cozy writing software earns its celebration by being restrained. The candle is a paper-card metaphor (a single light on the desk); the confetti is small paper strips (not foil, not glitter); the toast lives in the corner not the center; and the copy reads "a candle's worth" — gentle, specific, written by a writer's app. The whole moment is over in seven seconds and you didn't have to dismiss anything.
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!--  §15  Handoff &amp; open questions                                 -->
+    <!-- ============================================================ -->
+    <section class="s" id="s-handoff">
+      <div class="eyebrow"><span class="num">15</span> <span>Handoff &amp; open questions</span></div>
+      <h2 class="title">The three-brief system —<br><em>now complete.</em></h2>
+      <p class="lede">
+        Prompts 1, 2, and 3 together cover every visible state of the studio editor. Tokens map cleanly to Tailwind v4
+        <code style="font-family:var(--font-mono); color:var(--brand); background:oklch(0.85 0.18 90 / 0.10); padding:1px 6px; border-radius:4px;">@theme</code> values; the layout primitives match shadcn-style React components and TipTap node specs. Below is what's locked from this brief, the few questions still open, and what carries forward to the app-level passes Chris flagged separately (top nav, book-creation wizard).
+      </p>
+
+      <div class="cols2" style="gap:24px;">
+        <div class="spec-card">
+          <div class="md-label" style="color:var(--brand);">Locked from this brief</div>
+          <ul style="margin:0; padding-left:20px; color:var(--chrome-300); font-size:14px; line-height:1.7;">
+            <li>Taxonomy — five patterns (mode · drawer · overlay · modal · popover), one decision tree.</li>
+            <li>Z-index ladder — five layers (0 / 10 / 30 / 50 / 70); drawers stay at base.</li>
+            <li>Backdrop recipe — rgba(15,12,8,0.62) + 4px blur + 0.85 sat; applied only to modals.</li>
+            <li>Motion — three durations (140 / 220 / 340ms), one curve (cubic-bezier(.22,1,.36,1)); reduced-motion fallback specified.</li>
+            <li>Modal shell — S / M / L (420 / 520 / 720); icon + heading; right-aligned footer.</li>
+            <li>Confirmation dialogs — destructive / warn / info variants; cancel always ghost.</li>
+            <li>Paper-key <code style="font-family:var(--font-mono); font-size:11px; color:var(--brand);">&lt;kbd&gt;</code> — dark + light pair.</li>
+            <li>Snapshot banner · find &amp; replace bar · sprint pill · sprint celebration toast — all reusable primitives.</li>
+            <li>Corkboard ground · index-card scaled to 220px min-height · pin + paperclip variants.</li>
+            <li>Welcome card · open-notebook illustration · welcome / hint / arrow-cue components.</li>
+          </ul>
+        </div>
+
+        <div class="spec-card">
+          <div class="md-label" style="color:var(--brand);">Open questions for Chris</div>
+          <ul style="margin:0; padding-left:20px; color:var(--chrome-300); font-size:14px; line-height:1.7;">
+            <li>Corkboard <em>filter</em> ships, sort defers — confirm. (My pick: yes.)</li>
+            <li>Focus mode — minimal-toolbar sub-mode is out. If you want it later, add as a Prompt-1 user preference (<em>"hide toolbar in focus mode"</em>).</li>
+            <li>Premium gating on Export — free gets default preset only, premium unlocks all presets. Want to confirm vs gating PDF entirely.</li>
+            <li>Sprint celebration — toast by default, banner for "celebrate quietly" users. Should "celebrate quietly" be a user preference we add in Prompt 1's preferences pass?</li>
+            <li>Sprint blackout mode (Pomodoro that hides word count) — Prompt 1 flagged this. <strong>My pick:</strong> defer to a later sprint-pass; ships as a checkbox in the setup popover when shipped.</li>
+            <li>Find &amp; replace — should regex be visible by default or hidden behind a "more options" toggle? Currently always visible. (My pick: visible — it's one button, novelists who need it are searching for it.)</li>
+            <li>Snapshot preview banner placement — top of editor body (current) vs replacing the toolbar entirely. <strong>My pick:</strong> top of body. The toolbar's buttons still want to be discoverable even when previewing.</li>
+            <li>Empty-state illustration — one shared notebook drawing (current) or per-state illustrations (one for empty book, one for empty binder, etc). <strong>My pick:</strong> one shared illustration, scaled. Cozy software repeats motifs deliberately.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div style="margin-top:32px; padding:24px; border-radius:var(--r-lg); background:linear-gradient(180deg, var(--brand-soft), transparent); border:1px solid oklch(0.85 0.18 90 / 0.25);">
+        <div class="md-label" style="color:var(--brand);">Carries forward to the app-level passes</div>
+        <div class="cols2" style="margin-top:8px; gap:24px;">
+          <div>
+            <strong style="font-family:var(--font-display); color:var(--chrome-100); font-size:15px;">Top nav · settings · preferences</strong>
+            <p style="font-size:13px; color:var(--chrome-400); margin:6px 0 0; line-height:1.6;">Modal shell, paper-key, confirm dialog, toast, premium chip, backdrop recipe — all reusable in the app shell. Account settings, preferences, billing modals can be built without any new primitives.</p>
+          </div>
+          <div>
+            <strong style="font-family:var(--font-display); color:var(--chrome-100); font-size:15px;">Book creation wizard</strong>
+            <p style="font-size:13px; color:var(--chrome-400); margin:6px 0 0; line-height:1.6;">Welcome card, paper-card, format/preset picker, toggle, button hierarchy — port directly. The wizard is a series of empty-state-style centred cards, not a multi-step modal.</p>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:32px; padding:20px 24px; border-radius:var(--r-lg); background:var(--chrome-900); border:1px solid var(--chrome-800);">
+        <div class="md-label" style="color:var(--brand); margin-bottom:10px;">Final tally · what the three briefs cover</div>
+        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:18px;">
+          <div>
+            <strong style="font-family:var(--font-display); color:var(--chrome-100); font-size:14px; display:block; margin-bottom:6px;">Prompt 1 · Studio Shell</strong>
+            <ul style="margin:0; padding-left:18px; color:var(--chrome-400); font-size:12.5px; line-height:1.6;">
+              <li>Tokens · type · depth</li>
+              <li>Three-column shell</li>
+              <li>Binder · toolbar · status bar</li>
+              <li>Metadata panel</li>
+              <li>Popovers · toasts · pills</li>
+              <li>Hive placement</li>
+            </ul>
+          </div>
+          <div>
+            <strong style="font-family:var(--font-display); color:var(--chrome-100); font-size:14px; display:block; margin-bottom:6px;">Prompt 2 · Specialized Surfaces</strong>
+            <ul style="margin:0; padding-left:18px; color:var(--chrome-400); font-size:12.5px; line-height:1.6;">
+              <li>FM / BM book pages × 5</li>
+              <li>Outline · Beat Sheet · Arc · Cork</li>
+              <li>Research notes · legal pad</li>
+              <li>Character profile</li>
+              <li>Generic fallback</li>
+              <li>Tags · color labels · drag</li>
+            </ul>
+          </div>
+          <div>
+            <strong style="font-family:var(--font-display); color:var(--chrome-100); font-size:14px; display:block; margin-bottom:6px;">Prompt 3 · Overlays &amp; Modes</strong>
+            <ul style="margin:0; padding-left:18px; color:var(--chrome-400); font-size:12.5px; line-height:1.6;">
+              <li>Corkboard mode (full)</li>
+              <li>Focus mode</li>
+              <li>Version history drawer</li>
+              <li>Snapshot banner · find &amp; replace</li>
+              <li>Writing analysis · cheatsheet · export</li>
+              <li>Confirm · empty · sprint celebration</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:48px; padding-top:24px; border-top:1px solid var(--chrome-800); font-size:12px; color:var(--chrome-500); font-family:var(--font-mono); letter-spacing:0.04em; display:flex; justify-content:space-between;">
+        <span>BEEHIVE STUDIO · OVERLAYS, MODES &amp; MODALS · PROMPT 3 OF 3</span>
+        <span>CLAUDE DESIGN · 2026-05-26</span>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+</body>
+</html>

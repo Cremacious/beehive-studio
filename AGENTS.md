@@ -15,8 +15,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 > **Last updated:** 2026-05-27
 >
 > **Current focus:** Library v2 design ported. Claude Design's `studio-library` mockup (library.html + library-empty.html) translated 1:1 across 7 atomic commits — new AppNav (brand-mark + crumb + centered nav + Hive link), ContinueWritingHero (rotated paper cover with crown stamp + eyebrow pulse + progress bar + Resume CTA), StudioStats (3-tile vertical stack with spines/sparkline/ring viz), BookCard (rounded card with status stripe + paper-warm cover composition + always-visible info band), StudioEmptyState (shelf scene with floating paper hero book + template chips), page rewrite (no top bar — AppNav owns chrome; controls + filter chips + 5-col grid + shelf-foot). 126/126 tests, tsc clean.
-> **Active branch:** `main` (one polish commit ahead of origin)
-> **Last commit:** fix(studio): drop 'View archive' link from shelf footer
+> **Active branch:** `main` (ahead of origin)
+> **Last commit:** fix(nav): crumb shows the current route segment, not a fixed label
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.

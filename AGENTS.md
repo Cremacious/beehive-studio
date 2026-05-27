@@ -14,9 +14,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-27
 >
-> **Current focus:** Phase 8 COMPLETE. Stripe monetization fully shipped (P8A foundations → P8B pricing+checkout → P8C webhooks → P8D billing portal+downgrade).
+> **Current focus:** Phase 8 (Stripe) COMPLETE. Chrome retoned cool neutral (hue 256°, anchored on #1E1E1E/#252525) — was warm walnut, didn't pair well with brand yellow per Chris. Cream paper untouched. Ready for next direction.
 > **Active branch:** `main` (pushed to origin/main)
-> **Last commit:** docs: close P8D + Phase 8 complete (Stripe monetization shipped)
+> **Last commit:** feat(design): retone chrome + dark canvas to cool neutral grays
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.
@@ -66,7 +66,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 >
 > **Light-mode editor default (2026-05-26):** Editor theme defaults to `light` (cream paper) for all new sessions. Users with `localStorage['editor-theme'] === 'dark'` keep dark mode. The change reflects the on-brand "writer's desk by day" experience the Claude Design pass established. Dark mode remains accessible via the toolbar Moon icon.
 >
-> **Next concrete step when resuming:** Configure the Stripe dashboard webhook URL (subscribe to customer.subscription.{created,updated,deleted}, copy signing secret to Vercel env STRIPE_WEBHOOK_SECRET). Test the live flow with a real test-mode subscription. Then close out Phase 8 and plan Phase 9.
+> **Next concrete step when resuming:** Visually verify the chrome retone — toggle dark editor mode on a chapter, browse all studio surfaces, confirm the brand-yellow accents read well on the new cool gray (they may appear more vivid since yellow-on-cool-gray has higher contrast than yellow-on-warm-walnut). Watch for any decorative utilities (paper-grit warm rgba tint) that look off against the new chrome and tweak inline if needed. Also still pending: configure the Stripe dashboard webhook URL — subscribe to customer.subscription.{created,updated,deleted}, copy signing secret to Vercel env STRIPE_WEBHOOK_SECRET, test the live flow. Then plan Phase 9.
 
 ## ⚙️ Working Agreement (read this every session)
 

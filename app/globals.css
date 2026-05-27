@@ -46,19 +46,23 @@
 }
 
 :root {
-  /* ── Chrome (the dark walnut "desk" the paper sits on) ──────────── */
-  --chrome-950: oklch(0.165 0.010 60);
-  --chrome-900: oklch(0.205 0.012 58);
-  --chrome-850: oklch(0.230 0.013 57);
-  --chrome-800: oklch(0.255 0.013 56);
-  --chrome-750: oklch(0.290 0.014 55);
-  --chrome-700: oklch(0.340 0.012 55);
-  --chrome-600: oklch(0.410 0.010 55);
-  --chrome-500: oklch(0.520 0.010 55);
-  --chrome-400: oklch(0.640 0.012 60);
-  --chrome-300: oklch(0.760 0.014 65);
-  --chrome-200: oklch(0.880 0.012 75);
-  --chrome-100: oklch(0.950 0.010 80);
+  /* ── Chrome (cool neutral grays — anchor on #1E1E1E / #252525) ──── */
+  /* Hue 256° with very low chroma matches the tiny cool cast of the
+     reference hex values. Was warm walnut (hue 55-80°) before — replaced
+     because the brown tones didn't pair well with brand yellow + the gray
+     of the wider UI. */
+  --chrome-950: oklch(0.165 0.003 256);
+  --chrome-900: oklch(0.205 0.003 256);
+  --chrome-850: oklch(0.235 0.003 256);  /* ≈ #1E1E1E */
+  --chrome-800: oklch(0.275 0.003 256);  /* ≈ #252525 */
+  --chrome-750: oklch(0.310 0.003 256);
+  --chrome-700: oklch(0.350 0.003 256);
+  --chrome-600: oklch(0.420 0.003 256);
+  --chrome-500: oklch(0.530 0.003 256);
+  --chrome-400: oklch(0.640 0.003 256);
+  --chrome-300: oklch(0.760 0.003 256);
+  --chrome-200: oklch(0.880 0.003 256);
+  --chrome-100: oklch(0.950 0.003 256);
 
   /* ── Paper (light editor canvas — cream, warm) ─────────────────── */
   --paper-50:  oklch(0.985 0.012 88);
@@ -70,13 +74,16 @@
   --paper-ink:        oklch(0.265 0.020 55);
   --paper-ink-strong: oklch(0.180 0.022 50);
 
-  /* ── Dark editor canvas (warm coffee — NOT slate) ──────────────── */
-  --canvas-dark-100: oklch(0.255 0.018 55);
-  --canvas-dark-200: oklch(0.290 0.018 55);
-  --canvas-dark-300: oklch(0.350 0.018 55);
-  --canvas-dark-ink-muted:  oklch(0.680 0.014 65);
-  --canvas-dark-ink:        oklch(0.880 0.012 80);
-  --canvas-dark-ink-strong: oklch(0.965 0.010 85);
+  /* ── Dark editor canvas (cool neutral grays — paired with chrome) ── */
+  /* Was warm coffee (hue 55-80°); replaced with the same neutral hue 256°
+     as the chrome scale so the dark editor body sits cleanly inside the
+     dark UI. Cream paper (light mode) is untouched. */
+  --canvas-dark-100: oklch(0.255 0.003 256);
+  --canvas-dark-200: oklch(0.290 0.003 256);
+  --canvas-dark-300: oklch(0.350 0.003 256);
+  --canvas-dark-ink-muted:  oklch(0.680 0.003 256);
+  --canvas-dark-ink:        oklch(0.880 0.003 256);
+  --canvas-dark-ink-strong: oklch(0.965 0.003 256);
 
   /* ── Brand & accent ────────────────────────────────────────────── */
   --brand:        #FFC300;

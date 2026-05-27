@@ -16,7 +16,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 >
 > **Current focus:** Post-Phase 8 design polish. Chrome retoned cool neutral (hue 256°, anchored on #1E1E1E/#252525). Writing analysis panel pinned to dark chrome. Text bumped one step brighter (foreground chrome-200→100, muted chrome-400→300; wa-ink chrome-300→200) because cool grays read perceptually dimmer than warm walnut at equal L. Cream paper untouched. NEXT: /studio book grid landing page redesign — currently mid-brainstorm.
 > **Active branch:** `main` (pushed to origin/main)
-> **Last commit:** fix(studio): brighten dark-theme text (chrome bridge + writing analysis)
+> **Last commit:** docs(spec): /studio book grid library redesign
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.
@@ -66,7 +66,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 >
 > **Light-mode editor default (2026-05-26):** Editor theme defaults to `light` (cream paper) for all new sessions. Users with `localStorage['editor-theme'] === 'dark'` keep dark mode. The change reflects the on-brand "writer's desk by day" experience the Claude Design pass established. Dark mode remains accessible via the toolbar Moon icon.
 >
-> **Next concrete step when resuming:** Continue /studio book grid redesign brainstorm. Currently at Q1 (scope — empty state, populated state, or both). Open questions: layout (grid-only or add above-grid surface like continue-writing/stats/recent activity), card density (minimal vs richer with status pill / last edit / etc.), sort/filter controls, empty state direction (keep illustration or rethink), visual treatment (match editor design system or differentiate), continue-writing hero card. After locks: spec → plan → execute. Also still pending: configure the Stripe dashboard webhook URL — subscribe to customer.subscription.{created,updated,deleted}, copy signing secret to Vercel env STRIPE_WEBHOOK_SECRET, test the live flow.
+> **Next concrete step when resuming:** /studio redesign spec committed (`0bf3ae7`, `docs/superpowers/specs/2026-05-27-studio-library-redesign-design.md`). Awaiting Chris's review → then write implementation plan → execute. Spec locks: Continue-Writing hero + 4-stat strip header (totalWords / booksInProgress / wordsThisWeek / chaptersPublished), search + sort + filter chips controls, hover-overlay book cards (status / last edited / chapter count / genre / progress), reference-style empty state, paper-warm covers on cool gray chrome. New helpers: summarizeBookStatus() in lib/books, getStudioStatsAction in lib/actions/book.actions.ts. BookSummary projection extended (genre/lastEditedAt/chapterCount/status). No DB migrations. Also still pending: configure the Stripe dashboard webhook URL — subscribe to customer.subscription.{created,updated,deleted}, copy signing secret to Vercel env STRIPE_WEBHOOK_SECRET, test the live flow.
 
 ## ⚙️ Working Agreement (read this every session)
 

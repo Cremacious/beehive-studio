@@ -259,7 +259,7 @@ export function SprintControls({ currentWordCount }: Props) {
   return (
     <button
       onClick={dismissFinished}
-      className="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded bg-brand/15 text-brand border border-brand/30 hover:bg-brand/25 transition-colors"
+      className="animate-sprint-finished inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded bg-brand/15 text-brand border border-brand/30 hover:bg-brand/25 transition-colors"
       title="Click to dismiss"
     >
       <Timer size={12} />

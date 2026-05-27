@@ -317,6 +317,15 @@ body {
 }
 .float-gentle { animation: float-up 4s ease-in-out infinite; }
 
+/* DP4 — one-time pulse-glow on sprint finished pill. Paper-feeling soft
+   ring that expands and fades. animation-iteration-count: 1, so each
+   mount of the finished state plays it exactly once. */
+@keyframes sprintFinished {
+  0%   { box-shadow: 0 0 0 0 oklch(from var(--color-brand) l c h / 0.55); }
+  100% { box-shadow: 0 0 0 22px oklch(from var(--color-brand) l c h / 0); }
+}
+.animate-sprint-finished { animation: sprintFinished 1.5s ease-out 1; }
+
 /* Privacy / Terms prose lists */
 .prose-bh ul {
   list-style: none;

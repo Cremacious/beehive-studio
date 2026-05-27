@@ -337,10 +337,19 @@ export function MetadataPanel() {
   const { activeItem, activeItemId, focusMode, corkboardMode, bookId, historyOpen } = useBookEditor()
   const isChapterActive = !!activeItem && CHAPTER_TYPES.has(activeItem.type)
 
-  if (focusMode || corkboardMode || historyOpen) return null
+  const hidden = focusMode || corkboardMode || historyOpen
 
   return (
-    <aside className="w-60 flex-shrink-0 flex flex-col bg-card border-l border-border overflow-hidden">
+    <aside
+      aria-hidden={hidden}
+      className={cn(
+        'flex-shrink-0 flex flex-col bg-card border-l border-border overflow-hidden',
+        'transition-[width,opacity,transform] duration-200 ease-out',
+        hidden
+          ? 'w-0 opacity-0 translate-x-2 pointer-events-none'
+          : 'w-60 opacity-100 translate-x-0',
+      )}
+    >
       <div className="flex-1 overflow-y-auto">
         {isChapterActive ? <ChapterMetadata key={activeItemId} /> : <EmptyPlaceholder />}
       </div>

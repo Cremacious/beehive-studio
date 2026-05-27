@@ -181,11 +181,18 @@ export function BinderTree() {
     [tree, collapsed, toggleCollapsed]
   )
 
-  if (focusMode) return null
-
   return (
     <BinderTreeContext.Provider value={ctxValue}>
-      <aside className="w-60 flex-shrink-0 flex flex-col bg-surface border-r border-border overflow-hidden">
+      <aside
+        aria-hidden={focusMode}
+        className={cn(
+          'flex-shrink-0 flex flex-col bg-surface border-r border-border overflow-hidden',
+          'transition-[width,opacity,transform] duration-200 ease-out',
+          focusMode
+            ? 'w-0 opacity-0 -translate-x-2 pointer-events-none'
+            : 'w-60 opacity-100 translate-x-0',
+        )}
+      >
         <div className="px-3.5 pt-4 pb-3 border-b border-border">
           <div className="text-[10px] font-mono uppercase tracking-[0.10em] text-muted-foreground mb-1.5">
             Book

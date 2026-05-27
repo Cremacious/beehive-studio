@@ -2,7 +2,9 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { signIn, signUp } from '@/lib/auth-client'
+import { safeNextPath } from '@/lib/utils'
 
 const fieldClass =
   'w-full bg-[#252525] border border-border rounded-xl px-4 py-3.5 text-[15px] text-white placeholder:text-white/30 focus:outline-none focus:border-brand/50 focus:ring-4 focus:ring-brand/[0.12] transition-all'
@@ -37,6 +39,8 @@ function segColor(strength: 0 | 1 | 2 | 3, index: number): string {
 }
 
 export function SignUpForm({ locale }: { locale: string }) {
+  const searchParams = useSearchParams()
+  const next = safeNextPath(searchParams.get('next'), `/${locale}/studio`)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -60,6 +64,12 @@ export function SignUpForm({ locale }: { locale: string }) {
       setError(result.error.message ?? 'Something went wrong. Please try again.')
       setLoading(false)
     } else {
+      // Path 2 (per P8B plan §Task 2 Step 4): the sanitized `next` is dropped
+      // here — onboarding always redirects to /studio. New users land on
+      // /studio post-onboarding and re-click an upsell to reach /pricing.
+      // The `safeNextPath` call above still runs so a malicious `?next=` is
+      // rejected (rather than silently smuggled through).
+      void next
       window.location.href = `/${locale}/onboarding`
     }
   }
@@ -67,6 +77,7 @@ export function SignUpForm({ locale }: { locale: string }) {
   async function handleGoogle() {
     setError(null)
     setGoogleLoading(true)
+    // Same Path 2 degradation for OAuth — callback goes to /studio.
     await signIn.social({ provider: 'google', callbackURL: `/${locale}/studio` })
   }
 

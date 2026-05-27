@@ -14,9 +14,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-27
 >
-> **Current focus:** Phase 8 (Stripe) COMPLETE. Chrome retoned cool neutral (hue 256°, anchored on #1E1E1E/#252525) — was warm walnut, didn't pair well with brand yellow per Chris. Cream paper untouched. Ready for next direction.
+> **Current focus:** Phase 8 (Stripe) COMPLETE. Chrome retoned cool neutral (hue 256°, anchored on #1E1E1E/#252525) — was warm walnut. Writing analysis panel pinned to dark chrome regardless of editor mode (analytics surface reads better on dark). Cream paper untouched. Ready for next direction.
 > **Active branch:** `main` (pushed to origin/main)
-> **Last commit:** feat(design): retone chrome + dark canvas to cool neutral grays
+> **Last commit:** feat(studio): writing analysis always dark-themed (drop light-mode override)
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.

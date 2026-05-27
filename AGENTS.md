@@ -14,9 +14,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-27
 >
-> **Current focus:** /studio library redesign — executing 5-task plan. Task 1 (data layer) shipped: BookSummary extended (genre/lastEditedAt/chapterCount/status/isPublished), summarizeBookStatus helper, getStudioStatsAction. 4 tasks remain (BookCard+empty → BookGrid → StudioHeader → page wire-up).
+> **Current focus:** /studio library redesign — executing 5-task plan. Tasks 1-2 shipped (data layer + BookCard hover overlay + StudioEmptyState). 3 tasks remain (BookGrid → StudioHeader → page wire-up).
 > **Active branch:** `main` (local; not yet pushed)
-> **Last commit:** feat(studio): extend BookSummary + getStudioStatsAction (Library Task 1)
+> **Last commit:** feat(studio): BookCard with hover overlay + StudioEmptyState (Library Task 2)
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.

@@ -4,27 +4,33 @@ import { db } from '@/db'
 import {
   books, binderItems, chapters, bookTemplates, bookPublishingMetadata,
 } from '@/db/schema'
-import { eq, and, count } from 'drizzle-orm'
+import { eq, and, count, inArray, gt, ne, sql } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { assertBookOwner } from './_helpers'
 import { getUserPremiumStatus, FREE_BOOK_LIMIT } from '@/lib/premium'
 import { createBookSchema, updateBookSchema } from '@/lib/validations/book'
 import { createId } from '@paralleldrive/cuid2'
+import { summarizeBookStatus, type BookSummaryStatus } from '@/lib/books/summarize-status'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export type BookSummary = {
   id: string
   title: string
-  genre: string | null
-  visibility: 'PRIVATE' | 'PUBLIC'
-  status: 'DRAFT' | 'PUBLISHED'
   coverUrl: string | null
-  synopsis: string | null
   wordCount: number
+  genre: string | null
+  lastEditedAt: Date
   chapterCount: number
-  createdAt: Date
-  updatedAt: Date
+  status: BookSummaryStatus
+  isPublished: boolean
+}
+
+export type StudioStats = {
+  totalWords: number
+  booksInProgress: number
+  wordsThisWeek: number
+  chaptersPublished: number
 }
 
 export type ActionResult<T = void> =
@@ -193,29 +199,138 @@ export async function getUserBooksAction(): Promise<
 > {
   const userId = await requireAuth()
 
-  const rows = await db.query.books.findMany({
-    where: eq(books.userId, userId),
-    with: {
-      chapters: { columns: { wordCount: true } },
-    },
-    orderBy: (t, { desc }) => [desc(t.updatedAt)],
+  // 1) Fetch all the user's books.
+  const bookRows = await db
+    .select({
+      id: books.id,
+      title: books.title,
+      genre: books.genre,
+      status: books.status,
+      coverUrl: books.coverUrl,
+      updatedAt: books.updatedAt,
+    })
+    .from(books)
+    .where(eq(books.userId, userId))
+    .orderBy(sql`${books.updatedAt} DESC`)
+
+  if (bookRows.length === 0) return { success: true, data: [] }
+
+  // 2) Fetch all chapters for those books in a single query.
+  const bookIds = bookRows.map((b) => b.id)
+  const chapterRows = await db
+    .select({
+      bookId: chapters.bookId,
+      wordCount: chapters.wordCount,
+      status: chapters.status,
+      updatedAt: chapters.updatedAt,
+    })
+    .from(chapters)
+    .where(inArray(chapters.bookId, bookIds))
+
+  // 3) Zip in JS: per book, count chapters, find max(updatedAt), collect statuses.
+  type ChapterAgg = {
+    wordCount: number
+    count: number
+    maxUpdatedAt: Date
+    statuses: ('IDEA' | 'OUTLINE' | 'FIRST_DRAFT' | 'REVISED' | 'FINAL')[]
+  }
+  const perBook = new Map<string, ChapterAgg>()
+  for (const ch of chapterRows) {
+    const existing = perBook.get(ch.bookId)
+    if (existing) {
+      existing.wordCount += ch.wordCount
+      existing.count += 1
+      if (ch.updatedAt > existing.maxUpdatedAt) existing.maxUpdatedAt = ch.updatedAt
+      existing.statuses.push(ch.status)
+    } else {
+      perBook.set(ch.bookId, {
+        wordCount: ch.wordCount,
+        count: 1,
+        maxUpdatedAt: ch.updatedAt,
+        statuses: [ch.status],
+      })
+    }
+  }
+
+  const summaries: BookSummary[] = bookRows.map((book) => {
+    const agg = perBook.get(book.id)
+    const lastEditedAt = agg && agg.maxUpdatedAt > book.updatedAt ? agg.maxUpdatedAt : book.updatedAt
+    return {
+      id: book.id,
+      title: book.title,
+      coverUrl: book.coverUrl,
+      wordCount: agg?.wordCount ?? 0,
+      genre: book.genre,
+      lastEditedAt,
+      chapterCount: agg?.count ?? 0,
+      status: summarizeBookStatus({
+        bookStatus: book.status,
+        chapterStatuses: agg?.statuses ?? [],
+      }),
+      isPublished: book.status === 'PUBLISHED',
+    }
   })
 
-  const summaries: BookSummary[] = rows.map((book) => ({
-    id: book.id,
-    title: book.title,
-    genre: book.genre,
-    visibility: book.visibility,
-    status: book.status,
-    coverUrl: book.coverUrl,
-    synopsis: book.synopsis,
-    wordCount: book.chapters.reduce((sum, ch) => sum + ch.wordCount, 0),
-    chapterCount: book.chapters.length,
-    createdAt: book.createdAt,
-    updatedAt: book.updatedAt,
-  }))
-
   return { success: true, data: summaries }
+}
+
+/**
+ * Aggregate stats for the /studio header strip.
+ *
+ * wordsThisWeek caveat: sums word counts for CHAPTERS UPDATED in the
+ * last 7 days, not "words added this week" (we don't track per-day
+ * deltas). Acceptable productivity proxy.
+ */
+export async function getStudioStatsAction(): Promise<ActionResult<StudioStats>> {
+  const userId = await requireAuth()
+  const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000)
+
+  const userBooksSq = db
+    .select({ id: books.id, status: books.status })
+    .from(books)
+    .where(eq(books.userId, userId))
+    .as('user_books')
+
+  const [totalWordsRow, booksInProgressRow, wordsThisWeekRow, chaptersPublishedRow] =
+    await Promise.all([
+      // SUM(chapters.wordCount) for chapters of user's books
+      db
+        .select({ total: sql<number>`COALESCE(SUM(${chapters.wordCount}), 0)::int` })
+        .from(chapters)
+        .innerJoin(userBooksSq, eq(chapters.bookId, userBooksSq.id)),
+
+      // COUNT(books) WHERE userId AND status <> 'PUBLISHED'
+      db
+        .select({ total: sql<number>`COUNT(*)::int` })
+        .from(books)
+        .where(and(eq(books.userId, userId), ne(books.status, 'PUBLISHED'))),
+
+      // SUM(chapters.wordCount) WHERE chapter.updatedAt > sevenDaysAgo, scoped to user
+      db
+        .select({ total: sql<number>`COALESCE(SUM(${chapters.wordCount}), 0)::int` })
+        .from(chapters)
+        .innerJoin(userBooksSq, eq(chapters.bookId, userBooksSq.id))
+        .where(gt(chapters.updatedAt, sevenDaysAgo)),
+
+      // COUNT(chapters) WHERE chapter's book is PUBLISHED
+      db
+        .select({ total: sql<number>`COUNT(*)::int` })
+        .from(chapters)
+        .innerJoin(
+          userBooksSq,
+          and(eq(chapters.bookId, userBooksSq.id), eq(userBooksSq.status, 'PUBLISHED')),
+        ),
+    ])
+
+  return {
+    success: true,
+    data: {
+      totalWords: Number(totalWordsRow[0]?.total ?? 0),
+      booksInProgress: Number(booksInProgressRow[0]?.total ?? 0),
+      wordsThisWeek: Number(wordsThisWeekRow[0]?.total ?? 0),
+      chaptersPublished: Number(chaptersPublishedRow[0]?.total ?? 0),
+    },
+  }
 }
 
 /**

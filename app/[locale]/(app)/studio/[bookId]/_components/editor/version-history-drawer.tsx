@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Clock, X } from 'lucide-react'
+import { Clock, X, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
+import { cn } from '@/lib/utils'
 import { useBookEditor } from '../book-editor-provider'
 import {
   getChapterSnapshotsAction,
@@ -25,7 +26,7 @@ function formatSnapshotDate(d: Date): string {
 }
 
 export function VersionHistoryDrawer() {
-  const { activeChapter, toggleHistory, enterPreview, pushFlash } = useBookEditor()
+  const { activeChapter, toggleHistory, enterPreview, pushFlash, previewSnapshotId } = useBookEditor()
   const params = useParams<{ locale: string }>()
   const locale = params.locale
   const [snapshots, setSnapshots] = useState<SnapshotSummary[] | null>(null)
@@ -82,17 +83,30 @@ export function VersionHistoryDrawer() {
   return (
     <aside
       data-slot="version-history-drawer"
-      className="w-60 flex-shrink-0 flex flex-col bg-card border-l border-border overflow-hidden"
+      className="w-64 flex-shrink-0 flex flex-col bg-card border-l border-border overflow-hidden"
     >
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-        <div className="flex items-center gap-2">
-          <Clock size={14} className="text-foreground/70" />
-          <h2 className="text-sm font-medium text-foreground">Version history</h2>
+      <div className="flex items-center gap-2.5 px-4 py-3.5 border-b border-border">
+        <span
+          className="inline-flex items-center justify-center w-7 h-7 rounded-md"
+          style={{ background: 'var(--brand-soft)', color: 'var(--color-brand)' }}
+        >
+          <Clock size={14} />
+        </span>
+        <div className="flex-1">
+          <h2
+            className="text-sm font-bold text-foreground leading-tight"
+            style={{ fontFamily: 'var(--font-display)', letterSpacing: '-0.005em' }}
+          >
+            Version history
+          </h2>
+          <p className="text-[10px] font-mono text-muted-foreground tracking-wider uppercase">
+            Snapshots
+          </p>
         </div>
         <button
           onClick={toggleHistory}
           aria-label="Close version history"
-          className="text-foreground/60 hover:text-foreground transition-colors"
+          className="text-muted-foreground hover:text-foreground transition-colors p-1 -mr-1 rounded"
         >
           <X size={14} />
         </button>
@@ -110,17 +124,42 @@ export function VersionHistoryDrawer() {
         )}
 
         {!loading && isFreeTier && (
-          <div className="p-4 flex flex-col gap-3">
-            <div className="rounded-md border border-brand/30 bg-brand/5 p-3 flex flex-col gap-2">
-              <span className="rounded-sm bg-brand/20 px-1.5 py-0.5 text-[9px] font-semibold text-brand border border-brand/30 self-start">
-                Premium
+          <div className="p-3.5">
+            <div
+              className="relative overflow-hidden rounded-lg p-4 flex flex-col gap-2.5"
+              style={{
+                background:
+                  'radial-gradient(120% 80% at 20% 10%, oklch(from var(--color-brand) l c h / 0.18), transparent 70%), linear-gradient(180deg, var(--chrome-800), var(--chrome-850))',
+                border: '1px solid oklch(from var(--color-brand) l c h / 0.30)',
+              }}
+            >
+              <span
+                className="inline-flex items-center gap-1 self-start px-2 py-0.5 rounded-sm text-[9.5px] font-bold uppercase tracking-widest"
+                style={{
+                  background: 'var(--color-brand)',
+                  color: 'var(--brand-ink)',
+                  fontFamily: 'var(--font-mono)',
+                }}
+              >
+                <Sparkles size={9} /> Premium
               </span>
-              <p className="text-xs text-foreground/80 leading-relaxed">
-                Version history lets you restore any version of your chapter going back through your edits.
+              <h4
+                className="text-base font-bold text-foreground leading-tight"
+                style={{ fontFamily: 'var(--font-display)', letterSpacing: '-0.01em' }}
+              >
+                Never lose a version
+              </h4>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Version history lets you preview and restore any earlier draft of your chapter.
               </p>
               <Link
                 href={`/${locale}/pricing`}
-                className="inline-flex items-center justify-center rounded-md bg-brand hover:bg-brand-hover px-3 py-1.5 text-xs font-semibold text-background transition-colors"
+                className="inline-flex items-center justify-center gap-1.5 self-start mt-1 rounded-md px-3 py-1.5 text-xs font-bold transition-colors hover:bg-brand-hover"
+                style={{
+                  background: 'var(--color-brand)',
+                  color: 'var(--brand-ink)',
+                  fontFamily: 'var(--font-display)',
+                }}
               >
                 Upgrade →
               </Link>
@@ -143,23 +182,45 @@ export function VersionHistoryDrawer() {
         )}
 
         {!loading && snapshots && snapshots.length > 0 && (
-          <ul className="flex flex-col">
-            {snapshots.map(s => (
-              <li key={s.id}>
-                <button
-                  onClick={() => handleRowClick(s)}
-                  disabled={openingId === s.id}
-                  className="w-full text-left px-4 py-2 hover:bg-surface-elevated transition-colors border-b border-border/40 disabled:opacity-50"
-                >
-                  <div className="text-xs text-foreground">
-                    {formatSnapshotDate(new Date(s.createdAt))}
-                  </div>
-                  <div className="text-[10px] text-muted-foreground mt-0.5">
-                    {s.wordCount.toLocaleString()} words
-                  </div>
-                </button>
-              </li>
-            ))}
+          <ul className="flex flex-col gap-1.5 px-2 py-3">
+            {snapshots.map(s => {
+              const isActive = previewSnapshotId === s.id
+              return (
+                <li key={s.id}>
+                  <button
+                    onClick={() => handleRowClick(s)}
+                    disabled={openingId === s.id}
+                    className={cn(
+                      'w-full text-left px-3 py-2 rounded-md transition-colors disabled:opacity-50',
+                      'border',
+                      isActive
+                        ? 'border-l-2'
+                        : 'hover:bg-surface-elevated',
+                    )}
+                    style={
+                      isActive
+                        ? {
+                            background: 'var(--brand-soft)',
+                            borderColor: 'oklch(from var(--color-brand) l c h / 0.40)',
+                            borderLeftColor: 'var(--color-brand)',
+                            borderLeftWidth: '2px',
+                          }
+                        : { borderColor: 'var(--chrome-800)' }
+                    }
+                  >
+                    <div
+                      className="text-xs font-mono tracking-wide"
+                      style={{ color: isActive ? 'var(--color-brand)' : 'var(--foreground)' }}
+                    >
+                      {formatSnapshotDate(new Date(s.createdAt))}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground mt-0.5 font-mono">
+                      {s.wordCount.toLocaleString()} words
+                    </div>
+                  </button>
+                </li>
+              )
+            })}
           </ul>
         )}
       </div>

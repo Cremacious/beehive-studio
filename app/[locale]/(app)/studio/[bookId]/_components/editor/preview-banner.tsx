@@ -50,30 +50,93 @@ export function PreviewBanner() {
   return (
     <div
       data-slot="preview-banner"
-      className="flex items-center justify-between gap-3 px-4 py-2 border-b border-brand/40 bg-brand/10 text-xs"
+      className="relative flex items-center gap-3.5 pl-4 pr-4 py-2 text-xs"
+      style={{
+        background:
+          'linear-gradient(90deg, oklch(from var(--color-brand) l c h / 0.22), oklch(from var(--color-brand) l c h / 0.10) 60%, oklch(from var(--color-brand) l c h / 0.04))',
+        borderBottom: '1px solid oklch(from var(--color-brand) l c h / 0.35)',
+      }}
     >
-      <div className="flex items-center gap-2 text-foreground">
-        <History size={14} className="text-brand" />
-        <span>
-          Previewing version from <strong>{formatBannerDate(snapshotCreatedAt)}</strong> · read-only
+      <span
+        aria-hidden
+        className="absolute left-0 top-0 bottom-0 w-1"
+        style={{
+          background: 'var(--color-brand)',
+          boxShadow: '0 0 16px 0 oklch(from var(--color-brand) l c h / 0.4)',
+        }}
+      />
+      <span
+        className="inline-flex items-center justify-center w-7 h-7 rounded-md flex-shrink-0"
+        style={{
+          background: 'var(--color-brand)',
+          color: 'var(--brand-ink)',
+          boxShadow: '0 2px 6px -2px rgba(0,0,0,0.3)',
+        }}
+      >
+        <History size={14} />
+      </span>
+      <div className="flex-1 flex items-center gap-2 flex-wrap">
+        <span style={{ color: 'var(--pb-ink, var(--foreground))' }}>
+          Previewing version from{' '}
+          <strong
+            className="font-mono font-semibold"
+            style={{ color: 'var(--pb-strong, var(--color-brand))' }}
+          >
+            {formatBannerDate(snapshotCreatedAt)}
+          </strong>
+        </span>
+        <span
+          className="font-mono text-[10px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-sm"
+          style={{
+            color: 'var(--pb-ro, var(--color-brand))',
+            background: 'oklch(from var(--color-brand) l c h / 0.30)',
+          }}
+        >
+          read-only
         </span>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-shrink-0">
         <button
           onClick={handleRestore}
           disabled={restoring}
-          className="rounded px-2.5 py-1 text-xs font-semibold bg-brand hover:bg-brand-hover text-background transition-colors disabled:opacity-50"
+          className="rounded-md px-3 py-1.5 text-xs font-bold hover:bg-brand-hover transition-colors disabled:opacity-50"
+          style={{
+            background: 'var(--color-brand)',
+            color: 'var(--brand-ink)',
+            fontFamily: 'var(--font-display)',
+            boxShadow: '0 2px 6px -2px rgba(0,0,0,0.3)',
+          }}
         >
           {restoring ? 'Restoring…' : 'Restore this version'}
         </button>
         <button
           onClick={exitPreview}
           disabled={restoring}
-          className="rounded px-2.5 py-1 text-xs text-foreground/70 hover:text-foreground transition-colors disabled:opacity-50"
+          className="rounded-md px-3 py-1.5 text-xs transition-colors disabled:opacity-50"
+          style={{
+            background: 'transparent',
+            border: '1px solid oklch(from var(--color-brand) l c h / 0.4)',
+            color: 'var(--pb-ghost, var(--foreground))',
+          }}
         >
           Back to current
         </button>
       </div>
+      {/* Theme-aware bridge so brand-tint text stays readable on cream paper */}
+      <style>{`
+        [data-slot="preview-banner"] {
+          --pb-ink: var(--chrome-100);
+          --pb-strong: var(--color-brand);
+          --pb-ro: var(--color-brand);
+          --pb-ghost: var(--chrome-200);
+        }
+        [data-editor-theme="light"] [data-slot="preview-banner"] {
+          --pb-ink: var(--paper-ink-strong);
+          --pb-strong: oklch(0.45 0.13 60);
+          --pb-ro: oklch(0.40 0.13 60);
+          --pb-ghost: oklch(0.40 0.13 60);
+        }
+      `}</style>
     </div>
   )
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import type { Editor } from '@tiptap/react'
+import { ChevronUp, ChevronDown, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 type Props = {
@@ -96,99 +97,179 @@ export function FindReplace({ editor, onClose }: Props) {
     setCurrentMatch(0)
   }
 
+  const noMatches = findText.length > 0 && matches.length === 0
+  const countText = findText
+    ? matches.length === 0
+      ? 'No matches'
+      : `${currentMatch + 1} / ${matches.length}`
+    : ''
+
   return (
-    <div className="absolute top-14 right-2 z-20 bg-surface-elevated border border-border rounded-xl shadow-xl p-3 w-72">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-medium text-foreground/70">Find &amp; Replace</span>
-        <button onClick={onClose} aria-label="Close find" className="text-muted-foreground hover:text-foreground text-sm leading-none">
-          ×
-        </button>
-      </div>
+    <div
+      data-slot="find-replace"
+      className="flex justify-center px-4 pt-2"
+    >
+      {/* Theme-aware bridge for find/replace — paper context for light mode */}
+      <style>{`
+        [data-slot="find-replace"] {
+          --fr-bg: var(--chrome-900);
+          --fr-border: var(--chrome-800);
+          --fr-input-bg: var(--chrome-950);
+          --fr-input-border: var(--chrome-800);
+          --fr-ink: var(--chrome-100);
+          --fr-ink-muted: var(--chrome-400);
+          --fr-btn-hover-bg: var(--chrome-800);
+          --fr-sep: var(--chrome-800);
+        }
+        [data-editor-theme="light"] [data-slot="find-replace"] {
+          --fr-bg: var(--paper-100);
+          --fr-border: var(--paper-300);
+          --fr-input-bg: var(--paper-50);
+          --fr-input-border: var(--paper-300);
+          --fr-ink: var(--paper-ink-strong);
+          --fr-ink-muted: var(--paper-ink-muted);
+          --fr-btn-hover-bg: oklch(0.78 0.04 60 / 0.18);
+          --fr-sep: var(--paper-300);
+        }
+        [data-slot="find-replace"] .fr-ibtn:hover { background: var(--fr-btn-hover-bg); color: var(--fr-ink); }
+        [data-slot="find-replace"] .fr-ibtn:disabled { opacity: 0.4; cursor: not-allowed; }
+        [data-slot="find-replace"] .fr-ibtn.active {
+          background: var(--brand-soft);
+          color: var(--color-brand);
+        }
+        [data-slot="find-replace"] .fr-input:focus {
+          border-color: var(--color-brand);
+          box-shadow: 0 0 0 3px var(--brand-soft);
+        }
+      `}</style>
 
-      {/* Find row */}
-      <div className="flex gap-1.5 mb-1.5">
-        <input
-          autoFocus
-          value={findText}
-          onChange={e => setFindText(e.target.value)}
-          onKeyDown={e => {
-            if (e.key === 'Enter') {
-              e.shiftKey ? findPrev() : findNext()
-            }
-            if (e.key === 'Escape') onClose()
-          }}
-          placeholder="Find…"
-          className="flex-1 bg-surface border border-border rounded px-2 py-1 text-xs outline-none focus:border-brand/40 text-foreground"
-        />
-        <button
-          onClick={() => setMatchCase(c => !c)}
-          title="Match case"
-          className={cn(
-            'text-xs px-2 py-1 rounded border',
-            matchCase ? 'border-brand text-brand bg-brand/10' : 'border-border text-muted-foreground hover:border-brand/40',
-          )}
-        >
-          Aa
-        </button>
-      </div>
-
-      {/* Match count */}
-      <div className="text-xs text-muted-foreground mb-2">
-        {findText && (matches.length === 0 ? 'No matches' : `${currentMatch + 1} of ${matches.length}`)}
-      </div>
-
-      {/* Find navigation */}
-      <div className="flex gap-1.5 mb-2">
-        <button
-          onClick={findPrev}
-          disabled={matches.length === 0}
-          className="flex-1 text-xs py-1 rounded border border-border text-muted-foreground hover:text-foreground hover:border-brand/40 disabled:opacity-40"
-        >
-          ↑ Prev
-        </button>
-        <button
-          onClick={findNext}
-          disabled={matches.length === 0}
-          className="flex-1 text-xs py-1 rounded border border-border text-muted-foreground hover:text-foreground hover:border-brand/40 disabled:opacity-40"
-        >
-          ↓ Next
-        </button>
-      </div>
-
-      {/* Toggle replace */}
-      <button
-        onClick={() => setShowReplace(r => !r)}
-        className="text-xs text-muted-foreground hover:text-foreground mb-2 flex items-center gap-1"
+      <div
+        className="w-full max-w-[560px] rounded-lg shadow-lg"
+        style={{
+          background: 'var(--fr-bg)',
+          border: '1px solid var(--fr-border)',
+        }}
       >
-        {showReplace ? '▾' : '▸'} Replace
-      </button>
-
-      {showReplace && (
-        <>
+        {/* Row 1: search */}
+        <div className="flex items-center gap-1.5 px-2 py-2">
           <input
-            value={replaceText}
-            onChange={e => setReplaceText(e.target.value)}
-            placeholder="Replace with…"
-            className="w-full bg-surface border border-border rounded px-2 py-1 text-xs outline-none focus:border-brand/40 text-foreground mb-1.5"
+            autoFocus
+            value={findText}
+            onChange={e => setFindText(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                e.shiftKey ? findPrev() : findNext()
+              }
+              if (e.key === 'Escape') onClose()
+            }}
+            placeholder="Find…"
+            className="fr-input flex-1 h-7 rounded px-2.5 text-sm outline-none transition-shadow"
+            style={{
+              background: 'var(--fr-input-bg)',
+              border: '1px solid var(--fr-input-border)',
+              color: 'var(--fr-ink)',
+            }}
           />
-          <div className="flex gap-1.5">
+          <span
+            className="text-[11px] font-mono whitespace-nowrap px-1.5"
+            style={{ color: noMatches ? 'var(--destructive)' : 'var(--fr-ink-muted)' }}
+          >
+            {countText}
+          </span>
+          <button
+            onClick={findPrev}
+            disabled={matches.length === 0}
+            title="Previous match (Shift+Enter)"
+            className="fr-ibtn inline-flex items-center justify-center w-7 h-7 rounded transition-colors"
+            style={{ color: 'var(--fr-ink-muted)' }}
+          >
+            <ChevronUp size={14} />
+          </button>
+          <button
+            onClick={findNext}
+            disabled={matches.length === 0}
+            title="Next match (Enter)"
+            className="fr-ibtn inline-flex items-center justify-center w-7 h-7 rounded transition-colors"
+            style={{ color: 'var(--fr-ink-muted)' }}
+          >
+            <ChevronDown size={14} />
+          </button>
+          <span className="w-px h-4 mx-0.5" style={{ background: 'var(--fr-sep)' }} />
+          <button
+            onClick={() => setMatchCase(c => !c)}
+            title="Match case"
+            className={cn(
+              'fr-ibtn inline-flex items-center justify-center w-7 h-7 rounded font-bold text-[11px] transition-colors',
+              matchCase && 'active',
+            )}
+            style={!matchCase ? { color: 'var(--fr-ink-muted)' } : undefined}
+          >
+            Aa
+          </button>
+          <button
+            onClick={() => setShowReplace(r => !r)}
+            title="Toggle replace"
+            className={cn(
+              'fr-ibtn inline-flex items-center justify-center px-2 h-7 rounded text-[11px] font-semibold transition-colors',
+              showReplace && 'active',
+            )}
+            style={!showReplace ? { color: 'var(--fr-ink-muted)' } : undefined}
+          >
+            Replace
+          </button>
+          <span className="w-px h-4 mx-0.5" style={{ background: 'var(--fr-sep)' }} />
+          <button
+            onClick={onClose}
+            aria-label="Close find"
+            className="fr-ibtn inline-flex items-center justify-center w-7 h-7 rounded transition-colors"
+            style={{ color: 'var(--fr-ink-muted)' }}
+          >
+            <X size={14} />
+          </button>
+        </div>
+
+        {showReplace && (
+          <div
+            className="flex items-center gap-1.5 px-2 pb-2 -mt-0.5"
+            style={{ borderTop: '1px dashed var(--fr-sep)', paddingTop: '8px' }}
+          >
+            <input
+              value={replaceText}
+              onChange={e => setReplaceText(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') replaceCurrent()
+                if (e.key === 'Escape') onClose()
+              }}
+              placeholder="Replace with…"
+              className="fr-input flex-1 h-7 rounded px-2.5 text-sm outline-none transition-shadow"
+              style={{
+                background: 'var(--fr-input-bg)',
+                border: '1px solid var(--fr-input-border)',
+                color: 'var(--fr-ink)',
+              }}
+            />
             <button
               onClick={replaceCurrent}
               disabled={matches.length === 0}
-              className="flex-1 text-xs py-1 rounded border border-border text-muted-foreground hover:text-foreground hover:border-brand/40 disabled:opacity-40"
+              className="fr-ibtn inline-flex items-center justify-center px-2.5 h-7 rounded text-[11px] font-semibold transition-colors"
+              style={{ color: 'var(--fr-ink-muted)' }}
             >
               Replace
             </button>
             <button
               onClick={replaceAll}
               disabled={matches.length === 0}
-              className="flex-1 text-xs py-1 rounded border border-border text-muted-foreground hover:text-foreground hover:border-brand/40 disabled:opacity-40"
+              className="inline-flex items-center justify-center px-2.5 h-7 rounded text-[11px] font-semibold transition-colors hover:bg-brand-hover disabled:opacity-40"
+              style={{
+                background: 'var(--color-brand)',
+                color: 'var(--brand-ink)',
+              }}
             >
-              All
+              Replace all
             </button>
           </div>
-        </>
-      )}
+        )}
+      </div>
     </div>
   )
 }

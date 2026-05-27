@@ -98,8 +98,10 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
   const toggleCorkboardMode = useCallback(() => setCorkboardMode(c => !c), [])
   const [pendingRenameId, setPendingRenameId] = useState<string | null>(null)
   const [editorTheme, setEditorTheme] = useState<'dark' | 'light'>(() => {
-    if (typeof window === 'undefined') return 'dark'
-    return localStorage.getItem('editor-theme') === 'light' ? 'light' : 'dark'
+    // Light is the default writing surface (cream paper). Users opt into dark
+    // via the toolbar Moon icon; preference persists per device in localStorage.
+    if (typeof window === 'undefined') return 'light'
+    return localStorage.getItem('editor-theme') === 'dark' ? 'dark' : 'light'
   })
 
   const [historyOpen, setHistoryOpen] = useState(false)

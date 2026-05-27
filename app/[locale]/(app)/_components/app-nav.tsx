@@ -13,90 +13,135 @@ interface AppNavProps {
   }
 }
 
+/**
+ * Maps the current pathname (minus locale) to a Library-style breadcrumb
+ * label. The crumb sits next to the "Beehive Studio" lockup with a slash
+ * separator. Falls back to "Studio" when nothing matches so the chrome
+ * always looks intentional.
+ */
+function crumbFor(pathname: string, locale: string): string {
+  const trimmed = pathname.replace(new RegExp(`^/${locale}`), '') || '/'
+  const seg = trimmed.split('/').filter(Boolean)[0] ?? ''
+  switch (seg) {
+    case '':         return 'Library'
+    case 'studio':   return 'Library'
+    case 'discover': return 'Discover'
+    case 'community': return 'Community'
+    case 'hive':     return 'Hive'
+    case 'hives':    return 'Hives'
+    case 'welcome':  return 'Welcome'
+    case 'settings': return 'Settings'
+    case 'u':        return 'Profile'
+    case 'pricing':  return 'Pricing'
+    default:         return seg.charAt(0).toUpperCase() + seg.slice(1)
+  }
+}
+
 export function AppNav({ locale, user }: AppNavProps) {
   const pathname = usePathname()
-
   const initial = (user.name?.[0] ?? user.email?.[0] ?? 'U').toUpperCase()
 
   function isActive(segment: string) {
     return pathname.startsWith(`/${locale}/${segment}`)
   }
 
-  const navItemBase =
-    'relative px-3.5 py-1.5 rounded-full text-[14px] font-medium transition-colors'
-  const navItemInactive = 'text-white/55 hover:text-white hover:bg-white/5'
-  const navItemActive = 'text-brand bg-brand/10'
+  const crumb = crumbFor(pathname, locale)
 
   return (
-    <header className="sticky top-0 z-40 bg-[#141414]/90 backdrop-blur border-b border-border/70">
-      <div className="max-w-7xl mx-auto px-5 lg:px-8 h-14 flex items-center justify-between">
-
-        {/* Left: logo + nav */}
-        <div className="flex items-center gap-6">
-          <Link href={`/${locale}`} className="flex items-center gap-2.5 shrink-0">
-            <span className="relative inline-flex items-center justify-center w-8 h-8 rounded-[10px] bg-brand/15 border border-brand/30">
-              <svg viewBox="0 0 24 24" className="w-[18px] h-[18px]" fill="none" stroke="#FFC300" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2 L20 6.5 L20 15.5 L12 20 L4 15.5 L4 6.5 Z"/>
-                <path d="M12 9 L16 11 L16 14.5 L12 16.5 L8 14.5 L8 11 Z" fill="#FFC300" fillOpacity="0.6" stroke="none"/>
-              </svg>
+    <header
+      className="sticky top-0 z-40 backdrop-blur-md border-b"
+      style={{
+        background: 'oklch(0.235 0.003 256 / 0.85)',
+        borderColor: 'var(--canvas-dark-300)',
+        height: '56px',
+      }}
+    >
+      <div className="max-w-[1280px] mx-auto px-8 h-full flex items-center justify-between relative">
+        {/* LEFT — brand mark + crumb */}
+        <Link href={`/${locale}/studio`} className="flex items-center gap-2.5 shrink-0 no-underline">
+          <span
+            className="inline-flex items-center justify-center w-7 h-7 rounded-lg"
+            style={{
+              background: 'var(--brand-soft)',
+              border: '1px solid oklch(0.85 0.18 90 / 0.30)',
+              color: 'var(--brand)',
+            }}
+            aria-hidden="true"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2 L20 6.5 L20 15.5 L12 20 L4 15.5 L4 6.5 Z" />
+              <path d="M12 9 L16 11 L16 14.5 L12 16.5 L8 14.5 L8 11 Z" fill="currentColor" fillOpacity="0.55" stroke="none" />
+            </svg>
+          </span>
+          <div className="flex items-baseline gap-2.5" style={{ fontFamily: 'var(--font-display)', fontWeight: 700, letterSpacing: '-0.01em' }}>
+            <span className="text-[15px]" style={{ color: 'var(--canvas-dark-ink-strong)' }}>Beehive Studio</span>
+            <span
+              className="hidden sm:inline-flex items-center gap-2.5 uppercase"
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontWeight: 500,
+                fontSize: '11px',
+                letterSpacing: '0.10em',
+                color: 'var(--canvas-dark-ink-muted)',
+              }}
+            >
+              <span style={{ color: 'var(--canvas-dark-300)' }}>/</span>
+              {crumb}
             </span>
-            <span className="mainFont font-bold text-[15px] tracking-tight hidden sm:inline">Beehive</span>
-          </Link>
+          </div>
+        </Link>
 
-          <nav className="flex items-center gap-1">
+        {/* CENTER — nav (absolutely positioned) */}
+        <nav className="absolute left-1/2 -translate-x-1/2 flex gap-1">
+          {[
+            { label: 'Studio', href: `/${locale}/studio`, active: isActive('studio') },
+            { label: 'Discover', href: `/${locale}/discover`, active: isActive('discover') },
+            { label: 'Community', href: `/${locale}/community`, active: isActive('community') },
+            // /hive is the existing public-hives route; fall back to /community for the Hive crumb
+            { label: 'Hive', href: `/${locale}/hive`, active: isActive('hive') },
+          ].map((item) => (
             <Link
-              href={`/${locale}/studio`}
-              className={`${navItemBase} ${isActive('studio') ? navItemActive : navItemInactive}`}
+              key={item.label}
+              href={item.href}
+              className="px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-colors no-underline"
+              style={
+                item.active
+                  ? { color: 'var(--canvas-dark-ink-strong)', background: 'var(--canvas-dark-200)' }
+                  : { color: 'var(--canvas-dark-ink-muted)' }
+              }
+              onMouseEnter={(e) => {
+                if (!item.active) e.currentTarget.style.color = 'var(--canvas-dark-ink-strong)'
+              }}
+              onMouseLeave={(e) => {
+                if (!item.active) e.currentTarget.style.color = 'var(--canvas-dark-ink-muted)'
+              }}
             >
-              <span className="flex items-center gap-2">
-                <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-                </svg>
-                Studio
-              </span>
+              {item.label}
             </Link>
-            <Link
-              href={`/${locale}/community`}
-              className={`${navItemBase} ${isActive('community') ? navItemActive : navItemInactive}`}
-            >
-              <span className="flex items-center gap-2">
-                <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2 L20 6.5 L20 15.5 L12 20 L4 15.5 L4 6.5 Z"/>
-                  <path d="M12 7 L16 9.5 L16 13.5 L12 16 L8 13.5 L8 9.5 Z"/>
-                </svg>
-                Community
-              </span>
-            </Link>
-            <Link
-              href={`/${locale}/discover`}
-              className={`${navItemBase} ${isActive('discover') ? navItemActive : navItemInactive}`}
-            >
-              <span className="flex items-center gap-2">
-                <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
-                </svg>
-                Discover
-              </span>
-            </Link>
-          </nav>
-        </div>
+          ))}
+        </nav>
 
-        {/* Right: bell + avatar */}
-        <div className="flex items-center gap-1.5">
+        {/* RIGHT — notifications + avatar */}
+        <div className="flex items-center gap-3.5">
           <NotificationsBell />
-
           <button
-            className="w-8 h-8 rounded-full bg-brand/20 border border-brand/30 flex items-center justify-center text-[12px] font-bold text-brand mainFont ml-1"
+            className="w-[30px] h-[30px] rounded-full inline-flex items-center justify-center text-[12px] font-bold overflow-hidden"
+            style={{
+              background: 'var(--brand-soft)',
+              border: '1px solid oklch(0.85 0.18 90 / 0.30)',
+              color: 'var(--brand)',
+              fontFamily: 'var(--font-display)',
+            }}
             aria-label="Account menu"
           >
             {user.image ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img src={user.image} alt="" className="w-full h-full rounded-full object-cover" />
             ) : (
               initial
             )}
           </button>
         </div>
-
       </div>
     </header>
   )

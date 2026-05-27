@@ -14,9 +14,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-27
 >
-> **Current focus:** Studio Library redesign complete. /studio is now a richer bookshelf surface with Continue-Writing hero + 3-tile stats (Books in progress / Words this week / Chapters published — Total words tile dropped post-ship per Chris) + hover-overlay cards + search/sort/filter.
-> **Active branch:** `main` (local; one polish commit ahead of origin)
-> **Last commit:** fix(studio): drop Total words tile from library stats
+> **Current focus:** Studio Library v1 shipped (Hero + 3-tile stats + controls + grid + empty state) but visually dull. Claude Design brief for v2 visual redesign committed at `designs/claude/studio-library/BRIEF.md` — awaiting Claude Design output (library.html + library-empty.html + optional narrow). Once returned, port surface-by-surface following the DP2 playbook.
+> **Active branch:** `main` (local; ahead of origin)
+> **Last commit:** docs(design): Claude Design brief for /studio Library v2 redesign
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.

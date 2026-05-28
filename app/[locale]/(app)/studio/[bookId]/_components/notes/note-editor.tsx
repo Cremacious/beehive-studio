@@ -9,7 +9,7 @@ import { updateBinderItemAction } from '@/lib/actions/binder.actions'
 import { useBookEditor } from '../book-editor-provider'
 import { normalizeNoteContent, type NoteColor, type ResearchNoteContent } from '@/lib/notes/note-content'
 import { SaveStatusBadge, type FormSaveStatus } from '../front-back-matter/save-status-badge'
-import { NoteToolbar } from './note-toolbar'
+import { EditorToolbar } from '../editor/editor-toolbar'
 import { NoteAttributeControls } from './note-attribute-controls'
 
 type Props = { item: BinderItemRow }
@@ -95,6 +95,12 @@ export function NoteEditor({ item }: Props) {
       data-slot="note-editor"
       className="flex-1 flex flex-col overflow-hidden"
     >
+      {/* Full-width formatting toolbar — same component the chapter editor
+         uses. Note context omits the chapter-specific buttons (Find &
+         Replace, Writing Analysis); everything else (Bold/Italic/Headings/
+         Lists/Quote/Underline/Highlighter/Link/Undo/Redo/Align/etc.) works
+         identically since notes use the same StarterKit. */}
+      {editor && <EditorToolbar editor={editor} />}
       {/* Paper-card prose overrides — beats globals.css's .ProseMirror dark-canvas
          palette so the note body reads on cream paper. Note cards are always
          paper regardless of editor theme (they represent a physical note). */}
@@ -147,11 +153,6 @@ export function NoteEditor({ item }: Props) {
         }}
       >
         <div className="mx-auto w-full max-w-[720px] px-8 pt-8 pb-16">
-          {/* Toolbar — sits inline above the prose, no card wrapper. */}
-          <div className="mb-4">
-            {editor && <NoteToolbar editor={editor} />}
-          </div>
-
           <div data-slot="note-card">
             <h1
               data-slot="note-title"

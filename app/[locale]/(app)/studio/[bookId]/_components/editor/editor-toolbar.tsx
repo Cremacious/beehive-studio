@@ -27,10 +27,14 @@ import {
 
 type Props = {
   editor: Editor
-  onToggleAnalysis: () => void
-  analysisOpen: boolean
-  onToggleFind: () => void
-  findOpen: boolean
+  // Find & Replace + Writing Analysis are chapter-specific surfaces (they
+  // operate on chapter prose, snapshots, etc.). When the toolbar is mounted
+  // for a non-chapter editor (e.g. notes), the consumer omits these props
+  // and the corresponding buttons render nothing.
+  onToggleAnalysis?: () => void
+  analysisOpen?: boolean
+  onToggleFind?: () => void
+  findOpen?: boolean
 }
 
 type ToolbarButtonProps = {
@@ -293,10 +297,12 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
             <Eye size={14} />
           </ToolbarButton>
 
-          {/* Find & Replace */}
-          <ToolbarButton onClick={onToggleFind} isActive={findOpen} title="Find & replace (⌘F)">
-            <Search size={14} />
-          </ToolbarButton>
+          {/* Find & Replace — chapter-only */}
+          {onToggleFind && (
+            <ToolbarButton onClick={onToggleFind} isActive={findOpen} title="Find & replace (⌘F)">
+              <Search size={14} />
+            </ToolbarButton>
+          )}
 
           {/* Version history */}
           <ToolbarButton onClick={toggleHistory} isActive={historyOpen} title="Version history">
@@ -358,20 +364,22 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
             <TooltipContent>Export book</TooltipContent>
           </Tooltip>
 
-          {/* Writing analysis toggle */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onMouseDown={e => e.preventDefault()}
-                onClick={onToggleAnalysis}
-                aria-label="Writing analysis"
-                className={tbtnClass({ isActive: analysisOpen })}
-              >
-                <BarChart3 size={14} />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>Writing analysis — readability, pacing, word stats</TooltipContent>
-          </Tooltip>
+          {/* Writing analysis toggle — chapter-only */}
+          {onToggleAnalysis && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onMouseDown={e => e.preventDefault()}
+                  onClick={onToggleAnalysis}
+                  aria-label="Writing analysis"
+                  className={tbtnClass({ isActive: analysisOpen })}
+                >
+                  <BarChart3 size={14} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Writing analysis — readability, pacing, word stats</TooltipContent>
+            </Tooltip>
+          )}
 
           {/* Focus mode toggle */}
           <Tooltip>

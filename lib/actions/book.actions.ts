@@ -10,6 +10,7 @@ import { assertBookOwner } from './_helpers'
 import { getUserPremiumStatus, FREE_BOOK_LIMIT } from '@/lib/premium'
 import { createBookSchema, updateBookSchema, updateBookDetailsSchema } from '@/lib/validations/book'
 import { createId } from '@paralleldrive/cuid2'
+import { revalidatePath } from 'next/cache'
 import { summarizeBookStatus, type BookSummaryStatus } from '@/lib/books/summarize-status'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -444,11 +445,13 @@ export async function unpublishBookAction(bookId: string): Promise<ActionResult>
  * Deletes a book and all its content. Cascade deletes handle
  * binder_items, chapters, chapter_snapshots, etc.
  */
-export async function deleteBookAction(bookId: string): Promise<ActionResult> {
+export async function deleteBookAction(bookId: string, locale: string): Promise<ActionResult> {
   const userId = await requireAuth()
   await assertBookOwner(bookId, userId)
 
   await db.delete(books).where(and(eq(books.id, bookId), eq(books.userId, userId)))
+
+  revalidatePath(`/${locale}/studio`)
 
   return { success: true, data: undefined }
 }

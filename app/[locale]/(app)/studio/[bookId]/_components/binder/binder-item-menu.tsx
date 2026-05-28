@@ -98,6 +98,7 @@ export function BinderItemMenu({ node, onRenameStart }: Props) {
         order,
         content: null,
         chapterId: result.data.chapterId,
+        chapterStatus: result.data.chapterId ? 'FIRST_DRAFT' : null,
         createdAt: new Date(),
         updatedAt: new Date(),
       })

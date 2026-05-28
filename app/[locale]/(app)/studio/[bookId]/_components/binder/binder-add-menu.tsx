@@ -109,6 +109,7 @@ export function BinderAddMenu() {
         order,
         content: initialContent,
         chapterId: result.data.chapterId,
+        chapterStatus: result.data.chapterId ? 'FIRST_DRAFT' : null,
         createdAt: new Date(),
         updatedAt: new Date(),
       })

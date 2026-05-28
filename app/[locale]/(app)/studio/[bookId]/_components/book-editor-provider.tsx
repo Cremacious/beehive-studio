@@ -303,6 +303,9 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
       if (ch) m.set(activeItemId, { ...ch, status })
       return m
     })
+    setBinderItems(prev =>
+      prev.map(i => (i.id === activeItemId ? { ...i, chapterStatus: status } : i)),
+    )
 
     const result = await updateChapterStatusAction(previous.id, status)
     if (!result.success) {
@@ -313,6 +316,11 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
         if (ch) m.set(activeItemId, { ...ch, status: previous.status })
         return m
       })
+      setBinderItems(prev =>
+        prev.map(i =>
+          i.id === activeItemId ? { ...i, chapterStatus: previous.status } : i,
+        ),
+      )
       pushError(`Couldn't update status: ${result.error}`)
     }
   }, [activeItemId, chapterCache, pushError])

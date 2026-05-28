@@ -10,6 +10,7 @@ import { useBinderTree, type TreeNode } from './binder-tree'
 import { BinderItemMenu } from './binder-item-menu'
 import { updateBinderItemAction } from '@/lib/actions/binder.actions'
 import type { BinderItemRow } from '@/lib/actions/binder.actions'
+import type { ChapterStatus } from '@/lib/books/is-chapter-reader-visible'
 import { NOTE_COLOR_HEX } from '@/lib/notes/note-content'
 import {
   BookOpen,
@@ -78,6 +79,14 @@ const ICON_TINTS: Record<BinderItemRow['type'], string> = {
 }
 
 const COLLAPSIBLE_TYPES = new Set<BinderItemRow['type']>(['part', 'research_folder'])
+
+const STATUS_COLOR: Record<ChapterStatus, string> = {
+  IDEA: 'var(--status-idea)',
+  OUTLINE: 'var(--status-outline)',
+  FIRST_DRAFT: 'var(--status-first-draft)',
+  REVISED: 'var(--status-revised)',
+  FINAL: 'var(--status-final)',
+}
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -232,6 +241,14 @@ export function BinderItem({ node, depth }: Props) {
             </span>
           )
         })()}
+
+        {node.type === 'chapter' && node.chapterStatus && (
+          <span
+            className="inline-block w-1.5 h-1.5 rounded-full flex-shrink-0"
+            style={{ backgroundColor: STATUS_COLOR[node.chapterStatus] }}
+            aria-label={`Status: ${node.chapterStatus.toLowerCase().replace('_', ' ')}`}
+          />
+        )}
 
         {isRenaming ? (
           <input

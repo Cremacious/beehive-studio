@@ -13,6 +13,7 @@ import {
 } from '@/lib/validations/book'
 import { createId } from '@paralleldrive/cuid2'
 import type { ActionResult } from './book.actions'
+import type { ChapterStatus } from '@/lib/books/is-chapter-reader-visible'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -25,6 +26,7 @@ export type BinderItemRow = {
   order: number
   content: unknown
   chapterId: string | null  // Populated for type === 'chapter'
+  chapterStatus: ChapterStatus | null  // Populated for type === 'chapter' (or front/back matter)
   createdAt: Date
   updatedAt: Date
 }
@@ -68,30 +70,34 @@ export async function getBinderTreeAction(
     orderBy: [asc(binderItems.order)],
   })
 
-  // Fetch associated chapter IDs for chapter-type items
+  // Fetch associated chapter IDs + status for chapter-type items
   const chapterItems = await db.query.chapters.findMany({
     where: eq(chapters.bookId, bookId),
-    columns: { id: true, binderItemId: true },
+    columns: { id: true, binderItemId: true, status: true },
   })
   const chapterByBinderId = new Map(
-    chapterItems.map((c) => [c.binderItemId, c.id]),
+    chapterItems.map((c) => [c.binderItemId, { id: c.id, status: c.status }]),
   )
 
-  const rows: BinderItemRow[] = items.map((item) => ({
-    id: item.id,
-    bookId: item.bookId,
-    parentId: item.parentId,
-    type: item.type,
-    title: item.title,
-    order: item.order,
-    content: item.content,
-    chapterId:
+  const rows: BinderItemRow[] = items.map((item) => {
+    const chapter =
       item.type === 'chapter' || item.type === 'front_matter' || item.type === 'back_matter'
         ? (chapterByBinderId.get(item.id) ?? null)
-        : null,
-    createdAt: item.createdAt,
-    updatedAt: item.updatedAt,
-  }))
+        : null
+    return {
+      id: item.id,
+      bookId: item.bookId,
+      parentId: item.parentId,
+      type: item.type,
+      title: item.title,
+      order: item.order,
+      content: item.content,
+      chapterId: chapter?.id ?? null,
+      chapterStatus: chapter?.status ?? null,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+    }
+  })
 
   return { success: true, data: rows }
 }

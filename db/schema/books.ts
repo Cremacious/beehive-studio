@@ -3,7 +3,7 @@ import { createId } from '@paralleldrive/cuid2'
 import { relations } from 'drizzle-orm'
 import { users } from './auth'
 
-export const bookVisibilityEnum = pgEnum('book_visibility', ['PRIVATE', 'PUBLIC'])
+export const bookVisibilityEnum = pgEnum('book_visibility', ['PRIVATE', 'PUBLIC', 'FRIENDS'])
 export const bookStatusEnum = pgEnum('book_status', ['DRAFT', 'PUBLISHED'])
 export const chapterStatusEnum = pgEnum('chapter_status', ['IDEA', 'OUTLINE', 'FIRST_DRAFT', 'REVISED', 'FINAL'])
 export const binderItemTypeEnum = pgEnum('binder_item_type', [
@@ -19,7 +19,7 @@ export const books = pgTable('books', {
   visibility: bookVisibilityEnum('visibility').default('PRIVATE').notNull(),
   status: bookStatusEnum('status').default('DRAFT').notNull(),
   coverUrl: text('cover_url'),
-  explorable: boolean('explorable').default(false).notNull(),
+  discoverable: boolean('discoverable').default(false).notNull(),
   synopsis: text('synopsis'),
   // Discovery fields (added for book creation wizard)
   subgenre: text('subgenre'),
@@ -32,7 +32,10 @@ export const books = pgTable('books', {
   seriesNumber: integer('series_number'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-}, (t) => [index('books_user_id_idx').on(t.userId)])
+}, (t) => [
+  index('books_user_id_idx').on(t.userId),
+  index('books_discoverable_visibility_idx').on(t.discoverable, t.visibility),
+])
 
 export const bookPublishingMetadata = pgTable('book_publishing_metadata', {
   bookId: text('book_id').primaryKey().references(() => books.id, { onDelete: 'cascade' }),

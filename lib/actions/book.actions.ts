@@ -341,7 +341,7 @@ export async function getBookAction(bookId: string): Promise<
     id: string
     title: string
     genre: string | null
-    visibility: 'PRIVATE' | 'PUBLIC'
+    visibility: 'PRIVATE' | 'PUBLIC' | 'FRIENDS'
     status: 'DRAFT' | 'PUBLISHED'
     coverUrl: string | null
     synopsis: string | null

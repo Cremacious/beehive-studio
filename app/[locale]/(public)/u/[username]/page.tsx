@@ -90,7 +90,7 @@ export default async function AuthorProfilePage({ params }: Props) {
             <p className="text-[#555] text-[11px] uppercase tracking-widest mb-3">Published Books</p>
             <div className="grid grid-cols-4 gap-3">
               {books.map(book => (
-                <Link key={book.id} href={`/${locale}/discover/book/${book.id}`} className="block group">
+                <Link key={book.id} href={`/${locale}/books/${book.id}`} className="block group">
                   <div className="relative rounded-md mb-2 overflow-hidden bg-[#2a2a2a]" style={{ aspectRatio: '2/3' }}>
                     {book.coverUrl && (
                       <img src={book.coverUrl} alt={book.title} className="absolute inset-0 w-full h-full object-cover" />

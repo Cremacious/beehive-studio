@@ -38,7 +38,7 @@ function AuthorRow({ author, locale, label }: { author: FeedItem['author']; loca
 function NewChapterCard({ item, locale }: { item: NewChapterFeedItem; locale: string }) {
   return (
     <Link
-      href={`/${locale}/discover/book/${item.bookId}/read/${item.chapterId}`}
+      href={`/${locale}/books/${item.bookId}/read/${item.chapterId}`}
       className="bg-card border border-border rounded-lg p-4 flex flex-col gap-2 hover:bg-surface-elevated transition-colors block"
     >
       <div className="flex items-center justify-between">
@@ -60,7 +60,7 @@ function NewChapterCard({ item, locale }: { item: NewChapterFeedItem; locale: st
 function NewBookCard({ item, locale }: { item: NewBookFeedItem; locale: string }) {
   return (
     <Link
-      href={`/${locale}/discover/book/${item.bookId}`}
+      href={`/${locale}/books/${item.bookId}`}
       className="bg-card border border-border rounded-lg p-4 flex gap-4 hover:bg-surface-elevated transition-colors block"
     >
       <div className="w-16 h-24 rounded bg-background border border-border overflow-hidden shrink-0 flex items-center justify-center">

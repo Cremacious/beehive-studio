@@ -10,7 +10,7 @@ export function BookCard({ book, locale }: Props) {
       : `${book.wordCount} words`
 
   return (
-    <Link href={`/${locale}/discover/book/${book.id}`} className="block group">
+    <Link href={`/${locale}/books/${book.id}`} className="block group">
       <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg overflow-hidden hover:border-[#3a3a3a] transition-colors">
         <div className="aspect-[2/3] bg-gradient-to-br from-[#1e1e1e] to-[#2a2a2a] relative flex items-end p-2">
           {book.coverUrl ? (

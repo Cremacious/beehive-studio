@@ -4,6 +4,8 @@ import { db } from '@/db'
 import { books, binderItems, chapters, bookLikes, bookmarks, bookComments } from '@/db/schema'
 import { userProfiles } from '@/db/schema'
 import { eq, and, desc, sql, count, isNull } from 'drizzle-orm'
+import { getOptionalUserId } from '@/lib/require-auth'
+import { canReadBook } from '@/lib/books/can-read'
 
 export type DiscoverBook = {
   id: string
@@ -212,6 +214,10 @@ export async function getBookCommentsAction(
   bookId: string,
   page: number = 1
 ): Promise<ActionResult<{ comments: BookComment[]; hasMore: boolean }>> {
+  const userId = await getOptionalUserId()
+  const access = await canReadBook(bookId, userId)
+  if (!access.ok) return { success: false, error: 'FORBIDDEN' }
+
   const offset = (page - 1) * COMMENTS_PAGE_SIZE
 
   const rows = await db

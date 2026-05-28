@@ -4,6 +4,7 @@ import { db } from '@/db'
 import { readingProgress, binderItems, chapters } from '@/db/schema'
 import { and, eq, asc } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
+import { canReadBook } from '@/lib/books/can-read'
 import type { ActionResult } from './book.actions'
 
 export type ReadingProgressResult = {
@@ -16,6 +17,9 @@ export async function markChapterReadAction(
   chapterId: string
 ): Promise<ActionResult<void>> {
   const userId = await requireAuth()
+
+  const access = await canReadBook(bookId, userId)
+  if (!access.ok) return { success: false, error: 'FORBIDDEN' }
 
   const now = new Date()
   await db
@@ -33,6 +37,9 @@ export async function getReadingProgressAction(
   bookId: string
 ): Promise<ActionResult<ReadingProgressResult>> {
   const userId = await requireAuth()
+
+  const access = await canReadBook(bookId, userId)
+  if (!access.ok) return { success: false, error: 'FORBIDDEN' }
 
   const [progress] = await db
     .select()

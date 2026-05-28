@@ -4,6 +4,7 @@ import { db } from '@/db'
 import { bookLikes, bookmarks, books, follows, bookComments, notifications, userProfiles } from '@/db/schema'
 import { and, eq } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
+import { canReadBook } from '@/lib/books/can-read'
 import { z } from 'zod'
 import type { ActionResult } from './book.actions'
 import type { BookComment } from './discover.actions'
@@ -100,6 +101,9 @@ export async function addCommentAction(
   content: string
 ): Promise<ActionResult<BookComment>> {
   const userId = await requireAuth()
+
+  const access = await canReadBook(bookId, userId)
+  if (!access.ok) return { success: false, error: 'FORBIDDEN' }
 
   const parsed = addCommentSchema.safeParse({ content })
   if (!parsed.success) return { success: false, error: 'INVALID_CONTENT' }

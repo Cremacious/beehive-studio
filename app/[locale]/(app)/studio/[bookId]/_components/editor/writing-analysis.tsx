@@ -390,25 +390,7 @@ export function WritingAnalysis({ editorText, isOpen, onClose }: Props) {
           {/* Adverbs list */}
           {adverbs.length > 0 && (
             <Section label={`Adverbs (${adverbs.length})`}>
-              <div className="flex flex-wrap gap-1.5">
-                {adverbs.slice(0, 15).map((w, i) => (
-                  <span
-                    key={i}
-                    className="text-xs px-1.5 py-0.5 rounded"
-                    style={{
-                      background: 'var(--wa-pill-bg)',
-                      color: 'var(--color-brand)',
-                    }}
-                  >
-                    {w}
-                  </span>
-                ))}
-                {adverbs.length > 15 && (
-                  <span className="text-xs" style={{ color: 'var(--wa-ink-muted)' }}>
-                    +{adverbs.length - 15} more
-                  </span>
-                )}
-              </div>
+              <AdverbsList adverbs={adverbs} />
             </Section>
           )}
 
@@ -477,5 +459,52 @@ export function WritingAnalysis({ editorText, isOpen, onClose }: Props) {
         </DialogContent>
       </Dialog>
     </aside>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Expandable adverbs list — shows first 15 + a clickable +N more / Show less
+// toggle so users can always reach every detected adverb.
+// ---------------------------------------------------------------------------
+
+const ADVERBS_PREVIEW_COUNT = 15
+
+function AdverbsList({ adverbs }: { adverbs: string[] }) {
+  const [expanded, setExpanded] = useState(false)
+  const hasOverflow = adverbs.length > ADVERBS_PREVIEW_COUNT
+  const visible = expanded || !hasOverflow ? adverbs : adverbs.slice(0, ADVERBS_PREVIEW_COUNT)
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {visible.map((w, i) => (
+        <span
+          key={i}
+          className="text-xs px-2 py-0.5 rounded"
+          style={{
+            background: 'var(--wa-pill-bg)',
+            color: 'var(--color-brand)',
+          }}
+        >
+          {w}
+        </span>
+      ))}
+      {hasOverflow && (
+        <button
+          type="button"
+          onClick={() => setExpanded(e => !e)}
+          className="text-xs px-2 py-0.5 rounded cursor-pointer transition-colors hover:opacity-80"
+          style={{
+            color: 'var(--wa-ink-muted)',
+            background: 'transparent',
+            border: '1px dashed oklch(from var(--color-brand) l c h / 0.30)',
+          }}
+          aria-expanded={expanded}
+        >
+          {expanded
+            ? 'Show less'
+            : `+${adverbs.length - ADVERBS_PREVIEW_COUNT} more`}
+        </button>
+      )}
+    </div>
   )
 }

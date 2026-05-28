@@ -25,6 +25,8 @@ export type BookSummary = {
   chapterCount: number
   status: BookSummaryStatus
   isPublished: boolean
+  seriesName: string | null
+  seriesNumber: number | null
 }
 
 export type StudioStats = {
@@ -213,6 +215,8 @@ export async function getUserBooksAction(): Promise<
       status: books.status,
       coverUrl: books.coverUrl,
       updatedAt: books.updatedAt,
+      seriesName: books.seriesName,
+      seriesNumber: books.seriesNumber,
     })
     .from(books)
     .where(eq(books.userId, userId))
@@ -273,6 +277,8 @@ export async function getUserBooksAction(): Promise<
         chapterStatuses: agg?.statuses ?? [],
       }),
       isPublished: book.status === 'PUBLISHED',
+      seriesName: book.seriesName,
+      seriesNumber: book.seriesNumber,
     }
   })
 

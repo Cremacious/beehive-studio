@@ -8,12 +8,14 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragOverEvent,
 } from '@dnd-kit/core'
 import {
   SortableContext,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { cn } from '@/lib/utils'
+import { canNest, classifyDropZone, type BinderItemLite } from '@/lib/binder/drop-rules'
 import { useBookEditor } from '../book-editor-provider'
 import { BinderAddMenu } from './binder-add-menu'
 import { BinderItem } from './binder-item'
@@ -29,10 +31,16 @@ import { Settings } from 'lucide-react'
 
 export type TreeNode = BinderItemRow & { children: TreeNode[] }
 
+type DropZoneState = {
+  overId: string
+  zone: 'before' | 'middle' | 'after'
+} | null
+
 type BinderTreeContextValue = {
   tree: TreeNode[]
   collapsed: Set<string>
   toggleCollapsed: (id: string) => void
+  dropZone: DropZoneState
 }
 
 // ─── Local context ────────────────────────────────────────────────────────────
@@ -95,6 +103,9 @@ export function BinderTree() {
   const params = useParams<{ locale: string }>()
   const locale = params?.locale ?? 'en'
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
+  const [dropZone, setDropZone] = useState<DropZoneState>(null)
+  const autoExpandTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const autoExpandTargetRef = useRef<string | null>(null)
 
   // Book title inline rename (double-click the title in the binder header)
   const [isRenamingBook, setIsRenamingBook] = useState(false)
@@ -131,43 +142,141 @@ export function BinderTree() {
     })
   }, [])
 
+  const cancelAutoExpand = useCallback(() => {
+    if (autoExpandTimerRef.current) {
+      clearTimeout(autoExpandTimerRef.current)
+      autoExpandTimerRef.current = null
+    }
+    autoExpandTargetRef.current = null
+  }, [])
+
+  const scheduleAutoExpand = useCallback((folderId: string) => {
+    if (autoExpandTargetRef.current === folderId) return  // already scheduled
+    cancelAutoExpand()
+    autoExpandTargetRef.current = folderId
+    autoExpandTimerRef.current = setTimeout(() => {
+      setCollapsed(prev => {
+        if (!prev.has(folderId)) return prev  // already expanded
+        const next = new Set(prev)
+        next.delete(folderId)
+        return next
+      })
+      autoExpandTimerRef.current = null
+      autoExpandTargetRef.current = null
+    }, 500)
+  }, [cancelAutoExpand])
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   )
 
-  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+  const handleDragOver = useCallback((event: DragOverEvent) => {
     const { active, over } = event
-    if (!over || active.id === over.id) return
+    if (!over || active.id === over.id) {
+      setDropZone(null)
+      cancelAutoExpand()
+      return
+    }
 
     const activeId = active.id as string
     const overId = over.id as string
-
-    const visibleIds = flattenVisible(tree, collapsed)
-    const fromIndex = visibleIds.indexOf(activeId)
-    const toIndex = visibleIds.indexOf(overId)
-    if (fromIndex === -1 || toIndex === -1) return
-
-    const reordered = [...visibleIds]
-    reordered.splice(fromIndex, 1)
-    reordered.splice(toIndex, 0, activeId)
-
-    // Build a lookup of the moved item to determine its new parentId
-    const itemMap = new Map<string, BinderItemRow>(binderItems.map(i => [i.id, i]))
-
-    // Recalculate order within each parent group
-    const parentGroups = new Map<string | null, string[]>()
-    for (const id of reordered) {
-      const item = itemMap.get(id)
-      if (!item) continue
-      const parentKey = item.parentId
-      if (!parentGroups.has(parentKey)) parentGroups.set(parentKey, [])
-      parentGroups.get(parentKey)!.push(id)
+    const activeItem = binderItems.find(i => i.id === activeId)
+    const overItem = binderItems.find(i => i.id === overId)
+    if (!activeItem || !overItem) {
+      setDropZone(null)
+      cancelAutoExpand()
+      return
     }
 
-    const updates: { id: string; order: number; parentId: string | null }[] = []
-    for (const [parentId, ids] of parentGroups.entries()) {
-      ids.forEach((id, idx) => updates.push({ id, order: idx, parentId }))
+    // Pointer-Y proxy: use the dragged ghost's translated center, which closely
+    // tracks where the user's pointer is during a vertical-list drag.
+    const overRect = over.rect
+    const activeTranslated = active.rect.current.translated
+    if (!activeTranslated) {
+      setDropZone(null)
+      cancelAutoExpand()
+      return
     }
+    const pointerYProxy = activeTranslated.top + activeTranslated.height / 2
+
+    const isFolder = overItem.type === 'part' || overItem.type === 'research_folder'
+    const zone = classifyDropZone(pointerYProxy, overRect, isFolder)
+    if (!zone) {
+      setDropZone(null)
+      cancelAutoExpand()
+      return
+    }
+
+    // If zone is 'middle', verify canNest before showing the indicator + scheduling expand.
+    if (zone === 'middle') {
+      const allLite: BinderItemLite[] = binderItems.map(i => ({
+        id: i.id, type: i.type, parentId: i.parentId,
+      }))
+      if (!canNest(
+        { id: activeItem.id, type: activeItem.type, parentId: activeItem.parentId },
+        { id: overItem.id, type: overItem.type, parentId: overItem.parentId },
+        allLite,
+      )) {
+        setDropZone(null)
+        cancelAutoExpand()
+        return
+      }
+      scheduleAutoExpand(overId)
+    } else {
+      cancelAutoExpand()
+    }
+
+    setDropZone({ overId, zone })
+  }, [binderItems, cancelAutoExpand, scheduleAutoExpand])
+
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+    const finalDropZone = dropZone
+    setDropZone(null)
+    cancelAutoExpand()
+
+    const { active, over } = event
+    if (!over || active.id === over.id || !finalDropZone) return
+
+    const activeId = active.id as string
+    const overId = over.id as string
+    const activeItem = binderItems.find(i => i.id === activeId)
+    const overItem = binderItems.find(i => i.id === overId)
+    if (!activeItem || !overItem) return
+
+    if (finalDropZone.zone === 'middle') {
+      // Nest into folder: parentId = folder, order = maxOrderInFolder + 1.
+      const childrenOfTarget = binderItems.filter(i => i.parentId === overId)
+      const maxOrder = childrenOfTarget.length === 0
+        ? -1
+        : Math.max(...childrenOfTarget.map(i => i.order))
+      const updates = [{ id: activeId, order: maxOrder + 1, parentId: overId }]
+
+      setBinderItems(prev =>
+        prev.map(item =>
+          item.id === activeId
+            ? { ...item, parentId: overId, order: maxOrder + 1 }
+            : item
+        )
+      )
+      await reorderBinderItemsAction(bookId, updates)
+      return
+    }
+
+    // reorder-before / reorder-after: dragged item adopts overItem's parentId,
+    // then recompute order within that parent group.
+    const newParentId = overItem.parentId
+    const siblings = binderItems.filter(i => i.parentId === newParentId && i.id !== activeId)
+    const overIndex = siblings.findIndex(s => s.id === overId)
+    const insertIndex = finalDropZone.zone === 'before' ? overIndex : overIndex + 1
+
+    const newSiblingOrder = [...siblings]
+    newSiblingOrder.splice(insertIndex, 0, { ...activeItem, parentId: newParentId })
+
+    const updates = newSiblingOrder.map((s, idx) => ({
+      id: s.id,
+      order: idx,
+      parentId: newParentId,
+    }))
 
     // Optimistic update
     setBinderItems(prev =>
@@ -178,11 +287,11 @@ export function BinderTree() {
     )
 
     await reorderBinderItemsAction(bookId, updates)
-  }, [bookId, binderItems, tree, collapsed, setBinderItems])
+  }, [bookId, binderItems, dropZone, setBinderItems, cancelAutoExpand])
 
   const ctxValue = useMemo<BinderTreeContextValue>(
-    () => ({ tree, collapsed, toggleCollapsed }),
-    [tree, collapsed, toggleCollapsed]
+    () => ({ tree, collapsed, toggleCollapsed, dropZone }),
+    [tree, collapsed, toggleCollapsed, dropZone]
   )
 
   return (
@@ -246,6 +355,7 @@ export function BinderTree() {
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
+            onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
           >
             <SortableContext items={flatIds} strategy={verticalListSortingStrategy}>

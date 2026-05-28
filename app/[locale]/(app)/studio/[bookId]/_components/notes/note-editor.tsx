@@ -130,7 +130,11 @@ export function NoteEditor({ item }: Props) {
         <SaveStatusBadge status={saveStatus} />
       </header>
 
-      {/* Note pane — softly tinted canvas, scrolls. */}
+      {/* Note pane — paper IS the canvas. No floating card on a dark
+         background; prose sits directly on cream paper that fills the
+         entire writing surface, matching the chapter editor's pattern.
+         Notes always render as paper regardless of editor theme — they
+         represent a physical paper artifact. */}
       <div
         data-slot="note-pane"
         className="flex-1 overflow-y-auto cursor-text"
@@ -138,33 +142,23 @@ export function NoteEditor({ item }: Props) {
           if (editor && !editor.isDestroyed) editor.commands.focus()
         }}
         style={{
-          background:
-            'radial-gradient(ellipse at 50% 0%, oklch(0.85 0.18 90 / 0.04), transparent 50%), var(--background)',
+          background: 'var(--paper-100)',
+          color: 'var(--paper-ink)',
         }}
       >
-        <div className="flex flex-col items-center px-6 pt-9 pb-16">
-          {/* Toolbar floats above the card, left-aligned to the card. */}
-          <div className="w-full max-w-[600px] mb-3 flex justify-start">
+        <div className="mx-auto w-full max-w-[720px] px-8 pt-8 pb-16">
+          {/* Toolbar — sits inline above the prose, no card wrapper. */}
+          <div className="mb-4">
             {editor && <NoteToolbar editor={editor} />}
           </div>
 
-          {/* The note card — plain cream paper, no ruled lines. */}
-          <article
-            data-slot="note-card"
-            className="relative w-full max-w-[600px] rounded-lg px-14 pt-8 pb-20"
-            style={{
-              background: 'var(--paper-100)',
-              color: 'var(--paper-ink)',
-              boxShadow:
-                '0 1px 0 var(--paper-50) inset, 0 2px 6px rgba(0,0,0,0.3), 0 22px 60px -16px rgba(0,0,0,0.55)',
-            }}
-          >
+          <div data-slot="note-card">
             <h1
               data-slot="note-title"
               className="m-0 mb-1.5 leading-tight"
               style={{
                 fontFamily: 'var(--font-display)',
-                fontSize: '28px',
+                fontSize: '32px',
                 fontWeight: 700,
                 letterSpacing: '-0.015em',
                 color: 'var(--paper-ink-strong)',
@@ -202,19 +196,19 @@ export function NoteEditor({ item }: Props) {
               />
             </div>
 
-            {/* Note body — Newsreader prose. The legal-pad guides bleed through. */}
+            {/* Note body — Newsreader prose. */}
             <EditorContent
               editor={editor}
               data-slot="note-body"
               className="focus:outline-none"
               style={{
                 fontFamily: 'var(--font-prose)',
-                fontSize: '16.5px',
+                fontSize: '17px',
                 lineHeight: 1.78,
                 color: 'var(--paper-ink)',
               }}
             />
-          </article>
+          </div>
         </div>
       </div>
     </main>

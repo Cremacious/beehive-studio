@@ -95,12 +95,6 @@ export function NoteEditor({ item }: Props) {
       data-slot="note-editor"
       className="flex-1 flex flex-col overflow-hidden"
     >
-      {/* Full-width formatting toolbar — same component the chapter editor
-         uses. Note context omits the chapter-specific buttons (Find &
-         Replace, Writing Analysis); everything else (Bold/Italic/Headings/
-         Lists/Quote/Underline/Highlighter/Link/Undo/Redo/Align/etc.) works
-         identically since notes use the same StarterKit. */}
-      {editor && <EditorToolbar editor={editor} />}
       {/* Paper-card prose overrides — beats globals.css's .ProseMirror dark-canvas
          palette so the note body reads on cream paper. Note cards are always
          paper regardless of editor theme (they represent a physical note). */}
@@ -135,6 +129,13 @@ export function NoteEditor({ item }: Props) {
         <div className="flex-1" />
         <SaveStatusBadge status={saveStatus} />
       </header>
+
+      {/* Full-width formatting toolbar — same component the chapter editor
+         uses. Sits below the surface-head bar. Note context omits the
+         chapter-specific buttons (Find & Replace, Writing Analysis);
+         everything else works identically since notes use the same
+         StarterKit. */}
+      {editor && <EditorToolbar editor={editor} />}
 
       {/* Note pane — paper IS the canvas. No floating card on a dark
          background; prose sits directly on cream paper that fills the

@@ -15,11 +15,11 @@ import {
 const CHAPTER_TYPES = new Set(['chapter', 'front_matter', 'back_matter'])
 
 const STATUS_OPTIONS = [
-  { value: 'IDEA' as const, label: 'Idea', color: 'var(--status-idea)' },
-  { value: 'OUTLINE' as const, label: 'Outline', color: 'var(--status-outline)' },
-  { value: 'FIRST_DRAFT' as const, label: 'First Draft', color: 'var(--status-first-draft)' },
-  { value: 'REVISED' as const, label: 'Revised', color: 'var(--status-revised)' },
-  { value: 'FINAL' as const, label: 'Final', color: 'var(--status-final)' },
+  { value: 'IDEA' as const, label: 'Idea', subtitle: 'Not visible to readers', color: 'var(--status-idea)' },
+  { value: 'OUTLINE' as const, label: 'Outline', subtitle: 'Not visible to readers', color: 'var(--status-outline)' },
+  { value: 'FIRST_DRAFT' as const, label: 'First Draft', subtitle: 'Not visible to readers', color: 'var(--status-first-draft)' },
+  { value: 'REVISED' as const, label: 'Revised', subtitle: 'Visible to readers', color: 'var(--status-revised)' },
+  { value: 'FINAL' as const, label: 'Final', subtitle: 'Visible to readers', color: 'var(--status-final)' },
 ]
 
 type ChapterMeta = {
@@ -98,15 +98,21 @@ function ChapterMetadata() {
 
       <div className="px-[18px] py-[18px] border-b border-[var(--chrome-800)] flex flex-col gap-2.5">
         <span className={labelClass}>Status</span>
+        <p className="text-[11px] text-muted-foreground leading-relaxed">
+          Set how far along this chapter is. Readers can only see chapters marked{' '}
+          <span className="text-foreground/85 font-medium">Revised</span> or{' '}
+          <span className="text-foreground/85 font-medium">Final</span> — earlier
+          statuses show as a &quot;Draft — coming soon&quot; teaser instead.
+        </p>
         <div className="flex flex-wrap gap-1.5">
-          {STATUS_OPTIONS.map(({ value, label, color }) => {
+          {STATUS_OPTIONS.map(({ value, label, subtitle, color }) => {
             const isActive = activeChapter?.status === value
             return (
               <button
                 key={value}
                 onClick={() => updateChapterStatus(value)}
                 className={cn(
-                  "inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border transition-colors font-medium",
+                  "inline-flex flex-col items-start gap-0.5 text-xs px-2.5 py-1.5 rounded-md border transition-colors",
                   !isActive && "bg-[var(--chrome-800)] text-foreground/80 border-[var(--chrome-700)] hover:text-foreground",
                 )}
                 style={
@@ -119,11 +125,13 @@ function ChapterMetadata() {
                     : undefined
                 }
               >
-                <span
-                  className="w-1.5 h-1.5 rounded-full"
-                  style={{ backgroundColor: color }}
-                />
-                {label}
+                <span className="inline-flex items-center gap-1.5 font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
+                  {label}
+                </span>
+                <span className="text-[9px] uppercase tracking-[0.10em] opacity-70 font-mono">
+                  {subtitle}
+                </span>
               </button>
             )
           })}

@@ -14,9 +14,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-28
 >
-> **Current focus:** **Note editor toolbar reordered (`dc9f08d`)** — toolbar now renders BELOW the surface-head bar instead of above it. Render order: surface-head ("Research · Note title · Save badge") → EditorToolbar → note pane (paper). Matches chapter editor's vertical stacking. Just before this: (`f240c82`) notes mount the same `EditorToolbar` as chapter docs (full formatting set, VIEW-zone buttons; `onToggleFind`/`onToggleAnalysis` now optional — chapter-specific buttons hide when omitted). Earlier arc: (`cc508fb`) paper IS the canvas — dropped the 600px floating card on dark canvas, prose sits directly on `var(--paper-100)` filling the writing surface; (`b9a4a10`) container view redesign with paper cards on lifted gray canvas; (`ff3e711`) drag-into-folder shipped after iterative debugging. 157/157 tests, tsc clean.
+> **Current focus:** **FM/BM input affordance shipped (`35af098`)** — empty contenteditable fields on the 5 FM/BM page previews (title-page, copyright, dedication, acknowledgments, about-author) now show a dashed outline at rest so users see them as input zones. Three CSS tweaks in `page-wrapper.tsx`'s shared `<style>` block: `.bp-field:empty` gets a 1px dashed outline (paper-ink-muted @ 50%, 5px offset); placeholder opacity 0.55→0.75; `cursor: text` on hover. Focus state strengthened (0.45→0.55 alpha, 2px→4px offset). Once user types, field is no longer `:empty` and outline disappears. Recent arc: (`dc9f08d`) note toolbar reordered below surface-head; (`f240c82`) notes use full `EditorToolbar`; (`cc508fb`) note paper IS the canvas; (`b9a4a10`) container view paper cards on lifted gray; (`ff3e711`) drag-into-folder. 157/157 tests, tsc clean.
 > **Active branch:** `main`
-> **Last commit:** fix(note-editor): toolbar sits below the surface-head bar, not above it
+> **Last commit:** feat(front-back-matter): show dashed input affordance on empty fields
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.

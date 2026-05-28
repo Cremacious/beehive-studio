@@ -1,8 +1,10 @@
 'use client'
 
+import { useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { GripVertical, Trash2, Link as LinkIcon } from 'lucide-react'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import type { Beat, BeatStatus } from './outline-board'
 
 type Props = {
@@ -31,6 +33,7 @@ export function OutlineBeatRow({
   beat, index, isLast, chapterAvailable, chapterTitle,
   onChange, onDelete, onCycleStatus, onOpenLinkPopover, onUnlink, onJumpToChapter,
 }: Props) {
+  const [confirmOpen, setConfirmOpen] = useState(false)
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: beat.id })
   const rowStyle = {
     transform: CSS.Transform.toString(transform),
@@ -243,7 +246,7 @@ export function OutlineBeatRow({
           {/* Delete button — appears on hover */}
           <button
             type="button"
-            onClick={onDelete}
+            onClick={() => setConfirmOpen(true)}
             aria-label="Delete beat"
             className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded"
             style={{ color: 'var(--sheet-ink-muted)' }}
@@ -252,6 +255,16 @@ export function OutlineBeatRow({
           </button>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        variant="destructive"
+        title="Delete this beat?"
+        description="This removes the beat from your outline, including its summary, status, and any linked chapter reference. This cannot be undone."
+        confirmLabel="Delete beat"
+        onConfirm={onDelete}
+      />
     </div>
   )
 }

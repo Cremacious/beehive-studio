@@ -54,9 +54,43 @@ export function ContainerView({ item }: Props) {
     [binderItems, item.id],
   )
 
+  // Theme-aware CSS vars — same pattern as character-profile.tsx and the
+  // FM/BM previews. Dark mode: lifted neutral gray canvas (less walnut, more
+  // gray) so cream paper cards pop against it without clashing. Light mode:
+  // darker cream canvas with lighter cream cards lifted above.
+  const themeStyles = (
+    <style>{`
+      [data-slot="container-pane"] {
+        --container-bg:        oklch(0.22 0.005 256);
+        --container-ink:       var(--canvas-dark-ink);
+        --container-ink-muted: var(--canvas-dark-ink-muted);
+        --card-bg:             var(--paper-100);
+        --card-bg-hover:       var(--paper-50);
+        --card-border:         var(--paper-300);
+        --card-ink:            var(--paper-ink-strong);
+        --card-ink-muted:      var(--paper-ink-muted);
+      }
+      [data-editor-theme="light"] [data-slot="container-pane"] {
+        --container-bg:        var(--paper-300);
+        --container-ink:       var(--paper-ink-strong);
+        --container-ink-muted: var(--paper-ink-muted);
+        --card-bg:             var(--paper-50);
+        --card-bg-hover:       var(--paper-100);
+        --card-border:         var(--paper-200);
+        --card-ink:            var(--paper-ink-strong);
+        --card-ink-muted:      var(--paper-ink-muted);
+      }
+    `}</style>
+  )
+
   if (children.length === 0) {
     return (
-      <main className="flex-1 flex">
+      <main
+        data-slot="container-pane"
+        className="flex-1 flex"
+        style={{ background: 'var(--container-bg)' }}
+      >
+        {themeStyles}
         <EmptyState
           icon={<HeadingIcon size={20} />}
           title={
@@ -76,27 +110,32 @@ export function ContainerView({ item }: Props) {
   }
 
   return (
-    <main className="flex-1 overflow-y-auto">
+    <main
+      data-slot="container-pane"
+      className="flex-1 overflow-y-auto"
+      style={{ background: 'var(--container-bg)' }}
+    >
+      {themeStyles}
       <div className="max-w-3xl mx-auto px-8 py-10">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-7">
           <span
             className="inline-flex items-center justify-center rounded-md"
             style={{
-              width: 32,
-              height: 32,
-              background: 'oklch(from var(--color-brand) l c h / 0.12)',
+              width: 36,
+              height: 36,
+              background: 'oklch(from var(--color-brand) l c h / 0.14)',
               color: 'var(--color-brand)',
             }}
           >
-            <HeadingIcon size={16} />
+            <HeadingIcon size={18} />
           </span>
           <div className="min-w-0">
             <div
-              className="text-[10px] uppercase tracking-[0.12em]"
+              className="text-[10px] uppercase tracking-[0.14em]"
               style={{
                 fontFamily: 'var(--font-mono)',
-                color: 'var(--canvas-dark-ink-muted)',
+                color: 'var(--container-ink-muted)',
               }}
             >
               {headingLabel} · {children.length} {children.length === 1 ? 'item' : 'items'}
@@ -105,10 +144,10 @@ export function ContainerView({ item }: Props) {
               className="m-0 truncate"
               style={{
                 fontFamily: 'var(--font-display)',
-                fontSize: 24,
+                fontSize: 26,
                 fontWeight: 700,
                 letterSpacing: '-0.015em',
-                color: 'var(--canvas-dark-ink-strong)',
+                color: 'var(--container-ink)',
               }}
             >
               {item.title}
@@ -116,16 +155,16 @@ export function ContainerView({ item }: Props) {
           </div>
         </div>
 
-        {/* Children grid */}
+        {/* Children grid — paper cards on the lifted canvas */}
         <ul
-          className="grid gap-3"
+          className="grid gap-3.5"
           style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}
         >
           {children.map(child => {
             const meta = TYPE_META[child.type] ?? {
               label: child.type,
               Icon: FileText,
-              tint: 'var(--canvas-dark-ink-muted)',
+              tint: 'var(--card-ink-muted)',
             }
             const Icon = meta.Icon
             return (
@@ -133,22 +172,45 @@ export function ContainerView({ item }: Props) {
                 <button
                   type="button"
                   onClick={() => setActiveItemId(child.id)}
-                  className="w-full text-left rounded-lg border border-border bg-surface hover:bg-surface-elevated hover:border-brand/40 transition-colors px-3.5 py-3 flex items-start gap-3 cursor-pointer"
+                  className="group w-full text-left rounded-lg border transition-all px-4 py-3.5 flex items-start gap-3 cursor-pointer hover:-translate-y-px"
+                  style={{
+                    background: 'var(--card-bg)',
+                    borderColor: 'var(--card-border)',
+                    boxShadow:
+                      '0 1px 0 oklch(1 0 0 / 0.3) inset, 0 1px 2px rgba(0,0,0,0.18), 0 8px 18px -10px rgba(0,0,0,0.35)',
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background = 'var(--card-bg-hover)'
+                    e.currentTarget.style.borderColor = 'oklch(from var(--color-brand) l c h / 0.5)'
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = 'var(--card-bg)'
+                    e.currentTarget.style.borderColor = 'var(--card-border)'
+                  }}
                 >
                   <span
                     className="mt-0.5 flex-shrink-0 inline-flex items-center justify-center"
                     style={{ color: meta.tint }}
                   >
-                    <Icon size={15} />
+                    <Icon size={16} />
                   </span>
                   <div className="flex flex-col min-w-0 flex-1">
                     <span
-                      className="text-[13px] font-medium leading-tight truncate text-foreground"
-                      style={{ fontFamily: 'var(--font-display)' }}
+                      className="text-[14px] font-semibold leading-tight truncate"
+                      style={{
+                        fontFamily: 'var(--font-display)',
+                        color: 'var(--card-ink)',
+                      }}
                     >
                       {child.title || 'Untitled'}
                     </span>
-                    <span className="text-[11px] text-muted-foreground leading-tight mt-1">
+                    <span
+                      className="text-[10px] uppercase tracking-[0.10em] leading-tight mt-1.5"
+                      style={{
+                        fontFamily: 'var(--font-mono)',
+                        color: 'var(--card-ink-muted)',
+                      }}
+                    >
                       {meta.label}
                     </span>
                   </div>

@@ -6,6 +6,7 @@ import { binderItems, chapters } from '@/db/schema'
 import { and, eq, asc } from 'drizzle-orm'
 import { auth } from '@/lib/auth'
 import { canReadBook } from '@/lib/books/can-read'
+import { isChapterReaderVisible } from '@/lib/books/is-chapter-reader-visible'
 import { getPublicBookAction, getBookCommentsAction } from '@/lib/actions/discover.actions'
 import { getReadingProgressAction } from '@/lib/actions/reading.actions'
 import { getUserSocialStateAction } from '@/lib/actions/social.actions'
@@ -39,6 +40,8 @@ export default async function BookReaderPage({ params }: Props) {
       title: binderItems.title,
       wordCount: chapters.wordCount,
       order: binderItems.order,
+      status: chapters.status,
+      updatedAt: chapters.updatedAt,
     })
     .from(binderItems)
     .innerJoin(chapters, eq(chapters.binderItemId, binderItems.id))
@@ -60,11 +63,17 @@ export default async function BookReaderPage({ params }: Props) {
     ? Math.round((progress.readChapterBinderItemIds.length / chapterRows.length) * 100)
     : 0
 
+  const normalizedChapterRows = chapterRows.map(ch => ({ ...ch, wordCount: ch.wordCount ?? 0 }))
+
+  const readerVisibleChapters = isAuthor
+    ? normalizedChapterRows
+    : normalizedChapterRows.filter(ch => isChapterReaderVisible(ch.status))
+
   const lastReadChapter = progress?.lastChapterId
-    ? chapterRows.find(ch => ch.chapterId === progress.lastChapterId)
+    ? readerVisibleChapters.find(ch => ch.chapterId === progress.lastChapterId)
     : null
 
-  const normalizedChapterRows = chapterRows.map(ch => ({ ...ch, wordCount: ch.wordCount ?? 0 }))
+  const firstReadableChapter = readerVisibleChapters[0] ?? null
   const readerBasePath = `/${locale}/books/${bookId}`
   const backHref = isAuthor ? `/${locale}/studio/${bookId}` : `/${locale}/discover`
   const backLabel = isAuthor ? '← Back to editor' : '← Discover'
@@ -126,9 +135,9 @@ export default async function BookReaderPage({ params }: Props) {
           </div>
 
           <div className="mt-4 flex items-center gap-2.5 flex-wrap">
-            {normalizedChapterRows[0] && (
+            {firstReadableChapter && (
               <Link
-                href={`${readerBasePath}/read/${lastReadChapter?.chapterId ?? normalizedChapterRows[0].chapterId}`}
+                href={`${readerBasePath}/read/${lastReadChapter?.chapterId ?? firstReadableChapter.chapterId}`}
                 className="px-6 py-2.5 bg-[#FFC300] text-black font-bold rounded-md text-[14px] hover:bg-yellow-400 transition-colors"
               >
                 {lastReadChapter ? 'Continue Reading →' : 'Start Reading →'}
@@ -174,6 +183,7 @@ export default async function BookReaderPage({ params }: Props) {
             chapters={normalizedChapterRows}
             currentChapterId={progress?.lastChapterId ?? null}
             readChapterBinderItemIds={progress?.readChapterBinderItemIds ?? []}
+            isAuthor={isAuthor}
           />
         </div>
         <div className="p-5">

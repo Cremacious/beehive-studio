@@ -14,9 +14,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-28
 >
-> **Current focus:** **Delete-Book execution via subagent-driven mode — Tasks 1-2 of 7 shipped.** Plan: [docs/superpowers/plans/2026-05-28-delete-book.md](docs/superpowers/plans/2026-05-28-delete-book.md). T1 (`aa0f94a`): sonner installed + Toaster mounted in `app/layout.tsx`. **T2 (`e2b3cb6`)**: `deleteBookAction(bookId, locale)` — added required `locale` arg + `revalidatePath(\`/${locale}/studio\`)` call between DB delete and return; `revalidatePath` import newly added; 3-line diff, no scope creep, zero pre-existing callers (confirmed). Compliant ✅. **Next:** T3 = `DeleteBookButton` render-prop component (wraps destructive ConfirmDialog, owns dialog state + action call + sonner toast + router.push('/studio')); T4 = library kebab Delete item; T5 = Details Danger Zone; T6 = AGENTS.md "What Has Been Built" entry; T7 = final verification. 137/137 tests, tsc clean.
+> **Current focus:** **Delete-Book execution via subagent-driven mode — Tasks 1-3 of 7 shipped.** Plan: [docs/superpowers/plans/2026-05-28-delete-book.md](docs/superpowers/plans/2026-05-28-delete-book.md). T1 (`aa0f94a`): sonner installed + Toaster mounted in `app/layout.tsx`. T2 (`e2b3cb6`): `deleteBookAction(bookId, locale)` + revalidatePath, zero pre-existing callers. **T3 (`eb2bb1b`)**: `components/book/delete-book-button.tsx` render-prop component (46 lines) — owns ConfirmDialog state + action call + sonner toast + router.push('/studio')+refresh. Compliant ✅. **Next:** T4 = wire library kebab Delete item (add `bookTitle` prop to BookCardMenu, plug DeleteBookButton with `onSelect+preventDefault` pattern matching binder-item-menu); T5 = Details Danger Zone (outside the form element); T6 = AGENTS.md "What Has Been Built" entry; T7 = final verification. 137/137 tests, tsc clean.
 > **Active branch:** `main`
-> **Last commit:** feat(books): deleteBookAction takes locale + revalidates /studio
+> **Last commit:** feat(books): DeleteBookButton shared component (render-prop)
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.

@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
+import Placeholder from '@tiptap/extension-placeholder'
 import { updateBinderItemAction } from '@/lib/actions/binder.actions'
 import { useBookEditor } from '../book-editor-provider'
 import type { AboutAuthorFields } from '@/lib/front-back-matter/types'
@@ -70,6 +71,9 @@ export function AboutAuthorPreview({ itemId, initialFields }: Props) {
           codeBlock: false,
           code: false,
           strike: false,
+        }),
+        Placeholder.configure({
+          placeholder: 'Write a short author bio — who you are, what you write, and anything readers should know.',
         }),
       ],
       content: (initialFields.bio ?? null) as Parameters<typeof useEditor>[0]['content'],

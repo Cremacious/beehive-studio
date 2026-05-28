@@ -66,6 +66,29 @@ export function PageWrapper({ children, saveStatusBadge, variant = 'default' }: 
           box-shadow: 0 0 0 4px oklch(0.85 0.18 90 / 0.10);
           cursor: text;
         }
+        /* TipTap mini-editors (.bp-body — used by Acknowledgments + About
+           Author bio). Empty editors get the same affordance treatment as
+           empty .bp-field contenteditables: dashed outline + visible
+           placeholder text. TipTap's Placeholder extension renders the
+           placeholder as a ::before on the first empty paragraph and adds
+           .is-editor-empty to the editor root when no content. */
+        [data-slot="fbm-pane"] .bp-body.is-editor-empty {
+          outline: 1px dashed oklch(from var(--paper-ink-muted) l c h / 0.5);
+          outline-offset: 8px;
+          border-radius: 4px;
+        }
+        [data-slot="fbm-pane"] .bp-body .is-editor-empty:first-child::before {
+          content: attr(data-placeholder);
+          color: var(--paper-ink-muted);
+          opacity: 0.75;
+          font-style: italic;
+          pointer-events: none;
+          float: left;
+          height: 0;
+        }
+        [data-slot="fbm-pane"] .bp-body:hover {
+          cursor: text;
+        }
       `}</style>
 
       {saveStatusBadge && (

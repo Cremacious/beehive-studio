@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
+import Placeholder from '@tiptap/extension-placeholder'
 import { updateBinderItemAction } from '@/lib/actions/binder.actions'
 import { useBookEditor } from '../book-editor-provider'
 import type { AcknowledgmentsFields } from '@/lib/front-back-matter/types'
@@ -54,6 +55,9 @@ export function AcknowledgmentsPreview({ itemId, initialFields }: Props) {
           codeBlock: false,
           code: false,
           strike: false,
+        }),
+        Placeholder.configure({
+          placeholder: 'Write your acknowledgments here — thank the people, places, and presses that helped along the way.',
         }),
       ],
       content: (initialFields.text ?? null) as Parameters<typeof useEditor>[0]['content'],

@@ -215,13 +215,18 @@ export function BinderTree() {
                   onBlur={commitBookRename}
                 />
               ) : (
-                <h2
-                  className="text-[15px] font-bold text-foreground font-comfortaa tracking-tight leading-tight truncate cursor-pointer hover:text-brand transition-colors"
-                  onDoubleClick={() => setIsRenamingBook(true)}
-                  title="Double-click to rename"
+                <Link
+                  href={`/${locale}/books/${bookId}`}
+                  aria-label="Preview as reader"
+                  className="block text-[15px] font-bold text-foreground font-comfortaa tracking-tight leading-tight truncate cursor-pointer hover:text-brand hover:underline transition-colors no-underline"
+                  onDoubleClick={(e) => {
+                    e.preventDefault()
+                    setIsRenamingBook(true)
+                  }}
+                  title="Click to preview · Double-click to rename"
                 >
                   {localBookTitle}
-                </h2>
+                </Link>
               )}
             </div>
             <div className="flex items-center gap-1 flex-shrink-0">

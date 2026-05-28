@@ -14,9 +14,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-28
 >
-> **Current focus:** **Chapter-Status Publish-Gate COMPLETE** (6 feature commits + plan/spec). Chapter status now controls reader visibility on the public book reader: REVISED/FINAL = reader-visible with "Updated MMM DD, YYYY" freshness label; IDEA/OUTLINE/FIRST_DRAFT = "Draft — coming soon" locked teaser. Author always sees full content. Editing doesn't auto-demote. Surfaces: book reader chapter list, chapter reader page (direct-URL guard), binder color dots, metadata panel explainer + per-pill subtitles. Commits: T1 `34ff8da` (helper + tests), T2+3 `b73959b` (book reader gate), T4 `7c65b11` (locked chapter page), T5 `68387a4` (binder dots), T6 `587b778` (metadata explainer). See "What Has Been Built" for the full breakdown. **Awaiting Chris's manual smoke** (T8 checklist): incognito + author flows, status edits live-update binder dot, hero CTA never links to locked chapter, direct-URL to locked chapter shows placeholder, no read-tracking on locked direct-URL. 162/162 tests, tsc clean.
+> **Current focus:** **Writing-analysis adverbs list now expandable (`18a277c`).** The Adverbs section in the analytics panel truncated to 15 pills and showed a static "+N more" — no way to view the rest. Extracted into a new `AdverbsList` component with local `expanded` state; "+N more" is now a real `<button>` that toggles to/from "Show less". Visual tightening: pill gap-1.5 → gap-2, padding px-1.5 → px-2 so adjacent pills don't look jammed together. Toggle button uses a dashed brand border to distinguish from the solid-bg pills. `aria-expanded` on the toggle. Just before this: **Chapter-Status Publish-Gate COMPLETE** (6 feature commits + plan/spec). See "What Has Been Built" → Chapter Status for the full breakdown. 162/162 tests, tsc clean.
 > **Active branch:** `main`
-> **Last commit:** feat(metadata): Status section explainer + per-pill visibility subtitle
+> **Last commit:** feat(writing-analysis): expandable adverbs list — "+N more" is now clickable
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.

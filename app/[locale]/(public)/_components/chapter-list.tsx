@@ -14,12 +14,13 @@ type ChapterItem = {
 type Props = {
   bookId: string
   locale: string
+  readerBasePath: string
   chapters: ChapterItem[]
   currentChapterId: string | null
   readChapterBinderItemIds: string[]
 }
 
-export function ChapterList({ bookId, locale, chapters, currentChapterId, readChapterBinderItemIds }: Props) {
+export function ChapterList({ readerBasePath, chapters, currentChapterId, readChapterBinderItemIds }: Props) {
   const [expanded, setExpanded] = useState(false)
   const visibleChapters = expanded ? chapters : chapters.slice(0, 5)
   const remaining = chapters.length - 5
@@ -35,7 +36,7 @@ export function ChapterList({ bookId, locale, chapters, currentChapterId, readCh
           return (
             <Link
               key={ch.chapterId}
-              href={`/${locale}/discover/book/${bookId}/read/${ch.chapterId}`}
+              href={`${readerBasePath}/read/${ch.chapterId}`}
               className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-[13px] transition-colors ${
                 isCurrent ? 'bg-[#1e1e1e]' : 'hover:bg-[#1a1a1a]'
               }`}

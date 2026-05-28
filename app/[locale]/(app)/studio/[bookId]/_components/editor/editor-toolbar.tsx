@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import NextLink from 'next/link'
+import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import type { Editor } from '@tiptap/react'
 // Side-effect import: pulls in module augmentations for all StarterKit commands
@@ -92,6 +92,7 @@ function Separator() {
 
 export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggleFind, findOpen }: Props) {
   const { focusMode, toggleFocusMode, editorTheme, toggleEditorTheme, historyOpen, toggleHistory, bookId, locale } = useBookEditor()
+  const router = useRouter()
 
   const [showExport, setShowExport] = useState(false)
 
@@ -285,18 +286,12 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
         {/* VIEW zone (right) */}
         <div className="flex items-center gap-0.5">
           {/* Preview as reader */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <NextLink
-                href={`/${locale}/books/${bookId}`}
-                aria-label="Preview as reader"
-                className={tbtnClass()}
-              >
-                <Eye size={14} />
-              </NextLink>
-            </TooltipTrigger>
-            <TooltipContent>Preview as reader</TooltipContent>
-          </Tooltip>
+          <ToolbarButton
+            onClick={() => router.push(`/${locale}/books/${bookId}`)}
+            title="Preview as reader"
+          >
+            <Eye size={14} />
+          </ToolbarButton>
 
           {/* Find & Replace */}
           <ToolbarButton onClick={onToggleFind} isActive={findOpen} title="Find & replace (⌘F)">

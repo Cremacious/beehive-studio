@@ -14,9 +14,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-28
 >
-> **Current focus:** **Delete-Book feature — spec approved + plan written, awaiting Chris's execution-mode pick.** Spec `7724ba0`, plan `419f04d` ([docs/superpowers/plans/2026-05-28-delete-book.md](docs/superpowers/plans/2026-05-28-delete-book.md)). 7 tasks: (1) install `sonner` + mount Toaster in root layout — pre-flight grep found NO toast lib installed, so this is required groundwork for the spec's toast behavior; (2) extend `deleteBookAction(bookId, locale)` with `revalidatePath`; (3) create `components/book/delete-book-button.tsx` (render-prop wrapping the existing destructive ConfirmDialog); (4) wire library kebab Delete item; (5) wire Details page Danger Zone section (outside the form element so save can't accidentally trigger); (6) AGENTS.md sync; (7) final verification. Hard delete only (no undo). FK cascades already handle binder items / chapters / snapshots / etc. — no schema changes. SP-A reader epic is COMPLETE (15/15 + 2 follow-ups). 137/137 tests, tsc clean.
+> **Current focus:** **Delete-Book execution via subagent-driven mode — Task 1 of 7 shipped.** Plan: [docs/superpowers/plans/2026-05-28-delete-book.md](docs/superpowers/plans/2026-05-28-delete-book.md). **T1 (`aa0f94a`)**: installed sonner + mounted `<Toaster />` in the outermost root layout (`app/layout.tsx`) — applies to all routes including (public), (auth), (app). shadcn-generated `components/ui/sonner.tsx` uses `useTheme()` from next-themes but the project doesn't mount a ThemeProvider — falls back to "system" theme; cosmetic-only, defer unless toasts look wrong on the dark UI. Spec ✅, quality review skipped (pure install commit, no logic). **Next:** T2 = extend `deleteBookAction(bookId, locale)` with `revalidatePath`; T3 = `DeleteBookButton` shared component; T4 = library kebab Delete; T5 = Details Danger Zone; T6 = AGENTS.md "What Has Been Built" entry; T7 = final verification. 137/137 tests, tsc clean.
 > **Active branch:** `main`
-> **Last commit:** docs(delete-book): implementation plan — 7 tasks, sonner install included
+> **Last commit:** chore(ui): install sonner toast + mount Toaster in root layout
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.

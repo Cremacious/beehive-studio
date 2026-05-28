@@ -656,6 +656,9 @@ export function BookDetailsForm({ locale, bookId, initial, isPremium }: Props) {
             title="Structure"
             subtitle="Standalone or part of a series."
           >
+            <p className="text-[12px] text-muted-foreground leading-relaxed mb-3">
+              Is this book part of a series? If so, the series name and number will appear on your book&apos;s reader page, library card, and any discoverable surface — and readers will be able to jump between books in the series.
+            </p>
             <div className="flex gap-2 mb-3">
               {(['Standalone', 'Series'] as const).map(opt => (
                 <button

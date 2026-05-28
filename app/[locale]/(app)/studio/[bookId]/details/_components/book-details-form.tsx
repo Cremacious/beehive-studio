@@ -3,12 +3,14 @@
 import { useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ChevronDown, ChevronRight, Sparkles, X } from 'lucide-react'
+import { ChevronDown, ChevronRight, Sparkles, Trash2, X } from 'lucide-react'
 import {
   updateBookDetailsAction,
   type BookDetails,
 } from '@/lib/actions/book.actions'
 import { SharingControls, type Visibility } from '@/components/book/sharing-controls'
+import { DeleteBookButton } from '@/components/book/delete-book-button'
+import { Button } from '@/components/ui/button'
 import { useCloudinaryUpload } from '@/hooks/use-cloudinary-upload'
 import {
   GENRES,
@@ -779,6 +781,27 @@ export function BookDetailsForm({ locale, bookId, initial, isPremium }: Props) {
               {error}
             </div>
           )}
+
+          {/* ── DANGER ZONE ── (intentionally outside any form element) */}
+          <section className="rounded-lg border border-destructive/30 p-5 mt-6">
+            <h2 className="text-destructive text-[15px] font-semibold mb-1">Danger Zone</h2>
+            <p className="text-foreground/65 text-[13px] mb-4">
+              Permanently delete this book and everything in it.
+            </p>
+            <DeleteBookButton bookId={bookId} bookTitle={initial.title} locale={locale}>
+              {(onTrigger) => (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onTrigger}
+                  className="text-destructive border-destructive/40 hover:bg-destructive/10"
+                >
+                  <Trash2 size={14} className="mr-2" />
+                  Delete this book
+                </Button>
+              )}
+            </DeleteBookButton>
+          </section>
         </div>
       </div>
     </div>

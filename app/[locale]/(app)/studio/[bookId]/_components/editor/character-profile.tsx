@@ -297,8 +297,7 @@ export function CharacterProfile({ item }: Props) {
           {/* Section cards grid */}
           <div
             data-slot="character-sections"
-            className="mt-[22px] grid gap-[18px]"
-            style={{ gridTemplateColumns: '1fr 1fr' }}
+            className="mt-[22px] flex flex-col"
           >
             <SectionCard
               indexLabel="01 · Description"
@@ -320,7 +319,6 @@ export function CharacterProfile({ item }: Props) {
               value={c.backstory ?? ''}
               placeholder="What shaped them before the story began?"
               onCommit={v => setField('backstory', v || null)}
-              full
             />
             <SectionCard
               indexLabel="04 · Change"
@@ -328,21 +326,12 @@ export function CharacterProfile({ item }: Props) {
               value={c.arc ?? ''}
               placeholder="How do they change across the story?"
               onCommit={v => setField('arc', v || null)}
-              full
             />
 
             {/* Relationships — list + placeholder add button */}
-            <div
+            <section
               data-slot="character-section"
-              className="relative px-6 pt-[22px] pb-6"
-              style={{
-                gridColumn: '1 / -1',
-                background: 'var(--sheet-bg)',
-                color: 'var(--sheet-ink)',
-                borderRadius: 8,
-                boxShadow:
-                  '0 1px 0 var(--paper-50) inset, 0 2px 4px rgba(0,0,0,0.25), 0 12px 24px -8px rgba(0,0,0,0.35)',
-              }}
+              className="pt-8 border-t border-[var(--sheet-rule)]"
             >
               <div
                 style={{
@@ -359,7 +348,7 @@ export function CharacterProfile({ item }: Props) {
               <h3
                 style={{
                   fontFamily: 'var(--font-display)',
-                  fontSize: 17,
+                  fontSize: 16,
                   fontWeight: 700,
                   color: 'var(--sheet-ink-strong)',
                   margin: '0 0 12px',
@@ -484,7 +473,7 @@ export function CharacterProfile({ item }: Props) {
               >
                 + Link a character (coming soon)
               </button>
-            </div>
+            </section>
 
             <SectionCard
               indexLabel="06 · Loose"
@@ -492,7 +481,6 @@ export function CharacterProfile({ item }: Props) {
               value={c.notes ?? ''}
               placeholder="Anything else worth remembering…"
               onCommit={v => setField('notes', v || null)}
-              full
             />
           </div>
         </div>
@@ -504,33 +492,17 @@ export function CharacterProfile({ item }: Props) {
 // Single-paragraph contenteditable card. Saves on blur to keep behavior
 // predictable (typing inside a contenteditable + debounce-per-keystroke gets
 // fiddly with React + caret position). Same pattern as note-title.
-function SectionCard({
-  indexLabel,
-  title,
-  value,
-  placeholder,
-  onCommit,
-  full,
-}: {
+function SectionCard({ indexLabel, title, value, placeholder, onCommit }: {
   indexLabel: string
   title: string
   value: string
   placeholder: string
   onCommit: (next: string) => void
-  full?: boolean
 }) {
   return (
-    <div
+    <section
       data-slot="character-section"
-      className="relative px-6 pt-[22px] pb-6"
-      style={{
-        gridColumn: full ? '1 / -1' : undefined,
-        background: 'var(--sheet-bg)',
-        color: 'var(--sheet-ink)',
-        borderRadius: 8,
-        boxShadow:
-          '0 1px 0 var(--paper-50) inset, 0 2px 4px rgba(0,0,0,0.25), 0 12px 24px -8px rgba(0,0,0,0.35)',
-      }}
+      className="pt-8 first:pt-2 border-t border-[var(--sheet-rule)] first:border-t-0"
     >
       <div
         style={{
@@ -547,7 +519,7 @@ function SectionCard({
       <h3
         style={{
           fontFamily: 'var(--font-display)',
-          fontSize: 17,
+          fontSize: 16,
           fontWeight: 700,
           color: 'var(--sheet-ink-strong)',
           margin: '0 0 12px',
@@ -566,7 +538,7 @@ function SectionCard({
         style={{
           fontFamily: 'var(--font-prose)',
           fontSize: 15,
-          lineHeight: 1.65,
+          lineHeight: 1.7,
           color: 'var(--sheet-ink)',
           minHeight: '2.4em',
         }}
@@ -574,7 +546,7 @@ function SectionCard({
       >
         {value}
       </div>
-    </div>
+    </section>
   )
 }
 

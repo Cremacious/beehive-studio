@@ -40,6 +40,8 @@ export type PublicBook = {
   bookmarkCount: number
   chapterCount: number
   wordCount: number
+  seriesName: string | null
+  seriesNumber: number | null
 }
 
 export type BookComment = {
@@ -178,6 +180,8 @@ export async function getPublicBookAction(
       authorUsername: userProfiles.username,
       authorDisplayName: userProfiles.displayName,
       authorAvatarUrl: userProfiles.avatarUrl,
+      seriesName: books.seriesName,
+      seriesNumber: books.seriesNumber,
     })
     .from(books)
     .innerJoin(userProfiles, eq(books.userId, userProfiles.userId))

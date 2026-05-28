@@ -7,6 +7,7 @@ import { and, eq, asc } from 'drizzle-orm'
 import { auth } from '@/lib/auth'
 import { canReadBook } from '@/lib/books/can-read'
 import { isChapterReaderVisible } from '@/lib/books/is-chapter-reader-visible'
+import { getSeriesNeighbors } from '@/lib/books/get-series-neighbors'
 import { getPublicBookAction, getBookCommentsAction } from '@/lib/actions/discover.actions'
 import { getReadingProgressAction } from '@/lib/actions/reading.actions'
 import { getUserSocialStateAction } from '@/lib/actions/social.actions'
@@ -14,6 +15,7 @@ import { ChapterList } from '../../_components/chapter-list'
 import { CommentsPanel } from '../../_components/comments-panel'
 import { SocialActions } from '../../_components/social-actions'
 import { AccessDenied } from '../_components/access-denied'
+import { SeriesFooter } from '../../_components/series-footer'
 
 type Props = { params: Promise<{ locale: string; bookId: string }> }
 
@@ -48,10 +50,19 @@ export default async function BookReaderPage({ params }: Props) {
     .where(and(eq(binderItems.bookId, bookId), eq(binderItems.type, 'chapter')))
     .orderBy(asc(binderItems.order))
 
-  const [commentsResult, progressResult, socialResult] = await Promise.all([
+  const [commentsResult, progressResult, socialResult, seriesNeighbors] = await Promise.all([
     getBookCommentsAction(bookId, 1),
     userId ? getReadingProgressAction(bookId) : Promise.resolve(null),
     userId ? getUserSocialStateAction(bookId, book.authorUserId) : Promise.resolve(null),
+    getSeriesNeighbors({
+      currentBook: {
+        id: book.id,
+        userId: book.authorUserId,
+        seriesName: book.seriesName,
+        seriesNumber: book.seriesNumber,
+      },
+      viewerUserId: userId,
+    }),
   ])
 
   const comments = commentsResult.success ? commentsResult.data.comments : []
@@ -109,6 +120,16 @@ export default async function BookReaderPage({ params }: Props) {
                 by <span className="text-[#FFC300]">{book.authorDisplayName ?? book.authorUsername ?? 'Unknown'}</span>
               </span>
             </div>
+
+            {book.seriesName && (
+              <div className="text-[11px] uppercase tracking-wider text-[#888] mb-3" style={{ fontFamily: 'var(--font-mono)' }}>
+                {book.seriesNumber !== null ? (
+                  <>Book {book.seriesNumber} of <span className="italic text-[#aaa]">{book.seriesName}</span></>
+                ) : (
+                  <>Part of <span className="italic text-[#aaa]">{book.seriesName}</span></>
+                )}
+              </div>
+            )}
 
             {book.tags && book.tags.length > 0 && (
               <div className="flex gap-1.5 flex-wrap mb-3.5">
@@ -196,6 +217,8 @@ export default async function BookReaderPage({ params }: Props) {
           />
         </div>
       </div>
+
+      <SeriesFooter neighbors={seriesNeighbors} locale={locale} />
     </div>
   )
 }

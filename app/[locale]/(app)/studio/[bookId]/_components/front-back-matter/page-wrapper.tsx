@@ -41,21 +41,30 @@ export function PageWrapper({ children, saveStatusBadge, variant = 'default' }: 
         [data-editor-theme="light"] [data-slot="fbm-pane"] {
           --sheet-canvas: var(--paper-200);
         }
+        /* Empty editable fields get a dashed outline so users see them as
+           input zones at rest — without it, the cream-paper page looks
+           static and the faded placeholder italics don't read as "click me". */
+        [data-slot="fbm-pane"] .bp-field:empty {
+          outline: 1px dashed oklch(from var(--paper-ink-muted) l c h / 0.5);
+          outline-offset: 5px;
+          border-radius: 4px;
+        }
         [data-slot="fbm-pane"] [contenteditable]:focus {
-          outline: 2px solid oklch(from var(--color-brand) l c h / 0.45);
-          outline-offset: 2px;
+          outline: 2px solid oklch(from var(--color-brand) l c h / 0.55);
+          outline-offset: 4px;
           border-radius: 4px;
         }
         [data-slot="fbm-pane"] [contenteditable][data-placeholder]:empty::before {
           content: attr(data-placeholder);
           color: var(--paper-ink-muted);
-          opacity: 0.55;
+          opacity: 0.75;
           font-style: italic;
           pointer-events: none;
         }
         [data-slot="fbm-pane"] .bp-field:hover {
           background: oklch(0.85 0.18 90 / 0.10);
           box-shadow: 0 0 0 4px oklch(0.85 0.18 90 / 0.10);
+          cursor: text;
         }
       `}</style>
 

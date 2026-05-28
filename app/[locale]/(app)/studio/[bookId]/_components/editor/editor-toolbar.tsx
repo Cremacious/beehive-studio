@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import NextLink from 'next/link'
 import { cn } from '@/lib/utils'
 import type { Editor } from '@tiptap/react'
 // Side-effect import: pulls in module augmentations for all StarterKit commands
@@ -21,6 +22,7 @@ import {
   Sun, Moon,
   History,
   HelpCircle,
+  Eye,
 } from 'lucide-react'
 
 type Props = {
@@ -89,7 +91,7 @@ function Separator() {
 }
 
 export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggleFind, findOpen }: Props) {
-  const { focusMode, toggleFocusMode, editorTheme, toggleEditorTheme, historyOpen, toggleHistory } = useBookEditor()
+  const { focusMode, toggleFocusMode, editorTheme, toggleEditorTheme, historyOpen, toggleHistory, bookId, locale } = useBookEditor()
 
   const [showExport, setShowExport] = useState(false)
 
@@ -282,6 +284,20 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
 
         {/* VIEW zone (right) */}
         <div className="flex items-center gap-0.5">
+          {/* Preview as reader */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <NextLink
+                href={`/${locale}/books/${bookId}`}
+                aria-label="Preview as reader"
+                className={tbtnClass()}
+              >
+                <Eye size={14} />
+              </NextLink>
+            </TooltipTrigger>
+            <TooltipContent>Preview as reader</TooltipContent>
+          </Tooltip>
+
           {/* Find & Replace */}
           <ToolbarButton onClick={onToggleFind} isActive={findOpen} title="Find & replace (⌘F)">
             <Search size={14} />

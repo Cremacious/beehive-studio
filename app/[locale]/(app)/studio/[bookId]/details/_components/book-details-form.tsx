@@ -8,6 +8,7 @@ import {
   updateBookDetailsAction,
   type BookDetails,
 } from '@/lib/actions/book.actions'
+import { SharingControls, type Visibility } from '@/components/book/sharing-controls'
 import { useCloudinaryUpload } from '@/hooks/use-cloudinary-upload'
 import {
   GENRES,
@@ -34,6 +35,8 @@ type FormState = {
   isSeriesBook: boolean
   seriesName: string
   seriesNumber: string
+  visibility: Visibility
+  discoverable: boolean
 }
 
 const LANGUAGES = [
@@ -57,6 +60,8 @@ function toFormState(initial: BookDetails): FormState {
     isSeriesBook: Boolean(initial.seriesName || initial.seriesNumber),
     seriesName: initial.seriesName ?? '',
     seriesNumber: initial.seriesNumber != null ? String(initial.seriesNumber) : '',
+    visibility: initial.visibility,
+    discoverable: initial.discoverable,
   }
 }
 
@@ -77,6 +82,8 @@ function isClean(a: FormState, b: FormState): boolean {
   if (a.isSeriesBook !== b.isSeriesBook) return false
   if (a.seriesName !== b.seriesName) return false
   if (a.seriesNumber !== b.seriesNumber) return false
+  if (a.visibility !== b.visibility) return false
+  if (a.discoverable !== b.discoverable) return false
   if (a.tags.join('|') !== b.tags.join('|')) return false
   if (a.contentWarnings.join('|') !== b.contentWarnings.join('|')) return false
   if (a.compTitles.join('|') !== b.compTitles.join('|')) return false
@@ -283,10 +290,8 @@ export function BookDetailsForm({ locale, bookId, initial, isPremium }: Props) {
         seriesNumber: form.isSeriesBook && form.seriesNumber
           ? parseInt(form.seriesNumber, 10)
           : null,
-        // Visibility + discovery — UI for these ships in a later task;
-        // pass through current values so the schema accepts the payload.
-        visibility: initial.visibility,
-        discoverable: initial.discoverable,
+        visibility: form.visibility,
+        discoverable: form.discoverable,
       })
 
       if (!result.success) {
@@ -737,6 +742,26 @@ export function BookDetailsForm({ locale, bookId, initial, isPremium }: Props) {
                   : 'Subtitle is editable above in Basics. Other publishing fields require Premium.'}
               </p>
             </div>
+          </Section>
+
+          {/* ── SHARING ── */}
+          <Section
+            title="Sharing"
+            subtitle="Who can read this book, and whether it appears on Discover."
+          >
+            <SharingControls
+              visibility={form.visibility}
+              discoverable={form.discoverable}
+              onChange={({ visibility, discoverable }) => {
+                const patch: Partial<FormState> = {}
+                if (visibility !== undefined) {
+                  patch.visibility = visibility
+                  if (visibility !== 'PUBLIC') patch.discoverable = false
+                }
+                if (discoverable !== undefined) patch.discoverable = discoverable
+                update(patch)
+              }}
+            />
           </Section>
 
           {/* ── Error banner ── */}

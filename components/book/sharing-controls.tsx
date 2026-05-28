@@ -2,7 +2,7 @@
 
 import { Lock, Users, Globe } from 'lucide-react'
 
-type Visibility = 'PRIVATE' | 'PUBLIC' | 'FRIENDS'
+export type Visibility = 'PRIVATE' | 'PUBLIC' | 'FRIENDS'
 
 type Props = {
   visibility: Visibility
@@ -22,7 +22,7 @@ const OPTIONS: Array<{
   { value: 'PUBLIC', title: 'Public', description: 'Anyone with the link can read this book.', icon: Globe },
 ]
 
-export function SharingStep({ visibility, discoverable, onChange }: Props) {
+export function SharingControls({ visibility, discoverable, onChange }: Props) {
   const isPublic = visibility === 'PUBLIC'
   return (
     <div className="space-y-5">

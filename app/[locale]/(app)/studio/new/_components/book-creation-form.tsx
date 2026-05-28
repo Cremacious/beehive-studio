@@ -8,11 +8,9 @@ import { createBookAction } from '@/lib/actions/book.actions'
 import { StepOne } from '../../_components/create-book-wizard/step-one'
 import { StepTwo } from '../../_components/create-book-wizard/step-two'
 import { StepThree, type BookTemplate } from '../../_components/create-book-wizard/step-three'
-import { SharingStep } from './sharing-step'
+import { SharingControls, type Visibility } from '@/components/book/sharing-controls'
 
 type Step = 1 | 2 | 3 | 4
-
-type Visibility = 'PRIVATE' | 'PUBLIC' | 'FRIENDS'
 
 type FormData = {
   title: string
@@ -370,7 +368,7 @@ export function BookCreationForm({ locale, templates }: Props) {
 
               {step === 4 && (
                 <div className="space-y-5">
-                  <SharingStep
+                  <SharingControls
                     visibility={form.visibility}
                     discoverable={form.discoverable}
                     onChange={({ visibility, discoverable }) => {

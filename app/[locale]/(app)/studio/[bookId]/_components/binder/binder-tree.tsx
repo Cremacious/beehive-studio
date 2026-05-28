@@ -23,7 +23,7 @@ import { updateBookAction } from '@/lib/actions/book.actions'
 import type { BinderItemRow } from '@/lib/actions/binder.actions'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { LayoutGrid, Settings } from 'lucide-react'
+import { Settings } from 'lucide-react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -91,7 +91,7 @@ function flattenVisible(nodes: TreeNode[], collapsed: Set<string>): string[] {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function BinderTree() {
-  const { bookId, bookTitle, binderItems, setBinderItems, focusMode, corkboardMode, toggleCorkboardMode } = useBookEditor()
+  const { bookId, bookTitle, binderItems, setBinderItems, focusMode } = useBookEditor()
   const params = useParams<{ locale: string }>()
   const locale = params?.locale ?? 'en'
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
@@ -238,36 +238,23 @@ export function BinderTree() {
               >
                 <Settings size={14} />
               </Link>
-              <button
-                onClick={toggleCorkboardMode}
-                title={corkboardMode ? 'Exit corkboard' : 'Corkboard view'}
-                aria-label={corkboardMode ? 'Exit corkboard' : 'Corkboard view'}
-                className={cn(
-                  'w-7 h-7 inline-flex items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-surface-elevated hover:text-foreground transition-colors',
-                  corkboardMode && 'bg-brand/15 border-brand/30 text-brand',
-                )}
-              >
-                <LayoutGrid size={14} />
-              </button>
             </div>
           </div>
         </div>
 
-        {!corkboardMode && (
-          <div className="flex-1 overflow-y-auto py-2 px-1.5 flex flex-col gap-px">
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext items={flatIds} strategy={verticalListSortingStrategy}>
-                {tree.map(node => (
-                  <BinderItem key={node.id} node={node} depth={0} />
-                ))}
-              </SortableContext>
-            </DndContext>
-          </div>
-        )}
+        <div className="flex-1 overflow-y-auto py-2 px-1.5 flex flex-col gap-px">
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext items={flatIds} strategy={verticalListSortingStrategy}>
+              {tree.map(node => (
+                <BinderItem key={node.id} node={node} depth={0} />
+              ))}
+            </SortableContext>
+          </DndContext>
+        </div>
 
         <div className="border-t border-border px-2.5 py-3 flex flex-col gap-2 bg-surface">
           <BinderAddMenu />

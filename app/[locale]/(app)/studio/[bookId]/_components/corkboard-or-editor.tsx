@@ -2,16 +2,15 @@
 
 import { useBookEditor } from './book-editor-provider'
 import { ChapterEditor } from './editor/chapter-editor'
-import { CorkboardView } from './corkboard-view'
 
 export function CorkboardOrEditor() {
-  const { corkboardMode, editorTheme } = useBookEditor()
+  const { editorTheme } = useBookEditor()
   // data-editor-theme lives on this wrapper so ALL editor render paths
-  // (ChapterEditor's many early returns, CorkboardView, FrontBackMatter,
-  // Outline, Note, etc.) inherit the attribute and get themed. Previously
-  // the attribute was on chapter-editor.tsx's main, which only covered
-  // the TipTap path — meaning toggling light/dark on a Front Matter form
-  // (or Outline / Note / etc.) did nothing.
+  // (ChapterEditor's many early returns, FrontBackMatter, Outline, Note,
+  // etc.) inherit the attribute and get themed. Previously the attribute
+  // was on chapter-editor.tsx's main, which only covered the TipTap path —
+  // meaning toggling light/dark on a Front Matter form (or Outline / Note /
+  // etc.) did nothing.
   // Light-mode for the editor area.
   // We tried scoped CSS rules in globals.css (`[data-editor-theme="light"]
   // .ProseMirror { color: ... }` etc.) but those weren't reaching the
@@ -104,7 +103,7 @@ export function CorkboardOrEditor() {
           }
         `}</style>
       )}
-      {corkboardMode ? <CorkboardView /> : <ChapterEditor />}
+      <ChapterEditor />
     </div>
   )
 }

@@ -49,8 +49,6 @@ type BookEditorContextValue = {
   dismissError: (index: number) => void
   focusMode: boolean
   toggleFocusMode: () => void
-  corkboardMode: boolean
-  toggleCorkboardMode: () => void
   pendingRenameId: string | null
   setPendingRenameId: (id: string | null) => void
   editorTheme: 'dark' | 'light'
@@ -96,8 +94,6 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
   const [errors, setErrors] = useState<string[]>([])
   const [focusMode, setFocusMode] = useState(false)
   const toggleFocusMode = useCallback(() => setFocusMode(f => !f), [])
-  const [corkboardMode, setCorkboardMode] = useState(false)
-  const toggleCorkboardMode = useCallback(() => setCorkboardMode(c => !c), [])
   const [pendingRenameId, setPendingRenameId] = useState<string | null>(null)
   const [editorTheme, setEditorTheme] = useState<'dark' | 'light'>(() => {
     // Light is the default writing surface (cream paper). Users opt into dark
@@ -416,8 +412,6 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     dismissError,
     focusMode,
     toggleFocusMode,
-    corkboardMode,
-    toggleCorkboardMode,
     pendingRenameId,
     setPendingRenameId,
     editorTheme,
@@ -456,8 +450,6 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     dismissError,
     focusMode,
     toggleFocusMode,
-    corkboardMode,
-    toggleCorkboardMode,
     pendingRenameId,
     editorTheme,
     toggleEditorTheme,

@@ -90,8 +90,13 @@ describe('updateBookSchema', () => {
   })
 
   it('rejects visibility outside allowed values', () => {
-    const result = updateBookSchema.safeParse({ visibility: 'FRIENDS' })
+    const result = updateBookSchema.safeParse({ visibility: 'EVERYONE' })
     expect(result.success).toBe(false)
+  })
+
+  it('accepts FRIENDS visibility', () => {
+    const result = updateBookSchema.safeParse({ visibility: 'FRIENDS' })
+    expect(result.success).toBe(true)
   })
 
   it('accepts valid visibility', () => {

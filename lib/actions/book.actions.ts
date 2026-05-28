@@ -72,6 +72,8 @@ export async function createBookAction(input: {
   publisherName?: string
   trimSize?: string
   edition?: string
+  visibility?: 'PRIVATE' | 'PUBLIC' | 'FRIENDS'
+  discoverable?: boolean
 }): Promise<ActionResult<{ bookId: string }>> {
   const userId = await requireAuth()
 
@@ -107,6 +109,8 @@ export async function createBookAction(input: {
       compTitles: d.compTitles ?? null,
       seriesName: d.seriesName ?? null,
       seriesNumber: d.seriesNumber ?? null,
+      visibility: d.visibility,
+      discoverable: d.discoverable,
     })
 
     // Publishing metadata at creation time is intentionally free-tier — ongoing edits
@@ -468,6 +472,9 @@ export type BookDetails = {
   // Structure
   seriesName: string | null
   seriesNumber: number | null
+  // Visibility + discovery
+  visibility: 'PRIVATE' | 'PUBLIC' | 'FRIENDS'
+  discoverable: boolean
   // Publishing (premium-gated for edits other than subtitle)
   subtitle: string | null
   publisherName: string | null
@@ -511,6 +518,8 @@ export async function getBookDetailsAction(
       language: book.language,
       seriesName: book.seriesName,
       seriesNumber: book.seriesNumber,
+      visibility: book.visibility,
+      discoverable: book.discoverable,
       subtitle: pm?.subtitle ?? null,
       publisherName: pm?.publisherName ?? null,
       trimSize: pm?.trimSize ?? null,
@@ -546,6 +555,8 @@ export async function updateBookDetailsAction(
     seriesName: string | null
     seriesNumber: number | null
     subtitle: string | null
+    visibility: 'PRIVATE' | 'PUBLIC' | 'FRIENDS'
+    discoverable: boolean
   },
 ): Promise<ActionResult> {
   const userId = await requireAuth()
@@ -573,6 +584,8 @@ export async function updateBookDetailsAction(
         language: d.language,
         seriesName: d.seriesName,
         seriesNumber: d.seriesNumber,
+        visibility: d.visibility,
+        discoverable: d.discoverable,
         updatedAt: new Date(),
       })
       .where(eq(books.id, bookId))

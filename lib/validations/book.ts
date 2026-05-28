@@ -21,13 +21,21 @@ export const createBookSchema = z.object({
   publisherName: z.string().max(200).optional(),
   trimSize: z.string().max(20).optional(),
   edition: z.string().max(100).optional(),
-})
+  // Visibility + discovery
+  visibility: z.enum(['PRIVATE', 'PUBLIC', 'FRIENDS']).default('PRIVATE'),
+  discoverable: z.boolean().default(false),
+}).transform((data) => ({
+  ...data,
+  // Belt-and-suspenders: discoverable only meaningful when PUBLIC.
+  discoverable: data.visibility === 'PUBLIC' ? data.discoverable : false,
+}))
 
 export const updateBookSchema = z.object({
   title: z.string().min(1).max(200).optional(),
   genre: z.string().max(50).optional().nullable(),
   synopsis: z.string().max(2000).optional().nullable(),
-  visibility: z.enum(['PRIVATE', 'PUBLIC']).optional(),
+  visibility: z.enum(['PRIVATE', 'PUBLIC', 'FRIENDS']).optional(),
+  discoverable: z.boolean().optional(),
   status: z.enum(['DRAFT', 'PUBLISHED']).optional(),
   coverUrl: z.string().url().optional().nullable(),
 })
@@ -56,7 +64,14 @@ export const updateBookDetailsSchema = z.object({
   // to keep parity. The remaining publishing fields are premium-gated and
   // handled by updatePublishingMetadataAction.
   subtitle: z.string().max(200).nullable(),
-})
+  // Visibility + discovery
+  visibility: z.enum(['PRIVATE', 'PUBLIC', 'FRIENDS']),
+  discoverable: z.boolean(),
+}).transform((data) => ({
+  ...data,
+  // Belt-and-suspenders: discoverable only meaningful when PUBLIC.
+  discoverable: data.visibility === 'PUBLIC' ? data.discoverable : false,
+}))
 
 export const createBinderItemSchema = z.object({
   bookId: z.string().min(1),

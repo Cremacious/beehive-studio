@@ -283,6 +283,10 @@ export function BookDetailsForm({ locale, bookId, initial, isPremium }: Props) {
         seriesNumber: form.isSeriesBook && form.seriesNumber
           ? parseInt(form.seriesNumber, 10)
           : null,
+        // Visibility + discovery — UI for these ships in a later task;
+        // pass through current values so the schema accepts the payload.
+        visibility: initial.visibility,
+        discoverable: initial.discoverable,
       })
 
       if (!result.success) {

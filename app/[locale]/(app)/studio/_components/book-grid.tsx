@@ -4,8 +4,9 @@ import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { BookCard } from './book-card'
 import type { BookSummary } from '@/lib/actions/book.actions'
+import { normalizeSeriesKey } from '@/lib/books/series-key'
 
-type SortOption = 'recent' | 'title' | 'wordCount'
+type SortOption = 'recent' | 'title' | 'wordCount' | 'series'
 type StatusFilter = 'all' | 'Drafting' | 'Revised' | 'Published'
 type ViewMode = 'grid' | 'list'
 
@@ -13,6 +14,34 @@ const SORT_LABELS: Record<SortOption, string> = {
   recent: 'Recently edited',
   title: 'Title A → Z',
   wordCount: 'Word count',
+  series: 'By series',
+}
+
+function clusterBooks(books: BookSummary[]) {
+  const map = new Map<string, { displayName: string; books: BookSummary[] }>()
+  const standalone: BookSummary[] = []
+  for (const b of books) {
+    const key = normalizeSeriesKey(b.seriesName)
+    if (!key) {
+      standalone.push(b)
+      continue
+    }
+    const existing = map.get(key)
+    if (existing) {
+      existing.books.push(b)
+    } else {
+      map.set(key, { displayName: b.seriesName!, books: [b] })
+    }
+  }
+  for (const c of map.values()) {
+    c.books.sort((a, b) => {
+      if (a.seriesNumber === null && b.seriesNumber === null) return 0
+      if (a.seriesNumber === null) return 1
+      if (b.seriesNumber === null) return -1
+      return a.seriesNumber - b.seriesNumber
+    })
+  }
+  return { series: Array.from(map.values()), standalone }
 }
 
 type Props = {
@@ -282,18 +311,68 @@ export function BookGrid({ books, locale }: Props) {
 
       {/* ── Grid (list view is a v2 stub — same grid for now) ── */}
       {visible.length > 0 ? (
-        <div
-          className="grid"
-          style={{
-            gridTemplateColumns:
-              view === 'grid' ? 'repeat(5, 1fr)' : 'repeat(2, 1fr)',
-            gap: '22px',
-          }}
-        >
-          {visible.map((book) => (
-            <BookCard key={book.id} book={book} locale={locale} />
-          ))}
-        </div>
+        sort === 'series' ? (
+          (() => {
+            const clusters = clusterBooks(visible)
+            const gridStyle = {
+              gridTemplateColumns:
+                view === 'grid' ? 'repeat(5, 1fr)' : 'repeat(2, 1fr)',
+              gap: '22px',
+            } as const
+            const headerStyle = {
+              fontFamily: 'var(--font-mono)',
+              color: 'var(--canvas-dark-ink-muted)',
+            } as const
+            return (
+              <>
+                {clusters.series.map((cluster) => (
+                  <section key={cluster.displayName} className="mb-8">
+                    <h3
+                      className="text-xs uppercase tracking-wider mb-3 italic"
+                      style={headerStyle}
+                    >
+                      {cluster.displayName} ({cluster.books.length}{' '}
+                      {cluster.books.length === 1 ? 'book' : 'books'})
+                    </h3>
+                    <div className="grid" style={gridStyle}>
+                      {cluster.books.map((book) => (
+                        <BookCard key={book.id} book={book} locale={locale} />
+                      ))}
+                    </div>
+                  </section>
+                ))}
+                {clusters.standalone.length > 0 && (
+                  <section className="mb-8">
+                    <h3
+                      className="text-xs uppercase tracking-wider mb-3"
+                      style={headerStyle}
+                    >
+                      Standalone ({clusters.standalone.length})
+                    </h3>
+                    <div className="grid" style={gridStyle}>
+                      {clusters.standalone.map((book) => (
+                        <BookCard key={book.id} book={book} locale={locale} />
+                      ))}
+                    </div>
+                  </section>
+                )}
+              </>
+            )
+          })()
+        ) : (
+          <div
+            className="grid"
+            style={{
+              gridTemplateColumns:
+                view === 'grid' ? 'repeat(5, 1fr)' : 'repeat(2, 1fr)',
+              gap: '22px',
+            }}
+          >
+            {visible.map((book) => (
+              <BookCard key={book.id} book={book} locale={locale} />
+            ))}
+          </div>
+        )
       ) : (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <p

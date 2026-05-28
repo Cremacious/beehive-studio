@@ -69,15 +69,16 @@ export function PageWrapper({ children, saveStatusBadge, variant = 'default' }: 
         /* TipTap mini-editors (.bp-body — used by Acknowledgments + About
            Author bio). Empty editors get the same affordance treatment as
            empty .bp-field contenteditables: dashed outline + visible
-           placeholder text. TipTap's Placeholder extension renders the
-           placeholder as a ::before on the first empty paragraph and adds
-           .is-editor-empty to the editor root when no content. */
-        [data-slot="fbm-pane"] .bp-body.is-editor-empty {
+           placeholder text. TipTap's Placeholder extension marks the first
+           empty paragraph with .is-editor-empty + data-placeholder — those
+           live on the paragraph, NOT on the .bp-body root, so we use :has()
+           to lift the outline back up to the editor wrapper. */
+        [data-slot="fbm-pane"] .bp-body:has(p.is-editor-empty) {
           outline: 1px dashed oklch(from var(--paper-ink-muted) l c h / 0.5);
           outline-offset: 8px;
           border-radius: 4px;
         }
-        [data-slot="fbm-pane"] .bp-body .is-editor-empty:first-child::before {
+        [data-slot="fbm-pane"] .bp-body p.is-editor-empty:first-child::before {
           content: attr(data-placeholder);
           color: var(--paper-ink-muted);
           opacity: 0.75;

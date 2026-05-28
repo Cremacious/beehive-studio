@@ -8,7 +8,9 @@ import { markChapterReadAction } from '@/lib/actions/reading.actions'
 import { auth } from '@/lib/auth'
 import { headers } from 'next/headers'
 import { canReadBook } from '@/lib/books/can-read'
+import { isChapterReaderVisible } from '@/lib/books/is-chapter-reader-visible'
 import { AccessDenied } from '../../../_components/access-denied'
+import { Clock } from 'lucide-react'
 
 type Props = { params: Promise<{ locale: string; bookId: string; chapterId: string }> }
 
@@ -26,7 +28,7 @@ export default async function ChapterReaderPage({ params }: Props) {
 
   // Fetch book for title display
   const [book] = await db
-    .select({ id: books.id, title: books.title })
+    .select({ id: books.id, title: books.title, userId: books.userId })
     .from(books)
     .where(eq(books.id, bookId))
     .limit(1)
@@ -51,12 +53,17 @@ export default async function ChapterReaderPage({ params }: Props) {
 
   // Fetch chapter content
   const [chapter] = await db
-    .select({ content: chapters.content, wordCount: chapters.wordCount })
+    .select({ content: chapters.content, wordCount: chapters.wordCount, status: chapters.status })
     .from(chapters)
     .where(eq(chapters.id, chapterId))
     .limit(1)
 
   if (!chapter) notFound()
+
+  const isAuthor = userId === book.userId
+  if (!isAuthor && !isChapterReaderVisible(chapter.status)) {
+    return <LockedChapterPlaceholder bookId={bookId} locale={locale} />
+  }
 
   const prevChapter = currentIndex > 0 ? allChapters[currentIndex - 1] : null
   const nextChapter = currentIndex < allChapters.length - 1 ? allChapters[currentIndex + 1] : null
@@ -145,5 +152,29 @@ export default async function ChapterReaderPage({ params }: Props) {
         )}
       </div>
     </div>
+  )
+}
+
+function LockedChapterPlaceholder({ bookId, locale }: { bookId: string; locale: string }) {
+  return (
+    <main className="min-h-screen bg-[#141414] flex items-center justify-center px-6">
+      <div className="max-w-md text-center">
+        <div className="mx-auto w-14 h-14 rounded-full bg-[#1f1f1f] border border-[#2a2a2a] flex items-center justify-center mb-5">
+          <Clock className="w-6 h-6 text-[#888]" />
+        </div>
+        <h1 className="text-white text-[20px] font-semibold mb-2">
+          This chapter is still being drafted
+        </h1>
+        <p className="text-[#888] text-[14px] mb-6">
+          The author hasn&apos;t published this chapter yet. Check back soon.
+        </p>
+        <Link
+          href={`/${locale}/books/${bookId}`}
+          className="inline-block px-5 py-2 bg-[#FFC300] text-black font-semibold rounded-md text-[14px] hover:bg-yellow-400 transition-colors"
+        >
+          Back to chapters
+        </Link>
+      </div>
+    </main>
   )
 }

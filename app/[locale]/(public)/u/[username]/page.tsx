@@ -9,6 +9,7 @@ import {
   getProfileActivityAction,
 } from '@/lib/actions/user-profile.actions'
 import { FollowButton } from './_components/follow-button'
+import { SeriesLine } from '@/components/book/series-line'
 
 type Props = { params: Promise<{ locale: string; username: string }> }
 
@@ -97,6 +98,11 @@ export default async function AuthorProfilePage({ params }: Props) {
                     )}
                   </div>
                   <p className="text-[#ddd] text-[12px] font-semibold leading-tight mb-0.5 group-hover:text-white transition-colors">{book.title}</p>
+                  {book.seriesName && (
+                    <p className="text-[#777] mb-0.5 truncate">
+                      <SeriesLine seriesName={book.seriesName} seriesNumber={book.seriesNumber} />
+                    </p>
+                  )}
                   <p className="text-[#555] text-[10px]">{fmtWords(book.wordCount)} words · ♥ {book.likeCount}</p>
                 </Link>
               ))}

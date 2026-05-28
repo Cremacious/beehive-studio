@@ -47,6 +47,8 @@ type ProfileBook = {
   genre: string | null
   wordCount: number
   likeCount: number
+  seriesName: string | null
+  seriesNumber: number | null
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -178,6 +180,8 @@ export async function getProfileBooksAction(
       genre: books.genre,
       wordCount: sql<number>`COALESCE(${wordCountSq.wordTotal}, 0)`,
       likeCount: sql<number>`COALESCE(${likeCountSq.likeTotal}, 0)`,
+      seriesName: books.seriesName,
+      seriesNumber: books.seriesNumber,
     })
     .from(books)
     .leftJoin(likeCountSq, eq(books.id, likeCountSq.bookId))

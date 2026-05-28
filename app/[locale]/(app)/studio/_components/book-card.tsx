@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { BookCardMenu } from './book-card-menu'
+import { SeriesLine } from '@/components/book/series-line'
 import type { BookSummary } from '@/lib/actions/book.actions'
 
 type Props = {
@@ -211,6 +212,14 @@ export function BookCard({ book, locale }: Props) {
           <span style={{ width: '3px', height: '3px', borderRadius: '50%', background: 'var(--canvas-dark-300)' }} />
           <span>{formatRelative(book.lastEditedAt)}</span>
         </div>
+
+        {book.seriesName && (
+          <SeriesLine
+            seriesName={book.seriesName}
+            seriesNumber={book.seriesNumber}
+            className="block"
+          />
+        )}
 
         <div
           className="truncate transition-colors group-hover:[color:var(--brand)]"

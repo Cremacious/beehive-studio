@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { SeriesLine } from '@/components/book/series-line'
 import type { DiscoverBook } from '@/lib/actions/discover.actions'
 
 type Props = { book: DiscoverBook; locale: string }
@@ -25,9 +26,14 @@ export function BookCard({ book, locale }: Props) {
 
         <div className="p-2.5">
           <p className="text-white text-[13px] font-semibold leading-snug line-clamp-2 mb-0.5">{book.title}</p>
-          <p className="text-[#666] text-[11px] mb-2">
+          <p className="text-[#666] text-[11px] mb-1">
             by {book.authorDisplayName ?? book.authorUsername ?? 'Unknown'}
           </p>
+          {book.seriesName && (
+            <p className="text-[#777] mb-2 truncate">
+              <SeriesLine seriesName={book.seriesName} seriesNumber={book.seriesNumber} />
+            </p>
+          )}
           <div className="flex justify-between items-center">
             <span className="text-[11px] text-[#555]">{wordCountFormatted}</span>
             <div className="flex gap-2 text-[11px] text-[#555]">

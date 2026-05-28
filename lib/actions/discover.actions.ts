@@ -20,6 +20,8 @@ export type DiscoverBook = {
   wordCount: number
   authorUsername: string | null
   authorDisplayName: string | null
+  seriesName: string | null
+  seriesNumber: number | null
 }
 
 export type PublicBook = {
@@ -115,6 +117,8 @@ export async function getDiscoverFeedAction(
       wordCount: sql<number>`COALESCE(${wordCountSq.wordTotal}, 0)`,
       authorUsername: userProfiles.username,
       authorDisplayName: userProfiles.displayName,
+      seriesName: books.seriesName,
+      seriesNumber: books.seriesNumber,
     })
     .from(books)
     .innerJoin(userProfiles, eq(books.userId, userProfiles.userId))

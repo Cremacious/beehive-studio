@@ -71,7 +71,7 @@ export function BookCard({ book, locale }: Props) {
     >
       {/* Kebab menu — absolute, sits above the link */}
       <div className="absolute z-10" style={{ top: 12, right: 12 }}>
-        <BookCardMenu locale={locale} bookId={book.id} />
+        <BookCardMenu locale={locale} bookId={book.id} bookTitle={book.title} />
       </div>
 
       <Link

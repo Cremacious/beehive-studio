@@ -1,20 +1,22 @@
 'use client'
 
 import Link from 'next/link'
-import { MoreHorizontal, Pencil, BookOpen, Eye } from 'lucide-react'
+import { MoreHorizontal, Pencil, BookOpen, Eye, Trash2 } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { DeleteBookButton } from '@/components/book/delete-book-button'
 
 type Props = {
   locale: string
   bookId: string
+  bookTitle: string
 }
 
-export function BookCardMenu({ locale, bookId }: Props) {
+export function BookCardMenu({ locale, bookId, bookTitle }: Props) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -53,6 +55,16 @@ export function BookCardMenu({ locale, bookId }: Props) {
             <Pencil size={14} /> Edit details
           </Link>
         </DropdownMenuItem>
+        <DeleteBookButton bookId={bookId} bookTitle={bookTitle} locale={locale}>
+          {(onTrigger) => (
+            <DropdownMenuItem
+              onSelect={(e) => { e.preventDefault(); onTrigger() }}
+              className="text-destructive focus:text-destructive cursor-pointer"
+            >
+              <Trash2 size={14} /> Delete book
+            </DropdownMenuItem>
+          )}
+        </DeleteBookButton>
       </DropdownMenuContent>
     </DropdownMenu>
   )

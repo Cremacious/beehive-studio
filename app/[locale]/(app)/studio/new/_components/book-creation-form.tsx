@@ -8,8 +8,11 @@ import { createBookAction } from '@/lib/actions/book.actions'
 import { StepOne } from '../../_components/create-book-wizard/step-one'
 import { StepTwo } from '../../_components/create-book-wizard/step-two'
 import { StepThree, type BookTemplate } from '../../_components/create-book-wizard/step-three'
+import { SharingStep } from './sharing-step'
 
-type Step = 1 | 2 | 3
+type Step = 1 | 2 | 3 | 4
+
+type Visibility = 'PRIVATE' | 'PUBLIC' | 'FRIENDS'
 
 type FormData = {
   title: string
@@ -30,6 +33,8 @@ type FormData = {
   publisherName: string
   trimSize: string
   edition: string
+  visibility: Visibility
+  discoverable: boolean
 }
 
 const initial: FormData = {
@@ -38,19 +43,24 @@ const initial: FormData = {
   contentWarnings: [], compTitles: [''], language: 'English',
   templateId: '', isSeriesBook: false, seriesName: '',
   seriesNumber: '', publisherName: '', trimSize: '', edition: '',
+  visibility: 'PRIVATE', discoverable: false,
 }
 
-const STEP_LABELS = ['The Basics', 'Discovery', 'Structure'] as const
+const STEP_LABELS = ['The Basics', 'Discovery', 'Structure', 'Sharing'] as const
 const STEP_HEADLINES = [
   'Let’s start with the basics.',
   'Help readers discover it.',
   'Shape the structure.',
+  'Who can read it?',
 ] as const
 const STEP_SUBHEADS = [
   'Every story begins with a title and a thread of an idea.',
   'Genre, tags, and audience — these help your book find its readers.',
   'Pick a template and add publishing details. You can change all of this later.',
+  'Choose who sees this book. You can change this anytime from Book details.',
 ] as const
+
+const TOTAL_STEPS = 4
 
 type Props = {
   locale: string
@@ -76,7 +86,7 @@ export function BookCreationForm({ locale, templates }: Props) {
       setTitleError(null)
     }
     setDirection('forward')
-    setStep(s => Math.min(s + 1, 3) as Step)
+    setStep(s => Math.min(s + 1, TOTAL_STEPS) as Step)
   }
 
   function goBack() {
@@ -111,6 +121,8 @@ export function BookCreationForm({ locale, templates }: Props) {
         publisherName: form.publisherName || undefined,
         trimSize: form.trimSize || undefined,
         edition: form.edition || undefined,
+        visibility: form.visibility,
+        discoverable: form.discoverable,
       })
 
       if (!result.success) {
@@ -145,7 +157,7 @@ export function BookCreationForm({ locale, templates }: Props) {
         }}
       >
         <div className="flex-1 flex items-center justify-center gap-2">
-          {([1, 2, 3] as const).map((n, i) => {
+          {([1, 2, 3, 4] as const).map((n, i) => {
             const reached = step >= n
             const current = step === n
             return (
@@ -271,7 +283,7 @@ export function BookCreationForm({ locale, templates }: Props) {
                   marginBottom: '14px',
                 }}
               >
-                Step {step} of 3
+                Step {step} of {TOTAL_STEPS}
               </div>
               <h1
                 style={{
@@ -350,11 +362,50 @@ export function BookCreationForm({ locale, templates }: Props) {
                   templates={templates}
                   onUpdate={update}
                   onBack={goBack}
-                  onSkip={submit}
-                  onSubmit={submit}
-                  submitting={submitting}
+                  onSkip={goNext}
+                  onNext={goNext}
                   error={error}
                 />
+              )}
+
+              {step === 4 && (
+                <div className="space-y-5">
+                  <SharingStep
+                    visibility={form.visibility}
+                    discoverable={form.discoverable}
+                    onChange={({ visibility, discoverable }) => {
+                      const patch: Partial<FormData> = {}
+                      if (visibility !== undefined) {
+                        patch.visibility = visibility
+                        if (visibility !== 'PUBLIC') patch.discoverable = false
+                      }
+                      if (discoverable !== undefined) patch.discoverable = discoverable
+                      update(patch)
+                    }}
+                  />
+
+                  {error && (
+                    <p className="text-[13px] text-red-400 bg-red-400/10 border border-red-400/20 rounded-xl px-4 py-3">
+                      {error === 'FREE_LIMIT_REACHED'
+                        ? "You've reached the free plan limit of 3 books. Upgrade to create more."
+                        : error}
+                    </p>
+                  )}
+
+                  <div className="flex items-center justify-between pt-2">
+                    <button type="button" onClick={goBack} className="text-[13px] text-white/40 hover:text-white/70 transition-colors">← Back</button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={submit}
+                        disabled={submitting}
+                        className="bg-brand text-[#0a0a0a] font-bold font-comfortaa rounded-full px-6 py-2.5 text-[13px] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-brand-hover hover:-translate-y-px transition-all"
+                      >
+                        {submitting ? 'Creating…' : 'Create Book'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
 

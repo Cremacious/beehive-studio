@@ -154,8 +154,7 @@ export function CreateBookWizard({ locale, templates, onClose }: Props) {
           onUpdate={update}
           onBack={goBack}
           onSkip={submit}
-          onSubmit={submit}
-          submitting={submitting}
+          onNext={submit}
           error={error}
         />
       )}

@@ -27,12 +27,11 @@ type Props = Step3Data & {
   onUpdate: (fields: Partial<Step3Data>) => void
   onBack: () => void
   onSkip: () => void
-  onSubmit: () => void
-  submitting: boolean
+  onNext: () => void
   error: string | null
 }
 
-export function StepThree({ templateId, isSeriesBook, seriesName, seriesNumber, publisherName, trimSize, edition, templates, onUpdate, onBack, onSkip, onSubmit, submitting, error }: Props) {
+export function StepThree({ templateId, isSeriesBook, seriesName, seriesNumber, publisherName, trimSize, edition, templates, onUpdate, onBack, onSkip, onNext, error }: Props) {
   return (
     <div className="space-y-5">
       {/* Template selector */}
@@ -151,14 +150,13 @@ export function StepThree({ templateId, isSeriesBook, seriesName, seriesNumber, 
       <div className="flex items-center justify-between pt-2">
         <button type="button" onClick={onBack} className="text-[13px] text-white/40 hover:text-white/70 transition-colors">← Back</button>
         <div className="flex items-center gap-3">
-          <button type="button" onClick={onSkip} disabled={submitting} className="text-[13px] text-white/40 hover:text-white/70 transition-colors disabled:opacity-40">Skip</button>
+          <button type="button" onClick={onSkip} className="text-[13px] text-white/40 hover:text-white/70 transition-colors">Skip</button>
           <button
             type="button"
-            onClick={onSubmit}
-            disabled={submitting}
-            className="bg-brand text-[#0a0a0a] font-bold font-comfortaa rounded-full px-6 py-2.5 text-[13px] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-brand-hover hover:-translate-y-px transition-all"
+            onClick={onNext}
+            className="bg-brand text-[#0a0a0a] font-bold font-comfortaa rounded-full px-6 py-2.5 text-[13px] hover:bg-brand-hover hover:-translate-y-px transition-all"
           >
-            {submitting ? 'Creating…' : 'Create Book'}
+            Next →
           </button>
         </div>
       </div>

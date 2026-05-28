@@ -152,12 +152,20 @@ export function BinderItem({ node, depth }: Props) {
   const dragListeners = isRenaming ? {} : listeners
   const dragAttributes = isRenaming ? {} : attributes
 
+  // dnd-kit's `setNodeRef` MUST sit on just the row — not on a wrapper that
+  // also contains rendered children. closestCenter collision detection uses
+  // the ref'd element's geometric center; if children render inside the
+  // ref'd wrapper, an expanded folder's center sinks into its subtree and
+  // child rows steal the `over` event, making it impossible to drop onto
+  // the folder itself. Layout wrapper (for children) stays outside ref scope.
   return (
-    <div ref={setNodeRef} style={style}>
+    <div>
       {dropZoneForThisRow === 'before' && (
         <div className="h-0.5 bg-brand rounded-full mx-2" aria-hidden />
       )}
       <div
+        ref={setNodeRef}
+        style={{ ...style, paddingLeft: `${8 + depth * 12}px` }}
         {...dragAttributes}
         {...dragListeners}
         className={cn(
@@ -168,7 +176,6 @@ export function BinderItem({ node, depth }: Props) {
           isRenaming && 'bg-surface-elevated',
           dropZoneForThisRow === 'middle' && 'ring-2 ring-brand bg-brand/10',
         )}
-        style={{ paddingLeft: `${8 + depth * 12}px` }}
         onClick={() => setActiveItemId(node.id)}
         aria-label={isRenaming ? undefined : 'Drag to reorder'}
       >

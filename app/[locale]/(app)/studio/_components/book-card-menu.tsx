@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { MoreHorizontal, Pencil, BookOpen } from 'lucide-react'
+import { MoreHorizontal, Pencil, BookOpen, Eye } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,6 +41,11 @@ export function BookCardMenu({ locale, bookId }: Props) {
         <DropdownMenuItem asChild>
           <Link href={`/${locale}/studio/${bookId}`} className="cursor-pointer no-underline">
             <BookOpen size={14} /> Open
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href={`/${locale}/books/${bookId}`} className="cursor-pointer no-underline">
+            <Eye size={14} /> Preview
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>

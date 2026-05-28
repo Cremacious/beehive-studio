@@ -14,9 +14,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-28
 >
-> **Current focus:** **Note editor now uses the full chapter toolbar (`f240c82`)** — notes mount `EditorToolbar` (the same component chapter docs use) instead of the compact `NoteToolbar`. Full formatting set + VIEW-zone buttons; the toolbar bar spans the full editor width. `EditorToolbar`'s `onToggleFind`/`onToggleAnalysis` (+ their open-state flags) are now optional — when omitted (the note-editor case), Find & Replace and Writing Analysis buttons render nothing (chapter-specific surfaces). `NoteToolbar` left in place but unused. Recent arc on the note editor: (`cc508fb`) paper IS the canvas — dropped the 600px floating card on a dark canvas, prose now sits directly on `var(--paper-100)` that fills the writing surface; (`b9a4a10`) container view redesign with paper cards on a lifted gray canvas (`oklch(0.22 0.005 256)` dark / `--paper-300` light); (`ff3e711`) drag-into-folder shipped end-to-end after iterative debugging (verticalListSortingStrategy removed, pointerWithin collision detection, separate `:nest` overlay droppable, 87% nest band). 157/157 tests, tsc clean.
+> **Current focus:** **Note editor toolbar reordered (`dc9f08d`)** — toolbar now renders BELOW the surface-head bar instead of above it. Render order: surface-head ("Research · Note title · Save badge") → EditorToolbar → note pane (paper). Matches chapter editor's vertical stacking. Just before this: (`f240c82`) notes mount the same `EditorToolbar` as chapter docs (full formatting set, VIEW-zone buttons; `onToggleFind`/`onToggleAnalysis` now optional — chapter-specific buttons hide when omitted). Earlier arc: (`cc508fb`) paper IS the canvas — dropped the 600px floating card on dark canvas, prose sits directly on `var(--paper-100)` filling the writing surface; (`b9a4a10`) container view redesign with paper cards on lifted gray canvas; (`ff3e711`) drag-into-folder shipped after iterative debugging. 157/157 tests, tsc clean.
 > **Active branch:** `main`
-> **Last commit:** feat(note-editor): use the full-width chapter toolbar instead of NoteToolbar
+> **Last commit:** fix(note-editor): toolbar sits below the surface-head bar, not above it
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.

@@ -145,23 +145,31 @@ export function BinderItem({ node, depth }: Props) {
     commitRename()
   }, [commitRename])
 
+  // Whole row is the drag handle. Skip listeners while renaming so text
+  // selection inside the input doesn't trigger a sortable drag (the input's
+  // pointer moves would otherwise hit the 8px activation threshold).
+  const dragListeners = isRenaming ? {} : listeners
+  const dragAttributes = isRenaming ? {} : attributes
+
   return (
     <div ref={setNodeRef} style={style}>
       <div
+        {...dragAttributes}
+        {...dragListeners}
         className={cn(
-          'group flex items-center gap-2 h-8 pr-2 rounded-md cursor-pointer select-none transition-colors relative',
+          'group flex items-center gap-2 h-8 pr-2 rounded-md select-none transition-colors relative',
           'text-foreground hover:bg-surface-elevated',
+          isRenaming ? 'cursor-text' : 'cursor-grab',
           isActive && 'bg-brand/15 text-foreground shadow-[inset_2px_0_0_var(--brand)]',
           isRenaming && 'bg-surface-elevated',
         )}
         style={{ paddingLeft: `${8 + depth * 12}px` }}
         onClick={() => setActiveItemId(node.id)}
+        aria-label={isRenaming ? undefined : 'Drag to reorder'}
       >
         <span
-          {...attributes}
-          {...listeners}
-          className="opacity-0 group-hover:opacity-100 cursor-grab text-muted-foreground flex-shrink-0"
-          aria-label="Drag to reorder"
+          className="opacity-0 group-hover:opacity-100 text-muted-foreground flex-shrink-0"
+          aria-hidden
         >
           <GripVertical size={12} />
         </span>

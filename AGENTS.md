@@ -14,9 +14,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-05-28
 >
-> **Current focus:** **Delete-Book execution via subagent-driven mode — Tasks 1-3 of 7 shipped.** Plan: [docs/superpowers/plans/2026-05-28-delete-book.md](docs/superpowers/plans/2026-05-28-delete-book.md). T1 (`aa0f94a`): sonner installed + Toaster mounted in `app/layout.tsx`. T2 (`e2b3cb6`): `deleteBookAction(bookId, locale)` + revalidatePath, zero pre-existing callers. **T3 (`eb2bb1b`)**: `components/book/delete-book-button.tsx` render-prop component (46 lines) — owns ConfirmDialog state + action call + sonner toast + router.push('/studio')+refresh. Compliant ✅. **Next:** T4 = wire library kebab Delete item (add `bookTitle` prop to BookCardMenu, plug DeleteBookButton with `onSelect+preventDefault` pattern matching binder-item-menu); T5 = Details Danger Zone (outside the form element); T6 = AGENTS.md "What Has Been Built" entry; T7 = final verification. 137/137 tests, tsc clean.
+> **Current focus:** **Delete-Book execution via subagent-driven mode — Tasks 1-4 of 7 shipped.** Plan: [docs/superpowers/plans/2026-05-28-delete-book.md](docs/superpowers/plans/2026-05-28-delete-book.md). T1 (`aa0f94a`): sonner + Toaster. T2 (`e2b3cb6`): action extension. T3 (`eb2bb1b`): DeleteBookButton render-prop. **T4 (`31afc26`)**: library kebab Delete item — last menu entry, red via `text-destructive`, Trash2 icon, `onSelect+preventDefault` keeps menu open while dialog mounts (binder-item-menu pattern). `BookCardMenu` got new `bookTitle: string` prop, threaded from `book-card.tsx`'s `book.title`. Sole caller of `BookCardMenu` (verified). Compliant ✅. **Next:** T5 = Details page Danger Zone section (OUTSIDE the form element so Save can't trigger it); T6 = AGENTS.md "What Has Been Built" entry; T7 = final verification (npm test + tsc + Chris's manual checklist). 137/137 tests, tsc clean.
 > **Active branch:** `main`
-> **Last commit:** feat(books): DeleteBookButton shared component (render-prop)
+> **Last commit:** feat(studio): Delete book item in library card kebab
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.

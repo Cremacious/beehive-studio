@@ -1,0 +1,79 @@
+export type BinderItemType =
+  | 'part'
+  | 'chapter'
+  | 'front_matter'
+  | 'back_matter'
+  | 'research_folder'
+  | 'research_note'
+  | 'character'
+  | 'outline'
+
+export type BinderItemLite = {
+  id: string
+  type: BinderItemType
+  parentId: string | null
+}
+
+const ACCEPT_TABLE: Partial<Record<BinderItemType, BinderItemType[]>> = {
+  part: ['chapter', 'part'],
+  research_folder: ['research_note', 'research_folder'],
+}
+
+export function getAcceptedChildTypes(containerType: BinderItemType): BinderItemType[] {
+  return ACCEPT_TABLE[containerType] ?? []
+}
+
+/**
+ * Returns true if `active` can be nested under `target`.
+ * Rejects on:
+ *  - target type doesn't accept active's type
+ *  - active === target (self-nest)
+ *  - target is a descendant of active (cycle)
+ */
+export function canNest(
+  active: BinderItemLite,
+  target: BinderItemLite,
+  allItems: BinderItemLite[],
+): boolean {
+  if (active.id === target.id) return false
+  const accepted = getAcceptedChildTypes(target.type)
+  if (!accepted.includes(active.type)) return false
+
+  // Cycle guard: walk up from target via parentId. If we hit active.id,
+  // target is inside active's subtree — reject.
+  const byId = new Map(allItems.map(i => [i.id, i]))
+  let cursor: BinderItemLite | undefined = target
+  const seen = new Set<string>()
+  while (cursor) {
+    if (cursor.id === active.id) return false
+    if (seen.has(cursor.id)) break  // defensive against corrupt cycles
+    seen.add(cursor.id)
+    cursor = cursor.parentId ? byId.get(cursor.parentId) : undefined
+  }
+  return true
+}
+
+/**
+ * Classifies pointer Y within a row's bounding rect.
+ * - Folder rows: top 6px = before, bottom 6px = after, middle = middle (nest).
+ * - Non-folder rows: split at vertical midpoint — top half = before, bottom half = after.
+ * Returns null only if pointer is outside the rect (defensive; caller should pre-check).
+ */
+export function classifyDropZone(
+  pointerY: number,
+  rowRect: { top: number; height: number },
+  isFolder: boolean,
+): 'before' | 'middle' | 'after' | null {
+  const { top, height } = rowRect
+  const bottom = top + height
+  if (pointerY < top || pointerY > bottom) return null
+
+  const EDGE = 6
+  if (isFolder) {
+    if (pointerY - top < EDGE) return 'before'
+    if (bottom - pointerY < EDGE) return 'after'
+    return 'middle'
+  }
+  // Non-folder row: midpoint split.
+  return pointerY - top < height / 2 ? 'before' : 'after'
+}

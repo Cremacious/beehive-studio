@@ -123,7 +123,7 @@ export async function getDiscoverFeedAction(
     .leftJoin(wordCountSq, eq(books.id, wordCountSq.bookId))
     .where(
       and(
-        eq(books.status, 'PUBLISHED'),
+        eq(books.discoverable, true),
         eq(books.visibility, 'PUBLIC'),
         genre ? eq(books.genre, genre) : undefined
       )
@@ -152,6 +152,10 @@ export async function getDiscoverFeedAction(
   }
 }
 
+/**
+ * Returns the book data for the reader page. Does NOT gate by privacy.
+ * Callers must gate access with `canReadBook()` before rendering.
+ */
 export async function getPublicBookAction(
   bookId: string
 ): Promise<ActionResult<PublicBook>> {
@@ -171,9 +175,7 @@ export async function getPublicBookAction(
     })
     .from(books)
     .innerJoin(userProfiles, eq(books.userId, userProfiles.userId))
-    .where(
-      and(eq(books.id, bookId), eq(books.status, 'PUBLISHED'), eq(books.visibility, 'PUBLIC'))
-    )
+    .where(eq(books.id, bookId))
     .limit(1)
 
   if (!row) return { success: false, error: 'NOT_FOUND' }
@@ -253,7 +255,7 @@ export async function getDiscoverWritersAction(): Promise<ActionResult<DiscoverW
       eq(bookLikes.bookId, books.id),
       sql`${bookLikes.createdAt} > ${sevenDaysAgo}`
     ))
-    .where(and(eq(books.status, 'PUBLISHED'), eq(books.visibility, 'PUBLIC')))
+    .where(and(eq(books.discoverable, true), eq(books.visibility, 'PUBLIC')))
     .groupBy(userProfiles.userId, userProfiles.username, userProfiles.displayName, userProfiles.avatarUrl)
     .orderBy(desc(sql`COUNT(${bookLikes.userId})`))
     .limit(3)

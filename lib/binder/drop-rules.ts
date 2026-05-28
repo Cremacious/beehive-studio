@@ -14,9 +14,22 @@ export type BinderItemLite = {
   parentId: string | null
 }
 
+// Accept rules:
+//  - `part` (collection): only chapters. Parts are manuscript-structure
+//    containers; sub-parts and non-chapter document types live elsewhere.
+//  - `research_folder`: every non-chapter document type. Research folders are
+//    the catch-all organizer for notes, characters, outlines, front/back
+//    matter, and sub-folders.
 const ACCEPT_TABLE: Partial<Record<BinderItemType, BinderItemType[]>> = {
-  part: ['chapter', 'part'],
-  research_folder: ['research_note', 'research_folder'],
+  part: ['chapter'],
+  research_folder: [
+    'research_note',
+    'research_folder',
+    'character',
+    'outline',
+    'front_matter',
+    'back_matter',
+  ],
 }
 
 export function getAcceptedChildTypes(containerType: BinderItemType): BinderItemType[] {
@@ -55,7 +68,10 @@ export function canNest(
 
 /**
  * Classifies pointer Y within a row's bounding rect.
- * - Folder rows: top 6px = before, bottom 6px = after, middle = middle (nest).
+ * - Folder rows: top 3px = before, bottom 3px = after, middle = middle (nest).
+ *   The narrow edges make the nest band ~87% of the row, so users don't have
+ *   to land precisely in the middle to nest. Reorder still works near the
+ *   very top or bottom of the row.
  * - Non-folder rows: split at vertical midpoint — top half = before, bottom half = after.
  * Returns null only if pointer is outside the rect (defensive; caller should pre-check).
  */
@@ -68,7 +84,7 @@ export function classifyDropZone(
   const bottom = top + height
   if (pointerY < top || pointerY > bottom) return null
 
-  const EDGE = 6
+  const EDGE = 3
   if (isFolder) {
     if (pointerY - top < EDGE) return 'before'
     if (bottom - pointerY < EDGE) return 'after'

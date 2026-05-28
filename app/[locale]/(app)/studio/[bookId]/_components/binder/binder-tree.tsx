@@ -3,17 +3,16 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import {
   DndContext,
-  closestCenter,
+  pointerWithin,
+  rectIntersection,
   PointerSensor,
   useSensor,
   useSensors,
+  type CollisionDetection,
   type DragEndEvent,
   type DragOverEvent,
 } from '@dnd-kit/core'
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable'
+import { SortableContext } from '@dnd-kit/sortable'
 import { cn } from '@/lib/utils'
 import { canNest, classifyDropZone, type BinderItemLite } from '@/lib/binder/drop-rules'
 import { useBookEditor } from '../book-editor-provider'
@@ -107,6 +106,18 @@ export function BinderTree() {
   const autoExpandTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const autoExpandTargetRef = useRef<string | null>(null)
 
+  // Track the user's real pointer Y. dnd-kit's `active.rect.current.translated`
+  // gives the dragged GHOST's position, which is offset from the pointer by
+  // wherever the user grabbed the row — so its center never lines up with the
+  // folder's middle band when the user expects it to. We need the actual
+  // pointer clientY for zone classification.
+  const pointerYRef = useRef(0)
+  useEffect(() => {
+    const handler = (e: PointerEvent) => { pointerYRef.current = e.clientY }
+    window.addEventListener('pointermove', handler, { passive: true })
+    return () => window.removeEventListener('pointermove', handler)
+  }, [])
+
   // Book title inline rename (double-click the title in the binder header)
   const [isRenamingBook, setIsRenamingBook] = useState(false)
   const [localBookTitle, setLocalBookTitle] = useState(bookTitle)
@@ -170,16 +181,48 @@ export function BinderTree() {
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   )
 
+  // Pointer-first collision detection. closestCenter compares the dragged
+  // GHOST's center to candidate centers — but the ghost is offset from the
+  // user's pointer by however far they clicked from the row's top, so the
+  // ghost's center often lines up with a neighboring row's center instead of
+  // the folder the user is actually hovering. pointerWithin uses the real
+  // pointer position; rectIntersection covers gaps between rows where the
+  // pointer might briefly fall between droppables during fast drag.
+  //
+  // When the pointer is in a folder row's middle band, both the sortable row
+  // AND the `:nest` overlay match. Prefer `:nest` so verticalListSortingStrategy
+  // (which only knows sortable items) doesn't think we're reordering the
+  // folder out of the way.
+  const collisionDetection = useCallback<CollisionDetection>((args) => {
+    const pointerCollisions = pointerWithin(args)
+    const nestCollisions = pointerCollisions.filter(c => String(c.id).endsWith(':nest'))
+    if (nestCollisions.length > 0) return nestCollisions
+    if (pointerCollisions.length > 0) return pointerCollisions
+    return rectIntersection(args)
+  }, [])
+
   const handleDragOver = useCallback((event: DragOverEvent) => {
     const { active, over } = event
-    if (!over || active.id === over.id) {
+    if (!over) {
+      setDropZone(null)
+      cancelAutoExpand()
+      return
+    }
+
+    // `over.id` is either a sortable row id (the item itself) or a `:nest`
+    // overlay id (folder-middle drop target). Strip the suffix to get the
+    // logical row id either way.
+    const overIdStr = String(over.id)
+    const isNestTarget = overIdStr.endsWith(':nest')
+    const overId = isNestTarget ? overIdStr.slice(0, -':nest'.length) : overIdStr
+
+    if (active.id === overId) {
       setDropZone(null)
       cancelAutoExpand()
       return
     }
 
     const activeId = active.id as string
-    const overId = over.id as string
     const activeItem = binderItems.find(i => i.id === activeId)
     const overItem = binderItems.find(i => i.id === overId)
     if (!activeItem || !overItem) {
@@ -188,27 +231,10 @@ export function BinderTree() {
       return
     }
 
-    // Pointer-Y proxy: use the dragged ghost's translated center, which closely
-    // tracks where the user's pointer is during a vertical-list drag.
-    const overRect = over.rect
-    const activeTranslated = active.rect.current.translated
-    if (!activeTranslated) {
-      setDropZone(null)
-      cancelAutoExpand()
-      return
-    }
-    const pointerYProxy = activeTranslated.top + activeTranslated.height / 2
-
-    const isFolder = overItem.type === 'part' || overItem.type === 'research_folder'
-    const zone = classifyDropZone(pointerYProxy, overRect, isFolder)
-    if (!zone) {
-      setDropZone(null)
-      cancelAutoExpand()
-      return
-    }
-
-    // If zone is 'middle', verify canNest before showing the indicator + scheduling expand.
-    if (zone === 'middle') {
+    // Nest-overlay path: pointer is in a folder row's middle band. The overlay's
+    // existence already implies the type accepts nesting; still run canNest for
+    // the cycle guard.
+    if (isNestTarget) {
       const allLite: BinderItemLite[] = binderItems.map(i => ({
         id: i.id, type: i.type, parentId: i.parentId,
       }))
@@ -222,10 +248,24 @@ export function BinderTree() {
         return
       }
       scheduleAutoExpand(overId)
-    } else {
-      cancelAutoExpand()
+      setDropZone({ overId, zone: 'middle' })
+      return
     }
 
+    // Standard sortable path: pointer is on a row's top/bottom edge (or on a
+    // non-folder row). Classify before/after via real pointer Y vs row rect.
+    const overRect = over.rect
+    const pointerY = pointerYRef.current
+    const isFolder = overItem.type === 'part' || overItem.type === 'research_folder'
+    const zone = classifyDropZone(pointerY, overRect, isFolder)
+    // Middle on a sortable hit shouldn't happen (the nest overlay would have
+    // captured it); guard anyway.
+    if (!zone || zone === 'middle') {
+      setDropZone(null)
+      cancelAutoExpand()
+      return
+    }
+    cancelAutoExpand()
     setDropZone({ overId, zone })
   }, [binderItems, cancelAutoExpand, scheduleAutoExpand])
 
@@ -235,10 +275,17 @@ export function BinderTree() {
     cancelAutoExpand()
 
     const { active, over } = event
-    if (!over || active.id === over.id || !finalDropZone) return
+    if (!over || !finalDropZone) return
+
+    // Strip `:nest` suffix if present (nest-overlay droppable).
+    const overIdStr = String(over.id)
+    const overId = overIdStr.endsWith(':nest')
+      ? overIdStr.slice(0, -':nest'.length)
+      : overIdStr
+
+    if (active.id === overId) return
 
     const activeId = active.id as string
-    const overId = over.id as string
     const activeItem = binderItems.find(i => i.id === activeId)
     const overItem = binderItems.find(i => i.id === overId)
     if (!activeItem || !overItem) return
@@ -354,11 +401,18 @@ export function BinderTree() {
         <div className="flex-1 overflow-y-auto py-2 px-1.5 flex flex-col gap-px">
           <DndContext
             sensors={sensors}
-            collisionDetection={closestCenter}
+            collisionDetection={collisionDetection}
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
           >
-            <SortableContext items={flatIds} strategy={verticalListSortingStrategy}>
+            {/* No strategy: skip the verticalListSortingStrategy reorder
+                preview (which shifts other rows out of the way during drag).
+                That preview is what was making folder rows vacate when the
+                user tried to hover them as nest targets — there's no way to
+                "drop ON" a row that's moving out of the way. Without a
+                strategy, sortable still tracks reorder logically; the dropped
+                item just snaps to its new position on release. */}
+            <SortableContext items={flatIds}>
               {tree.map(node => (
                 <BinderItem key={node.id} node={node} depth={0} />
               ))}

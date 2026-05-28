@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
+import { useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { cn } from '@/lib/utils'
 import { useBookEditor } from '../book-editor-provider'
@@ -102,6 +103,18 @@ export function BinderItem({ node, depth }: Props) {
   const iconTint = ICON_TINTS[node.type]
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: node.id })
+
+  // Folder rows expose a SEPARATE droppable overlay covering only the middle
+  // band (top:6 to bottom:6). It is NOT in SortableContext, so it doesn't
+  // participate in verticalListSortingStrategy's reorder choreography — the
+  // folder row stops shifting when the user hovers its middle, and the over
+  // resolves to this overlay's id (`${node.id}:nest`). Top/bottom 6px fall
+  // through to the sortable below for normal reorder-before / reorder-after.
+  const isFolderType = node.type === 'part' || node.type === 'research_folder'
+  const { setNodeRef: setNestRef } = useDroppable({
+    id: `${node.id}:nest`,
+    disabled: !isFolderType,
+  })
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -174,7 +187,8 @@ export function BinderItem({ node, depth }: Props) {
           isRenaming ? 'cursor-text' : 'cursor-grab',
           isActive && 'bg-brand/15 text-foreground shadow-[inset_2px_0_0_var(--brand)]',
           isRenaming && 'bg-surface-elevated',
-          dropZoneForThisRow === 'middle' && 'ring-2 ring-brand bg-brand/10',
+          dropZoneForThisRow === 'middle' &&
+            'ring-2 ring-brand bg-brand/20 shadow-[0_0_0_4px_oklch(from_var(--brand)_l_c_h_/_0.25)]',
         )}
         onClick={() => setActiveItemId(node.id)}
         aria-label={isRenaming ? undefined : 'Drag to reorder'}
@@ -258,6 +272,21 @@ export function BinderItem({ node, depth }: Props) {
         })()}
 
         <BinderItemMenu node={node} onRenameStart={() => setIsRenaming(true)} />
+
+        {/* Nest-target overlay — folder rows only. Covers ~87% of the row
+            (top:3, bottom:3) so the user doesn't need to land precisely in
+            the middle to nest. Reorder before/after still works in the
+            narrow 3px edges. pointerWithin resolves `over` to this droppable
+            (not the sortable) when the pointer is inside the overlay.
+            pointer-events-none so it doesn't intercept clicks or drag. */}
+        {isFolderType && (
+          <div
+            ref={setNestRef}
+            className="absolute inset-x-0 pointer-events-none"
+            style={{ top: 3, bottom: 3 }}
+            aria-hidden
+          />
+        )}
       </div>
       {dropZoneForThisRow === 'after' && (
         <div className="h-0.5 bg-brand rounded-full mx-2" aria-hidden />

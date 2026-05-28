@@ -89,7 +89,8 @@ type Props = {
 
 export function BinderItem({ node, depth }: Props) {
   const { activeItemId, setActiveItemId, updateBinderItem, pendingRenameId, setPendingRenameId } = useBookEditor()
-  const { collapsed, toggleCollapsed } = useBinderTree()
+  const { collapsed, toggleCollapsed, dropZone } = useBinderTree()
+  const dropZoneForThisRow = dropZone?.overId === node.id ? dropZone.zone : null
 
   const [isRenaming, setIsRenaming] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -153,6 +154,9 @@ export function BinderItem({ node, depth }: Props) {
 
   return (
     <div ref={setNodeRef} style={style}>
+      {dropZoneForThisRow === 'before' && (
+        <div className="h-0.5 bg-brand rounded-full mx-2" aria-hidden />
+      )}
       <div
         {...dragAttributes}
         {...dragListeners}
@@ -162,6 +166,7 @@ export function BinderItem({ node, depth }: Props) {
           isRenaming ? 'cursor-text' : 'cursor-grab',
           isActive && 'bg-brand/15 text-foreground shadow-[inset_2px_0_0_var(--brand)]',
           isRenaming && 'bg-surface-elevated',
+          dropZoneForThisRow === 'middle' && 'ring-2 ring-brand bg-brand/10',
         )}
         style={{ paddingLeft: `${8 + depth * 12}px` }}
         onClick={() => setActiveItemId(node.id)}
@@ -247,6 +252,9 @@ export function BinderItem({ node, depth }: Props) {
 
         <BinderItemMenu node={node} onRenameStart={() => setIsRenaming(true)} />
       </div>
+      {dropZoneForThisRow === 'after' && (
+        <div className="h-0.5 bg-brand rounded-full mx-2" aria-hidden />
+      )}
 
       {isCollapsible && !isCollapsed && node.children.map(child => (
         <BinderItem key={child.id} node={child} depth={depth + 1} />

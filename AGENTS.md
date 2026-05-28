@@ -289,6 +289,28 @@ Replaces the bare card grid at `/[locale]/studio` with a richer library surface.
 
 No DB schema changes. No new dependencies. 126/126 tests, tsc clean.
 
+### SP-A — Reader Route + Privacy/Discoverable ✅ COMPLETE (2026-05-28)
+
+Public-facing book reader route accessible from the studio editor. First of two sub-projects (SP-A reader + SP-B friendships); SP-B deferred.
+
+- **Schema** (commit `7e180bb`): `book_visibility` enum extended with `FRIENDS`; existing-but-unused `books.explorable` column renamed to `discoverable` (saved a column add); new composite index `books_discoverable_visibility_idx` on `(discoverable, visibility)`; backfill `UPDATE books SET discoverable=true WHERE visibility='PUBLIC' AND status='PUBLISHED'` ran (0 rows in dev). Migration applied via one-shot tsx script (drizzle-kit push requires TTY; same trade-off as Phase 7 — drizzle snapshot history is out of sync with live DB).
+- **`canReadBook()` helper** (`7e180bb`/`acf7948`): single source of truth at [lib/books/can-read.ts](lib/books/can-read.ts). Resolution order: NOT_FOUND → author wins → PUBLIC → FRIENDS=FRIENDS_ONLY (placeholder for SP-B) → PRIVATE. 6 unit tests.
+- **Discover refactor** (`a8567ce`): `getDiscoverFeedAction` + `getDiscoverWritersAction` now filter on `discoverable=true AND visibility='PUBLIC'`; `getPublicBookAction` stripped to bare PK lookup (privacy now caller-owned via `canReadBook`). Six `status='PUBLISHED'` refs audited and intentionally left — they're author-label / feed-event queries, not access gates.
+- **Reader components hoisted** (`fba2c1a`): `ChapterList`, `CommentsPanel`, `SocialActions` git-moved (100% similarity) from `discover/_components/` to `(public)/_components/` for sharing.
+- **New reader at `/[locale]/books/[bookId]`** (`4c43ab3`, `ab01e81`): server component pair — book overview page + chapter reader at `read/[chapterId]`. canReadBook gate at top: NOT_FOUND → `notFound()`; PRIVATE/FRIENDS_ONLY → `<AccessDenied>` (Lock icon for private, Users for friends-only, brand-yellow "Discover other books" CTA). Author back-link goes to studio; everyone else gets discover. ChapterList refactored to take `readerBasePath` prop.
+- **Redirects** (`72bfa76`): old `/discover/book/[bookId]` + `read/[chapterId]` pages are now 8-line `permanentRedirect` shims (HTTP 308); 4 production `<Link>` hrefs migrated to `/books/` directly so internal nav skips the 308 hop. Code dupe between discover and books readers fully collapsed.
+- **Reader-write action gating** (`950aec1`): `markChapterReadAction`, `getReadingProgressAction`, `addCommentAction` gated after `requireAuth()` via `canReadBook`; `getBookCommentsAction` (which lives in `discover.actions.ts` and supports anon viewers) gated via `getOptionalUserId`. All return `{ success: false, error: 'FORBIDDEN' }` on denial. Closed a silent bug — `getBookCommentsAction` had no visibility filter before.
+- **Validation schemas** (`2eb43e2`): `createBookSchema` + `updateBookDetailsSchema` accept `visibility` (incl. FRIENDS) + `discoverable` with `.transform()` coercing discoverable→false when visibility≠PUBLIC; `updateBookSchema` widened to FRIENDS + optional discoverable (no transform; partial-update semantics). 4 new coercion tests + 1 repurposed sibling test now rejects `'EVERYONE'` and accepts FRIENDS.
+- **Wizard Sharing step** (`ea888a3`): new `SharingControls` presentational component (three-card privacy radio Private/Friends/Public with Lock/Users/Globe lucide icons + discoverable checkbox, brand-yellow active state). Wizard now has 4 steps (Step 4 = Sharing, owns Create Book submit); Step 3 "Create Book" became "Next →". 3-layer discoverable defense (checkbox disabled + client force-clear on visibility change + server coercion).
+- **Details page Sharing section** (`e7751bd`): `SharingControls` shared between wizard and Details form (`components/book/sharing-controls.tsx`); Details form gained a fifth Section after Publishing; `Visibility` type exported from the shared module, imported by both consumers.
+- **Editor entry points** (`70daf4e`, `c1b1817`): toolbar Preview button (Eye icon in VIEW zone) + binder header book title wrapped in `<Link>` to the reader (double-click still triggers rename via `e.preventDefault()` — known minor UX race on the dblclick, deferred).
+
+**Tests:** 132 → 137 (+5 net: +6 canReadBook + 4 schema coercion + 1 sibling repurposed - lost). tsc clean across the run.
+
+**Mental model:** three independent axes on a book — `privacy` (who can open the reader, via `visibility` column extended with FRIENDS) / `discoverable` (whether it appears in /discover listings) / `status` (DRAFT/PUBLISHED — author's done-label only, no longer gates access).
+
+**Deferred to SP-B (Friendships subsystem):** symmetric friend request/accept table + actions + UI + notifications. Until SP-B ships, `FRIENDS` visibility is settable but `canReadBook` returns `FRIENDS_ONLY` (author-only access).
+
 ## What's Next
 
 - Phase 9 — TBD (candidates: referral codes, growth analytics, plan-upgrade nudges, polish)

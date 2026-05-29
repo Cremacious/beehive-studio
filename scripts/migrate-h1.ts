@@ -45,19 +45,12 @@ async function main() {
   console.log('✓ hives_book_id_unique partial unique index created')
 
   // 5. Tighten hives.book_id FK to ON DELETE CASCADE.
-  //    Drop existing constraint (auto-named) and recreate.
-  const fkRow = await sql`
-    SELECT conname FROM pg_constraint
-    WHERE conrelid = 'hives'::regclass AND contype = 'f'
-      AND conkey @> ARRAY[(SELECT attnum FROM pg_attribute WHERE attrelid = 'hives'::regclass AND attname = 'book_id')]::smallint[]
-  `
-  if (fkRow.length) {
-    const name = fkRow[0].conname as string
-    // Identifier interpolation: neon's tagged template treats values as parameters,
-    // which isn't valid for DDL identifiers. Use sql.unsafe for the quoted name.
-    await sql.unsafe(`ALTER TABLE hives DROP CONSTRAINT "${name}"`)
-    console.log(`  dropped FK ${name}`)
-  }
+  //    Drop any pre-existing FK (drizzle's default name is hives_book_id_books_id_fk;
+  //    previous migrations may have left other names — be defensive).
+  //    Idempotent: a re-run finds no constraint and the ADD recreates it after a prior DROP.
+  await sql`ALTER TABLE hives DROP CONSTRAINT IF EXISTS hives_book_id_books_id_fk`
+  await sql`ALTER TABLE hives DROP CONSTRAINT IF EXISTS hives_book_id_fkey`
+  console.log('  dropped any existing FK on hives.book_id')
   await sql`ALTER TABLE hives ADD CONSTRAINT hives_book_id_fkey
             FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE`
   console.log('✓ hives.book_id FK now CASCADE')

@@ -83,25 +83,50 @@ export function WikiEntryEditor({ item, readOnly = false }: { item: BinderItemRo
     <main
       data-slot="wiki-entry-pane"
       className="flex-1 overflow-y-auto"
-      style={{ background: 'var(--sheet-canvas, var(--background))' }}
+      style={{ background: 'var(--wiki-canvas)' }}
     >
       <style>{`
         [data-slot="wiki-entry-pane"] {
-          --sheet-canvas: var(--background);
+          --wiki-canvas:    oklch(0.22 0.005 256);
+          --wiki-card-bg:   var(--paper-100);
+          --wiki-card-bord: var(--paper-300);
+          --wiki-ink:       var(--paper-ink);
+          --wiki-ink-strong:var(--paper-ink-strong);
+          --wiki-ink-muted: var(--paper-ink-muted);
         }
         [data-editor-theme="light"] [data-slot="wiki-entry-pane"] {
-          --sheet-canvas: var(--paper-200);
+          --wiki-canvas:    var(--paper-300);
+          --wiki-card-bg:   var(--paper-50);
+          --wiki-card-bord: var(--paper-200);
         }
+        [data-slot="wiki-entry-pane"] .wiki-card {
+          background: var(--wiki-card-bg);
+          border: 1px solid var(--wiki-card-bord);
+        }
+        [data-slot="wiki-entry-pane"] .wiki-title { color: var(--wiki-ink-strong); }
+        [data-slot="wiki-entry-pane"] .wiki-breadcrumb { color: var(--wiki-ink-muted); }
+        [data-slot="wiki-entry-pane"] .ProseMirror { color: var(--wiki-ink); caret-color: var(--color-brand); outline: none; }
+        [data-slot="wiki-entry-pane"] .ProseMirror h2 { color: var(--wiki-ink-strong); font-family: var(--font-display); font-size: 20px; font-weight: 700; margin: 1.2em 0 0.4em; }
+        [data-slot="wiki-entry-pane"] .ProseMirror h2:first-child { margin-top: 0; }
+        [data-slot="wiki-entry-pane"] .ProseMirror strong { color: var(--wiki-ink-strong); font-weight: 600; }
+        [data-slot="wiki-entry-pane"] .ProseMirror em { font-style: italic; }
+        [data-slot="wiki-entry-pane"] .ProseMirror blockquote { color: var(--wiki-ink-muted); border-left: 3px solid oklch(0.78 0.04 60 / 0.45); padding-left: 0.9em; margin: 0.6em 0; }
+        [data-slot="wiki-entry-pane"] .ProseMirror p { margin: 0 0 1em; text-wrap: pretty; }
+        [data-slot="wiki-entry-pane"] .ProseMirror ul,
+        [data-slot="wiki-entry-pane"] .ProseMirror ol { padding-left: 1.4em; margin: 0 0 1em; }
+        [data-slot="wiki-entry-pane"] .ProseMirror ul { list-style: disc; }
+        [data-slot="wiki-entry-pane"] .ProseMirror ol { list-style: decimal; }
+        [data-slot="wiki-entry-pane"] .ProseMirror li { margin: 0.3em 0; }
       `}</style>
       <div className="mx-auto max-w-[760px] px-8 py-10 space-y-6">
         <header className="flex items-center justify-between">
-          <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+          <span className="wiki-breadcrumb text-[11px] uppercase tracking-wide">
             Wiki ▸ {template.label}
           </span>
           <SaveStatusBadge status={status} />
         </header>
 
-        <section className="rounded-lg border border-border bg-card p-6 space-y-3">
+        <section className="wiki-card rounded-lg p-6 space-y-3">
           <div className="flex items-center gap-2">
             <span
               className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide"
@@ -117,7 +142,7 @@ export function WikiEntryEditor({ item, readOnly = false }: { item: BinderItemRo
             role="textbox"
             contentEditable={!readOnly}
             suppressContentEditableWarning
-            className="font-comfortaa font-bold text-2xl outline-none"
+            className="wiki-title font-comfortaa font-bold text-2xl outline-none"
             onBlur={e => commitTitle(e.currentTarget.textContent ?? '')}
           >
             {item.title}
@@ -130,12 +155,12 @@ export function WikiEntryEditor({ item, readOnly = false }: { item: BinderItemRo
           />
         </section>
 
-        <section className="rounded-lg border border-border bg-card p-6">
+        <section className="wiki-card rounded-lg p-6">
           <EditorContent editor={editor} />
         </section>
 
         {readOnly && (
-          <p className="text-center text-xs text-muted-foreground">
+          <p className="wiki-breadcrumb text-center text-xs">
             Read-only — your role is Beta Reader.
           </p>
         )}

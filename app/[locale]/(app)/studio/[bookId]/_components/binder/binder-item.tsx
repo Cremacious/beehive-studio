@@ -82,7 +82,7 @@ const ICON_TINTS: Record<BinderItemRow['type'], string> = {
   wiki_folder: 'var(--wiki-other)',
 }
 
-const COLLAPSIBLE_TYPES = new Set<BinderItemRow['type']>(['part', 'research_folder'])
+const COLLAPSIBLE_TYPES = new Set<BinderItemRow['type']>(['part', 'research_folder', 'wiki_folder'])
 
 const STATUS_COLOR: Record<ChapterStatus, string> = {
   IDEA: 'var(--status-idea)',
@@ -123,7 +123,7 @@ export function BinderItem({ node, depth }: Props) {
   // folder row stops shifting when the user hovers its middle, and the over
   // resolves to this overlay's id (`${node.id}:nest`). Top/bottom 6px fall
   // through to the sortable below for normal reorder-before / reorder-after.
-  const isFolderType = node.type === 'part' || node.type === 'research_folder'
+  const isFolderType = node.type === 'part' || node.type === 'research_folder' || node.type === 'wiki_folder'
   const { setNodeRef: setNestRef } = useDroppable({
     id: `${node.id}:nest`,
     disabled: !isFolderType,

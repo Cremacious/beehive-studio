@@ -256,7 +256,7 @@ export function BinderTree() {
     // non-folder row). Classify before/after via real pointer Y vs row rect.
     const overRect = over.rect
     const pointerY = pointerYRef.current
-    const isFolder = overItem.type === 'part' || overItem.type === 'research_folder'
+    const isFolder = overItem.type === 'part' || overItem.type === 'research_folder' || overItem.type === 'wiki_folder'
     const zone = classifyDropZone(pointerY, overRect, isFolder)
     // Middle on a sortable hit shouldn't happen (the nest overlay would have
     // captured it); guard anyway.

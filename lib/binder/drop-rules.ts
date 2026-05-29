@@ -7,6 +7,8 @@ export type BinderItemType =
   | 'research_note'
   | 'character'
   | 'outline'
+  | 'wiki_entry'
+  | 'wiki_folder'
 
 export type BinderItemLite = {
   id: string
@@ -30,6 +32,7 @@ const ACCEPT_TABLE: Partial<Record<BinderItemType, BinderItemType[]>> = {
     'front_matter',
     'back_matter',
   ],
+  wiki_folder: ['wiki_entry', 'wiki_folder', 'character'],
 }
 
 export function getAcceptedChildTypes(containerType: BinderItemType): BinderItemType[] {

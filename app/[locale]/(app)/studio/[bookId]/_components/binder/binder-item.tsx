@@ -65,6 +65,8 @@ const ICONS: Record<BinderItemRow['type'], LucideIcon> = {
   research_note: StickyNote,
   character: UserIcon,
   outline: LayoutIcon,
+  wiki_entry: BookOpen,
+  wiki_folder: Folder,
 }
 
 const ICON_TINTS: Record<BinderItemRow['type'], string> = {
@@ -76,6 +78,8 @@ const ICON_TINTS: Record<BinderItemRow['type'], string> = {
   research_note: 'var(--type-research)',
   character: 'var(--type-character)',
   outline: 'var(--type-outline)',
+  wiki_entry: 'var(--wiki-other)',
+  wiki_folder: 'var(--wiki-other)',
 }
 
 const COLLAPSIBLE_TYPES = new Set<BinderItemRow['type']>(['part', 'research_folder'])

@@ -1,12 +1,13 @@
 'use server'
 
 import { db } from '@/db'
-import { hives, hiveMembers, hiveInvites, notifications } from '@/db/schema'
+import { hives, hiveMembers, hiveInvites, notifications, books } from '@/db/schema'
 import { eq, and, count } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { assertHiveMember, assertHiveOwner, assertHiveAdmin } from './_helpers'
 import { getUserPremiumStatus, FREE_HIVE_LIMIT, FREE_HIVE_MEMBER_LIMIT } from '@/lib/premium'
 import { createHiveSchema, updateHiveSchema } from '@/lib/validations/hive'
+import { getBookHive } from '@/lib/hive/get-book-hive'
 import { createId } from '@paralleldrive/cuid2'
 import type { ActionResult } from './book.actions'
 
@@ -47,39 +48,52 @@ async function getHiveMemberCount(hiveId: string): Promise<number> {
   return Number(rows[0]?.count ?? 0)
 }
 
-export async function createHiveAction(input: {
-  bookId: string
-  name: string
-  description?: string
-  visibility?: 'PRIVATE' | 'PUBLIC' | 'FRIENDS'
-}): Promise<ActionResult<{ hiveId: string }>> {
-  const userId = await requireAuth()
-  const parsed = createHiveSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: parsed.error.issues[0].message }
+export async function createHiveAction(input: unknown): Promise<ActionResult<{ hiveId: string }>> {
+  try {
+    const userId = await requireAuth()
+    const parsed = createHiveSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: parsed.error.issues[0].message }
+    const data = parsed.data
 
-  const isPremium = await getUserPremiumStatus(userId)
-  if (!isPremium && (await getHiveCount(userId)) >= FREE_HIVE_LIMIT) {
-    return { success: false, error: 'FREE_LIMIT_REACHED' }
+    // Free-tier limit (owned hives only)
+    const isPremium = await getUserPremiumStatus(userId)
+    if (!isPremium && (await getHiveCount(userId)) >= FREE_HIVE_LIMIT) {
+      return { success: false, error: 'FREE_LIMIT_REACHED' }
+    }
+
+    // If bookId provided, verify ownership + uniqueness
+    if (data.bookId) {
+      const book = await db.query.books.findFirst({
+        where: and(eq(books.id, data.bookId), eq(books.userId, userId)),
+        columns: { id: true },
+      })
+      if (!book) return { success: false, error: 'BOOK_NOT_FOUND' }
+      const existing = await getBookHive(data.bookId)
+      if (existing) return { success: false, error: 'BOOK_ALREADY_HAS_HIVE' }
+    }
+
+    const hiveId = createId()
+    await db.transaction(async (tx) => {
+      await tx.insert(hives).values({
+        id: hiveId,
+        bookId: data.bookId ?? null,
+        ownerId: userId,
+        name: data.name,
+        description: data.description ?? null,
+        visibility: data.visibility,
+        discoverable: data.discoverable,
+      })
+      await tx.insert(hiveMembers).values({
+        hiveId,
+        userId,
+        role: 'OWNER',
+      })
+    })
+
+    return { success: true, data: { hiveId } }
+  } catch (e) {
+    return { success: false, error: e instanceof Error ? e.message : 'Unknown error' }
   }
-
-  const hiveId = createId()
-  await db.transaction(async (tx) => {
-    await tx.insert(hives).values({
-      id: hiveId,
-      bookId: parsed.data.bookId,
-      ownerId: userId,
-      name: parsed.data.name,
-      description: parsed.data.description ?? null,
-      visibility: parsed.data.visibility ?? 'PRIVATE',
-    })
-    await tx.insert(hiveMembers).values({
-      hiveId,
-      userId,
-      role: 'OWNER',
-    })
-  })
-
-  return { success: true, data: { hiveId } }
 }
 
 export async function getHiveAction(hiveId: string): Promise<ActionResult<{

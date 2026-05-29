@@ -1,11 +1,18 @@
 import { z } from 'zod'
 
-export const createHiveSchema = z.object({
-  bookId: z.string().min(1),
-  name: z.string().min(1).max(100),
-  description: z.string().max(500).optional(),
-  visibility: z.enum(['PRIVATE', 'PUBLIC', 'FRIENDS']).default('PRIVATE'),
-})
+export const createHiveSchema = z
+  .object({
+    bookId: z.string().nullable().optional(),
+    name: z.string().min(1).max(80),
+    description: z.string().max(280).optional(),
+    visibility: z.enum(['PRIVATE', 'FRIENDS', 'PUBLIC']).default('PRIVATE'),
+    discoverable: z.boolean().default(false),
+  })
+  .transform((v) => ({
+    ...v,
+    // Coerce: discoverable can only be true on PUBLIC hives.
+    discoverable: v.visibility === 'PUBLIC' ? v.discoverable : false,
+  }))
 
 export const updateHiveSchema = z.object({
   name: z.string().min(1).max(100).optional(),

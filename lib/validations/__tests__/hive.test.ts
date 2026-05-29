@@ -2,21 +2,25 @@ import { describe, it, expect } from 'vitest'
 import { createHiveSchema, createTaskSchema, updateTaskSchema } from '../hive'
 
 describe('createHiveSchema', () => {
-  it('accepts valid input', () => {
-    const result = createHiveSchema.safeParse({ bookId: 'abc', name: 'My Hive' })
-    expect(result.success).toBe(true)
+  it('coerces discoverable=false when visibility != PUBLIC', () => {
+    const r = createHiveSchema.parse({
+      name: 'X', visibility: 'PRIVATE', discoverable: true,
+    })
+    expect(r.discoverable).toBe(false)
+  })
+  it('keeps discoverable=true when visibility=PUBLIC', () => {
+    const r = createHiveSchema.parse({
+      name: 'X', visibility: 'PUBLIC', discoverable: true,
+    })
+    expect(r.discoverable).toBe(true)
+  })
+  it('defaults discoverable=false and visibility=PRIVATE', () => {
+    const r = createHiveSchema.parse({ name: 'X' })
+    expect(r.discoverable).toBe(false)
+    expect(r.visibility).toBe('PRIVATE')
   })
   it('rejects empty name', () => {
-    const result = createHiveSchema.safeParse({ bookId: 'abc', name: '' })
-    expect(result.success).toBe(false)
-  })
-  it('rejects missing bookId', () => {
-    const result = createHiveSchema.safeParse({ name: 'My Hive' })
-    expect(result.success).toBe(false)
-  })
-  it('defaults visibility to PRIVATE', () => {
-    const result = createHiveSchema.safeParse({ bookId: 'abc', name: 'My Hive' })
-    expect(result.success && result.data.visibility).toBe('PRIVATE')
+    expect(() => createHiveSchema.parse({ name: '' })).toThrow()
   })
 })
 

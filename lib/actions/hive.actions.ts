@@ -63,11 +63,11 @@ export async function createHiveAction(input: unknown): Promise<ActionResult<{ h
       return { success: false, error: 'FREE_LIMIT_REACHED' }
     }
 
-    // If bookId provided, verify ownership + uniqueness.
-    // Intentionally not scoped via scopedBooksForUser: semantics here are
-    // "is this a real book the user owns" not "list user's library".
-    // Defensive ne(...) ensures the standalone-hive shadow can't be linked.
+    let bookId: string
+
     if (data.bookId) {
+      // Linked-book path: verify ownership + uniqueness, refuse shadows.
+      // Defensive ne(...) ensures the standalone-hive shadow can't be linked.
       const book = await db.query.books.findFirst({
         where: and(
           eq(books.id, data.bookId),
@@ -79,13 +79,26 @@ export async function createHiveAction(input: unknown): Promise<ActionResult<{ h
       if (!book) return { success: false, error: 'BOOK_NOT_FOUND' }
       const existing = await getBookHive(data.bookId)
       if (existing) return { success: false, error: 'BOOK_ALREADY_HAS_HIVE' }
+      bookId = data.bookId
+    } else {
+      // Standalone path: create an invisible shadow book so hives.bookId is
+      // always non-null. Title mirrors the hive name for admin debuggability.
+      bookId = createId()
+      await db.insert(books).values({
+        id: bookId,
+        userId,
+        title: data.name,
+        visibility: 'PRIVATE',
+        discoverable: false,
+        status: 'STANDALONE_HIVE_SHADOW',
+      })
     }
 
     const hiveId = createId()
     await db.transaction(async (tx) => {
       await tx.insert(hives).values({
         id: hiveId,
-        bookId: data.bookId ?? null,
+        bookId,
         ownerId: userId,
         name: data.name,
         description: data.description ?? null,

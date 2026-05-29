@@ -276,10 +276,10 @@ export async function leaveHiveAction(hiveId: string): Promise<ActionResult> {
   return { success: true, data: undefined }
 }
 
-export async function getPublicHivesAction(): Promise<ActionResult<HiveSummary[]>> {
+export async function getDiscoverableHivesAction(): Promise<ActionResult<HiveSummary[]>> {
   await requireAuth()
   const rows = await db.query.hives.findMany({
-    where: eq(hives.visibility, 'PUBLIC'),
+    where: and(eq(hives.visibility, 'PUBLIC'), eq(hives.discoverable, true)),
     orderBy: (t, { desc }) => [desc(t.createdAt)],
     limit: 50,
   })

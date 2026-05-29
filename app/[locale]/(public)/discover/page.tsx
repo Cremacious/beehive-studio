@@ -2,7 +2,7 @@ import { Suspense } from 'react'
 import Link from 'next/link'
 import { getDiscoverFeedAction, getDiscoverWritersAction } from '@/lib/actions/discover.actions'
 import { getSparksAction } from '@/lib/actions/sparks.actions'
-import { getPublicHivesAction } from '@/lib/actions/hive.actions'
+import { getDiscoverableHivesAction } from '@/lib/actions/hive.actions'
 import { FeedFilters } from './_components/feed-filters'
 import { WritersStrip } from './_components/writers-strip'
 import { LoadMoreFeed } from './_components/load-more-feed'
@@ -131,7 +131,7 @@ async function SparksTab({ locale }: { locale: string }) {
 }
 
 async function HivesTab({ locale }: { locale: string }) {
-  const result = await getPublicHivesAction()
+  const result = await getDiscoverableHivesAction()
   const hives = result.success ? result.data : []
 
   return (

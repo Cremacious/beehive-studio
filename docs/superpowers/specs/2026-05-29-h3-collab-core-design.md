@@ -36,7 +36,6 @@ The activity event types these features write to H1's `hive_activity` table land
 
 - @mention notifications and a real notification center — deferred; cross-cutting feature that should land separately.
 - Word goals / per-user word logs → H4.
-- Bee-themed milestones → H4.
 - Buzz Board → H4.
 - Dashboard counts/aggregation → H5.
 - Real-time multi-user editing (operational transform, CRDTs) — last-write-wins on the chapter doc; annotation/suggestion rows are independent so the conflict surface is small.
@@ -458,7 +457,6 @@ Single migration `db/migrations/0xxx_h3_collab_core.sql` + runner `scripts/db/ap
 
 - @mention notifications + notification center → deferred (cross-cutting; should land as its own thing)
 - Word goals / per-user word logs → H4
-- Bee-themed milestones → H4
 - Buzz Board → H4
 - Dashboard aggregation of counts → H5
 - Real-time mark synchronization → not in scope (last-write-wins on doc; annotations are independent rows)

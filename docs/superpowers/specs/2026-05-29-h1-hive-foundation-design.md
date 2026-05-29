@@ -28,7 +28,7 @@ This spec defines the foundation that the rest of the Hives redesign (H2–H5) s
 
 ## Non-goals
 
-- Wiki, Outline, Annotations, Submissions, Suggestions, Discussions, Word Goals, Milestones, Buzz Board, and Dashboard internals — these are H2–H5.
+- Wiki, Outline, Annotations, Submissions, Suggestions, Discussions, Word Goals, Buzz Board, and Dashboard internals — these are H2–H5.
 - Sprints, polls, and real-time chat from beehive-books-online — not in scope for this redesign cycle.
 - Bi-directional mirror between editor binder items and Hive wiki/outline — that's H2.
 
@@ -93,7 +93,7 @@ CREATE TABLE hive_activity (
   id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   hive_id     uuid NOT NULL REFERENCES hives(id) ON DELETE CASCADE,
   actor_id    uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  type        text NOT NULL,    -- 'chapter_submitted' | 'discussion_posted' | 'annotation_added' | 'suggestion_proposed' | 'suggestion_accepted' | 'buzz_posted' | 'milestone_unlocked' | 'member_joined'
+  type        text NOT NULL,    -- 'chapter_submitted' | 'discussion_posted' | 'annotation_added' | 'suggestion_proposed' | 'suggestion_accepted' | 'buzz_posted' | 'member_joined'
   subject_id  uuid,             -- nullable; e.g. chapter id, post id
   payload     jsonb,            -- denormalized title/excerpt for cheap reads
   created_at  timestamp DEFAULT now() NOT NULL
@@ -103,7 +103,7 @@ CREATE INDEX hive_activity_hive_id_created_at_idx
   ON hive_activity(hive_id, created_at DESC);
 ```
 
-H1 ships the table and the read path (`getHiveActivityFeedAction`). The `member_joined` write path is wired up in H1 (since membership is in scope here); all other write paths are wired by the sub-project that owns the corresponding feature (H3 for chapter/discussion/annotation/suggestion, H4 for buzz/milestone).
+H1 ships the table and the read path (`getHiveActivityFeedAction`). The `member_joined` write path is wired up in H1 (since membership is in scope here); all other write paths are wired by the sub-project that owns the corresponding feature (H3 for chapter/discussion/annotation/suggestion, H4 for buzz).
 
 ### Permission helpers (new file: `lib/hive/permissions.ts`)
 
@@ -238,7 +238,7 @@ Existing `BinderHiveFooter` component. New behavior:
 
 ### `/hive/[hiveId]` — placeholder structure
 
-H1 only redesigns the **Settings** and **Members** entries. The other sidebar nav items (Dashboard, Outline, Wiki, Annotations, Discussions, Submit Chapter, Edit Suggestions, Word Goals, Milestones, Buzz Board) render placeholder pages with a "Coming soon" note so the nav shell is real but the contents wait for H2–H5.
+H1 only redesigns the **Settings** and **Members** entries. The other sidebar nav items (Dashboard, Outline, Wiki, Annotations, Discussions, Submit Chapter, Edit Suggestions, Word Goals, Buzz Board) render placeholder pages with a "Coming soon" note so the nav shell is real but the contents wait for H2–H5.
 
 ---
 
@@ -278,7 +278,7 @@ Single migration file: `db/migrations/0xxx_h1_hive_foundation.sql` + a `scripts/
 
 ## Risks & Trade-offs
 
-- **Activity-event table is denormalized.** A new event type (e.g. when H4 adds `milestone_unlocked`) requires both the writer and the feed-renderer to know about it. Acceptable: enumerated `type` field + switch in the renderer. Document new types in this spec as they land.
+- **Activity-event table is denormalized.** A new event type (e.g. when H4 adds `buzz_posted`) requires both the writer and the feed-renderer to know about it. Acceptable: enumerated `type` field + switch in the renderer. Document new types in this spec as they land.
 - **The `getCommunityFeedAction` (follows-feed) is being deleted.** Phase 7.5 work retires. The follow relationship itself remains useful (author profile pages, future features); just the feed view goes.
 - **Role enum migration is irreversible.** Once `EDITOR`/`PROOFREADER` are dropped, restoring them requires a real migration. Accepted: those roles were never load-bearing.
 - **Standalone hives create a new mental model** users have to absorb ("a hive can exist without a book"). H1 ships this anyway because the user explicitly wants it; UX copy on the creation modal makes the three paths clear.
@@ -295,7 +295,6 @@ Single migration file: `db/migrations/0xxx_h1_hive_foundation.sql` + a `scripts/
 - Edit suggestions workflow → H3
 - Discussion threading → H3
 - Word goals + per-user word logs → H4
-- Bee-themed milestones / achievements → H4
 - Buzz Board (inspiration / mood posts) → H4
 - Sprints, polls, real-time chat → not in scope for the redesign cycle
 - Dashboard redesign (aggregates all sections) → H5

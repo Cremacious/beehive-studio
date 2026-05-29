@@ -30,7 +30,7 @@ The editor side also gains the 13 new wiki categories (CHARACTER already exists 
 
 - Live multi-user editing (cursors, OT, CRDTs). Last-write-wins; snapshot/restore is the recovery path.
 - Inline annotations / submissions / suggestions on chapters → H3.
-- Discussions, milestones, word goals, buzz board → H3/H4.
+- Discussions, word goals, buzz board → H3/H4.
 - A specialized timeline visualization for the TIMELINE category. Ships as a templated wiki entry like the others; richer UI is a future-state idea.
 - Removing the existing `character` binder type. It stays as its own first-class type because of its specialized renderer (avatar, relationships). It appears in the Hive Wiki under the CHARACTER category via UNION at query time.
 
@@ -343,7 +343,6 @@ Single migration file: `db/migrations/0xxx_h2_mirror_model.sql` + runner `script
 - Submit Chapter / Edit Suggestions → H3
 - Discussions → H3
 - Word Goals / Per-user word logs → H4
-- Bee-themed milestones → H4
 - Buzz Board → H4
 - Dashboard aggregation → H5
 - Real-time multi-user editing (cursors / OT / CRDTs) → not in scope for the redesign cycle

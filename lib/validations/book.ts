@@ -79,6 +79,7 @@ export const createBinderItemSchema = z.object({
   type: z.enum([
     'part', 'chapter', 'front_matter', 'back_matter',
     'research_folder', 'research_note', 'character', 'outline',
+    'wiki_entry', 'wiki_folder',
   ]),
   title: z.string().min(1).max(200),
   order: z.number().int().min(0).default(0),

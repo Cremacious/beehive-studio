@@ -1,9 +1,8 @@
 import Link from 'next/link'
 import { Users } from 'lucide-react'
+import type { UserHiveView } from '@/lib/actions/hive.actions'
 
-type Hive = { id: string; name: string; memberCount: number; isPublic: boolean }
-
-export function MyHivesPanel({ locale, hives }: { locale: string; hives: Hive[] }) {
+export function MyHivesPanel({ locale, hives }: { locale: string; hives: UserHiveView[] }) {
   const visible = hives.slice(0, 5)
   const hasMore = hives.length > 5
 
@@ -42,7 +41,7 @@ export function MyHivesPanel({ locale, hives }: { locale: string; hives: Hive[] 
           ))}
           {hasMore && (
             <li>
-              <Link href={`/${locale}/discover?tab=hives`} className="text-xs text-brand hover:underline">
+              <Link href={`/${locale}/studio`} className="text-xs text-brand hover:underline">
                 View all ({hives.length})
               </Link>
             </li>

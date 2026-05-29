@@ -1,7 +1,7 @@
 'use server'
 
 import { db } from '@/db'
-import { hiveOutlines, hiveWikiPages, hiveDiscussionPosts, hiveTasks, notifications, hives, binderItems, userProfiles, chapters } from '@/db/schema'
+import { hiveDiscussionPosts, hiveTasks, notifications, hives, binderItems, userProfiles, chapters } from '@/db/schema'
 import { eq, and, asc, inArray } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { assertHiveMember, assertHiveAdmin } from './_helpers'
@@ -256,75 +256,6 @@ export async function getBinderTreeForHiveAction(
 }
 
 // ── Legacy CRUD (T10 deletes) ────────────────────────────────────────────────
-
-// ── Outline ───────────────────────────────────────────────────────────────────
-
-export async function getHiveOutlineAction(hiveId: string): Promise<ActionResult<{ content: string | null }>> {
-  const userId = await requireAuth()
-  await assertHiveMember(hiveId, userId)
-  const outline = await db.query.hiveOutlines.findFirst({ where: eq(hiveOutlines.hiveId, hiveId) })
-  return { success: true, data: { content: outline?.content ?? null } }
-}
-
-export async function saveHiveOutlineAction(hiveId: string, content: string): Promise<ActionResult> {
-  const userId = await requireAuth()
-  await assertHiveMember(hiveId, userId)
-  await db.insert(hiveOutlines)
-    .values({ hiveId, content })
-    .onConflictDoUpdate({ target: hiveOutlines.hiveId, set: { content, updatedAt: new Date() } })
-  return { success: true, data: undefined }
-}
-
-// ── Wiki ──────────────────────────────────────────────────────────────────────
-
-export type WikiPageSummary = { id: string; title: string; updatedAt: Date }
-export type WikiPageFull = WikiPageSummary & { content: string | null; hiveId: string }
-
-export async function getWikiPagesAction(hiveId: string): Promise<ActionResult<WikiPageSummary[]>> {
-  const userId = await requireAuth()
-  await assertHiveMember(hiveId, userId)
-  const pages = await db.query.hiveWikiPages.findMany({
-    where: eq(hiveWikiPages.hiveId, hiveId),
-    columns: { id: true, title: true, updatedAt: true },
-    orderBy: (t, { asc }) => [asc(t.title)],
-  })
-  return { success: true, data: pages }
-}
-
-export async function createWikiPageAction(hiveId: string, title: string): Promise<ActionResult<{ pageId: string }>> {
-  const userId = await requireAuth()
-  await assertHiveMember(hiveId, userId)
-  const [page] = await db.insert(hiveWikiPages)
-    .values({ hiveId, title, createdBy: userId })
-    .returning({ id: hiveWikiPages.id })
-  return { success: true, data: { pageId: page.id } }
-}
-
-export async function getWikiPageAction(pageId: string): Promise<ActionResult<WikiPageFull>> {
-  const userId = await requireAuth()
-  const page = await db.query.hiveWikiPages.findFirst({ where: eq(hiveWikiPages.id, pageId) })
-  if (!page) return { success: false, error: 'Page not found' }
-  await assertHiveMember(page.hiveId, userId)
-  return { success: true, data: page }
-}
-
-export async function saveWikiPageAction(pageId: string, content: string): Promise<ActionResult> {
-  const userId = await requireAuth()
-  const page = await db.query.hiveWikiPages.findFirst({ where: eq(hiveWikiPages.id, pageId), columns: { hiveId: true } })
-  if (!page) return { success: false, error: 'Page not found' }
-  await assertHiveMember(page.hiveId, userId)
-  await db.update(hiveWikiPages).set({ content, updatedBy: userId, updatedAt: new Date() }).where(eq(hiveWikiPages.id, pageId))
-  return { success: true, data: undefined }
-}
-
-export async function deleteWikiPageAction(pageId: string): Promise<ActionResult> {
-  const userId = await requireAuth()
-  const page = await db.query.hiveWikiPages.findFirst({ where: eq(hiveWikiPages.id, pageId), columns: { hiveId: true } })
-  if (!page) return { success: false, error: 'Page not found' }
-  await assertHiveMember(page.hiveId, userId)
-  await db.delete(hiveWikiPages).where(eq(hiveWikiPages.id, pageId))
-  return { success: true, data: undefined }
-}
 
 // ── Discussion ────────────────────────────────────────────────────────────────
 

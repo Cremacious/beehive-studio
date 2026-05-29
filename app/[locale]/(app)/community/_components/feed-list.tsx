@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { FeedItemRenderer } from './feed-item'
-import { getCommunityFeedAction } from '@/lib/actions/community.actions'
+// TODO H1-T14: replace with getHiveActivityFeedAction
 import type { FeedItem } from '@/lib/types/community'
 
 export function FeedList({
@@ -17,19 +17,13 @@ export function FeedList({
   initialNextCursor: string | null
   hasAnyFollows: boolean
 }) {
-  const [items, setItems] = useState(initialItems)
-  const [cursor, setCursor] = useState(initialNextCursor)
-  const [loading, setLoading] = useState(false)
+  const [items] = useState(initialItems)
+  const [cursor] = useState(initialNextCursor)
+  const [loading] = useState(false)
 
+  // TODO H1-T14: rewire to getHiveActivityFeedAction
   async function loadMore() {
-    if (!cursor || loading) return
-    setLoading(true)
-    const result = await getCommunityFeedAction({ cursor })
-    setLoading(false)
-    if (result.success) {
-      setItems(prev => [...prev, ...result.data.items])
-      setCursor(result.data.nextCursor)
-    }
+    return
   }
 
   if (!hasAnyFollows) {

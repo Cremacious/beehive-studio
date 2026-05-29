@@ -1,24 +1,22 @@
-import { getCommunityFeedAction, getSuggestedWritersAction, getMyActiveSparksAction } from '@/lib/actions/community.actions'
-// TODO: use getUserHivesView post-H1-T7
-// import { getMyHivesAction } from '@/lib/actions/hive.actions'
+import { getSuggestedWritersAction, getMyActiveSparksAction } from '@/lib/actions/community.actions'
+// TODO H1-T14: replace with getHiveActivityFeedAction + getUserHivesView
 import { CommunityPageShell } from './_components/community-page-shell'
+import type { FeedItem } from '@/lib/types/community'
 
 export default async function CommunityPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params
 
-  const [feedResult, writersResult, sparksResult] = await Promise.all([
-    getCommunityFeedAction({ limit: 20 }),
+  const [writersResult, sparksResult] = await Promise.all([
     getSuggestedWritersAction({ excludeFollowing: true, limit: 8 }),
-    // TODO: use getUserHivesView post-H1-T7
-    // getMyHivesAction(),
     getMyActiveSparksAction(),
   ])
 
-  const feedItems = feedResult.success ? feedResult.data.items : []
-  const feedCursor = feedResult.success ? feedResult.data.nextCursor : null
-  const hasAnyFollows = feedResult.success ? feedResult.data.hasAnyFollows : false
+  // TODO H1-T14: replace with getHiveActivityFeedAction
+  const feedItems: FeedItem[] = []
+  const feedCursor: string | null = null
+  const hasAnyFollows = false
   const suggestedWriters = writersResult.success ? writersResult.data : []
-  // TODO: use getUserHivesView post-H1-T7
+  // TODO H1-T14: replace with getUserHivesView projection
   const myHives: never[] = []
   const activeSparks = sparksResult.success ? sparksResult.data : []
 

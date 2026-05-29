@@ -1,7 +1,8 @@
 import { db } from '@/db'
 import { books } from '@/db/schema'
-import { eq, asc } from 'drizzle-orm'
+import { asc } from 'drizzle-orm'
 import { getUserPremiumStatus, FREE_BOOK_LIMIT } from '@/lib/premium'
+import { scopedBooksForUser } from '@/lib/books/scoped'
 
 /**
  * Returns true when a non-premium user has more than FREE_BOOK_LIMIT books
@@ -21,7 +22,7 @@ export async function isBookOverflow(userId: string, bookId: string): Promise<bo
   const userBooks = await db
     .select({ id: books.id })
     .from(books)
-    .where(eq(books.userId, userId))
+    .where(scopedBooksForUser(userId))
     .orderBy(asc(books.createdAt))
 
   const index = userBooks.findIndex(b => b.id === bookId)

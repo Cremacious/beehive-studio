@@ -109,10 +109,12 @@ export async function getPublicProfileAction(
       .select({ total: sql<number>`COALESCE(SUM(${chapters.wordCount}), 0)` })
       .from(chapters)
       .innerJoin(books, eq(chapters.bookId, books.id))
+      // shadow books are excluded by the PUBLISHED filter
       .where(and(eq(books.userId, userId), eq(books.status, 'PUBLISHED'))),
     db
       .select({ total: count() })
       .from(books)
+      // shadow books are excluded by the PUBLISHED filter
       .where(and(eq(books.userId, userId), eq(books.status, 'PUBLISHED'))),
     db
       .select({ total: count() })
@@ -186,6 +188,7 @@ export async function getProfileBooksAction(
     .from(books)
     .leftJoin(likeCountSq, eq(books.id, likeCountSq.bookId))
     .leftJoin(wordCountSq, eq(books.id, wordCountSq.bookId))
+    // shadow books are excluded by the PUBLISHED filter
     .where(and(eq(books.userId, userId), eq(books.status, 'PUBLISHED')))
     .orderBy(desc(sql`COALESCE(${likeCountSq.likeTotal}, 0)`))
     .limit(12)

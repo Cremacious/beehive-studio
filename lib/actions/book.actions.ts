@@ -12,6 +12,7 @@ import { createBookSchema, updateBookSchema, updateBookDetailsSchema } from '@/l
 import { createId } from '@paralleldrive/cuid2'
 import { revalidatePath } from 'next/cache'
 import { summarizeBookStatus, type BookSummaryStatus } from '@/lib/books/summarize-status'
+import { scopedBooksForUser } from '@/lib/books/scoped'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -48,7 +49,7 @@ async function getActiveBookCount(userId: string): Promise<number> {
   const result = await db
     .select({ count: count() })
     .from(books)
-    .where(eq(books.userId, userId))
+    .where(scopedBooksForUser(userId))
   return Number(result[0]?.count ?? 0)
 }
 
@@ -222,7 +223,7 @@ export async function getUserBooksAction(): Promise<
     })
     .from(books)
     .leftJoin(hives, eq(hives.bookId, books.id))
-    .where(eq(books.userId, userId))
+    .where(scopedBooksForUser(userId))
     .orderBy(sql`${books.updatedAt} DESC`)
 
   if (bookRows.length === 0) return { success: true, data: [] }
@@ -303,7 +304,7 @@ export async function getStudioStatsAction(): Promise<ActionResult<StudioStats>>
   const userBooksSq = db
     .select({ id: books.id, status: books.status })
     .from(books)
-    .where(eq(books.userId, userId))
+    .where(scopedBooksForUser(userId))
     .as('user_books')
 
   const [totalWordsRow, booksInProgressRow, wordsThisWeekRow, chaptersPublishedRow] =
@@ -318,7 +319,7 @@ export async function getStudioStatsAction(): Promise<ActionResult<StudioStats>>
       db
         .select({ total: sql<number>`COUNT(*)::int` })
         .from(books)
-        .where(and(eq(books.userId, userId), ne(books.status, 'PUBLISHED'))),
+        .where(and(scopedBooksForUser(userId), ne(books.status, 'PUBLISHED'))),
 
       // SUM(chapters.wordCount) WHERE chapter.updatedAt > sevenDaysAgo, scoped to user
       db
@@ -367,7 +368,7 @@ export async function getBookAction(bookId: string): Promise<
   const userId = await requireAuth()
 
   const book = await db.query.books.findFirst({
-    where: and(eq(books.id, bookId), eq(books.userId, userId)),
+    where: and(eq(books.id, bookId), scopedBooksForUser(userId)),
     columns: {
       id: true, title: true, genre: true, visibility: true,
       status: true, coverUrl: true, synopsis: true,
@@ -377,7 +378,8 @@ export async function getBookAction(bookId: string): Promise<
 
   if (!book) return { success: false, error: 'Book not found' }
 
-  return { success: true, data: book }
+  // scopedBooksForUser guarantees status !== 'STANDALONE_HIVE_SHADOW'.
+  return { success: true, data: { ...book, status: book.status as 'DRAFT' | 'PUBLISHED' } }
 }
 
 /**
@@ -459,7 +461,7 @@ export async function deleteBookAction(bookId: string, locale: string): Promise<
   const userId = await requireAuth()
   await assertBookOwner(bookId, userId)
 
-  await db.delete(books).where(and(eq(books.id, bookId), eq(books.userId, userId)))
+  await db.delete(books).where(and(eq(books.id, bookId), scopedBooksForUser(userId)))
 
   revalidatePath(`/${locale}/studio`)
 

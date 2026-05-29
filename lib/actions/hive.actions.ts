@@ -2,7 +2,7 @@
 
 import { db } from '@/db'
 import { hives, hiveMembers, hiveInvites, notifications, books } from '@/db/schema'
-import { eq, and, count, sql } from 'drizzle-orm'
+import { eq, and, count, sql, ne } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { assertHiveMember, assertHiveOwner, assertHiveAdmin } from './_helpers'
 import { getUserPremiumStatus, FREE_HIVE_LIMIT, FREE_HIVE_MEMBER_LIMIT } from '@/lib/premium'
@@ -63,10 +63,17 @@ export async function createHiveAction(input: unknown): Promise<ActionResult<{ h
       return { success: false, error: 'FREE_LIMIT_REACHED' }
     }
 
-    // If bookId provided, verify ownership + uniqueness
+    // If bookId provided, verify ownership + uniqueness.
+    // Intentionally not scoped via scopedBooksForUser: semantics here are
+    // "is this a real book the user owns" not "list user's library".
+    // Defensive ne(...) ensures the standalone-hive shadow can't be linked.
     if (data.bookId) {
       const book = await db.query.books.findFirst({
-        where: and(eq(books.id, data.bookId), eq(books.userId, userId)),
+        where: and(
+          eq(books.id, data.bookId),
+          eq(books.userId, userId),
+          ne(books.status, 'STANDALONE_HIVE_SHADOW'),
+        ),
         columns: { id: true },
       })
       if (!book) return { success: false, error: 'BOOK_NOT_FOUND' }

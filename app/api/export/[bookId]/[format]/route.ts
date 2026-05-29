@@ -12,6 +12,7 @@ import {
   renderAcknowledgments,
   renderAboutAuthor,
 } from '@/lib/export/front-back-matter-templates'
+import { scopedBooksForUser } from '@/lib/books/scoped'
 
 type ExportRow = {
   id: string
@@ -102,7 +103,7 @@ export async function GET(
 
   // Verify ownership
   const book = await db.query.books.findFirst({
-    where: and(eq(books.id, bookId), eq(books.userId, userId)),
+    where: and(eq(books.id, bookId), scopedBooksForUser(userId)),
   })
   if (!book) {
     return Response.json({ error: 'Not found' }, { status: 404 })

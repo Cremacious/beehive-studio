@@ -1,8 +1,9 @@
 import { db } from '@/db'
 import { books } from '@/db/schema'
-import { and, eq, isNotNull } from 'drizzle-orm'
+import { and, isNotNull } from 'drizzle-orm'
 import { normalizeSeriesKey } from './series-key'
 import { canReadBook } from './can-read'
+import { scopedBooksForUser } from './scoped'
 
 export type SeriesNeighbor = {
   id: string
@@ -56,7 +57,7 @@ export async function getSeriesNeighbors({
       seriesNumber: books.seriesNumber,
     })
     .from(books)
-    .where(and(eq(books.userId, currentBook.userId), isNotNull(books.seriesName)))
+    .where(and(scopedBooksForUser(currentBook.userId), isNotNull(books.seriesName)))
 
   // Filter to same normalized key (in JS — normalization can't be done in SQL).
   const sameSeries = rows.filter(r => normalizeSeriesKey(r.seriesName) === key)

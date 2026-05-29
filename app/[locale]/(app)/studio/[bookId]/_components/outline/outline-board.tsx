@@ -15,6 +15,7 @@ import { Plus } from 'lucide-react'
 import { SaveStatusBadge, type FormSaveStatus } from '../front-back-matter/save-status-badge'
 import { OutlineBeatRow } from './outline-card'
 import { ChapterLinkPopover } from './chapter-link-popover'
+import { groupBeatsByAct, distinctActs } from '@/lib/outline/group-by-act'
 
 // DP3 Task 4 — Outline Kanban → beat-sheet. Vertical sortable list of beats.
 // Legacy {columns, cards} content is flattened at render time (column order
@@ -31,6 +32,7 @@ export type Beat = {
   description?: string
   status?: BeatStatus
   linkedChapterId?: string | null
+  act?: string | null
 }
 
 export type OutlineContent = { beats: Beat[] }
@@ -95,6 +97,8 @@ export function OutlineBoard({ item }: Props) {
   const [beats, setBeats] = useState<Beat[]>(() => readBeats(item.content))
   const [saveStatus, setSaveStatus] = useState<FormSaveStatus>('idle')
   const [linkingBeatId, setLinkingBeatId] = useState<string | null>(null)
+  const [defaultActForNextBeat, setDefaultActForNextBeat] = useState<string | null>(null)
+  const [newActDraft, setNewActDraft] = useState<string | null>(null)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
@@ -123,8 +127,10 @@ export function OutlineBoard({ item }: Props) {
     }, 2000)
   }
 
-  function addBeat() {
-    commit([...beats, { id: createId(), title: '', description: '', status: 'idea', linkedChapterId: null }])
+  function addBeat(act?: string | null) {
+    const resolvedAct = act !== undefined ? act : defaultActForNextBeat
+    commit([...beats, { id: createId(), title: '', description: '', status: 'idea', linkedChapterId: null, act: resolvedAct ?? null }])
+    if (act === undefined && defaultActForNextBeat !== null) setDefaultActForNextBeat(null)
   }
   function patchBeat(id: string, patch: Partial<Beat>) {
     commit(beats.map(b => b.id === id ? { ...b, ...patch } : b))
@@ -138,13 +144,32 @@ export function OutlineBoard({ item }: Props) {
     patchBeat(id, { status: nextStatus(b.status) })
   }
 
+  function renameAct(oldName: string | null, raw: string) {
+    if (oldName === null) return
+    const newName = raw.trim()
+    if (!newName || newName === oldName) return
+    commit(beats.map(b => b.act === oldName ? { ...b, act: newName } : b))
+  }
+
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
     if (!over || active.id === over.id) return
     const from = beats.findIndex(b => b.id === active.id)
     const to = beats.findIndex(b => b.id === over.id)
     if (from < 0 || to < 0) return
-    commit(arrayMove(beats, from, to))
+    const targetAct = beats[to]!.act ?? null
+    let next = arrayMove(beats, from, to)
+    if ((next[to]!.act ?? null) !== targetAct) {
+      next = next.map((b, i) => i === to ? { ...b, act: targetAct } : b)
+    }
+    commit(next)
+  }
+
+  function commitNewAct(raw: string) {
+    const name = raw.trim()
+    setNewActDraft(null)
+    if (!name) return
+    setDefaultActForNextBeat(name)
   }
 
   function isChapterAvailable(chapterId: string | null | undefined): boolean {
@@ -224,7 +249,7 @@ export function OutlineBoard({ item }: Props) {
         <div className="flex-1" />
         <button
           type="button"
-          onClick={addBeat}
+          onClick={() => addBeat()}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold"
           style={{
             background: 'var(--color-brand)',
@@ -246,10 +271,10 @@ export function OutlineBoard({ item }: Props) {
           className="mx-auto px-8 py-6"
           style={{ maxWidth: 760 }}
         >
-          {beats.length === 0 ? (
+          {beats.length === 0 && defaultActForNextBeat === null && newActDraft === null ? (
             <button
               type="button"
-              onClick={addBeat}
+              onClick={() => addBeat()}
               className="w-full mt-4 px-4 py-6 rounded-md text-sm font-semibold italic transition-colors"
               style={{
                 background: 'transparent',
@@ -262,35 +287,115 @@ export function OutlineBoard({ item }: Props) {
             </button>
           ) : (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={beats.map(b => b.id)} strategy={verticalListSortingStrategy}>
-                <div className="flex flex-col gap-1.5">
-                  {beats.map((beat, idx) => (
-                    <OutlineBeatRow
-                      key={beat.id}
-                      beat={beat}
-                      index={idx + 1}
-                      isLast={idx === beats.length - 1}
-                      chapterAvailable={isChapterAvailable(beat.linkedChapterId)}
-                      chapterTitle={chapterTitleFor(beat.linkedChapterId)}
-                      onChange={patch => patchBeat(beat.id, patch)}
-                      onDelete={() => deleteBeat(beat.id)}
-                      onCycleStatus={() => cycleStatus(beat.id)}
-                      onOpenLinkPopover={() => setLinkingBeatId(beat.id)}
-                      onUnlink={() => patchBeat(beat.id, { linkedChapterId: null })}
-                      onJumpToChapter={() => {
-                        if (beat.linkedChapterId) jumpToChapter(beat.linkedChapterId)
-                      }}
-                    />
-                  ))}
-                </div>
-              </SortableContext>
+              <div className="flex flex-col gap-6">
+                {groupBeatsByAct(beats).map(group => {
+                  let globalIdx = 0
+                  for (const b of beats) {
+                    if (b.id === group.beats[0]?.id) break
+                    globalIdx++
+                  }
+                  return (
+                    <section key={group.act ?? '__noact__'} className="space-y-2">
+                      <header className="flex items-center gap-2">
+                        {group.act === null ? (
+                          <span
+                            className="font-comfortaa font-bold text-base"
+                            style={{ color: 'var(--sheet-ink-muted)' }}
+                          >
+                            No Act
+                          </span>
+                        ) : (
+                          <input
+                            defaultValue={group.act}
+                            placeholder="Act name"
+                            list="outline-act-suggestions"
+                            onBlur={e => renameAct(group.act, e.target.value)}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+                              if (e.key === 'Escape') {
+                                ;(e.target as HTMLInputElement).value = group.act ?? ''
+                                ;(e.target as HTMLInputElement).blur()
+                              }
+                            }}
+                            className="font-comfortaa font-bold text-base bg-transparent border-b border-transparent hover:border-border focus:border-brand outline-none"
+                          />
+                        )}
+                        <span className="text-xs" style={{ color: 'var(--sheet-ink-muted)' }}>
+                          {group.beats.length} beat{group.beats.length === 1 ? '' : 's'}
+                        </span>
+                        <div className="flex-1" />
+                        <button
+                          type="button"
+                          onClick={() => addBeat(group.act)}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-semibold"
+                          style={{ color: 'var(--sheet-ink-muted)' }}
+                        >
+                          <Plus className="w-3 h-3" />
+                          Add beat
+                        </button>
+                      </header>
+                      <SortableContext items={group.beats.map(b => b.id)} strategy={verticalListSortingStrategy}>
+                        <div className="flex flex-col gap-1.5">
+                          {group.beats.map((beat, i) => {
+                            const idx = globalIdx + i
+                            return (
+                              <OutlineBeatRow
+                                key={beat.id}
+                                beat={beat}
+                                index={idx + 1}
+                                isLast={idx === beats.length - 1}
+                                chapterAvailable={isChapterAvailable(beat.linkedChapterId)}
+                                chapterTitle={chapterTitleFor(beat.linkedChapterId)}
+                                onChange={patch => patchBeat(beat.id, patch)}
+                                onDelete={() => deleteBeat(beat.id)}
+                                onCycleStatus={() => cycleStatus(beat.id)}
+                                onOpenLinkPopover={() => setLinkingBeatId(beat.id)}
+                                onUnlink={() => patchBeat(beat.id, { linkedChapterId: null })}
+                                onJumpToChapter={() => {
+                                  if (beat.linkedChapterId) jumpToChapter(beat.linkedChapterId)
+                                }}
+                              />
+                            )
+                          })}
+                        </div>
+                      </SortableContext>
+                    </section>
+                  )
+                })}
+                {defaultActForNextBeat !== null && !beats.some(b => b.act === defaultActForNextBeat) && (
+                  <section className="space-y-2">
+                    <header className="flex items-center gap-2">
+                      <span className="font-comfortaa font-bold text-base" style={{ color: 'var(--sheet-ink-muted)' }}>
+                        {defaultActForNextBeat}
+                      </span>
+                      <span className="text-xs" style={{ color: 'var(--sheet-ink-muted)' }}>
+                        0 beats
+                      </span>
+                      <div className="flex-1" />
+                      <button
+                        type="button"
+                        onClick={() => addBeat(defaultActForNextBeat)}
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-semibold"
+                        style={{ color: 'var(--sheet-ink-muted)' }}
+                      >
+                        <Plus className="w-3 h-3" />
+                        Add beat
+                      </button>
+                    </header>
+                  </section>
+                )}
+              </div>
             </DndContext>
           )}
 
-          {beats.length > 0 && (
+          <datalist id="outline-act-suggestions">
+            {distinctActs(beats).map(a => <option key={a} value={a} />)}
+          </datalist>
+
+          {(beats.length > 0 || defaultActForNextBeat !== null) && (
             <button
               type="button"
-              onClick={addBeat}
+              onClick={() => addBeat()}
               className="w-full mt-3 px-4 py-3 rounded-md text-sm font-semibold italic transition-colors flex items-center justify-center gap-2"
               style={{
                 background: 'transparent',
@@ -301,6 +406,41 @@ export function OutlineBoard({ item }: Props) {
             >
               <Plus className="w-4 h-4" />
               Add a beat
+            </button>
+          )}
+
+          {newActDraft !== null ? (
+            <input
+              autoFocus
+              value={newActDraft}
+              onChange={e => setNewActDraft(e.target.value)}
+              onBlur={e => commitNewAct(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+                if (e.key === 'Escape') { setNewActDraft(null) }
+              }}
+              placeholder="Act name"
+              className="w-full mt-3 px-4 py-3 rounded-md text-sm font-semibold bg-transparent outline-none"
+              style={{
+                border: '1.5px dashed var(--color-brand)',
+                color: 'var(--sheet-ink)',
+                fontFamily: 'var(--font-display)',
+              }}
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setNewActDraft('')}
+              className="w-full mt-3 px-4 py-3 rounded-md text-sm font-semibold italic transition-colors flex items-center justify-center gap-2"
+              style={{
+                background: 'transparent',
+                border: '1.5px dashed var(--sheet-rule-soft)',
+                color: 'var(--sheet-ink-muted)',
+                fontFamily: 'var(--font-display)',
+              }}
+            >
+              <Plus className="w-4 h-4" />
+              New Act
             </button>
           )}
         </div>

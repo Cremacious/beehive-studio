@@ -97,7 +97,7 @@ export function OutlineBoard({ item }: Props) {
   const [beats, setBeats] = useState<Beat[]>(() => readBeats(item.content))
   const [saveStatus, setSaveStatus] = useState<FormSaveStatus>('idle')
   const [linkingBeatId, setLinkingBeatId] = useState<string | null>(null)
-  const [defaultActForNextBeat, setDefaultActForNextBeat] = useState<string | null>(null)
+  const [pendingActs, setPendingActs] = useState<string[]>([])
   const [newActDraft, setNewActDraft] = useState<string | null>(null)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
@@ -128,9 +128,9 @@ export function OutlineBoard({ item }: Props) {
   }
 
   function addBeat(act?: string | null) {
-    const resolvedAct = act !== undefined ? act : defaultActForNextBeat
-    commit([...beats, { id: createId(), title: '', description: '', status: 'idea', linkedChapterId: null, act: resolvedAct ?? null }])
-    if (act === undefined && defaultActForNextBeat !== null) setDefaultActForNextBeat(null)
+    const resolvedAct = act !== undefined ? act : null
+    commit([...beats, { id: createId(), title: '', description: '', status: 'idea', linkedChapterId: null, act: resolvedAct }])
+    if (resolvedAct) setPendingActs(prev => prev.filter(a => a !== resolvedAct))
   }
   function patchBeat(id: string, patch: Partial<Beat>) {
     commit(beats.map(b => b.id === id ? { ...b, ...patch } : b))
@@ -169,7 +169,8 @@ export function OutlineBoard({ item }: Props) {
     const name = raw.trim()
     setNewActDraft(null)
     if (!name) return
-    setDefaultActForNextBeat(name)
+    if (beats.some(b => b.act === name)) return
+    setPendingActs(prev => prev.includes(name) ? prev : [...prev, name])
   }
 
   function isChapterAvailable(chapterId: string | null | undefined): boolean {
@@ -271,7 +272,7 @@ export function OutlineBoard({ item }: Props) {
           className="mx-auto px-8 py-6"
           style={{ maxWidth: 760 }}
         >
-          {beats.length === 0 && defaultActForNextBeat === null && newActDraft === null ? (
+          {beats.length === 0 && pendingActs.length === 0 && newActDraft === null ? (
             <button
               type="button"
               onClick={() => addBeat()}
@@ -362,28 +363,39 @@ export function OutlineBoard({ item }: Props) {
                     </section>
                   )
                 })}
-                {defaultActForNextBeat !== null && !beats.some(b => b.act === defaultActForNextBeat) && (
-                  <section className="space-y-2">
-                    <header className="flex items-center gap-2">
-                      <span className="font-comfortaa font-bold text-base" style={{ color: 'var(--sheet-ink-muted)' }}>
-                        {defaultActForNextBeat}
-                      </span>
-                      <span className="text-xs" style={{ color: 'var(--sheet-ink-muted)' }}>
-                        0 beats
-                      </span>
-                      <div className="flex-1" />
-                      <button
-                        type="button"
-                        onClick={() => addBeat(defaultActForNextBeat)}
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-semibold"
-                        style={{ color: 'var(--sheet-ink-muted)' }}
-                      >
-                        <Plus className="w-3 h-3" />
-                        Add beat
-                      </button>
-                    </header>
-                  </section>
-                )}
+                {pendingActs
+                  .filter(name => !beats.some(b => b.act === name))
+                  .map(name => (
+                    <section key={`pending:${name}`} className="space-y-2">
+                      <header className="flex items-center gap-2">
+                        <span className="font-comfortaa font-bold text-base" style={{ color: 'var(--sheet-ink-muted)' }}>
+                          {name}
+                        </span>
+                        <span className="text-xs" style={{ color: 'var(--sheet-ink-muted)' }}>
+                          0 beats
+                        </span>
+                        <div className="flex-1" />
+                        <button
+                          type="button"
+                          onClick={() => addBeat(name)}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-semibold"
+                          style={{ color: 'var(--sheet-ink-muted)' }}
+                        >
+                          <Plus className="w-3 h-3" />
+                          Add beat
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPendingActs(prev => prev.filter(a => a !== name))}
+                          aria-label={`Discard empty act ${name}`}
+                          className="inline-flex items-center px-1.5 py-1 rounded text-[11px]"
+                          style={{ color: 'var(--sheet-ink-muted)' }}
+                        >
+                          ×
+                        </button>
+                      </header>
+                    </section>
+                  ))}
               </div>
             </DndContext>
           )}
@@ -392,7 +404,7 @@ export function OutlineBoard({ item }: Props) {
             {distinctActs(beats).map(a => <option key={a} value={a} />)}
           </datalist>
 
-          {(beats.length > 0 || defaultActForNextBeat !== null) && (
+          {(beats.length > 0 || pendingActs.length > 0) && (
             <button
               type="button"
               onClick={() => addBeat()}

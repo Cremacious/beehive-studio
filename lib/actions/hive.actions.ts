@@ -2,7 +2,7 @@
 
 import { db } from '@/db'
 import { hives, hiveMembers, hiveInvites, notifications, books } from '@/db/schema'
-import { eq, and, count } from 'drizzle-orm'
+import { eq, and, count, sql } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { assertHiveMember, assertHiveOwner, assertHiveAdmin } from './_helpers'
 import { getUserPremiumStatus, FREE_HIVE_LIMIT, FREE_HIVE_MEMBER_LIMIT } from '@/lib/premium'
@@ -281,4 +281,81 @@ export async function getPublicHivesAction(): Promise<ActionResult<HiveSummary[]
     memberCount: 0, createdAt: h.createdAt,
   }))
   return { success: true, data: summaries }
+}
+
+export type UserHiveView = {
+  id: string
+  name: string
+  description: string | null
+  bookId: string | null
+  bookTitle: string | null
+  bookCoverUrl: string | null
+  visibility: 'PRIVATE' | 'FRIENDS' | 'PUBLIC'
+  discoverable: boolean
+  status: 'ACTIVE' | 'COMPLETED'
+  memberCount: number
+  lastActiveAt: Date | null
+  viewerRole: 'OWNER' | 'MODERATOR' | 'CONTRIBUTOR' | 'BETA_READER'
+}
+
+/**
+ * Projection for the /studio Hives section. Returns every hive the viewer
+ * is a member of, with denormalized book + member count + last activity.
+ * Ordered by most-recent activity (falling back to hive creation time).
+ */
+export async function getUserHivesView(): Promise<ActionResult<UserHiveView[]>> {
+  try {
+    const userId = await requireAuth()
+    const result = await db.execute(sql`
+      SELECT
+        h.id,
+        h.name,
+        h.description,
+        h.book_id          AS "bookId",
+        b.title            AS "bookTitle",
+        b.cover_url        AS "bookCoverUrl",
+        h.visibility,
+        h.discoverable,
+        h.status,
+        (SELECT COUNT(*)::int FROM hive_members WHERE hive_id = h.id) AS "memberCount",
+        (SELECT MAX(created_at) FROM hive_activity WHERE hive_id = h.id) AS "lastActiveAt",
+        m.role::text       AS "viewerRole"
+      FROM hives h
+      INNER JOIN hive_members m ON m.hive_id = h.id AND m.user_id = ${userId}
+      LEFT JOIN books b ON b.id = h.book_id
+      ORDER BY COALESCE(
+        (SELECT MAX(created_at) FROM hive_activity WHERE hive_id = h.id),
+        h.created_at
+      ) DESC
+    `)
+
+    type RawRow = {
+      id: string
+      name: string
+      description: string | null
+      bookId: string | null
+      bookTitle: string | null
+      bookCoverUrl: string | null
+      visibility: 'PRIVATE' | 'FRIENDS' | 'PUBLIC'
+      discoverable: boolean
+      status: 'ACTIVE' | 'COMPLETED'
+      memberCount: number
+      lastActiveAt: string | Date | null
+      viewerRole: 'OWNER' | 'MODERATOR' | 'CONTRIBUTOR' | 'BETA_READER'
+    }
+
+    const data: UserHiveView[] = (result.rows as RawRow[]).map((row) => ({
+      ...row,
+      lastActiveAt:
+        row.lastActiveAt == null
+          ? null
+          : row.lastActiveAt instanceof Date
+          ? row.lastActiveAt
+          : new Date(row.lastActiveAt),
+    }))
+
+    return { success: true, data }
+  } catch (e) {
+    return { success: false, error: e instanceof Error ? e.message : 'Unknown error' }
+  }
 }

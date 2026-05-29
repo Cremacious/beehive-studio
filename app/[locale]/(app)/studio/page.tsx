@@ -28,15 +28,17 @@ export default async function StudioPage({
   const books = booksResult.success ? booksResult.data : []
   const hives = hivesResult.success ? hivesResult.data : []
 
-  if (books.length === 0) {
+  if (books.length === 0 && hives.length === 0) {
     return <StudioEmptyState locale={locale} templates={templates} />
   }
 
   // Most-recently-edited book — sort defensively so the hero is stable
   // regardless of getUserBooksAction's default ordering.
-  const recentBook = [...books].sort(
-    (a, b) => new Date(b.lastEditedAt).getTime() - new Date(a.lastEditedAt).getTime(),
-  )[0]
+  const recentBook = books.length > 0
+    ? [...books].sort(
+        (a, b) => new Date(b.lastEditedAt).getTime() - new Date(a.lastEditedAt).getTime(),
+      )[0]
+    : null
 
   return (
     <main
@@ -49,11 +51,13 @@ export default async function StudioPage({
     >
       <div style={{ height: '40px' }} />
 
-      <section style={{ marginBottom: '36px' }}>
-        <ContinueWritingHero book={recentBook} locale={locale} />
-      </section>
+      {recentBook && (
+        <section style={{ marginBottom: '36px' }}>
+          <ContinueWritingHero book={recentBook} locale={locale} />
+        </section>
+      )}
 
-      <BookGrid books={books} locale={locale} />
+      {books.length > 0 && <BookGrid books={books} locale={locale} />}
 
       <HivesSection hives={hives} />
     </main>

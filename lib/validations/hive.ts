@@ -14,12 +14,19 @@ export const createHiveSchema = z
     discoverable: v.visibility === 'PUBLIC' ? v.discoverable : false,
   }))
 
-export const updateHiveSchema = z.object({
-  name: z.string().min(1).max(100).optional(),
-  description: z.string().max(500).nullable().optional(),
-  visibility: z.enum(['PRIVATE', 'PUBLIC', 'FRIENDS']).optional(),
-  status: z.enum(['ACTIVE', 'COMPLETED']).optional(),
-})
+export const updateHiveSchema = z
+  .object({
+    hiveId: z.string(),
+    name: z.string().min(1).max(80).optional(),
+    description: z.string().max(280).nullable().optional(),
+    visibility: z.enum(['PRIVATE', 'FRIENDS', 'PUBLIC']).optional(),
+    discoverable: z.boolean().optional(),
+  })
+  .transform((v) => {
+    // If visibility is being set to non-PUBLIC, force discoverable=false.
+    if (v.visibility && v.visibility !== 'PUBLIC') v.discoverable = false
+    return v
+  })
 
 export const createTaskSchema = z.object({
   title: z.string().min(1).max(200),

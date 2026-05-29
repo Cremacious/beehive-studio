@@ -8,6 +8,7 @@ import { assertHiveMember, assertHiveOwner, assertHiveAdmin } from './_helpers'
 import { getUserPremiumStatus, FREE_HIVE_LIMIT, FREE_HIVE_MEMBER_LIMIT } from '@/lib/premium'
 import { createHiveSchema, updateHiveSchema } from '@/lib/validations/hive'
 import { getBookHive } from '@/lib/hive/get-book-hive'
+import { requireHiveMod } from '@/lib/hive/permissions'
 import { createId } from '@paralleldrive/cuid2'
 import type { ActionResult } from './book.actions'
 
@@ -27,7 +28,7 @@ export type HiveMemberRow = {
   id: string
   hiveId: string
   userId: string
-  role: 'OWNER' | 'CONTRIBUTOR' | 'EDITOR' | 'BETA_READER' | 'PROOFREADER'
+  role: 'OWNER' | 'MODERATOR' | 'CONTRIBUTOR' | 'BETA_READER'
   joinedAt: Date
   user: { name: string | null; email: string; image: string | null }
 }
@@ -120,76 +121,27 @@ export async function getHiveAction(hiveId: string): Promise<ActionResult<{
   return { success: true, data: { hive, members: members as HiveMemberRow[], isOwner, isEditor } }
 }
 
-export async function getUserHivesAction(): Promise<ActionResult<HiveSummary[]>> {
-  const userId = await requireAuth()
+// `getUserHivesAction` and `getMyHivesAction` deleted in H1 Task 6.
+// Both fold into `getUserHivesView` shipping in H1 Task 7. Callers (e.g.
+// `app/[locale]/(app)/community/page.tsx`) are stubbed until then.
 
-  const memberships = await db.query.hiveMembers.findMany({
-    where: eq(hiveMembers.userId, userId),
-    with: { hive: true },
-  })
+export async function updateHiveAction(input: unknown): Promise<ActionResult<void>> {
+  try {
+    const userId = await requireAuth()
+    const parsed = updateHiveSchema.parse(input)
+    await requireHiveMod(parsed.hiveId, userId)
 
-  const summaries: HiveSummary[] = memberships.map(m => ({
-    id: m.hive.id,
-    bookId: m.hive.bookId,
-    name: m.hive.name,
-    description: m.hive.description,
-    visibility: m.hive.visibility,
-    status: m.hive.status,
-    ownerId: m.hive.ownerId,
-    memberCount: 0,
-    createdAt: m.hive.createdAt,
-  }))
+    const patch: Record<string, unknown> = { updatedAt: new Date() }
+    if (parsed.name !== undefined) patch.name = parsed.name
+    if (parsed.description !== undefined) patch.description = parsed.description
+    if (parsed.visibility !== undefined) patch.visibility = parsed.visibility
+    if (parsed.discoverable !== undefined) patch.discoverable = parsed.discoverable
 
-  return { success: true, data: summaries }
-}
-
-export type MyHiveSummary = {
-  id: string
-  name: string
-  memberCount: number
-  isPublic: boolean
-}
-
-export async function getMyHivesAction(): Promise<ActionResult<MyHiveSummary[]>> {
-  const userId = await requireAuth()
-
-  const memberships = await db.query.hiveMembers.findMany({
-    where: eq(hiveMembers.userId, userId),
-    with: { hive: true },
-  })
-
-  const summaries = await Promise.all(
-    memberships.map(async m => ({
-      id: m.hive.id,
-      name: m.hive.name,
-      memberCount: await getHiveMemberCount(m.hive.id),
-      isPublic: m.hive.visibility === 'PUBLIC',
-    })),
-  )
-
-  return { success: true, data: summaries }
-}
-
-export async function updateHiveAction(hiveId: string, input: {
-  name?: string
-  description?: string | null
-  visibility?: 'PRIVATE' | 'PUBLIC' | 'FRIENDS'
-  status?: 'ACTIVE' | 'COMPLETED'
-}): Promise<ActionResult> {
-  const userId = await requireAuth()
-  const parsed = updateHiveSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: parsed.error.issues[0].message }
-  await assertHiveAdmin(hiveId, userId)
-
-  const updates: Partial<typeof hives.$inferInsert> = {}
-  if (parsed.data.name !== undefined) updates.name = parsed.data.name
-  if (parsed.data.description !== undefined) updates.description = parsed.data.description
-  if (parsed.data.visibility !== undefined) updates.visibility = parsed.data.visibility
-  if (parsed.data.status !== undefined) updates.status = parsed.data.status
-  if (Object.keys(updates).length === 0) return { success: true, data: undefined }
-
-  await db.update(hives).set({ ...updates, updatedAt: new Date() }).where(eq(hives.id, hiveId))
-  return { success: true, data: undefined }
+    await db.update(hives).set(patch).where(eq(hives.id, parsed.hiveId))
+    return { success: true, data: undefined }
+  } catch (e) {
+    return { success: false, error: e instanceof Error ? e.message : 'Unknown error' }
+  }
 }
 
 export async function deleteHiveAction(hiveId: string): Promise<ActionResult> {

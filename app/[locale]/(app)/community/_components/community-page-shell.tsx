@@ -4,7 +4,8 @@ import { MyHivesPanel } from './sidebar/my-hives-panel'
 import { SuggestedWritersPanel } from './sidebar/suggested-writers-panel'
 import { ActiveSparksPanel } from './sidebar/active-sparks-panel'
 import type { FeedItem, SuggestedWriter, ActiveSparkEntry } from '@/lib/types/community'
-import type { MyHiveSummary } from '@/lib/actions/hive.actions'
+// TODO: replace with getUserHivesView projection post-H1-T7
+type MyHiveSummary = { id: string; name: string; memberCount: number; isPublic: boolean }
 
 export function CommunityPageShell({
   locale,

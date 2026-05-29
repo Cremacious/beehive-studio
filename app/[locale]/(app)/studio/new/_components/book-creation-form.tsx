@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { X } from 'lucide-react'
 import { createBookAction } from '@/lib/actions/book.actions'
 import { StepOne } from '../../_components/create-book-wizard/step-one'
@@ -67,6 +67,8 @@ type Props = {
 
 export function BookCreationForm({ locale, templates }: Props) {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const withHive = searchParams.get('withHive') === '1'
   const [step, setStep] = useState<Step>(1)
   const [direction, setDirection] = useState<'forward' | 'back'>('forward')
   const [form, setForm] = useState<FormData>(initial)
@@ -128,7 +130,11 @@ export function BookCreationForm({ locale, templates }: Props) {
         return
       }
 
-      router.push(`/${locale}/studio/${result.data.bookId}`)
+      if (withHive) {
+        router.push(`/${locale}/studio?createHive=${result.data.bookId}`)
+      } else {
+        router.push(`/${locale}/studio/${result.data.bookId}`)
+      }
     } finally {
       setSubmitting(false)
     }

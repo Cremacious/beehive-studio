@@ -2,7 +2,7 @@
 
 import { db } from '@/db'
 import {
-  books, binderItems, chapters, bookTemplates, bookPublishingMetadata,
+  books, binderItems, chapters, bookTemplates, bookPublishingMetadata, hives,
 } from '@/db/schema'
 import { eq, and, count, inArray, gt, ne, sql } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
@@ -27,6 +27,7 @@ export type BookSummary = {
   isPublished: boolean
   seriesName: string | null
   seriesNumber: number | null
+  hiveId: string | null
 }
 
 export type StudioStats = {
@@ -217,8 +218,10 @@ export async function getUserBooksAction(): Promise<
       updatedAt: books.updatedAt,
       seriesName: books.seriesName,
       seriesNumber: books.seriesNumber,
+      hiveId: hives.id,
     })
     .from(books)
+    .leftJoin(hives, eq(hives.bookId, books.id))
     .where(eq(books.userId, userId))
     .orderBy(sql`${books.updatedAt} DESC`)
 
@@ -279,6 +282,7 @@ export async function getUserBooksAction(): Promise<
       isPublished: book.status === 'PUBLISHED',
       seriesName: book.seriesName,
       seriesNumber: book.seriesNumber,
+      hiveId: book.hiveId,
     }
   })
 

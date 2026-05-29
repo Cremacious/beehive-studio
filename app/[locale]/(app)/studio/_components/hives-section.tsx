@@ -1,6 +1,7 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { Plus, Search } from 'lucide-react'
 import { HiveCard } from './hive-card'
 import { CreateHiveModal } from './create-hive-modal'
@@ -27,6 +28,24 @@ export function HivesSection({ hives }: Props) {
   const [membership, setMembership] = useState<MembershipFilter>('all')
   const [linkFilter, setLinkFilter] = useState<LinkFilter>('all')
   const [createOpen, setCreateOpen] = useState(false)
+  const [prelockBookId, setPrelockBookId] = useState<string | null>(null)
+
+  // Auto-open the modal when the studio page is loaded with ?createHive=<bookId>
+  // (the create-book wizard's ?withHive=1 path bounces here after creating the book).
+  const router = useRouter()
+  const pathname = usePathname()
+  const sp = useSearchParams()
+  const createHiveParam = sp.get('createHive')
+  useEffect(() => {
+    if (!createHiveParam) return
+    setPrelockBookId(createHiveParam)
+    setCreateOpen(true)
+    // Strip the query param so a refresh doesn't re-open the modal.
+    const next = new URLSearchParams(sp.toString())
+    next.delete('createHive')
+    const qs = next.toString()
+    router.replace(qs ? `${pathname}?${qs}` : pathname)
+  }, [createHiveParam, pathname, router, sp])
 
   const counts = useMemo(() => {
     let owned = 0
@@ -255,7 +274,14 @@ export function HivesSection({ hives }: Props) {
         </>
       )}
 
-      <CreateHiveModal open={createOpen} onOpenChange={setCreateOpen} />
+      <CreateHiveModal
+        open={createOpen}
+        onOpenChange={(v) => {
+          setCreateOpen(v)
+          if (!v) setPrelockBookId(null)
+        }}
+        prelockBookId={prelockBookId}
+      />
       {/* filterActive is currently only used as guard against showing the
           empty-state CTA on the no-match path — referenced to keep tsc happy
           in case future patches want the value. */}

@@ -101,7 +101,7 @@ export async function getHiveAction(hiveId: string): Promise<ActionResult<{
 
   const myMember = members.find(m => m.userId === userId)
   const isOwner = hive.ownerId === userId
-  const isEditor = isOwner || myMember?.role === 'EDITOR'
+  const isEditor = isOwner || myMember?.role === 'MODERATOR'
 
   return { success: true, data: { hive, members: members as HiveMemberRow[], isOwner, isEditor } }
 }
@@ -286,7 +286,7 @@ export async function removeMemberAction(hiveId: string, targetUserId: string): 
   return { success: true, data: undefined }
 }
 
-export async function updateMemberRoleAction(hiveId: string, targetUserId: string, role: 'CONTRIBUTOR' | 'EDITOR' | 'BETA_READER' | 'PROOFREADER' | 'OWNER'): Promise<ActionResult> {
+export async function updateMemberRoleAction(hiveId: string, targetUserId: string, role: 'OWNER' | 'MODERATOR' | 'CONTRIBUTOR' | 'BETA_READER'): Promise<ActionResult> {
   const userId = await requireAuth()
   await assertHiveOwner(hiveId, userId)
   await db.update(hiveMembers).set({ role }).where(and(eq(hiveMembers.hiveId, hiveId), eq(hiveMembers.userId, targetUserId)))

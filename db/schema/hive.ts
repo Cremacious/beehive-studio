@@ -1,12 +1,12 @@
-import { pgTable, text, timestamp, pgEnum, index, AnyPgColumn } from 'drizzle-orm/pg-core'
+import { pgTable, text, timestamp, pgEnum, index, uniqueIndex, boolean, jsonb, AnyPgColumn } from 'drizzle-orm/pg-core'
 import { createId } from '@paralleldrive/cuid2'
-import { relations } from 'drizzle-orm'
+import { relations, sql } from 'drizzle-orm'
 import { users } from './auth'
 import { books, chapters } from './books'
 
 export const hiveStatusEnum = pgEnum('hive_status', ['ACTIVE', 'COMPLETED'])
 export const hiveVisibilityEnum = pgEnum('hive_visibility', ['PRIVATE', 'PUBLIC', 'FRIENDS'])
-export const hiveMemberRoleEnum = pgEnum('hive_member_role', ['OWNER', 'CONTRIBUTOR', 'EDITOR', 'BETA_READER', 'PROOFREADER'])
+export const hiveMemberRoleEnum = pgEnum('hive_member_role', ['OWNER', 'MODERATOR', 'CONTRIBUTOR', 'BETA_READER'])
 export const hiveInviteStatusEnum = pgEnum('hive_invite_status', ['PENDING', 'ACCEPTED', 'DECLINED'])
 export const hiveSubmissionStatusEnum = pgEnum('hive_submission_status', ['PENDING', 'APPROVED', 'REJECTED'])
 export const hiveSuggestionStatusEnum = pgEnum('hive_suggestion_status', ['PENDING', 'ACCEPTED', 'REJECTED'])
@@ -14,15 +14,20 @@ export const hiveTaskStatusEnum = pgEnum('hive_task_status', ['OPEN', 'IN_PROGRE
 
 export const hives = pgTable('hives', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
-  bookId: text('book_id').references(() => books.id, { onDelete: 'set null' }),
+  bookId: text('book_id').references(() => books.id, { onDelete: 'cascade' }),
   ownerId: text('owner_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   description: text('description'),
   visibility: hiveVisibilityEnum('visibility').default('PRIVATE').notNull(),
+  discoverable: boolean('discoverable').default(false).notNull(),
   status: hiveStatusEnum('status').default('ACTIVE').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-})
+}, (t) => [
+  // Partial UNIQUE: one hive per book, NULL bookId allowed for standalones.
+  // H2 will tighten to plain UNIQUE once standalone hives have shadow books.
+  uniqueIndex('hives_book_id_unique').on(t.bookId).where(sql`book_id IS NOT NULL`),
+])
 
 export const hiveMembers = pgTable('hive_members', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
@@ -183,4 +188,34 @@ export const hiveDiscussionPostsRelations = relations(hiveDiscussionPosts, ({ on
 export const hiveChapterLocksRelations = relations(hiveChapterLocks, ({ one }) => ({
   chapter: one(chapters, { fields: [hiveChapterLocks.chapterId], references: [chapters.id] }),
   user: one(users, { fields: [hiveChapterLocks.userId], references: [users.id] }),
+}))
+
+export const hiveActivityTypeEnum = pgEnum('hive_activity_type', [
+  'chapter_submitted',
+  'chapter_submitted_approved',
+  'chapter_submitted_rejected',
+  'annotation_added',
+  'suggestion_proposed',
+  'suggestion_accepted',
+  'suggestion_rejected',
+  'buzz_posted',
+  'discussion_posted',
+  'member_joined',
+])
+
+export const hiveActivity = pgTable('hive_activity', {
+  id: text('id').primaryKey().$defaultFn(() => createId()),
+  hiveId: text('hive_id').notNull().references(() => hives.id, { onDelete: 'cascade' }),
+  actorId: text('actor_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  type: hiveActivityTypeEnum('type').notNull(),
+  subjectId: text('subject_id'),
+  payload: jsonb('payload'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (t) => [
+  index('hive_activity_hive_id_created_at_idx').on(t.hiveId, t.createdAt.desc()),
+])
+
+export const hiveActivityRelations = relations(hiveActivity, ({ one }) => ({
+  hive: one(hives, { fields: [hiveActivity.hiveId], references: [hives.id] }),
+  actor: one(users, { fields: [hiveActivity.actorId], references: [users.id] }),
 }))

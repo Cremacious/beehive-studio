@@ -42,7 +42,7 @@ export async function assertHiveAdmin(hiveId: string, userId: string) {
     where: and(
       eq(hiveMembers.hiveId, hiveId),
       eq(hiveMembers.userId, userId),
-      eq(hiveMembers.role, 'EDITOR'),
+      eq(hiveMembers.role, 'MODERATOR'),
     ),
     columns: { id: true },
   })

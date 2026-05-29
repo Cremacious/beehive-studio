@@ -2,9 +2,11 @@ import { db } from '@/db'
 import { bookTemplates } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { getUserBooksAction } from '@/lib/actions/book.actions'
+import { getUserHivesView } from '@/lib/actions/hive.actions'
 import { StudioEmptyState } from './_components/studio-empty-state'
 import { ContinueWritingHero } from './_components/continue-writing-hero'
 import { BookGrid } from './_components/book-grid'
+import { HivesSection } from './_components/hives-section'
 
 export default async function StudioPage({
   params,
@@ -13,16 +15,18 @@ export default async function StudioPage({
 }) {
   const { locale } = await params
 
-  const [templates, booksResult] = await Promise.all([
+  const [templates, booksResult, hivesResult] = await Promise.all([
     db
       .select({ id: bookTemplates.id, name: bookTemplates.name, genre: bookTemplates.genre })
       .from(bookTemplates)
       .where(eq(bookTemplates.isSystemTemplate, true))
       .orderBy(bookTemplates.name),
     getUserBooksAction(),
+    getUserHivesView(),
   ])
 
   const books = booksResult.success ? booksResult.data : []
+  const hives = hivesResult.success ? hivesResult.data : []
 
   if (books.length === 0) {
     return <StudioEmptyState locale={locale} templates={templates} />
@@ -50,6 +54,8 @@ export default async function StudioPage({
       </section>
 
       <BookGrid books={books} locale={locale} />
+
+      <HivesSection hives={hives} />
     </main>
   )
 }

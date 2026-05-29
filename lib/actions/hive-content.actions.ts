@@ -146,6 +146,8 @@ export async function getHiveOutlineView(hiveId: string): Promise<ActionResult<{
   outline: BinderItemRow | null
   chapters: Array<{ id: string; title: string; order: number }>
   viewerRole: HiveRole
+  lastEditedByUsername: string | null
+  lastEditedAt: Date | null
 }>> {
   const userId = await requireAuth()
   const role = await requireHiveMember(hiveId, userId)
@@ -165,6 +167,15 @@ export async function getHiveOutlineView(hiveId: string): Promise<ActionResult<{
     orderBy: [asc(binderItems.order)],
   })
 
+  let lastEditedByUsername: string | null = null
+  if (outline?.lastEditedBy) {
+    const profile = await db.query.userProfiles.findFirst({
+      where: eq(userProfiles.userId, outline.lastEditedBy),
+      columns: { username: true },
+    })
+    lastEditedByUsername = profile?.username ?? null
+  }
+
   return {
     success: true,
     data: {
@@ -172,6 +183,8 @@ export async function getHiveOutlineView(hiveId: string): Promise<ActionResult<{
       outline: outline ? toBinderItemRow(outline) : null,
       chapters: chapterItems,
       viewerRole: role,
+      lastEditedByUsername,
+      lastEditedAt: outline?.updatedAt ?? null,
     },
   }
 }

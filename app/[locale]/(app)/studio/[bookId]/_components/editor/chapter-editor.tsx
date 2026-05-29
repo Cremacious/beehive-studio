@@ -21,6 +21,7 @@ import { OverflowBanner } from '../overflow-banner'
 import { KeyboardCheatsheet } from './keyboard-cheatsheet'
 import { CharacterProfile } from './character-profile'
 import { WikiEntryEditor } from './wiki-entry-editor'
+import { WikiFolderRenderer } from './wiki-folder-renderer'
 import { ContainerView } from './container-view'
 import { FrontBackMatterRenderer, shouldUseFrontBackMatterRenderer } from '../front-back-matter'
 import { OutlineBoard } from '../outline/outline-board'
@@ -260,6 +261,9 @@ export function ChapterEditor() {
     }
     if (activeItem.type === 'wiki_entry') {
       return <WikiEntryEditor item={activeItem} />
+    }
+    if (activeItem.type === 'wiki_folder') {
+      return <WikiFolderRenderer item={activeItem} />
     }
     if (activeItem.type === 'part' || activeItem.type === 'research_folder') {
       return <ContainerView item={activeItem} />

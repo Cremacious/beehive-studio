@@ -1,6 +1,6 @@
 import { pgTable, text, timestamp, pgEnum, index, uniqueIndex, boolean, jsonb, AnyPgColumn } from 'drizzle-orm/pg-core'
 import { createId } from '@paralleldrive/cuid2'
-import { relations, sql } from 'drizzle-orm'
+import { relations } from 'drizzle-orm'
 import { users } from './auth'
 import { books, chapters } from './books'
 
@@ -14,7 +14,7 @@ export const hiveTaskStatusEnum = pgEnum('hive_task_status', ['OPEN', 'IN_PROGRE
 
 export const hives = pgTable('hives', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
-  bookId: text('book_id').references(() => books.id, { onDelete: 'cascade' }),
+  bookId: text('book_id').notNull().references(() => books.id, { onDelete: 'cascade' }),
   ownerId: text('owner_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   description: text('description'),
@@ -24,9 +24,7 @@ export const hives = pgTable('hives', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (t) => [
-  // Partial UNIQUE: one hive per book, NULL bookId allowed for standalones.
-  // H2 will tighten to plain UNIQUE once standalone hives have shadow books.
-  uniqueIndex('hives_book_id_unique').on(t.bookId).where(sql`book_id IS NOT NULL`),
+  uniqueIndex('hives_book_id_unique').on(t.bookId),
 ])
 
 export const hiveMembers = pgTable('hive_members', {
@@ -81,25 +79,6 @@ export const hiveComments = pgTable('hive_comments', {
   resolved: timestamp('resolved'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (t) => [index('hive_comments_chapter_id_idx').on(t.chapterId)])
-
-export const hiveOutlines = pgTable('hive_outlines', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
-  hiveId: text('hive_id').notNull().unique().references(() => hives.id, { onDelete: 'cascade' }),
-  content: text('content'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-})
-
-export const hiveWikiPages = pgTable('hive_wiki_pages', {
-  id: text('id').primaryKey().$defaultFn(() => createId()),
-  hiveId: text('hive_id').notNull().references(() => hives.id, { onDelete: 'cascade' }),
-  title: text('title').notNull(),
-  content: text('content'),
-  createdBy: text('created_by').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  updatedBy: text('updated_by').references(() => users.id, { onDelete: 'set null' }),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-}, (t) => [index('hive_wiki_pages_hive_id_idx').on(t.hiveId)])
 
 export const hiveTasks = pgTable('hive_tasks', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
@@ -161,15 +140,6 @@ export const hiveCommentsRelations = relations(hiveComments, ({ one }) => ({
   hive: one(hives, { fields: [hiveComments.hiveId], references: [hives.id] }),
   chapter: one(chapters, { fields: [hiveComments.chapterId], references: [chapters.id] }),
   author: one(users, { fields: [hiveComments.authorId], references: [users.id] }),
-}))
-
-export const hiveOutlinesRelations = relations(hiveOutlines, ({ one }) => ({
-  hive: one(hives, { fields: [hiveOutlines.hiveId], references: [hives.id] }),
-}))
-
-export const hiveWikiPagesRelations = relations(hiveWikiPages, ({ one }) => ({
-  hive: one(hives, { fields: [hiveWikiPages.hiveId], references: [hives.id] }),
-  creator: one(users, { fields: [hiveWikiPages.createdBy], references: [users.id] }),
 }))
 
 export const hiveTasksRelations = relations(hiveTasks, ({ one }) => ({

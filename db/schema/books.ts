@@ -4,11 +4,12 @@ import { relations } from 'drizzle-orm'
 import { users } from './auth'
 
 export const bookVisibilityEnum = pgEnum('book_visibility', ['PRIVATE', 'PUBLIC', 'FRIENDS'])
-export const bookStatusEnum = pgEnum('book_status', ['DRAFT', 'PUBLISHED'])
+export const bookStatusEnum = pgEnum('book_status', ['DRAFT', 'PUBLISHED', 'STANDALONE_HIVE_SHADOW'])
 export const chapterStatusEnum = pgEnum('chapter_status', ['IDEA', 'OUTLINE', 'FIRST_DRAFT', 'REVISED', 'FINAL'])
 export const binderItemTypeEnum = pgEnum('binder_item_type', [
   'part', 'chapter', 'front_matter', 'back_matter',
   'research_folder', 'research_note', 'character', 'outline',
+  'wiki_entry', 'wiki_folder',
 ])
 
 export const books = pgTable('books', {
@@ -57,9 +58,15 @@ export const binderItems = pgTable('binder_items', {
   title: text('title').notNull(),
   order: integer('order').default(0).notNull(),
   content: jsonb('content'),
+  authorId: text('author_id').references(() => users.id, { onDelete: 'set null' }),
+  lastEditedBy: text('last_edited_by').references(() => users.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-}, (t) => [index('binder_items_book_id_idx').on(t.bookId), index('binder_items_parent_id_idx').on(t.parentId)])
+}, (t) => [
+  index('binder_items_book_id_idx').on(t.bookId),
+  index('binder_items_parent_id_idx').on(t.parentId),
+  index('binder_items_book_type_idx').on(t.bookId, t.type),
+])
 
 export const chapters = pgTable('chapters', {
   id: text('id').primaryKey().$defaultFn(() => createId()),

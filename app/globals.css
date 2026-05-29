@@ -108,6 +108,23 @@
   --type-research:     oklch(0.74 0.080 155);
   --type-character:    oklch(0.72 0.110 35);
 
+  /* ── Wiki category accents (14) ────────────────────────────────── */
+  /* Wiki category accents (oklch — match DP1 token system) */
+  --wiki-character:   oklch(0.74 0.13 80);   /* warm gold */
+  --wiki-location:    oklch(0.72 0.12 165);  /* teal */
+  --wiki-lore:        oklch(0.70 0.13 290);  /* violet */
+  --wiki-plot:        oklch(0.72 0.16 25);   /* warm red */
+  --wiki-artifact:    oklch(0.78 0.10 65);   /* amber */
+  --wiki-faction:     oklch(0.68 0.12 245);  /* steel blue */
+  --wiki-culture:     oklch(0.72 0.11 130);  /* sage */
+  --wiki-language:    oklch(0.70 0.10 200);  /* slate cyan */
+  --wiki-biology:     oklch(0.74 0.13 100);  /* leafy yellow-green */
+  --wiki-theme:       oklch(0.70 0.13 320);  /* magenta */
+  --wiki-economy:     oklch(0.74 0.11 55);   /* copper */
+  --wiki-terminology: oklch(0.68 0.05 270);  /* lavender gray */
+  --wiki-timeline:    oklch(0.74 0.10 180);  /* aqua */
+  --wiki-other:       oklch(0.68 0.04 270);  /* neutral */
+
   /* ── Validation ────────────────────────────────────────────────── */
   --success: oklch(0.72 0.130 152);
   --warning: oklch(0.80 0.140 80);

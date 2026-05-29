@@ -30,3 +30,35 @@ export function extractWordCount(json: unknown): number {
 
   return count
 }
+
+/**
+ * Strips a TipTap JSON document (or legacy plain string) to plain text and
+ * truncates to `maxLen` characters with an ellipsis. Used for hive wiki excerpts.
+ */
+export function tipTapToPlain(value: unknown, maxLen: number): string {
+  let out = ''
+  function walk(node: unknown): void {
+    if (out.length >= maxLen) return
+    if (node === null || node === undefined) return
+    if (typeof node === 'string') {
+      out += (out ? ' ' : '') + node
+      return
+    }
+    if (typeof node !== 'object') return
+    const n = node as TipTapNode
+    if (typeof n.text === 'string') {
+      out += (out && !out.endsWith(' ') ? ' ' : '') + n.text
+      return
+    }
+    if (Array.isArray(n.content)) {
+      for (const child of n.content) {
+        if (out.length >= maxLen) break
+        walk(child)
+      }
+    }
+  }
+  walk(value)
+  const trimmed = out.replace(/\s+/g, ' ').trim()
+  if (trimmed.length <= maxLen) return trimmed
+  return trimmed.slice(0, maxLen).trimEnd() + '…'
+}

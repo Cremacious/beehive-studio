@@ -1,12 +1,261 @@
 'use server'
 
 import { db } from '@/db'
-import { hiveOutlines, hiveWikiPages, hiveDiscussionPosts, hiveTasks, notifications } from '@/db/schema'
-import { eq, asc } from 'drizzle-orm'
+import { hiveOutlines, hiveWikiPages, hiveDiscussionPosts, hiveTasks, notifications, hives, binderItems, userProfiles, chapters } from '@/db/schema'
+import { eq, and, asc, inArray } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { assertHiveMember, assertHiveAdmin } from './_helpers'
 import { createTaskSchema, updateTaskSchema } from '@/lib/validations/hive'
+import { requireHiveMember, type HiveRole } from '@/lib/hive/permissions'
+import { tipTapToPlain } from '@/lib/tiptap-utils'
+import type { WikiCategory } from '@/lib/wiki/category-templates'
+import type { BinderItemRow } from './binder.actions'
+import type { ChapterStatus } from '@/lib/books/is-chapter-reader-visible'
 import type { ActionResult } from './book.actions'
+
+// ── H2 T9: Hive content views (binder-backed) ─────────────────────────────────
+
+export type HiveWikiEntry = {
+  id: string
+  title: string
+  category: WikiCategory
+  tags: string[]
+  excerpt: string
+  authorId: string | null
+  authorUsername: string | null
+  authorAvatarUrl: string | null
+  lastEditedBy: string | null
+  lastEditedAt: Date
+  parentId: string | null
+}
+
+export type HiveWikiFolder = {
+  id: string
+  title: string
+  description: string | null
+  parentId: string | null
+  entryCount: number
+}
+
+export type HiveWikiViewData = {
+  bookId: string
+  entries: HiveWikiEntry[]
+  folders: HiveWikiFolder[]
+  viewerRole: HiveRole
+  authorUserId: string
+}
+
+function toBinderItemRow(
+  item: typeof binderItems.$inferSelect,
+  chapterId: string | null = null,
+  chapterStatus: ChapterStatus | null = null,
+): BinderItemRow {
+  return {
+    id: item.id,
+    bookId: item.bookId,
+    parentId: item.parentId,
+    type: item.type,
+    title: item.title,
+    order: item.order,
+    content: item.content,
+    authorId: item.authorId,
+    lastEditedBy: item.lastEditedBy,
+    chapterId,
+    chapterStatus,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
+  }
+}
+
+export async function getHiveWikiView(hiveId: string): Promise<ActionResult<HiveWikiViewData>> {
+  const userId = await requireAuth()
+  const role = await requireHiveMember(hiveId, userId)
+  const hive = await db.query.hives.findFirst({
+    where: eq(hives.id, hiveId),
+    columns: { bookId: true },
+    with: { book: { columns: { userId: true } } },
+  })
+  if (!hive || !hive.bookId || !hive.book) return { success: false, error: 'HIVE_NOT_FOUND' }
+
+  const items = await db.query.binderItems.findMany({
+    where: and(
+      eq(binderItems.bookId, hive.bookId),
+      inArray(binderItems.type, ['wiki_entry', 'wiki_folder', 'character', 'research_folder']),
+    ),
+    orderBy: [asc(binderItems.order)],
+  })
+
+  const authorIds = Array.from(
+    new Set(items.flatMap(i => [i.authorId, i.lastEditedBy]).filter((v): v is string => !!v)),
+  )
+  const profiles = authorIds.length
+    ? await db.query.userProfiles.findMany({
+        where: inArray(userProfiles.userId, authorIds),
+        columns: { userId: true, username: true, avatarUrl: true },
+      })
+    : []
+  const profileByUserId = new Map(profiles.map(p => [p.userId, p]))
+
+  const entries: HiveWikiEntry[] = items
+    .filter(i => i.type === 'wiki_entry' || i.type === 'character')
+    .map(i => {
+      const content = (i.content ?? {}) as { category?: WikiCategory; body?: unknown; tags?: string[] }
+      const profile = i.authorId ? profileByUserId.get(i.authorId) : null
+      return {
+        id: i.id,
+        title: i.title,
+        category: i.type === 'character' ? 'CHARACTER' : (content.category ?? 'OTHER'),
+        tags: Array.isArray(content.tags) ? content.tags : [],
+        excerpt: tipTapToPlain(content.body, 120),
+        authorId: i.authorId,
+        authorUsername: profile?.username ?? null,
+        authorAvatarUrl: profile?.avatarUrl ?? null,
+        lastEditedBy: i.lastEditedBy,
+        lastEditedAt: i.updatedAt,
+        parentId: i.parentId,
+      }
+    })
+
+  const folders: HiveWikiFolder[] = items
+    .filter(i => i.type === 'wiki_folder' || i.type === 'research_folder')
+    .map(i => {
+      const c = (i.content ?? {}) as { description?: string }
+      return {
+        id: i.id,
+        title: i.title,
+        description: c.description ?? null,
+        parentId: i.parentId,
+        entryCount: entries.filter(e => e.parentId === i.id).length,
+      }
+    })
+
+  return {
+    success: true,
+    data: {
+      bookId: hive.bookId,
+      entries,
+      folders,
+      viewerRole: role,
+      authorUserId: hive.book.userId,
+    },
+  }
+}
+
+export async function getHiveOutlineView(hiveId: string): Promise<ActionResult<{
+  bookId: string
+  outline: BinderItemRow | null
+  chapters: Array<{ id: string; title: string; order: number }>
+  viewerRole: HiveRole
+}>> {
+  const userId = await requireAuth()
+  const role = await requireHiveMember(hiveId, userId)
+  const hive = await db.query.hives.findFirst({
+    where: eq(hives.id, hiveId),
+    columns: { bookId: true },
+  })
+  if (!hive || !hive.bookId) return { success: false, error: 'HIVE_NOT_FOUND' }
+
+  const outline = await db.query.binderItems.findFirst({
+    where: and(eq(binderItems.bookId, hive.bookId), eq(binderItems.type, 'outline')),
+  })
+
+  const chapterItems = await db.query.binderItems.findMany({
+    where: and(eq(binderItems.bookId, hive.bookId), eq(binderItems.type, 'chapter')),
+    columns: { id: true, title: true, order: true },
+    orderBy: [asc(binderItems.order)],
+  })
+
+  return {
+    success: true,
+    data: {
+      bookId: hive.bookId,
+      outline: outline ? toBinderItemRow(outline) : null,
+      chapters: chapterItems,
+      viewerRole: role,
+    },
+  }
+}
+
+export async function getHiveNotesView(hiveId: string): Promise<ActionResult<{
+  bookId: string
+  notes: Array<BinderItemRow & { authorUsername: string | null }>
+  viewerRole: HiveRole
+}>> {
+  const userId = await requireAuth()
+  const role = await requireHiveMember(hiveId, userId)
+  const hive = await db.query.hives.findFirst({
+    where: eq(hives.id, hiveId),
+    columns: { bookId: true },
+  })
+  if (!hive || !hive.bookId) return { success: false, error: 'HIVE_NOT_FOUND' }
+
+  const items = await db.query.binderItems.findMany({
+    where: and(eq(binderItems.bookId, hive.bookId), eq(binderItems.type, 'research_note')),
+    orderBy: [asc(binderItems.order)],
+  })
+
+  const authorIds = Array.from(new Set(items.map(i => i.authorId).filter((v): v is string => !!v)))
+  const profiles = authorIds.length
+    ? await db.query.userProfiles.findMany({
+        where: inArray(userProfiles.userId, authorIds),
+        columns: { userId: true, username: true },
+      })
+    : []
+  const usernameByUserId = new Map(profiles.map(p => [p.userId, p.username]))
+
+  const notes = items.map(i => ({
+    ...toBinderItemRow(i),
+    authorUsername: i.authorId ? (usernameByUserId.get(i.authorId) ?? null) : null,
+  }))
+
+  return {
+    success: true,
+    data: {
+      bookId: hive.bookId,
+      notes,
+      viewerRole: role,
+    },
+  }
+}
+
+export async function getBinderTreeForHiveAction(
+  bookId: string,
+  hiveId: string,
+): Promise<ActionResult<BinderItemRow[]>> {
+  const userId = await requireAuth()
+  await requireHiveMember(hiveId, userId)
+
+  const hive = await db.query.hives.findFirst({
+    where: eq(hives.id, hiveId),
+    columns: { bookId: true },
+  })
+  if (!hive || hive.bookId !== bookId) return { success: false, error: 'HIVE_NOT_FOUND' }
+
+  const items = await db.query.binderItems.findMany({
+    where: eq(binderItems.bookId, bookId),
+    orderBy: [asc(binderItems.order)],
+  })
+
+  const chapterRows = await db.query.chapters.findMany({
+    where: eq(chapters.bookId, bookId),
+    columns: { id: true, binderItemId: true, status: true },
+  })
+  const chapterByBinderId = new Map(
+    chapterRows.map(c => [c.binderItemId, { id: c.id, status: c.status as ChapterStatus }]),
+  )
+
+  const rows: BinderItemRow[] = items.map(item => {
+    const ch =
+      item.type === 'chapter' || item.type === 'front_matter' || item.type === 'back_matter'
+        ? (chapterByBinderId.get(item.id) ?? null)
+        : null
+    return toBinderItemRow(item, ch?.id ?? null, ch?.status ?? null)
+  })
+
+  return { success: true, data: rows }
+}
+
+// ── Legacy CRUD (T10 deletes) ────────────────────────────────────────────────
 
 // ── Outline ───────────────────────────────────────────────────────────────────
 

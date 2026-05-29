@@ -112,3 +112,56 @@ export async function requireBinderWritePermission(
       return
   }
 }
+
+/**
+ * Same shape as `requireBinderWritePermission`, but for CREATE flows where
+ * the binder item doesn't exist yet — the caller supplies the intended `type`
+ * directly instead of us looking it up.
+ */
+export async function requireBinderCreatePermission(
+  bookId: string,
+  type: BinderItemTypeForPermission,
+  userId: string,
+): Promise<void> {
+  // 1. Author bypass
+  const book = await db.query.books.findFirst({
+    where: eq(books.id, bookId),
+    columns: { userId: true },
+  })
+  if (!book) throw new Error('BOOK_NOT_FOUND')
+  if (book.userId === userId) return
+
+  // 2. Resolve hive for this book
+  const hive = await db.query.hives.findFirst({
+    where: eq(hives.bookId, bookId),
+    columns: { id: true },
+  })
+  if (!hive) throw new Error('NOT_AUTHORIZED')
+
+  // 3. Resolve role
+  const member = await db.query.hiveMembers.findFirst({
+    where: and(eq(hiveMembers.hiveId, hive.id), eq(hiveMembers.userId, userId)),
+    columns: { role: true },
+  })
+  if (!member) throw new Error('NOT_AUTHORIZED')
+  const role = member.role as HiveRole
+
+  // 4. Type-based branch (mirrors requireBinderWritePermission)
+  switch (type) {
+    case 'chapter':
+    case 'part':
+    case 'front_matter':
+    case 'back_matter':
+      throw new Error('NOT_AUTHORIZED')   // H3 owns the submission flow
+    case 'outline':
+      if (!canEditOutline(role)) throw new Error('NOT_AUTHORIZED')
+      return
+    case 'wiki_entry':
+    case 'wiki_folder':
+    case 'character':
+    case 'research_note':
+    case 'research_folder':
+      if (!canEditWiki(role)) throw new Error('NOT_AUTHORIZED')
+      return
+  }
+}

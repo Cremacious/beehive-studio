@@ -5,6 +5,10 @@ import { books, binderItems, chapters } from '@/db/schema'
 import { eq, and, asc } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { assertBookOwner } from './_helpers'
+import {
+  requireBinderWritePermission,
+  requireBinderCreatePermission,
+} from '@/lib/hive/permissions'
 import { isBookOverflow } from '@/lib/billing/book-overflow'
 import {
   createBinderItemSchema,
@@ -21,10 +25,15 @@ export type BinderItemRow = {
   id: string
   bookId: string
   parentId: string | null
-  type: 'part' | 'chapter' | 'front_matter' | 'back_matter' | 'research_folder' | 'research_note' | 'character' | 'outline'
+  type:
+    | 'part' | 'chapter' | 'front_matter' | 'back_matter'
+    | 'research_folder' | 'research_note' | 'character' | 'outline'
+    | 'wiki_entry' | 'wiki_folder'
   title: string
   order: number
   content: unknown
+  authorId: string | null
+  lastEditedBy: string | null
   chapterId: string | null  // Populated for type === 'chapter'
   chapterStatus: ChapterStatus | null  // Populated for type === 'chapter' (or front/back matter)
   createdAt: Date
@@ -50,6 +59,16 @@ async function assertBinderOwner(
   }
 
   return { bookId: item[0].bookId }
+}
+
+/** Pure lookup: returns the book a binder item belongs to. */
+async function getBinderItemBook(binderItemId: string): Promise<{ bookId: string }> {
+  const row = await db.query.binderItems.findFirst({
+    where: eq(binderItems.id, binderItemId),
+    columns: { bookId: true },
+  })
+  if (!row) throw new Error('Binder item not found')
+  return { bookId: row.bookId }
 }
 
 // ─── Actions ──────────────────────────────────────────────────────────────────
@@ -92,6 +111,8 @@ export async function getBinderTreeAction(
       title: item.title,
       order: item.order,
       content: item.content,
+      authorId: item.authorId,
+      lastEditedBy: item.lastEditedBy,
       chapterId: chapter?.id ?? null,
       chapterStatus: chapter?.status ?? null,
       createdAt: item.createdAt,
@@ -121,7 +142,7 @@ export async function createBinderItemAction(input: {
     return { success: false, error: parsed.error.issues[0].message }
   }
 
-  await assertBookOwner(parsed.data.bookId, userId)
+  await requireBinderCreatePermission(parsed.data.bookId, parsed.data.type, userId)
 
   if (await isBookOverflow(userId, parsed.data.bookId)) {
     return { success: false, error: 'FREE_LIMIT_REACHED' }
@@ -138,6 +159,8 @@ export async function createBinderItemAction(input: {
       title: parsed.data.title,
       order: parsed.data.order,
       content: parsed.data.content ?? null,
+      authorId: userId,
+      lastEditedBy: userId,
     })
 
     let chapterId: string | null = null
@@ -178,18 +201,20 @@ export async function updateBinderItemAction(
     return { success: false, error: parsed.error.issues[0].message }
   }
 
-  const { bookId: ownerBookId } = await assertBinderOwner(id, userId)
+  const { bookId: ownerBookId } = await getBinderItemBook(id)
+  await requireBinderWritePermission(ownerBookId, id, userId)
 
   if (await isBookOverflow(userId, ownerBookId)) {
     return { success: false, error: 'FREE_LIMIT_REACHED' }
   }
 
-  const updates: Record<string, unknown> = {}
+  const updates: Record<string, unknown> = { lastEditedBy: userId }
   if (parsed.data.title !== undefined) updates.title = parsed.data.title
   if (parsed.data.content !== undefined) updates.content = parsed.data.content
   if (parsed.data.parentId !== undefined) updates.parentId = parsed.data.parentId
 
-  if (Object.keys(updates).length === 0) {
+  // Only-lastEditedBy keys means no real change — bail without write.
+  if (Object.keys(updates).length === 1) {
     return { success: true, data: undefined }
   }
 
@@ -205,7 +230,8 @@ export async function updateBinderItemAction(
  */
 export async function deleteBinderItemAction(id: string): Promise<ActionResult> {
   const userId = await requireAuth()
-  const { bookId } = await assertBinderOwner(id, userId)
+  const { bookId } = await getBinderItemBook(id)
+  await requireBinderWritePermission(bookId, id, userId)
 
   if (await isBookOverflow(userId, bookId)) {
     return { success: false, error: 'FREE_LIMIT_REACHED' }
@@ -250,7 +276,11 @@ export async function reorderBinderItemsAction(
     return { success: false, error: parsed.error.issues[0].message }
   }
 
-  await assertBookOwner(bookId, userId)
+  // Reorder operates across many items at once. We gate the whole batch by
+  // the FIRST affected item's write permission. Mixed-type reorders that
+  // would require different permissions per item are acceptable in v1
+  // because the UI only emits reorders the user is allowed to make.
+  await requireBinderWritePermission(bookId, parsed.data[0].id, userId)
 
   if (await isBookOverflow(userId, bookId)) {
     return { success: false, error: 'FREE_LIMIT_REACHED' }

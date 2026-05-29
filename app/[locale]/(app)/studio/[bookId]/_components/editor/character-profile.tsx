@@ -5,6 +5,8 @@ import type { BinderItemRow } from '@/lib/actions/binder.actions'
 import { updateBinderItemAction } from '@/lib/actions/binder.actions'
 import { useBookEditor } from '../book-editor-provider'
 import { SaveStatusBadge, type FormSaveStatus } from '../front-back-matter/save-status-badge'
+import { TagChipStrip } from './tag-chip-strip'
+import { normalizeTags } from '@/lib/wiki/tags'
 
 // DP3 Task 2 — Character profile sheet-style rewrite.
 //
@@ -31,6 +33,7 @@ type CharacterContent = {
   arc?: string | null
   relationships?: Relationship[] | null
   notes?: string | null
+  tags?: string[] | null
 }
 
 // Legacy shape — anything not in the new shape gets folded in.
@@ -289,6 +292,13 @@ export function CharacterProfile({ item }: Props) {
                   value={c.pronouns ?? ''}
                   placeholder="Pronouns"
                   onCommit={v => setField('pronouns', v || null)}
+                />
+              </div>
+              <div className="mt-3">
+                <TagChipStrip
+                  tags={c.tags ?? []}
+                  onChange={next => setField('tags', normalizeTags(next))}
+                  accentColor="--wiki-character"
                 />
               </div>
             </div>

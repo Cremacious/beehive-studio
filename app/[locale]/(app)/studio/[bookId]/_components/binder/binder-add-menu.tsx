@@ -4,6 +4,9 @@ import { useState } from 'react'
 import { useBookEditor } from '../book-editor-provider'
 import { createBinderItemAction } from '@/lib/actions/binder.actions'
 import type { BinderItemRow } from '@/lib/actions/binder.actions'
+import { CATEGORY_TEMPLATE_MAP } from '@/lib/wiki/category-templates'
+import type { WikiCategory } from '@/lib/wiki/category-templates'
+import { WikiCategoryPicker } from './wiki-category-picker'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -18,6 +21,8 @@ import {
   StickyNote,
   User as UserIcon,
   Layout as LayoutIcon,
+  NotebookPen,
+  FolderTree,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -28,20 +33,26 @@ type AddOption = {
   subtitle: string
   Icon: LucideIcon
   tint: string
+  special?: 'wiki-picker'
 }
 
 const MANUSCRIPT_OPTIONS: AddOption[] = [
-  { type: 'chapter',      label: 'Chapter',        defaultTitle: 'Untitled Chapter',    subtitle: 'The actual prose. Opens in the editor.',     Icon: FileText,   tint: 'var(--type-chapter)' },
-  { type: 'part',         label: 'Collection',     defaultTitle: 'Untitled Collection', subtitle: 'A group of chapters (e.g., "Part One").',    Icon: BookOpen,   tint: 'var(--type-chapter)' },
-  { type: 'front_matter', label: 'Front matter',   defaultTitle: 'Front matter',        subtitle: 'Title page, dedication, copyright.',         Icon: ScrollText, tint: 'var(--type-front-matter)' },
-  { type: 'back_matter',  label: 'Back matter',    defaultTitle: 'Back matter',         subtitle: 'Acknowledgments, about the author.',         Icon: ScrollText, tint: 'var(--type-back-matter)' },
+  { type: 'chapter',      label: 'Chapter',           defaultTitle: 'Untitled Chapter',    subtitle: 'The actual prose. Opens in the editor.',     Icon: FileText,   tint: 'var(--type-chapter)' },
+  { type: 'part',         label: 'Part (collection)', defaultTitle: 'Untitled Part',       subtitle: 'A group of chapters (e.g., "Part One").',    Icon: BookOpen,   tint: 'var(--type-chapter)' },
+  { type: 'front_matter', label: 'Front matter',      defaultTitle: 'Front matter',        subtitle: 'Title page, dedication, copyright.',         Icon: ScrollText, tint: 'var(--type-front-matter)' },
+  { type: 'back_matter',  label: 'Back matter',       defaultTitle: 'Back matter',         subtitle: 'Acknowledgments, about the author.',         Icon: ScrollText, tint: 'var(--type-back-matter)' },
 ]
 
-const RESEARCH_OPTIONS: AddOption[] = [
-  { type: 'research_folder', label: 'Research folder', defaultTitle: 'Research',           subtitle: 'Container for your reference materials.',     Icon: Folder,      tint: 'var(--type-research)' },
-  { type: 'research_note',   label: 'Research note',   defaultTitle: 'Untitled note',      subtitle: 'Freeform notes — world-building, ideas.',     Icon: StickyNote,  tint: 'var(--type-research)' },
-  { type: 'character',       label: 'Character',       defaultTitle: 'Untitled Character', subtitle: 'Name, traits, backstory for one character.',  Icon: UserIcon,    tint: 'var(--type-character)' },
-  { type: 'outline',         label: 'Outline',         defaultTitle: 'Untitled Outline',   subtitle: 'Outline of a chapter or arc.',                Icon: LayoutIcon,  tint: 'var(--type-outline)' },
+const WORLDBUILDING_OPTIONS: AddOption[] = [
+  { type: 'character',   label: 'Character',     defaultTitle: 'Untitled Character', subtitle: 'Name, traits, backstory for one character.', Icon: UserIcon,    tint: 'var(--type-character)' },
+  { type: 'wiki_entry',  label: 'Wiki Entry ▸',  defaultTitle: '',                   subtitle: '13 categories — pick one to start.',          Icon: NotebookPen, tint: 'var(--wiki-other)', special: 'wiki-picker' },
+  { type: 'wiki_folder', label: 'Wiki Folder',   defaultTitle: 'Untitled Folder',    subtitle: 'A container for wiki entries.',               Icon: FolderTree,  tint: 'var(--wiki-other)' },
+]
+
+const PLANNING_OPTIONS: AddOption[] = [
+  { type: 'outline',         label: 'Outline',         defaultTitle: 'Untitled Outline', subtitle: 'Beat sheet — optional acts.', Icon: LayoutIcon, tint: 'var(--type-outline)' },
+  { type: 'research_note',   label: 'Research note',   defaultTitle: 'Untitled note',    subtitle: 'Freeform notes.',             Icon: StickyNote, tint: 'var(--type-research)' },
+  { type: 'research_folder', label: 'Research folder', defaultTitle: 'Research',         subtitle: 'Container for notes.',        Icon: Folder,     tint: 'var(--type-research)' },
 ]
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -79,9 +90,14 @@ function MenuItem({
 export function BinderAddMenu() {
   const { bookId, binderItems, addBinderItem, setActiveItemId, setPendingRenameId } = useBookEditor()
   const [open, setOpen] = useState(false)
+  const [pickerOpen, setPickerOpen] = useState(false)
 
   async function handleAdd(option: AddOption) {
     setOpen(false)
+    if (option.special === 'wiki-picker') {
+      setPickerOpen(true)
+      return
+    }
     const rootItems = binderItems.filter(i => i.parentId === null)
     const maxOrder = rootItems.length > 0 ? Math.max(...rootItems.map(i => i.order)) : -1
     const order = maxOrder + 1
@@ -115,9 +131,46 @@ export function BinderAddMenu() {
         createdAt: new Date(),
         updatedAt: new Date(),
       })
-      // Open the new item in the editor and immediately enter rename mode so
-      // the user can name it before doing anything else. Reuses the
-      // pendingRenameId mechanism added in SP2 Task 5.
+      setActiveItemId(result.data.id)
+      setPendingRenameId(result.data.id)
+    } else {
+      console.error('createBinderItemAction failed:', result.error)
+    }
+  }
+
+  async function handlePickCategory(category: WikiCategory) {
+    setPickerOpen(false)
+    const template = CATEGORY_TEMPLATE_MAP[category]
+    const rootItems = binderItems.filter(i => i.parentId === null)
+    const maxOrder = rootItems.length > 0 ? Math.max(...rootItems.map(i => i.order)) : -1
+    const order = maxOrder + 1
+    const title = `New ${template.label}`
+    const content = { category, body: template.defaultBody, tags: [] }
+
+    const result = await createBinderItemAction({
+      bookId,
+      parentId: null,
+      type: 'wiki_entry',
+      title,
+      order,
+      content,
+    })
+    if (result.success) {
+      addBinderItem({
+        id: result.data.id,
+        bookId,
+        parentId: null,
+        type: 'wiki_entry',
+        title,
+        order,
+        content,
+        authorId: null,
+        lastEditedBy: null,
+        chapterId: result.data.chapterId,
+        chapterStatus: result.data.chapterId ? 'FIRST_DRAFT' : null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
       setActiveItemId(result.data.id)
       setPendingRenameId(result.data.id)
     } else {
@@ -126,28 +179,33 @@ export function BinderAddMenu() {
   }
 
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger asChild>
-        <button
-          className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-brand hover:bg-brand-hover px-3 py-2 text-[13px] font-bold font-comfortaa text-brand-ink transition-colors shadow-sm tracking-tight"
-          title="Add chapter, collection, character, and more"
-        >
-          <Plus size={14} strokeWidth={2.5} />
-          <span>Add</span>
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" side="top" className="w-72 p-1.5 rounded-lg border border-border bg-popover shadow-lg">
-        <SectionLabel>Manuscript</SectionLabel>
-        {MANUSCRIPT_OPTIONS.map(opt => (
-          <MenuItem key={opt.type} option={opt} onClick={() => handleAdd(opt)} />
-        ))}
-        <SectionLabel>
-          Research <span className="font-normal normal-case text-muted-foreground/70">(only you can see these)</span>
-        </SectionLabel>
-        {RESEARCH_OPTIONS.map(opt => (
-          <MenuItem key={opt.type} option={opt} onClick={() => handleAdd(opt)} />
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      <DropdownMenu open={open} onOpenChange={setOpen}>
+        <DropdownMenuTrigger asChild>
+          <button
+            className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-brand hover:bg-brand-hover px-3 py-2 text-[13px] font-bold font-comfortaa text-brand-ink transition-colors shadow-sm tracking-tight"
+            title="Add chapter, collection, character, and more"
+          >
+            <Plus size={14} strokeWidth={2.5} />
+            <span>Add</span>
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" side="top" className="w-72 p-1.5 rounded-lg border border-border bg-popover shadow-lg">
+          <SectionLabel>Manuscript</SectionLabel>
+          {MANUSCRIPT_OPTIONS.map(opt => (
+            <MenuItem key={opt.type} option={opt} onClick={() => handleAdd(opt)} />
+          ))}
+          <SectionLabel>Worldbuilding</SectionLabel>
+          {WORLDBUILDING_OPTIONS.map(opt => (
+            <MenuItem key={opt.type} option={opt} onClick={() => handleAdd(opt)} />
+          ))}
+          <SectionLabel>Planning</SectionLabel>
+          {PLANNING_OPTIONS.map(opt => (
+            <MenuItem key={opt.type} option={opt} onClick={() => handleAdd(opt)} />
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <WikiCategoryPicker open={pickerOpen} onOpenChange={setPickerOpen} onPick={handlePickCategory} />
+    </>
   )
 }

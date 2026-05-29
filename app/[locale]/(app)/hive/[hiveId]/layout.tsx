@@ -13,17 +13,11 @@ export default async function HiveLayout({
   const result = await getHiveAction(hiveId).catch(() => null)
   if (!result?.success) notFound()
 
-  const { hive, isOwner, isEditor } = result.data
+  const { hive } = result.data
 
   return (
     <div className="flex flex-1 overflow-hidden h-[calc(100vh-56px)]">
-      <HiveSidebar
-        hiveId={hiveId}
-        locale={locale}
-        hiveName={hive.name}
-        isOwner={isOwner}
-        isEditor={isEditor}
-      />
+      <HiveSidebar hiveId={hiveId} locale={locale} hiveName={hive.name} />
       <div className="flex-1 overflow-y-auto">{children}</div>
     </div>
   )

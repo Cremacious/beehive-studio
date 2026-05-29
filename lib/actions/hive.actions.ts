@@ -9,6 +9,7 @@ import { getUserPremiumStatus, FREE_HIVE_LIMIT, FREE_HIVE_MEMBER_LIMIT } from '@
 import { createHiveSchema, updateHiveSchema } from '@/lib/validations/hive'
 import { getBookHive } from '@/lib/hive/get-book-hive'
 import { requireHiveMod } from '@/lib/hive/permissions'
+import { recordHiveActivity } from '@/lib/hive/record-activity'
 import { createId } from '@paralleldrive/cuid2'
 import type { ActionResult } from './book.actions'
 
@@ -233,6 +234,13 @@ export async function acceptHiveInviteAction(inviteId: string): Promise<ActionRe
   await db.transaction(async (tx) => {
     await tx.update(hiveInvites).set({ status: 'ACCEPTED' }).where(eq(hiveInvites.id, inviteId))
     await tx.insert(hiveMembers).values({ hiveId: invite.hiveId, userId, role: invite.role })
+  })
+  await recordHiveActivity({
+    hiveId: invite.hiveId,
+    actorId: userId,
+    type: 'member_joined',
+    subjectId: null,
+    payload: { role: invite.role },
   })
   return { success: true, data: { hiveId: invite.hiveId } }
 }

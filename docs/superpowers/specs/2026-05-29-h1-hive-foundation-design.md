@@ -93,7 +93,7 @@ CREATE TABLE hive_activity (
   id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   hive_id     uuid NOT NULL REFERENCES hives(id) ON DELETE CASCADE,
   actor_id    uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  type        text NOT NULL,    -- 'chapter_submitted' | 'discussion_posted' | 'annotation_added' | 'suggestion_proposed' | 'suggestion_accepted' | 'buzz_posted' | 'member_joined'
+  type        text NOT NULL,    -- 'chapter_submitted' | 'chapter_submitted_approved' | 'chapter_submitted_rejected' | 'annotation_added' | 'suggestion_proposed' | 'suggestion_accepted' | 'suggestion_rejected' | 'buzz_posted' | 'discussion_posted' | 'member_joined'
   subject_id  uuid,             -- nullable; e.g. chapter id, post id
   payload     jsonb,            -- denormalized title/excerpt for cheap reads
   created_at  timestamp DEFAULT now() NOT NULL

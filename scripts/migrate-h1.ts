@@ -63,8 +63,10 @@ async function main() {
   await sql`UPDATE hive_invites SET role = 'CONTRIBUTOR' WHERE role = 'PROOFREADER'`
   console.log('✓ EDITOR → MODERATOR and PROOFREADER → CONTRIBUTOR rewrites done')
 
-  await sql`CREATE TYPE hive_member_role_new
-            AS ENUM ('OWNER', 'MODERATOR', 'CONTRIBUTOR', 'BETA_READER')`
+  await sql`DO $$ BEGIN
+              CREATE TYPE hive_member_role_new
+                AS ENUM ('OWNER', 'MODERATOR', 'CONTRIBUTOR', 'BETA_READER');
+            EXCEPTION WHEN duplicate_object THEN null; END $$`
   await sql`ALTER TABLE hive_members
             ALTER COLUMN role DROP DEFAULT`
   await sql`ALTER TABLE hive_invites

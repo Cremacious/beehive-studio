@@ -12,11 +12,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-05-28
+> **Last updated:** 2026-05-29
 >
-> **Current focus:** **Linked Series COMPLETE** (7 feature commits + plan/spec/docs). Series choice now does something: "Book N · *Series*" surfaces on reader hero, library/discover/profile cards; library "By series" sort clusters books with subheaders; book reader page footer offers prev/next navigation (canReadBook-gated so locked next-books silently omit); wizard + Details page explain what the choice controls. Commits: T1 `9849971` (series-key), T2 `d99bc70` (getSeriesNeighbors), T3 `2142f3a` (BookSummary extension), T4 `d5bcec1` (SeriesLine + 3 cards), T5 `f207e6f` (By series sort + clustering), T6 `91dc22a` (reader hero + SeriesFooter), T7 `953c296` (wizard + Details explainer). See "What Has Been Built" → Linked Series for the full breakdown. **Awaiting Chris's manual smoke**: three books in same series across casing variants link via normalized key; By series sort clusters them; reader page footer offers prev/next; Make Book 3 PRIVATE → incognito viewer on Book 2 sees prev but not next. 175/175 tests, tsc clean.
+> **Current focus:** **Hives redesign — H1 spec WRITTEN** (commit `7fc7cb7`, `docs/superpowers/specs/2026-05-29-h1-hive-foundation-design.md`). Full Hives redesign decomposed into 5 sub-projects (H1 foundation → H2 mirror → H3 collab core → H4 motivation → H5 dashboard). H1 brainstorm complete: one-hive-per-book + standalone allowed (`hives.bookId` UNIQUE partial index); 4 roles (OWNER/MODERATOR/CONTRIBUTOR/BETA_READER); hive owns its own visibility + new `discoverable` boolean (mirrors books pattern); 3 creation paths from `/studio` (link existing book / new book+hive together / standalone); editor binder footer button reads "Create Hive" or "Go to Hive" via `getBookHive(bookId)` reverse lookup; `/studio` gets a new Hives section below Books grid with own filters (Owned/Member, Linked/Standalone); `/community` becomes a hive-activity feed (kills the old follows-feed `getCommunityFeedAction`); `/discover/hives` filters on new `discoverable=true`; book delete cascades to hive. New `hive_activity` table introduced in H1 (H3/H4 wire writes for new event types). **Awaiting Chris's review of the H1 spec** before invoking writing-plans skill OR moving to H2 brainstorm. Recommendation: brainstorm H2 next (mirror decisions may force small schema additions to H1 before it ships). Linked Series + Chapter Status + Drag-into-Folder + Character Redesign + Delete Book all still awaiting Chris's manual smoke (carried from prior session).
 > **Active branch:** `main`
-> **Last commit:** feat(wizard,details): explain what the Series choice controls
+> **Last commit:** docs(spec): H1 hive foundation — book↔hive model & entry points
 >
 > **The audit** is a 6-sub-project effort to make the book editor at
 > `/[locale]/studio/[bookId]` fully operational.

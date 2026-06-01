@@ -16,7 +16,14 @@ export function LinkCard({ url }: { url: string }) {
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-center gap-3 px-3 py-2.5 rounded-md border border-border hover:border-brand/60 hover:bg-muted/30 transition-colors"
+      style={{
+        background:
+          'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+        borderRadius: 'var(--r-row)',
+        boxShadow: 'var(--sh-inset)',
+        border: 'var(--br-card)',
+      }}
+      className="flex items-center gap-3 p-3 mt-1 hover:translate-y-[-1px] transition-transform"
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
@@ -26,12 +33,24 @@ export function LinkCard({ url }: { url: string }) {
         loading="lazy"
       />
       <div className="flex-1 min-w-0">
-        <div className="text-xs font-semibold text-foreground truncate">
+        <div
+          className="text-xs font-comfortaa font-semibold truncate"
+          style={{ color: 'var(--canvas-dark-ink-strong)' }}
+        >
           {hostname}
         </div>
-        <div className="text-[11px] text-muted-foreground truncate">{url}</div>
+        <div
+          className="text-[11px] font-mono truncate"
+          style={{ color: 'var(--brand)' }}
+        >
+          {url}
+        </div>
       </div>
-      <ExternalLink size={14} className="text-muted-foreground shrink-0" />
+      <ExternalLink
+        size={14}
+        className="shrink-0"
+        style={{ color: 'var(--brand)' }}
+      />
     </a>
   )
 }

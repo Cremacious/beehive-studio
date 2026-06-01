@@ -55,11 +55,30 @@ export function BuzzPostCard({
     router.refresh()
   }
 
+  const edited =
+    post.updatedAt &&
+    new Date(post.updatedAt).getTime() -
+      new Date(post.createdAt).getTime() >
+      1000
+
   return (
-    <article className="flex items-start gap-3 px-4 py-3.5 rounded-md border border-border bg-card">
+    <article
+      style={{
+        background:
+          'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+        borderRadius: 'var(--r-card)',
+        boxShadow: 'var(--sh-tile)',
+        border: 'var(--br-card)',
+      }}
+      className="flex items-start gap-3 p-5"
+    >
       <span
         aria-hidden
-        className="inline-flex items-center justify-center w-9 h-9 rounded-full text-muted-foreground bg-muted/40 shrink-0 mt-0.5"
+        className="inline-flex items-center justify-center w-9 h-9 rounded-full shrink-0 mt-0.5"
+        style={{
+          background: 'oklch(from var(--brand) l c h / 0.14)',
+          color: 'var(--brand)',
+        }}
       >
         {post.avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -69,31 +88,42 @@ export function BuzzPostCard({
             className="w-9 h-9 rounded-full object-cover"
           />
         ) : (
-          post.username?.[0]?.toUpperCase() ?? '?'
+          <span className="font-comfortaa font-semibold text-xs">
+            {post.username?.[0]?.toUpperCase() ?? '?'}
+          </span>
         )}
       </span>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-          <span className="font-semibold text-foreground">
+        <div
+          className="flex items-center gap-2 text-[11px] font-mono"
+          style={{ color: 'var(--canvas-dark-ink-muted)' }}
+        >
+          <span
+            className="font-comfortaa font-semibold text-sm"
+            style={{ color: 'var(--canvas-dark-ink-strong)' }}
+          >
             @{post.username ?? 'unknown'}
           </span>
           <span>·</span>
           <span>{relTime(post.createdAt)}</span>
-          {post.updatedAt &&
-            new Date(post.updatedAt).getTime() -
-              new Date(post.createdAt).getTime() >
-              1000 && <span className="italic">(edited)</span>}
+          {edited && <span className="italic">(edited)</span>}
         </div>
 
         {/* Body */}
         {post.type === 'TEXT' ? (
-          <div className="mt-1.5 text-sm leading-relaxed text-foreground whitespace-pre-wrap break-words">
+          <div
+            className="mt-2 text-sm font-prose leading-relaxed whitespace-pre-wrap break-words"
+            style={{ color: 'var(--canvas-dark-ink)' }}
+          >
             {post.body}
           </div>
         ) : (
-          <div className="mt-1.5 space-y-2">
+          <div className="mt-2 space-y-2">
             {post.body && (
-              <div className="text-sm leading-relaxed text-foreground whitespace-pre-wrap break-words">
+              <div
+                className="text-sm font-prose leading-relaxed whitespace-pre-wrap break-words"
+                style={{ color: 'var(--canvas-dark-ink)' }}
+              >
                 {post.body}
               </div>
             )}
@@ -101,7 +131,7 @@ export function BuzzPostCard({
           </div>
         )}
 
-        <div className="mt-2 flex items-center gap-1">
+        <div className="mt-3 flex items-center gap-1">
           <LikeButton
             buzzId={post.id}
             initialLiked={post.viewerLiked}
@@ -116,7 +146,11 @@ export function BuzzPostCard({
             <button
               type="button"
               aria-label="Post actions"
-              className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/40 shrink-0"
+              style={{
+                color: 'var(--canvas-dark-ink-muted)',
+                borderRadius: 'var(--r-btn)',
+              }}
+              className="p-1 hover:bg-[linear-gradient(180deg,var(--canvas-dark-250),var(--canvas-dark-200))] shrink-0"
             >
               <MoreVertical size={16} />
             </button>

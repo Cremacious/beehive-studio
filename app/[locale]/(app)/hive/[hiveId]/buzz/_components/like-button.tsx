@@ -4,7 +4,6 @@ import { useState, useTransition } from 'react'
 import { Heart } from 'lucide-react'
 import { toast } from 'sonner'
 import { toggleBuzzLikeAction } from '@/lib/actions/hive-buzz.actions'
-import { cn } from '@/lib/utils'
 
 export function LikeButton({
   buzzId,
@@ -47,16 +46,15 @@ export function LikeButton({
       disabled={pending}
       aria-pressed={liked}
       aria-label={liked ? 'Unlike' : 'Like'}
-      className={cn(
-        'inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium transition-colors',
-        liked
-          ? 'text-brand'
-          : 'text-muted-foreground hover:text-foreground hover:bg-muted/40',
-      )}
+      style={{
+        color: liked ? 'var(--brand)' : 'var(--canvas-dark-ink-muted)',
+        borderRadius: 'var(--r-pill)',
+      }}
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono transition-colors hover:bg-[linear-gradient(180deg,var(--canvas-dark-250),var(--canvas-dark-200))] disabled:opacity-60"
     >
       <Heart
         size={14}
-        className={liked ? 'fill-current' : ''}
+        fill={liked ? 'var(--brand)' : 'none'}
         strokeWidth={liked ? 2 : 1.75}
       />
       <span>{count}</span>

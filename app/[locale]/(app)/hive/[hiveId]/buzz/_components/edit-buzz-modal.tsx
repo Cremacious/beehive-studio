@@ -151,9 +151,20 @@ export function EditBuzzModal({ open, onOpenChange, post }: Props) {
           >
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={!canSubmit}>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={!canSubmit}
+            style={{
+              background: 'var(--brand)',
+              color: 'var(--brand-ink, oklch(0.18 0.02 60))',
+              borderRadius: 'var(--r-btn)',
+              boxShadow: 'var(--sh-tile)',
+            }}
+            className="inline-flex items-center gap-1.5 font-geist font-semibold text-sm px-4 py-2 disabled:opacity-50"
+          >
             {submitting ? 'Saving…' : 'Save'}
-          </Button>
+          </button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

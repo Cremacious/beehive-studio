@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { X } from 'lucide-react'
+import { Check, X } from 'lucide-react'
 import { createBookAction } from '@/lib/actions/book.actions'
 import { StepOne } from '../../_components/create-book-wizard/step-one'
 import { StepTwo } from '../../_components/create-book-wizard/step-two'
@@ -44,7 +44,7 @@ const initial: FormData = {
   visibility: 'PRIVATE', discoverable: false,
 }
 
-const STEP_LABELS = ['The Basics', 'Discovery', 'Structure', 'Sharing'] as const
+const STEP_LABELS = ['Basics', 'Discovery', 'Structure', 'Sharing'] as const
 const STEP_HEADLINES = [
   'Let’s start with the basics.',
   'Help readers discover it.',
@@ -144,93 +144,86 @@ export function BookCreationForm({ locale, templates }: Props) {
 
   return (
     <div
-      className="flex flex-col"
+      className="min-h-screen w-full flex flex-col"
       style={{
-        minHeight: 'calc(100vh - 56px)',
         background: 'var(--canvas-dark-50, #141414)',
         color: 'var(--canvas-dark-ink-strong, #fff)',
+        padding: '28px',
       }}
     >
-      {/* ── Top bar: progress + close ── */}
-      <header
-        className="flex items-center gap-6 px-6 sm:px-10"
+      <div
+        className="mx-auto w-full flex flex-col"
         style={{
-          height: '64px',
-          borderBottom: '1px solid var(--canvas-dark-300, #2a2a2a)',
-          background: 'var(--canvas-dark-100, #1a1a1a)',
+          maxWidth: '1040px',
+          background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+          borderRadius: 'var(--r-card)',
+          boxShadow: 'var(--sh-card)',
+          border: 'var(--br-card)',
         }}
       >
-        <div className="flex-1 flex items-center justify-center gap-2">
+        {/* ── Progress bar ── */}
+        <div
+          className="flex items-center gap-2 px-6 py-[18px]"
+          style={{ borderBottom: '1px solid oklch(1 0 0 / 0.05)' }}
+        >
           {([1, 2, 3, 4] as const).map((n, i) => {
-            const reached = step >= n
-            const current = step === n
+            const isActive = step === n
+            const isDone = step > n
+            const isReached = step >= n
             return (
-              <div key={n} className="flex items-center gap-2">
+              <div key={n} className="flex items-center gap-2 flex-1">
                 {i > 0 && (
                   <div
                     style={{
-                      width: '36px',
                       height: '1px',
-                      background: step > n - 1
-                        ? 'var(--brand, #FFC300)'
-                        : 'var(--canvas-dark-300, #2a2a2a)',
+                      flex: 1,
+                      background: isReached ? 'var(--brand)' : 'oklch(1 0 0 / 0.06)',
                       transition: 'background 0.25s',
                     }}
                   />
                 )}
                 <button
                   type="button"
-                  onClick={() => reached && jumpTo(n)}
-                  disabled={!reached}
+                  onClick={() => isReached && jumpTo(n)}
+                  disabled={!isReached}
+                  aria-current={isActive ? 'step' : undefined}
                   aria-label={`Step ${n}: ${STEP_LABELS[n - 1]}`}
-                  className="inline-flex items-center gap-2"
+                  className="inline-flex items-center gap-2 px-3 py-1.5"
                   style={{
-                    padding: '4px 10px 4px 6px',
-                    borderRadius: '999px',
-                    background: current ? 'var(--brand-soft, rgba(255,195,0,0.12))' : 'transparent',
-                    border: '1px solid',
-                    borderColor: current
-                      ? 'oklch(0.85 0.18 90 / 0.35)'
-                      : reached
-                        ? 'var(--canvas-dark-300, #2a2a2a)'
-                        : 'transparent',
-                    cursor: reached ? 'pointer' : 'default',
-                    transition: 'background 0.2s, border-color 0.2s',
+                    borderRadius: 'var(--r-pill)',
+                    background: isActive || isDone
+                      ? 'var(--brand)'
+                      : 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+                    color: isActive || isDone
+                      ? 'var(--brand-ink)'
+                      : 'var(--canvas-dark-ink-muted)',
+                    boxShadow: isActive || isDone ? 'none' : 'var(--sh-tile)',
+                    cursor: isReached ? 'pointer' : 'default',
+                    transition: 'background 0.2s, color 0.2s',
                   }}
                 >
                   <span
                     className="inline-flex items-center justify-center"
                     style={{
-                      width: '22px',
-                      height: '22px',
-                      borderRadius: '999px',
-                      background: current
-                        ? 'var(--brand, #FFC300)'
-                        : step > n
-                          ? 'rgba(255,195,0,0.18)'
-                          : 'var(--canvas-dark-200, #1f1f1f)',
-                      color: current
-                        ? 'var(--brand-ink, #0a0a0a)'
-                        : step > n
-                          ? 'var(--brand, #FFC300)'
-                          : 'var(--canvas-dark-ink-muted, #777)',
+                      width: '18px',
+                      height: '18px',
+                      borderRadius: 'var(--r-pill)',
+                      background: isActive || isDone
+                        ? 'var(--brand-ink)'
+                        : 'var(--canvas-dark-100)',
+                      color: isActive || isDone ? 'var(--brand)' : 'var(--canvas-dark-ink-muted)',
                       fontFamily: 'var(--font-display)',
                       fontWeight: 700,
-                      fontSize: '11px',
+                      fontSize: '10px',
                     }}
                   >
-                    {step > n ? '✓' : n}
+                    {isDone ? <Check size={11} strokeWidth={3} /> : n}
                   </span>
                   <span
                     style={{
                       fontFamily: 'var(--font-display)',
                       fontSize: '12px',
-                      fontWeight: 600,
-                      color: current
-                        ? 'var(--brand, #FFC300)'
-                        : reached
-                          ? 'var(--canvas-dark-ink, #aaa)'
-                          : 'var(--canvas-dark-ink-muted, #777)',
+                      fontWeight: 700,
                     }}
                   >
                     {STEP_LABELS[n - 1]}
@@ -239,92 +232,82 @@ export function BookCreationForm({ locale, templates }: Props) {
               </div>
             )
           })}
-        </div>
 
-        <Link
-          href={`/${locale}/studio`}
-          aria-label="Cancel and return to studio"
-          className="inline-flex items-center justify-center"
-          style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: '999px',
-            border: '1px solid var(--canvas-dark-300, #2a2a2a)',
-            color: 'var(--canvas-dark-ink-muted, #777)',
-            transition: 'color 0.15s, border-color 0.15s',
-          }}
-        >
-          <X size={16} />
-        </Link>
-      </header>
-
-      {/* ── Step viewport ── */}
-      <div className="flex-1 relative overflow-hidden">
-        <div
-          key={step}
-          className={animClass}
-          style={{
-            position: 'absolute',
-            inset: 0,
-            overflowY: 'auto',
-          }}
-        >
-          <div
-            className="mx-auto w-full"
+          <Link
+            href={`/${locale}/studio`}
+            aria-label="Cancel and return to studio"
+            className="inline-flex items-center justify-center ml-3"
             style={{
-              maxWidth: '640px',
-              padding: '56px 24px 96px',
+              width: '32px',
+              height: '32px',
+              borderRadius: 'var(--r-pill)',
+              boxShadow: 'var(--sh-tile)',
+              background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+              color: 'var(--canvas-dark-ink-muted)',
             }}
           >
-            <div style={{ marginBottom: '36px' }}>
-              <div
-                className="uppercase"
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '11px',
-                  letterSpacing: '0.18em',
-                  color: 'var(--brand, #FFC300)',
-                  marginBottom: '14px',
-                }}
-              >
-                Step {step} of {TOTAL_STEPS}
-              </div>
-              <h1
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: 'clamp(28px, 4vw, 40px)',
-                  fontWeight: 700,
-                  letterSpacing: '-0.025em',
-                  lineHeight: 1.1,
-                  margin: 0,
-                  color: 'var(--canvas-dark-ink-strong, #fff)',
-                  textWrap: 'balance' as const,
-                }}
-              >
-                {STEP_HEADLINES[step - 1]}
-              </h1>
-              <p
-                style={{
-                  fontFamily: 'var(--font-prose)',
-                  fontSize: '16px',
-                  lineHeight: 1.55,
-                  marginTop: '12px',
-                  color: 'var(--canvas-dark-ink-muted, #999)',
-                  textWrap: 'pretty' as const,
-                }}
-              >
-                {STEP_SUBHEADS[step - 1]}
-              </p>
-            </div>
+            <X size={14} />
+          </Link>
+        </div>
 
+        {/* ── Step viewport ── */}
+        <div className="flex-1 relative overflow-hidden">
+          <div
+            key={step}
+            className={animClass}
+            style={{
+              position: 'relative',
+              overflowY: 'auto',
+            }}
+          >
             <div
+              className="mx-auto w-full"
               style={{
-                background: 'var(--canvas-dark-100, #1a1a1a)',
-                border: '1px solid var(--canvas-dark-300, #2a2a2a)',
-                borderRadius: '16px',
-                padding: '28px',
+                maxWidth: '880px',
+                padding: '26px 36px 18px',
               }}
             >
+              <div style={{ marginBottom: '36px' }}>
+                <div
+                  className="uppercase"
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '11px',
+                    letterSpacing: '0.18em',
+                    color: 'var(--brand, #FFC300)',
+                    marginBottom: '14px',
+                  }}
+                >
+                  Step {step} of {TOTAL_STEPS}
+                </div>
+                <h1
+                  style={{
+                    fontFamily: 'var(--font-display)',
+                    fontSize: 'clamp(28px, 4vw, 40px)',
+                    fontWeight: 700,
+                    letterSpacing: '-0.025em',
+                    lineHeight: 1.1,
+                    margin: 0,
+                    color: 'var(--canvas-dark-ink-strong, #fff)',
+                    textWrap: 'balance' as const,
+                  }}
+                >
+                  {STEP_HEADLINES[step - 1]}
+                </h1>
+                <p
+                  style={{
+                    fontFamily: 'var(--font-prose)',
+                    fontSize: '16px',
+                    lineHeight: 1.55,
+                    marginTop: '12px',
+                    color: 'var(--canvas-dark-ink-muted, #999)',
+                    textWrap: 'pretty' as const,
+                  }}
+                >
+                  {STEP_SUBHEADS[step - 1]}
+                </p>
+              </div>
+
               {step === 1 && (
                 <StepOne
                   title={form.title}
@@ -411,22 +394,22 @@ export function BookCreationForm({ locale, templates }: Props) {
                   </div>
                 </div>
               )}
-            </div>
 
-            {/* Footer reassurance — every field here is editable later from
-                the book's Book details page (settings cog in the binder). */}
-            <p
-              className="text-center"
-              style={{
-                marginTop: 20,
-                fontFamily: 'var(--font-mono)',
-                fontSize: 11,
-                letterSpacing: '0.08em',
-                color: 'var(--canvas-dark-ink-muted, #777)',
-              }}
-            >
-              You can edit everything here later from Book details (⚙ in the binder).
-            </p>
+              {/* Footer reassurance — every field here is editable later from
+                  the book's Book details page (settings cog in the binder). */}
+              <p
+                className="text-center"
+                style={{
+                  marginTop: 20,
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 11,
+                  letterSpacing: '0.08em',
+                  color: 'var(--canvas-dark-ink-muted, #777)',
+                }}
+              >
+                You can edit everything here later from Book details (⚙ in the binder).
+              </p>
+            </div>
           </div>
         </div>
       </div>

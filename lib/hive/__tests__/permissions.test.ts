@@ -16,6 +16,7 @@ import {
   canEditWiki, canSubmitChapter, canReviewSubmissions, canAnnotate,
   canSuggestEdits, canEditOutline, canManageMembers, canDeleteHive,
   requireBinderWritePermission,
+  canPostDiscussion, canReviewSuggestion, canResolveAnnotation, canEditDiscussionPost,
   type HiveRole,
 } from '../permissions'
 
@@ -116,4 +117,43 @@ describe('requireBinderWritePermission — author bypass', () => {
     ;(db.query.hiveMembers.findFirst as any).mockResolvedValue(undefined)
     await expect(requireBinderWritePermission('book-1', 'item-1', 'stranger')).rejects.toThrow('NOT_AUTHORIZED')
   })
+})
+
+describe('canPostDiscussion', () => {
+  for (const role of ['OWNER','MODERATOR','CONTRIBUTOR','BETA_READER'] as const) {
+    it(`${role} can post`, () => expect(canPostDiscussion(role)).toBe(true))
+  }
+})
+
+describe('canReviewSuggestion', () => {
+  it('OWNER allowed', () => expect(canReviewSuggestion('OWNER')).toBe(true))
+  it('MODERATOR allowed', () => expect(canReviewSuggestion('MODERATOR')).toBe(true))
+  it('CONTRIBUTOR denied', () => expect(canReviewSuggestion('CONTRIBUTOR')).toBe(false))
+  it('BETA_READER denied', () => expect(canReviewSuggestion('BETA_READER')).toBe(false))
+})
+
+describe('canResolveAnnotation', () => {
+  const annotation = { authorId: 'beta-1' }
+  it('book owner resolves anyone', () =>
+    expect(canResolveAnnotation(annotation, 'OWNER', 'author-1', 'author-1')).toBe(true))
+  it('annotation author resolves their own', () =>
+    expect(canResolveAnnotation(annotation, 'BETA_READER', 'beta-1', 'author-1')).toBe(true))
+  it('other member cannot resolve', () =>
+    expect(canResolveAnnotation(annotation, 'MODERATOR', 'mod-2', 'author-1')).toBe(false))
+  it('non-author, non-book-owner contributor denied', () =>
+    expect(canResolveAnnotation(annotation, 'CONTRIBUTOR', 'random', 'author-1')).toBe(false))
+})
+
+describe('canEditDiscussionPost', () => {
+  const post = { authorId: 'beta-1' }
+  it('post author allowed', () =>
+    expect(canEditDiscussionPost(post, 'BETA_READER', 'beta-1')).toBe(true))
+  it('OWNER allowed (moderation)', () =>
+    expect(canEditDiscussionPost(post, 'OWNER', 'owner-1')).toBe(true))
+  it('MODERATOR allowed', () =>
+    expect(canEditDiscussionPost(post, 'MODERATOR', 'mod-1')).toBe(true))
+  it('CONTRIBUTOR not allowed on other peoples posts', () =>
+    expect(canEditDiscussionPost(post, 'CONTRIBUTOR', 'random')).toBe(false))
+  it('BETA_READER not allowed on other peoples posts', () =>
+    expect(canEditDiscussionPost(post, 'BETA_READER', 'random')).toBe(false))
 })

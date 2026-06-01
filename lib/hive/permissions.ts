@@ -38,6 +38,33 @@ export const canSuggestEdits = (_r: HiveRole) => true
 export const canEditOutline = (r: HiveRole) => r !== 'BETA_READER'
 export const canManageMembers = (r: HiveRole) => r === 'OWNER' || r === 'MODERATOR'
 export const canDeleteHive = (r: HiveRole) => r === 'OWNER'
+export const canPostDiscussion = (_r: HiveRole) => true   // all members
+export const canReviewSuggestion = (r: HiveRole) => r === 'OWNER' || r === 'MODERATOR'
+
+/**
+ * Resolve an annotation: the book's author OR the annotation's own author.
+ * (Hive moderators/owners are NOT granted resolve permission by default —
+ *  the spec is intentional that resolution is a content decision, not a moderation one.)
+ */
+export function canResolveAnnotation(
+  annotation: { authorId: string },
+  _viewerRole: HiveRole,
+  viewerId: string,
+  bookOwnerId: string,
+): boolean {
+  return viewerId === bookOwnerId || viewerId === annotation.authorId
+}
+
+/**
+ * Edit/delete a discussion post: post author OR OWNER/MODERATOR (for moderation).
+ */
+export function canEditDiscussionPost(
+  post: { authorId: string },
+  viewerRole: HiveRole,
+  viewerId: string,
+): boolean {
+  return viewerId === post.authorId || viewerRole === 'OWNER' || viewerRole === 'MODERATOR'
+}
 
 // ── Binder write permission ─────────────────────────────────────────────────
 export type BinderItemTypeForPermission =

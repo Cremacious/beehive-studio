@@ -182,31 +182,11 @@ export function SubmissionComposer({
     <main
       data-slot="submission-composer-pane"
       className="flex-1 overflow-y-auto"
-      style={{ background: 'var(--composer-canvas)' }}
     >
       <style>{`
-        [data-slot="submission-composer-pane"] {
-          --composer-canvas:    oklch(0.22 0.005 256);
-          --composer-card-bg:   var(--paper-100);
-          --composer-card-bord: var(--paper-300);
-          --composer-ink:       var(--paper-ink);
-          --composer-ink-strong:var(--paper-ink-strong);
-          --composer-ink-muted: var(--paper-ink-muted);
-        }
-        [data-editor-theme="light"] [data-slot="submission-composer-pane"] {
-          --composer-canvas:    var(--paper-300);
-          --composer-card-bg:   var(--paper-50);
-          --composer-card-bord: var(--paper-200);
-        }
-        [data-slot="submission-composer-pane"] .composer-card {
-          background: var(--composer-card-bg);
-          border: 1px solid var(--composer-card-bord);
-        }
-        [data-slot="submission-composer-pane"] .composer-title { color: var(--composer-ink-strong); }
-        [data-slot="submission-composer-pane"] .composer-muted { color: var(--composer-ink-muted); }
         [data-slot="submission-composer-pane"] .ProseMirror {
-          color: var(--composer-ink);
-          caret-color: var(--color-brand);
+          color: var(--canvas-dark-ink);
+          caret-color: var(--brand);
           outline: none;
           font-family: var(--font-prose, var(--font-newsreader, serif));
           font-size: 17px;
@@ -217,14 +197,14 @@ export function SubmissionComposer({
         [data-slot="submission-composer-pane"] .ProseMirror h1,
         [data-slot="submission-composer-pane"] .ProseMirror h2,
         [data-slot="submission-composer-pane"] .ProseMirror h3 {
-          color: var(--composer-ink-strong);
+          color: var(--canvas-dark-ink-strong);
           font-family: var(--font-display);
           font-weight: 700;
         }
-        [data-slot="submission-composer-pane"] .ProseMirror strong { color: var(--composer-ink-strong); font-weight: 600; }
+        [data-slot="submission-composer-pane"] .ProseMirror strong { color: var(--canvas-dark-ink-strong); font-weight: 600; }
         [data-slot="submission-composer-pane"] .ProseMirror blockquote {
-          color: var(--composer-ink-muted);
-          border-left: 3px solid oklch(0.78 0.04 60 / 0.45);
+          color: var(--canvas-dark-ink-muted);
+          border-left: 3px solid oklch(from var(--brand) l c h / 0.55);
           padding-left: 0.9em; margin: 0.6em 0;
         }
         [data-slot="submission-composer-pane"] .ProseMirror ul,
@@ -233,89 +213,140 @@ export function SubmissionComposer({
         [data-slot="submission-composer-pane"] .ProseMirror ol { list-style: decimal; }
       `}</style>
 
-      <div className="mx-auto max-w-[760px] px-8 py-10 space-y-5">
-        <header className="flex items-center justify-between">
-          <Link
-            href={`/${locale}/hive/${hiveId}/submissions`}
-            className="composer-muted text-[11px] uppercase tracking-wide inline-flex items-center gap-1 hover:text-brand"
-          >
-            <ChevronLeft size={12} /> Submissions {mode === 'new' ? '› New' : `› ${title || 'Untitled'}`}
-          </Link>
-          <SaveStatusBadge status={saveStatus} />
-        </header>
+      <div className="mx-auto max-w-[760px] p-6">
+        <div
+          style={{
+            background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+            borderRadius: 'var(--r-card)',
+            boxShadow: 'var(--sh-card)',
+            border: 'var(--br-card)',
+          }}
+          className="p-6 space-y-5"
+        >
+          <header className="flex items-center justify-between">
+            <Link
+              href={`/${locale}/hive/${hiveId}/submissions`}
+              className="text-[11px] uppercase tracking-wide inline-flex items-center gap-1 hover:text-[var(--canvas-dark-ink-strong)] transition-colors"
+              style={{ color: 'var(--canvas-dark-ink-muted)' }}
+            >
+              <ChevronLeft size={12} /> Submissions {mode === 'new' ? '› New' : `› ${title || 'Untitled'}`}
+            </Link>
+            {editable && <SaveStatusBadge status={saveStatus} />}
+          </header>
 
-        <section className="composer-card rounded-lg p-6 space-y-4">
-          <div
-            role="textbox"
-            contentEditable={editable}
-            suppressContentEditableWarning
-            spellCheck
-            data-placeholder="Untitled submission"
-            className="composer-title font-comfortaa font-bold text-2xl outline-none"
-            onBlur={e => {
-              const next = (e.currentTarget.textContent ?? '').trim()
-              if (next !== title) {
-                setTitle(next)
-                titleRef.current = next
-                scheduleSave()
-              }
-            }}
-          >
-            {initial?.title ?? ''}
+          <div className="flex items-center justify-between gap-3">
+            <h1
+              style={{ color: 'var(--brand)' }}
+              className="font-comfortaa font-bold text-2xl"
+            >
+              {mode === 'new' ? 'Submit a Chapter' : 'Edit Submission'}
+            </h1>
           </div>
 
-          <div className="flex items-center gap-3 flex-wrap text-[11px] composer-muted">
-            <label className="inline-flex items-center gap-2">
-              <span className="uppercase tracking-wide">Insert at</span>
-              <select
-                value={encodeTarget(targetOrder)}
-                disabled={!editable}
-                onChange={e => {
-                  const v = decodeTarget(e.target.value)
-                  setTargetOrder(v)
-                  targetOrderRef.current = v
-                  scheduleSave()
-                }}
-                className="bg-transparent border border-border rounded px-2 py-1 text-xs"
-                style={{ color: 'var(--composer-ink)' }}
-              >
-                <option value="">End (default)</option>
-                <option value="0">Beginning</option>
-                {chapters.map(c => (
-                  <option key={c.id} value={String(c.order + 1)}>
-                    After &quot;{c.title || 'Untitled chapter'}&quot;
-                  </option>
-                ))}
-              </select>
-            </label>
-            <span>·</span>
-            <span>{wordCount.toLocaleString()} words</span>
-          </div>
-        </section>
-
-        <section className="composer-card rounded-lg p-6">
-          <EditorContent editor={editor} />
-        </section>
-
-        <div className="flex items-center justify-end gap-2 pt-2">
-          {!editable && (
-            <span className="composer-muted text-xs italic">
-              This submission is locked — already submitted.
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={!canSubmit}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+          <section
             style={{
-              background: 'var(--color-brand)',
-              color: 'var(--brand-ink, oklch(0.18 0.02 60))',
+              background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+              borderRadius: 'var(--r-row)',
+              boxShadow: 'var(--sh-tile)',
+              border: 'var(--br-card)',
             }}
+            className="p-5 space-y-4"
           >
-            <Send size={14} />
-            Submit for review
-          </button>
+            <div
+              role="textbox"
+              contentEditable={editable}
+              suppressContentEditableWarning
+              spellCheck
+              data-placeholder="Untitled submission"
+              className="font-comfortaa font-bold text-2xl outline-none"
+              style={{ color: 'var(--canvas-dark-ink-strong)' }}
+              onBlur={e => {
+                const next = (e.currentTarget.textContent ?? '').trim()
+                if (next !== title) {
+                  setTitle(next)
+                  titleRef.current = next
+                  scheduleSave()
+                }
+              }}
+            >
+              {initial?.title ?? ''}
+            </div>
+
+            <div
+              className="flex items-center gap-3 flex-wrap text-[11px] font-mono"
+              style={{ color: 'var(--canvas-dark-ink-muted)' }}
+            >
+              <label className="inline-flex items-center gap-2">
+                <span className="uppercase tracking-wide">Insert at</span>
+                <select
+                  value={encodeTarget(targetOrder)}
+                  disabled={!editable}
+                  onChange={e => {
+                    const v = decodeTarget(e.target.value)
+                    setTargetOrder(v)
+                    targetOrderRef.current = v
+                    scheduleSave()
+                  }}
+                  style={{
+                    background: 'var(--canvas-dark-100)',
+                    borderRadius: 'var(--r-btn)',
+                    boxShadow: 'var(--sh-inset)',
+                    border: 'var(--br-card)',
+                    color: 'var(--canvas-dark-ink)',
+                  }}
+                  className="px-2 py-1 text-xs focus:outline-none disabled:opacity-50"
+                >
+                  <option value="">End (default)</option>
+                  <option value="0">Beginning</option>
+                  {chapters.map(c => (
+                    <option key={c.id} value={String(c.order + 1)}>
+                      After &quot;{c.title || 'Untitled chapter'}&quot;
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <span>·</span>
+              <span>{wordCount.toLocaleString()} words</span>
+            </div>
+          </section>
+
+          <section
+            style={{
+              background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+              borderRadius: 'var(--r-row)',
+              boxShadow: 'var(--sh-tile)',
+              border: 'var(--br-card)',
+            }}
+            className="p-6"
+          >
+            <EditorContent editor={editor} />
+          </section>
+
+          <div className="flex items-center justify-end gap-2 pt-2">
+            {!editable && (
+              <span
+                className="text-xs italic"
+                style={{ color: 'var(--canvas-dark-ink-muted)' }}
+              >
+                This submission is locked — already submitted.
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={!canSubmit}
+              style={{
+                background: 'var(--brand)',
+                color: 'var(--brand-ink, oklch(0.18 0.02 60))',
+                borderRadius: 'var(--r-btn)',
+                boxShadow: 'var(--sh-tile)',
+              }}
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-geist font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Send size={14} />
+              Submit for review
+            </button>
+          </div>
         </div>
       </div>
     </main>

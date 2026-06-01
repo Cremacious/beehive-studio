@@ -46,57 +46,125 @@ export function SubmissionRead({ submission, submitter, book, hiveId, locale }: 
     <main
       data-slot="submission-read-pane"
       className="flex-1 overflow-y-auto"
-      style={{ background: 'var(--composer-canvas)' }}
     >
       <ReadOnlyBodyStyles />
-      <div className="mx-auto max-w-[760px] px-8 py-10 space-y-5">
-        <header className="flex items-center justify-between">
-          <Link
-            href={`/${locale}/hive/${hiveId}/submissions`}
-            className="composer-muted text-[11px] uppercase tracking-wide inline-flex items-center gap-1 hover:text-brand"
+      <div className="mx-auto max-w-[760px] p-6">
+        <div
+          style={{
+            background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+            borderRadius: 'var(--r-card)',
+            boxShadow: 'var(--sh-card)',
+            border: 'var(--br-card)',
+          }}
+          className="p-6 space-y-5"
+        >
+          <header className="flex items-center justify-between">
+            <Link
+              href={`/${locale}/hive/${hiveId}/submissions`}
+              className="text-[11px] uppercase tracking-wide inline-flex items-center gap-1 hover:text-[var(--canvas-dark-ink-strong)] transition-colors"
+              style={{ color: 'var(--canvas-dark-ink-muted)' }}
+            >
+              <ChevronLeft size={12} /> Back to submissions
+            </Link>
+          </header>
+
+          <h1
+            style={{ color: 'var(--brand)' }}
+            className="font-comfortaa font-bold text-2xl"
           >
-            <ChevronLeft size={12} /> Back to submissions
-          </Link>
-        </header>
+            Submission
+          </h1>
 
-        <SubmissionMetaHeader submission={submission} submitter={submitter} />
+          <SubmissionMetaHeader submission={submission} submitter={submitter} />
 
-        {submission.draftStatus === 'APPROVED' && (
-          <section className="composer-card rounded-lg p-4 flex items-center justify-between gap-3">
-            <div>
-              <p className="composer-title text-sm font-semibold">Chapter created</p>
-              <p className="composer-muted text-xs">
-                This submission was approved and added to the book.
+          {submission.draftStatus === 'APPROVED' && (
+            <section
+              style={{
+                background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+                borderRadius: 'var(--r-row)',
+                boxShadow: 'var(--sh-tile)',
+                border: 'var(--br-card)',
+              }}
+              className="p-4 flex items-center justify-between gap-3"
+            >
+              <div>
+                <p
+                  className="text-sm font-semibold"
+                  style={{ color: 'var(--canvas-dark-ink-strong)' }}
+                >
+                  Chapter created
+                </p>
+                <p
+                  className="text-xs"
+                  style={{ color: 'var(--canvas-dark-ink-muted)' }}
+                >
+                  This submission was approved and added to the book.
+                </p>
+              </div>
+              <ApprovedChapterLink
+                locale={locale}
+                bookId={book.id}
+                createdChapterId={submission.createdChapterId}
+              />
+            </section>
+          )}
+
+          {submission.draftStatus === 'REJECTED' && (
+            <section
+              style={{
+                background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+                borderRadius: 'var(--r-row)',
+                boxShadow: 'var(--sh-tile)',
+                border: 'var(--br-card)',
+              }}
+              className="p-4"
+            >
+              <p
+                className="text-sm font-semibold mb-1"
+                style={{ color: 'var(--canvas-dark-ink-strong)' }}
+              >
+                Review note
               </p>
-            </div>
-            <ApprovedChapterLink
-              locale={locale}
-              bookId={book.id}
-              createdChapterId={submission.createdChapterId}
-            />
-          </section>
-        )}
+              <p
+                className="text-sm whitespace-pre-wrap"
+                style={{ color: 'var(--canvas-dark-ink)' }}
+              >
+                {submission.reviewNote || '(No note left by the reviewer.)'}
+              </p>
+            </section>
+          )}
 
-        {submission.draftStatus === 'REJECTED' && (
-          <section className="composer-card rounded-lg p-4">
-            <p className="composer-title text-sm font-semibold mb-1">Review note</p>
-            <p className="composer-ink text-sm whitespace-pre-wrap" style={{ color: 'var(--composer-ink)' }}>
-              {submission.reviewNote || '(No note left by the reviewer.)'}
-            </p>
-          </section>
-        )}
+          {submission.draftStatus === 'PENDING' && (
+            <section
+              style={{
+                background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+                borderRadius: 'var(--r-row)',
+                boxShadow: 'var(--sh-tile)',
+                border: 'var(--br-card)',
+              }}
+              className="p-4"
+            >
+              <p
+                className="text-sm italic"
+                style={{ color: 'var(--canvas-dark-ink-muted)' }}
+              >
+                Awaiting review by the hive owner.
+              </p>
+            </section>
+          )}
 
-        {submission.draftStatus === 'PENDING' && (
-          <section className="composer-card rounded-lg p-4">
-            <p className="composer-muted text-sm italic">
-              Awaiting review by the hive owner.
-            </p>
+          <section
+            style={{
+              background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+              borderRadius: 'var(--r-row)',
+              boxShadow: 'var(--sh-tile)',
+              border: 'var(--br-card)',
+            }}
+            className="p-6"
+          >
+            <EditorContent editor={editor} />
           </section>
-        )}
-
-        <section className="composer-card rounded-lg p-6">
-          <EditorContent editor={editor} />
-        </section>
+        </div>
       </div>
     </main>
   )

@@ -46,24 +46,45 @@ export function SubmissionRow({
   return (
     <Link
       href={`/${locale}/hive/${hiveId}/submissions/${row.id}`}
-      className="flex items-center gap-3 px-3 py-2.5 rounded-md border border-border hover:bg-muted/40 transition-colors"
+      style={{
+        background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+        borderRadius: 'var(--r-row)',
+        boxShadow: 'var(--sh-tile)',
+        border: 'var(--br-card)',
+      }}
+      className="flex items-center gap-3 px-4 py-3 hover:translate-y-[-1px] transition-transform"
     >
       <span
         aria-hidden
-        className="inline-flex items-center justify-center w-7 h-7 rounded-full text-muted-foreground bg-muted/40 shrink-0"
+        className="inline-flex items-center justify-center w-7 h-7 rounded-full shrink-0"
+        style={{
+          background: 'oklch(from var(--brand) l c h / 0.14)',
+          color: 'var(--brand)',
+        }}
       >
         <FileText size={14} />
       </span>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="text-sm font-medium truncate text-foreground">
+          <span
+            className="font-comfortaa font-semibold text-sm truncate"
+            style={{ color: 'var(--canvas-dark-ink-strong)' }}
+          >
             {row.title || 'Untitled submission'}
           </span>
           {row.authorUsername && (
-            <span className="text-[11px] text-muted-foreground truncate">@{row.authorUsername}</span>
+            <span
+              className="text-[11px] font-mono truncate"
+              style={{ color: 'var(--canvas-dark-ink-muted)' }}
+            >
+              @{row.authorUsername}
+            </span>
           )}
         </div>
-        <div className="flex items-center gap-2 mt-0.5 text-[11px] text-muted-foreground">
+        <div
+          className="flex items-center gap-2 mt-0.5 text-[11px] font-mono"
+          style={{ color: 'var(--canvas-dark-ink-muted)' }}
+        >
           <span>{row.wordCount.toLocaleString()} words</span>
           <span>·</span>
           <span>{targetOrderLabel(row.targetChapterOrder)}</span>
@@ -78,7 +99,10 @@ export function SubmissionRow({
       >
         {status.label}
       </span>
-      <span className="text-[11px] text-muted-foreground shrink-0">
+      <span
+        className="text-[11px] font-mono shrink-0"
+        style={{ color: 'var(--canvas-dark-ink-muted)' }}
+      >
         {relTime(row.updatedAt)}
       </span>
     </Link>

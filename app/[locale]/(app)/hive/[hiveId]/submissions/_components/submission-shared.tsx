@@ -48,7 +48,15 @@ export function SubmissionMetaHeader({
   const initial = (submitter.username?.[0] ?? '?').toUpperCase()
 
   return (
-    <section className="composer-card rounded-lg p-5 flex items-center gap-3">
+    <section
+      style={{
+        background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+        borderRadius: 'var(--r-row)',
+        boxShadow: 'var(--sh-tile)',
+        border: 'var(--br-card)',
+      }}
+      className="p-5 flex items-center gap-3"
+    >
       <span
         aria-hidden
         className="inline-flex items-center justify-center w-10 h-10 rounded-full text-sm font-semibold shrink-0"
@@ -58,12 +66,18 @@ export function SubmissionMetaHeader({
       </span>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 min-w-0 flex-wrap">
-          <h1 className="composer-title font-comfortaa font-bold text-lg truncate">
+          <h1
+            className="font-comfortaa font-bold text-lg truncate"
+            style={{ color: 'var(--canvas-dark-ink-strong)' }}
+          >
             {submission.title || 'Untitled submission'}
           </h1>
           <StatusPill status={submission.draftStatus} />
         </div>
-        <div className="flex items-center gap-2 text-[11px] composer-muted mt-1 flex-wrap">
+        <div
+          className="flex items-center gap-2 text-[11px] font-mono mt-1 flex-wrap"
+          style={{ color: 'var(--canvas-dark-ink-muted)' }}
+        >
           {submitter.username && <span>@{submitter.username}</span>}
           <span>·</span>
           <span>Submitted {fmtDate(submission.createdAt)}</span>
@@ -77,30 +91,16 @@ export function SubmissionMetaHeader({
   )
 }
 
+/**
+ * Scoped ProseMirror typography for the read-only submission body.
+ * Mounted in both review + read panes (they share `data-slot="submission-read-pane"`).
+ * Sits on the dark walnut tile, not on cream paper — uses canvas-dark-ink tokens.
+ */
 export function ReadOnlyBodyStyles() {
   return (
     <style>{`
-      [data-slot="submission-read-pane"] {
-        --composer-canvas:    oklch(0.22 0.005 256);
-        --composer-card-bg:   var(--paper-100);
-        --composer-card-bord: var(--paper-300);
-        --composer-ink:       var(--paper-ink);
-        --composer-ink-strong:var(--paper-ink-strong);
-        --composer-ink-muted: var(--paper-ink-muted);
-      }
-      [data-editor-theme="light"] [data-slot="submission-read-pane"] {
-        --composer-canvas:    var(--paper-300);
-        --composer-card-bg:   var(--paper-50);
-        --composer-card-bord: var(--paper-200);
-      }
-      [data-slot="submission-read-pane"] .composer-card {
-        background: var(--composer-card-bg);
-        border: 1px solid var(--composer-card-bord);
-      }
-      [data-slot="submission-read-pane"] .composer-title { color: var(--composer-ink-strong); }
-      [data-slot="submission-read-pane"] .composer-muted { color: var(--composer-ink-muted); }
       [data-slot="submission-read-pane"] .ProseMirror {
-        color: var(--composer-ink);
+        color: var(--canvas-dark-ink);
         outline: none;
         font-family: var(--font-prose, var(--font-newsreader, serif));
         font-size: 17px;
@@ -110,20 +110,21 @@ export function ReadOnlyBodyStyles() {
       [data-slot="submission-read-pane"] .ProseMirror h1,
       [data-slot="submission-read-pane"] .ProseMirror h2,
       [data-slot="submission-read-pane"] .ProseMirror h3 {
-        color: var(--composer-ink-strong);
+        color: var(--canvas-dark-ink-strong);
         font-family: var(--font-display);
         font-weight: 700;
       }
-      [data-slot="submission-read-pane"] .ProseMirror strong { color: var(--composer-ink-strong); font-weight: 600; }
+      [data-slot="submission-read-pane"] .ProseMirror strong { color: var(--canvas-dark-ink-strong); font-weight: 600; }
       [data-slot="submission-read-pane"] .ProseMirror blockquote {
-        color: var(--composer-ink-muted);
-        border-left: 3px solid oklch(0.78 0.04 60 / 0.45);
+        color: var(--canvas-dark-ink-muted);
+        border-left: 3px solid oklch(from var(--brand) l c h / 0.55);
         padding-left: 0.9em; margin: 0.6em 0;
       }
       [data-slot="submission-read-pane"] .ProseMirror ul,
       [data-slot="submission-read-pane"] .ProseMirror ol { padding-left: 1.4em; margin: 0 0 1em; }
       [data-slot="submission-read-pane"] .ProseMirror ul { list-style: disc; }
       [data-slot="submission-read-pane"] .ProseMirror ol { list-style: decimal; }
+      [data-slot="submission-read-pane"] .ProseMirror li { margin: 0.3em 0; }
     `}</style>
   )
 }
@@ -141,7 +142,8 @@ export function ApprovedChapterLink({
     return (
       <Link
         href={`/${locale}/books/${bookId}`}
-        className="inline-flex items-center gap-1 text-xs font-semibold text-brand hover:underline"
+        className="inline-flex items-center gap-1 text-xs font-semibold hover:underline"
+        style={{ color: 'var(--brand)' }}
       >
         View in book →
       </Link>
@@ -150,7 +152,8 @@ export function ApprovedChapterLink({
   return (
     <Link
       href={`/${locale}/books/${bookId}/read/${createdChapterId}`}
-      className="inline-flex items-center gap-1 text-xs font-semibold text-brand hover:underline"
+      className="inline-flex items-center gap-1 text-xs font-semibold hover:underline"
+      style={{ color: 'var(--brand)' }}
     >
       Read the chapter →
     </Link>

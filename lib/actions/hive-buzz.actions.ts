@@ -74,6 +74,9 @@ export async function createBuzzPostAction(
       linkUrl,
     })
 
+    // Activity payload shape: { type: 'TEXT' | 'LINK', bodyExcerpt: string (<=100 chars), linkUrl: string | null }
+    // Consumed by app/[locale]/(app)/community/_components/activity-event-row.tsx to render
+    // "posted: '<excerpt>...'" for TEXT and "shared a link to <hostname>" for LINK.
     await recordHiveActivityTx(tx as DrizzleTx, {
       hiveId: data.hiveId,
       actorId: userId,

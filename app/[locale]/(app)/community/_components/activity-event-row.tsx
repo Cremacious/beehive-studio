@@ -26,8 +26,28 @@ const VERB: Record<string, string> = {
   member_joined: 'joined the hive',
 }
 
+// Activity payload shape (set by createBuzzPostAction):
+//   { type: 'TEXT' | 'LINK', bodyExcerpt: string, linkUrl: string | null }
+function buzzVerb(payload: unknown): string {
+  if (!payload || typeof payload !== 'object') return VERB.buzz_posted
+  const p = payload as { type?: unknown; bodyExcerpt?: unknown; linkUrl?: unknown }
+  if (p.type === 'LINK' && typeof p.linkUrl === 'string') {
+    try {
+      const host = new URL(p.linkUrl).hostname
+      return `shared a link to ${host}`
+    } catch {
+      return 'shared a link'
+    }
+  }
+  if (p.type === 'TEXT' && typeof p.bodyExcerpt === 'string') {
+    const excerpt = p.bodyExcerpt.length > 80 ? `${p.bodyExcerpt.slice(0, 80)}...` : p.bodyExcerpt
+    return `posted: '${excerpt}'`
+  }
+  return VERB.buzz_posted
+}
+
 export function ActivityEventRow({ event, locale }: { event: HiveActivityEvent; locale: string }) {
-  const verb = VERB[event.type] ?? 'made an update'
+  const verb = event.type === 'buzz_posted' ? buzzVerb(event.payload) : (VERB[event.type] ?? 'made an update')
   const handle = event.actorUsername ? `@${event.actorUsername}` : 'Someone'
   const initial = event.actorUsername?.[0]?.toUpperCase() ?? '?'
 

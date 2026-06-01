@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, pgEnum, index, uniqueIndex, boolean, jsonb, integer, AnyPgColumn } from 'drizzle-orm/pg-core'
+import { pgTable, text, timestamp, pgEnum, index, uniqueIndex, boolean, jsonb, integer, primaryKey, AnyPgColumn } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 import { createId } from '@paralleldrive/cuid2'
 import { relations } from 'drizzle-orm'
@@ -138,6 +138,9 @@ export const hivesRelations = relations(hives, ({ one, many }) => ({
   book: one(books, { fields: [hives.bookId], references: [books.id] }),
   members: many(hiveMembers),
   invites: many(hiveInvites),
+  wordGoals: many(hiveWordGoals),
+  wordLogs: many(hiveWordLogs),
+  buzzPosts: many(hiveBuzzPosts),
 }))
 
 export const hiveMembersRelations = relations(hiveMembers, ({ one }) => ({
@@ -214,4 +217,84 @@ export const hiveActivity = pgTable('hive_activity', {
 export const hiveActivityRelations = relations(hiveActivity, ({ one }) => ({
   hive: one(hives, { fields: [hiveActivity.hiveId], references: [hives.id] }),
   actor: one(users, { fields: [hiveActivity.actorId], references: [users.id] }),
+}))
+
+// ---------------------------------------------------------------------------
+// H4 — Motivation (word goals, word logs, buzz board)
+// ---------------------------------------------------------------------------
+
+export const wordGoalTypeEnum = pgEnum('word_goal_type', ['DAILY', 'WEEKLY', 'MONTHLY', 'TOTAL'])
+export const buzzPostTypeEnum = pgEnum('buzz_post_type', ['TEXT', 'LINK'])
+
+export const hiveWordGoals = pgTable('hive_word_goals', {
+  id: text('id').primaryKey().$defaultFn(() => createId()),
+  hiveId: text('hive_id').notNull().references(() => hives.id, { onDelete: 'cascade' }),
+  createdBy: text('created_by').notNull().references(() => users.id, { onDelete: 'set null' }),
+  type: wordGoalTypeEnum('type').notNull(),
+  targetWords: integer('target_words').notNull(),
+  startDate: timestamp('start_date').defaultNow().notNull(),
+  endDate: timestamp('end_date'),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (_t) => [
+  // Partial-unique index on (hive_id, type) WHERE is_active = true is added in the migration runner
+  // (drizzle doesn't model partial uniques well).
+])
+
+export const hiveWordLogs = pgTable('hive_word_logs', {
+  id: text('id').primaryKey().$defaultFn(() => createId()),
+  hiveId: text('hive_id').notNull().references(() => hives.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  chapterId: text('chapter_id').notNull().references(() => chapters.id, { onDelete: 'cascade' }),
+  wordsAdded: integer('words_added').notNull(),
+  loggedAt: timestamp('logged_at').defaultNow().notNull(),
+}, (t) => [
+  index('hive_word_logs_hive_id_logged_at_idx').on(t.hiveId, t.loggedAt),
+  index('hive_word_logs_user_chapter_idx').on(t.userId, t.chapterId, t.loggedAt),
+])
+
+export const hiveBuzzPosts = pgTable('hive_buzz_posts', {
+  id: text('id').primaryKey().$defaultFn(() => createId()),
+  hiveId: text('hive_id').notNull().references(() => hives.id, { onDelete: 'cascade' }),
+  authorId: text('author_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  type: buzzPostTypeEnum('type').notNull(),
+  body: text('body').notNull(),
+  linkUrl: text('link_url'),
+  likeCount: integer('like_count').default(0).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (t) => [
+  index('hive_buzz_posts_hive_created_idx').on(t.hiveId, t.createdAt),
+  // CHECK ((type='LINK' AND link_url IS NOT NULL) OR (type='TEXT' AND link_url IS NULL))
+  // is added in the migration runner.
+])
+
+export const hiveBuzzLikes = pgTable('hive_buzz_likes', {
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  buzzId: text('buzz_id').notNull().references(() => hiveBuzzPosts.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (t) => [
+  primaryKey({ columns: [t.userId, t.buzzId] }),
+])
+
+export const hiveWordGoalsRelations = relations(hiveWordGoals, ({ one }) => ({
+  hive: one(hives, { fields: [hiveWordGoals.hiveId], references: [hives.id] }),
+  createdBy: one(users, { fields: [hiveWordGoals.createdBy], references: [users.id] }),
+}))
+
+export const hiveWordLogsRelations = relations(hiveWordLogs, ({ one }) => ({
+  hive: one(hives, { fields: [hiveWordLogs.hiveId], references: [hives.id] }),
+  user: one(users, { fields: [hiveWordLogs.userId], references: [users.id] }),
+  chapter: one(chapters, { fields: [hiveWordLogs.chapterId], references: [chapters.id] }),
+}))
+
+export const hiveBuzzPostsRelations = relations(hiveBuzzPosts, ({ one, many }) => ({
+  hive: one(hives, { fields: [hiveBuzzPosts.hiveId], references: [hives.id] }),
+  author: one(users, { fields: [hiveBuzzPosts.authorId], references: [users.id] }),
+  likes: many(hiveBuzzLikes),
+}))
+
+export const hiveBuzzLikesRelations = relations(hiveBuzzLikes, ({ one }) => ({
+  user: one(users, { fields: [hiveBuzzLikes.userId], references: [users.id] }),
+  post: one(hiveBuzzPosts, { fields: [hiveBuzzLikes.buzzId], references: [hiveBuzzPosts.id] }),
 }))

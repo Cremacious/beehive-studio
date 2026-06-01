@@ -162,14 +162,18 @@ export async function createSuggestionAction(
       .set({ content: nextDoc, updatedAt: new Date() })
       .where(eq(chapters.id, chapterId))
 
+    // Activity payload shape (top-level suggestion only — replies don't fire):
+    //   { suggestionId, chapterId, originalExcerpt, suggestedText }
     await recordHiveActivityTx(tx as DrizzleTx, {
       hiveId,
       actorId: userId,
       type: 'suggestion_proposed',
       subjectId: newId,
       payload: {
+        suggestionId: newId,
         chapterId,
-        excerpt: originalExcerpt.slice(0, 80),
+        originalExcerpt,
+        suggestedText,
       },
     })
 
@@ -293,15 +297,20 @@ export async function acceptSuggestionAction(
         })
         .where(eq(hiveSuggestions.id, suggestion.id))
 
+      // Activity payload shape (orphan-on-accept path — emits suggestion_rejected
+      // because the suggestion never landed; carries orphan: true sentinel so
+      // /community renderers can distinguish from an explicit reject):
+      //   { suggestionId, chapterId, note: null, orphan: true }
       await recordHiveActivityTx(tx as DrizzleTx, {
         hiveId: suggestion.hiveId,
         actorId: userId,
         type: 'suggestion_rejected',
         subjectId: suggestion.id,
         payload: {
-          orphan: true,
+          suggestionId: suggestion.id,
           chapterId: suggestion.chapterId,
-          excerpt: (suggestion.originalExcerpt ?? '').slice(0, 80),
+          note: null,
+          orphan: true,
         },
       })
     })
@@ -335,14 +344,16 @@ export async function acceptSuggestionAction(
       })
       .where(eq(hiveSuggestions.id, suggestion.id))
 
+    // Activity payload shape (accept path):
+    //   { suggestionId, chapterId }
     await recordHiveActivityTx(tx as DrizzleTx, {
       hiveId: suggestion.hiveId,
       actorId: userId,
       type: 'suggestion_accepted',
       subjectId: suggestion.id,
       payload: {
+        suggestionId: suggestion.id,
         chapterId: suggestion.chapterId,
-        excerpt: (suggestion.originalExcerpt ?? '').slice(0, 80),
       },
     })
   })
@@ -418,14 +429,16 @@ export async function rejectSuggestionAction(
       })
       .where(eq(hiveSuggestions.id, id))
 
+    // Activity payload shape (explicit reject path):
+    //   { suggestionId, chapterId, note }
     await recordHiveActivityTx(tx as DrizzleTx, {
       hiveId: suggestion.hiveId,
       actorId: userId,
       type: 'suggestion_rejected',
       subjectId: id,
       payload: {
+        suggestionId: id,
         chapterId: suggestion.chapterId,
-        excerpt: (suggestion.originalExcerpt ?? '').slice(0, 80),
         note: note ?? null,
       },
     })

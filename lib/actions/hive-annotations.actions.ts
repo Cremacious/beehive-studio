@@ -131,12 +131,15 @@ export async function createAnnotationAction(
       .set({ content: nextDoc, updatedAt: new Date() })
       .where(eq(chapters.id, chapterId))
 
+    // Activity payload shape (top-level annotation only — replies don't fire):
+    //   { annotationId, chapterId, layer, excerpt }
     await recordHiveActivityTx(tx as DrizzleTx, {
       hiveId,
       actorId: userId,
       type: 'annotation_added',
       subjectId: newId,
       payload: {
+        annotationId: newId,
         chapterId,
         layer,
         excerpt: (selectedText ?? '').slice(0, 80),

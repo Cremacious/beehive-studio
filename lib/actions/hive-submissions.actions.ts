@@ -179,6 +179,8 @@ export async function submitSubmissionAction(
       .set({ draftStatus: 'PENDING', updatedAt: now })
       .where(eq(hiveSubmissions.id, id))
 
+    // Activity payload shape (top-level only — DRAFT→PENDING transition):
+    //   { submissionId, title, wordCount }
     await recordHiveActivityTx(tx as DrizzleTx, {
       hiveId: submission.hiveId,
       actorId: userId,
@@ -318,6 +320,8 @@ export async function approveSubmissionAction(
       })
       .where(eq(hiveSubmissions.id, id))
 
+    // Activity payload shape (privileged approve path):
+    //   { submissionId, chapterId, title, wordCount, submitterUserId }
     await recordHiveActivityTx(tx as DrizzleTx, {
       hiveId: submission.hiveId,
       actorId: userId,
@@ -354,6 +358,7 @@ export async function rejectSubmissionAction(
       id: true,
       hiveId: true,
       userId: true,
+      title: true,
       draftStatus: true,
     },
   })
@@ -385,6 +390,8 @@ export async function rejectSubmissionAction(
       })
       .where(eq(hiveSubmissions.id, id))
 
+    // Activity payload shape (reject path):
+    //   { submissionId, title, reviewNote }
     await recordHiveActivityTx(tx as DrizzleTx, {
       hiveId: submission.hiveId,
       actorId: userId,
@@ -392,6 +399,7 @@ export async function rejectSubmissionAction(
       subjectId: id,
       payload: {
         submissionId: id,
+        title: submission.title,
         reviewNote,
       },
     })

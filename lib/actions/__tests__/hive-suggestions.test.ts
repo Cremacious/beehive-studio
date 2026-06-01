@@ -187,7 +187,8 @@ describe('createSuggestionAction — H3 T7', () => {
     expect(actInsert!.values.type).toBe('suggestion_proposed')
     expect(actInsert!.values.payload).toMatchObject({
       chapterId: 'ch-1',
-      excerpt: 'Hello',
+      originalExcerpt: 'Hello',
+      suggestedText: 'Hi',
     })
 
     // chapter content updated

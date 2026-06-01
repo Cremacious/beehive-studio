@@ -93,6 +93,8 @@ export async function createDiscussionPostAction(
       topic,
     })
 
+    // Activity payload shape (top-level post only — replies don't fire):
+    //   { postId, topic, title }
     await recordHiveActivityTx(tx as DrizzleTx, {
       hiveId,
       actorId: userId,

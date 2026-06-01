@@ -1,0 +1,350 @@
+'use server'
+
+import { db } from '@/db'
+import {
+  hiveAnnotations,
+  hives,
+  chapters,
+  books,
+  userProfiles,
+} from '@/db/schema'
+import { eq, and, asc } from 'drizzle-orm'
+import { requireAuth } from '@/lib/require-auth'
+import {
+  requireHiveMember,
+  canAnnotate,
+  canResolveAnnotation,
+} from '@/lib/hive/permissions'
+import {
+  recordHiveActivityTx,
+  type DrizzleTx,
+} from '@/lib/hive/record-activity'
+import {
+  createAnnotationSchema,
+  replyToAnnotationSchema,
+  type CreateAnnotationInput,
+  type ReplyToAnnotationInput,
+} from '@/lib/validations/hive-annotation'
+import { findOrphanMarks, type PMNode } from '@/lib/tiptap-extensions/mark-scanning'
+import { patchDocWithMark } from '@/lib/tiptap-extensions/patch-mark'
+import type { ActionResult } from './book.actions'
+
+// ── Public types ─────────────────────────────────────────────────────────────
+
+export type AnnotationLayer = 'GRAMMAR' | 'PLOT' | 'TONE' | 'CONTINUITY' | 'GENERAL'
+
+export type AnnotationRow = {
+  id: string
+  hiveId: string
+  chapterId: string
+  authorId: string
+  parentId: string | null
+  layer: AnnotationLayer
+  selectionStart: number | null
+  selectionEnd: number | null
+  selectedText: string | null
+  body: string
+  resolved: boolean
+  resolvedBy: string | null
+  resolvedAt: Date | null
+  createdAt: Date
+  updatedAt: Date
+  author: {
+    userId: string
+    username: string | null
+    avatarUrl: string | null
+    displayName: string | null
+  }
+  resolver: {
+    userId: string
+    username: string | null
+    avatarUrl: string | null
+    displayName: string | null
+  } | null
+}
+
+export type GetChapterAnnotationsData = {
+  annotations: AnnotationRow[]
+  orphanRowIds: string[]
+}
+
+// ── createAnnotationAction ───────────────────────────────────────────────────
+
+export async function createAnnotationAction(
+  input: CreateAnnotationInput,
+): Promise<ActionResult<{ id: string }>> {
+  const userId = await requireAuth()
+  const parsed = createAnnotationSchema.safeParse(input)
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0].message }
+  const { hiveId, chapterId, layer, body, selectionStart, selectionEnd, selectedText } = parsed.data
+
+  let role
+  try {
+    role = await requireHiveMember(hiveId, userId)
+  } catch {
+    return { success: false, error: 'NOT_AUTHORIZED' }
+  }
+  if (!canAnnotate(role)) return { success: false, error: 'NOT_AUTHORIZED' }
+
+  // Verify chapter belongs to the hive's book.
+  const hive = await db.query.hives.findFirst({
+    where: eq(hives.id, hiveId),
+    columns: { bookId: true },
+  })
+  if (!hive) return { success: false, error: 'NOT_FOUND' }
+  const chapter = await db.query.chapters.findFirst({
+    where: eq(chapters.id, chapterId),
+    columns: { id: true, bookId: true, content: true },
+  })
+  if (!chapter || chapter.bookId !== hive.bookId) {
+    return { success: false, error: 'NOT_FOUND' }
+  }
+
+  const result = await db.transaction(async (tx) => {
+    const [inserted] = await tx
+      .insert(hiveAnnotations)
+      .values({
+        hiveId,
+        chapterId,
+        authorId: userId,
+        parentId: null,
+        layer,
+        selectionStart,
+        selectionEnd,
+        selectedText: selectedText ?? null,
+        body,
+      })
+      .returning({ id: hiveAnnotations.id })
+    const newId = inserted.id
+
+    // Patch chapter content with the annotation mark.
+    const doc = (chapter.content ?? { type: 'doc', content: [] }) as PMNode
+    const nextDoc = patchDocWithMark(
+      doc,
+      'hiveAnnotation',
+      { annotationId: newId, layer },
+      selectionStart,
+      selectionEnd,
+    )
+    await tx
+      .update(chapters)
+      .set({ content: nextDoc, updatedAt: new Date() })
+      .where(eq(chapters.id, chapterId))
+
+    await recordHiveActivityTx(tx as DrizzleTx, {
+      hiveId,
+      actorId: userId,
+      type: 'annotation_added',
+      subjectId: newId,
+      payload: {
+        chapterId,
+        layer,
+        excerpt: (selectedText ?? '').slice(0, 80),
+      },
+    })
+
+    return newId
+  })
+
+  return { success: true, data: { id: result } }
+}
+
+// ── replyToAnnotationAction ──────────────────────────────────────────────────
+
+export async function replyToAnnotationAction(
+  input: ReplyToAnnotationInput,
+): Promise<ActionResult<{ id: string }>> {
+  const userId = await requireAuth()
+  const parsed = replyToAnnotationSchema.safeParse(input)
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0].message }
+  const { parentId, body } = parsed.data
+
+  const parent = await db.query.hiveAnnotations.findFirst({
+    where: eq(hiveAnnotations.id, parentId),
+    columns: {
+      id: true,
+      hiveId: true,
+      chapterId: true,
+      layer: true,
+      parentId: true,
+    },
+  })
+  if (!parent) return { success: false, error: 'NOT_FOUND' }
+
+  let role
+  try {
+    role = await requireHiveMember(parent.hiveId, userId)
+  } catch {
+    return { success: false, error: 'NOT_AUTHORIZED' }
+  }
+  if (!canAnnotate(role)) return { success: false, error: 'NOT_AUTHORIZED' }
+
+  const [inserted] = await db
+    .insert(hiveAnnotations)
+    .values({
+      hiveId: parent.hiveId,
+      chapterId: parent.chapterId,
+      authorId: userId,
+      parentId: parent.id,
+      layer: parent.layer,
+      selectionStart: null,
+      selectionEnd: null,
+      selectedText: null,
+      body,
+    })
+    .returning({ id: hiveAnnotations.id })
+
+  // No activity event for replies.
+  return { success: true, data: { id: inserted.id } }
+}
+
+// ── resolveAnnotationAction / unresolveAnnotationAction ─────────────────────
+
+async function setAnnotationResolved(
+  annotationId: string,
+  resolved: boolean,
+): Promise<ActionResult> {
+  const userId = await requireAuth()
+
+  const ann = await db.query.hiveAnnotations.findFirst({
+    where: eq(hiveAnnotations.id, annotationId),
+    columns: { id: true, hiveId: true, chapterId: true, authorId: true },
+  })
+  if (!ann) return { success: false, error: 'NOT_FOUND' }
+
+  const chapter = await db.query.chapters.findFirst({
+    where: eq(chapters.id, ann.chapterId),
+    columns: { bookId: true },
+  })
+  if (!chapter) return { success: false, error: 'NOT_FOUND' }
+  const book = await db.query.books.findFirst({
+    where: eq(books.id, chapter.bookId),
+    columns: { userId: true },
+  })
+  if (!book) return { success: false, error: 'NOT_FOUND' }
+
+  let role
+  try {
+    role = await requireHiveMember(ann.hiveId, userId)
+  } catch {
+    return { success: false, error: 'NOT_AUTHORIZED' }
+  }
+
+  if (!canResolveAnnotation({ authorId: ann.authorId }, role, userId, book.userId)) {
+    return { success: false, error: 'NOT_AUTHORIZED' }
+  }
+
+  await db
+    .update(hiveAnnotations)
+    .set({
+      resolved,
+      resolvedBy: resolved ? userId : null,
+      resolvedAt: resolved ? new Date() : null,
+      updatedAt: new Date(),
+    })
+    .where(eq(hiveAnnotations.id, annotationId))
+
+  return { success: true, data: undefined }
+}
+
+export async function resolveAnnotationAction(annotationId: string): Promise<ActionResult> {
+  return setAnnotationResolved(annotationId, true)
+}
+
+export async function unresolveAnnotationAction(annotationId: string): Promise<ActionResult> {
+  return setAnnotationResolved(annotationId, false)
+}
+
+// ── getChapterAnnotationsAction ──────────────────────────────────────────────
+
+export async function getChapterAnnotationsAction(
+  chapterId: string,
+  hiveId: string,
+): Promise<ActionResult<GetChapterAnnotationsData>> {
+  const userId = await requireAuth()
+  try {
+    await requireHiveMember(hiveId, userId)
+  } catch {
+    return { success: false, error: 'NOT_AUTHORIZED' }
+  }
+
+  const hive = await db.query.hives.findFirst({
+    where: eq(hives.id, hiveId),
+    columns: { bookId: true },
+  })
+  if (!hive) return { success: false, error: 'NOT_FOUND' }
+  const chapter = await db.query.chapters.findFirst({
+    where: eq(chapters.id, chapterId),
+    columns: { id: true, bookId: true, content: true },
+  })
+  if (!chapter || chapter.bookId !== hive.bookId) {
+    return { success: false, error: 'NOT_FOUND' }
+  }
+
+  const rows = await db.query.hiveAnnotations.findMany({
+    where: eq(hiveAnnotations.chapterId, chapterId),
+    orderBy: [asc(hiveAnnotations.createdAt)],
+  })
+
+  const userIds = Array.from(
+    new Set(
+      rows
+        .flatMap((r) => [r.authorId, r.resolvedBy])
+        .filter((v): v is string => !!v),
+    ),
+  )
+  const profiles = userIds.length
+    ? await db.query.userProfiles.findMany({
+        where: (t, { inArray }) => inArray(t.userId, userIds),
+        columns: { userId: true, username: true, avatarUrl: true, displayName: true },
+      })
+    : []
+  const profileByUserId = new Map(profiles.map((p) => [p.userId, p]))
+
+  const annotations: AnnotationRow[] = rows.map((r) => {
+    const author = profileByUserId.get(r.authorId)
+    const resolver = r.resolvedBy ? profileByUserId.get(r.resolvedBy) : null
+    return {
+      id: r.id,
+      hiveId: r.hiveId,
+      chapterId: r.chapterId,
+      authorId: r.authorId,
+      parentId: r.parentId,
+      layer: r.layer as AnnotationLayer,
+      selectionStart: r.selectionStart,
+      selectionEnd: r.selectionEnd,
+      selectedText: r.selectedText,
+      body: r.body,
+      resolved: r.resolved,
+      resolvedBy: r.resolvedBy,
+      resolvedAt: r.resolvedAt,
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt,
+      author: {
+        userId: r.authorId,
+        username: author?.username ?? null,
+        avatarUrl: author?.avatarUrl ?? null,
+        displayName: author?.displayName ?? null,
+      },
+      resolver: r.resolvedBy
+        ? {
+            userId: r.resolvedBy,
+            username: resolver?.username ?? null,
+            avatarUrl: resolver?.avatarUrl ?? null,
+            displayName: resolver?.displayName ?? null,
+          }
+        : null,
+    }
+  })
+
+  // Top-level annotation ids only (replies don't carry their own marks).
+  const topLevelIds = rows.filter((r) => r.parentId === null).map((r) => r.id)
+  const doc = (chapter.content ?? { type: 'doc', content: [] }) as PMNode
+  const { orphanRows } = findOrphanMarks(doc, 'hiveAnnotation', 'annotationId', topLevelIds)
+
+  return {
+    success: true,
+    data: { annotations, orphanRowIds: orphanRows },
+  }
+}
+

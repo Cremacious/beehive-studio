@@ -360,9 +360,6 @@ export function BinderTree() {
         )}
       >
         <div className="px-3.5 pt-4 pb-3">
-          <div className="text-[10px] font-mono uppercase tracking-[0.10em] text-muted-foreground mb-1.5">
-            Book
-          </div>
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
               {isRenamingBook ? (

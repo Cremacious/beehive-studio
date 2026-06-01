@@ -24,18 +24,6 @@ interface AppNavProps {
   }
 }
 
-/**
- * Returns the first path segment after the locale (lowercased), e.g.
- * "/en/studio/abc" → "studio". The crumb renders as "/<segment>" next to
- * the brand lockup, so it always reflects the current route. Falls back
- * to "studio" at the locale root.
- */
-function crumbFor(pathname: string, locale: string): string {
-  const trimmed = pathname.replace(new RegExp(`^/${locale}`), '') || '/'
-  const seg = trimmed.split('/').filter(Boolean)[0] ?? ''
-  return (seg || 'studio').toLowerCase()
-}
-
 export function AppNav({ locale, user }: AppNavProps) {
   const pathname = usePathname()
   const router = useRouter()
@@ -58,11 +46,9 @@ export function AppNav({ locale, user }: AppNavProps) {
     return pathname.startsWith(`/${locale}/${segment}`)
   }
 
-  const crumb = crumbFor(pathname, locale)
-
   return (
     <header
-      className="sticky top-3 z-40 mx-4 mt-3 backdrop-blur-md"
+      className="sticky top-1.5 z-40 mx-4 mt-1.5 backdrop-blur-md"
       style={{
         background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
         borderRadius: 'var(--r-nav)',
@@ -90,19 +76,6 @@ export function AppNav({ locale, user }: AppNavProps) {
           </span>
           <div className="flex items-baseline gap-2.5" style={{ fontFamily: 'var(--font-display)', fontWeight: 700, letterSpacing: '-0.01em' }}>
             <span className="text-[15px]" style={{ color: 'var(--canvas-dark-ink-strong)' }}>Beehive Studio</span>
-            <span
-              className="hidden sm:inline-flex items-center lowercase"
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontWeight: 500,
-                fontSize: '11px',
-                letterSpacing: '0.04em',
-                color: 'var(--canvas-dark-ink-muted)',
-              }}
-            >
-              <span style={{ color: 'var(--canvas-dark-300)' }}>/</span>
-              {crumb}
-            </span>
           </div>
         </Link>
 

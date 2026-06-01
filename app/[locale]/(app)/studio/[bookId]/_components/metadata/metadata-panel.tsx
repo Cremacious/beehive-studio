@@ -1,16 +1,11 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { ChevronDown, ChevronRight, Sparkles } from 'lucide-react'
+import { ChevronDown, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useBookEditor } from '../book-editor-provider'
 import { EmptyState } from '../empty-state'
 import { updateBinderItemAction } from '@/lib/actions/binder.actions'
-import {
-  getPublishingMetadataAction,
-  updatePublishingMetadataAction,
-  type PublishingMetadata,
-} from '@/lib/actions/publishing.actions'
 
 const CHAPTER_TYPES = new Set(['chapter', 'front_matter', 'back_matter'])
 
@@ -203,163 +198,9 @@ function ChapterMetadata() {
   )
 }
 
-function PublishingSection({ bookId }: { bookId: string }) {
-  const [expanded, setExpanded] = useState(false)
-  const [loaded, setLoaded] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [upgradePrompt, setUpgradePrompt] = useState(false)
-  const [fields, setFields] = useState<Partial<PublishingMetadata>>({})
-
-  async function handleExpand() {
-    if (expanded) {
-      setExpanded(false)
-      return
-    }
-    if (!loaded) {
-      // Fetch first, then expand — inputs mount with data already in fields
-      const result = await getPublishingMetadataAction(bookId)
-      if (result.success) setFields(result.data)
-      setLoaded(true)
-    }
-    setExpanded(true)
-  }
-
-  // Fields that accept null (nullable in schema): isbn, subtitle, authorBio, dedication, publisherName
-  // Fields that are optional-only (no null): trimSize, edition
-  const NULLABLE_FIELDS = new Set<keyof PublishingMetadata>(['isbn', 'subtitle', 'authorBio', 'dedication', 'publisherName'])
-
-  async function handleBlur(field: keyof PublishingMetadata, value: string) {
-    setSaving(true)
-    setUpgradePrompt(false)
-    const trimmed = value.trim()
-    const coerced = NULLABLE_FIELDS.has(field) ? (trimmed || null) : (trimmed || undefined)
-    const result = await updatePublishingMetadataAction(bookId, { [field]: coerced })
-    setSaving(false)
-    if (!result.success && result.error?.startsWith('PREMIUM_REQUIRED')) {
-      setUpgradePrompt(true)
-    }
-  }
-
-  const pubLabelClass = "block text-[10px] mb-1 uppercase tracking-[0.10em] font-jetbrains-mono"
-  const pubLabelStyle = { color: 'var(--canvas-dark-ink-muted)' } as const
-  const pubFieldClass = "w-full bg-transparent px-2.5 py-1.5 text-xs placeholder:text-muted-foreground placeholder:italic focus:outline-none transition-colors"
-  const pubFieldStyle = {
-    borderRadius: 'var(--r-row)',
-    boxShadow: 'var(--sh-inset)',
-    color: 'var(--canvas-dark-ink-strong)',
-  } as const
-
-  return (
-    <div
-      className="mt-auto border-t border-[var(--chrome-800)]"
-      style={{ background: 'linear-gradient(180deg, var(--chrome-900), oklch(0.16 0.012 60))' }}
-    >
-      <button
-        onClick={handleExpand}
-        className="flex w-full items-start justify-between px-[18px] pt-3.5 pb-1 text-left hover:bg-surface-elevated/30 transition-colors"
-      >
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2">
-            {expanded ? (
-              <ChevronDown size={14} className="text-muted-foreground" />
-            ) : (
-              <ChevronRight size={14} className="text-muted-foreground" />
-            )}
-            <span
-              className="text-sm font-comfortaa font-bold uppercase tracking-wider"
-              style={{ color: 'var(--brand)' }}
-            >
-              Publishing details
-            </span>
-            <span
-              className="px-2 py-0.5 text-[10px] font-geist font-bold uppercase tracking-wide inline-flex items-center gap-1"
-              style={{
-                background: 'var(--brand)',
-                color: 'var(--brand-ink)',
-                borderRadius: 'var(--r-pill)',
-              }}
-            >
-              <Sparkles className="w-3 h-3" />
-              Premium
-            </span>
-          </div>
-        </div>
-        {saving && <span className="text-[9px] text-muted-foreground mt-1">Saving…</span>}
-      </button>
-
-      <div className="px-[18px] pb-3 -mt-1">
-        <span className="text-xs text-muted-foreground">Applies to the whole book, not just this chapter</span>
-      </div>
-
-      {expanded && (
-        <div className="px-[18px] pb-[22px] pt-1 flex flex-col gap-3">
-          {upgradePrompt && (
-            <div
-              className="rounded-md px-3 py-2 text-[10px]"
-              style={{
-                color: 'var(--brand)',
-                backgroundColor: 'var(--brand-soft)',
-                border: '1px solid oklch(0.85 0.18 90 / 0.25)',
-              }}
-            >
-              Publishing details require a premium account.
-            </div>
-          )}
-
-          {[
-            { field: 'subtitle' as const, label: 'Subtitle', type: 'text' },
-            { field: 'isbn' as const, label: 'ISBN', type: 'text' },
-            { field: 'publisherName' as const, label: 'Publisher name', type: 'text' },
-            { field: 'dedication' as const, label: 'Dedication', type: 'text' },
-            { field: 'edition' as const, label: 'Edition', type: 'text' },
-          ].map(({ field, label, type }) => (
-            <div key={field} className="flex flex-col gap-1">
-              <label className={pubLabelClass} style={pubLabelStyle}>{label}</label>
-              <input
-                type={type}
-                defaultValue={fields[field] ?? ''}
-                onBlur={e => handleBlur(field, e.target.value)}
-                className={pubFieldClass}
-                style={pubFieldStyle}
-                placeholder={`Enter ${label.toLowerCase()}…`}
-              />
-            </div>
-          ))}
-
-          <div className="flex flex-col gap-1">
-            <label className={pubLabelClass} style={pubLabelStyle}>Author bio</label>
-            <textarea
-              rows={3}
-              defaultValue={fields.authorBio ?? ''}
-              onBlur={e => handleBlur('authorBio', e.target.value)}
-              className={cn(pubFieldClass, "resize-none leading-relaxed")}
-              style={pubFieldStyle}
-              placeholder="Enter author bio…"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className={pubLabelClass} style={pubLabelStyle}>Trim size</label>
-            <select
-              defaultValue={fields.trimSize ?? ''}
-              onBlur={e => handleBlur('trimSize', e.target.value)}
-              className={pubFieldClass}
-              style={pubFieldStyle}
-            >
-              <option value="">— Select —</option>
-              <option value="5x8">5 × 8</option>
-              <option value="5.5x8.5">5.5 × 8.5</option>
-              <option value="6x9">6 × 9</option>
-            </select>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
 
 export function MetadataPanel() {
-  const { activeItem, activeItemId, focusMode, bookId, historyOpen } = useBookEditor()
+  const { activeItem, activeItemId, focusMode, historyOpen } = useBookEditor()
   const isChapterActive = !!activeItem && CHAPTER_TYPES.has(activeItem.type)
 
   const hidden = focusMode || historyOpen
@@ -389,7 +230,6 @@ export function MetadataPanel() {
       <div className="flex-1 overflow-y-auto">
         {isChapterActive ? <ChapterMetadata key={activeItemId} /> : <EmptyPlaceholder />}
       </div>
-      <PublishingSection bookId={bookId} />
     </aside>
   )
 }

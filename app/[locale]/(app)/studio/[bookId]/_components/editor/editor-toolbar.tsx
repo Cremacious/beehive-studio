@@ -58,24 +58,61 @@ type ToolbarButtonProps = {
 
 // Shared className builder so ad-hoc buttons (Sun/Moon, font-select, Export,
 // Analysis, Focus) get the same hover/active/disabled treatment as the
-// ToolbarButton wrapper. Mockup spec: 30x30 icon button, r-md (10px), chrome-400
-// default, chrome-100 + chrome-800 on hover. Active state moves to solid
-// brand-yellow per the 5-sanctioned-uses rule (vs the mockup's brand-soft tint).
+// ToolbarButton wrapper. T4 (aesthetic refresh): 30x30 tiles use --r-btn
+// (12px) + inset tile gradient (via tbtnStyle) + --sh-tile. Active state is
+// solid brand-yellow with brand-ink icon per spec rule 4.
 function tbtnClass({
   isActive = false,
   disabled = false,
   hasLabel = false,
 }: { isActive?: boolean; disabled?: boolean; hasLabel?: boolean } = {}) {
   return cn(
-    'inline-flex items-center justify-center rounded-[10px] transition-colors',
+    'inline-flex items-center justify-center transition-colors',
     hasLabel ? 'h-[30px] gap-1.5 px-2.5 text-xs font-medium' : 'h-[30px] w-[30px]',
-    'text-foreground/65 hover:text-foreground hover:bg-surface-elevated',
-    isActive && 'bg-brand text-brand-ink hover:bg-brand-hover hover:text-brand-ink',
-    disabled && 'opacity-40 cursor-not-allowed hover:bg-transparent hover:text-foreground/65',
+    isActive
+      ? 'text-[var(--brand-ink)]'
+      : 'text-[var(--canvas-dark-ink-strong)]',
+    disabled && 'opacity-40 cursor-not-allowed',
   )
 }
 
+// Inline-style helper for the iOS-depth tile treatment. Idle tiles get the
+// inset gradient + --sh-tile; active tiles get solid brand-yellow. Hover is
+// wired via onMouseEnter/onMouseLeave that swap the gradient stops (kept
+// inline so we don't bleed CSS into globals.css for a single surface).
+function tbtnStyle(isActive: boolean): React.CSSProperties {
+  return {
+    borderRadius: 'var(--r-btn)',
+    background: isActive
+      ? 'var(--brand)'
+      : 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+    boxShadow: 'var(--sh-tile)',
+  }
+}
+
+function tbtnHoverEnter(e: React.MouseEvent<HTMLButtonElement>, isActive: boolean) {
+  if (isActive) return
+  e.currentTarget.style.background =
+    'linear-gradient(180deg, var(--canvas-dark-400), var(--canvas-dark-350))'
+}
+
+function tbtnHoverLeave(e: React.MouseEvent<HTMLButtonElement>, isActive: boolean) {
+  if (isActive) return
+  e.currentTarget.style.background =
+    'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))'
+}
+
+// Shared panel treatment for dropdown menus (Heading▾, List▾, Align▾, More▾).
+// Mirrors T3's panel: gradient bg + --r-card + --sh-card + --br-card.
+const dropdownPanelStyle: React.CSSProperties = {
+  background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+  borderRadius: 'var(--r-card)',
+  boxShadow: 'var(--sh-card)',
+  border: 'var(--br-card)',
+}
+
 function ToolbarButton({ onClick, disabled, isActive, title, children }: ToolbarButtonProps) {
+  const active = !!isActive
   const button = (
     <button
       // Prevent the button from stealing focus from the editor on click.
@@ -88,6 +125,9 @@ function ToolbarButton({ onClick, disabled, isActive, title, children }: Toolbar
       disabled={disabled}
       aria-label={title}
       className={tbtnClass({ isActive, disabled })}
+      style={tbtnStyle(active)}
+      onMouseEnter={e => tbtnHoverEnter(e, active)}
+      onMouseLeave={e => tbtnHoverLeave(e, active)}
     >
       {children}
     </button>
@@ -139,7 +179,13 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
     <TooltipProvider>
       <div
         data-slot="editor-toolbar"
-        className="flex items-center gap-1 h-12 px-3.5 border-b border-border bg-surface"
+        className="flex items-center gap-1 px-3 py-2"
+        style={{
+          background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+          borderRadius: 'var(--r-card)',
+          boxShadow: 'var(--sh-card)',
+          border: 'var(--br-card)',
+        }}
       >
         {/* FORMAT zone (left) */}
         <div className="flex items-center gap-0.5">
@@ -179,6 +225,9 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
                     onMouseDown={e => e.preventDefault()}
                     aria-label="Heading"
                     className={tbtnClass({ isActive: editor.isActive('heading') })}
+                    style={tbtnStyle(editor.isActive('heading'))}
+                    onMouseEnter={e => tbtnHoverEnter(e, editor.isActive('heading'))}
+                    onMouseLeave={e => tbtnHoverLeave(e, editor.isActive('heading'))}
                   >
                     <HeadingIcon size={14} />
                   </button>
@@ -186,7 +235,7 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
               </TooltipTrigger>
               <TooltipContent>Heading</TooltipContent>
             </Tooltip>
-            <DropdownMenuContent align="start" onCloseAutoFocus={e => e.preventDefault()}>
+            <DropdownMenuContent align="start" onCloseAutoFocus={e => e.preventDefault()} style={dropdownPanelStyle}>
               <DropdownMenuItem
                 onSelect={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
                 className={cn(editor.isActive('heading', { level: 1 }) && 'bg-brand/15 text-foreground')}
@@ -226,6 +275,9 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
                     onMouseDown={e => e.preventDefault()}
                     aria-label="List"
                     className={tbtnClass({ isActive: editor.isActive('bulletList') || editor.isActive('orderedList') })}
+                    style={tbtnStyle(editor.isActive('bulletList') || editor.isActive('orderedList'))}
+                    onMouseEnter={e => tbtnHoverEnter(e, editor.isActive('bulletList') || editor.isActive('orderedList'))}
+                    onMouseLeave={e => tbtnHoverLeave(e, editor.isActive('bulletList') || editor.isActive('orderedList'))}
                   >
                     <List size={14} />
                   </button>
@@ -233,7 +285,7 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
               </TooltipTrigger>
               <TooltipContent>List</TooltipContent>
             </Tooltip>
-            <DropdownMenuContent align="start" onCloseAutoFocus={e => e.preventDefault()}>
+            <DropdownMenuContent align="start" onCloseAutoFocus={e => e.preventDefault()} style={dropdownPanelStyle}>
               <DropdownMenuItem
                 onSelect={() => editor.chain().focus().toggleBulletList().run()}
                 className={cn(editor.isActive('bulletList') && 'bg-brand/15 text-foreground')}
@@ -313,26 +365,32 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
             <Tooltip>
               <TooltipTrigger asChild>
                 <DropdownMenuTrigger asChild>
-                  <button
-                    onMouseDown={e => e.preventDefault()}
-                    aria-label="Align"
-                    className={tbtnClass({
-                      isActive:
-                        editor.isActive({ textAlign: 'center' }) ||
-                        editor.isActive({ textAlign: 'right' }),
-                    })}
-                  >
-                    {editor.isActive({ textAlign: 'center' })
-                      ? <AlignCenter size={14} />
-                      : editor.isActive({ textAlign: 'right' })
-                        ? <AlignRight size={14} />
-                        : <AlignLeft size={14} />}
-                  </button>
+                  {(() => {
+                    const alignActive =
+                      editor.isActive({ textAlign: 'center' }) ||
+                      editor.isActive({ textAlign: 'right' })
+                    return (
+                      <button
+                        onMouseDown={e => e.preventDefault()}
+                        aria-label="Align"
+                        className={tbtnClass({ isActive: alignActive })}
+                        style={tbtnStyle(alignActive)}
+                        onMouseEnter={e => tbtnHoverEnter(e, alignActive)}
+                        onMouseLeave={e => tbtnHoverLeave(e, alignActive)}
+                      >
+                        {editor.isActive({ textAlign: 'center' })
+                          ? <AlignCenter size={14} />
+                          : editor.isActive({ textAlign: 'right' })
+                            ? <AlignRight size={14} />
+                            : <AlignLeft size={14} />}
+                      </button>
+                    )
+                  })()}
                 </DropdownMenuTrigger>
               </TooltipTrigger>
               <TooltipContent>Align</TooltipContent>
             </Tooltip>
-            <DropdownMenuContent align="start" onCloseAutoFocus={e => e.preventDefault()}>
+            <DropdownMenuContent align="start" onCloseAutoFocus={e => e.preventDefault()} style={dropdownPanelStyle}>
               <DropdownMenuItem
                 onSelect={() => editor.chain().focus().setTextAlign('left').run()}
                 className={cn(editor.isActive({ textAlign: 'left' }) && 'bg-brand/15 text-foreground')}
@@ -400,6 +458,9 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
                 onClick={toggleEditorTheme}
                 aria-label={editorTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
                 className={tbtnClass()}
+                style={tbtnStyle(false)}
+                onMouseEnter={e => tbtnHoverEnter(e, false)}
+                onMouseLeave={e => tbtnHoverLeave(e, false)}
               >
                 {editorTheme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
               </button>
@@ -420,6 +481,9 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
                     onMouseDown={e => e.preventDefault()}
                     aria-label="More"
                     className={tbtnClass({ isActive: analysisOpen })}
+                    style={tbtnStyle(!!analysisOpen)}
+                    onMouseEnter={e => tbtnHoverEnter(e, !!analysisOpen)}
+                    onMouseLeave={e => tbtnHoverLeave(e, !!analysisOpen)}
                   >
                     <MoreHorizontal size={14} />
                   </button>
@@ -427,7 +491,7 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
               </TooltipTrigger>
               <TooltipContent>More</TooltipContent>
             </Tooltip>
-            <DropdownMenuContent align="end" onCloseAutoFocus={e => e.preventDefault()}>
+            <DropdownMenuContent align="end" onCloseAutoFocus={e => e.preventDefault()} style={dropdownPanelStyle}>
               <DropdownMenuItem
                 onSelect={() => window.dispatchEvent(new Event('beehive:toggle-cheatsheet'))}
               >
@@ -470,6 +534,9 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
                 onClick={toggleFocusMode}
                 aria-label={focusMode ? 'Exit focus mode' : 'Enter focus mode'}
                 className={tbtnClass({ isActive: focusMode })}
+                style={tbtnStyle(focusMode)}
+                onMouseEnter={e => tbtnHoverEnter(e, focusMode)}
+                onMouseLeave={e => tbtnHoverLeave(e, focusMode)}
               >
                 {focusMode ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
               </button>

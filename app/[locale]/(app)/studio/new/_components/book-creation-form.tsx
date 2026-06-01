@@ -9,6 +9,7 @@ import { StepOne } from '../../_components/create-book-wizard/step-one'
 import { StepTwo } from '../../_components/create-book-wizard/step-two'
 import { StepThree, type BookTemplate } from '../../_components/create-book-wizard/step-three'
 import { StepHeader } from '../../_components/create-book-wizard/step-header'
+import { WizardFooter } from '../../_components/create-book-wizard/wizard-field'
 import { SharingControls, type Visibility } from '@/components/book/sharing-controls'
 
 type Step = 1 | 2 | 3 | 4
@@ -342,26 +343,28 @@ export function BookCreationForm({ locale, templates }: Props) {
                   />
 
                   {error && (
-                    <p className="text-[13px] text-red-400 bg-red-400/10 border border-red-400/20 rounded-xl px-4 py-3">
+                    <p
+                      style={{
+                        fontSize: 13,
+                        color: 'oklch(0.72 0.21 25)',
+                        background: 'oklch(0.62 0.21 25 / 0.10)',
+                        border: '1px solid oklch(0.62 0.21 25 / 0.25)',
+                        borderRadius: 'var(--r-row)',
+                        padding: '12px 16px',
+                      }}
+                    >
                       {error === 'FREE_LIMIT_REACHED'
                         ? "You've reached the free plan limit of 3 books. Upgrade to create more."
                         : error}
                     </p>
                   )}
 
-                  <div className="flex items-center justify-between pt-2">
-                    <button type="button" onClick={goBack} className="text-[13px] text-white/40 hover:text-white/70 transition-colors">← Back</button>
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={submit}
-                        disabled={submitting}
-                        className="bg-brand text-[#0a0a0a] font-bold font-comfortaa rounded-full px-6 py-2.5 text-[13px] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-brand-hover hover:-translate-y-px transition-all"
-                      >
-                        {submitting ? 'Creating…' : 'Create Book'}
-                      </button>
-                    </div>
-                  </div>
+                  <WizardFooter
+                    onBack={goBack}
+                    onNext={submit}
+                    nextLabel="Create your book ✨"
+                    submitting={submitting}
+                  />
                 </div>
               )}
 
@@ -397,6 +400,18 @@ export function BookCreationForm({ locale, templates }: Props) {
         .step-enter-back    { animation: stepEnterBack    320ms cubic-bezier(0.22, 0.61, 0.36, 1); }
         @media (prefers-reduced-motion: reduce) {
           .step-enter-forward, .step-enter-back { animation: none; }
+        }
+        .back-link {
+          font-size: 13px;
+          color: var(--canvas-dark-ink-muted);
+          background: none;
+          border: none;
+          cursor: pointer;
+          transition: color 150ms ease;
+        }
+        .back-link:hover { color: var(--canvas-dark-ink-strong); }
+        @keyframes wizardSpin {
+          to { transform: rotate(360deg); }
         }
       `}</style>
     </div>

@@ -2,7 +2,7 @@
 
 import { Check } from 'lucide-react'
 import { TRIM_SIZES } from './genre-data'
-import { HelperText, RECESSED_INPUT_STYLE, recessBlur, recessFocus } from './wizard-field'
+import { HelperText, RECESSED_INPUT_STYLE, WizardFooter, recessBlur, recessFocus } from './wizard-field'
 
 export type BookTemplate = {
   id: string
@@ -326,26 +326,28 @@ export function StepThree({ templateId, isSeriesBook, seriesName, seriesNumber, 
       </details>
 
       {error && (
-        <p className="text-[13px] text-red-400 bg-red-400/10 border border-red-400/20 rounded-xl px-4 py-3">
+        <p
+          style={{
+            fontSize: 13,
+            color: 'oklch(0.72 0.21 25)',
+            background: 'oklch(0.62 0.21 25 / 0.10)',
+            border: '1px solid oklch(0.62 0.21 25 / 0.25)',
+            borderRadius: 'var(--r-row)',
+            padding: '12px 16px',
+          }}
+        >
           {error === 'FREE_LIMIT_REACHED'
             ? "You've reached the free plan limit of 3 books. Upgrade to create more."
             : error}
         </p>
       )}
 
-      <div className="flex items-center justify-between pt-2">
-        <button type="button" onClick={onBack} className="text-[13px] text-white/40 hover:text-white/70 transition-colors">← Back</button>
-        <div className="flex items-center gap-3">
-          <button type="button" onClick={onSkip} className="text-[13px] text-white/40 hover:text-white/70 transition-colors">Skip</button>
-          <button
-            type="button"
-            onClick={onNext}
-            className="bg-brand text-[#0a0a0a] font-bold font-comfortaa rounded-full px-6 py-2.5 text-[13px] hover:bg-brand-hover hover:-translate-y-px transition-all"
-          >
-            Next →
-          </button>
-        </div>
-      </div>
+      <WizardFooter
+        onBack={onBack}
+        onSkip={onSkip}
+        onNext={onNext}
+        nextLabel="Next: who can see it →"
+      />
     </div>
   )
 }

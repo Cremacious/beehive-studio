@@ -7,6 +7,7 @@ import {
   RECESSED_INPUT_STYLE,
   RECESSED_TEXTAREA_STYLE,
   WizardField,
+  WizardFooter,
   recessBlur,
   recessFocus,
 } from './wizard-field'
@@ -103,17 +104,12 @@ export function StepOne({ title, subtitle, synopsis, coverUrl, onUpdate, onNext,
         </div>
       </div>
 
-      <div className="flex items-center justify-between mt-8">
-        <button type="button" onClick={onCancel} className="text-[13px] text-white/40 hover:text-white/70 transition-colors">Cancel</button>
-        <button
-          type="button"
-          onClick={() => { if (!title.trim()) return; onNext() }}
-          disabled={!title.trim()}
-          className="bg-brand text-[#0a0a0a] font-bold font-comfortaa rounded-full px-6 py-2.5 text-[13px] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-brand-hover hover:-translate-y-px transition-all"
-        >
-          Next →
-        </button>
-      </div>
+      <WizardFooter
+        onCancel={onCancel}
+        onNext={() => { if (!title.trim()) return; onNext() }}
+        nextLabel="Next: tell us how to find it →"
+        nextDisabled={!title.trim()}
+      />
     </div>
   )
 }

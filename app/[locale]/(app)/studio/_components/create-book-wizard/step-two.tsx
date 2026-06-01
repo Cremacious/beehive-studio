@@ -6,6 +6,7 @@ import { GENRES, GENRE_NAMES, CONTENT_WARNINGS, TARGET_AUDIENCES } from './genre
 import { PREDEFINED_TAGS } from './tags-data'
 import {
   WizardField,
+  WizardFooter,
   HelperText,
   ExampleChips,
   RECESSED_INPUT_STYLE,
@@ -316,19 +317,12 @@ export function StepTwo({ genre, subgenre, tags, targetAudience, contentWarnings
         </SelectField>
       </WizardField>
 
-      <div className="flex items-center justify-between pt-2">
-        <button type="button" onClick={onBack} className="text-[13px] text-white/40 hover:text-white/70 transition-colors">← Back</button>
-        <div className="flex items-center gap-3">
-          <button type="button" onClick={onSkip} className="text-[13px] text-white/40 hover:text-white/70 transition-colors">Skip</button>
-          <button
-            type="button"
-            onClick={onNext}
-            className="bg-brand text-[#0a0a0a] font-bold font-comfortaa rounded-full px-6 py-2.5 text-[13px] hover:bg-brand-hover hover:-translate-y-px transition-all"
-          >
-            Next →
-          </button>
-        </div>
-      </div>
+      <WizardFooter
+        onBack={onBack}
+        onSkip={onSkip}
+        onNext={onNext}
+        nextLabel="Next: shape your manuscript →"
+      />
     </div>
   )
 }

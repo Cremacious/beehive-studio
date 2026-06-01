@@ -139,3 +139,81 @@ export function recessBlur(e: React.FocusEvent<HTMLElement>) {
   e.currentTarget.style.boxShadow = 'none'
   e.currentTarget.style.borderColor = 'oklch(1 0 0 / 0.06)'
 }
+
+type WizardFooterProps = {
+  onBack?: () => void
+  onCancel?: () => void
+  onSkip?: () => void
+  onNext: () => void
+  nextLabel: string
+  nextDisabled?: boolean
+  submitting?: boolean
+}
+
+export function WizardFooter({ onBack, onCancel, onSkip, onNext, nextLabel, nextDisabled, submitting }: WizardFooterProps) {
+  const isDisabled = nextDisabled || submitting
+  return (
+    <div
+      className="flex items-center justify-between"
+      style={{
+        marginTop: 20,
+        paddingTop: 22,
+        borderTop: '1px solid oklch(1 0 0 / 0.05)',
+      }}
+    >
+      {onCancel ? (
+        <button type="button" onClick={onCancel} className="back-link">← Cancel</button>
+      ) : onBack ? (
+        <button type="button" onClick={onBack} className="back-link">← Back</button>
+      ) : <span />}
+
+      <div className="flex items-center gap-3">
+        {onSkip && (
+          <button type="button" onClick={onSkip} className="back-link">Skip</button>
+        )}
+        <button
+          type="button"
+          onClick={onNext}
+          disabled={isDisabled}
+          style={{
+            background: 'var(--brand)',
+            color: 'var(--brand-ink)',
+            fontFamily: 'var(--font-display)',
+            fontWeight: 700,
+            fontSize: 13,
+            padding: '11px 22px',
+            borderRadius: 'var(--r-pill)',
+            border: 'none',
+            boxShadow: 'none',
+            opacity: isDisabled ? 0.4 : 1,
+            cursor: isDisabled ? 'not-allowed' : 'pointer',
+            transition: 'transform 150ms ease',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+          onMouseEnter={e => { if (!isDisabled) e.currentTarget.style.transform = 'translateY(-1px)' }}
+          onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)' }}
+        >
+          {submitting ? (
+            <>
+              <span
+                aria-hidden
+                style={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: '50%',
+                  border: '2px solid currentColor',
+                  borderTopColor: 'transparent',
+                  display: 'inline-block',
+                  animation: 'wizardSpin 0.7s linear infinite',
+                }}
+              />
+              Creating…
+            </>
+          ) : nextLabel}
+        </button>
+      </div>
+    </div>
+  )
+}

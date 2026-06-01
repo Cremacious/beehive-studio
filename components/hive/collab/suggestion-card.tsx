@@ -102,12 +102,17 @@ export function SuggestionCard({
   }
 
   return (
-    <div
+    <article
       className={
-        'rounded-md border border-border bg-[oklch(from_var(--paper-100)_l_c_h)] shadow-sm transition ' +
-        (suggestion.resolved ? 'opacity-60' : '')
+        'transition ' + (suggestion.resolved ? 'opacity-60' : '')
       }
-      style={{ borderLeft: `2px solid ${SUGGESTION_COLOR}` }}
+      style={{
+        borderRadius: 'var(--r-row)',
+        background:
+          'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+        boxShadow: 'var(--sh-tile)',
+        borderLeft: `3px solid ${SUGGESTION_COLOR}`,
+      }}
     >
       <div className="px-3 py-2.5">
         <div className="flex items-center gap-2">
@@ -143,7 +148,13 @@ export function SuggestionCard({
                 }}
                 disabled={accepting || rejecting}
                 aria-label="Accept suggestion"
-                className="flex h-6 w-6 items-center justify-center rounded-md border border-border text-muted-foreground hover:border-brand hover:text-foreground transition"
+                style={{
+                  borderRadius: 'var(--r-btn)',
+                  background: 'var(--brand)',
+                  color: 'var(--brand-ink)',
+                  boxShadow: 'var(--sh-tile)',
+                }}
+                className="flex h-6 w-6 items-center justify-center font-semibold transition hover:opacity-90 disabled:opacity-50"
               >
                 {accepting ? (
                   <Loader2 className="h-3 w-3 animate-spin" />
@@ -159,7 +170,14 @@ export function SuggestionCard({
                 }}
                 disabled={accepting || rejecting}
                 aria-label="Reject suggestion"
-                className="flex h-6 w-6 items-center justify-center rounded-md border border-border text-muted-foreground hover:border-destructive hover:text-destructive transition"
+                style={{
+                  borderRadius: 'var(--r-btn)',
+                  background:
+                    'linear-gradient(180deg, var(--canvas-dark-400), var(--canvas-dark-350))',
+                  color: 'var(--canvas-dark-ink-strong)',
+                  boxShadow: 'var(--sh-tile)',
+                }}
+                className="flex h-6 w-6 items-center justify-center font-semibold transition hover:text-destructive disabled:opacity-50"
               >
                 {rejecting ? (
                   <Loader2 className="h-3 w-3 animate-spin" />
@@ -178,15 +196,27 @@ export function SuggestionCard({
         >
           {expanded ? (
             <div className="grid grid-cols-2 gap-2">
-              <div className="rounded border border-border/60 bg-muted/30 p-1.5">
+              <div
+                style={{
+                  borderRadius: 'var(--r-row)',
+                  background: 'oklch(0.45 0.15 25 / 0.18)',
+                }}
+                className="p-1.5"
+              >
                 <div className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground mb-0.5">
                   Original
                 </div>
-                <p className="text-[12px] leading-snug line-through text-muted-foreground whitespace-pre-wrap">
+                <p className="text-[12px] leading-snug line-through opacity-70 whitespace-pre-wrap">
                   {original}
                 </p>
               </div>
-              <div className="rounded border border-brand/40 bg-brand/5 p-1.5">
+              <div
+                style={{
+                  borderRadius: 'var(--r-row)',
+                  background: 'oklch(0.6 0.15 145 / 0.18)',
+                }}
+                className="p-1.5"
+              >
                 <div className="text-[9px] font-mono uppercase tracking-wider text-muted-foreground mb-0.5">
                   Suggested
                 </div>
@@ -298,7 +328,7 @@ export function SuggestionCard({
         variant="destructive"
         onConfirm={handleReject}
       />
-    </div>
+    </article>
   )
 }
 

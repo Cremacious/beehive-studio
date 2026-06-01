@@ -113,7 +113,10 @@ export function GutterFilterStrip({ chapterId, value, onChange }: Props) {
   }
 
   return (
-    <div className="flex flex-wrap gap-1.5 border-b border-border px-2 py-2">
+    <div
+      className="flex flex-wrap items-center gap-1.5 border-b px-3 py-2"
+      style={{ borderColor: 'var(--canvas-dark-300)' }}
+    >
       <Pill active={allActive} onClick={clickAll}>
         All
       </Pill>
@@ -164,12 +167,15 @@ function Pill({
       type="button"
       aria-pressed={active}
       onClick={onClick}
-      className={
-        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] transition ' +
-        (active
-          ? 'border-brand bg-brand/10 text-foreground ring-1 ring-brand'
-          : 'border-border bg-transparent text-muted-foreground hover:border-brand/50 hover:text-foreground')
-      }
+      style={{
+        borderRadius: 'var(--r-pill)',
+        background: active
+          ? 'var(--brand)'
+          : 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+        color: active ? 'var(--brand-ink)' : 'var(--canvas-dark-ink-strong)',
+        boxShadow: 'var(--sh-tile)',
+      }}
+      className="inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-geist font-semibold transition hover:opacity-90"
     >
       {dot ? (
         <span

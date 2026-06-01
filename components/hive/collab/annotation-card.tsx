@@ -99,12 +99,17 @@ export function AnnotationCard({
   }
 
   return (
-    <div
+    <article
       className={
-        'rounded-md border border-border bg-[oklch(from_var(--paper-100)_l_c_h)] shadow-sm transition ' +
-        (annotation.resolved ? 'opacity-60' : '')
+        'transition ' + (annotation.resolved ? 'opacity-60' : '')
       }
-      style={{ borderLeft: `2px solid ${color}` }}
+      style={{
+        borderRadius: 'var(--r-row)',
+        background:
+          'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+        boxShadow: 'var(--sh-tile)',
+        borderLeft: `3px solid ${color}`,
+      }}
     >
       <div className="px-3 py-2.5">
         <div className="flex items-center gap-2">
@@ -142,8 +147,9 @@ export function AnnotationCard({
               }}
               disabled={toggling}
               aria-label={annotation.resolved ? 'Unresolve' : 'Resolve'}
+              style={{ borderRadius: 'var(--r-btn)' }}
               className={
-                'flex h-6 w-6 items-center justify-center rounded-md border transition ' +
+                'flex h-6 w-6 items-center justify-center border transition ' +
                 (annotation.resolved
                   ? 'border-brand bg-brand/15 text-brand'
                   : 'border-border text-muted-foreground hover:border-brand hover:text-foreground')
@@ -250,7 +256,7 @@ export function AnnotationCard({
           </div>
         ) : null}
       </div>
-    </div>
+    </article>
   )
 }
 

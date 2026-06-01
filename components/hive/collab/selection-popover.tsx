@@ -81,15 +81,23 @@ export function SelectionPopover({
     <div
       role="toolbar"
       aria-label="Collaboration actions"
-      style={style}
-      className="flex items-center gap-1 rounded-md border border-border bg-popover px-1 py-1 shadow-md"
+      style={{
+        ...style,
+        background:
+          'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+        borderRadius: 'var(--r-card)',
+        boxShadow: 'var(--sh-card)',
+        border: 'var(--br-card)',
+      }}
+      className="flex items-center gap-1 px-2 py-1"
     >
       <button
         type="button"
         onClick={openAnnotate}
         disabled={!canAnnotate}
         aria-label="Annotate selection"
-        className="flex items-center gap-1.5 rounded px-2 py-1 text-xs text-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
+        style={{ borderRadius: 'var(--r-btn)' }}
+        className="flex items-center gap-1.5 px-2 py-1 text-xs text-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
       >
         <MessageSquare className="h-3.5 w-3.5" />
         Annotate
@@ -99,7 +107,8 @@ export function SelectionPopover({
         onClick={openSuggest}
         disabled={!canSuggestEdits}
         aria-label="Suggest edit"
-        className="flex items-center gap-1.5 rounded px-2 py-1 text-xs text-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
+        style={{ borderRadius: 'var(--r-btn)' }}
+        className="flex items-center gap-1.5 px-2 py-1 text-xs text-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
       >
         <Edit3 className="h-3.5 w-3.5" />
         Suggest edit

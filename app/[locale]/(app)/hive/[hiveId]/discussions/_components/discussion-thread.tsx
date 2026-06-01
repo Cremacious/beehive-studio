@@ -40,8 +40,11 @@ function relTime(d: Date | string): string {
 
 function renderBody(body: string) {
   return body.split('\n').map((line, i) => (
-    <p key={i} className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">
-      {line || ' '}
+    <p
+      key={i}
+      className="font-prose text-sm leading-relaxed text-[var(--canvas-dark-ink)] whitespace-pre-wrap"
+    >
+      {line || ' '}
     </p>
   ))
 }
@@ -102,75 +105,111 @@ export function DiscussionThread({
   }
 
   return (
-    <main className="flex-1 overflow-y-auto">
-      <div className="mx-auto max-w-3xl px-6 py-8">
-        <Link
-          href={`/${locale}/hive/${hiveId}/discussions`}
-          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mb-4"
+    <>
+      <Link
+        href={`/${locale}/hive/${hiveId}/discussions`}
+        className="inline-flex items-center gap-1.5 text-xs font-mono text-[var(--canvas-dark-ink-muted)] hover:text-[var(--brand)] mb-4"
+      >
+        <ArrowLeft size={12} />
+        Back to discussions
+      </Link>
+
+      <div className="flex items-center gap-2 mb-2 flex-wrap">
+        {post.topic && <TopicPill topic={post.topic} />}
+        <h1
+          style={{ color: 'var(--brand)' }}
+          className="font-comfortaa font-bold text-2xl"
         >
-          <ArrowLeft size={12} />
-          Back to discussions
-        </Link>
+          {(post.body.split('\n')[0] || 'Discussion').slice(0, 80)}
+        </h1>
+      </div>
+      <p className="text-xs font-mono text-[var(--canvas-dark-ink-muted)] mb-6">
+        {post.username && <>@{post.username} · </>}
+        {relTime(post.createdAt)}
+      </p>
 
-        <PostCard
-          post={post}
-          isTopLevel
-          viewerRole={viewerRole}
-          viewerUserId={viewerUserId}
-          locale={locale}
-          hiveId={hiveId}
-          onReplyClick={() => focusReplyWithMention(post.username)}
-        />
+      <PostCard
+        post={post}
+        isTopLevel
+        viewerRole={viewerRole}
+        viewerUserId={viewerUserId}
+        locale={locale}
+        hiveId={hiveId}
+        onReplyClick={() => focusReplyWithMention(post.username)}
+      />
 
-        <div className="mt-6">
-          <h2 className="font-comfortaa font-bold text-sm uppercase tracking-wide text-muted-foreground mb-3">
-            Reply
-          </h2>
-          <Textarea
-            ref={replyRef}
-            value={replyDraft}
-            onChange={(e) => setReplyDraft(e.target.value)}
-            placeholder="Add to the conversation…"
-            rows={3}
-          />
-          <div className="flex justify-end mt-2">
-            <Button
-              onClick={submitReply}
-              disabled={!replyDraft.trim() || replying}
-              size="sm"
-            >
-              {replying ? 'Posting…' : 'Reply'}
-            </Button>
+      <div className="mt-8">
+        <h2 className="font-comfortaa font-bold text-sm uppercase tracking-wide text-[var(--canvas-dark-ink-muted)] mb-3">
+          {replies.length} {replies.length === 1 ? 'Reply' : 'Replies'}
+        </h2>
+        {replies.length === 0 ? (
+          <div
+            style={{
+              background:
+                'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+              borderRadius: 'var(--r-row)',
+              boxShadow: 'var(--sh-tile)',
+              border: 'var(--br-card)',
+            }}
+            className="px-3 py-8 text-center text-sm font-mono text-[var(--canvas-dark-ink-muted)] italic"
+          >
+            No replies yet.
           </div>
-        </div>
+        ) : (
+          <div className="space-y-3">
+            {replies.map((reply) => (
+              <PostCard
+                key={reply.id}
+                post={reply}
+                isTopLevel={false}
+                viewerRole={viewerRole}
+                viewerUserId={viewerUserId}
+                locale={locale}
+                hiveId={hiveId}
+                onReplyClick={() => focusReplyWithMention(reply.username)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
-        <div className="mt-8">
-          <h2 className="font-comfortaa font-bold text-sm uppercase tracking-wide text-muted-foreground mb-3">
-            {replies.length} {replies.length === 1 ? 'Reply' : 'Replies'}
-          </h2>
-          {replies.length === 0 ? (
-            <div className="px-3 py-8 rounded-md border border-dashed border-border text-center text-sm text-muted-foreground italic">
-              No replies yet.
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {replies.map((reply) => (
-                <PostCard
-                  key={reply.id}
-                  post={reply}
-                  isTopLevel={false}
-                  viewerRole={viewerRole}
-                  viewerUserId={viewerUserId}
-                  locale={locale}
-                  hiveId={hiveId}
-                  onReplyClick={() => focusReplyWithMention(reply.username)}
-                />
-              ))}
-            </div>
-          )}
+      <div className="mt-6">
+        <h2 className="font-comfortaa font-bold text-sm uppercase tracking-wide text-[var(--canvas-dark-ink-muted)] mb-3">
+          Reply
+        </h2>
+        <textarea
+          ref={replyRef}
+          value={replyDraft}
+          onChange={(e) => setReplyDraft(e.target.value)}
+          placeholder="Add to the conversation…"
+          rows={3}
+          style={{
+            background: 'var(--canvas-dark-100)',
+            borderRadius: 'var(--r-row)',
+            boxShadow: 'var(--sh-inset)',
+            border: 'var(--br-card)',
+            color: 'var(--canvas-dark-ink)',
+          }}
+          className="w-full px-3 py-2 min-h-[80px] resize-y font-geist text-sm focus:outline-none placeholder:text-[var(--canvas-dark-ink-muted)]"
+        />
+        <div className="flex justify-end mt-2">
+          <button
+            type="button"
+            onClick={submitReply}
+            disabled={!replyDraft.trim() || replying}
+            style={{
+              background: 'var(--brand)',
+              color: 'var(--brand-ink, oklch(0.18 0.02 60))',
+              borderRadius: 'var(--r-btn)',
+              boxShadow: 'var(--sh-tile)',
+            }}
+            className="font-geist font-semibold text-sm px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {replying ? 'Posting…' : 'Post Reply'}
+          </button>
         </div>
       </div>
-    </main>
+    </>
   )
 }
 
@@ -203,9 +242,6 @@ function PostCard({
     viewerUserId,
   )
 
-  // Top-level "title" is the first 80 chars of body, conventionally shown
-  // on the first line. We show the full body content; if the body has a
-  // composed title prefix (compose modal does this), it appears naturally.
   async function saveEdit() {
     const body = draft.trim()
     if (!body || saving) return
@@ -240,15 +276,19 @@ function PostCard({
 
   return (
     <article
-      className={
-        'rounded-md border border-border p-4 ' +
-        (isTopLevel ? 'bg-card' : 'bg-muted/20')
-      }
+      style={{
+        background:
+          'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+        borderRadius: 'var(--r-row)',
+        boxShadow: 'var(--sh-tile)',
+        border: 'var(--br-card)',
+      }}
+      className="p-4"
     >
       <header className="flex items-start gap-3 mb-2">
         <span
           aria-hidden
-          className="inline-flex items-center justify-center w-8 h-8 rounded-full text-muted-foreground bg-muted/40 shrink-0"
+          className="inline-flex items-center justify-center w-8 h-8 rounded-full text-[var(--canvas-dark-ink-muted)] bg-[var(--canvas-dark-100)] shrink-0 text-xs font-semibold"
         >
           {post.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -263,13 +303,12 @@ function PostCard({
         </span>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            {isTopLevel && post.topic && <TopicPill topic={post.topic} />}
             {post.username && (
-              <span className="text-sm font-medium text-foreground">
+              <span className="text-sm font-medium text-[var(--canvas-dark-ink-strong)]">
                 @{post.username}
               </span>
             )}
-            <span className="text-[11px] text-muted-foreground">
+            <span className="text-[11px] font-mono text-[var(--canvas-dark-ink-muted)]">
               {relTime(post.createdAt)}
             </span>
           </div>
@@ -280,7 +319,7 @@ function PostCard({
               <button
                 type="button"
                 onClick={onReplyClick}
-                className="text-[11px] text-muted-foreground hover:text-foreground px-2 py-1 rounded hover:bg-muted/40"
+                className="text-[11px] font-mono text-[var(--canvas-dark-ink-muted)] hover:text-[var(--brand)] px-2 py-1 rounded"
               >
                 Reply
               </button>
@@ -291,7 +330,7 @@ function PostCard({
                   <button
                     type="button"
                     aria-label="Post actions"
-                    className="p-1 rounded hover:bg-muted/40 text-muted-foreground"
+                    className="p-1 rounded hover:bg-[var(--canvas-dark-100)] text-[var(--canvas-dark-ink-muted)]"
                   >
                     <MoreVertical size={14} />
                   </button>

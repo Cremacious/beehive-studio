@@ -56,11 +56,18 @@ export function DiscussionRow({
   return (
     <Link
       href={`/${locale}/hive/${hiveId}/discussions/${row.id}`}
-      className="flex items-start gap-3 px-3 py-3 rounded-md border border-border hover:bg-muted/40 transition-colors"
+      style={{
+        background:
+          'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+        borderRadius: 'var(--r-row)',
+        boxShadow: 'var(--sh-tile)',
+        border: 'var(--br-card)',
+      }}
+      className="flex items-start gap-3 px-4 py-3 hover:-translate-y-px transition-transform"
     >
       <span
         aria-hidden
-        className="inline-flex items-center justify-center w-8 h-8 rounded-full text-muted-foreground bg-muted/40 shrink-0 mt-0.5"
+        className="inline-flex items-center justify-center w-8 h-8 rounded-full text-[var(--canvas-dark-ink-muted)] bg-[var(--canvas-dark-100)] shrink-0 mt-0.5 text-xs font-semibold"
       >
         {row.avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -72,23 +79,29 @@ export function DiscussionRow({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 min-w-0">
           <TopicPill topic={row.topic} />
-          <span className="text-sm font-semibold truncate text-foreground">
+          <h3 className="font-comfortaa font-semibold text-sm truncate text-[var(--canvas-dark-ink-strong)]">
             {row.title || 'Untitled'}
-          </span>
+          </h3>
         </div>
         {excerpt && (
-          <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{excerpt}</p>
+          <p className="mt-1 text-xs text-[var(--canvas-dark-ink-muted)] line-clamp-2">
+            {excerpt}
+          </p>
         )}
-        <div className="flex items-center gap-2 mt-1.5 text-[11px] text-muted-foreground">
-          {row.username && <span>@{row.username}</span>}
-          <span>·</span>
+        <p className="mt-1.5 text-[11px] font-mono text-[var(--canvas-dark-ink-muted)]">
+          {row.username && (
+            <>
+              <span>@{row.username}</span>
+              <span className="mx-1.5">·</span>
+            </>
+          )}
           <span className="inline-flex items-center gap-1">
             <MessageSquare size={11} />
             {row.replyCount} {row.replyCount === 1 ? 'reply' : 'replies'}
           </span>
-          <span>·</span>
+          <span className="mx-1.5">·</span>
           <span>{relTime(row.lastActivityAt)}</span>
-        </div>
+        </p>
       </div>
     </Link>
   )

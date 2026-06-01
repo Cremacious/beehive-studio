@@ -39,13 +39,28 @@ export default async function DiscussionThreadPage({
   }
 
   return (
-    <DiscussionThread
-      post={r.data.post}
-      replies={r.data.replies}
-      hiveId={hiveId}
-      locale={locale}
-      viewerRole={viewerRole}
-      viewerUserId={userId}
-    />
+    <main className="flex-1 overflow-y-auto">
+      <div className="mx-auto max-w-3xl px-6 py-8">
+        <div
+          style={{
+            background:
+              'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+            borderRadius: 'var(--r-card)',
+            boxShadow: 'var(--sh-card)',
+            border: 'var(--br-card)',
+          }}
+          className="p-6"
+        >
+          <DiscussionThread
+            post={r.data.post}
+            replies={r.data.replies}
+            hiveId={hiveId}
+            locale={locale}
+            viewerRole={viewerRole}
+            viewerUserId={userId}
+          />
+        </div>
+      </div>
+    </main>
   )
 }

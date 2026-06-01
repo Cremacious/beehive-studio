@@ -12,8 +12,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import { Input } from '@/components/ui/input'
 import { createDiscussionPostAction } from '@/lib/actions/hive-discussions.actions'
 import type { DiscussionTopic } from '@/lib/validations/hive-discussion'
 import { TOPIC_META } from './discussion-row'
@@ -45,8 +43,6 @@ export function DiscussionComposeModal({ open, onOpenChange, hiveId }: Props) {
     if (!canSubmit) return
     setSubmitting(true)
     try {
-      // The server derives a title from the first 80 chars of body. If the user
-      // supplied a title, prepend it so the derived title surfaces theirs.
       const composedBody = title.trim()
         ? `${title.trim()}\n\n${body.trim()}`
         : body.trim()
@@ -73,6 +69,14 @@ export function DiscussionComposeModal({ open, onOpenChange, hiveId }: Props) {
     if (!next) reset()
     onOpenChange(next)
   }
+
+  const recessedInputStyle = {
+    background: 'var(--canvas-dark-100)',
+    borderRadius: 'var(--r-row)',
+    boxShadow: 'var(--sh-inset)',
+    border: 'var(--br-card)',
+    color: 'var(--canvas-dark-ink)',
+  } as const
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -115,28 +119,48 @@ export function DiscussionComposeModal({ open, onOpenChange, hiveId }: Props) {
           })}
         </div>
 
-        <Input
+        <input
+          type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Title (optional — first 80 chars of body if blank)"
           maxLength={80}
+          style={recessedInputStyle}
+          className="w-full px-3 py-2 font-geist text-sm focus:outline-none placeholder:text-[var(--canvas-dark-ink-muted)]"
         />
 
-        <Textarea
+        <textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
           placeholder="What's on your mind?"
           rows={8}
           autoFocus
+          style={recessedInputStyle}
+          className="w-full px-3 py-2 min-h-[140px] resize-y font-geist text-sm focus:outline-none placeholder:text-[var(--canvas-dark-ink-muted)]"
         />
 
         <DialogFooter>
-          <Button variant="ghost" onClick={() => handleOpenChange(false)} disabled={submitting}>
+          <Button
+            variant="ghost"
+            onClick={() => handleOpenChange(false)}
+            disabled={submitting}
+          >
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={!canSubmit}>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={!canSubmit}
+            style={{
+              background: 'var(--brand)',
+              color: 'var(--brand-ink, oklch(0.18 0.02 60))',
+              borderRadius: 'var(--r-btn)',
+              boxShadow: 'var(--sh-tile)',
+            }}
+            className="font-geist font-semibold text-sm px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             {submitting ? 'Posting…' : 'Post'}
-          </Button>
+          </button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

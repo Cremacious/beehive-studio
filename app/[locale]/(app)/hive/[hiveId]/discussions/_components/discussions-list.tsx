@@ -49,71 +49,75 @@ export function DiscussionsList({ posts, hiveId, locale, viewerRole }: Props) {
   const allActive = activeTopics === null
 
   return (
-    <main className="flex-1 overflow-y-auto">
-      <div className="mx-auto max-w-3xl px-6 py-8">
-        <header className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="font-comfortaa font-bold text-2xl text-foreground">
-              Discussions
-            </h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Conversations with your hive.
-            </p>
-          </div>
-          {canPost && (
-            <button
-              type="button"
-              onClick={() => setComposeOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-semibold"
-              style={{
-                background: 'var(--color-brand)',
-                color: 'var(--brand-ink, oklch(0.18 0.02 60))',
-              }}
-            >
-              <Plus size={14} />
-              New Post
-            </button>
-          )}
-        </header>
-
-        <div className="flex flex-wrap gap-2 mb-4">
-          <FilterChip label="All" active={allActive} onClick={toggleAll} />
-          {TOPICS.map((t) => {
-            const active = !allActive && activeTopics.has(t)
-            return (
-              <FilterChip
-                key={t}
-                label={TOPIC_META[t].label}
-                tokenVar={TOPIC_META[t].tokenVar}
-                active={active}
-                onClick={() => toggleTopic(t)}
-              />
-            )
-          })}
-        </div>
-
-        {filtered.length === 0 ? (
-          <div className="px-3 py-12 rounded-md border border-dashed border-border text-center">
-            <p className="text-sm font-medium text-foreground">No posts yet</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Be the first to start a discussion.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-1.5">
-            {filtered.map((row) => (
-              <DiscussionRow key={row.id} row={row} hiveId={hiveId} locale={locale} />
-            ))}
-          </div>
+    <>
+      <header className="flex items-center justify-between mb-6">
+        <h1
+          style={{ color: 'var(--brand)' }}
+          className="font-comfortaa font-bold text-2xl"
+        >
+          Discussions
+        </h1>
+        {canPost && (
+          <button
+            type="button"
+            onClick={() => setComposeOpen(true)}
+            style={{ color: 'var(--brand)', borderRadius: 'var(--r-btn)' }}
+            className="inline-flex items-center gap-1.5 px-3 py-2 font-geist font-semibold text-sm hover:bg-[linear-gradient(180deg,var(--canvas-dark-350),var(--canvas-dark-300))]"
+          >
+            <Plus size={14} />
+            New Discussion
+          </button>
         )}
+      </header>
+
+      <div className="flex flex-wrap gap-2 mb-4">
+        <FilterChip label="All" active={allActive} onClick={toggleAll} />
+        {TOPICS.map((t) => {
+          const active = !allActive && activeTopics.has(t)
+          return (
+            <FilterChip
+              key={t}
+              label={TOPIC_META[t].label}
+              tokenVar={TOPIC_META[t].tokenVar}
+              active={active}
+              onClick={() => toggleTopic(t)}
+            />
+          )
+        })}
       </div>
+
+      {filtered.length === 0 ? (
+        <div
+          style={{
+            background:
+              'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+            borderRadius: 'var(--r-row)',
+            boxShadow: 'var(--sh-tile)',
+            border: 'var(--br-card)',
+          }}
+          className="px-3 py-12 text-center"
+        >
+          <p className="text-sm font-medium text-[var(--canvas-dark-ink-strong)]">
+            No posts yet
+          </p>
+          <p className="text-xs font-mono text-[var(--canvas-dark-ink-muted)] mt-1">
+            Be the first to start a discussion.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {filtered.map((row) => (
+            <DiscussionRow key={row.id} row={row} hiveId={hiveId} locale={locale} />
+          ))}
+        </div>
+      )}
 
       <DiscussionComposeModal
         open={composeOpen}
         onOpenChange={setComposeOpen}
         hiveId={hiveId}
       />
-    </main>
+    </>
   )
 }
 

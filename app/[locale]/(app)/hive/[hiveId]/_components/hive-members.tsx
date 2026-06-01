@@ -15,6 +15,7 @@ type Role = 'OWNER' | 'MODERATOR' | 'CONTRIBUTOR' | 'BETA_READER'
 
 type Props = {
   hiveId: string
+  locale: string
   members: HiveMemberRow[]
   isOwner: boolean
   isEditor: boolean
@@ -23,7 +24,7 @@ type Props = {
 
 const ASSIGNABLE_ROLES: Role[] = ['MODERATOR', 'CONTRIBUTOR', 'BETA_READER']
 
-export function HiveMembers({ hiveId, members: initialMembers, isOwner, isEditor, currentUserId }: Props) {
+export function HiveMembers({ hiveId, locale, members: initialMembers, isOwner, isEditor, currentUserId }: Props) {
   const [members, setMembers] = useState(initialMembers)
   const [inviteUsername, setInviteUsername] = useState('')
   const [inviteLink, setInviteLink] = useState<string | null>(null)
@@ -45,7 +46,7 @@ export function HiveMembers({ hiveId, members: initialMembers, isOwner, isEditor
   async function handleGenerateLink() {
     const result = await generateInviteLinkAction(hiveId)
     if (result.success) {
-      setInviteLink(`${window.location.origin}/en/hive/invite/${result.data.token}`)
+      setInviteLink(`${window.location.origin}/${locale}/hive/invite/${result.data.token}`)
     }
   }
 

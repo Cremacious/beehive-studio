@@ -62,14 +62,16 @@ export function AppNav({ locale, user }: AppNavProps) {
 
   return (
     <header
-      className="sticky top-0 z-40 backdrop-blur-md border-b"
+      className="sticky top-3 z-40 mx-4 mt-3 backdrop-blur-md"
       style={{
-        background: 'oklch(0.235 0.003 256 / 0.85)',
-        borderColor: 'var(--canvas-dark-300)',
+        background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+        borderRadius: 'var(--r-nav)',
+        boxShadow: 'var(--sh-card)',
+        border: 'var(--br-card)',
         height: '56px',
       }}
     >
-      <div className="max-w-[1280px] mx-auto px-8 h-full flex items-center justify-between relative">
+      <div className="max-w-[1280px] mx-auto px-6 h-full flex items-center justify-between relative">
         {/* LEFT — brand mark + crumb */}
         <Link href={`/${locale}/studio`} className="flex items-center gap-2.5 shrink-0 no-underline">
           <span
@@ -119,14 +121,14 @@ export function AppNav({ locale, user }: AppNavProps) {
               className="px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-colors no-underline"
               style={
                 item.active
-                  ? { color: 'var(--canvas-dark-ink-strong)', background: 'var(--canvas-dark-200)' }
-                  : { color: 'var(--canvas-dark-ink-muted)' }
+                  ? { color: 'var(--brand)' }
+                  : { color: 'var(--canvas-dark-ink)' }
               }
               onMouseEnter={(e) => {
                 if (!item.active) e.currentTarget.style.color = 'var(--canvas-dark-ink-strong)'
               }}
               onMouseLeave={(e) => {
-                if (!item.active) e.currentTarget.style.color = 'var(--canvas-dark-ink-muted)'
+                if (!item.active) e.currentTarget.style.color = 'var(--canvas-dark-ink)'
               }}
             >
               {item.label}
@@ -140,12 +142,14 @@ export function AppNav({ locale, user }: AppNavProps) {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                className="w-[30px] h-[30px] rounded-full inline-flex items-center justify-center text-[12px] font-bold overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--canvas-dark-50)]"
+                className="w-[30px] h-[30px] inline-flex items-center justify-center text-[12px] font-bold overflow-hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--canvas-dark-50)]"
                 style={{
                   background: 'var(--brand-soft)',
                   border: '1px solid oklch(0.85 0.18 90 / 0.30)',
                   color: 'var(--brand)',
                   fontFamily: 'var(--font-display)',
+                  borderRadius: 'var(--r-pill)',
+                  boxShadow: 'var(--sh-tile)',
                 }}
                 aria-label="Account menu"
               >

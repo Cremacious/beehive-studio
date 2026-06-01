@@ -377,6 +377,14 @@ body {
 }
 .animate-sprint-finished { animation: sprintFinished 1.5s ease-out 1; }
 
+/* Status pill buttons in metadata panel — idle buttons brighten on hover to
+   read as "selectable button" not "tag". Active state is owned by inline
+   style (status color background). The --status-hover-bg custom property is
+   set per-button to the same status color at higher alpha. */
+.status-pill-btn[data-active="false"]:hover {
+  background: var(--status-hover-bg) !important;
+}
+
 /* Privacy / Terms prose lists */
 .prose-bh ul {
   list-style: none;

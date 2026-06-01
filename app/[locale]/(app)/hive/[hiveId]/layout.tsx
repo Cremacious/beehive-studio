@@ -24,7 +24,7 @@ export default async function HiveLayout({
   }
 
   return (
-    <div className="flex flex-1 overflow-hidden h-[calc(100vh-74px)]">
+    <div className="flex flex-1 overflow-hidden h-[calc(100vh-68px)]">
       <HiveSidebar
         hiveId={hiveId}
         locale={locale}

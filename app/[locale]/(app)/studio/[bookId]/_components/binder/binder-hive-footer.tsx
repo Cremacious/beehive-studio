@@ -23,11 +23,11 @@ export function BinderHiveFooter() {
           border: 'var(--br-card)',
           color: 'var(--brand)',
         }}
-        className="w-full flex items-center gap-2 px-2.5 py-2 font-semibold transition-colors text-[13px] no-underline hover:brightness-110"
+        className="w-full flex items-center justify-center gap-2 px-2.5 py-2 font-semibold transition-colors text-[13px] no-underline hover:brightness-110"
         title="Go to Hive"
       >
         <Users size={14} className="flex-shrink-0" style={{ color: 'var(--brand)' }} />
-        <span className="flex-1 text-left">Go to Hive</span>
+        <span>Go to Hive</span>
         <ChevronRight size={12} className="flex-shrink-0" style={{ color: 'var(--brand)' }} />
       </Link>
     )
@@ -44,11 +44,11 @@ export function BinderHiveFooter() {
           border: 'var(--br-card)',
           color: 'var(--brand)',
         }}
-        className="w-full flex items-center gap-2 px-2.5 py-2 font-semibold transition-colors text-[13px] hover:brightness-110"
+        className="w-full flex items-center justify-center gap-2 px-2.5 py-2 font-semibold transition-colors text-[13px] hover:brightness-110"
         title="Create Hive"
       >
         <Plus size={14} className="flex-shrink-0" style={{ color: 'var(--brand)' }} />
-        <span className="flex-1 text-left">Create Hive</span>
+        <span>Create Hive</span>
         <ChevronRight size={12} className="flex-shrink-0" style={{ color: 'var(--brand)' }} />
       </button>
       <CreateHiveModal open={open} onOpenChange={setOpen} prelockBookId={bookId} />

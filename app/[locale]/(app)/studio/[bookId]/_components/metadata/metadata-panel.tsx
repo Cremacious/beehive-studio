@@ -1,11 +1,17 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { ChevronDown, ChevronRight } from 'lucide-react'
+import { Check, ChevronDown, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useBookEditor } from '../book-editor-provider'
 import { EmptyState } from '../empty-state'
 import { updateBinderItemAction } from '@/lib/actions/binder.actions'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 const CHAPTER_TYPES = new Set(['chapter', 'front_matter', 'back_matter'])
 
@@ -70,7 +76,7 @@ function ChapterMetadata() {
   const fieldStyle = {
     borderRadius: 'var(--r-row)',
     boxShadow: 'var(--sh-inset)',
-    background: 'transparent',
+    background: 'linear-gradient(180deg, var(--canvas-dark-150), var(--canvas-dark-100))',
     color: 'var(--canvas-dark-ink-strong)',
   } as const
 
@@ -106,32 +112,77 @@ function ChapterMetadata() {
           <span className="text-foreground/85 font-medium">Final</span> — earlier
           statuses show as a &quot;Draft — coming soon&quot; teaser instead.
         </p>
-        <div className="flex flex-wrap gap-1.5">
-          {STATUS_OPTIONS.map(({ value, label, subtitle, color }) => {
-            const isActive = activeChapter?.status === value
-            return (
-              <button
-                key={value}
-                onClick={() => updateChapterStatus(value)}
-                className="inline-flex flex-col items-center gap-0.5 text-xs px-3 py-1.5 font-geist font-semibold transition-colors"
-                style={{
-                  borderRadius: 'var(--r-pill)',
-                  boxShadow: 'var(--sh-tile)',
-                  background: isActive ? color : `oklch(from ${color} l c h / 0.18)`,
-                  color: isActive ? 'var(--brand-ink)' : color,
-                }}
+        {(() => {
+          const currentStatus = activeChapter?.status ?? 'FIRST_DRAFT'
+          const current =
+            STATUS_OPTIONS.find(o => o.value === currentStatus) ??
+            STATUS_OPTIONS.find(o => o.value === 'FIRST_DRAFT')!
+          return (
+            <div className="flex flex-col gap-1.5">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="inline-flex items-center justify-between gap-2 w-full px-3 py-2 text-sm font-geist font-semibold transition-colors"
+                    style={{
+                      borderRadius: 'var(--r-btn)',
+                      boxShadow: 'var(--sh-tile)',
+                      background: `oklch(from ${current.color} l c h / 0.18)`,
+                      color: current.color,
+                      border: `1px solid ${current.color}`,
+                    }}
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <span
+                        aria-hidden
+                        className="inline-block size-2 rounded-full"
+                        style={{ background: current.color }}
+                      />
+                      {current.label}
+                    </span>
+                    <ChevronDown size={14} aria-hidden />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-(--radix-dropdown-menu-trigger-width)">
+                  {STATUS_OPTIONS.map(({ value, label, subtitle, color }) => {
+                    const isActive = currentStatus === value
+                    return (
+                      <DropdownMenuItem
+                        key={value}
+                        onSelect={() => updateChapterStatus(value)}
+                        className="flex items-center gap-2 py-1.5"
+                      >
+                        <span
+                          aria-hidden
+                          className="inline-block size-2 rounded-full shrink-0"
+                          style={{ background: color }}
+                        />
+                        <span className="flex flex-col leading-tight flex-1 min-w-0">
+                          <span className="text-sm font-geist font-semibold" style={{ color }}>
+                            {label}
+                          </span>
+                          <span
+                            className="text-[9px] font-jetbrains-mono uppercase tracking-[0.10em] text-muted-foreground"
+                          >
+                            {subtitle}
+                          </span>
+                        </span>
+                        {isActive && (
+                          <Check size={14} aria-hidden style={{ color: 'var(--brand)' }} />
+                        )}
+                      </DropdownMenuItem>
+                    )
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <span
+                className="text-[9px] font-jetbrains-mono uppercase tracking-[0.10em] text-muted-foreground"
               >
-                <span>{label}</span>
-                <span
-                  className="text-[9px] font-jetbrains-mono mt-0.5 uppercase tracking-[0.10em]"
-                  style={{ color: isActive ? 'var(--brand-ink)' : 'var(--canvas-dark-ink-muted)' }}
-                >
-                  {subtitle}
-                </span>
-              </button>
-            )
-          })}
-        </div>
+                {current.subtitle}
+              </span>
+            </div>
+          )
+        })()}
       </div>
 
       <div className="px-[18px] py-[18px] border-b border-[var(--chrome-800)] flex flex-col gap-2.5">

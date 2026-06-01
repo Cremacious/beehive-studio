@@ -390,37 +390,6 @@ export function BinderTree() {
                 </Link>
               )}
             </div>
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <button
-                type="button"
-                onClick={() => {
-                  // Trigger the BinderAddMenu by dispatching a custom event;
-                  // the menu owns its own trigger in the footer too. The
-                  // header tile is a quick-access mirror — clicking it scrolls
-                  // user awareness to the footer add menu via focus.
-                  const trigger = document.querySelector<HTMLButtonElement>('[data-binder-add-trigger]')
-                  trigger?.click()
-                }}
-                aria-label="Add binder item"
-                title="Add binder item"
-                style={{
-                  color: 'var(--brand)',
-                  borderRadius: 'var(--r-btn)',
-                }}
-                className="font-geist font-semibold text-sm px-2 py-1 hover:bg-[linear-gradient(180deg,var(--canvas-dark-350),var(--canvas-dark-300))] transition-colors"
-              >
-                + Add
-              </button>
-              <Link
-                href={`/${locale}/studio/${bookId}/details`}
-                title="Book details"
-                aria-label="Book details"
-                style={{ borderRadius: 'var(--r-btn)' }}
-                className="w-7 h-7 inline-flex items-center justify-center text-muted-foreground hover:bg-[linear-gradient(180deg,var(--canvas-dark-350),var(--canvas-dark-300))] hover:text-foreground transition-colors no-underline"
-              >
-                <Settings size={14} />
-              </Link>
-            </div>
           </div>
         </div>
 
@@ -447,7 +416,25 @@ export function BinderTree() {
         </div>
 
         <div className="px-2.5 py-3 flex flex-col gap-2">
-          <BinderAddMenu />
+          <div className="flex items-stretch gap-2">
+            <div className="flex-1 min-w-0">
+              <BinderAddMenu />
+            </div>
+            <Link
+              href={`/${locale}/studio/${bookId}/details`}
+              title="Book details"
+              aria-label="Book details"
+              style={{
+                background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+                borderRadius: 'var(--r-btn)',
+                boxShadow: 'var(--sh-tile)',
+                border: 'var(--br-card)',
+              }}
+              className="w-10 inline-flex items-center justify-center text-muted-foreground hover:brightness-110 hover:text-foreground transition-colors no-underline flex-shrink-0"
+            >
+              <Settings size={14} />
+            </Link>
+          </div>
           <BinderHiveFooter />
         </div>
 

@@ -198,13 +198,12 @@ export function BinderItem({ node, depth }: Props) {
           background: isActive
             ? 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))'
             : undefined,
-          // Compose --sh-tile depth with the 2px brand-yellow inset left marker.
-          // Drag-middle ring overrides everything below.
+          // Drag-middle ring overrides --sh-tile depth on active.
           boxShadow:
             dropZoneForThisRow === 'middle'
               ? '0 0 0 4px oklch(from var(--brand) l c h / 0.25)'
               : isActive
-                ? 'var(--sh-tile), inset 2px 0 0 var(--brand)'
+                ? 'var(--sh-tile)'
                 : undefined,
         }}
         {...dragAttributes}

@@ -53,7 +53,7 @@ export default async function BookEditorPage({ params }: Props) {
           flex-1 ancestor resolves to content-height — not viewport. Pin the
           studio columns to viewport-minus-nav (h-14 = 56px) so the binder /
           editor / metadata fill the screen instead of stopping ~80% down. */}
-      <div className="flex h-[calc(100vh-74px)] overflow-hidden">
+      <div className="flex gap-2 h-[calc(100vh-68px)] overflow-hidden">
         <BinderTree />
         <CorkboardOrEditor />
         <RightPanelSlot />

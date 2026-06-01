@@ -34,10 +34,10 @@ export function CorkboardOrEditor() {
             border-bottom-color: var(--paper-300);
           }
           [data-editor-theme="light"] [data-slot="editor-toolbar"] button {
-            color: var(--paper-ink-muted);
+            color: var(--brand);
           }
           [data-editor-theme="light"] [data-slot="editor-toolbar"] button:hover {
-            color: var(--paper-ink-strong);
+            color: var(--brand);
             background-color: var(--paper-200);
           }
           [data-editor-theme="light"] [data-slot="editor-toolbar"] button:disabled {

@@ -80,8 +80,11 @@
      dark UI. Cream paper (light mode) is untouched. */
   --canvas-dark-100: oklch(0.255 0.003 256);
   --canvas-dark-150: oklch(0.275 0.003 256);
-  --canvas-dark-200: oklch(0.290 0.003 256);
-  --canvas-dark-300: oklch(0.350 0.003 256);
+  --canvas-dark-200: oklch(0.295 0.003 256);
+  --canvas-dark-250: oklch(0.325 0.003 256);
+  --canvas-dark-300: oklch(0.360 0.003 256);
+  --canvas-dark-350: oklch(0.400 0.003 256);
+  --canvas-dark-400: oklch(0.450 0.003 256);
   --canvas-dark-ink-muted:  oklch(0.680 0.003 256);
   --canvas-dark-ink:        oklch(0.880 0.003 256);
   --canvas-dark-ink-strong: oklch(0.965 0.003 256);
@@ -170,6 +173,25 @@
   --r-lg: 14px;
   --r-xl: 18px;
   --r-2xl: 22px;
+
+  /* Aesthetic refresh radius scale */
+  --r-card: 20px;   /* outer panels: binder, toolbar, canvas frame, metadata, status, modals */
+  --r-row:  14px;   /* inset rows: binder rows, list items, inputs */
+  --r-btn:  12px;   /* square-ish buttons: toolbar tiles, kebab buttons */
+  --r-pill: 999px;  /* fully rounded: status pills, save indicator, premium badge, sprint button */
+  --r-nav:  20px;   /* app nav bar */
+
+  /* Aesthetic refresh depth system */
+  --sh-card:
+    0 1px 0 oklch(1 0 0 / 0.06) inset,
+    0 8px 24px oklch(0 0 0 / 0.35),
+    0 2px 4px oklch(0 0 0 / 0.25);
+  --sh-tile:
+    0 1px 0 oklch(1 0 0 / 0.08) inset,
+    0 1px 2px oklch(0 0 0 / 0.3);
+  --sh-inset:
+    inset 0 1px 2px oklch(0 0 0 / 0.2);
+  --br-card: 0.5px solid oklch(1 0 0 / 0.04);
   --r-full: 9999px;
 
   /* ── Elevation (the "stacked paper" depth scale) ───────────────── */

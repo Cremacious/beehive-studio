@@ -1,4 +1,5 @@
-import { pgTable, text, timestamp, pgEnum, index, uniqueIndex, boolean, jsonb, AnyPgColumn } from 'drizzle-orm/pg-core'
+import { pgTable, text, timestamp, pgEnum, index, uniqueIndex, boolean, jsonb, integer, AnyPgColumn } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
 import { createId } from '@paralleldrive/cuid2'
 import { relations } from 'drizzle-orm'
 import { users } from './auth'
@@ -11,6 +12,8 @@ export const hiveInviteStatusEnum = pgEnum('hive_invite_status', ['PENDING', 'AC
 export const hiveSubmissionStatusEnum = pgEnum('hive_submission_status', ['PENDING', 'APPROVED', 'REJECTED'])
 export const hiveSuggestionStatusEnum = pgEnum('hive_suggestion_status', ['PENDING', 'ACCEPTED', 'REJECTED'])
 export const hiveTaskStatusEnum = pgEnum('hive_task_status', ['OPEN', 'IN_PROGRESS', 'DONE'])
+export const annotationLayerEnum = pgEnum('annotation_layer', ['GRAMMAR', 'PLOT', 'TONE', 'CONTINUITY', 'GENERAL'])
+export const discussionTopicEnum = pgEnum('discussion_topic', ['GENERAL', 'WORLDBUILDING', 'FEEDBACK', 'OFF_TOPIC'])
 
 export const hives = pgTable('hives', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
@@ -48,37 +51,65 @@ export const hiveInvites = pgTable('hive_invites', {
 export const hiveSubmissions = pgTable('hive_submissions', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
   hiveId: text('hive_id').notNull().references(() => hives.id, { onDelete: 'cascade' }),
-  chapterId: text('chapter_id').notNull().references(() => chapters.id, { onDelete: 'cascade' }),
-  submitterId: text('submitter_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  status: hiveSubmissionStatusEnum('status').default('PENDING').notNull(),
-  reviewerNote: text('reviewer_note'),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  title: text('title').notNull().default(''),
+  content: jsonb('content').notNull().default(sql`'{}'::jsonb`),
+  wordCount: integer('word_count').notNull().default(0),
+  targetChapterOrder: integer('target_chapter_order'),
+  draftStatus: text('draft_status').notNull().default('DRAFT'),
+  createdChapterId: text('created_chapter_id').references(() => chapters.id, { onDelete: 'set null' }),
+  reviewedBy: text('reviewed_by').references(() => users.id),
+  reviewedAt: timestamp('reviewed_at'),
+  reviewNote: text('review_note'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-}, (t) => [index('hive_submissions_hive_id_idx').on(t.hiveId), index('hive_submissions_chapter_id_idx').on(t.chapterId)])
+}, (t) => [
+  index('hive_submissions_hive_id_idx').on(t.hiveId),
+  index('hive_submissions_user_id_idx').on(t.userId),
+])
 
 export const hiveSuggestions = pgTable('hive_suggestions', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
   hiveId: text('hive_id').notNull().references(() => hives.id, { onDelete: 'cascade' }),
   chapterId: text('chapter_id').notNull().references(() => chapters.id, { onDelete: 'cascade' }),
   authorId: text('author_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  originalText: text('original_text').notNull(),
+  parentId: text('parent_id').references((): AnyPgColumn => hiveSuggestions.id, { onDelete: 'cascade' }),
+  selectionStart: integer('selection_start').notNull(),
+  selectionEnd: integer('selection_end').notNull(),
+  originalExcerpt: text('original_excerpt').notNull(),
   suggestedText: text('suggested_text').notNull(),
-  status: hiveSuggestionStatusEnum('status').default('PENDING').notNull(),
-  diff: text('diff'),
+  body: text('body'),
+  resolved: boolean('resolved').default(false).notNull(),
+  resolvedBy: text('resolved_by').references(() => users.id),
+  resolvedAt: timestamp('resolved_at'),
+  acceptedAt: timestamp('accepted_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-}, (t) => [index('hive_suggestions_chapter_id_idx').on(t.chapterId)])
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (t) => [
+  index('hive_suggestions_chapter_id_idx').on(t.chapterId),
+  index('hive_suggestions_parent_id_idx').on(t.parentId),
+])
 
-export const hiveComments = pgTable('hive_comments', {
+export const hiveAnnotations = pgTable('hive_annotations', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
   hiveId: text('hive_id').notNull().references(() => hives.id, { onDelete: 'cascade' }),
   chapterId: text('chapter_id').notNull().references(() => chapters.id, { onDelete: 'cascade' }),
   authorId: text('author_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  anchorStart: text('anchor_start'),
-  anchorEnd: text('anchor_end'),
-  content: text('content').notNull(),
-  resolved: timestamp('resolved'),
+  parentId: text('parent_id').references((): AnyPgColumn => hiveAnnotations.id, { onDelete: 'cascade' }),
+  layer: annotationLayerEnum('layer').notNull().default('GENERAL'),
+  selectionStart: integer('selection_start'),
+  selectionEnd: integer('selection_end'),
+  selectedText: text('selected_text'),
+  body: text('body').notNull(),
+  resolved: boolean('resolved').default(false).notNull(),
+  resolvedBy: text('resolved_by').references(() => users.id),
+  resolvedAt: timestamp('resolved_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-}, (t) => [index('hive_comments_chapter_id_idx').on(t.chapterId)])
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (t) => [
+  index('hive_annotations_chapter_id_idx').on(t.chapterId),
+  index('hive_annotations_parent_id_idx').on(t.parentId),
+])
 
 export const hiveTasks = pgTable('hive_tasks', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
@@ -98,14 +129,9 @@ export const hiveDiscussionPosts = pgTable('hive_discussion_posts', {
   authorId: text('author_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   content: text('content').notNull(),
   parentId: text('parent_id').references((): AnyPgColumn => hiveDiscussionPosts.id, { onDelete: 'set null' }),
+  topic: discussionTopicEnum('topic'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (t) => [index('hive_discussion_posts_hive_id_idx').on(t.hiveId)])
-
-export const hiveChapterLocks = pgTable('hive_chapter_locks', {
-  chapterId: text('chapter_id').notNull().primaryKey().references(() => chapters.id, { onDelete: 'cascade' }),
-  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  lockedAt: timestamp('locked_at').defaultNow().notNull(),
-})
 
 export const hivesRelations = relations(hives, ({ one, many }) => ({
   owner: one(users, { fields: [hives.ownerId], references: [users.id] }),
@@ -126,20 +152,25 @@ export const hiveInvitesRelations = relations(hiveInvites, ({ one }) => ({
 
 export const hiveSubmissionsRelations = relations(hiveSubmissions, ({ one }) => ({
   hive: one(hives, { fields: [hiveSubmissions.hiveId], references: [hives.id] }),
-  chapter: one(chapters, { fields: [hiveSubmissions.chapterId], references: [chapters.id] }),
-  submitter: one(users, { fields: [hiveSubmissions.submitterId], references: [users.id] }),
+  user: one(users, { fields: [hiveSubmissions.userId], references: [users.id], relationName: 'submission_user' }),
+  createdChapter: one(chapters, { fields: [hiveSubmissions.createdChapterId], references: [chapters.id] }),
+  reviewer: one(users, { fields: [hiveSubmissions.reviewedBy], references: [users.id], relationName: 'submission_reviewer' }),
 }))
 
-export const hiveSuggestionsRelations = relations(hiveSuggestions, ({ one }) => ({
+export const hiveSuggestionsRelations = relations(hiveSuggestions, ({ one, many }) => ({
   hive: one(hives, { fields: [hiveSuggestions.hiveId], references: [hives.id] }),
   chapter: one(chapters, { fields: [hiveSuggestions.chapterId], references: [chapters.id] }),
   author: one(users, { fields: [hiveSuggestions.authorId], references: [users.id] }),
+  parent: one(hiveSuggestions, { fields: [hiveSuggestions.parentId], references: [hiveSuggestions.id], relationName: 'suggestion_parent' }),
+  replies: many(hiveSuggestions, { relationName: 'suggestion_parent' }),
 }))
 
-export const hiveCommentsRelations = relations(hiveComments, ({ one }) => ({
-  hive: one(hives, { fields: [hiveComments.hiveId], references: [hives.id] }),
-  chapter: one(chapters, { fields: [hiveComments.chapterId], references: [chapters.id] }),
-  author: one(users, { fields: [hiveComments.authorId], references: [users.id] }),
+export const hiveAnnotationsRelations = relations(hiveAnnotations, ({ one, many }) => ({
+  hive: one(hives, { fields: [hiveAnnotations.hiveId], references: [hives.id] }),
+  chapter: one(chapters, { fields: [hiveAnnotations.chapterId], references: [chapters.id] }),
+  author: one(users, { fields: [hiveAnnotations.authorId], references: [users.id] }),
+  parent: one(hiveAnnotations, { fields: [hiveAnnotations.parentId], references: [hiveAnnotations.id], relationName: 'annotation_parent' }),
+  replies: many(hiveAnnotations, { relationName: 'annotation_parent' }),
 }))
 
 export const hiveTasksRelations = relations(hiveTasks, ({ one }) => ({
@@ -153,11 +184,6 @@ export const hiveDiscussionPostsRelations = relations(hiveDiscussionPosts, ({ on
   author: one(users, { fields: [hiveDiscussionPosts.authorId], references: [users.id] }),
   parent: one(hiveDiscussionPosts, { fields: [hiveDiscussionPosts.parentId], references: [hiveDiscussionPosts.id], relationName: 'post_parent' }),
   replies: many(hiveDiscussionPosts, { relationName: 'post_parent' }),
-}))
-
-export const hiveChapterLocksRelations = relations(hiveChapterLocks, ({ one }) => ({
-  chapter: one(chapters, { fields: [hiveChapterLocks.chapterId], references: [chapters.id] }),
-  user: one(users, { fields: [hiveChapterLocks.userId], references: [users.id] }),
 }))
 
 export const hiveActivityTypeEnum = pgEnum('hive_activity_type', [

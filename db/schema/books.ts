@@ -77,6 +77,7 @@ export const chapters = pgTable('chapters', {
   wordGoal: integer('word_goal').default(0).notNull(),
   status: chapterStatusEnum('status').default('FIRST_DRAFT').notNull(),
   notes: text('notes'),
+  authorUserId: text('author_user_id').references(() => users.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (t) => [index('chapters_book_id_idx').on(t.bookId)])
@@ -105,6 +106,7 @@ export const binderItemsRelations = relations(binderItems, ({ one, many }) => ({
 export const chaptersRelations = relations(chapters, ({ one, many }) => ({
   book: one(books, { fields: [chapters.bookId], references: [books.id] }),
   binderItem: one(binderItems, { fields: [chapters.binderItemId], references: [binderItems.id] }),
+  author: one(users, { fields: [chapters.authorUserId], references: [users.id] }),
   snapshots: many(chapterSnapshots),
 }))
 

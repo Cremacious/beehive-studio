@@ -128,7 +128,7 @@ export const hiveDiscussionPosts = pgTable('hive_discussion_posts', {
   hiveId: text('hive_id').notNull().references(() => hives.id, { onDelete: 'cascade' }),
   authorId: text('author_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   content: text('content').notNull(),
-  parentId: text('parent_id').references((): AnyPgColumn => hiveDiscussionPosts.id, { onDelete: 'set null' }),
+  parentId: text('parent_id').references((): AnyPgColumn => hiveDiscussionPosts.id, { onDelete: 'cascade' }),
   topic: discussionTopicEnum('topic'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (t) => [index('hive_discussion_posts_hive_id_idx').on(t.hiveId)])

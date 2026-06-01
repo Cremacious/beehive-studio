@@ -1,7 +1,7 @@
 'use server'
 
 import { db } from '@/db'
-import { hiveDiscussionPosts, hiveTasks, notifications, hives, binderItems, userProfiles, chapters } from '@/db/schema'
+import { hiveTasks, notifications, hives, binderItems, userProfiles, chapters } from '@/db/schema'
 import { eq, and, asc, inArray } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { assertHiveMember, assertHiveAdmin } from './_helpers'
@@ -269,49 +269,6 @@ export async function getBinderTreeForHiveAction(
 }
 
 // ── Legacy CRUD (T10 deletes) ────────────────────────────────────────────────
-
-// ── Discussion ────────────────────────────────────────────────────────────────
-
-export type DiscussionPost = {
-  id: string
-  hiveId: string
-  authorId: string
-  content: string
-  parentId: string | null
-  createdAt: Date
-  author: { name: string | null; image: string | null }
-}
-
-export async function getDiscussionPostsAction(hiveId: string): Promise<ActionResult<DiscussionPost[]>> {
-  const userId = await requireAuth()
-  await assertHiveMember(hiveId, userId)
-  const posts = await db.query.hiveDiscussionPosts.findMany({
-    where: eq(hiveDiscussionPosts.hiveId, hiveId),
-    with: { author: { columns: { name: true, image: true } } },
-    orderBy: (t, { desc }) => [desc(t.createdAt)],
-  })
-  return { success: true, data: posts as DiscussionPost[] }
-}
-
-export async function createDiscussionPostAction(hiveId: string, content: string, parentId?: string): Promise<ActionResult<{ postId: string }>> {
-  const userId = await requireAuth()
-  await assertHiveMember(hiveId, userId)
-  if (!content.trim()) return { success: false, error: 'Content required' }
-  const [post] = await db.insert(hiveDiscussionPosts)
-    .values({ hiveId, authorId: userId, content: content.trim(), parentId: parentId ?? null })
-    .returning({ id: hiveDiscussionPosts.id })
-  return { success: true, data: { postId: post.id } }
-}
-
-export async function deleteDiscussionPostAction(postId: string): Promise<ActionResult> {
-  const userId = await requireAuth()
-  const post = await db.query.hiveDiscussionPosts.findFirst({ where: eq(hiveDiscussionPosts.id, postId) })
-  if (!post) return { success: false, error: 'Post not found' }
-  await assertHiveMember(post.hiveId, userId)
-  if (post.authorId !== userId) await assertHiveAdmin(post.hiveId, userId)
-  await db.delete(hiveDiscussionPosts).where(eq(hiveDiscussionPosts.id, postId))
-  return { success: true, data: undefined }
-}
 
 // ── Tasks ─────────────────────────────────────────────────────────────────────
 

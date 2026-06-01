@@ -194,6 +194,15 @@ async function main() {
                 OR (parent_id IS NOT NULL AND topic IS NULL))`
   console.log('✓ hive_discussion_posts.topic added with CHECK')
 
+  // 6b. Switch hive_discussion_posts.parent_id FK to ON DELETE CASCADE so
+  //     deleting a parent post cascades to its replies (otherwise SET NULL
+  //     would orphan replies with topic=NULL → violates the CHECK above).
+  await sql`ALTER TABLE hive_discussion_posts DROP CONSTRAINT IF EXISTS hive_discussion_posts_parent_id_fkey`
+  await sql`ALTER TABLE hive_discussion_posts
+            ADD CONSTRAINT hive_discussion_posts_parent_id_fkey
+            FOREIGN KEY (parent_id) REFERENCES hive_discussion_posts(id) ON DELETE CASCADE`
+  console.log('✓ hive_discussion_posts.parent_id FK switched to ON DELETE CASCADE')
+
   // 7. Drop hive_chapter_locks
   await sql`DROP TABLE IF EXISTS hive_chapter_locks`
   console.log('✓ hive_chapter_locks dropped')

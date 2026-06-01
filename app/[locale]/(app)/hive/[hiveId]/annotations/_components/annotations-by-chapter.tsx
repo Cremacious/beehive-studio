@@ -95,15 +95,29 @@ export function AnnotationsByChapter({ data, hiveId, locale }: Props) {
   const visibleCount = filtered.reduce((sum, g) => sum + g.annotations.length, 0)
 
   return (
-    <main className="flex-1 overflow-y-auto">
-      <div className="mx-auto max-w-3xl px-6 py-8">
+    <div className="mx-auto max-w-3xl px-2 py-2">
+      <div
+        style={{
+          background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+          borderRadius: 'var(--r-card)',
+          boxShadow: 'var(--sh-card)',
+          border: 'var(--br-card)',
+        }}
+        className="p-6"
+      >
         <header className="mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="font-comfortaa font-bold text-2xl text-foreground">
+              <h1
+                style={{ color: 'var(--brand)' }}
+                className="font-comfortaa font-bold text-2xl"
+              >
                 Annotations
               </h1>
-              <p className="text-sm text-muted-foreground mt-0.5">
+              <p
+                className="text-sm mt-1"
+                style={{ color: 'var(--canvas-dark-ink-muted)' }}
+              >
                 Commentary from hive members across all chapters.
               </p>
             </div>
@@ -155,7 +169,7 @@ export function AnnotationsByChapter({ data, hiveId, locale }: Props) {
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-5">
             {filtered.map((group) => (
               <ChapterGroup
                 key={group.chapterId}
@@ -169,7 +183,7 @@ export function AnnotationsByChapter({ data, hiveId, locale }: Props) {
           </div>
         )}
       </div>
-    </main>
+    </div>
   )
 }
 
@@ -189,28 +203,46 @@ function ChapterGroup({
   const chapterHref = `/${locale}/hive/${hiveId}/chapters/${group.chapterId}`
 
   return (
-    <section className="rounded-lg border border-border bg-card">
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
+    <section>
+      <div
+        style={{
+          background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+          borderRadius: 'var(--r-row)',
+          boxShadow: 'var(--sh-tile)',
+        }}
+        className="flex items-center gap-2 px-4 py-2 mb-3"
+      >
         <button
           type="button"
           onClick={onToggle}
           aria-label={collapsed ? 'Expand chapter' : 'Collapse chapter'}
-          className="text-muted-foreground hover:text-foreground"
+          style={{ color: 'var(--canvas-dark-ink-muted)' }}
+          className="hover:text-foreground"
         >
           {collapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
         </button>
-        <Link
-          href={chapterHref}
-          className="font-comfortaa font-bold text-base text-foreground hover:text-brand hover:underline"
+        <h2
+          className="font-comfortaa font-semibold text-sm"
+          style={{ color: 'var(--canvas-dark-ink-strong)' }}
         >
           {group.chapterTitle}
-        </Link>
-        <span className="text-xs text-muted-foreground">
-          ({group.annotations.length})
+        </h2>
+        <span
+          className="text-xs font-mono"
+          style={{ color: 'var(--canvas-dark-ink-muted)' }}
+        >
+          {group.annotations.length}
         </span>
+        <Link
+          href={chapterHref}
+          className="ml-auto text-xs font-mono hover:text-brand"
+          style={{ color: 'var(--canvas-dark-ink-muted)' }}
+        >
+          Jump →
+        </Link>
       </div>
       {!collapsed && (
-        <ul className="divide-y divide-border">
+        <ul className="space-y-2 pl-2">
           {group.annotations.map((a) => (
             <AnnotationRow
               key={a.id}
@@ -244,7 +276,15 @@ function AnnotationRow({
   const openHref = `/${locale}/hive/${hiveId}/chapters/${chapterId}#ann-${annotation.id}`
 
   return (
-    <li className="flex items-start gap-3 px-4 py-3">
+    <li
+      style={{
+        background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+        borderRadius: 'var(--r-row)',
+        boxShadow: 'var(--sh-tile)',
+        borderLeft: `3px solid ${meta.dot}`,
+      }}
+      className="flex items-start gap-3 px-4 py-3"
+    >
       {annotation.author.avatarUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img

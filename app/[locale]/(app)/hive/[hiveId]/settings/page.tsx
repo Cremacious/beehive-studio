@@ -11,9 +11,34 @@ export default async function HiveSettingsPage({ params }: { params: Promise<{ l
 
   if (!isOwner) {
     return (
-      <div className="max-w-2xl mx-auto p-8 text-center text-muted-foreground">
-        <h2 className="text-lg font-medium text-foreground mb-2">Settings</h2>
-        <p>Settings is only available to the hive owner.</p>
+      <div className="max-w-2xl mx-auto p-6">
+        <div
+          style={{
+            background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+            borderRadius: 'var(--r-card)',
+            boxShadow: 'var(--sh-card)',
+            border: 'var(--br-card)',
+          }}
+          className="p-6"
+        >
+          <h1
+            style={{ color: 'var(--brand)' }}
+            className="font-comfortaa font-bold text-2xl mb-6"
+          >
+            Settings
+          </h1>
+          <p
+            style={{
+              background: 'var(--canvas-dark-100)',
+              borderRadius: 'var(--r-row)',
+              boxShadow: 'var(--sh-inset)',
+              color: 'var(--canvas-dark-ink-muted)',
+            }}
+            className="px-4 py-3 text-sm"
+          >
+            Only the owner can edit hive settings.
+          </p>
+        </div>
       </div>
     )
   }

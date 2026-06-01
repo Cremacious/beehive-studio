@@ -56,30 +56,28 @@ export function HiveOutlineSurface({
 }) {
   if (!data.outline) {
     return (
-      <main className="flex-1 flex items-center justify-center p-10">
-        <div
-          className="max-w-md text-center space-y-4 rounded-lg p-8"
-          style={{
-            background: 'var(--canvas-dark-100)',
-            border: '1px solid var(--canvas-dark-300)',
-          }}
-        >
-          <h2 className="font-comfortaa font-bold text-xl">No outline yet</h2>
-          <p className="text-sm text-muted-foreground">
-            This hive&apos;s book has no outline yet — the author can create one in the editor.
+      <div
+        style={{
+          background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+          borderRadius: 'var(--r-card)',
+          boxShadow: 'var(--sh-card)',
+          border: 'var(--br-card)',
+        }}
+        className="p-6"
+      >
+        <div className="text-center py-12">
+          <p className="text-sm mb-3" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
+            No outline yet — the author can create one in the editor.
           </p>
           <Link
             href={`/${locale}/studio/${data.bookId}`}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold"
-            style={{
-              background: 'var(--color-brand)',
-              color: 'var(--brand-ink, oklch(0.18 0.02 60))',
-            }}
+            style={{ color: 'var(--brand)' }}
+            className="font-geist font-semibold text-sm"
           >
-            Open the book in the studio
+            Open the book in the studio →
           </Link>
         </div>
-      </main>
+      </div>
     )
   }
 
@@ -188,13 +186,19 @@ function HiveOutlineSurfaceInner({
   }
 
   return (
-    <main
+    <div
       data-slot="outline-pane"
-      className="flex-1 flex flex-col overflow-hidden"
+      style={{
+        background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+        borderRadius: 'var(--r-card)',
+        boxShadow: 'var(--sh-card)',
+        border: 'var(--br-card)',
+      }}
+      className="p-6"
     >
       <style>{`
         [data-slot="outline-pane"] {
-          --sheet-canvas:     var(--background);
+          --sheet-canvas:     transparent;
           --sheet-bg:         var(--canvas-dark-100);
           --sheet-bg-hover:   var(--canvas-dark-200);
           --sheet-ink:        var(--canvas-dark-ink);
@@ -219,49 +223,43 @@ function HiveOutlineSurfaceInner({
 
       <header
         data-slot="outline-surface-head"
-        className="flex items-center gap-3 px-6 py-2.5 border-b border-border bg-surface"
+        className="flex items-center justify-between gap-3 mb-6"
       >
-        <span
-          className="inline-block w-2 h-2 rounded-sm"
-          style={{ backgroundColor: 'var(--type-outline, oklch(0.68 0.10 200))' }}
-          aria-hidden
-        />
-        <span className="text-[10px] font-mono uppercase tracking-[0.08em] text-muted-foreground">
-          Outline
-        </span>
-        <span className="text-sm font-medium text-foreground/90 truncate">{outline.title}</span>
-        <span className="text-[11px] text-muted-foreground/70">
-          · {beats.length} beat{beats.length === 1 ? '' : 's'}
-        </span>
-        {lastEditedAt && (
-          <span className="text-[11px] text-muted-foreground/70">
-            · {lastEditedByUsername ? `Last edited by @${lastEditedByUsername} · ` : 'Last edited '}{relTime(lastEditedAt)}
+        <div className="flex items-baseline gap-3 min-w-0">
+          <h1 style={{ color: 'var(--brand)' }} className="font-comfortaa font-bold text-2xl">
+            Outline
+          </h1>
+          <span className="text-sm truncate" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
+            {outline.title}
           </span>
-        )}
-        <div className="flex-1" />
-        {!readOnly && (
-          <button
-            type="button"
-            onClick={() => addBeat()}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold"
-            style={{
-              background: 'var(--color-brand)',
-              color: 'var(--brand-ink, oklch(0.18 0.02 60))',
-            }}
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Add beat
-          </button>
-        )}
-        <SaveStatusBadge status={saveStatus} />
+        </div>
+        <div className="flex items-center gap-3">
+          {lastEditedAt && (
+            <p className="text-xs font-mono" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
+              {lastEditedByUsername ? `Last edited by @${lastEditedByUsername} · ` : 'Last edited '}{relTime(lastEditedAt)}
+            </p>
+          )}
+          {!readOnly && (
+            <button
+              type="button"
+              onClick={() => addBeat()}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold"
+              style={{
+                background: 'var(--color-brand)',
+                color: 'var(--brand-ink, oklch(0.18 0.02 60))',
+                borderRadius: 'var(--r-btn)',
+              }}
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Add beat
+            </button>
+          )}
+          <SaveStatusBadge status={saveStatus} />
+        </div>
       </header>
 
-      <div
-        data-slot="outline-pane-body"
-        className="flex-1 overflow-y-auto"
-        style={{ background: 'var(--sheet-canvas)' }}
-      >
-        <div className="mx-auto px-8 py-6" style={{ maxWidth: 760 }}>
+      <div data-slot="outline-pane-body">
+        <div className="mx-auto" style={{ maxWidth: 760 }}>
           {beats.length === 0 && pendingActs.length === 0 && newActDraft === null ? (
             !readOnly ? (
               <button
@@ -296,18 +294,25 @@ function HiveOutlineSurfaceInner({
                   }
                   return (
                     <section key={group.act ?? '__noact__'} className="space-y-2">
-                      <header className="flex items-center gap-2">
+                      <header
+                        style={{
+                          background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+                          borderRadius: 'var(--r-row)',
+                          boxShadow: 'var(--sh-tile)',
+                        }}
+                        className="flex items-center gap-3 px-4 py-2"
+                      >
                         {group.act === null ? (
                           <span
-                            className="font-comfortaa font-bold text-base"
-                            style={{ color: 'var(--sheet-ink-muted)' }}
+                            className="font-comfortaa font-semibold text-sm"
+                            style={{ color: 'var(--canvas-dark-ink-muted)' }}
                           >
                             No Act
                           </span>
                         ) : readOnly ? (
                           <span
-                            className="font-comfortaa font-bold text-base"
-                            style={{ color: 'var(--sheet-ink)' }}
+                            className="font-comfortaa font-semibold text-sm"
+                            style={{ color: 'var(--canvas-dark-ink-strong)' }}
                           >
                             {group.act}
                           </span>
@@ -324,19 +329,19 @@ function HiveOutlineSurfaceInner({
                                 ;(e.target as HTMLInputElement).blur()
                               }
                             }}
-                            className="font-comfortaa font-bold text-base bg-transparent border-b border-transparent hover:border-border focus:border-brand outline-none"
+                            style={{ background: 'transparent', color: 'var(--canvas-dark-ink-strong)' }}
+                            className="font-comfortaa font-semibold text-sm focus:outline-none"
                           />
                         )}
-                        <span className="text-xs" style={{ color: 'var(--sheet-ink-muted)' }}>
-                          {group.beats.length} beat{group.beats.length === 1 ? '' : 's'}
+                        <span className="ml-auto text-xs font-mono" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
+                          {group.beats.length} {group.beats.length === 1 ? 'beat' : 'beats'}
                         </span>
-                        <div className="flex-1" />
                         {!readOnly && (
                           <button
                             type="button"
                             onClick={() => addBeat(group.act)}
-                            className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-semibold"
-                            style={{ color: 'var(--sheet-ink-muted)' }}
+                            style={{ color: 'var(--brand)', borderRadius: 'var(--r-btn)' }}
+                            className="inline-flex items-center gap-1 px-2 py-1 font-geist font-semibold text-xs"
                           >
                             <Plus className="w-3 h-3" />
                             Add beat
@@ -373,19 +378,25 @@ function HiveOutlineSurfaceInner({
                   .filter(name => !beats.some(b => b.act === name))
                   .map(name => (
                     <section key={`pending:${name}`} className="space-y-2">
-                      <header className="flex items-center gap-2">
-                        <span className="font-comfortaa font-bold text-base" style={{ color: 'var(--sheet-ink-muted)' }}>
+                      <header
+                        style={{
+                          background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+                          borderRadius: 'var(--r-row)',
+                          boxShadow: 'var(--sh-tile)',
+                        }}
+                        className="flex items-center gap-3 px-4 py-2"
+                      >
+                        <span className="font-comfortaa font-semibold text-sm" style={{ color: 'var(--canvas-dark-ink-strong)' }}>
                           {name}
                         </span>
-                        <span className="text-xs" style={{ color: 'var(--sheet-ink-muted)' }}>
+                        <span className="ml-auto text-xs font-mono" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
                           0 beats
                         </span>
-                        <div className="flex-1" />
                         <button
                           type="button"
                           onClick={() => addBeat(name)}
-                          className="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-semibold"
-                          style={{ color: 'var(--sheet-ink-muted)' }}
+                          style={{ color: 'var(--brand)', borderRadius: 'var(--r-btn)' }}
+                          className="inline-flex items-center gap-1 px-2 py-1 font-geist font-semibold text-xs"
                         >
                           <Plus className="w-3 h-3" />
                           Add beat
@@ -395,7 +406,7 @@ function HiveOutlineSurfaceInner({
                           onClick={() => setPendingActs(prev => prev.filter(a => a !== name))}
                           aria-label={`Discard empty act ${name}`}
                           className="inline-flex items-center px-1.5 py-1 rounded text-[11px]"
-                          style={{ color: 'var(--sheet-ink-muted)' }}
+                          style={{ color: 'var(--canvas-dark-ink-muted)' }}
                         >
                           ×
                         </button>
@@ -464,10 +475,15 @@ function HiveOutlineSurfaceInner({
 
           {readOnly && (
             <p
-              className="mt-6 text-center text-xs"
-              style={{ color: 'var(--sheet-ink-muted)' }}
+              style={{
+                background: 'var(--canvas-dark-100)',
+                borderRadius: 'var(--r-row)',
+                boxShadow: 'var(--sh-inset)',
+                color: 'var(--canvas-dark-ink-muted)',
+              }}
+              className="mt-6 px-3 py-2 text-xs text-center"
             >
-              Read-only — your role is Beta Reader.
+              Read-only — your role is Beta Reader
             </p>
           )}
         </div>
@@ -480,7 +496,7 @@ function HiveOutlineSurfaceInner({
           onClose={() => setLinkingBeatId(null)}
         />
       )}
-    </main>
+    </div>
   )
 }
 
@@ -507,17 +523,15 @@ function HiveChapterLinkPopover({
     >
       <div
         onClick={e => e.stopPropagation()}
-        className="rounded-lg shadow-2xl max-w-md w-full max-h-[60vh] flex flex-col"
+        className="min-w-[280px] w-[360px] max-h-[60vh] flex flex-col p-2"
         style={{
-          width: 360,
-          background: 'var(--canvas-dark-100, oklch(0.255 0.018 55))',
-          border: '1px solid var(--canvas-dark-300, oklch(0.350 0.018 55))',
+          background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+          borderRadius: 'var(--r-card)',
+          boxShadow: 'var(--sh-card)',
+          border: 'var(--br-card)',
         }}
       >
-        <div
-          className="flex items-center justify-between gap-2 px-3 py-2.5"
-          style={{ borderBottom: '1px solid var(--canvas-dark-300, oklch(0.350 0.018 55))' }}
-        >
+        <div className="flex items-center justify-between gap-2 px-2 py-1.5">
           <span
             className="text-[10px] font-mono uppercase tracking-[0.10em]"
             style={{ color: 'var(--canvas-dark-ink-muted)' }}
@@ -534,12 +548,13 @@ function HiveChapterLinkPopover({
           </button>
         </div>
 
-        <div className="px-3 pt-3 pb-2">
+        <div className="px-1 pb-2">
           <div
-            className="flex items-center gap-2 px-2.5 py-1.5 rounded-md"
+            className="flex items-center gap-2 px-2.5 py-1.5"
             style={{
-              background: 'var(--canvas-dark-200, oklch(0.290 0.018 55))',
-              border: '1px solid var(--canvas-dark-300, oklch(0.350 0.018 55))',
+              background: 'var(--canvas-dark-100)',
+              borderRadius: 'var(--r-row)',
+              boxShadow: 'var(--sh-inset)',
             }}
           >
             <Search className="w-3.5 h-3.5" style={{ color: 'var(--canvas-dark-ink-muted)' }} />
@@ -555,23 +570,35 @@ function HiveChapterLinkPopover({
         </div>
 
         {filtered.length === 0 ? (
-          <p
-            className="px-4 pb-4 text-xs italic"
-            style={{ color: 'var(--canvas-dark-ink-muted)' }}
-          >
-            {sorted.length === 0
-              ? 'Standalone hive — no chapters available to link.'
-              : 'No chapters match that search.'}
-          </p>
+          sorted.length === 0 ? (
+            <p
+              style={{
+                background: 'var(--canvas-dark-100)',
+                borderRadius: 'var(--r-row)',
+                boxShadow: 'var(--sh-inset)',
+                color: 'var(--canvas-dark-ink-muted)',
+              }}
+              className="mx-1 mb-1 px-3 py-2 text-xs"
+            >
+              Standalone hive — no chapters available to link.
+            </p>
+          ) : (
+            <p
+              className="px-3 pb-3 text-xs italic"
+              style={{ color: 'var(--canvas-dark-ink-muted)' }}
+            >
+              No chapters match that search.
+            </p>
+          )
         ) : (
-          <div className="overflow-y-auto flex flex-col gap-0.5 px-2 pb-3">
+          <div className="overflow-y-auto flex flex-col gap-0.5 px-1 pb-1">
             {filtered.map(c => (
               <button
                 key={c.id}
                 onClick={() => { onPick(c.id); onClose() }}
-                className="text-left text-sm px-2.5 py-2 rounded transition-colors"
-                style={{ color: 'var(--canvas-dark-ink)' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--canvas-dark-200, oklch(0.290 0.018 55))' }}
+                className="text-left text-sm px-2.5 py-2 transition-colors"
+                style={{ color: 'var(--canvas-dark-ink)', borderRadius: 'var(--r-row)' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--canvas-dark-300)' }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
               >
                 {c.title || 'Untitled chapter'}

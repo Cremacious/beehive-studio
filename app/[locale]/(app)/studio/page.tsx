@@ -4,7 +4,7 @@ import { eq } from 'drizzle-orm'
 import { getUserBooksAction } from '@/lib/actions/book.actions'
 import { getUserHivesView } from '@/lib/actions/hive.actions'
 import { StudioEmptyState } from './_components/studio-empty-state'
-import { ContinueWritingHero } from './_components/continue-writing-hero'
+import { DualHero } from './_components/dual-hero'
 import { LibraryGrid } from './_components/library-grid'
 
 export default async function StudioPage({
@@ -33,11 +33,17 @@ export default async function StudioPage({
 
   // Most-recently-edited book — sort defensively so the hero is stable
   // regardless of getUserBooksAction's default ordering.
-  const recentBook = books.length > 0
-    ? [...books].sort(
-        (a, b) => new Date(b.lastEditedAt).getTime() - new Date(a.lastEditedAt).getTime(),
-      )[0]
-    : null
+  const recentBook =
+    books.length > 0
+      ? [...books].sort(
+          (a, b) =>
+            new Date(b.lastEditedAt).getTime() - new Date(a.lastEditedAt).getTime(),
+        )[0]
+      : null
+
+  // getUserHivesView already orders by most-recent activity desc, so the first
+  // entry is the "active" hive.
+  const activeHive = hives.length > 0 ? hives[0] : null
 
   return (
     <main
@@ -50,11 +56,21 @@ export default async function StudioPage({
     >
       <div style={{ height: '40px' }} />
 
-      {recentBook && (
-        <section style={{ marginBottom: '36px' }}>
-          <ContinueWritingHero book={recentBook} locale={locale} />
-        </section>
-      )}
+      <section style={{ marginBottom: '36px' }}>
+        <DualHero book={recentBook} hive={activeHive} locale={locale} />
+      </section>
+
+      <h2
+        className="font-comfortaa font-bold m-0"
+        style={{
+          color: 'var(--brand)',
+          fontSize: '16px',
+          letterSpacing: '-0.01em',
+          marginBottom: '16px',
+        }}
+      >
+        Your library
+      </h2>
 
       <LibraryGrid books={books} hives={hives} locale={locale} />
     </main>

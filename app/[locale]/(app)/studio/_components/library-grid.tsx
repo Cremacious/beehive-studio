@@ -2,8 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
-import Link from 'next/link'
-import { Plus, Search, ChevronDown, Hexagon } from 'lucide-react'
+import { Search, ChevronDown, Hexagon } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -137,65 +136,6 @@ export function LibraryGrid({ books, hives, locale }: Props) {
 
   return (
     <section className="flex flex-col" style={{ marginTop: '8px' }}>
-      {/* ── Header row ── */}
-      <div
-        className="flex items-center justify-between"
-        style={{ marginBottom: '20px' }}
-      >
-        <h2
-          className="font-comfortaa font-bold m-0"
-          style={{
-            color: 'var(--brand)',
-            fontSize: '22px',
-            letterSpacing: '-0.01em',
-          }}
-        >
-          Your Library
-        </h2>
-        <div className="flex items-center gap-2">
-          <Link
-            href={`/${locale}/studio/new`}
-            className="inline-flex items-center gap-1.5 no-underline transition-colors"
-            style={{
-              padding: '8px 14px',
-              borderRadius: 'var(--r-pill)',
-              background: 'var(--brand)',
-              color: 'var(--brand-ink)',
-              fontFamily: 'var(--font-display)',
-              fontWeight: 700,
-              fontSize: '13px',
-              letterSpacing: '0.02em',
-              boxShadow: 'var(--sh-tile)',
-            }}
-          >
-            <Plus size={14} strokeWidth={2.5} />
-            New Book
-          </Link>
-          <button
-            type="button"
-            onClick={() => setCreateOpen(true)}
-            className="inline-flex items-center gap-1.5 transition-colors"
-            style={{
-              padding: '8px 14px',
-              borderRadius: 'var(--r-pill)',
-              background:
-                'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-              color: 'var(--canvas-dark-ink-strong)',
-              fontFamily: 'var(--font-display)',
-              fontWeight: 700,
-              fontSize: '13px',
-              letterSpacing: '0.02em',
-              border: 'var(--br-card)',
-              boxShadow: 'var(--sh-tile)',
-              cursor: 'pointer',
-            }}
-          >
-            <Plus size={14} strokeWidth={2.5} />
-            New Hive
-          </button>
-        </div>
-      </div>
-
       {/* ── Controls bar (panel chrome) ── */}
       <div
         style={{

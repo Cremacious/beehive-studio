@@ -496,6 +496,11 @@ body {
   cursor: pointer;
 }
 
+/* Chapter title (TipTap h1) on the dark editor canvas — brand-yellow per T5
+   aesthetic refresh. Light-mode override lives in corkboard-or-editor.tsx's
+   injected <style> block and continues to win when [data-editor-theme="light"]. */
+[data-editor-theme="dark"] .tiptap.ProseMirror h1 { color: var(--brand); }
+
 .ProseMirror strong { font-weight: 600; color: var(--canvas-dark-ink-strong); }
 .ProseMirror em { font-style: italic; }
 .ProseMirror s { text-decoration: line-through; }

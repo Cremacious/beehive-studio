@@ -337,6 +337,12 @@ export function ChapterEditor() {
         <div
           ref={editorContainerRef}
           className="flex-1 overflow-y-auto cursor-text"
+          style={{
+            background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+            borderRadius: 'var(--r-card)',
+            boxShadow: 'var(--sh-card)',
+            border: 'var(--br-card)',
+          }}
           onClick={() => {
             if (editor && !editor.isDestroyed) editor.commands.focus()
           }}

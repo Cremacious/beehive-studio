@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { ChevronDown, ChevronRight } from 'lucide-react'
+import { ChevronDown, ChevronRight, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useBookEditor } from '../book-editor-provider'
 import { EmptyState } from '../empty-state'
@@ -69,8 +69,15 @@ function ChapterMetadata() {
     updateChapterNotes(e.target.value)
   }
 
-  const labelClass = "text-[10px] text-muted-foreground uppercase tracking-[0.10em] font-medium font-mono"
-  const fieldClass = "resize-none bg-surface-inset rounded-md p-2.5 text-xs text-foreground outline-none border border-border focus:border-brand/40 transition-colors leading-relaxed placeholder:italic placeholder:text-muted-foreground"
+  const labelClass = "text-sm font-comfortaa font-bold uppercase tracking-wider"
+  const labelStyle = { color: 'var(--brand)' } as const
+  const fieldClass = "resize-none p-2.5 text-xs outline-none transition-colors leading-relaxed placeholder:italic placeholder:text-muted-foreground"
+  const fieldStyle = {
+    borderRadius: 'var(--r-row)',
+    boxShadow: 'var(--sh-inset)',
+    background: 'transparent',
+    color: 'var(--canvas-dark-ink-strong)',
+  } as const
 
   return (
     <div className="flex flex-col">
@@ -97,7 +104,7 @@ function ChapterMetadata() {
       </div>
 
       <div className="px-[18px] py-[18px] border-b border-[var(--chrome-800)] flex flex-col gap-2.5">
-        <span className={labelClass}>Status</span>
+        <span className={labelClass} style={labelStyle}>Status</span>
         <p className="text-[11px] text-muted-foreground leading-relaxed">
           Set how far along this chapter is. Readers can only see chapters marked{' '}
           <span className="text-foreground/85 font-medium">Revised</span> or{' '}
@@ -111,25 +118,19 @@ function ChapterMetadata() {
               <button
                 key={value}
                 onClick={() => updateChapterStatus(value)}
-                className={cn(
-                  "inline-flex flex-col items-start gap-0.5 text-xs px-2.5 py-1.5 rounded-md border transition-colors",
-                  !isActive && "bg-[var(--chrome-800)] text-foreground/80 border-[var(--chrome-700)] hover:text-foreground",
-                )}
-                style={
-                  isActive
-                    ? {
-                        color,
-                        backgroundColor: `oklch(from ${color} l c h / 0.18)`,
-                        borderColor: `oklch(from ${color} l c h / 0.40)`,
-                      }
-                    : undefined
-                }
+                className="inline-flex flex-col items-center gap-0.5 text-xs px-3 py-1.5 font-geist font-semibold transition-colors"
+                style={{
+                  borderRadius: 'var(--r-pill)',
+                  boxShadow: 'var(--sh-tile)',
+                  background: isActive ? color : `oklch(from ${color} l c h / 0.18)`,
+                  color: isActive ? 'var(--brand-ink)' : color,
+                }}
               >
-                <span className="inline-flex items-center gap-1.5 font-medium">
-                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
-                  {label}
-                </span>
-                <span className="text-[9px] uppercase tracking-[0.10em] opacity-70 font-mono">
+                <span>{label}</span>
+                <span
+                  className="text-[9px] font-jetbrains-mono mt-0.5 uppercase tracking-[0.10em]"
+                  style={{ color: isActive ? 'var(--brand-ink)' : 'var(--canvas-dark-ink-muted)' }}
+                >
                   {subtitle}
                 </span>
               </button>
@@ -139,10 +140,11 @@ function ChapterMetadata() {
       </div>
 
       <div className="px-[18px] py-[18px] border-b border-[var(--chrome-800)] flex flex-col gap-2.5">
-        <span className={labelClass}>Synopsis</span>
+        <span className={labelClass} style={labelStyle}>Synopsis</span>
         <textarea
           key={activeItemId + '-synopsis'}
           className={cn(fieldClass, "min-h-16")}
+          style={fieldStyle}
           placeholder="One-line chapter summary…"
           defaultValue={meta.synopsis ?? ''}
           onChange={e => handleMetaChange({ synopsis: e.target.value })}
@@ -155,7 +157,7 @@ function ChapterMetadata() {
             onClick={() => setScenePlannerOpen(o => !o)}
             className="flex items-center justify-between w-full text-xs text-foreground/80 font-medium hover:text-foreground transition-colors"
           >
-            <span className={labelClass}>Scene Planner</span>
+            <span className={labelClass} style={labelStyle}>Scene Planner</span>
             {scenePlannerOpen ? (
               <ChevronDown size={14} className="text-muted-foreground" />
             ) : (
@@ -170,10 +172,11 @@ function ChapterMetadata() {
                 { key: 'sceneOutcome', label: 'Outcome', placeholder: "How does the scene end?" },
               ].map(({ key, label, placeholder }) => (
                 <div key={key} className="flex flex-col gap-1">
-                  <span className={labelClass}>{label}</span>
+                  <span className={labelClass} style={labelStyle}>{label}</span>
                   <textarea
                     key={activeItemId + '-' + key}
                     className={cn(fieldClass, "min-h-12")}
+                    style={fieldStyle}
                     placeholder={placeholder}
                     defaultValue={(meta as Record<string, string>)[key] ?? ''}
                     onChange={e => handleMetaChange({ [key]: e.target.value } as Partial<ChapterMeta>)}
@@ -186,10 +189,11 @@ function ChapterMetadata() {
       )}
 
       <div className="px-[18px] py-[18px] flex flex-col gap-2.5 flex-1">
-        <span className={labelClass}>Notes</span>
+        <span className={labelClass} style={labelStyle}>Notes</span>
         <textarea
           key={activeItemId}
           className={cn(fieldClass, "flex-1 min-h-24 p-3")}
+          style={fieldStyle}
           placeholder="Private notes — only you can see these."
           defaultValue={activeChapter?.notes ?? ''}
           onChange={handleNotesChange}
@@ -236,8 +240,14 @@ function PublishingSection({ bookId }: { bookId: string }) {
     }
   }
 
-  const pubLabelClass = "block text-[10px] text-muted-foreground mb-1 uppercase tracking-[0.10em] font-mono"
-  const pubFieldClass = "w-full rounded border border-border bg-[var(--chrome-950)] px-2.5 py-1.5 text-xs text-foreground placeholder:text-muted-foreground placeholder:italic focus:border-brand/40 focus:outline-none transition-colors"
+  const pubLabelClass = "block text-[10px] mb-1 uppercase tracking-[0.10em] font-jetbrains-mono"
+  const pubLabelStyle = { color: 'var(--canvas-dark-ink-muted)' } as const
+  const pubFieldClass = "w-full bg-transparent px-2.5 py-1.5 text-xs placeholder:text-muted-foreground placeholder:italic focus:outline-none transition-colors"
+  const pubFieldStyle = {
+    borderRadius: 'var(--r-row)',
+    boxShadow: 'var(--sh-inset)',
+    color: 'var(--canvas-dark-ink-strong)',
+  } as const
 
   return (
     <div
@@ -255,17 +265,21 @@ function PublishingSection({ bookId }: { bookId: string }) {
             ) : (
               <ChevronRight size={14} className="text-muted-foreground" />
             )}
-            <span className="text-xs font-bold text-foreground/90 font-[family-name:var(--font-display)]">
+            <span
+              className="text-sm font-comfortaa font-bold uppercase tracking-wider"
+              style={{ color: 'var(--brand)' }}
+            >
               Publishing details
             </span>
             <span
-              className="rounded-sm px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.10em] font-mono"
+              className="px-2 py-0.5 text-[10px] font-geist font-bold uppercase tracking-wide inline-flex items-center gap-1"
               style={{
-                backgroundColor: 'var(--brand)',
+                background: 'var(--brand)',
                 color: 'var(--brand-ink)',
-                borderColor: 'var(--brand)',
+                borderRadius: 'var(--r-pill)',
               }}
             >
+              <Sparkles className="w-3 h-3" />
               Premium
             </span>
           </div>
@@ -300,34 +314,37 @@ function PublishingSection({ bookId }: { bookId: string }) {
             { field: 'edition' as const, label: 'Edition', type: 'text' },
           ].map(({ field, label, type }) => (
             <div key={field} className="flex flex-col gap-1">
-              <label className={pubLabelClass}>{label}</label>
+              <label className={pubLabelClass} style={pubLabelStyle}>{label}</label>
               <input
                 type={type}
                 defaultValue={fields[field] ?? ''}
                 onBlur={e => handleBlur(field, e.target.value)}
                 className={pubFieldClass}
+                style={pubFieldStyle}
                 placeholder={`Enter ${label.toLowerCase()}…`}
               />
             </div>
           ))}
 
           <div className="flex flex-col gap-1">
-            <label className={pubLabelClass}>Author bio</label>
+            <label className={pubLabelClass} style={pubLabelStyle}>Author bio</label>
             <textarea
               rows={3}
               defaultValue={fields.authorBio ?? ''}
               onBlur={e => handleBlur('authorBio', e.target.value)}
               className={cn(pubFieldClass, "resize-none leading-relaxed")}
+              style={pubFieldStyle}
               placeholder="Enter author bio…"
             />
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className={pubLabelClass}>Trim size</label>
+            <label className={pubLabelClass} style={pubLabelStyle}>Trim size</label>
             <select
               defaultValue={fields.trimSize ?? ''}
               onBlur={e => handleBlur('trimSize', e.target.value)}
               className={pubFieldClass}
+              style={pubFieldStyle}
             >
               <option value="">— Select —</option>
               <option value="5x8">5 × 8</option>
@@ -350,8 +367,19 @@ export function MetadataPanel() {
   return (
     <aside
       aria-hidden={hidden}
+      style={
+        hidden
+          ? undefined
+          : {
+              background:
+                'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+              borderRadius: 'var(--r-card)',
+              boxShadow: 'var(--sh-card)',
+              border: 'var(--br-card)',
+            }
+      }
       className={cn(
-        'flex-shrink-0 flex flex-col bg-card border-l border-border overflow-hidden',
+        'flex-shrink-0 flex flex-col overflow-hidden',
         'transition-[width,opacity,transform] duration-200 ease-out',
         hidden
           ? 'w-0 opacity-0 translate-x-2 pointer-events-none'

@@ -135,10 +135,11 @@ export function SprintControls({ currentWordCount }: Props) {
             bottom: 'calc(100% + 10px)',
             right: 0,
             width: 260,
-            background: 'var(--chrome-750)',
-            border: '1px solid var(--chrome-700)',
-            borderRadius: 12,
-            boxShadow: '0 12px 32px rgba(0,0,0,0.45), 0 4px 8px rgba(0,0,0,0.3)',
+            background:
+              'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+            border: 'var(--br-card)',
+            borderRadius: 'var(--r-card)',
+            boxShadow: 'var(--sh-card)',
             padding: 14,
           }}
         >
@@ -151,9 +152,9 @@ export function SprintControls({ currentWordCount }: Props) {
               right: 18,
               width: 14,
               height: 14,
-              background: 'var(--chrome-750)',
-              borderRight: '1px solid var(--chrome-700)',
-              borderBottom: '1px solid var(--chrome-700)',
+              background: 'var(--canvas-dark-200)',
+              borderRight: 'var(--br-card)',
+              borderBottom: 'var(--br-card)',
               transform: 'rotate(45deg)',
             }}
           />
@@ -164,7 +165,7 @@ export function SprintControls({ currentWordCount }: Props) {
                 fontFamily: 'var(--font-display)',
                 fontWeight: 700,
                 fontSize: 13,
-                color: 'var(--chrome-100)',
+                color: 'var(--brand)',
                 letterSpacing: '-0.005em',
               }}
             >
@@ -175,7 +176,7 @@ export function SprintControls({ currentWordCount }: Props) {
               onClick={() => setState({ type: 'idle' })}
               aria-label="Cancel sprint setup"
               className="inline-flex items-center justify-center rounded transition-colors hover:bg-surface-elevated"
-              style={{ width: 22, height: 22, color: 'var(--chrome-400)' }}
+              style={{ width: 22, height: 22, color: 'var(--canvas-dark-ink-muted)' }}
             >
               <X size={12} />
             </button>
@@ -191,17 +192,21 @@ export function SprintControls({ currentWordCount }: Props) {
               <button
                 key={m}
                 onClick={() => start(m)}
-                className="text-center rounded-md transition-colors group"
+                className="text-center transition-colors group"
                 style={{
                   padding: '10px 6px',
-                  background: 'var(--chrome-700)',
-                  border: '1px solid var(--chrome-700)',
+                  borderRadius: 'var(--r-btn)',
+                  background:
+                    'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+                  boxShadow: 'var(--sh-tile)',
+                  color: 'var(--canvas-dark-ink-strong)',
+                  border: '1px solid transparent',
                 }}
                 onMouseEnter={e => {
                   e.currentTarget.style.borderColor = 'var(--color-brand)'
                 }}
                 onMouseLeave={e => {
-                  e.currentTarget.style.borderColor = 'var(--chrome-700)'
+                  e.currentTarget.style.borderColor = 'transparent'
                 }}
               >
                 <div
@@ -209,7 +214,7 @@ export function SprintControls({ currentWordCount }: Props) {
                     fontFamily: 'var(--font-mono)',
                     fontSize: 18,
                     fontWeight: 600,
-                    color: 'var(--chrome-100)',
+                    color: 'var(--canvas-dark-ink-strong)',
                     lineHeight: 1,
                   }}
                 >
@@ -221,7 +226,7 @@ export function SprintControls({ currentWordCount }: Props) {
                     fontSize: 9,
                     letterSpacing: '0.10em',
                     textTransform: 'uppercase',
-                    color: 'var(--chrome-500)',
+                    color: 'var(--canvas-dark-ink-muted)',
                     marginTop: 3,
                   }}
                 >

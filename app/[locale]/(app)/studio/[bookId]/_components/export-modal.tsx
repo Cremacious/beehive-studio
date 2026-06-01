@@ -74,33 +74,42 @@ export function ExportModal({ open, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ background: 'oklch(0 0 0 / 0.5)' }}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="export-title"
-        className="w-[640px] max-w-[92vw] rounded-lg border border-border bg-popover shadow-xl"
+        className="w-[640px] max-w-[92vw]"
+        style={{
+          background:
+            'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+          borderRadius: 'var(--r-card)',
+          boxShadow: 'var(--sh-card)',
+          border: 'var(--br-card)',
+        }}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-[22px] pt-[18px] pb-[14px] gap-[18px]">
           <div>
             <h3
               id="export-title"
-              className="text-foreground m-0"
+              className="m-0"
               style={{
                 fontFamily: 'var(--font-display)',
                 fontSize: 20,
                 fontWeight: 700,
                 letterSpacing: '-0.005em',
+                color: 'var(--brand)',
               }}
             >
               Export {bookTitle}
             </h3>
             <p
               className="mt-0.5"
-              style={{ fontSize: 11, color: 'var(--chrome-500)' }}
+              style={{ fontSize: 11, color: 'var(--canvas-dark-ink-muted)' }}
             >
               {wordCount.toLocaleString()} words
             </p>
@@ -109,7 +118,7 @@ export function ExportModal({ open, onClose }: Props) {
             onClick={onClose}
             aria-label="Close export"
             className="inline-flex items-center justify-center rounded-md transition-colors hover:bg-surface-elevated"
-            style={{ width: 30, height: 30, color: 'var(--chrome-400)' }}
+            style={{ width: 30, height: 30, color: 'var(--canvas-dark-ink-muted)' }}
           >
             <X size={14} />
           </button>
@@ -135,12 +144,15 @@ export function ExportModal({ open, onClose }: Props) {
                   key={f.value}
                   onClick={() => { if (!f.disabled) setFormat(f.value) }}
                   disabled={f.disabled}
-                  className="text-left rounded-md transition-colors relative"
+                  className="text-left transition-colors relative"
                   style={{
                     padding: '14px 14px 12px',
-                    border: `1px solid ${isActive ? 'oklch(0.85 0.18 90 / 0.5)' : 'var(--chrome-700)'}`,
-                    background: isActive ? 'var(--brand-soft)' : 'var(--chrome-800)',
-                    boxShadow: isActive ? '0 0 0 1px oklch(0.85 0.18 90 / 0.25)' : 'none',
+                    borderRadius: 'var(--r-btn)',
+                    border: `1px solid ${isActive ? 'oklch(0.85 0.18 90 / 0.5)' : 'transparent'}`,
+                    background: isActive
+                      ? 'var(--brand-soft)'
+                      : 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+                    boxShadow: isActive ? '0 0 0 1px oklch(0.85 0.18 90 / 0.25)' : 'var(--sh-tile)',
                     cursor: f.disabled ? 'not-allowed' : 'pointer',
                     opacity: f.disabled ? 0.5 : 1,
                   }}
@@ -202,12 +214,15 @@ export function ExportModal({ open, onClose }: Props) {
                     <button
                       key={s}
                       onClick={() => setDocxStyle(s)}
-                      className="text-left rounded-md transition-colors"
+                      className="text-left transition-colors"
                       style={{
                         padding: '12px 14px',
-                        border: `1px solid ${isActive ? 'oklch(0.85 0.18 90 / 0.5)' : 'var(--chrome-700)'}`,
-                        background: isActive ? 'var(--brand-soft)' : 'var(--chrome-800)',
-                        boxShadow: isActive ? '0 0 0 1px oklch(0.85 0.18 90 / 0.25)' : 'none',
+                        borderRadius: 'var(--r-btn)',
+                        border: `1px solid ${isActive ? 'oklch(0.85 0.18 90 / 0.5)' : 'transparent'}`,
+                        background: isActive
+                          ? 'var(--brand-soft)'
+                          : 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+                        boxShadow: isActive ? '0 0 0 1px oklch(0.85 0.18 90 / 0.25)' : 'var(--sh-tile)',
                       }}
                     >
                       <div

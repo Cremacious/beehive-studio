@@ -39,7 +39,7 @@ function KbCombo({ keys }: { keys: string }) {
               background:
                 'linear-gradient(180deg, var(--chrome-800), var(--chrome-850))',
               border: '1px solid var(--chrome-700)',
-              borderRadius: 4,
+              borderRadius: 'var(--r-btn)',
               boxShadow:
                 '0 1px 0 rgba(255,255,255,0.06) inset, 0 -1px 0 rgba(0,0,0,0.3) inset, 0 1px 0 rgba(0,0,0,0.6), 0 2px 3px rgba(0,0,0,0.35)',
             }}
@@ -125,21 +125,30 @@ export function KeyboardCheatsheet() {
       role="dialog"
       aria-modal="true"
       aria-labelledby="cheatsheet-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-background/70"
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ background: 'oklch(0 0 0 / 0.5)' }}
     >
       <div
         ref={containerRef}
-        className="w-[480px] max-w-[90vw] rounded-lg border border-border bg-popover shadow-xl"
+        className="w-[480px] max-w-[90vw]"
+        style={{
+          background:
+            'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+          borderRadius: 'var(--r-card)',
+          boxShadow: 'var(--sh-card)',
+          border: 'var(--br-card)',
+        }}
       >
         <div className="flex items-center justify-between px-[22px] pt-[18px] pb-[14px] gap-[18px]">
           <h3
             id="cheatsheet-title"
-            className="text-foreground m-0"
+            className="m-0"
             style={{
               fontFamily: 'var(--font-display)',
               fontSize: 20,
               fontWeight: 700,
               letterSpacing: '-0.005em',
+              color: 'var(--brand)',
             }}
           >
             Keyboard shortcuts
@@ -151,7 +160,7 @@ export function KeyboardCheatsheet() {
             style={{
               width: 30,
               height: 30,
-              color: 'var(--chrome-400)',
+              color: 'var(--canvas-dark-ink-muted)',
             }}
           >
             <X size={14} />

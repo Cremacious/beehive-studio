@@ -220,8 +220,12 @@ export function BinderItem({ node, depth }: Props) {
         onClick={() => setActiveItemId(node.id)}
         aria-label={isRenaming ? undefined : 'Drag to reorder'}
       >
+        {/* Grip handle is absolutely positioned so it doesn't eat layout space
+            when hidden — without this, every row gets a ~20px invisible gutter
+            on the left (12px icon + 8px gap), making icon + title look
+            center-shifted instead of flush against the indent edge. */}
         <span
-          className="opacity-0 group-hover:opacity-100 text-muted-foreground flex-shrink-0"
+          className="absolute left-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 text-muted-foreground pointer-events-none"
           aria-hidden
         >
           <GripVertical size={12} />

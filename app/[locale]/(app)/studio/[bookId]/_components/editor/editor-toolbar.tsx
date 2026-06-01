@@ -71,7 +71,7 @@ function tbtnClass({
     hasLabel ? 'h-[30px] gap-1.5 px-2.5 text-xs font-medium' : 'h-[30px] w-[30px]',
     isActive
       ? 'text-[var(--brand-ink)]'
-      : 'text-[var(--canvas-dark-ink-strong)]',
+      : 'text-[var(--brand)]',
     disabled && 'opacity-40 cursor-not-allowed',
   )
 }

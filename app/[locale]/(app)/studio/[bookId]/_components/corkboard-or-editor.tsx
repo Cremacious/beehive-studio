@@ -24,7 +24,7 @@ export function CorkboardOrEditor() {
     <div
       data-editor-theme={editorTheme}
       className="flex-1 flex flex-col overflow-hidden"
-      style={isLight ? { backgroundColor: 'var(--paper-100)', color: 'var(--paper-ink-strong)' } : undefined}
+      style={isLight ? { backgroundColor: 'var(--paper-100)', color: 'var(--paper-ink-strong)', borderRadius: 'var(--r-card)' } : undefined}
     >
       {isLight && (
         <style>{`

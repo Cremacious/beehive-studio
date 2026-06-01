@@ -30,19 +30,48 @@ export default async function HiveDashboardPage({ params }: { params: Promise<{ 
 
   return (
     <div className="max-w-2xl mx-auto p-8 flex flex-col gap-6">
-      <div>
+      <section
+        style={{
+          background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+          borderRadius: 'var(--r-card)',
+          boxShadow: 'var(--sh-card)',
+          border: 'var(--br-card)',
+        }}
+        className="p-6"
+      >
         <p className="text-xs font-mono uppercase tracking-wide text-muted-foreground mb-2">Hive</p>
-        <h1 className="text-2xl font-medium text-foreground">Welcome to {hive.name}</h1>
+        <h1
+          style={{ color: 'var(--brand)' }}
+          className="font-comfortaa font-bold text-2xl mb-2"
+        >
+          Welcome to {hive.name}
+        </h1>
         {hive.description && (
           <p className="text-sm text-muted-foreground mt-2">{hive.description}</p>
         )}
         {isShadow && (
           <p className="text-xs text-muted-foreground mt-2 italic">Standalone hive (no linked book)</p>
         )}
-      </div>
+        <div className="flex items-center gap-4 mt-4 text-xs font-mono" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
+          <span className="inline-flex items-center gap-1.5">
+            <Users className="w-3 h-3" />
+            {members.length} {members.length === 1 ? 'member' : 'members'}
+          </span>
+          <span>·</span>
+          <span>Last active {lastActive ? relTime(lastActive) : '—'}</span>
+        </div>
+      </section>
 
       {showBookCard && book && (
-        <div className="bg-card border border-border rounded-lg p-4 flex gap-4">
+        <div
+          style={{
+            background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+            borderRadius: 'var(--r-card)',
+            boxShadow: 'var(--sh-tile)',
+            border: 'var(--br-card)',
+          }}
+          className="p-5 flex gap-4"
+        >
           <div className="flex-shrink-0">
             {book.coverUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -60,7 +89,12 @@ export default async function HiveDashboardPage({ params }: { params: Promise<{ 
           <div className="flex-1 min-w-0 flex flex-col gap-2">
             <div>
               <p className="text-xs font-mono uppercase tracking-wide text-muted-foreground">Book</p>
-              <h2 className="text-lg font-medium text-foreground truncate">{book.title}</h2>
+              <h2
+                style={{ color: 'var(--brand)' }}
+                className="font-comfortaa font-bold text-lg truncate"
+              >
+                {book.title}
+              </h2>
               {book.authorUsername && (
                 <p className="text-xs text-muted-foreground mt-0.5">by @{book.authorUsername}</p>
               )}
@@ -87,19 +121,25 @@ export default async function HiveDashboardPage({ params }: { params: Promise<{ 
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="bg-card border border-border rounded-lg p-4">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-            <Users className="w-3 h-3" />
-            Members
-          </p>
-          <p className="text-2xl font-medium text-foreground mt-1">{members.length}</p>
+      {isShadow && (
+        <div
+          style={{
+            background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+            borderRadius: 'var(--r-card)',
+            boxShadow: 'var(--sh-tile)',
+            border: 'var(--br-card)',
+          }}
+          className="p-5"
+        >
+          <h2
+            style={{ color: 'var(--brand)' }}
+            className="font-comfortaa font-bold text-lg mb-1"
+          >
+            Standalone hive
+          </h2>
+          <p className="text-sm text-muted-foreground">No book linked to this hive.</p>
         </div>
-        <div className="bg-card border border-border rounded-lg p-4">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Last active</p>
-          <p className="text-2xl font-medium text-foreground mt-1">{lastActive ? relTime(lastActive) : '—'}</p>
-        </div>
-      </div>
+      )}
     </div>
   )
 }

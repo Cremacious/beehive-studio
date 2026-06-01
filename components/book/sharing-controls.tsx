@@ -1,6 +1,6 @@
 'use client'
 
-import { Lock, Users, Globe } from 'lucide-react'
+import { Lock, Users, Globe, Check } from 'lucide-react'
 
 export type Visibility = 'PRIVATE' | 'PUBLIC' | 'FRIENDS'
 
@@ -35,46 +35,131 @@ export function SharingControls({ visibility, discoverable, onChange }: Props) {
               key={opt.value}
               type="button"
               onClick={() => onChange({ visibility: opt.value })}
-              className={`text-left p-3 rounded-xl border transition-colors
-                ${selected
-                  ? 'border-brand/50 bg-brand/10 text-white'
-                  : 'border-border bg-[#1c1c1c] text-white/60 hover:border-white/20 hover:text-white/80'
-                }`}
+              style={{
+                textAlign: 'left',
+                padding: 14,
+                borderRadius: 18,
+                background: selected
+                  ? 'oklch(from var(--brand) l c h / 0.12)'
+                  : 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+                boxShadow: selected ? 'none' : 'var(--sh-tile)',
+                border: selected
+                  ? '1px solid oklch(from var(--brand) l c h / 0.45)'
+                  : '1px solid transparent',
+                color: 'var(--canvas-dark-ink-strong)',
+                cursor: 'pointer',
+                transition: 'all 150ms ease',
+              }}
             >
-              <Icon className={`w-4 h-4 mb-2 ${selected ? 'text-brand' : 'text-white/40'}`} />
-              <div className="text-[13px] font-medium text-white">{opt.title}</div>
-              <div className="text-[11px] text-white/45 mt-0.5">{opt.description}</div>
-              {opt.hint && <div className="text-[10px] text-white/30 mt-1.5">{opt.hint}</div>}
+              <Icon
+                size={16}
+                style={{
+                  color: selected ? 'var(--brand)' : 'var(--canvas-dark-ink-muted)',
+                  marginBottom: 8,
+                }}
+              />
+              <div
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontSize: 13,
+                  fontWeight: 700,
+                }}
+              >
+                {opt.title}
+              </div>
+              <div
+                style={{
+                  fontSize: 11,
+                  color: 'var(--canvas-dark-ink-muted)',
+                  marginTop: 2,
+                }}
+              >
+                {opt.description}
+              </div>
+              {opt.hint && (
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: 'var(--canvas-dark-ink-muted)',
+                    opacity: 0.7,
+                    marginTop: 6,
+                  }}
+                >
+                  {opt.hint}
+                </div>
+              )}
             </button>
           )
         })}
       </div>
 
-      <div
-        className={`p-4 rounded-xl border transition-colors ${
-          isPublic ? 'border-border bg-[#1c1c1c]' : 'border-border/60 bg-[#161616]'
-        }`}
+      <label
+        style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 12,
+          padding: 14,
+          borderRadius: 'var(--r-row)',
+          background: 'var(--canvas-dark-100)',
+          boxShadow: 'var(--sh-inset)',
+          cursor: isPublic ? 'pointer' : 'not-allowed',
+          opacity: isPublic ? 1 : 0.45,
+          transition: 'opacity 150ms ease',
+        }}
       >
-        <label className="flex items-start gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={discoverable && isPublic}
-            disabled={!isPublic}
-            onChange={(e) => onChange({ discoverable: e.target.checked })}
-            className="mt-0.5 accent-brand"
-          />
-          <div className="flex-1">
-            <div className={`text-[13px] font-medium ${isPublic ? 'text-white' : 'text-white/35'}`}>
-              Discoverable
-            </div>
-            <div className={`text-[11px] mt-0.5 ${isPublic ? 'text-white/55' : 'text-white/30'}`}>
-              {isPublic
-                ? 'Show this book on the Discover page so other writers can find it.'
-                : 'Only public books can be discoverable.'}
-            </div>
+        <input
+          type="checkbox"
+          checked={discoverable && isPublic}
+          disabled={!isPublic}
+          onChange={(e) => onChange({ discoverable: e.target.checked })}
+          className="sr-only"
+          aria-describedby="discoverable-help"
+        />
+        <span
+          aria-hidden="true"
+          className="inline-flex items-center justify-center"
+          style={{
+            width: 18,
+            height: 18,
+            borderRadius: 4,
+            marginTop: 1,
+            background:
+              discoverable && isPublic ? 'var(--brand)' : 'var(--canvas-dark-100)',
+            border:
+              discoverable && isPublic
+                ? 'none'
+                : '1px solid oklch(1 0 0 / 0.10)',
+            color: 'var(--brand-ink)',
+            flexShrink: 0,
+          }}
+        >
+          {discoverable && isPublic && <Check size={13} strokeWidth={3} />}
+        </span>
+        <div>
+          <div
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: 13,
+              fontWeight: 600,
+              color: 'var(--canvas-dark-ink-strong)',
+            }}
+          >
+            Discoverable
           </div>
-        </label>
-      </div>
+          <div
+            id="discoverable-help"
+            style={{
+              fontSize: 11,
+              color: 'var(--canvas-dark-ink-muted)',
+              marginTop: 2,
+            }}
+          >
+            {isPublic
+              ? 'Discoverable books show up on /discover. Uncheck if you want a public-but-unlisted link only.'
+              : 'Only public books can be discoverable.'}
+          </div>
+        </div>
+      </label>
     </div>
   )
 }

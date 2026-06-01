@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { BookOpen, ChevronRight } from 'lucide-react'
 
-type Chapter = { id: string; title: string; order: number }
+type Chapter = { id: string; chapterId: string | null; title: string; order: number }
 
 type Props = {
   hiveId: string
@@ -43,20 +43,40 @@ export function HiveChapterIndex({ hiveId, locale, chapters }: Props) {
       </div>
 
       <ul className="flex flex-col gap-2">
-        {chapters.map((chapter, i) => (
-          <li key={chapter.id}>
-            <Link
-              href={`${base}/chapters/${chapter.id}`}
-              className="flex items-center gap-3 bg-card border border-border rounded-lg p-4 hover:border-brand transition-colors group"
-            >
-              <span className="text-xs font-mono text-muted-foreground w-8 flex-shrink-0">
-                {String(i + 1).padStart(2, '0')}
-              </span>
-              <span className="flex-1 text-sm text-foreground truncate">{chapter.title}</span>
-              <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-brand transition-colors flex-shrink-0" />
-            </Link>
-          </li>
-        ))}
+        {chapters.map((chapter, i) => {
+          const num = (
+            <span className="text-xs font-mono text-muted-foreground w-8 flex-shrink-0">
+              {String(i + 1).padStart(2, '0')}
+            </span>
+          )
+          const title = (
+            <span className="flex-1 text-sm text-foreground truncate">{chapter.title}</span>
+          )
+          // chapterId is null for binder-item rows that have no backing chapters
+          // row (shouldn't happen for type='chapter' under normal conditions,
+          // but defensive). Render as a disabled row in that case.
+          if (!chapter.chapterId) {
+            return (
+              <li key={chapter.id} className="flex items-center gap-3 bg-card border border-border rounded-lg p-4 opacity-60">
+                {num}
+                {title}
+                <span className="text-xs text-muted-foreground italic flex-shrink-0">Unavailable</span>
+              </li>
+            )
+          }
+          return (
+            <li key={chapter.id}>
+              <Link
+                href={`${base}/chapters/${chapter.chapterId}`}
+                className="flex items-center gap-3 bg-card border border-border rounded-lg p-4 hover:border-brand transition-colors group"
+              >
+                {num}
+                {title}
+                <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-brand transition-colors flex-shrink-0" />
+              </Link>
+            </li>
+          )
+        })}
       </ul>
     </div>
   )

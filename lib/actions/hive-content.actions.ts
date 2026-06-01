@@ -274,7 +274,7 @@ export async function getHiveChapterListAction(
   hiveId: string,
 ): Promise<ActionResult<{
   bookId: string
-  chapters: Array<{ id: string; title: string; order: number }>
+  chapters: Array<{ id: string; chapterId: string | null; title: string; order: number }>
 }>> {
   const userId = await requireAuth()
   await requireHiveMember(hiveId, userId)
@@ -284,15 +284,25 @@ export async function getHiveChapterListAction(
   })
   if (!hive || !hive.bookId) return { success: false, error: 'HIVE_NOT_FOUND' }
 
-  const rows = await db.query.binderItems.findMany({
-    where: and(eq(binderItems.bookId, hive.bookId), eq(binderItems.type, 'chapter')),
-    columns: { id: true, title: true, order: true, parentId: true },
-    orderBy: [asc(binderItems.order)],
-  })
+  // `id` is the binderItems PK (kept for submission target-order callers).
+  // `chapterId` is the chapters PK, joined via chapters.binderItemId — that's
+  // what /hive/[hiveId]/chapters/[chapterId] (T13) expects in its URL.
+  const rows = await db
+    .select({
+      id: binderItems.id,
+      chapterId: chapters.id,
+      title: binderItems.title,
+      order: binderItems.order,
+      parentId: binderItems.parentId,
+    })
+    .from(binderItems)
+    .leftJoin(chapters, eq(chapters.binderItemId, binderItems.id))
+    .where(and(eq(binderItems.bookId, hive.bookId), eq(binderItems.type, 'chapter')))
+    .orderBy(asc(binderItems.order))
 
   const topLevel = rows
     .filter(r => r.parentId === null)
-    .map(({ id, title, order }) => ({ id, title, order }))
+    .map(({ id, chapterId, title, order }) => ({ id, chapterId, title, order }))
 
   return { success: true, data: { bookId: hive.bookId, chapters: topLevel } }
 }

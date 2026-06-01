@@ -81,7 +81,7 @@ export function HiveChapterSurface({
   return (
     <main
       data-slot="hive-chapter-pane"
-      className="flex-1 flex flex-col overflow-hidden"
+      className="flex-1 flex flex-col overflow-hidden p-6"
     >
       <style>{`
         [data-slot="hive-chapter-pane"] {
@@ -147,82 +147,89 @@ export function HiveChapterSurface({
         }
       `}</style>
 
-      {/* Header */}
-      <header className="border-b border-border bg-surface px-6 py-4">
-        <div className="flex items-center gap-2 text-[11px] text-muted-foreground mb-3">
-          <Link
-            href={`/${locale}/hive/${hiveId}`}
-            className="inline-flex items-center gap-1 hover:text-foreground"
-          >
-            <ChevronLeft className="w-3 h-3" />
-            {data.hive.name}
-          </Link>
-          <span aria-hidden>›</span>
-          <span>Chapters</span>
-          <span aria-hidden>›</span>
-          <span className="text-foreground/80 truncate">{data.chapter.title}</span>
-        </div>
-
-        <div className="flex items-start gap-3">
-          <div className="flex-1 min-w-0">
-            <h1 className="font-comfortaa font-bold text-2xl text-foreground truncate">
-              {data.chapter.title}
-            </h1>
-            <p className="mt-1 text-sm italic text-muted-foreground">
-              {isContribution ? (
-                <>
-                  Written by{' '}
-                  <span className="font-medium not-italic text-foreground/90">
-                    @{data.author?.username ?? 'unknown'}
-                  </span>
-                  {' '}— chapter contribution to{' '}
-                  <span className="not-italic">{data.book.title}</span>
-                  {data.book.ownerUsername ? (
+      {/* Outer panel: dark frame around the prose surface + collab gutter */}
+      <div
+        style={{
+          background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+          borderRadius: 'var(--r-card)',
+          boxShadow: 'var(--sh-card)',
+          border: 'var(--br-card)',
+        }}
+        className="flex-1 flex gap-0 overflow-hidden"
+      >
+        <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
+          {/* Header: back-link + title + byline */}
+          <div className="px-8 pt-6 pb-4">
+            <Link
+              href={`/${locale}/hive/${hiveId}/chapters`}
+              className="text-xs font-mono text-[var(--canvas-dark-ink-muted)] hover:text-[var(--brand)] mb-4 inline-flex items-center gap-1"
+            >
+              <ChevronLeft className="w-3 h-3" />
+              Back to chapters
+            </Link>
+            <div className="flex items-start gap-3">
+              <div className="flex-1 min-w-0">
+                <h1
+                  style={{ color: 'var(--brand)' }}
+                  className="font-comfortaa font-bold text-2xl truncate"
+                >
+                  {data.chapter.title}
+                </h1>
+                <p className="mt-1 text-sm italic text-[var(--canvas-dark-ink-muted)]">
+                  {isContribution ? (
                     <>
-                      {' '}by{' '}
-                      <span className="font-medium not-italic text-foreground/90">
-                        @{data.book.ownerUsername}
+                      Written by{' '}
+                      <span className="font-medium not-italic text-[var(--canvas-dark-ink-strong)]">
+                        @{data.author?.username ?? 'unknown'}
                       </span>
+                      {' '}— chapter contribution to{' '}
+                      <span className="not-italic">{data.book.title}</span>
+                      {data.book.ownerUsername ? (
+                        <>
+                          {' '}by{' '}
+                          <span className="font-medium not-italic text-[var(--canvas-dark-ink-strong)]">
+                            @{data.book.ownerUsername}
+                          </span>
+                        </>
+                      ) : null}
                     </>
-                  ) : null}
-                </>
-              ) : (
-                <>
-                  Chapter from <span className="not-italic">{data.book.title}</span>
-                  {data.book.ownerUsername ? (
+                  ) : (
                     <>
-                      {' '}by{' '}
-                      <span className="font-medium not-italic text-foreground/90">
-                        @{data.book.ownerUsername}
-                      </span>
+                      Chapter from <span className="not-italic">{data.book.title}</span>
+                      {data.book.ownerUsername ? (
+                        <>
+                          {' '}by{' '}
+                          <span className="font-medium not-italic text-[var(--canvas-dark-ink-strong)]">
+                            @{data.book.ownerUsername}
+                          </span>
+                        </>
+                      ) : null}
                     </>
-                  ) : null}
-                </>
-              )}
-            </p>
+                  )}
+                </p>
+              </div>
+              <span
+                className="inline-flex shrink-0 items-center px-2 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider"
+                style={{
+                  background: 'oklch(from var(--color-brand) l c h / 0.15)',
+                  color: 'var(--color-brand)',
+                  border: '1px solid oklch(from var(--color-brand) l c h / 0.35)',
+                }}
+              >
+                {ROLE_LABEL[viewerRole]}
+              </span>
+            </div>
           </div>
-          <span
-            className="inline-flex shrink-0 items-center px-2 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider"
-            style={{
-              background: 'oklch(from var(--color-brand) l c h / 0.15)',
-              color: 'var(--color-brand)',
-              border: '1px solid oklch(from var(--color-brand) l c h / 0.35)',
-            }}
-          >
-            {ROLE_LABEL[viewerRole]}
-          </span>
-        </div>
-      </header>
 
-      {/* Body: prose + gutter */}
-      <div className="flex-1 flex overflow-hidden">
-        <div className="flex-1 overflow-y-auto">
-          <div className="hive-chapter-prose mx-auto max-w-[720px] px-8 py-10">
-            {editor ? (
-              <EditorContent editor={editor} />
-            ) : (
-              <div className="text-sm text-muted-foreground">Loading…</div>
-            )}
+          {/* Prose surface — UNCHANGED per plan Step 5 */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="hive-chapter-prose mx-auto max-w-[720px] px-8 py-10">
+              {editor ? (
+                <EditorContent editor={editor} />
+              ) : (
+                <div className="text-sm text-muted-foreground">Loading…</div>
+              )}
+            </div>
           </div>
         </div>
         <CollaborationGutter

@@ -163,34 +163,14 @@ function HiveWikiEntryEditorInner({
     <main
       data-slot="wiki-entry-pane"
       className="flex-1 overflow-y-auto"
-      style={{ background: 'var(--wiki-canvas)' }}
     >
       <style>{`
-        [data-slot="wiki-entry-pane"] {
-          --wiki-canvas:    oklch(0.22 0.005 256);
-          --wiki-card-bg:   var(--paper-100);
-          --wiki-card-bord: var(--paper-300);
-          --wiki-ink:       var(--paper-ink);
-          --wiki-ink-strong:var(--paper-ink-strong);
-          --wiki-ink-muted: var(--paper-ink-muted);
-        }
-        [data-editor-theme="light"] [data-slot="wiki-entry-pane"] {
-          --wiki-canvas:    var(--paper-300);
-          --wiki-card-bg:   var(--paper-50);
-          --wiki-card-bord: var(--paper-200);
-        }
-        [data-slot="wiki-entry-pane"] .wiki-card {
-          background: var(--wiki-card-bg);
-          border: 1px solid var(--wiki-card-bord);
-        }
-        [data-slot="wiki-entry-pane"] .wiki-title { color: var(--wiki-ink-strong); }
-        [data-slot="wiki-entry-pane"] .wiki-breadcrumb { color: var(--wiki-ink-muted); }
-        [data-slot="wiki-entry-pane"] .ProseMirror { color: var(--wiki-ink); caret-color: var(--color-brand); outline: none; }
-        [data-slot="wiki-entry-pane"] .ProseMirror h2 { color: var(--wiki-ink-strong); font-family: var(--font-display); font-size: 20px; font-weight: 700; margin: 1.2em 0 0.4em; }
+        [data-slot="wiki-entry-pane"] .ProseMirror { color: var(--canvas-dark-ink); caret-color: var(--color-brand); outline: none; }
+        [data-slot="wiki-entry-pane"] .ProseMirror h2 { color: var(--canvas-dark-ink-strong); font-family: var(--font-display); font-size: 20px; font-weight: 700; margin: 1.2em 0 0.4em; }
         [data-slot="wiki-entry-pane"] .ProseMirror h2:first-child { margin-top: 0; }
-        [data-slot="wiki-entry-pane"] .ProseMirror strong { color: var(--wiki-ink-strong); font-weight: 600; }
+        [data-slot="wiki-entry-pane"] .ProseMirror strong { color: var(--canvas-dark-ink-strong); font-weight: 600; }
         [data-slot="wiki-entry-pane"] .ProseMirror em { font-style: italic; }
-        [data-slot="wiki-entry-pane"] .ProseMirror blockquote { color: var(--wiki-ink-muted); border-left: 3px solid oklch(0.78 0.04 60 / 0.45); padding-left: 0.9em; margin: 0.6em 0; }
+        [data-slot="wiki-entry-pane"] .ProseMirror blockquote { color: var(--canvas-dark-ink-muted); border-left: 3px solid oklch(from var(--brand) l c h / 0.55); padding-left: 0.9em; margin: 0.6em 0; }
         [data-slot="wiki-entry-pane"] .ProseMirror p { margin: 0 0 1em; text-wrap: pretty; }
         [data-slot="wiki-entry-pane"] .ProseMirror ul,
         [data-slot="wiki-entry-pane"] .ProseMirror ol { padding-left: 1.4em; margin: 0 0 1em; }
@@ -198,59 +178,82 @@ function HiveWikiEntryEditorInner({
         [data-slot="wiki-entry-pane"] .ProseMirror ol { list-style: decimal; }
         [data-slot="wiki-entry-pane"] .ProseMirror li { margin: 0.3em 0; }
       `}</style>
-      <div className="mx-auto max-w-[760px] px-8 py-10 space-y-6">
-        <header className="flex items-center justify-between">
-          <button
-            type="button"
-            onClick={onBack}
-            className="wiki-breadcrumb text-[11px] uppercase tracking-wide inline-flex items-center gap-1 hover:text-brand"
-          >
-            <ChevronLeft size={12} /> Back to wiki
-          </button>
-          <SaveStatusBadge status={status} />
-        </header>
+      <div className="mx-auto max-w-[820px] p-6">
+        <div
+          style={{
+            background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+            borderRadius: 'var(--r-card)',
+            boxShadow: 'var(--sh-card)',
+            border: 'var(--br-card)',
+          }}
+          className="p-8 space-y-6"
+        >
+          <header className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={onBack}
+              className="text-[11px] uppercase tracking-wide inline-flex items-center gap-1 hover:text-[var(--canvas-dark-ink-strong)] transition-colors"
+              style={{ color: 'var(--canvas-dark-ink-muted)' }}
+            >
+              <ChevronLeft size={12} /> Back to wiki
+            </button>
+            {!readOnly && <SaveStatusBadge status={status} />}
+          </header>
 
-        <section className="wiki-card rounded-lg p-6 space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <span
-              className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide"
+          <section className="space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide"
+                style={{
+                  color: `var(${template.accentColor})`,
+                  background: `oklch(from var(${template.accentColor}) l c h / 0.14)`,
+                }}
+              >
+                <IconComponent size={12} /> {template.label}
+              </span>
+              <span
+                className="text-[10px]"
+                style={{ color: 'var(--canvas-dark-ink-muted)' }}
+              >
+                {authorUsername ? `Last edited by @${authorUsername} · ` : ''}{relTime(lastEditedAt)}
+              </span>
+            </div>
+            <div
+              role="textbox"
+              contentEditable={!readOnly}
+              suppressContentEditableWarning
+              className="wiki-title font-comfortaa font-bold text-2xl outline-none"
+              style={{ color: 'var(--canvas-dark-ink-strong)' }}
+              onBlur={e => commitTitle(e.currentTarget.textContent ?? '')}
+            >
+              {item.title}
+            </div>
+            <TagChipStrip
+              tags={content.tags}
+              onChange={setTags}
+              accentColor={template.accentColor}
+              readOnly={readOnly}
+            />
+          </section>
+
+          <section>
+            <EditorContent editor={editor} />
+          </section>
+
+          {readOnly && (
+            <p
+              className="text-center text-xs px-4 py-3"
               style={{
-                color: `var(${template.accentColor})`,
-                background: `oklch(from var(${template.accentColor}) l c h / 0.14)`,
+                color: 'var(--canvas-dark-ink-muted)',
+                background: 'var(--canvas-dark-100)',
+                borderRadius: 'var(--r-row)',
+                boxShadow: 'var(--sh-inset)',
               }}
             >
-              <IconComponent size={12} /> {template.label}
-            </span>
-            <span className="wiki-breadcrumb text-[10px]">
-              {authorUsername ? `Last edited by @${authorUsername} · ` : ''}{relTime(lastEditedAt)}
-            </span>
-          </div>
-          <div
-            role="textbox"
-            contentEditable={!readOnly}
-            suppressContentEditableWarning
-            className="wiki-title font-comfortaa font-bold text-2xl outline-none"
-            onBlur={e => commitTitle(e.currentTarget.textContent ?? '')}
-          >
-            {item.title}
-          </div>
-          <TagChipStrip
-            tags={content.tags}
-            onChange={setTags}
-            accentColor={template.accentColor}
-            readOnly={readOnly}
-          />
-        </section>
-
-        <section className="wiki-card rounded-lg p-6">
-          <EditorContent editor={editor} />
-        </section>
-
-        {readOnly && (
-          <p className="wiki-breadcrumb text-center text-xs">
-            Read-only — your role is Beta Reader.
-          </p>
-        )}
+              Read-only — your role is Beta Reader.
+            </p>
+          )}
+        </div>
       </div>
     </main>
   )

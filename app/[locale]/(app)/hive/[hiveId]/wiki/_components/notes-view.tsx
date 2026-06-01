@@ -78,14 +78,18 @@ export function NotesView({
             type="button"
             onClick={handleAdd}
             disabled={pending}
-            className="inline-flex items-center gap-1.5 text-xs rounded-md px-3 py-1.5 bg-brand text-brand-ink font-semibold hover:opacity-90 disabled:opacity-50"
+            style={{ color: 'var(--brand)', borderRadius: 'var(--r-btn)' }}
+            className="inline-flex items-center gap-1.5 text-sm font-geist font-semibold px-3 py-2 hover:bg-[linear-gradient(180deg,var(--canvas-dark-350),var(--canvas-dark-300))] disabled:opacity-50"
           >
-            <Plus size={12} /> New Note
+            <Plus size={14} /> New Note
           </button>
         </div>
       )}
       {sorted.length === 0 ? (
-        <div className="text-center text-sm text-muted-foreground py-12">
+        <div
+          className="text-center text-sm py-12"
+          style={{ color: 'var(--canvas-dark-ink-muted)' }}
+        >
           No notes yet.
         </div>
       ) : (
@@ -93,21 +97,50 @@ export function NotesView({
           {sorted.map(n => (
             <article
               key={n.id}
-              className="rounded-lg border border-border bg-card p-4 flex flex-col gap-2 min-h-[120px]"
+              style={{
+                background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+                borderRadius: 'var(--r-row)',
+                boxShadow: 'var(--sh-tile)',
+                border: 'var(--br-card)',
+              }}
+              className="p-4 flex flex-col gap-2 min-h-[120px]"
             >
               <div className="flex items-center justify-between gap-2">
-                <div className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <div
+                  className="inline-flex items-center gap-1.5 text-[11px]"
+                  style={{ color: 'var(--canvas-dark-ink-muted)' }}
+                >
                   <StickyNote size={12} />
                   {isPinned(n) && <Pin size={11} className="text-brand" />}
                 </div>
-                <span className="text-[10px] text-muted-foreground">{relTime(n.updatedAt)}</span>
+                <span
+                  className="text-[10px]"
+                  style={{ color: 'var(--canvas-dark-ink-muted)' }}
+                >
+                  {relTime(n.updatedAt)}
+                </span>
               </div>
-              <div className="font-comfortaa font-bold text-sm leading-tight">{n.title}</div>
+              <div
+                className="font-comfortaa font-semibold text-sm leading-tight"
+                style={{ color: 'var(--canvas-dark-ink-strong)' }}
+              >
+                {n.title}
+              </div>
               {noteExcerpt(n) && (
-                <div className="text-xs text-muted-foreground line-clamp-3">{noteExcerpt(n)}</div>
+                <div
+                  className="text-xs line-clamp-3"
+                  style={{ color: 'var(--canvas-dark-ink-muted)' }}
+                >
+                  {noteExcerpt(n)}
+                </div>
               )}
               {n.authorUsername && (
-                <div className="text-[10px] text-muted-foreground mt-auto">by @{n.authorUsername}</div>
+                <div
+                  className="text-[10px] mt-auto font-mono"
+                  style={{ color: 'var(--canvas-dark-ink-muted)' }}
+                >
+                  @{n.authorUsername}
+                </div>
               )}
             </article>
           ))}

@@ -31,9 +31,19 @@ export function ByCategoryView({
             <button
               type="button"
               onClick={() => setCollapsed(prev => ({ ...prev, [t.category]: !prev[t.category] }))}
-              className="w-full flex items-center gap-2 py-2 group"
+              style={{
+                background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+                borderRadius: 'var(--r-row)',
+                boxShadow: 'var(--sh-tile)',
+                borderLeft: `3px solid var(${t.accentColor})`,
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3"
             >
-              {isCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
+              {isCollapsed ? (
+                <ChevronRight size={14} style={{ color: 'var(--canvas-dark-ink-muted)' }} />
+              ) : (
+                <ChevronDown size={14} style={{ color: 'var(--canvas-dark-ink-muted)' }} />
+              )}
               <span
                 className="inline-flex h-6 w-6 items-center justify-center rounded-md"
                 style={{
@@ -43,11 +53,21 @@ export function ByCategoryView({
               >
                 <Icon size={13} />
               </span>
-              <span className="font-comfortaa font-bold text-sm">{t.label}</span>
-              <span className="text-xs text-muted-foreground">{matched.length}</span>
+              <span
+                className="font-comfortaa font-semibold text-sm"
+                style={{ color: 'var(--canvas-dark-ink-strong)' }}
+              >
+                {t.label}
+              </span>
+              <span
+                className="ml-auto text-xs font-mono"
+                style={{ color: 'var(--canvas-dark-ink-muted)' }}
+              >
+                {matched.length}
+              </span>
             </button>
             {!isCollapsed && (
-              <div className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {matched.map(e => (
                   <EntryCard key={e.id} entry={e} onClick={() => onOpenEntry(e.id)} />
                 ))}
@@ -55,7 +75,7 @@ export function ByCategoryView({
                   <button
                     type="button"
                     onClick={onAddEntry}
-                    className="text-left text-xs text-muted-foreground hover:text-brand inline-flex items-center gap-1.5 py-3"
+                    className="text-left text-xs text-[var(--canvas-dark-ink-muted)] hover:text-brand inline-flex items-center gap-1.5 py-3"
                   >
                     <Plus size={12} /> Add a {t.label}
                   </button>

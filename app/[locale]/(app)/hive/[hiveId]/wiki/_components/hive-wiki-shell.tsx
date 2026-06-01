@@ -102,80 +102,117 @@ export function HiveWikiShell({
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-8 space-y-6">
-      <header className="flex flex-col gap-4">
-        <div className="flex items-center justify-between gap-4">
-          <h1 className="font-comfortaa font-bold text-2xl">Wiki</h1>
-          {canEdit && viewMode !== 'notes' && (
-            <button
-              type="button"
-              onClick={() => setPickerOpen(true)}
-              disabled={pending}
-              className="inline-flex items-center gap-1.5 text-xs rounded-md px-3 py-1.5 bg-brand text-brand-ink font-semibold hover:opacity-90 disabled:opacity-50"
+    <div className="max-w-6xl mx-auto p-6">
+      <div
+        style={{
+          background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+          borderRadius: 'var(--r-card)',
+          boxShadow: 'var(--sh-card)',
+          border: 'var(--br-card)',
+        }}
+        className="p-6 space-y-6 min-h-[calc(100vh-160px)]"
+      >
+        <header className="flex flex-col gap-4">
+          <div className="flex items-center justify-between gap-4">
+            <h1
+              style={{ color: 'var(--brand)' }}
+              className="font-comfortaa font-bold text-2xl"
             >
-              <Plus size={12} /> New Entry
-            </button>
-          )}
-        </div>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="relative flex-1">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="text"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search title, tags, excerpt…"
-              className="w-full pl-9 pr-3 py-2 text-sm rounded-md border border-border bg-card outline-none focus:ring-2 focus:ring-brand"
-            />
-          </div>
-          <div className="inline-flex rounded-md border border-border bg-card p-1 text-xs">
-            {(['category', 'folder', 'notes'] as ViewMode[]).map(m => (
+              Wiki
+            </h1>
+            {canEdit && viewMode !== 'notes' && (
               <button
-                key={m}
                 type="button"
-                onClick={() => setViewMode(m)}
-                className={cn(
-                  'px-3 py-1.5 rounded font-medium',
-                  viewMode === m
-                    ? 'bg-brand text-brand-ink'
-                    : 'text-muted-foreground hover:text-foreground',
-                )}
+                onClick={() => setPickerOpen(true)}
+                disabled={pending}
+                style={{ color: 'var(--brand)', borderRadius: 'var(--r-btn)' }}
+                className="inline-flex items-center gap-1.5 text-sm font-geist font-semibold px-3 py-2 hover:bg-[linear-gradient(180deg,var(--canvas-dark-350),var(--canvas-dark-300))] disabled:opacity-50"
               >
-                {m === 'category' ? 'By Category' : m === 'folder' ? 'By Folder' : 'Notes'}
+                <Plus size={14} /> New Entry
               </button>
-            ))}
+            )}
           </div>
-        </div>
-      </header>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="relative flex-1">
+              <Search
+                size={14}
+                className="absolute left-3 top-1/2 -translate-y-1/2"
+                style={{ color: 'var(--canvas-dark-ink-muted)' }}
+              />
+              <input
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search title, tags, excerpt…"
+                style={{
+                  background: 'var(--canvas-dark-100)',
+                  borderRadius: 'var(--r-row)',
+                  boxShadow: 'var(--sh-inset)',
+                  border: 'var(--br-card)',
+                  color: 'var(--canvas-dark-ink)',
+                }}
+                className="w-full pl-9 pr-3 py-2 text-sm font-geist placeholder:text-[var(--canvas-dark-ink-muted)] focus:outline-none"
+              />
+            </div>
+            <div className="flex gap-1" role="tablist">
+              {(['category', 'folder', 'notes'] as ViewMode[]).map(m => {
+                const isActive = viewMode === m
+                return (
+                  <button
+                    key={m}
+                    role="tab"
+                    aria-selected={isActive}
+                    type="button"
+                    onClick={() => setViewMode(m)}
+                    style={{
+                      background: isActive
+                        ? 'var(--brand)'
+                        : 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+                      color: isActive ? 'var(--brand-ink)' : 'var(--canvas-dark-ink)',
+                      borderRadius: 'var(--r-pill)',
+                      boxShadow: 'var(--sh-tile)',
+                    }}
+                    className={cn(
+                      'px-4 py-1.5 text-xs font-geist font-semibold',
+                    )}
+                  >
+                    {m === 'category' ? 'By Category' : m === 'folder' ? 'By Folder' : 'Notes'}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </header>
 
-      {viewMode === 'category' && (
-        <ByCategoryView
-          entries={filteredEntries}
-          canEdit={canEdit}
-          onOpenEntry={setSelectedEntryId}
-          onAddEntry={() => setPickerOpen(true)}
-        />
-      )}
-      {viewMode === 'folder' && (
-        <ByFolderView
-          entries={filteredEntries}
-          folders={wiki.folders}
-          onOpenEntry={setSelectedEntryId}
-        />
-      )}
-      {viewMode === 'notes' && (
-        <NotesView
-          notes={notes.notes}
-          bookId={wiki.bookId}
-          canEdit={canEdit}
-        />
-      )}
+        {viewMode === 'category' && (
+          <ByCategoryView
+            entries={filteredEntries}
+            canEdit={canEdit}
+            onOpenEntry={setSelectedEntryId}
+            onAddEntry={() => setPickerOpen(true)}
+          />
+        )}
+        {viewMode === 'folder' && (
+          <ByFolderView
+            entries={filteredEntries}
+            folders={wiki.folders}
+            onOpenEntry={setSelectedEntryId}
+          />
+        )}
+        {viewMode === 'notes' && (
+          <NotesView
+            notes={notes.notes}
+            bookId={wiki.bookId}
+            canEdit={canEdit}
+          />
+        )}
 
-      <WikiCategoryPicker
-        open={pickerOpen}
-        onOpenChange={setPickerOpen}
-        onPick={handlePickCategory}
-      />
+        <WikiCategoryPicker
+          open={pickerOpen}
+          onOpenChange={setPickerOpen}
+          onPick={handlePickCategory}
+        />
+      </div>
     </div>
   )
 }

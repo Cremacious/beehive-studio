@@ -31,7 +31,10 @@ export function ByFolderView({
       ))}
       {rootEntries.length > 0 && (
         <section>
-          <div className="text-xs uppercase tracking-wide text-muted-foreground py-2">
+          <div
+            className="text-xs uppercase tracking-wide py-2"
+            style={{ color: 'var(--canvas-dark-ink-muted)' }}
+          >
             Top level ({rootEntries.length})
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -42,7 +45,10 @@ export function ByFolderView({
         </section>
       )}
       {rootFolders.length === 0 && rootEntries.length === 0 && (
-        <div className="text-center text-sm text-muted-foreground py-12">
+        <div
+          className="text-center text-sm py-12"
+          style={{ color: 'var(--canvas-dark-ink-muted)' }}
+        >
           No wiki content yet.
         </div>
       )}
@@ -72,18 +78,42 @@ function FolderNode({
       <button
         type="button"
         onClick={() => setCollapsed(v => !v)}
-        className="w-full flex items-center gap-2 py-2"
+        style={{
+          background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+          borderRadius: 'var(--r-row)',
+          boxShadow: 'var(--sh-tile)',
+        }}
+        className="w-full flex items-center gap-3 px-4 py-3"
       >
-        {collapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
-        <Folder size={14} className="text-muted-foreground" />
-        <span className="font-comfortaa font-bold text-sm">{folder.title}</span>
-        <span className="text-xs text-muted-foreground">{folder.entryCount}</span>
+        {collapsed ? (
+          <ChevronRight size={14} style={{ color: 'var(--canvas-dark-ink-muted)' }} />
+        ) : (
+          <ChevronDown size={14} style={{ color: 'var(--canvas-dark-ink-muted)' }} />
+        )}
+        <Folder size={14} style={{ color: 'var(--canvas-dark-ink-muted)' }} />
+        <span
+          className="font-comfortaa font-semibold text-sm"
+          style={{ color: 'var(--canvas-dark-ink-strong)' }}
+        >
+          {folder.title}
+        </span>
+        <span
+          className="ml-auto text-xs font-mono"
+          style={{ color: 'var(--canvas-dark-ink-muted)' }}
+        >
+          {folder.entryCount}
+        </span>
       </button>
       {folder.description && !collapsed && (
-        <p className="text-xs text-muted-foreground pl-6 pb-2">{folder.description}</p>
+        <p
+          className="text-xs pl-6 py-2"
+          style={{ color: 'var(--canvas-dark-ink-muted)' }}
+        >
+          {folder.description}
+        </p>
       )}
       {!collapsed && (
-        <div className="space-y-4 pl-6">
+        <div className="space-y-4 pl-6 mt-3">
           {childFolders.map(f => (
             <FolderNode
               key={f.id}
@@ -102,7 +132,12 @@ function FolderNode({
             </div>
           )}
           {childFolders.length === 0 && childEntries.length === 0 && (
-            <div className="text-xs text-muted-foreground italic">Empty folder.</div>
+            <div
+              className="text-xs italic"
+              style={{ color: 'var(--canvas-dark-ink-muted)' }}
+            >
+              Empty folder.
+            </div>
           )}
         </div>
       )}

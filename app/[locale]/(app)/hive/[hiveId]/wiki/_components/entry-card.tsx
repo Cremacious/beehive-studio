@@ -21,7 +21,13 @@ export function EntryCard({ entry, onClick }: { entry: HiveWikiEntry; onClick: (
     <button
       type="button"
       onClick={onClick}
-      className="text-left rounded-lg border border-border bg-card p-4 hover:ring-2 hover:ring-brand transition-all flex flex-col gap-2 min-h-[120px]"
+      style={{
+        background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+        borderRadius: 'var(--r-row)',
+        boxShadow: 'var(--sh-tile)',
+        border: 'var(--br-card)',
+      }}
+      className="text-left p-4 flex flex-col gap-2 min-h-[120px] hover:-translate-y-0.5 transition-transform"
     >
       <div className="flex items-center justify-between gap-2">
         <span
@@ -33,11 +39,26 @@ export function EntryCard({ entry, onClick }: { entry: HiveWikiEntry; onClick: (
         >
           {template.label}
         </span>
-        <span className="text-[10px] text-muted-foreground">{relTime(entry.lastEditedAt)}</span>
+        <span
+          className="text-[10px]"
+          style={{ color: 'var(--canvas-dark-ink-muted)' }}
+        >
+          {relTime(entry.lastEditedAt)}
+        </span>
       </div>
-      <div className="font-comfortaa font-bold text-sm leading-tight">{entry.title}</div>
+      <div
+        className="font-comfortaa font-semibold text-sm leading-tight truncate"
+        style={{ color: 'var(--canvas-dark-ink-strong)' }}
+      >
+        {entry.title}
+      </div>
       {entry.excerpt && (
-        <div className="text-xs text-muted-foreground line-clamp-2">{entry.excerpt}</div>
+        <div
+          className="text-xs line-clamp-2"
+          style={{ color: 'var(--canvas-dark-ink-muted)' }}
+        >
+          {entry.excerpt}
+        </div>
       )}
       {entry.tags.length > 0 && (
         <div className="flex flex-wrap gap-1">
@@ -56,7 +77,12 @@ export function EntryCard({ entry, onClick }: { entry: HiveWikiEntry; onClick: (
         </div>
       )}
       {entry.authorUsername && (
-        <div className="text-[10px] text-muted-foreground mt-auto">by @{entry.authorUsername}</div>
+        <div
+          className="text-[10px] mt-auto font-mono"
+          style={{ color: 'var(--canvas-dark-ink-muted)' }}
+        >
+          @{entry.authorUsername}
+        </div>
       )}
     </button>
   )

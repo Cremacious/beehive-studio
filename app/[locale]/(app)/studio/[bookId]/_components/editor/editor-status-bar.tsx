@@ -59,43 +59,62 @@ export function EditorStatusBar({ editor }: Props) {
     }
   }
 
+  const saveLabel =
+    saveStatus === 'saved' ? 'Saved' : saveStatus === 'saving' ? 'Saving…' : 'Unsaved'
+
   return (
     <div
       data-slot="editor-status-bar"
-      className="flex items-center justify-between gap-3 px-4 py-1.5 border-t border-border bg-surface text-xs text-foreground/60 tabular-nums"
+      style={{
+        background:
+          'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+        borderRadius: 'var(--r-card)',
+        boxShadow: 'var(--sh-card)',
+        border: 'var(--br-card)',
+      }}
+      className="flex items-center justify-between gap-4 px-4 py-2 tabular-nums"
     >
       <div data-slot="status-left" className="flex items-center gap-3">
-        {/* Save status */}
-        <span
+        {/* Save status pill — off-green tint preserved; brand-yellow dot only when unsaved */}
+        <div
+          style={{ borderRadius: 'var(--r-pill)' }}
           className={cn(
-            'inline-flex items-center gap-1',
-            saveStatus === 'unsaved' && 'text-brand',
-            saveStatus === 'saving' && 'text-foreground/40 animate-pulse',
+            'inline-flex items-center gap-2 px-3 py-1 text-xs font-mono bg-[oklch(0.85_0.13_165_/_0.20)] text-[oklch(0.85_0.13_165)]',
+            saveStatus === 'saving' && 'animate-pulse',
           )}
           title="All edits autosave"
         >
-          {saveStatus === 'saved' && '● Saved'}
-          {saveStatus === 'saving' && '○ Saving…'}
-          {saveStatus === 'unsaved' && '● Unsaved'}
-        </span>
-
-        <span className="text-foreground/30">·</span>
+          {saveStatus === 'unsaved' && (
+            <span
+              style={{ background: 'var(--brand)' }}
+              className="w-1.5 h-1.5 rounded-full"
+            />
+          )}
+          <span>{saveLabel}</span>
+        </div>
 
         {/* Word count */}
-        <span>{wordCount.toLocaleString()} words</span>
-
-        <span className="text-foreground/30">·</span>
+        <span
+          style={{ color: 'var(--canvas-dark-ink-muted)' }}
+          className="text-xs font-mono"
+        >
+          {wordCount.toLocaleString()} words
+        </span>
 
         {/* Word goal */}
         {editing ? (
-          <>
+          <div
+            style={{ borderRadius: 'var(--r-pill)', boxShadow: 'var(--sh-inset)' }}
+            className="inline-flex items-center gap-2 px-2 py-1 bg-transparent"
+          >
             <input
               ref={inputRef}
               type="number"
               min={0}
               max={1_000_000}
               defaultValue={wordGoal}
-              className="w-20 bg-surface-inset border border-border rounded px-2 py-0.5 text-xs text-foreground outline-none focus:border-brand/40"
+              style={{ color: 'var(--canvas-dark-ink-strong)' }}
+              className="w-16 bg-transparent text-xs font-mono outline-none"
               onKeyDown={e => {
                 if (e.key === 'Enter') commit()
                 if (e.key === 'Escape') setEditing(false)
@@ -103,31 +122,33 @@ export function EditorStatusBar({ editor }: Props) {
             />
             <button
               onClick={commit}
-              className="text-xs text-brand hover:text-brand-hover"
+              style={{ color: 'var(--brand)' }}
+              className="text-xs font-mono hover:opacity-80"
             >
               Save
             </button>
             <button
               onClick={() => setEditing(false)}
-              className="text-xs text-muted-foreground hover:text-foreground"
+              style={{ color: 'var(--canvas-dark-ink-muted)' }}
+              className="text-xs font-mono hover:opacity-80"
             >
               Cancel
             </button>
-          </>
+          </div>
         ) : wordGoal > 0 ? (
-          <>
-            <span>{percent}% of {wordGoal.toLocaleString()} word goal</span>
-            <button
-              onClick={() => setEditing(true)}
-              className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
-            >
-              edit
-            </button>
-          </>
+          <button
+            onClick={() => setEditing(true)}
+            style={{ color: 'var(--brand)' }}
+            className="text-xs font-mono hover:opacity-80 underline-offset-2 hover:underline"
+            title="Edit word goal"
+          >
+            {percent}% of {wordGoal.toLocaleString()} word goal
+          </button>
         ) : (
           <button
             onClick={() => setEditing(true)}
-            className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+            style={{ color: 'var(--brand)' }}
+            className="text-xs font-mono hover:opacity-80 underline-offset-2 hover:underline"
           >
             Set word goal
           </button>

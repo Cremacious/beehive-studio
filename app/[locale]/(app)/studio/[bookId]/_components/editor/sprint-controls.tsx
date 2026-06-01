@@ -100,7 +100,14 @@ export function SprintControls({ currentWordCount }: Props) {
       <button
         onClick={() => setState({ type: 'setup' })}
         aria-label="Start writing sprint"
-        className="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded text-foreground/80 hover:text-brand hover:bg-brand/10 transition-colors"
+        style={{
+          borderRadius: 'var(--r-pill)',
+          background:
+            'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+          boxShadow: 'var(--sh-tile)',
+          color: 'var(--canvas-dark-ink-strong)',
+        }}
+        className="inline-flex items-center gap-1.5 text-xs font-mono px-3 py-1 hover:opacity-90 transition-opacity"
       >
         <Timer size={12} />
         <span>Start sprint</span>

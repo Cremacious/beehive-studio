@@ -40,6 +40,20 @@ export const canManageMembers = (r: HiveRole) => r === 'OWNER' || r === 'MODERAT
 export const canDeleteHive = (r: HiveRole) => r === 'OWNER'
 export const canPostDiscussion = (_r: HiveRole) => true   // all members
 export const canReviewSuggestion = (r: HiveRole) => r === 'OWNER' || r === 'MODERATOR'
+export const canSetWordGoal = (r: HiveRole) => r === 'OWNER' || r === 'MODERATOR'
+export const canPostBuzz    = (_r: HiveRole) => true   // all members
+export const canLikeBuzz    = (_r: HiveRole) => true   // all members
+
+/**
+ * Edit/delete a buzz post: post author OR OWNER/MODERATOR (for moderation).
+ */
+export function canEditBuzz(
+  post: { authorId: string },
+  viewerRole: HiveRole,
+  viewerId: string,
+): boolean {
+  return viewerId === post.authorId || viewerRole === 'OWNER' || viewerRole === 'MODERATOR'
+}
 
 /**
  * Resolve an annotation: the book's author OR the annotation's own author.

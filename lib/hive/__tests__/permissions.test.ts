@@ -17,6 +17,7 @@ import {
   canSuggestEdits, canEditOutline, canManageMembers, canDeleteHive,
   requireBinderWritePermission,
   canPostDiscussion, canReviewSuggestion, canResolveAnnotation, canEditDiscussionPost,
+  canSetWordGoal, canPostBuzz, canLikeBuzz, canEditBuzz,
   type HiveRole,
 } from '../permissions'
 
@@ -156,4 +157,37 @@ describe('canEditDiscussionPost', () => {
     expect(canEditDiscussionPost(post, 'CONTRIBUTOR', 'random')).toBe(false))
   it('BETA_READER not allowed on other peoples posts', () =>
     expect(canEditDiscussionPost(post, 'BETA_READER', 'random')).toBe(false))
+})
+
+describe('canSetWordGoal', () => {
+  it('OWNER allowed', () => expect(canSetWordGoal('OWNER')).toBe(true))
+  it('MODERATOR allowed', () => expect(canSetWordGoal('MODERATOR')).toBe(true))
+  it('CONTRIBUTOR denied', () => expect(canSetWordGoal('CONTRIBUTOR')).toBe(false))
+  it('BETA_READER denied', () => expect(canSetWordGoal('BETA_READER')).toBe(false))
+})
+
+describe('canPostBuzz', () => {
+  for (const role of ['OWNER','MODERATOR','CONTRIBUTOR','BETA_READER'] as const) {
+    it(`${role} can post`, () => expect(canPostBuzz(role)).toBe(true))
+  }
+})
+
+describe('canLikeBuzz', () => {
+  for (const role of ['OWNER','MODERATOR','CONTRIBUTOR','BETA_READER'] as const) {
+    it(`${role} can like`, () => expect(canLikeBuzz(role)).toBe(true))
+  }
+})
+
+describe('canEditBuzz', () => {
+  const post = { authorId: 'author-1' }
+  it('post author allowed', () =>
+    expect(canEditBuzz(post, 'BETA_READER', 'author-1')).toBe(true))
+  it('OWNER allowed (moderation)', () =>
+    expect(canEditBuzz(post, 'OWNER', 'owner-1')).toBe(true))
+  it('MODERATOR allowed (moderation)', () =>
+    expect(canEditBuzz(post, 'MODERATOR', 'mod-1')).toBe(true))
+  it('CONTRIBUTOR not allowed on others', () =>
+    expect(canEditBuzz(post, 'CONTRIBUTOR', 'random')).toBe(false))
+  it('BETA_READER not allowed on others', () =>
+    expect(canEditBuzz(post, 'BETA_READER', 'random')).toBe(false))
 })

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Check, X } from 'lucide-react'
@@ -8,6 +8,7 @@ import { createBookAction } from '@/lib/actions/book.actions'
 import { StepOne } from '../../_components/create-book-wizard/step-one'
 import { StepTwo } from '../../_components/create-book-wizard/step-two'
 import { StepThree, type BookTemplate } from '../../_components/create-book-wizard/step-three'
+import { StepHeader } from '../../_components/create-book-wizard/step-header'
 import { SharingControls, type Visibility } from '@/components/book/sharing-controls'
 
 type Step = 1 | 2 | 3 | 4
@@ -45,18 +46,19 @@ const initial: FormData = {
 }
 
 const STEP_LABELS = ['Basics', 'Discovery', 'Structure', 'Sharing'] as const
+const REASSURE = { color: 'var(--canvas-dark-ink-strong)', fontWeight: 600 } as const
 const STEP_HEADLINES = [
-  'Let’s start with the basics.',
-  'Help readers discover it.',
-  'Shape the structure.',
-  'Who can read it?',
+  "Let's start with the basics.",
+  'How will readers find this book?',
+  'Pick a starting structure.',
+  'Who should see this book?',
 ] as const
-const STEP_SUBHEADS = [
-  'Every story begins with a title and a thread of an idea.',
-  'Genre, tags, and audience — these help your book find its readers.',
-  'Pick a template and add publishing details. You can change all of this later.',
-  'Choose who sees this book. You can change this anytime from Book details.',
-] as const
+const STEP_LEDES: ReactNode[] = [
+  <>A few quick details so we can set up your book. <strong style={REASSURE}>You can change any of this later.</strong></>,
+  <>Tags and comp titles help readers discover your book on /discover. You can come back to any of this whenever.</>,
+  <>We&apos;ll create the binder for you. <strong style={REASSURE}>You can rearrange or rename anything later.</strong></>,
+  <>Most writers start private and switch later — pick what feels right today.</>,
+]
 
 const TOTAL_STEPS = 4
 
@@ -268,44 +270,12 @@ export function BookCreationForm({ locale, templates }: Props) {
               }}
             >
               <div style={{ marginBottom: '36px' }}>
-                <div
-                  className="uppercase"
-                  style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '11px',
-                    letterSpacing: '0.18em',
-                    color: 'var(--brand, #FFC300)',
-                    marginBottom: '14px',
-                  }}
-                >
-                  Step {step} of {TOTAL_STEPS}
-                </div>
-                <h1
-                  style={{
-                    fontFamily: 'var(--font-display)',
-                    fontSize: 'clamp(28px, 4vw, 40px)',
-                    fontWeight: 700,
-                    letterSpacing: '-0.025em',
-                    lineHeight: 1.1,
-                    margin: 0,
-                    color: 'var(--canvas-dark-ink-strong, #fff)',
-                    textWrap: 'balance' as const,
-                  }}
-                >
-                  {STEP_HEADLINES[step - 1]}
-                </h1>
-                <p
-                  style={{
-                    fontFamily: 'var(--font-prose)',
-                    fontSize: '16px',
-                    lineHeight: 1.55,
-                    marginTop: '12px',
-                    color: 'var(--canvas-dark-ink-muted, #999)',
-                    textWrap: 'pretty' as const,
-                  }}
-                >
-                  {STEP_SUBHEADS[step - 1]}
-                </p>
+                <StepHeader
+                  step={step}
+                  total={TOTAL_STEPS}
+                  headline={STEP_HEADLINES[step - 1]}
+                  lede={STEP_LEDES[step - 1]}
+                />
               </div>
 
               {step === 1 && (

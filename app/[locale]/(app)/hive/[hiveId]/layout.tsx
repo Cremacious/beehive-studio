@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import { getHiveAction } from '@/lib/actions/hive.actions'
+import { getActiveWordGoalSummaryAction } from '@/lib/actions/hive-word-goals.actions'
 import { HiveSidebar } from './_components/hive-sidebar'
 
 export default async function HiveLayout({
@@ -15,9 +16,21 @@ export default async function HiveLayout({
 
   const { hive } = result.data
 
+  const summaryRes = await getActiveWordGoalSummaryAction(hiveId).catch(() => null)
+  let wordGoalPct: number | null = null
+  if (summaryRes && summaryRes.success && summaryRes.data) {
+    const { goal, progress } = summaryRes.data
+    wordGoalPct = goal.targetWords > 0 ? (progress / goal.targetWords) * 100 : 0
+  }
+
   return (
     <div className="flex flex-1 overflow-hidden h-[calc(100vh-56px)]">
-      <HiveSidebar hiveId={hiveId} locale={locale} hiveName={hive.name} />
+      <HiveSidebar
+        hiveId={hiveId}
+        locale={locale}
+        hiveName={hive.name}
+        wordGoalPct={wordGoalPct}
+      />
       <div className="flex-1 overflow-y-auto">{children}</div>
     </div>
   )

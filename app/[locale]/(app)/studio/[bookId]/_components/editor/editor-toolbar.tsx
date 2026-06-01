@@ -24,7 +24,17 @@ import {
   HelpCircle,
   Eye,
   MessagesSquare,
+  Heading as HeadingIcon,
+  Type as TypeIcon,
+  MoreHorizontal,
 } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu'
 
 type Props = {
   editor: Editor
@@ -158,48 +168,86 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
 
           <Separator />
 
-          {/* Block — disabled checks removed: editor.can().chain()...run() was
-              returning false in TipTap v3, blocking clicks entirely. The chain
-              no-ops gracefully when it can't apply, so we don't need the gate. */}
-          <ToolbarButton
-            onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-            isActive={editor.isActive('heading', { level: 1 })}
-            title="Heading 1"
-          >
-            <Heading1 size={14} />
-          </ToolbarButton>
-          <ToolbarButton
-            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-            isActive={editor.isActive('heading', { level: 2 })}
-            title="Heading 2"
-          >
-            <Heading2 size={14} />
-          </ToolbarButton>
-          <ToolbarButton
-            onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-            isActive={editor.isActive('heading', { level: 3 })}
-            title="Heading 3"
-          >
-            <Heading3 size={14} />
-          </ToolbarButton>
+          {/* Heading dropdown — groups H1/H2/H3 into a single trigger so the
+              toolbar stays single-row. Active state lights when any heading
+              level is active. */}
+          <DropdownMenu>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    onMouseDown={e => e.preventDefault()}
+                    aria-label="Heading"
+                    className={tbtnClass({ isActive: editor.isActive('heading') })}
+                  >
+                    <HeadingIcon size={14} />
+                  </button>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent>Heading</TooltipContent>
+            </Tooltip>
+            <DropdownMenuContent align="start" onCloseAutoFocus={e => e.preventDefault()}>
+              <DropdownMenuItem
+                onSelect={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+                className={cn(editor.isActive('heading', { level: 1 }) && 'bg-brand/15 text-foreground')}
+              >
+                <Heading1 size={14} className="mr-2" /> Heading 1
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+                className={cn(editor.isActive('heading', { level: 2 }) && 'bg-brand/15 text-foreground')}
+              >
+                <Heading2 size={14} className="mr-2" /> Heading 2
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+                className={cn(editor.isActive('heading', { level: 3 }) && 'bg-brand/15 text-foreground')}
+              >
+                <Heading3 size={14} className="mr-2" /> Heading 3
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onSelect={() => editor.chain().focus().setParagraph().run()}
+                className={cn(editor.isActive('paragraph') && !editor.isActive('heading') && 'bg-brand/15 text-foreground')}
+              >
+                <TypeIcon size={14} className="mr-2" /> Paragraph
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           <Separator />
 
-          {/* Lists, quote, hr */}
-          <ToolbarButton
-            onClick={() => editor.chain().focus().toggleBulletList().run()}
-            isActive={editor.isActive('bulletList')}
-            title="Bullet list"
-          >
-            <List size={14} />
-          </ToolbarButton>
-          <ToolbarButton
-            onClick={() => editor.chain().focus().toggleOrderedList().run()}
-            isActive={editor.isActive('orderedList')}
-            title="Numbered list"
-          >
-            <ListOrdered size={14} />
-          </ToolbarButton>
+          {/* List dropdown — groups bullet + ordered into a single trigger. */}
+          <DropdownMenu>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    onMouseDown={e => e.preventDefault()}
+                    aria-label="List"
+                    className={tbtnClass({ isActive: editor.isActive('bulletList') || editor.isActive('orderedList') })}
+                  >
+                    <List size={14} />
+                  </button>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent>List</TooltipContent>
+            </Tooltip>
+            <DropdownMenuContent align="start" onCloseAutoFocus={e => e.preventDefault()}>
+              <DropdownMenuItem
+                onSelect={() => editor.chain().focus().toggleBulletList().run()}
+                className={cn(editor.isActive('bulletList') && 'bg-brand/15 text-foreground')}
+              >
+                <List size={14} className="mr-2" /> Bullet list
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => editor.chain().focus().toggleOrderedList().run()}
+                className={cn(editor.isActive('orderedList') && 'bg-brand/15 text-foreground')}
+              >
+                <ListOrdered size={14} className="mr-2" /> Numbered list
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleBlockquote().run()}
             isActive={editor.isActive('blockquote')}
@@ -259,28 +307,52 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
 
           <Separator />
 
-          {/* Align — distinct lucide icons so users can tell L/C/R apart */}
-          <ToolbarButton
-            onClick={() => editor.chain().focus().setTextAlign('left').run()}
-            isActive={editor.isActive({ textAlign: 'left' })}
-            title="Align left"
-          >
-            <AlignLeft size={14} />
-          </ToolbarButton>
-          <ToolbarButton
-            onClick={() => editor.chain().focus().setTextAlign('center').run()}
-            isActive={editor.isActive({ textAlign: 'center' })}
-            title="Align center"
-          >
-            <AlignCenter size={14} />
-          </ToolbarButton>
-          <ToolbarButton
-            onClick={() => editor.chain().focus().setTextAlign('right').run()}
-            isActive={editor.isActive({ textAlign: 'right' })}
-            title="Align right"
-          >
-            <AlignRight size={14} />
-          </ToolbarButton>
+          {/* Align dropdown — groups L/C/R into one trigger. Icon reflects
+              current alignment when set; defaults to AlignLeft. */}
+          <DropdownMenu>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    onMouseDown={e => e.preventDefault()}
+                    aria-label="Align"
+                    className={tbtnClass({
+                      isActive:
+                        editor.isActive({ textAlign: 'center' }) ||
+                        editor.isActive({ textAlign: 'right' }),
+                    })}
+                  >
+                    {editor.isActive({ textAlign: 'center' })
+                      ? <AlignCenter size={14} />
+                      : editor.isActive({ textAlign: 'right' })
+                        ? <AlignRight size={14} />
+                        : <AlignLeft size={14} />}
+                  </button>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent>Align</TooltipContent>
+            </Tooltip>
+            <DropdownMenuContent align="start" onCloseAutoFocus={e => e.preventDefault()}>
+              <DropdownMenuItem
+                onSelect={() => editor.chain().focus().setTextAlign('left').run()}
+                className={cn(editor.isActive({ textAlign: 'left' }) && 'bg-brand/15 text-foreground')}
+              >
+                <AlignLeft size={14} className="mr-2" /> Align left
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => editor.chain().focus().setTextAlign('center').run()}
+                className={cn(editor.isActive({ textAlign: 'center' }) && 'bg-brand/15 text-foreground')}
+              >
+                <AlignCenter size={14} className="mr-2" /> Align center
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => editor.chain().focus().setTextAlign('right').run()}
+                className={cn(editor.isActive({ textAlign: 'right' }) && 'bg-brand/15 text-foreground')}
+              >
+                <AlignRight size={14} className="mr-2" /> Align right
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Single spacer pushes everything after it to the right.
@@ -321,14 +393,6 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
             </ToolbarButton>
           )}
 
-          {/* Keyboard shortcuts */}
-          <ToolbarButton
-            onClick={() => window.dispatchEvent(new Event('beehive:toggle-cheatsheet'))}
-            title="Keyboard shortcuts (Ctrl+/)"
-          >
-            <HelpCircle size={14} />
-          </ToolbarButton>
-
           {/* Editor theme toggle (Sun/Moon) — shows the icon for the destination mode */}
           <Tooltip>
             <TooltipTrigger asChild>
@@ -345,53 +409,58 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
             </TooltipContent>
           </Tooltip>
 
-          {/* Font size control — native select styled to match toolbar
-              buttons. We keep native dropdown behavior (no custom popover);
-              the rounded paper-card surface + border match the mockup's
-              .tb-select rule. */}
-          <select
-            value={fontSize}
-            onChange={e => setFontSize(Number(e.target.value))}
-            aria-label="Font size"
-            className="h-[30px] rounded-[10px] bg-surface-elevated border border-border px-2 text-xs text-foreground/80 hover:text-foreground hover:border-foreground/30 transition-colors cursor-pointer focus:outline-none focus:ring-1 focus:ring-brand/40"
-          >
-            {[12, 14, 16, 18, 20, 24].map(s => (
-              <option key={s} value={s}>{s}px</option>
-            ))}
-          </select>
-
-          {/* Export */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onMouseDown={e => e.preventDefault()}
-                onClick={() => setShowExport(true)}
-                aria-label="Export book"
-                className={tbtnClass({ hasLabel: true })}
-              >
-                <Download size={14} />
-                <span>Export</span>
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>Export book</TooltipContent>
-          </Tooltip>
-
-          {/* Writing analysis toggle — chapter-only */}
-          {onToggleAnalysis && (
+          {/* More menu — utilities (Help, Font size, Export, Writing analysis).
+              Keeps the toolbar single-row so Focus mode stays visible at
+              narrow viewports. */}
+          <DropdownMenu>
             <Tooltip>
               <TooltipTrigger asChild>
-                <button
-                  onMouseDown={e => e.preventDefault()}
-                  onClick={onToggleAnalysis}
-                  aria-label="Writing analysis"
-                  className={tbtnClass({ isActive: analysisOpen })}
-                >
-                  <BarChart3 size={14} />
-                </button>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    onMouseDown={e => e.preventDefault()}
+                    aria-label="More"
+                    className={tbtnClass({ isActive: analysisOpen })}
+                  >
+                    <MoreHorizontal size={14} />
+                  </button>
+                </DropdownMenuTrigger>
               </TooltipTrigger>
-              <TooltipContent>Writing analysis — readability, pacing, word stats</TooltipContent>
+              <TooltipContent>More</TooltipContent>
             </Tooltip>
-          )}
+            <DropdownMenuContent align="end" onCloseAutoFocus={e => e.preventDefault()}>
+              <DropdownMenuItem
+                onSelect={() => window.dispatchEvent(new Event('beehive:toggle-cheatsheet'))}
+              >
+                <HelpCircle size={14} className="mr-2" /> Keyboard shortcuts
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setShowExport(true)}>
+                <Download size={14} className="mr-2" /> Export book
+              </DropdownMenuItem>
+              {onToggleAnalysis && (
+                <DropdownMenuItem
+                  onSelect={onToggleAnalysis}
+                  className={cn(analysisOpen && 'bg-brand/15 text-foreground')}
+                >
+                  <BarChart3 size={14} className="mr-2" /> Writing analysis
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <div className="flex items-center gap-2 px-2 py-1.5 text-xs text-foreground/70">
+                <TypeIcon size={14} />
+                <span>Font size</span>
+                <select
+                  value={fontSize}
+                  onChange={e => setFontSize(Number(e.target.value))}
+                  aria-label="Font size"
+                  className="ml-auto h-[26px] rounded-[8px] bg-surface-elevated border border-border px-2 text-xs text-foreground/80 hover:text-foreground hover:border-foreground/30 transition-colors cursor-pointer focus:outline-none focus:ring-1 focus:ring-brand/40"
+                >
+                  {[12, 14, 16, 18, 20, 24].map(s => (
+                    <option key={s} value={s}>{s}px</option>
+                  ))}
+                </select>
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* Focus mode toggle */}
           <Tooltip>

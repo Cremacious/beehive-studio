@@ -8,15 +8,38 @@ export function OverflowBanner() {
   return (
     <div
       data-slot="overflow-banner"
-      className="bg-brand/15 border-b border-brand/40 px-4 py-2 flex items-center justify-between gap-3"
+      className="mx-4 my-2 px-4 py-3 flex items-center justify-between gap-3"
+      style={{
+        background:
+          'linear-gradient(180deg, oklch(from var(--color-brand) l c h / 0.15), oklch(from var(--color-brand) l c h / 0.08))',
+        boxShadow: 'var(--sh-tile)',
+        border: 'var(--br-card)',
+        borderRadius: 'var(--r-card)',
+        borderLeft: '4px solid var(--color-brand)',
+      }}
     >
-      <p className="text-sm text-foreground">
-        This book is read-only because you&apos;re on the free tier.
-        Upgrade to keep editing.
-      </p>
+      <div>
+        <p
+          className="text-sm font-semibold"
+          style={{ color: 'var(--canvas-dark-ink-strong)' }}
+        >
+          This book is read-only on the Free plan
+        </p>
+        <p
+          className="text-xs"
+          style={{ color: 'var(--canvas-dark-ink-muted)' }}
+        >
+          Upgrade to keep editing all your books.
+        </p>
+      </div>
       <Link
         href={`/${params.locale}/pricing`}
-        className="text-xs font-semibold rounded-md bg-brand text-brand-ink px-3 py-1.5 hover:bg-brand-hover transition-colors shrink-0"
+        className="text-sm font-semibold px-4 py-2 hover:bg-brand-hover transition-colors shrink-0"
+        style={{
+          background: 'var(--color-brand)',
+          color: 'var(--brand-ink)',
+          borderRadius: 'var(--r-pill)',
+        }}
       >
         Upgrade
       </Link>

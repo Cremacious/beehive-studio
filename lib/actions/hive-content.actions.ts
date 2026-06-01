@@ -1,7 +1,7 @@
 'use server'
 
 import { db } from '@/db'
-import { hiveTasks, notifications, hives, binderItems, userProfiles, chapters } from '@/db/schema'
+import { hiveTasks, notifications, hives, binderItems, userProfiles, chapters, books } from '@/db/schema'
 import { eq, and, asc, inArray } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { assertHiveMember, assertHiveAdmin } from './_helpers'
@@ -266,6 +266,126 @@ export async function getBinderTreeForHiveAction(
   })
 
   return { success: true, data: rows }
+}
+
+// ── H3 T13: Hive chapter view ────────────────────────────────────────────────
+
+export type HiveChapterViewData = {
+  chapter: {
+    id: string
+    title: string
+    content: unknown
+    authorUserId: string | null
+  }
+  book: {
+    id: string
+    userId: string
+    title: string
+    ownerUsername: string | null
+  }
+  author: {
+    userId: string
+    username: string | null
+    avatarUrl: string | null
+  } | null
+  hive: {
+    id: string
+    name: string
+    bookId: string
+  }
+  viewerRole: HiveRole
+}
+
+export async function getHiveChapterView(
+  hiveId: string,
+  chapterId: string,
+): Promise<ActionResult<HiveChapterViewData>> {
+  const userId = await requireAuth()
+  const viewerRole = await requireHiveMember(hiveId, userId)
+
+  const hive = await db.query.hives.findFirst({
+    where: eq(hives.id, hiveId),
+    columns: { id: true, name: true, bookId: true },
+  })
+  if (!hive || !hive.bookId) return { success: false, error: 'HIVE_NOT_FOUND' }
+
+  const chapter = await db.query.chapters.findFirst({
+    where: eq(chapters.id, chapterId),
+    columns: {
+      id: true,
+      bookId: true,
+      binderItemId: true,
+      content: true,
+      authorUserId: true,
+    },
+  })
+  if (!chapter) return { success: false, error: 'NOT_FOUND' }
+  // Cross-hive escape guard.
+  if (chapter.bookId !== hive.bookId) return { success: false, error: 'NOT_FOUND' }
+
+  // Title lives on binder_items, not chapters.
+  let title = 'Untitled Chapter'
+  if (chapter.binderItemId) {
+    const bi = await db.query.binderItems.findFirst({
+      where: eq(binderItems.id, chapter.binderItemId),
+      columns: { title: true },
+    })
+    if (bi?.title) title = bi.title
+  }
+
+  const book = await db.query.books.findFirst({
+    where: eq(books.id, chapter.bookId),
+    columns: { id: true, userId: true, title: true },
+  })
+  if (!book) return { success: false, error: 'NOT_FOUND' }
+
+  // Author profile (book owner + chapter submitter, if distinct).
+  const profileIds = Array.from(
+    new Set([book.userId, chapter.authorUserId].filter((v): v is string => !!v)),
+  )
+  const profiles = profileIds.length
+    ? await db.query.userProfiles.findMany({
+        where: inArray(userProfiles.userId, profileIds),
+        columns: { userId: true, username: true, avatarUrl: true },
+      })
+    : []
+  const profileByUserId = new Map(profiles.map(p => [p.userId, p]))
+  const ownerProfile = profileByUserId.get(book.userId) ?? null
+  const authorProfile =
+    chapter.authorUserId && chapter.authorUserId !== book.userId
+      ? (profileByUserId.get(chapter.authorUserId) ?? {
+          userId: chapter.authorUserId,
+          username: null,
+          avatarUrl: null,
+        })
+      : null
+
+  return {
+    success: true,
+    data: {
+      chapter: {
+        id: chapter.id,
+        title,
+        content: chapter.content,
+        authorUserId: chapter.authorUserId,
+      },
+      book: {
+        id: book.id,
+        userId: book.userId,
+        title: book.title,
+        ownerUsername: ownerProfile?.username ?? null,
+      },
+      author: authorProfile
+        ? {
+            userId: authorProfile.userId,
+            username: authorProfile.username ?? null,
+            avatarUrl: authorProfile.avatarUrl ?? null,
+          }
+        : null,
+      hive: { id: hive.id, name: hive.name, bookId: hive.bookId },
+      viewerRole,
+    },
+  }
 }
 
 // ── Legacy CRUD (T10 deletes) ────────────────────────────────────────────────

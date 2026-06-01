@@ -268,6 +268,35 @@ export async function getBinderTreeForHiveAction(
   return { success: true, data: rows }
 }
 
+// ── H3 T16: Hive chapter list (for submission target-order picker) ──────────
+
+export async function getHiveChapterListAction(
+  hiveId: string,
+): Promise<ActionResult<{
+  bookId: string
+  chapters: Array<{ id: string; title: string; order: number }>
+}>> {
+  const userId = await requireAuth()
+  await requireHiveMember(hiveId, userId)
+  const hive = await db.query.hives.findFirst({
+    where: eq(hives.id, hiveId),
+    columns: { bookId: true },
+  })
+  if (!hive || !hive.bookId) return { success: false, error: 'HIVE_NOT_FOUND' }
+
+  const rows = await db.query.binderItems.findMany({
+    where: and(eq(binderItems.bookId, hive.bookId), eq(binderItems.type, 'chapter')),
+    columns: { id: true, title: true, order: true, parentId: true },
+    orderBy: [asc(binderItems.order)],
+  })
+
+  const topLevel = rows
+    .filter(r => r.parentId === null)
+    .map(({ id, title, order }) => ({ id, title, order }))
+
+  return { success: true, data: { bookId: hive.bookId, chapters: topLevel } }
+}
+
 // ── H3 T13: Hive chapter view ────────────────────────────────────────────────
 
 export type HiveChapterViewData = {

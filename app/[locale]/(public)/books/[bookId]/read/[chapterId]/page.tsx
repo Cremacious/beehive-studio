@@ -1,8 +1,9 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { db } from '@/db'
-import { chapters, binderItems, books } from '@/db/schema'
+import { chapters, binderItems, books, userProfiles } from '@/db/schema'
 import { and, eq, asc } from 'drizzle-orm'
+import { ChapterContributionByline } from './_components/chapter-contribution-byline'
 import { tiptapToHtml } from '@/lib/export/tiptap-to-html'
 import { markChapterReadAction } from '@/lib/actions/reading.actions'
 import { auth } from '@/lib/auth'
@@ -26,10 +27,17 @@ export default async function ChapterReaderPage({ params }: Props) {
     return <AccessDenied reason={access.reason} locale={locale} />
   }
 
-  // Fetch book for title display
+  // Fetch book + book-owner profile for title display + byline
   const [book] = await db
-    .select({ id: books.id, title: books.title, userId: books.userId })
+    .select({
+      id: books.id,
+      title: books.title,
+      userId: books.userId,
+      bookAuthorUsername: userProfiles.username,
+      bookAuthorDisplayName: userProfiles.displayName,
+    })
     .from(books)
+    .leftJoin(userProfiles, eq(userProfiles.userId, books.userId))
     .where(eq(books.id, bookId))
     .limit(1)
 
@@ -51,10 +59,18 @@ export default async function ChapterReaderPage({ params }: Props) {
   const currentIndex = allChapters.findIndex(ch => ch.chapterId === chapterId)
   if (currentIndex === -1) notFound()
 
-  // Fetch chapter content
+  // Fetch chapter content + contributing-author profile (if set)
   const [chapter] = await db
-    .select({ content: chapters.content, wordCount: chapters.wordCount, status: chapters.status })
+    .select({
+      content: chapters.content,
+      wordCount: chapters.wordCount,
+      status: chapters.status,
+      authorUserId: chapters.authorUserId,
+      chapterAuthorUsername: userProfiles.username,
+      chapterAuthorDisplayName: userProfiles.displayName,
+    })
     .from(chapters)
+    .leftJoin(userProfiles, eq(userProfiles.userId, chapters.authorUserId))
     .where(eq(chapters.id, chapterId))
     .limit(1)
 
@@ -78,6 +94,9 @@ export default async function ChapterReaderPage({ params }: Props) {
   }
 
   const htmlContent = chapter.content ? tiptapToHtml(chapter.content) : ''
+
+  const showContributionByline =
+    chapter.authorUserId !== null && chapter.authorUserId !== book.userId
 
   return (
     <div className="min-h-screen bg-[#141414]">
@@ -107,10 +126,26 @@ export default async function ChapterReaderPage({ params }: Props) {
       <div className="max-w-[640px] mx-auto px-6 py-12">
         <p className="text-[#555] text-[12px] uppercase tracking-widest mb-1.5">Chapter {chapterNumber}</p>
         <h2 className="text-white text-[24px] font-semibold mb-9">{current.title}</h2>
-        <div
-          className="prose-chapter text-[#ccc] text-[16px] leading-[1.9]"
-          dangerouslySetInnerHTML={{ __html: htmlContent }}
-        />
+        {showContributionByline && (
+          <ChapterContributionByline
+            chapterAuthor={{
+              username: chapter.chapterAuthorUsername,
+              displayName: chapter.chapterAuthorDisplayName,
+            }}
+            bookAuthor={{
+              username: book.bookAuthorUsername,
+              displayName: book.bookAuthorDisplayName,
+            }}
+            bookTitle={book.title}
+            locale={locale}
+          />
+        )}
+        <div className="public-reader">
+          <div
+            className="prose-chapter text-[#ccc] text-[16px] leading-[1.9]"
+            dangerouslySetInnerHTML={{ __html: htmlContent }}
+          />
+        </div>
       </div>
 
       {/* Footer nav */}

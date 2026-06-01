@@ -1,4 +1,4 @@
-type TiptapMark = { type: string }
+type TiptapMark = { type: string; attrs?: Record<string, unknown> }
 type TiptapNode = {
   type: string
   text?: string
@@ -38,6 +38,22 @@ function renderNode(node: TiptapNode): string {
           case 'underline': html = `<u>${html}</u>`; break
           case 'strike':    html = `<s>${html}</s>`; break
           case 'highlight': html = `<mark>${html}</mark>`; break
+          case 'hiveAnnotation': {
+            const id = mark.attrs?.annotationId
+            const layer = mark.attrs?.layer
+            if (typeof id === 'string') {
+              const layerAttr = typeof layer === 'string' ? ` data-layer="${escapeHtml(layer)}"` : ''
+              html = `<span class="hive-annotation" data-annotation-id="${escapeHtml(id)}"${layerAttr}>${html}</span>`
+            }
+            break
+          }
+          case 'hiveSuggestion': {
+            const id = mark.attrs?.suggestionId
+            if (typeof id === 'string') {
+              html = `<span class="hive-suggestion" data-suggestion-id="${escapeHtml(id)}">${html}</span>`
+            }
+            break
+          }
         }
       }
       return html

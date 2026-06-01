@@ -5,6 +5,11 @@ vi.mock('@/db', () => ({
   db: { select: vi.fn() },
 }))
 
+const areUsersFriendsMock = vi.fn(async () => false)
+vi.mock('@/lib/friendships/are-friends', () => ({
+  areUsersFriends: (a: string, b: string) => areUsersFriendsMock(),
+}))
+
 async function mockBook(book: { userId: string; visibility: 'PRIVATE' | 'PUBLIC' | 'FRIENDS' } | null) {
   const { db } = await import('@/db')
   ;(db.select as ReturnType<typeof vi.fn>).mockReturnValue({
@@ -17,7 +22,10 @@ async function mockBook(book: { userId: string; visibility: 'PRIVATE' | 'PUBLIC'
 }
 
 describe('canReadBook', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    areUsersFriendsMock.mockResolvedValue(false)
+  })
 
   it('returns NOT_FOUND when book missing', async () => {
     await mockBook(null)
@@ -40,9 +48,21 @@ describe('canReadBook', () => {
     expect(await canReadBook('b1', 'u2')).toEqual({ ok: true })
   })
 
-  it('returns FRIENDS_ONLY for FRIENDS book viewed by stranger (SP-A: author only)', async () => {
+  it('returns FRIENDS_ONLY for FRIENDS book viewed by non-friend stranger', async () => {
     await mockBook({ userId: 'u1', visibility: 'FRIENDS' })
+    areUsersFriendsMock.mockResolvedValue(false)
     expect(await canReadBook('b1', 'u2')).toEqual({ ok: false, reason: 'FRIENDS_ONLY' })
+  })
+
+  it('returns ok for FRIENDS book when viewer is a friend (SP-B)', async () => {
+    await mockBook({ userId: 'u1', visibility: 'FRIENDS' })
+    areUsersFriendsMock.mockResolvedValue(true)
+    expect(await canReadBook('b1', 'u2')).toEqual({ ok: true })
+  })
+
+  it('returns FRIENDS_ONLY for FRIENDS book viewed by anon (SP-B)', async () => {
+    await mockBook({ userId: 'u1', visibility: 'FRIENDS' })
+    expect(await canReadBook('b1', null)).toEqual({ ok: false, reason: 'FRIENDS_ONLY' })
   })
 
   it('returns PRIVATE for PRIVATE book viewed by stranger', async () => {

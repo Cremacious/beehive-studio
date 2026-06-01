@@ -4,6 +4,20 @@ import { relations } from 'drizzle-orm'
 import { users } from './auth'
 import { books, chapters } from './books'
 
+export const friendshipStatusEnum = pgEnum('friendship_status', ['PENDING', 'ACCEPTED'])
+
+export const friendships = pgTable('friendships', {
+  id: text('id').primaryKey().$defaultFn(() => createId()),
+  requesterId: text('requester_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  recipientId: text('recipient_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  status: friendshipStatusEnum('status').notNull().default('PENDING'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  acceptedAt: timestamp('accepted_at'),
+}, (t) => [
+  index('friendships_requester_idx').on(t.requesterId),
+  index('friendships_recipient_idx').on(t.recipientId),
+])
+
 export const notificationTypeEnum = pgEnum('notification_type', [
   'NEW_FOLLOWER', 'NEW_LIKE', 'NEW_COMMENT', 'NEW_CHAPTER',
   'HIVE_INVITE', 'HIVE_SUBMISSION', 'HIVE_SUGGESTION', 'SPARK_WIN',

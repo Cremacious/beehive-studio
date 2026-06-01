@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { LogOut, User as UserIcon, CreditCard } from 'lucide-react'
+import { LogOut, User as UserIcon, CreditCard, Users } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -184,6 +184,11 @@ export function AppNav({ locale, user }: AppNavProps) {
               <DropdownMenuItem asChild>
                 <Link href={`/${locale}/studio`} className="cursor-pointer no-underline">
                   <UserIcon size={14} /> Your studio
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href={`/${locale}/friends`} className="cursor-pointer no-underline">
+                  <Users size={14} /> Friends
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>

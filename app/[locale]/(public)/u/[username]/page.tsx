@@ -10,6 +10,10 @@ import {
 } from '@/lib/actions/user-profile.actions'
 import { FollowButton } from './_components/follow-button'
 import { SeriesLine } from '@/components/book/series-line'
+import { FriendButton } from '@/components/friendship/friend-button'
+import { db } from '@/db'
+import { friendships } from '@/db/schema'
+import { and, eq, or } from 'drizzle-orm'
 
 type Props = { params: Promise<{ locale: string; username: string }> }
 
@@ -31,6 +35,27 @@ export default async function AuthorProfilePage({ params }: Props) {
   const books = booksResult.success ? booksResult.data : []
   const openSparks = sparksResult.success ? sparksResult.data : []
   const activity = activityResult.success ? activityResult.data : []
+
+  // Resolve friendship status for the FriendButton initial render.
+  let friendshipStatus: 'NONE' | 'PENDING_OUTGOING' | 'PENDING_INCOMING' | 'ACCEPTED' = 'NONE'
+  let friendshipId: string | null = null
+  const isSelf = !!userId && userId === profile.userId
+  if (userId && !isSelf) {
+    const [row] = await db
+      .select({ id: friendships.id, requesterId: friendships.requesterId, recipientId: friendships.recipientId, status: friendships.status })
+      .from(friendships)
+      .where(or(
+        and(eq(friendships.requesterId, userId), eq(friendships.recipientId, profile.userId)),
+        and(eq(friendships.requesterId, profile.userId), eq(friendships.recipientId, userId)),
+      ))
+      .limit(1)
+    if (row) {
+      friendshipId = row.id
+      if (row.status === 'ACCEPTED') friendshipStatus = 'ACCEPTED'
+      else if (row.requesterId === userId) friendshipStatus = 'PENDING_OUTGOING'
+      else friendshipStatus = 'PENDING_INCOMING'
+    }
+  }
 
   const ACTIVITY_ICONS: Record<string, string> = {
     chapter_published: '📖',
@@ -64,6 +89,14 @@ export default async function AuthorProfilePage({ params }: Props) {
                 locale={locale}
                 initialFollowing={profile.isFollowing}
                 isAuthenticated={!!userId}
+              />
+              <FriendButton
+                targetUserId={profile.userId}
+                locale={locale}
+                initialStatus={friendshipStatus}
+                initialFriendshipId={friendshipId}
+                isAuthenticated={!!userId}
+                isSelf={isSelf}
               />
             </div>
             {profile.bio && (

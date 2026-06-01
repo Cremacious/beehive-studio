@@ -30,6 +30,17 @@ export function EmptyState({
     <div
       data-slot="empty-state"
       className={cn('flex-1 flex items-center justify-center p-8', className)}
+      style={
+        onEditorCanvas
+          ? undefined
+          : {
+              background:
+                'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+              borderRadius: 'var(--r-card)',
+              boxShadow: 'var(--sh-card)',
+              border: 'var(--br-card)',
+            }
+      }
     >
       {onEditorCanvas && (
         <style>{`

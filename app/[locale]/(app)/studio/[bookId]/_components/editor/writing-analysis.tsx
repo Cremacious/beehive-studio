@@ -113,18 +113,23 @@ function findCliches(text: string): string[] {
 
 function Section({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div
-      className="py-4"
-      style={{ borderBottom: '1px dashed var(--wa-section-sep)' }}
+    <section
+      className="p-4 flex flex-col gap-2"
+      style={{
+        background:
+          'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+        borderRadius: 'var(--r-row)',
+        boxShadow: 'var(--sh-tile)',
+      }}
     >
-      <p
-        className="font-mono text-[10.5px] uppercase tracking-widest mb-2"
-        style={{ color: 'var(--wa-ink-muted)' }}
+      <h3
+        className="font-comfortaa font-bold text-sm"
+        style={{ color: 'var(--color-brand)' }}
       >
         {label}
-      </p>
+      </h3>
       {children}
-    </div>
+    </section>
   )
 }
 
@@ -192,8 +197,11 @@ export function WritingAnalysis({ editorText, isOpen, onClose }: Props) {
       data-slot="writing-analysis"
       className="w-72 flex-shrink-0 flex flex-col overflow-hidden"
       style={{
-        background: 'var(--wa-bg)',
-        borderLeft: '1px solid var(--wa-border)',
+        background:
+          'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+        borderRadius: 'var(--r-card)',
+        boxShadow: 'var(--sh-card)',
+        border: 'var(--br-card)',
         color: 'var(--wa-ink)',
       }}
     >
@@ -217,15 +225,15 @@ export function WritingAnalysis({ editorText, isOpen, onClose }: Props) {
       `}</style>
 
       <div
-        className="flex items-center gap-2.5 px-4 py-3.5"
+        className="flex items-start gap-2.5 px-4 py-3.5"
         style={{ borderBottom: '1px solid var(--wa-border)' }}
       >
         <h2
-          className="flex-1 text-sm font-bold leading-tight"
+          className="flex-1 font-comfortaa font-bold leading-[1.05]"
           style={{
-            fontFamily: 'var(--font-display)',
-            letterSpacing: '-0.005em',
-            color: 'var(--wa-ink-strong)',
+            fontSize: 44,
+            letterSpacing: '-0.025em',
+            color: 'var(--color-brand)',
           }}
         >
           Writing analysis
@@ -293,7 +301,7 @@ export function WritingAnalysis({ editorText, isOpen, onClose }: Props) {
       {editorText.trim().length === 0 ? (
         <EmptyState title="Nothing to analyze yet" body="Start writing to see analysis." />
       ) : (
-        <div className="flex-1 overflow-y-auto px-4 pb-6">
+        <div className="flex-1 overflow-y-auto px-4 pb-6 pt-4 flex flex-col gap-3">
           {/* Readability */}
           <Section label="Readability">
             <div className="flex items-baseline gap-2.5">

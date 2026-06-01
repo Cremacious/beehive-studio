@@ -53,42 +53,57 @@ export default async function WordGoalsPage({
   return (
     <main className="flex-1 overflow-y-auto">
       <div className="mx-auto max-w-4xl px-6 py-8">
-        <header className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="font-comfortaa font-bold text-2xl text-foreground">Word Goals</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Set a shared writing target. Word logs from the hive roll up against it.
-            </p>
-          </div>
-          {canManage && activeGoals.length > 0 && activeGoals.length < 4 && (
-            <NewGoalModal hiveId={hiveId} existingActiveTypes={activeTypes} />
-          )}
-        </header>
+        <div
+          style={{
+            background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+            borderRadius: 'var(--r-card)',
+            boxShadow: 'var(--sh-card)',
+            border: 'var(--br-card)',
+          }}
+          className="p-6"
+        >
+          <header className="flex items-center justify-between mb-6">
+            <div>
+              <h1
+                style={{ color: 'var(--brand)' }}
+                className="font-comfortaa font-bold text-2xl"
+              >
+                Word Goals
+              </h1>
+              <p className="text-xs text-[var(--canvas-dark-ink-muted)] mt-1">
+                Set a shared writing target. Word logs from the hive roll up against it.
+              </p>
+            </div>
+            {canManage && activeGoals.length > 0 && activeGoals.length < 4 && (
+              <NewGoalModal hiveId={hiveId} existingActiveTypes={activeTypes} />
+            )}
+          </header>
 
-        {activeGoals.length === 0 ? (
-          <EmptyState hiveId={hiveId} canCreate={canManage} existingActiveTypes={activeTypes} />
-        ) : (
-          <div className="space-y-6">
-            <ActiveGoalsStrip hiveId={hiveId} goals={goals} canManage={canManage} />
-            {primary && primaryProgress && (
-              <ContributorsPanel
-                primary={primary}
-                contributors={primaryProgress.contributors}
-                totalProgress={primaryProgress.progress}
+          {activeGoals.length === 0 ? (
+            <EmptyState hiveId={hiveId} canCreate={canManage} existingActiveTypes={activeTypes} />
+          ) : (
+            <div className="space-y-6">
+              <ActiveGoalsStrip hiveId={hiveId} goals={goals} canManage={canManage} />
+              {primary && primaryProgress && (
+                <ContributorsPanel
+                  primary={primary}
+                  contributors={primaryProgress.contributors}
+                  totalProgress={primaryProgress.progress}
+                  locale={locale}
+                />
+              )}
+              <RecentActivityPanel
+                hiveId={hiveId}
+                initialItems={recentItems}
+                initialCursor={recentCursor}
                 locale={locale}
               />
-            )}
-            <RecentActivityPanel
-              hiveId={hiveId}
-              initialItems={recentItems}
-              initialCursor={recentCursor}
-              locale={locale}
-            />
-          </div>
-        )}
+            </div>
+          )}
 
-        <div className="mt-6">
-          <GoalHistory archived={archivedGoals} />
+          <div className="mt-6">
+            <GoalHistory archived={archivedGoals} />
+          </div>
         </div>
       </div>
     </main>

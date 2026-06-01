@@ -129,12 +129,13 @@ export function NewGoalModal({
         <button
           type="button"
           className={cn(
-            'inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-semibold',
+            'inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold',
             triggerClassName,
           )}
           style={{
-            background: 'var(--color-brand)',
+            background: 'var(--brand)',
             color: 'var(--brand-ink, oklch(0.18 0.02 60))',
+            borderRadius: 'var(--r-btn)',
           }}
         >
           <Plus size={14} />

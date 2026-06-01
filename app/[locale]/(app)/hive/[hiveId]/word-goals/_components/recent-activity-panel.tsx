@@ -32,13 +32,28 @@ export function RecentActivityPanel({ hiveId, initialItems, initialCursor, local
   }
 
   return (
-    <section className="rounded-xl border border-border bg-card p-4">
+    <section
+      style={{
+        background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+        borderRadius: 'var(--r-card)',
+        boxShadow: 'var(--sh-tile)',
+        border: 'var(--br-card)',
+      }}
+      className="p-4"
+    >
       <header className="mb-3">
-        <h2 className="font-comfortaa font-bold text-base text-foreground">Recent activity</h2>
-        <p className="text-xs text-muted-foreground">Latest word-log entries from the hive.</p>
+        <h2
+          style={{ color: 'var(--brand)' }}
+          className="font-comfortaa font-semibold text-sm"
+        >
+          Recent Activity
+        </h2>
+        <p className="text-xs text-[var(--canvas-dark-ink-muted)] mt-0.5">
+          Latest word-log entries from the hive.
+        </p>
       </header>
       {items.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-2">No activity yet.</p>
+        <p className="text-sm text-[var(--canvas-dark-ink-muted)] py-2">No activity yet.</p>
       ) : (
         <ul className="space-y-2">
           {items.map((item) => {
@@ -46,38 +61,46 @@ export function RecentActivityPanel({ hiveId, initialItems, initialCursor, local
             const positive = item.wordsAdded >= 0
             return (
               <li key={item.id} className="flex items-center gap-2.5 text-sm">
-                <div className="h-6 w-6 rounded-full bg-foreground/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                <div
+                  className="h-6 w-6 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
+                  style={{ background: 'var(--canvas-dark-100)', boxShadow: 'var(--sh-inset)' }}
+                >
                   {item.user.avatarUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={item.user.avatarUrl} alt="" className="h-full w-full object-cover" />
                   ) : (
-                    <User className="w-3 h-3 text-muted-foreground" />
+                    <User className="w-3 h-3 text-[var(--canvas-dark-ink-muted)]" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
                   {profileHref ? (
-                    <Link href={profileHref} className="font-medium text-foreground hover:underline">
+                    <Link
+                      href={profileHref}
+                      className="font-medium text-[var(--canvas-dark-ink-strong)] hover:underline"
+                    >
                       {item.user.username}
                     </Link>
                   ) : (
-                    <span className="font-medium text-foreground">Unknown writer</span>
+                    <span className="font-medium text-[var(--canvas-dark-ink-strong)]">
+                      Unknown writer
+                    </span>
                   )}
-                  <span className="text-muted-foreground">
+                  <span className="text-[var(--canvas-dark-ink-muted)]">
                     {' '}
                     <span
                       className="font-mono"
-                      style={{ color: positive ? 'var(--color-brand)' : 'var(--destructive)' }}
+                      style={{ color: positive ? 'var(--brand)' : 'var(--destructive)' }}
                     >
                       {positive ? '+' : ''}
                       {item.wordsAdded.toLocaleString()}
                     </span>{' '}
                     words in{' '}
-                    <span className="italic text-foreground/80">
+                    <span className="italic text-[var(--canvas-dark-ink)]">
                       {item.chapterTitle ?? 'a chapter'}
                     </span>
                   </span>
                 </div>
-                <span className="text-xs text-muted-foreground flex-shrink-0">
+                <span className="text-xs text-[var(--canvas-dark-ink-muted)] flex-shrink-0">
                   {relTime(item.loggedAt)}
                 </span>
               </li>
@@ -91,7 +114,8 @@ export function RecentActivityPanel({ hiveId, initialItems, initialCursor, local
             type="button"
             onClick={loadOlder}
             disabled={pending}
-            className="text-xs text-muted-foreground hover:text-foreground px-3 py-1.5 rounded-md border border-border hover:bg-foreground/5 disabled:opacity-50"
+            style={{ borderRadius: 'var(--r-btn)' }}
+            className="text-xs text-[var(--canvas-dark-ink-muted)] hover:text-[var(--canvas-dark-ink-strong)] px-3 py-1.5 hover:bg-[linear-gradient(180deg,var(--canvas-dark-300),var(--canvas-dark-200))] disabled:opacity-50"
           >
             {pending ? 'Loading…' : 'Load older'}
           </button>

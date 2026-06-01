@@ -22,20 +22,33 @@ const TYPE_LABEL: Record<WordGoalType, string> = {
 export function ContributorsPanel({ primary, contributors, totalProgress, locale }: Props) {
   if (!primary) return null
   return (
-    <section className="rounded-xl border border-border bg-card p-4">
+    <section
+      style={{
+        background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+        borderRadius: 'var(--r-card)',
+        boxShadow: 'var(--sh-tile)',
+        border: 'var(--br-card)',
+      }}
+      className="p-4"
+    >
       <header className="flex items-center justify-between mb-3">
         <div>
-          <h2 className="font-comfortaa font-bold text-base text-foreground">Contributors</h2>
-          <p className="text-xs text-muted-foreground">
+          <h2
+            style={{ color: 'var(--brand)' }}
+            className="font-comfortaa font-semibold text-sm"
+          >
+            Contributors
+          </h2>
+          <p className="text-xs text-[var(--canvas-dark-ink-muted)] mt-0.5">
             Within the active {TYPE_LABEL[primary.type]} goal's window.
           </p>
         </div>
-        <span className="text-xs font-mono text-muted-foreground">
+        <span className="text-xs font-mono text-[var(--canvas-dark-ink-muted)]">
           {totalProgress.toLocaleString()} total
         </span>
       </header>
       {contributors.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-2">No contributions logged yet.</p>
+        <p className="text-sm text-[var(--canvas-dark-ink-muted)] py-2">No contributions logged yet.</p>
       ) : (
         <ul className="space-y-2">
           {contributors.map((c) => {
@@ -45,12 +58,15 @@ export function ContributorsPanel({ primary, contributors, totalProgress, locale
             const NameTag = profileHref ? Link : 'span'
             return (
               <li key={c.userId} className="flex items-center gap-3">
-                <div className="h-7 w-7 rounded-full bg-foreground/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                <div
+                  className="h-7 w-7 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
+                  style={{ background: 'var(--canvas-dark-100)', boxShadow: 'var(--sh-inset)' }}
+                >
                   {c.avatarUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={c.avatarUrl} alt="" className="h-full w-full object-cover" />
                   ) : (
-                    <User className="w-3.5 h-3.5 text-muted-foreground" />
+                    <User className="w-3.5 h-3.5 text-[var(--canvas-dark-ink-muted)]" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -58,19 +74,30 @@ export function ContributorsPanel({ primary, contributors, totalProgress, locale
                     <NameTag
                       // @ts-expect-error — conditional `href` for Link vs span
                       href={profileHref ?? undefined}
-                      className="text-sm text-foreground truncate hover:underline"
+                      className="text-sm text-[var(--canvas-dark-ink-strong)] truncate hover:underline"
                     >
                       {c.username ?? 'Unknown writer'}
                     </NameTag>
-                    <span className="text-xs font-mono text-muted-foreground flex-shrink-0">
+                    <span className="text-xs font-mono text-[var(--canvas-dark-ink-muted)] flex-shrink-0">
                       {c.wordsContributed.toLocaleString()}{' '}
-                      <span className="text-muted-foreground/60">· {pct}%</span>
+                      <span className="opacity-60">· {pct}%</span>
                     </span>
                   </div>
-                  <div className="mt-1 h-1 w-full rounded-full bg-foreground/5 overflow-hidden">
+                  <div
+                    className="mt-1 h-1 w-full overflow-hidden"
+                    style={{
+                      background: 'var(--canvas-dark-100)',
+                      borderRadius: 'var(--r-pill)',
+                      boxShadow: 'var(--sh-inset)',
+                    }}
+                  >
                     <div
                       className="h-full"
-                      style={{ width: `${pct}%`, background: 'var(--color-brand)' }}
+                      style={{
+                        width: `${pct}%`,
+                        background: 'var(--brand)',
+                        borderRadius: 'var(--r-pill)',
+                      }}
                     />
                   </div>
                 </div>

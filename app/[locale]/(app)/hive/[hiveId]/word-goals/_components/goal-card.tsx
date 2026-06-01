@@ -57,7 +57,15 @@ export function GoalCard({ goal, progress, canManage }: Props) {
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card p-4 flex flex-col gap-3">
+    <div
+      style={{
+        background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+        borderRadius: 'var(--r-row)',
+        boxShadow: 'var(--sh-tile)',
+        border: 'var(--br-card)',
+      }}
+      className="p-4 flex flex-col gap-3"
+    >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <div
@@ -67,10 +75,12 @@ export function GoalCard({ goal, progress, canManage }: Props) {
             <Icon className="w-3.5 h-3.5" style={{ color: meta.accent }} />
           </div>
           <div className="min-w-0">
-            <div className="text-xs font-semibold uppercase tracking-wide" style={{ color: meta.accent }}>
+            <h3
+              className="font-comfortaa font-semibold text-sm text-[var(--canvas-dark-ink-strong)]"
+            >
               {meta.label}
-            </div>
-            <div className="text-xs text-muted-foreground truncate">
+            </h3>
+            <div className="text-xs font-mono text-[var(--canvas-dark-ink-muted)] truncate">
               {progress.toLocaleString()} / {goal.targetWords.toLocaleString()} words
             </div>
           </div>
@@ -80,7 +90,8 @@ export function GoalCard({ goal, progress, canManage }: Props) {
             <button
               type="button"
               onClick={() => setEditOpen(true)}
-              className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-foreground/5"
+              style={{ borderRadius: 'var(--r-btn)' }}
+              className="p-1 text-[var(--canvas-dark-ink-muted)] hover:text-[var(--canvas-dark-ink-strong)] hover:bg-[linear-gradient(180deg,var(--canvas-dark-300),var(--canvas-dark-200))]"
               aria-label="Edit goal"
             >
               <Pencil className="w-3.5 h-3.5" />
@@ -88,7 +99,8 @@ export function GoalCard({ goal, progress, canManage }: Props) {
             <button
               type="button"
               onClick={() => setConfirmArchive(true)}
-              className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-foreground/5"
+              style={{ borderRadius: 'var(--r-btn)' }}
+              className="p-1 text-[var(--canvas-dark-ink-muted)] hover:text-[var(--canvas-dark-ink-strong)] hover:bg-[linear-gradient(180deg,var(--canvas-dark-300),var(--canvas-dark-200))]"
               aria-label="Archive goal"
             >
               <Archive className="w-3.5 h-3.5" />
@@ -98,27 +110,34 @@ export function GoalCard({ goal, progress, canManage }: Props) {
       </div>
 
       <div>
-        <div className="h-2 w-full rounded-full overflow-hidden bg-foreground/10">
+        <div
+          style={{
+            background: 'var(--canvas-dark-100)',
+            borderRadius: 'var(--r-pill)',
+            boxShadow: 'var(--sh-inset)',
+          }}
+          className="h-2 w-full overflow-hidden"
+        >
           <div
-            className={cn(
-              'h-full transition-[width] duration-300',
-              over && 'animate-pulse',
-            )}
+            className={cn('h-full transition-[width] duration-300', over && 'animate-pulse')}
             style={{
               width: `${pctClamped}%`,
-              background: 'var(--color-brand)',
+              background: 'var(--brand)',
+              borderRadius: 'var(--r-pill)',
             }}
             aria-label={`Progress: ${pct.toFixed(0)}%`}
           />
         </div>
-        <div className="mt-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
-          <span className={cn('font-mono', over && 'text-brand font-semibold')}>{pct.toFixed(0)}%</span>
+        <div className="mt-1.5 flex items-center justify-between text-[11px] text-[var(--canvas-dark-ink-muted)]">
+          <span className={cn('font-mono', over && 'font-semibold')} style={over ? { color: 'var(--brand)' } : undefined}>
+            {pct.toFixed(0)}%
+          </span>
           {remaining ? <span>{remaining}</span> : <span>No deadline</span>}
         </div>
       </div>
 
       {goal.endDate && (
-        <div className="text-[10px] uppercase tracking-wide text-muted-foreground/70 font-mono">
+        <div className="text-[10px] uppercase tracking-wide text-[var(--canvas-dark-ink-muted)] font-mono opacity-70">
           Ends {goal.endDate.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
         </div>
       )}

@@ -48,12 +48,20 @@ export async function ActiveGoalsStrip({ hiveId, goals, canManage }: Props) {
           return (
             <div
               key={type}
-              className="rounded-xl border border-dashed border-border bg-card/30 p-4 flex flex-col items-start gap-2"
+              style={{
+                background: 'linear-gradient(180deg, var(--canvas-dark-300), var(--canvas-dark-200))',
+                borderRadius: 'var(--r-row)',
+                boxShadow: 'var(--sh-tile)',
+                border: '1px dashed oklch(1 0 0 / 0.08)',
+              }}
+              className="p-4 flex flex-col items-start gap-2"
             >
-              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <div className="text-xs font-semibold uppercase tracking-wide text-[var(--canvas-dark-ink-muted)]">
                 {type.charAt(0) + type.slice(1).toLowerCase()}
               </div>
-              <p className="text-xs text-muted-foreground">No active {type.toLowerCase()} goal.</p>
+              <p className="text-xs text-[var(--canvas-dark-ink-muted)]">
+                No active {type.toLowerCase()} goal.
+              </p>
               <NewGoalModal
                 hiveId={hiveId}
                 existingActiveTypes={activeTypes}

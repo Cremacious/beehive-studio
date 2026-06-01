@@ -11,18 +11,29 @@ type Props = {
 
 export function EmptyState({ hiveId, canCreate, existingActiveTypes }: Props) {
   return (
-    <div className="rounded-xl border border-dashed border-border bg-card/40 p-10 flex flex-col items-center text-center gap-3">
+    <div
+      style={{
+        background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+        borderRadius: 'var(--r-card)',
+        boxShadow: 'var(--sh-tile)',
+        border: '1px dashed oklch(1 0 0 / 0.08)',
+      }}
+      className="p-10 flex flex-col items-center text-center gap-3"
+    >
       <div
         className="h-12 w-12 rounded-full flex items-center justify-center"
-        style={{ background: 'oklch(from var(--color-brand) l c h / 0.15)' }}
+        style={{ background: 'oklch(from var(--brand) l c h / 0.15)' }}
       >
-        <Target className="w-6 h-6 text-brand" />
+        <Target className="w-6 h-6" style={{ color: 'var(--brand)' }} />
       </div>
       <div>
-        <h3 className="font-comfortaa font-bold text-base text-foreground">
+        <h3
+          style={{ color: 'var(--brand)' }}
+          className="font-comfortaa font-bold text-base"
+        >
           No active goals
         </h3>
-        <p className="text-sm text-muted-foreground mt-1 max-w-md">
+        <p className="text-sm text-[var(--canvas-dark-ink-muted)] mt-1 max-w-md">
           Word goals rally the hive around a shared writing target. Daily, weekly,
           monthly, or a single push to a total word count.
         </p>
@@ -36,7 +47,7 @@ export function EmptyState({ hiveId, canCreate, existingActiveTypes }: Props) {
           />
         </div>
       ) : (
-        <p className="text-xs text-muted-foreground mt-1">
+        <p className="text-xs text-[var(--canvas-dark-ink-muted)] mt-1">
           Only owners and moderators can set goals.
         </p>
       )}

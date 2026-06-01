@@ -8,6 +8,7 @@ import { getUserPremiumStatus } from '@/lib/premium'
 import { isBookOverflow } from '@/lib/billing/book-overflow'
 import { extractWordCount } from '@/lib/tiptap-utils'
 import { updateChapterNotesSchema, chapterStatusSchema, updateChapterWordGoalSchema } from '@/lib/validations/book'
+import { logHiveWordDelta } from '@/lib/hive/log-word-delta'
 import type { ActionResult } from './book.actions'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -128,6 +129,15 @@ export async function saveChapterAction(
       })
     }
   }
+
+  // Hive word-log throttle — same posture as the snapshot block above:
+  //   outside the chapter tx, swallowed errors, 60s window per (user, chapter).
+  await logHiveWordDelta({
+    bookId: chapter.bookId,
+    userId,
+    chapterId,
+    currentWordCount: wordCount,
+  })
 
   return { success: true, data: { wordCount } }
 }

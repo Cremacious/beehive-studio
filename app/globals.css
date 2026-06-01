@@ -524,3 +524,17 @@ body {
    the light-mode color injection into the component tree. See
    corkboard-or-editor.tsx and editor-toolbar.tsx for the actual styles. */
 
+
+/* H3 collab marks — annotations + suggestions */
+.hive-annotation       { background: oklch(from var(--brand) l c h / 0.18); border-bottom: 1.5px solid var(--brand); }
+.hive-annotation[data-layer="GRAMMAR"]    { background: oklch(0.72 0.10 165 / 0.20); border-bottom-color: oklch(0.72 0.10 165); }
+.hive-annotation[data-layer="PLOT"]       { background: oklch(0.72 0.13 25  / 0.20); border-bottom-color: oklch(0.72 0.13 25); }
+.hive-annotation[data-layer="TONE"]       { background: oklch(0.72 0.13 290 / 0.20); border-bottom-color: oklch(0.72 0.13 290); }
+.hive-annotation[data-layer="CONTINUITY"] { background: oklch(0.72 0.10 200 / 0.20); border-bottom-color: oklch(0.72 0.10 200); }
+.hive-annotation[data-layer="GENERAL"]    { background: oklch(0.74 0.13 80  / 0.20); border-bottom-color: oklch(0.74 0.13 80); }
+
+.hive-suggestion       { background: oklch(0.78 0.10 65 / 0.22); border-bottom: 1.5px dashed oklch(0.78 0.10 65); }
+
+/* Public reader: render as invisible spans (marks ride along on save but don't visually leak to logged-out viewers) */
+.public-reader .hive-annotation,
+.public-reader .hive-suggestion { background: transparent; border-bottom: none; }

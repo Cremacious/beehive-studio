@@ -63,6 +63,11 @@ type BookEditorContextValue = {
   reloadActiveChapter: () => Promise<void>
   bookOverflow: boolean
   bookHive: { hiveId: string } | null
+  currentUserId: string | null
+  chapterContentVersion: number
+  bumpChapterContentVersion: () => void
+  gutterOpen: boolean
+  toggleGutter: () => void
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
@@ -84,10 +89,11 @@ type Props = {
   initialBinderItems: BinderItemRow[]
   bookOverflow?: boolean
   bookHive?: { hiveId: string } | null
+  currentUserId?: string | null
   children: React.ReactNode
 }
 
-export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderItems, bookOverflow = false, bookHive = null, children }: Props) {
+export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderItems, bookOverflow = false, bookHive = null, currentUserId = null, children }: Props) {
   const [binderItems, setBinderItems] = useState<BinderItemRow[]>(initialBinderItems)
   const [activeItemId, setActiveItemIdState] = useState<string | null>(null)
   const [chapterCache, setChapterCache] = useState<Map<string, ChapterData>>(new Map())
@@ -105,12 +111,30 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
   })
 
   const [historyOpen, setHistoryOpen] = useState(false)
+  const [gutterOpen, setGutterOpen] = useState(false)
+  const [chapterContentVersion, setChapterContentVersion] = useState(0)
   const [previewSnapshotId, setPreviewSnapshotId] = useState<string | null>(null)
   const [previewSnapshotContent, setPreviewSnapshotContent] = useState<unknown>(null)
   const [previewSnapshotCreatedAt, setPreviewSnapshotCreatedAt] = useState<Date | null>(null)
 
   const toggleHistory = useCallback(() => {
-    setHistoryOpen(o => !o)
+    setHistoryOpen(o => {
+      const next = !o
+      if (next) setGutterOpen(false)
+      return next
+    })
+  }, [])
+
+  const toggleGutter = useCallback(() => {
+    setGutterOpen(o => {
+      const next = !o
+      if (next) setHistoryOpen(false)
+      return next
+    })
+  }, [])
+
+  const bumpChapterContentVersion = useCallback(() => {
+    setChapterContentVersion(v => v + 1)
   }, [])
 
   const enterPreview = useCallback((snapshot: {
@@ -436,6 +460,11 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     reloadActiveChapter,
     bookOverflow,
     bookHive,
+    currentUserId,
+    chapterContentVersion,
+    bumpChapterContentVersion,
+    gutterOpen,
+    toggleGutter,
   }), [
     bookId,
     bookTitle,
@@ -474,6 +503,11 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     reloadActiveChapter,
     bookOverflow,
     bookHive,
+    currentUserId,
+    chapterContentVersion,
+    bumpChapterContentVersion,
+    gutterOpen,
+    toggleGutter,
   ])
 
   return <BookEditorContext.Provider value={value}>{children}</BookEditorContext.Provider>

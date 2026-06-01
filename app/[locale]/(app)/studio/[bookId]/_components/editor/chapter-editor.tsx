@@ -10,6 +10,10 @@ import Link from '@tiptap/extension-link'
 import Typography from '@tiptap/extension-typography'
 import CharacterCount from '@tiptap/extension-character-count'
 import TextAlign from '@tiptap/extension-text-align'
+import { HiveAnnotationMark } from '@/lib/tiptap-extensions/hive-annotation-mark'
+import { HiveSuggestionMark } from '@/lib/tiptap-extensions/hive-suggestion-mark'
+import { SelectionPopover } from '@/components/hive/collab/selection-popover'
+import { CollaborationGutter } from '@/components/hive/collab/collaboration-gutter'
 import { useBookEditor } from '../book-editor-provider'
 import { EditorToolbar } from './editor-toolbar'
 import { EditorStatusBar } from './editor-status-bar'
@@ -109,8 +113,23 @@ function EmptyStartChapter() {
 }
 
 export function ChapterEditor() {
-  const { activeItemId, activeItem, activeChapter, updateChapterContent, flushPendingSave, pushFlash, previewSnapshotId, previewSnapshotContent, bookOverflow } =
-    useBookEditor()
+  const {
+    activeItemId,
+    activeItem,
+    activeChapter,
+    updateChapterContent,
+    flushPendingSave,
+    pushFlash,
+    previewSnapshotId,
+    previewSnapshotContent,
+    bookOverflow,
+    bookHive,
+    currentUserId,
+    chapterContentVersion,
+    bumpChapterContentVersion,
+    gutterOpen,
+    reloadActiveChapter,
+  } = useBookEditor()
 
   const [analysisOpen, setAnalysisOpen] = useState(false)
   const [findOpen, setFindOpen] = useState(false)
@@ -136,6 +155,8 @@ export function ChapterEditor() {
         Typography,
         CharacterCount,
         TextAlign.configure({ types: ['heading', 'paragraph'] }),
+        HiveAnnotationMark,
+        HiveSuggestionMark,
       ],
       content: activeChapter?.content ?? null,
       onUpdate: ({ editor }) => {
@@ -148,7 +169,7 @@ export function ChapterEditor() {
         },
       },
     },
-    [activeItemId],
+    [activeItemId, chapterContentVersion],
   )
 
   // Keyboard shortcuts: Cmd/Ctrl+F (find), Cmd/Ctrl+S (force save).
@@ -303,6 +324,15 @@ export function ChapterEditor() {
       )}
       <PreviewBanner />
       {findOpen && editor && <FindReplace editor={editor} onClose={() => setFindOpen(false)} />}
+      {editor && bookHive && isChapterType && activeChapter && currentUserId && (
+        <SelectionPopover
+          editor={editor}
+          hiveId={bookHive.hiveId}
+          chapterId={activeChapter.id}
+          canAnnotate
+          canSuggestEdits
+        />
+      )}
       <div className="flex flex-1 overflow-hidden">
         <div
           ref={editorContainerRef}
@@ -323,6 +353,21 @@ export function ChapterEditor() {
             }}
           />
         </div>
+        {gutterOpen && bookHive && isChapterType && activeChapter && currentUserId && (
+          // Mounted here (not via RightPanelSlot) because the gutter needs the
+          // live TipTap editor instance for coordsAtPos anchoring. The studio
+          // editor is author-only access, so viewer is treated as OWNER with
+          // bookOwnerId == currentUserId.
+          <CollaborationGutter
+            editor={editor}
+            chapterId={activeChapter.id}
+            hiveId={bookHive.hiveId}
+            viewer={{ id: currentUserId, role: 'OWNER', bookOwnerId: currentUserId }}
+            onAcceptedSuggestion={() => {
+              void reloadActiveChapter().then(() => bumpChapterContentVersion())
+            }}
+          />
+        )}
         {analysisOpen && (
           <WritingAnalysis
             editorText={editorText}

@@ -47,6 +47,7 @@ export default async function BookEditorPage({ params }: Props) {
       initialBinderItems={binderResult!.data}
       bookOverflow={bookOverflow}
       bookHive={bookHive!}
+      currentUserId={session?.user?.id ?? null}
     >
       {/* The (app) layout uses min-h-screen (not h-screen), so h-full on a
           flex-1 ancestor resolves to content-height — not viewport. Pin the

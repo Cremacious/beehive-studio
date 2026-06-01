@@ -23,6 +23,7 @@ import {
   History,
   HelpCircle,
   Eye,
+  MessagesSquare,
 } from 'lucide-react'
 
 type Props = {
@@ -95,7 +96,7 @@ function Separator() {
 }
 
 export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggleFind, findOpen }: Props) {
-  const { focusMode, toggleFocusMode, editorTheme, toggleEditorTheme, historyOpen, toggleHistory, bookId, locale } = useBookEditor()
+  const { focusMode, toggleFocusMode, editorTheme, toggleEditorTheme, historyOpen, toggleHistory, bookId, locale, bookHive, gutterOpen, toggleGutter } = useBookEditor()
   const router = useRouter()
 
   const [showExport, setShowExport] = useState(false)
@@ -308,6 +309,17 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
           <ToolbarButton onClick={toggleHistory} isActive={historyOpen} title="Version history">
             <History size={14} />
           </ToolbarButton>
+
+          {/* Collaboration gutter — only when this book has a hive */}
+          {bookHive && (
+            <ToolbarButton
+              onClick={toggleGutter}
+              isActive={gutterOpen}
+              title="Toggle collaboration gutter"
+            >
+              <MessagesSquare size={14} />
+            </ToolbarButton>
+          )}
 
           {/* Keyboard shortcuts */}
           <ToolbarButton

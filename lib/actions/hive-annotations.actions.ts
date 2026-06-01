@@ -6,9 +6,10 @@ import {
   hives,
   chapters,
   books,
+  binderItems,
   userProfiles,
 } from '@/db/schema'
-import { eq, and, asc } from 'drizzle-orm'
+import { eq, and, asc, desc, isNull, inArray } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import {
   requireHiveMember,
@@ -348,6 +349,144 @@ export async function getChapterAnnotationsAction(
   return {
     success: true,
     data: { annotations, orphanRowIds: orphanRows },
+  }
+}
+
+// ── getAnnotationsForHiveAction ──────────────────────────────────────────────
+
+export type HiveAnnotationItem = {
+  id: string
+  author: {
+    username: string | null
+    avatarUrl: string | null
+    displayName: string | null
+  }
+  layer: AnnotationLayer
+  body: string
+  selectedText: string | null
+  resolved: boolean
+  resolvedBy: string | null
+  resolvedAt: Date | null
+  createdAt: Date
+  hasReplies: boolean
+}
+
+export type HiveAnnotationsByChapter = {
+  chapterId: string
+  chapterTitle: string
+  annotations: HiveAnnotationItem[]
+}
+
+export type GetAnnotationsForHiveData = {
+  byChapter: HiveAnnotationsByChapter[]
+  totalCount: number
+}
+
+export type GetAnnotationsForHiveOptions = {
+  layers?: AnnotationLayer[]
+  includeResolved?: boolean
+}
+
+export async function getAnnotationsForHiveAction(
+  hiveId: string,
+  options: GetAnnotationsForHiveOptions = {},
+): Promise<ActionResult<GetAnnotationsForHiveData>> {
+  const userId = await requireAuth()
+  try {
+    await requireHiveMember(hiveId, userId)
+  } catch {
+    return { success: false, error: 'NOT_AUTHORIZED' }
+  }
+
+  const hive = await db.query.hives.findFirst({
+    where: eq(hives.id, hiveId),
+    columns: { bookId: true },
+  })
+  if (!hive) return { success: false, error: 'NOT_FOUND' }
+
+  const includeResolved = options.includeResolved ?? false
+  const layers = options.layers && options.layers.length > 0 ? options.layers : null
+
+  const whereClauses = [
+    eq(hiveAnnotations.hiveId, hiveId),
+    isNull(hiveAnnotations.parentId),
+  ]
+  if (!includeResolved) whereClauses.push(eq(hiveAnnotations.resolved, false))
+  if (layers) whereClauses.push(inArray(hiveAnnotations.layer, layers))
+
+  const rows = await db
+    .select({
+      annotationId: hiveAnnotations.id,
+      chapterId: hiveAnnotations.chapterId,
+      layer: hiveAnnotations.layer,
+      body: hiveAnnotations.body,
+      selectedText: hiveAnnotations.selectedText,
+      resolved: hiveAnnotations.resolved,
+      resolvedBy: hiveAnnotations.resolvedBy,
+      resolvedAt: hiveAnnotations.resolvedAt,
+      authorId: hiveAnnotations.authorId,
+      createdAt: hiveAnnotations.createdAt,
+      chapterTitle: binderItems.title,
+      chapterOrder: binderItems.order,
+      authorUsername: userProfiles.username,
+      authorAvatar: userProfiles.avatarUrl,
+      authorDisplayName: userProfiles.displayName,
+    })
+    .from(hiveAnnotations)
+    .innerJoin(chapters, eq(chapters.id, hiveAnnotations.chapterId))
+    .leftJoin(binderItems, eq(binderItems.id, chapters.binderItemId))
+    .leftJoin(userProfiles, eq(userProfiles.userId, hiveAnnotations.authorId))
+    .where(and(...whereClauses))
+    .orderBy(asc(binderItems.order), desc(hiveAnnotations.createdAt))
+
+  if (rows.length === 0) {
+    return { success: true, data: { byChapter: [], totalCount: 0 } }
+  }
+
+  const topLevelIds = rows.map((r) => r.annotationId)
+  const replyRows = await db.query.hiveAnnotations.findMany({
+    where: (t, { inArray: inArr }) => inArr(t.parentId, topLevelIds),
+    columns: { parentId: true },
+  })
+  const parentsWithReplies = new Set(
+    replyRows.map((r) => r.parentId).filter((v): v is string => !!v),
+  )
+
+  const byChapter = new Map<string, HiveAnnotationsByChapter>()
+  for (const r of rows) {
+    let group = byChapter.get(r.chapterId)
+    if (!group) {
+      group = {
+        chapterId: r.chapterId,
+        chapterTitle: r.chapterTitle ?? 'Untitled chapter',
+        annotations: [],
+      }
+      byChapter.set(r.chapterId, group)
+    }
+    group.annotations.push({
+      id: r.annotationId,
+      author: {
+        username: r.authorUsername,
+        avatarUrl: r.authorAvatar,
+        displayName: r.authorDisplayName,
+      },
+      layer: r.layer as AnnotationLayer,
+      body: r.body,
+      selectedText: r.selectedText,
+      resolved: r.resolved,
+      resolvedBy: r.resolvedBy,
+      resolvedAt: r.resolvedAt,
+      createdAt: r.createdAt,
+      hasReplies: parentsWithReplies.has(r.annotationId),
+    })
+  }
+
+  return {
+    success: true,
+    data: {
+      byChapter: Array.from(byChapter.values()),
+      totalCount: rows.length,
+    },
   }
 }
 

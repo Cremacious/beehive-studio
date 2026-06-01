@@ -46,48 +46,35 @@ export default async function StudioPage({
       className="relative z-[1] mx-auto"
       style={{ maxWidth: '1680px', padding: '8px 16px 48px' }}
     >
-      {/* Page-content shell — all studio content lives inside this dark-gray
-          rounded wrapper so the cards float on a clearly distinct surface
-          (vs. the outer #141414 layout backdrop). */}
+      {/* Continue Writing hero — full width above the 2-col split */}
+      <section style={{ marginBottom: '24px' }}>
+        <ContinueWritingHero book={recentBook} locale={locale} />
+      </section>
+
+      {/* 2-col split: books main + 300px hive rail */}
       <div
-        style={{
-          background: '#1E1E1E',
-          borderRadius: 'var(--r-card)',
-          padding: '24px',
-          boxShadow: '0 1px 0 oklch(1 0 0 / 0.04) inset, 0 8px 24px oklch(0 0 0 / 0.25)',
-          border: 'var(--br-card)',
-        }}
+        className="grid gap-5"
+        style={{ gridTemplateColumns: 'minmax(0, 1fr) 300px' }}
       >
-        {/* Continue Writing hero — full width above the 2-col split */}
-        <section style={{ marginBottom: '24px' }}>
-          <ContinueWritingHero book={recentBook} locale={locale} />
-        </section>
-
-        {/* 2-col split: books main + 300px hive rail */}
-        <div
-          className="grid gap-5"
-          style={{ gridTemplateColumns: 'minmax(0, 1fr) 300px' }}
-        >
-          <div>
-            <h2
-              className="font-comfortaa font-bold m-0"
-              style={{
-                color: 'var(--brand)',
-                fontSize: '16px',
-                letterSpacing: '-0.01em',
-                marginBottom: '14px',
-              }}
-            >
-              Your books
-            </h2>
-            {/* Pass hives=[] so the grid renders books only — hives live in the rail */}
-            <LibraryGrid books={books} hives={[]} locale={locale} />
-          </div>
-
-          <aside>
-            <HiveRail hives={hives} locale={locale} />
-          </aside>
+        <div>
+          <h2
+            className="font-comfortaa font-bold m-0"
+            style={{
+              color: 'var(--brand)',
+              fontSize: '16px',
+              letterSpacing: '-0.01em',
+              marginBottom: '14px',
+            }}
+          >
+            Your books
+          </h2>
+          {/* Pass hives=[] so the grid renders books only — hives live in the rail */}
+          <LibraryGrid books={books} hives={[]} locale={locale} />
         </div>
+
+        <aside>
+          <HiveRail hives={hives} locale={locale} />
+        </aside>
       </div>
     </main>
   )

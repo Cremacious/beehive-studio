@@ -26,7 +26,7 @@ export default async function AppLayout({
   if (!profile?.onboardingComplete) redirect(`/${locale}/onboarding`)
 
   return (
-    <div className="min-h-screen bg-[#141414] flex flex-col">
+    <div className="min-h-screen bg-[#262728] flex flex-col">
       <AppNav locale={locale} user={session.user} />
       <main className="flex-1 flex flex-col pt-1.5">{children}</main>
     </div>

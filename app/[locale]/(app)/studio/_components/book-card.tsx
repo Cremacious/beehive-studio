@@ -52,22 +52,19 @@ export function BookCard({ book, locale }: Props) {
     <div
       className="group relative flex flex-col overflow-hidden transition-all"
       style={{
-        background: 'var(--canvas-dark-100)',
-        border: '1px solid var(--canvas-dark-300)',
-        borderRadius: 'var(--r-2xl)',
-        boxShadow: 'var(--el-1)',
+        background:
+          'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+        border: 'var(--br-card)',
+        borderRadius: 'var(--r-card)',
+        boxShadow: 'var(--sh-card)',
         color: 'inherit',
         ['--accent' as string]: accent,
       } as React.CSSProperties}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-4px)'
-        e.currentTarget.style.boxShadow = 'var(--el-3)'
-        e.currentTarget.style.borderColor = 'oklch(0.40 0.003 256)'
+        e.currentTarget.style.transform = 'translateY(-3px)'
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = ''
-        e.currentTarget.style.boxShadow = 'var(--el-1)'
-        e.currentTarget.style.borderColor = 'var(--canvas-dark-300)'
       }}
     >
       {/* Kebab menu — absolute, sits above the link */}
@@ -106,7 +103,7 @@ export function BookCard({ book, locale }: Props) {
           />
         )}
 
-        {/* Status pill — always visible, top-left */}
+        {/* Status pill — top-left */}
         <span
           className="absolute inline-flex items-center gap-1.5 uppercase"
           style={{
@@ -196,7 +193,7 @@ export function BookCard({ book, locale }: Props) {
         className="flex flex-col gap-1.5"
         style={{
           padding: '16px 18px 18px',
-          borderTop: '1px solid var(--canvas-dark-300)',
+          borderTop: 'var(--br-card)',
         }}
       >
         <div

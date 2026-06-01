@@ -5,8 +5,7 @@ import { getUserBooksAction } from '@/lib/actions/book.actions'
 import { getUserHivesView } from '@/lib/actions/hive.actions'
 import { StudioEmptyState } from './_components/studio-empty-state'
 import { ContinueWritingHero } from './_components/continue-writing-hero'
-import { BookGrid } from './_components/book-grid'
-import { HivesSection } from './_components/hives-section'
+import { LibraryGrid } from './_components/library-grid'
 
 export default async function StudioPage({
   params,
@@ -57,9 +56,7 @@ export default async function StudioPage({
         </section>
       )}
 
-      {books.length > 0 && <BookGrid books={books} locale={locale} />}
-
-      <HivesSection hives={hives} />
+      <LibraryGrid books={books} hives={hives} locale={locale} />
     </main>
   )
 }

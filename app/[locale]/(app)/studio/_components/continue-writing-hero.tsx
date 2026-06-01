@@ -59,12 +59,13 @@ export function ContinueWritingHero({ book, locale }: Props) {
       className="group relative block w-full no-underline overflow-hidden transition-[transform,box-shadow,border-color] duration-150 hover:-translate-y-px"
       style={{
         padding: '40px 48px 44px',
-        borderRadius: 'var(--r-2xl)',
-        background: 'var(--canvas-dark-150)',
-        border: '1px solid var(--canvas-dark-300)',
+        borderRadius: 'var(--r-card)',
+        background:
+          'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+        border: 'var(--br-card)',
         color: 'var(--canvas-dark-ink)',
         fontFamily: 'var(--font-ui)',
-        boxShadow: 'var(--el-2)',
+        boxShadow: 'var(--sh-card)',
       }}
     >
       {/* Top meta strip */}
@@ -269,9 +270,10 @@ export function ContinueWritingHero({ book, locale }: Props) {
             style={{
               gap: '16px',
               padding: '13px 18px',
-              borderRadius: 'var(--r-md)',
+              borderRadius: 'var(--r-row)',
               background: 'var(--brand)',
               color: 'var(--brand-ink)',
+              boxShadow: 'var(--sh-tile)',
               fontFamily: 'var(--font-display)',
               fontWeight: 700,
               fontSize: '15px',

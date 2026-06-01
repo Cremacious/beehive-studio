@@ -27,6 +27,7 @@ type Props = {
 const NAV_ITEMS = [
   { label: 'Dashboard', icon: LayoutDashboard, segment: '' },
   { label: 'Outline', icon: ListOrdered, segment: '/outline' },
+  { label: 'Chapters', icon: BookOpen, segment: '/chapters' },
   { label: 'Wiki', icon: BookOpen, segment: '/wiki' },
   { label: 'Annotations', icon: StickyNote, segment: '/annotations' },
   { label: 'Discussions', icon: MessagesSquare, segment: '/discussions' },

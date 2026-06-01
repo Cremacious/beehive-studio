@@ -118,11 +118,21 @@ export async function createHiveAction(input: unknown): Promise<ActionResult<{ h
   }
 }
 
+export type HiveBookSummary = {
+  id: string
+  title: string
+  coverUrl: string | null
+  status: 'DRAFT' | 'PUBLISHED' | 'STANDALONE_HIVE_SHADOW'
+  userId: string
+  authorUsername: string | null
+}
+
 export async function getHiveAction(hiveId: string): Promise<ActionResult<{
   hive: typeof hives.$inferSelect
   members: HiveMemberRow[]
   isOwner: boolean
   isEditor: boolean
+  book: HiveBookSummary | null
 }>> {
   const userId = await requireAuth()
   await assertHiveMember(hiveId, userId)
@@ -139,7 +149,30 @@ export async function getHiveAction(hiveId: string): Promise<ActionResult<{
   const isOwner = hive.ownerId === userId
   const isEditor = isOwner || myMember?.role === 'MODERATOR'
 
-  return { success: true, data: { hive, members: members as HiveMemberRow[], isOwner, isEditor } }
+  let book: HiveBookSummary | null = null
+  if (hive.bookId) {
+    const bookRow = await db.query.books.findFirst({
+      where: eq(books.id, hive.bookId),
+      columns: { id: true, title: true, coverUrl: true, status: true, userId: true },
+    })
+    if (bookRow) {
+      const { userProfiles } = await import('@/db/schema')
+      const profile = await db.query.userProfiles.findFirst({
+        where: eq(userProfiles.userId, bookRow.userId),
+        columns: { username: true },
+      })
+      book = {
+        id: bookRow.id,
+        title: bookRow.title,
+        coverUrl: bookRow.coverUrl,
+        status: bookRow.status,
+        userId: bookRow.userId,
+        authorUsername: profile?.username ?? null,
+      }
+    }
+  }
+
+  return { success: true, data: { hive, members: members as HiveMemberRow[], isOwner, isEditor, book } }
 }
 
 // `getUserHivesAction` and `getMyHivesAction` deleted in H1 Task 6.

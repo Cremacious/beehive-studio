@@ -255,10 +255,20 @@ export function CollaborationGutter({
   return (
     <aside
       ref={gutterRef}
-      style={{ width: EXPANDED_WIDTH }}
-      className="relative flex h-full shrink-0 flex-col border-l border-border bg-card"
+      style={{
+        width: EXPANDED_WIDTH,
+        background:
+          'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+        borderRadius: 'var(--r-card)',
+        boxShadow: 'var(--sh-card)',
+        border: 'var(--br-card)',
+      }}
+      className="relative flex h-full shrink-0 flex-col overflow-hidden"
     >
-      <div className="flex items-center justify-between border-b border-border px-2 py-1.5">
+      <div
+        className="flex items-center justify-between px-2 py-1.5"
+        style={{ borderBottom: 'var(--br-card)' }}
+      >
         <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
           Collaboration
         </div>

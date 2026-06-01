@@ -83,9 +83,18 @@ export function VersionHistoryDrawer() {
   return (
     <aside
       data-slot="version-history-drawer"
-      className="w-64 flex-shrink-0 flex flex-col bg-card border-l border-border overflow-hidden"
+      style={{
+        background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+        borderRadius: 'var(--r-card)',
+        boxShadow: 'var(--sh-card)',
+        border: 'var(--br-card)',
+      }}
+      className="w-64 flex-shrink-0 flex flex-col overflow-hidden"
     >
-      <div className="flex items-center gap-2.5 px-4 py-3.5 border-b border-border">
+      <div
+        className="flex items-center gap-2.5 px-4 py-3.5"
+        style={{ borderBottom: 'var(--br-card)' }}
+      >
         <span
           className="inline-flex items-center justify-center w-7 h-7 rounded-md"
           style={{ background: 'var(--brand-soft)', color: 'var(--color-brand)' }}
@@ -94,8 +103,8 @@ export function VersionHistoryDrawer() {
         </span>
         <div className="flex-1">
           <h2
-            className="text-sm font-bold text-foreground leading-tight"
-            style={{ fontFamily: 'var(--font-display)', letterSpacing: '-0.005em' }}
+            className="text-sm font-bold leading-tight"
+            style={{ fontFamily: 'var(--font-display)', letterSpacing: '-0.005em', color: 'var(--brand)' }}
           >
             Version history
           </h2>
@@ -191,22 +200,20 @@ export function VersionHistoryDrawer() {
                     onClick={() => handleRowClick(s)}
                     disabled={openingId === s.id}
                     className={cn(
-                      'w-full text-left px-3 py-2 rounded-md transition-colors disabled:opacity-50',
-                      'border',
-                      isActive
-                        ? 'border-l-2'
-                        : 'hover:bg-surface-elevated',
+                      'w-full text-left px-3 py-2 transition-colors disabled:opacity-50',
+                      !isActive &&
+                        'hover:bg-[linear-gradient(180deg,var(--canvas-dark-250),var(--canvas-dark-200))]',
                     )}
-                    style={
-                      isActive
-                        ? {
-                            background: 'var(--brand-soft)',
-                            borderColor: 'oklch(from var(--color-brand) l c h / 0.40)',
-                            borderLeftColor: 'var(--color-brand)',
-                            borderLeftWidth: '2px',
-                          }
-                        : { borderColor: 'var(--chrome-800)' }
-                    }
+                    style={{
+                      borderRadius: 'var(--r-row)',
+                      background: isActive
+                        ? 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))'
+                        : undefined,
+                      boxShadow: isActive ? 'var(--sh-tile)' : undefined,
+                      borderLeft: isActive
+                        ? '2px solid var(--brand)'
+                        : '2px solid transparent',
+                    }}
                   >
                     <div
                       className="text-xs font-mono tracking-wide"

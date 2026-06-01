@@ -144,10 +144,13 @@ export function FindReplace({ editor, onClose }: Props) {
       `}</style>
 
       <div
-        className="w-full max-w-[560px] rounded-lg shadow-lg"
+        className="w-full max-w-[560px]"
         style={{
-          background: 'var(--fr-bg)',
-          border: '1px solid var(--fr-border)',
+          background:
+            'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+          borderRadius: 'var(--r-card)',
+          boxShadow: 'var(--sh-card)',
+          border: 'var(--br-card)',
         }}
       >
         {/* Row 1: search */}
@@ -163,10 +166,12 @@ export function FindReplace({ editor, onClose }: Props) {
               if (e.key === 'Escape') onClose()
             }}
             placeholder="Find…"
-            className="fr-input flex-1 h-7 rounded px-2.5 text-sm outline-none transition-shadow"
+            className="fr-input flex-1 h-7 px-2.5 text-sm outline-none transition-shadow"
             style={{
               background: 'var(--fr-input-bg)',
               border: '1px solid var(--fr-input-border)',
+              borderRadius: 'var(--r-row)',
+              boxShadow: 'var(--sh-inset)',
               color: 'var(--fr-ink)',
             }}
           />

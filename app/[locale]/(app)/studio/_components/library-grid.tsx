@@ -294,8 +294,8 @@ export function LibraryGrid({ books, hives, locale }: Props) {
         <div
           className="grid"
           style={{
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-            gap: '22px',
+            gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+            gap: '14px',
           }}
         >
           {visibleItems.map((item) =>

@@ -4,7 +4,8 @@ import { eq } from 'drizzle-orm'
 import { getUserBooksAction } from '@/lib/actions/book.actions'
 import { getUserHivesView } from '@/lib/actions/hive.actions'
 import { StudioEmptyState } from './_components/studio-empty-state'
-import { DualHero } from './_components/dual-hero'
+import { ContinueWritingHero } from './_components/continue-writing-hero'
+import { HiveRail } from './_components/hive-rail'
 import { LibraryGrid } from './_components/library-grid'
 
 export default async function StudioPage({
@@ -31,8 +32,7 @@ export default async function StudioPage({
     return <StudioEmptyState locale={locale} templates={templates} />
   }
 
-  // Most-recently-edited book — sort defensively so the hero is stable
-  // regardless of getUserBooksAction's default ordering.
+  // Most-recently-edited book → hero. Defensive sort regardless of action order.
   const recentBook =
     books.length > 0
       ? [...books].sort(
@@ -41,38 +41,54 @@ export default async function StudioPage({
         )[0]
       : null
 
-  // getUserHivesView already orders by most-recent activity desc, so the first
-  // entry is the "active" hive.
-  const activeHive = hives.length > 0 ? hives[0] : null
-
   return (
     <main
-      className="relative z-[1]"
-      style={{
-        maxWidth: '1280px',
-        margin: '0 auto',
-        padding: '0 32px 96px',
-      }}
+      className="relative z-[1] mx-auto"
+      style={{ maxWidth: '1680px', padding: '8px 16px 48px' }}
     >
-      <div style={{ height: '40px' }} />
-
-      <section style={{ marginBottom: '36px' }}>
-        <DualHero book={recentBook} hive={activeHive} locale={locale} />
-      </section>
-
-      <h2
-        className="font-comfortaa font-bold m-0"
+      {/* Page-content shell — all studio content lives inside this dark-gray
+          rounded wrapper so the cards float on a clearly distinct surface
+          (vs. the outer #141414 layout backdrop). */}
+      <div
         style={{
-          color: 'var(--brand)',
-          fontSize: '16px',
-          letterSpacing: '-0.01em',
-          marginBottom: '16px',
+          background: '#1E1E1E',
+          borderRadius: 'var(--r-card)',
+          padding: '24px',
+          boxShadow: '0 1px 0 oklch(1 0 0 / 0.04) inset, 0 8px 24px oklch(0 0 0 / 0.25)',
+          border: 'var(--br-card)',
         }}
       >
-        Your library
-      </h2>
+        {/* Continue Writing hero — full width above the 2-col split */}
+        <section style={{ marginBottom: '24px' }}>
+          <ContinueWritingHero book={recentBook} locale={locale} />
+        </section>
 
-      <LibraryGrid books={books} hives={hives} locale={locale} />
+        {/* 2-col split: books main + 300px hive rail */}
+        <div
+          className="grid gap-5"
+          style={{ gridTemplateColumns: 'minmax(0, 1fr) 300px' }}
+        >
+          <div>
+            <h2
+              className="font-comfortaa font-bold m-0"
+              style={{
+                color: 'var(--brand)',
+                fontSize: '16px',
+                letterSpacing: '-0.01em',
+                marginBottom: '14px',
+              }}
+            >
+              Your books
+            </h2>
+            {/* Pass hives=[] so the grid renders books only — hives live in the rail */}
+            <LibraryGrid books={books} hives={[]} locale={locale} />
+          </div>
+
+          <aside>
+            <HiveRail hives={hives} locale={locale} />
+          </aside>
+        </div>
+      </div>
     </main>
   )
 }

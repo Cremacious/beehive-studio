@@ -187,13 +187,25 @@ export function CharacterProfile({ item }: Props) {
         <SaveStatusBadge status={saveStatus} />
       </header>
 
-      {/* Character pane — chrome-walnut backing (per mockup .char-pane). */}
+      {/* Character pane — chrome-walnut backing (per mockup .char-pane).
+          T10 aesthetic refresh: outer panel chrome (gradient + r-card + sh-card +
+          br-card). Light-mode override below restores the paper-200 canvas. */}
+      <style>{`
+        [data-editor-theme="light"] [data-slot="character-pane"] {
+          background:
+            radial-gradient(ellipse at 50% 0%, oklch(0.85 0.18 90 / 0.04), transparent 40%),
+            var(--sheet-canvas) !important;
+        }
+      `}</style>
       <div
         data-slot="character-pane"
         className="flex-1 overflow-y-auto"
         style={{
           background:
-            'radial-gradient(ellipse at 50% 0%, oklch(0.85 0.18 90 / 0.04), transparent 40%), var(--sheet-canvas)',
+            'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+          borderRadius: 'var(--r-card)',
+          boxShadow: 'var(--sh-card)',
+          border: 'var(--br-card)',
         }}
       >
         <div className="mx-auto max-w-[720px] px-8 pt-7 pb-14">

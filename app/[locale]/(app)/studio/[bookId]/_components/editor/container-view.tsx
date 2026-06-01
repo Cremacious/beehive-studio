@@ -71,6 +71,7 @@ export function ContainerView({ item }: Props) {
         --card-ink-muted:      var(--paper-ink-muted);
       }
       [data-editor-theme="light"] [data-slot="container-pane"] {
+        background: var(--container-bg) !important;
         --container-bg:        var(--paper-300);
         --container-ink:       var(--paper-ink-strong);
         --container-ink-muted: var(--paper-ink-muted);
@@ -88,7 +89,12 @@ export function ContainerView({ item }: Props) {
       <main
         data-slot="container-pane"
         className="flex-1 flex"
-        style={{ background: 'var(--container-bg)' }}
+        style={{
+          background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+          borderRadius: 'var(--r-card)',
+          boxShadow: 'var(--sh-card)',
+          border: 'var(--br-card)',
+        }}
       >
         {themeStyles}
         <EmptyState
@@ -172,12 +178,12 @@ export function ContainerView({ item }: Props) {
                 <button
                   type="button"
                   onClick={() => setActiveItemId(child.id)}
-                  className="group w-full text-left rounded-lg border transition-all px-4 py-3.5 flex items-start gap-3 cursor-pointer hover:-translate-y-px"
+                  className="group w-full text-left border transition-all px-4 py-3.5 flex items-start gap-3 cursor-pointer hover:-translate-y-px"
                   style={{
                     background: 'var(--card-bg)',
                     borderColor: 'var(--card-border)',
-                    boxShadow:
-                      '0 1px 0 oklch(1 0 0 / 0.3) inset, 0 1px 2px rgba(0,0,0,0.18), 0 8px 18px -10px rgba(0,0,0,0.35)',
+                    borderRadius: 'var(--r-row)',
+                    boxShadow: 'var(--sh-tile)',
                   }}
                   onMouseEnter={e => {
                     e.currentTarget.style.background = 'var(--card-bg-hover)'

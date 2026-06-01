@@ -96,9 +96,19 @@ export function WikiFolderRenderer({ item, readOnly = false }: { item: BinderIte
     <main
       data-slot="wiki-folder-pane"
       className="flex-1 overflow-y-auto"
-      style={{ background: 'var(--container-bg)' }}
+      style={{
+        background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+        borderRadius: 'var(--r-card)',
+        boxShadow: 'var(--sh-card)',
+        border: 'var(--br-card)',
+      }}
     >
       {themeStyles}
+      <style>{`
+        [data-editor-theme="light"] [data-slot="wiki-folder-pane"] {
+          background: var(--container-bg) !important;
+        }
+      `}</style>
       <div className="max-w-3xl mx-auto px-8 py-10">
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-3 min-w-0">
@@ -171,12 +181,12 @@ export function WikiFolderRenderer({ item, readOnly = false }: { item: BinderIte
                   <button
                     type="button"
                     onClick={() => setActiveItemId(child.id)}
-                    className="group w-full text-left rounded-lg border transition-all px-4 py-3.5 flex items-start gap-3 cursor-pointer hover:-translate-y-px"
+                    className="group w-full text-left border transition-all px-4 py-3.5 flex items-start gap-3 cursor-pointer hover:-translate-y-px"
                     style={{
                       background: 'var(--card-bg)',
                       borderColor: 'var(--card-border)',
-                      boxShadow:
-                        '0 1px 0 oklch(1 0 0 / 0.3) inset, 0 1px 2px rgba(0,0,0,0.18), 0 8px 18px -10px rgba(0,0,0,0.35)',
+                      borderRadius: 'var(--r-row)',
+                      boxShadow: 'var(--sh-tile)',
                     }}
                     onMouseEnter={e => {
                       e.currentTarget.style.background = 'var(--card-bg-hover)'

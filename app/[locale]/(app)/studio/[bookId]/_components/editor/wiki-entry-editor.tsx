@@ -83,9 +83,17 @@ export function WikiEntryEditor({ item, readOnly = false }: { item: BinderItemRo
     <main
       data-slot="wiki-entry-pane"
       className="flex-1 overflow-y-auto"
-      style={{ background: 'var(--wiki-canvas)' }}
+      style={{
+        background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+        borderRadius: 'var(--r-card)',
+        boxShadow: 'var(--sh-card)',
+        border: 'var(--br-card)',
+      }}
     >
       <style>{`
+        [data-editor-theme="light"] [data-slot="wiki-entry-pane"] {
+          background: var(--wiki-canvas) !important;
+        }
         [data-slot="wiki-entry-pane"] {
           --wiki-canvas:    oklch(0.22 0.005 256);
           --wiki-card-bg:   var(--paper-100);

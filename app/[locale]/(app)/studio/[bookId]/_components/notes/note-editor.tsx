@@ -137,11 +137,16 @@ export function NoteEditor({ item }: Props) {
          StarterKit. */}
       {editor && <EditorToolbar editor={editor} />}
 
-      {/* Note pane — paper IS the canvas. No floating card on a dark
-         background; prose sits directly on cream paper that fills the
-         entire writing surface, matching the chapter editor's pattern.
-         Notes always render as paper regardless of editor theme — they
-         represent a physical paper artifact. */}
+      {/* Note pane — T10 outer panel chrome (gradient + r-card + sh-card +
+         br-card). The cream-paper note sheet sits INSIDE the panel; the
+         paper itself is preserved exactly so the note still reads as a
+         physical paper artifact. Light mode keeps the paper-as-canvas
+         feel by overriding the gradient with paper-200. */}
+      <style>{`
+        [data-editor-theme="light"] [data-slot="note-pane"] {
+          background: var(--paper-200) !important;
+        }
+      `}</style>
       <div
         data-slot="note-pane"
         className="flex-1 overflow-y-auto cursor-text"
@@ -149,11 +154,25 @@ export function NoteEditor({ item }: Props) {
           if (editor && !editor.isDestroyed) editor.commands.focus()
         }}
         style={{
-          background: 'var(--paper-100)',
+          background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+          borderRadius: 'var(--r-card)',
+          boxShadow: 'var(--sh-card)',
+          border: 'var(--br-card)',
           color: 'var(--paper-ink)',
         }}
       >
-        <div className="mx-auto w-full max-w-[720px] px-8 pt-8 pb-16">
+        <div
+          className="mx-auto w-full max-w-[720px] px-8 pt-8 pb-16 my-8"
+          style={{
+            background: 'var(--paper-100)',
+            borderRadius: 6,
+            boxShadow: [
+              '0 1px 0 var(--paper-50) inset',
+              '0 1px 2px rgba(0,0,0,0.3)',
+              '0 12px 32px -10px rgba(0,0,0,0.4)',
+            ].join(', '),
+          }}
+        >
           <div data-slot="note-card">
             <h1
               data-slot="note-title"

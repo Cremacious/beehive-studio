@@ -217,6 +217,13 @@ export function OutlineBoard({ item }: Props) {
           --sheet-rule:       var(--paper-300);
           --sheet-rule-soft:  oklch(from var(--paper-300) l c h / 0.7);
         }
+        [data-editor-theme="light"] [data-slot="outline-pane-body"] {
+          background: var(--sheet-canvas) !important;
+        }
+        [data-editor-theme="light"] [data-slot="outline-pane"] [data-slot="beat-body"] {
+          background: var(--sheet-bg) !important;
+          border: 1px solid var(--sheet-rule);
+        }
         [data-slot="outline-pane"] [contenteditable]:focus {
           outline: 2px solid oklch(from var(--color-brand) l c h / 0.45);
           outline-offset: 2px;
@@ -266,7 +273,12 @@ export function OutlineBoard({ item }: Props) {
       <div
         data-slot="outline-pane-body"
         className="flex-1 overflow-y-auto"
-        style={{ background: 'var(--sheet-canvas)' }}
+        style={{
+          background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+          borderRadius: 'var(--r-card)',
+          boxShadow: 'var(--sh-card)',
+          border: 'var(--br-card)',
+        }}
       >
         <div
           className="mx-auto px-8 py-6"

@@ -110,13 +110,15 @@ export function OutlineBeatRow({
           </button>
         </div>
 
-        {/* Body card */}
+        {/* Body card — T10 tile gradient + r-row + sh-tile. */}
         <div
-          className="relative px-4 py-3 rounded-md"
+          data-slot="beat-body"
+          className="relative px-4 py-3"
           style={{
-            background: 'var(--sheet-bg)',
-            border: '1px solid var(--sheet-rule)',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.12)',
+            background:
+              'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+            borderRadius: 'var(--r-row)',
+            boxShadow: 'var(--sh-tile)',
           }}
         >
           {/* Title */}

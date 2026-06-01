@@ -30,16 +30,24 @@ export function PageWrapper({ children, saveStatusBadge, variant = 'default' }: 
       className="flex-1 overflow-y-auto"
       style={{
         background:
-          'radial-gradient(ellipse at 50% 0%, oklch(0.85 0.18 90 / 0.04), transparent 40%), var(--sheet-canvas)',
+          'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+        borderRadius: 'var(--r-card)',
+        boxShadow: 'var(--sh-card)',
+        border: 'var(--br-card)',
       }}
     >
-      {/* Theme-aware canvas: dark editor = chrome walnut; light = paper-200. */}
+      {/* Theme-aware canvas: dark editor = T10 panel chrome (inline); light =
+         paper-200 desk via override below. The cream paper page sheet inside
+         is UNCHANGED. */}
       <style>{`
         [data-slot="fbm-pane"] {
           --sheet-canvas: var(--background);
         }
         [data-editor-theme="light"] [data-slot="fbm-pane"] {
           --sheet-canvas: var(--paper-200);
+          background:
+            radial-gradient(ellipse at 50% 0%, oklch(0.85 0.18 90 / 0.04), transparent 40%),
+            var(--paper-200) !important;
         }
         /* Empty editable fields get a dashed outline so users see them as
            input zones at rest — without it, the cream-paper page looks

@@ -345,15 +345,21 @@ export function BinderTree() {
     <BinderTreeContext.Provider value={ctxValue}>
       <aside
         aria-hidden={focusMode}
+        style={{
+          background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+          borderRadius: 'var(--r-card)',
+          boxShadow: 'var(--sh-card)',
+          border: 'var(--br-card)',
+        }}
         className={cn(
-          'flex-shrink-0 flex flex-col bg-surface border-r border-border overflow-hidden',
+          'flex-shrink-0 flex flex-col overflow-hidden',
           'transition-[width,opacity,transform] duration-200 ease-out',
           focusMode
             ? 'w-0 opacity-0 -translate-x-2 pointer-events-none'
             : 'w-60 opacity-100 translate-x-0',
         )}
       >
-        <div className="px-3.5 pt-4 pb-3 border-b border-border">
+        <div className="px-3.5 pt-4 pb-3">
           <div className="text-[10px] font-mono uppercase tracking-[0.10em] text-muted-foreground mb-1.5">
             Book
           </div>
@@ -363,7 +369,8 @@ export function BinderTree() {
                 <input
                   ref={bookTitleInputRef}
                   defaultValue={localBookTitle}
-                  className="w-full bg-transparent border-b border-brand text-[15px] font-bold font-comfortaa tracking-tight outline-none text-foreground leading-tight"
+                  style={{ color: 'var(--brand)' }}
+                  className="w-full bg-transparent border-b border-brand text-[15px] font-bold font-comfortaa tracking-tight outline-none leading-tight"
                   onKeyDown={e => {
                     if (e.key === 'Enter') commitBookRename()
                     if (e.key === 'Escape') setIsRenamingBook(false)
@@ -374,7 +381,8 @@ export function BinderTree() {
                 <Link
                   href={`/${locale}/books/${bookId}`}
                   aria-label="Preview as reader"
-                  className="block text-[15px] font-bold text-foreground font-comfortaa tracking-tight leading-tight truncate cursor-pointer hover:text-brand hover:underline transition-colors no-underline"
+                  style={{ color: 'var(--brand)' }}
+                  className="block text-[15px] font-bold font-comfortaa tracking-tight leading-tight truncate cursor-pointer hover:underline transition-colors no-underline"
                   onDoubleClick={(e) => {
                     e.preventDefault()
                     setIsRenamingBook(true)
@@ -386,11 +394,32 @@ export function BinderTree() {
               )}
             </div>
             <div className="flex items-center gap-1 flex-shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  // Trigger the BinderAddMenu by dispatching a custom event;
+                  // the menu owns its own trigger in the footer too. The
+                  // header tile is a quick-access mirror — clicking it scrolls
+                  // user awareness to the footer add menu via focus.
+                  const trigger = document.querySelector<HTMLButtonElement>('[data-binder-add-trigger]')
+                  trigger?.click()
+                }}
+                aria-label="Add binder item"
+                title="Add binder item"
+                style={{
+                  color: 'var(--brand)',
+                  borderRadius: 'var(--r-btn)',
+                }}
+                className="font-geist font-semibold text-sm px-2 py-1 hover:bg-[linear-gradient(180deg,var(--canvas-dark-350),var(--canvas-dark-300))] transition-colors"
+              >
+                + Add
+              </button>
               <Link
                 href={`/${locale}/studio/${bookId}/details`}
                 title="Book details"
                 aria-label="Book details"
-                className="w-7 h-7 inline-flex items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-surface-elevated hover:text-foreground transition-colors no-underline"
+                style={{ borderRadius: 'var(--r-btn)' }}
+                className="w-7 h-7 inline-flex items-center justify-center text-muted-foreground hover:bg-[linear-gradient(180deg,var(--canvas-dark-350),var(--canvas-dark-300))] hover:text-foreground transition-colors no-underline"
               >
                 <Settings size={14} />
               </Link>
@@ -420,7 +449,7 @@ export function BinderTree() {
           </DndContext>
         </div>
 
-        <div className="border-t border-border px-2.5 py-3 flex flex-col gap-2 bg-surface">
+        <div className="px-2.5 py-3 flex flex-col gap-2">
           <BinderAddMenu />
           <BinderHiveFooter />
         </div>

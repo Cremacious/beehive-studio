@@ -15,7 +15,15 @@ export function WikiCategoryPicker({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl">
+      <DialogContent
+        style={{
+          background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+          borderRadius: 'var(--r-card)',
+          boxShadow: 'var(--sh-card)',
+          border: 'var(--br-card)',
+        }}
+        className="sm:max-w-3xl"
+      >
         <DialogHeader>
           <DialogTitle>What kind of wiki entry?</DialogTitle>
         </DialogHeader>
@@ -27,7 +35,13 @@ export function WikiCategoryPicker({
                 key={t.category}
                 type="button"
                 onClick={() => onPick(t.category)}
-                className="group flex flex-col items-start gap-2 rounded-lg border border-border bg-card p-3 text-left transition-all hover:ring-2 hover:ring-brand hover:bg-surface-elevated"
+                style={{
+                  borderRadius: 'var(--r-row)',
+                  boxShadow: 'var(--sh-tile)',
+                  background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+                  border: 'var(--br-card)',
+                }}
+                className="group flex flex-col items-start gap-2 p-3 text-left transition-all hover:ring-2 hover:ring-brand"
               >
                 <span
                   className="inline-flex h-8 w-8 items-center justify-center rounded-md"

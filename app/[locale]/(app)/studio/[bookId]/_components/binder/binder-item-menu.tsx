@@ -30,11 +30,12 @@ function MenuItem({
     <div
       role="menuitem"
       onClick={onClick}
+      style={{ borderRadius: 'var(--r-row)' }}
       className={cn(
-        'text-[13px] px-2.5 py-2 rounded-md cursor-pointer flex items-center gap-2.5 transition-colors',
+        'text-[13px] px-2.5 py-2 cursor-pointer flex items-center gap-2.5 transition-colors',
         destructive
           ? 'text-destructive hover:bg-destructive/10 [&_svg]:text-destructive'
-          : 'text-foreground hover:bg-surface-elevated [&_svg]:text-muted-foreground hover:[&_svg]:text-foreground',
+          : 'text-foreground hover:bg-[linear-gradient(180deg,var(--canvas-dark-250),var(--canvas-dark-200))] [&_svg]:text-muted-foreground hover:[&_svg]:text-foreground',
       )}
     >
       {children}
@@ -214,7 +215,13 @@ export function BinderItemMenu({ node, onRenameStart }: Props) {
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="start"
-        className="w-52 p-1.5 rounded-lg border border-border bg-popover shadow-lg"
+        style={{
+          background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+          borderRadius: 'var(--r-card)',
+          boxShadow: 'var(--sh-card)',
+          border: 'var(--br-card)',
+        }}
+        className="w-52 p-1.5"
         onClick={e => e.stopPropagation()}
         onCloseAutoFocus={e => {
           // Only suppress focus-restoration when closing because Rename was

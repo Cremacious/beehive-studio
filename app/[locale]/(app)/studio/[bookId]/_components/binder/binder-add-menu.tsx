@@ -74,7 +74,8 @@ function MenuItem({
     <div
       role="menuitem"
       onClick={onClick}
-      className="px-2.5 py-2 rounded-md cursor-pointer hover:bg-surface-elevated text-foreground flex items-start gap-2.5 transition-colors"
+      style={{ borderRadius: 'var(--r-row)' }}
+      className="px-2.5 py-2 cursor-pointer hover:bg-[linear-gradient(180deg,var(--canvas-dark-250),var(--canvas-dark-200))] text-foreground flex items-start gap-2.5 transition-colors"
     >
       <span className="mt-0.5 flex-shrink-0 inline-flex items-center justify-center" style={{ color: option.tint }}>
         <option.Icon size={14} />
@@ -183,6 +184,7 @@ export function BinderAddMenu() {
       <DropdownMenu open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger asChild>
           <button
+            data-binder-add-trigger
             className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-brand hover:bg-brand-hover px-3 py-2 text-[13px] font-bold font-comfortaa text-brand-ink transition-colors shadow-sm tracking-tight"
             title="Add chapter, collection, character, and more"
           >
@@ -190,7 +192,17 @@ export function BinderAddMenu() {
             <span>Add</span>
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" side="top" className="w-72 p-1.5 rounded-lg border border-border bg-popover shadow-lg">
+        <DropdownMenuContent
+          align="start"
+          side="top"
+          style={{
+            background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+            borderRadius: 'var(--r-card)',
+            boxShadow: 'var(--sh-card)',
+            border: 'var(--br-card)',
+          }}
+          className="w-72 p-1.5"
+        >
           <SectionLabel>Manuscript</SectionLabel>
           {MANUSCRIPT_OPTIONS.map(opt => (
             <MenuItem key={opt.type} option={opt} onClick={() => handleAdd(opt)} />

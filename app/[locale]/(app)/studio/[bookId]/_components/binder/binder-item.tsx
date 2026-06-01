@@ -191,17 +191,31 @@ export function BinderItem({ node, depth }: Props) {
       )}
       <div
         ref={setNodeRef}
-        style={{ ...style, paddingLeft: `${8 + depth * 12}px` }}
+        style={{
+          ...style,
+          paddingLeft: `${8 + depth * 12}px`,
+          borderRadius: 'var(--r-row)',
+          background: isActive
+            ? 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))'
+            : undefined,
+          // Compose --sh-tile depth with the 2px brand-yellow inset left marker.
+          // Drag-middle ring overrides everything below.
+          boxShadow:
+            dropZoneForThisRow === 'middle'
+              ? '0 0 0 4px oklch(from var(--brand) l c h / 0.25)'
+              : isActive
+                ? 'var(--sh-tile), inset 2px 0 0 var(--brand)'
+                : undefined,
+        }}
         {...dragAttributes}
         {...dragListeners}
         className={cn(
-          'group flex items-center gap-2 h-8 pr-2 rounded-md select-none transition-colors relative',
-          'text-foreground hover:bg-surface-elevated',
+          'group flex items-center gap-2 h-8 pr-2 select-none transition-colors relative',
+          'text-foreground',
+          !isActive && 'hover:bg-[linear-gradient(180deg,var(--canvas-dark-250),var(--canvas-dark-200))]',
           isRenaming ? 'cursor-text' : 'cursor-grab',
-          isActive && 'bg-brand/15 text-foreground shadow-[inset_2px_0_0_var(--brand)]',
-          isRenaming && 'bg-surface-elevated',
-          dropZoneForThisRow === 'middle' &&
-            'ring-2 ring-brand bg-brand/20 shadow-[0_0_0_4px_oklch(from_var(--brand)_l_c_h_/_0.25)]',
+          isRenaming && !isActive && 'bg-[linear-gradient(180deg,var(--canvas-dark-250),var(--canvas-dark-200))]',
+          dropZoneForThisRow === 'middle' && 'ring-2 ring-brand bg-brand/20',
         )}
         onClick={() => setActiveItemId(node.id)}
         aria-label={isRenaming ? undefined : 'Drag to reorder'}

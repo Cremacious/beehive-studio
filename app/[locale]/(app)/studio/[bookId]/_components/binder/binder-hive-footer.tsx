@@ -16,12 +16,19 @@ export function BinderHiveFooter() {
     return (
       <Link
         href={`/${locale}/hive/${bookHive.hiveId}`}
-        className="w-full flex items-center gap-2 px-2.5 py-2 rounded-md border border-border bg-transparent text-foreground hover:bg-surface-elevated transition-colors text-[13px]"
+        style={{
+          background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+          borderRadius: 'var(--r-row)',
+          boxShadow: 'var(--sh-tile)',
+          border: 'var(--br-card)',
+          color: 'var(--brand)',
+        }}
+        className="w-full flex items-center gap-2 px-2.5 py-2 font-semibold transition-colors text-[13px] no-underline hover:brightness-110"
         title="Go to Hive"
       >
-        <Users size={14} className="text-muted-foreground flex-shrink-0" />
+        <Users size={14} className="flex-shrink-0" style={{ color: 'var(--brand)' }} />
         <span className="flex-1 text-left">Go to Hive</span>
-        <ChevronRight size={12} className="text-muted-foreground flex-shrink-0" />
+        <ChevronRight size={12} className="flex-shrink-0" style={{ color: 'var(--brand)' }} />
       </Link>
     )
   }
@@ -30,12 +37,19 @@ export function BinderHiveFooter() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="w-full flex items-center gap-2 px-2.5 py-2 rounded-md border border-border bg-transparent text-foreground hover:bg-surface-elevated transition-colors text-[13px]"
+        style={{
+          background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+          borderRadius: 'var(--r-row)',
+          boxShadow: 'var(--sh-tile)',
+          border: 'var(--br-card)',
+          color: 'var(--brand)',
+        }}
+        className="w-full flex items-center gap-2 px-2.5 py-2 font-semibold transition-colors text-[13px] hover:brightness-110"
         title="Create Hive"
       >
-        <Plus size={14} className="text-muted-foreground flex-shrink-0" />
+        <Plus size={14} className="flex-shrink-0" style={{ color: 'var(--brand)' }} />
         <span className="flex-1 text-left">Create Hive</span>
-        <ChevronRight size={12} className="text-muted-foreground flex-shrink-0" />
+        <ChevronRight size={12} className="flex-shrink-0" style={{ color: 'var(--brand)' }} />
       </button>
       <CreateHiveModal open={open} onOpenChange={setOpen} prelockBookId={bookId} />
     </>

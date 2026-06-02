@@ -1,9 +1,13 @@
 'use client'
 
+/* OutlineBeatRow — one beat in the act drawer. Compact iOS-table row
+ * with: drag handle · index · status dot · title (editable) · description
+ * (editable, optional) · link chip · delete. */
+
 import { useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { GripVertical, Trash2, Link as LinkIcon } from 'lucide-react'
+import { GripVertical, Trash2, Link as LinkIcon, Link2Off } from 'lucide-react'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import type { Beat, BeatStatus } from './outline-board'
 
@@ -21,12 +25,15 @@ type Props = {
   onJumpToChapter: () => void
 }
 
-// Status token map. Three tints from existing --status-* palette per spec §Task 4.
-// idea → cloud blue · drafting → warm yellow · done → terracotta.
-const STATUS_TOKEN: Record<BeatStatus, string> = {
-  idea: '--status-idea',
-  drafting: '--status-first-draft',
-  done: '--status-final',
+const STATUS_COLOR: Record<BeatStatus, string> = {
+  idea: 'oklch(0.78 0.04 240)',
+  drafting: 'oklch(0.78 0.16 80)',
+  done: 'oklch(0.70 0.16 145)',
+}
+const STATUS_LABEL: Record<BeatStatus, string> = {
+  idea: 'idea',
+  drafting: 'drafting',
+  done: 'done',
 }
 
 export function OutlineBeatRow({
@@ -34,228 +41,188 @@ export function OutlineBeatRow({
   onChange, onDelete, onCycleStatus, onOpenLinkPopover, onUnlink, onJumpToChapter,
 }: Props) {
   const [confirmOpen, setConfirmOpen] = useState(false)
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: beat.id })
-  const rowStyle = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.4 : 1,
+  const sortable = useSortable({ id: beat.id })
+
+  const rowStyle: React.CSSProperties = {
+    transform: CSS.Transform.toString(sortable.transform),
+    transition: sortable.transition,
+    opacity: sortable.isDragging ? 0.45 : 1,
+    display: 'grid',
+    gridTemplateColumns: '28px 26px 14px 1fr auto auto',
+    alignItems: 'center',
+    gap: 10,
+    padding: '10px 12px',
+    borderBottom: isLast ? 0 : '1px solid var(--outline-rule)',
+    color: 'var(--outline-ink)',
+    background: sortable.isDragging
+      ? 'oklch(from var(--color-brand) l c h / 0.06)'
+      : 'transparent',
   }
 
   const status: BeatStatus = beat.status ?? 'idea'
-  const statusToken = STATUS_TOKEN[status]
-  const linked = !!beat.linkedChapterId
 
   return (
-    <div
-      ref={setNodeRef}
-      style={rowStyle}
-      className="group relative grid gap-3 py-3 px-2 rounded-md transition-colors"
-      data-slot="beat-row"
-      // grid-template-columns: gutter (number + drag handle) | body
-      // matches mockup .beat
-    >
-      <div
-        className="grid"
-        style={{ gridTemplateColumns: '42px 1fr', gap: 12, position: 'relative' }}
-      >
-        {/* Gutter: numbered pill + drag handle + connector line down */}
-        <div
-          className="flex flex-col items-center gap-1.5 pt-0.5 relative"
-          aria-hidden
-        >
-          {/* connector line */}
-          {!isLast && (
-            <span
-              aria-hidden
-              style={{
-                position: 'absolute',
-                left: '50%',
-                top: 30,
-                bottom: -16,
-                width: 1,
-                background: 'var(--sheet-rule-soft)',
-                transform: 'translateX(-50%)',
-              }}
-            />
-          )}
-          <span
-            className="inline-flex items-center justify-center font-mono font-semibold"
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: 999,
-              fontSize: 11,
-              zIndex: 1,
-              background: linked ? 'var(--color-brand)' : 'var(--sheet-bg)',
-              color: linked ? 'var(--brand-ink, oklch(0.18 0.02 60))' : 'var(--sheet-ink-muted)',
-              border: linked
-                ? '1px solid var(--color-brand)'
-                : '1px solid var(--sheet-rule)',
-              boxShadow: linked
-                ? '0 0 0 3px oklch(from var(--color-brand) l c h / 0.18)'
-                : undefined,
-            }}
-          >
-            {index}
-          </span>
-          <button
-            type="button"
-            {...attributes}
-            {...listeners}
-            className="opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing"
-            aria-label="Drag beat"
-            style={{ color: 'var(--sheet-ink-muted)' }}
-          >
-            <GripVertical className="w-3.5 h-4" />
-          </button>
-        </div>
-
-        {/* Body card — T10 tile gradient + r-row + sh-tile. */}
-        <div
-          data-slot="beat-body"
-          className="relative px-4 py-3"
+    <>
+      <div ref={sortable.setNodeRef} style={rowStyle} data-slot="beat-row">
+        <button
+          type="button"
+          ref={sortable.setActivatorNodeRef}
+          {...sortable.attributes}
+          {...sortable.listeners}
+          aria-label="Drag to reorder · drag into another act to move"
+          title="Drag to reorder · drag into another act to move"
           style={{
-            background:
-              'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-            borderRadius: 'var(--r-row)',
-            boxShadow: 'var(--sh-tile)',
+            width: 28, height: 28,
+            display: 'grid', placeItems: 'center',
+            background: 'transparent', border: 0,
+            color: 'var(--outline-ink-muted)',
+            cursor: 'grab',
+            borderRadius: 6,
           }}
         >
-          {/* Title */}
-          <h4
-            contentEditable
-            suppressContentEditableWarning
-            onBlur={e => {
-              const next = (e.currentTarget.textContent ?? '').trim()
-              if (next !== (beat.title ?? '').trim()) onChange({ title: next })
-            }}
-            onKeyDown={e => {
-              if (e.key === 'Enter') {
-                e.preventDefault()
-                ;(e.currentTarget as HTMLElement).blur()
-              }
-            }}
-            className="m-0 outline-none"
+          <GripVertical className="w-4 h-4" />
+        </button>
+
+        <span
+          aria-label={`Beat ${index}`}
+          style={{
+            width: 26, height: 22,
+            display: 'grid', placeItems: 'center',
+            borderRadius: 11,
+            background: 'oklch(from var(--outline-ink-muted) l c h / 0.12)',
+            color: 'var(--outline-ink-muted)',
+            fontSize: 11,
+            fontWeight: 700,
+          }}
+        >
+          {index}
+        </span>
+
+        <button
+          type="button"
+          onClick={onCycleStatus}
+          aria-label={`Status: ${STATUS_LABEL[status]} · click to cycle`}
+          title={`Status: ${STATUS_LABEL[status]} · click to cycle (idea → drafting → done)`}
+          style={{
+            width: 14, height: 14,
+            borderRadius: 7,
+            background: STATUS_COLOR[status],
+            border: '1.5px solid var(--outline-drawer-bg)',
+            boxShadow: '0 0 0 1px var(--outline-rule)',
+            cursor: 'pointer',
+            padding: 0,
+          }}
+        />
+
+        <div style={{ minWidth: 0 }}>
+          <input
+            type="text"
+            value={beat.title}
+            placeholder="Untitled beat"
+            onChange={e => onChange({ title: e.target.value })}
             style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: 15,
+              width: '100%',
+              background: 'transparent',
+              border: 0,
+              outline: 'none',
+              color: 'var(--outline-ink-strong)',
+              fontSize: 13,
               fontWeight: 600,
-              color: 'var(--sheet-ink-strong)',
-              lineHeight: 1.3,
-              letterSpacing: '-0.005em',
+              padding: 0,
+              fontFamily: 'inherit',
             }}
-            data-placeholder="Beat title"
-          >
-            {beat.title}
-          </h4>
-
-          {/* Description */}
-          <div
-            contentEditable
-            suppressContentEditableWarning
-            onBlur={e => {
-              const next = (e.currentTarget.textContent ?? '').trim()
-              if (next !== (beat.description ?? '').trim()) onChange({ description: next })
-            }}
-            className="mt-1.5 outline-none"
-            style={{
-              fontFamily: 'var(--font-prose)',
-              fontSize: 14,
-              lineHeight: 1.55,
-              color: 'var(--sheet-ink-muted)',
-              minHeight: '1.4em',
-              whiteSpace: 'pre-wrap',
-            }}
-            data-placeholder="What happens in this beat?"
-          >
-            {beat.description ?? ''}
-          </div>
-
-          {/* Row: chapter chip + status pill */}
-          <div className="mt-2.5 flex items-center gap-2 flex-wrap">
-            {/* Linked-chapter chip */}
-            {linked ? (
-              <button
-                type="button"
-                onClick={chapterAvailable ? onJumpToChapter : undefined}
-                onDoubleClick={onUnlink}
-                title={chapterAvailable ? 'Click to open · double-click to unlink' : 'Chapter unavailable · double-click to unlink'}
-                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full"
-                style={{
-                  background: chapterAvailable
-                    ? 'oklch(from var(--color-brand) l c h / 0.18)'
-                    : 'oklch(from var(--destructive) l c h / 0.15)',
-                  color: chapterAvailable
-                    ? 'var(--color-brand)'
-                    : 'var(--destructive)',
-                  border: '1px solid oklch(from var(--color-brand) l c h / 0.28)',
-                  fontFamily: 'var(--font-display)',
-                  fontWeight: 600,
-                  fontSize: 11.5,
-                }}
-              >
-                <LinkIcon className="w-2.5 h-2.5 opacity-60" />
-                {chapterAvailable ? (chapterTitle ?? 'Linked chapter') : 'Chapter unavailable'}
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={onOpenLinkPopover}
-                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full transition-colors"
-                style={{
-                  background: 'transparent',
-                  color: 'var(--sheet-ink-muted)',
-                  border: '1px dashed var(--sheet-rule)',
-                  fontFamily: 'var(--font-display)',
-                  fontWeight: 600,
-                  fontSize: 11.5,
-                }}
-              >
-                <LinkIcon className="w-2.5 h-2.5 opacity-60" />
-                Link chapter
-              </button>
-            )}
-
-            {/* Status pill — clickable, cycles idea → drafting → done → idea */}
-            <button
-              type="button"
-              onClick={onCycleStatus}
-              title="Click to cycle status"
-              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-mono lowercase"
+          />
+          {beat.description ? (
+            <input
+              type="text"
+              value={beat.description}
+              placeholder="Notes…"
+              onChange={e => onChange({ description: e.target.value })}
               style={{
-                fontSize: 10.5,
-                letterSpacing: '0.04em',
-                color: `var(${statusToken})`,
-                backgroundColor: `oklch(from var(${statusToken}) l c h / 0.18)`,
-                borderColor: `oklch(from var(${statusToken}) l c h / 0.40)`,
-                borderWidth: 1,
-                borderStyle: 'solid',
+                width: '100%',
+                background: 'transparent',
+                border: 0,
+                outline: 'none',
+                color: 'var(--outline-ink-muted)',
+                fontSize: 12,
+                padding: '2px 0 0',
+                fontFamily: 'inherit',
               }}
-            >
-              <span
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: 2,
-                  background: `var(${statusToken})`,
-                  display: 'inline-block',
-                }}
-              />
-              {status}
-            </button>
-          </div>
+            />
+          ) : null}
+        </div>
 
-          {/* Delete button — appears on hover */}
+        {beat.linkedChapterId && chapterAvailable ? (
           <button
             type="button"
-            onClick={() => setConfirmOpen(true)}
-            aria-label="Delete beat"
-            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded"
-            style={{ color: 'var(--sheet-ink-muted)' }}
+            onClick={onJumpToChapter}
+            title={`Linked to ${chapterTitle ?? 'chapter'} · click to jump`}
+            aria-label={`Linked to ${chapterTitle ?? 'chapter'}`}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+              padding: '4px 8px',
+              borderRadius: 6,
+              background: 'oklch(from var(--color-brand) l c h / 0.12)',
+              color: 'var(--outline-ink)',
+              border: 0,
+              fontSize: 11,
+              fontWeight: 600,
+              cursor: 'pointer',
+              maxWidth: 140,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            <LinkIcon className="w-3 h-3" />
+            {chapterTitle ?? 'Chapter'}
           </button>
-        </div>
+        ) : beat.linkedChapterId ? (
+          <button
+            type="button"
+            onClick={onUnlink}
+            title="Linked chapter is missing · click to unlink"
+            aria-label="Unlink missing chapter"
+            style={{ ...linkButtonBase, color: 'var(--outline-ink-muted)' }}
+          >
+            <Link2Off className="w-3 h-3" />
+            Missing
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={onOpenLinkPopover}
+            title="Link this beat to a chapter"
+            aria-label="Link to a chapter"
+            style={{
+              ...linkButtonBase,
+              color: 'var(--outline-ink-muted)',
+              opacity: 0.6,
+            }}
+          >
+            <LinkIcon className="w-3 h-3" />
+          </button>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setConfirmOpen(true)}
+          title="Delete beat"
+          aria-label="Delete beat"
+          style={{
+            width: 28, height: 28,
+            display: 'grid', placeItems: 'center',
+            background: 'transparent', border: 0,
+            color: 'var(--outline-ink-muted)',
+            cursor: 'pointer',
+            borderRadius: 6,
+            opacity: 0.7,
+          }}
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
       </div>
 
       <ConfirmDialog
@@ -263,10 +230,24 @@ export function OutlineBeatRow({
         onOpenChange={setConfirmOpen}
         variant="destructive"
         title="Delete this beat?"
-        description="This removes the beat from your outline, including its summary, status, and any linked chapter reference. This cannot be undone."
-        confirmLabel="Delete beat"
-        onConfirm={onDelete}
+        description="This can't be undone."
+        confirmLabel="Delete"
+        onConfirm={() => {
+          setConfirmOpen(false)
+          onDelete()
+        }}
       />
-    </div>
+    </>
   )
+}
+
+const linkButtonBase: React.CSSProperties = {
+  width: 28,
+  height: 28,
+  display: 'grid',
+  placeItems: 'center',
+  background: 'transparent',
+  border: 0,
+  cursor: 'pointer',
+  borderRadius: 6,
 }

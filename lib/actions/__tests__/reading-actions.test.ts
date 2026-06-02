@@ -21,21 +21,20 @@ vi.mock('@/db', () => ({
   },
 }))
 
+import * as readingActions from '@/lib/actions/reading.actions'
+
 describe('reading actions surface', () => {
-  it('exports markChapterReadAction, unmarkChapterReadAction, getReadingProgressAction', async () => {
-    const mod = await import('@/lib/actions/reading.actions')
-    expect(typeof mod.markChapterReadAction).toBe('function')
-    expect(typeof mod.unmarkChapterReadAction).toBe('function')
-    expect(typeof mod.getReadingProgressAction).toBe('function')
+  it('exports markChapterReadAction, unmarkChapterReadAction, getReadingProgressAction', () => {
+    expect(typeof readingActions.markChapterReadAction).toBe('function')
+    expect(typeof readingActions.unmarkChapterReadAction).toBe('function')
+    expect(typeof readingActions.getReadingProgressAction).toBe('function')
   })
 
-  it('markChapterReadAction is async and takes 2 args (bookId, chapterBinderItemId)', async () => {
-    const mod = await import('@/lib/actions/reading.actions')
-    expect(mod.markChapterReadAction.length).toBe(2)
+  it('markChapterReadAction is async and takes 2 args (bookId, chapterBinderItemId)', () => {
+    expect(readingActions.markChapterReadAction.length).toBe(2)
   })
 
-  it('unmarkChapterReadAction is async and takes 2 args (bookId, chapterBinderItemId)', async () => {
-    const mod = await import('@/lib/actions/reading.actions')
-    expect(mod.unmarkChapterReadAction.length).toBe(2)
+  it('unmarkChapterReadAction is async and takes 2 args (bookId, chapterBinderItemId)', () => {
+    expect(readingActions.unmarkChapterReadAction.length).toBe(2)
   })
 })

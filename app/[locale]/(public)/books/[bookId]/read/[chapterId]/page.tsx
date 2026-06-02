@@ -90,7 +90,7 @@ export default async function ChapterReaderPage({ params }: Props) {
 
   // Mark chapter as read for authenticated users
   if (userId) {
-    await markChapterReadAction(bookId, chapterId)
+    await markChapterReadAction(bookId, current.binderItemId)
   }
 
   const htmlContent = chapter.content ? tiptapToHtml(chapter.content) : ''

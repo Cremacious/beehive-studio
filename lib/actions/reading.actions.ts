@@ -1,8 +1,8 @@
 'use server'
 
 import { db } from '@/db'
-import { readingProgress, binderItems, chapters } from '@/db/schema'
-import { and, eq, asc } from 'drizzle-orm'
+import { readingProgress, chapterReads, chapters } from '@/db/schema'
+import { and, eq } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { canReadBook } from '@/lib/books/can-read'
 import type { ActionResult } from './book.actions'
@@ -14,22 +14,68 @@ export type ReadingProgressResult = {
 
 export async function markChapterReadAction(
   bookId: string,
-  chapterId: string
+  chapterBinderItemId: string
 ): Promise<ActionResult<void>> {
   const userId = await requireAuth()
 
   const access = await canReadBook(bookId, userId)
   if (!access.ok) return { success: false, error: 'FORBIDDEN' }
 
+  // Resolve chapters.id (cursor PK) from the binder item id.
+  const [chapterRow] = await db
+    .select({ chapterId: chapters.id })
+    .from(chapters)
+    .where(eq(chapters.binderItemId, chapterBinderItemId))
+    .limit(1)
+
   const now = new Date()
+
+  // Idempotent insert into the read set.
   await db
-    .insert(readingProgress)
-    .values({ userId, bookId, chapterId, lastOpenedAt: now })
-    .onConflictDoUpdate({
-      target: [readingProgress.userId, readingProgress.bookId],
-      set: { chapterId, lastOpenedAt: now },
+    .insert(chapterReads)
+    .values({ userId, bookId, chapterBinderItemId, readAt: now })
+    .onConflictDoNothing({
+      target: [chapterReads.userId, chapterReads.chapterBinderItemId],
     })
 
+  // Cursor upsert is preserved so "Continue Reading" and the auto-mark
+  // from /read/[chapterId] keep working uninterrupted. If we can't resolve
+  // the chapters.id row (race condition or stale id), the cursor write is
+  // skipped — the read set still records the intent.
+  if (chapterRow?.chapterId) {
+    await db
+      .insert(readingProgress)
+      .values({ userId, bookId, chapterId: chapterRow.chapterId, lastOpenedAt: now })
+      .onConflictDoUpdate({
+        target: [readingProgress.userId, readingProgress.bookId],
+        set: { chapterId: chapterRow.chapterId, lastOpenedAt: now },
+      })
+  }
+
+  return { success: true, data: undefined }
+}
+
+export async function unmarkChapterReadAction(
+  bookId: string,
+  chapterBinderItemId: string
+): Promise<ActionResult<void>> {
+  const userId = await requireAuth()
+
+  const access = await canReadBook(bookId, userId)
+  if (!access.ok) return { success: false, error: 'FORBIDDEN' }
+
+  await db
+    .delete(chapterReads)
+    .where(
+      and(
+        eq(chapterReads.userId, userId),
+        eq(chapterReads.chapterBinderItemId, chapterBinderItemId)
+      )
+    )
+
+  // Deliberately do NOT touch readingProgress — the cursor is a separate
+  // concern from the read set, and unmarking a chapter shouldn't reset
+  // "Continue Reading".
   return { success: true, data: undefined }
 }
 
@@ -42,38 +88,21 @@ export async function getReadingProgressAction(
   if (!access.ok) return { success: false, error: 'FORBIDDEN' }
 
   const [progress] = await db
-    .select()
+    .select({ chapterId: readingProgress.chapterId })
     .from(readingProgress)
     .where(and(eq(readingProgress.userId, userId), eq(readingProgress.bookId, bookId)))
     .limit(1)
 
-  if (!progress || !progress.chapterId) {
-    return { success: true, data: { lastChapterId: null, readChapterBinderItemIds: [] } }
-  }
-
-  const [currentChapter] = await db
-    .select({ binderItemId: chapters.binderItemId })
-    .from(chapters)
-    .where(eq(chapters.id, progress.chapterId))
-    .limit(1)
-
-  if (!currentChapter?.binderItemId) {
-    return { success: true, data: { lastChapterId: progress.chapterId, readChapterBinderItemIds: [] } }
-  }
-
-  const allChapterItems = await db
-    .select({ id: binderItems.id, order: binderItems.order })
-    .from(binderItems)
-    .where(and(eq(binderItems.bookId, bookId), eq(binderItems.type, 'chapter')))
-    .orderBy(asc(binderItems.order))
-
-  const currentIndex = allChapterItems.findIndex(item => item.id === currentChapter.binderItemId)
-  const readIds = currentIndex >= 0
-    ? allChapterItems.slice(0, currentIndex + 1).map(item => item.id)
-    : []
+  const reads = await db
+    .select({ chapterBinderItemId: chapterReads.chapterBinderItemId })
+    .from(chapterReads)
+    .where(and(eq(chapterReads.userId, userId), eq(chapterReads.bookId, bookId)))
 
   return {
     success: true,
-    data: { lastChapterId: progress.chapterId, readChapterBinderItemIds: readIds },
+    data: {
+      lastChapterId: progress?.chapterId ?? null,
+      readChapterBinderItemIds: reads.map((r) => r.chapterBinderItemId),
+    },
   }
 }

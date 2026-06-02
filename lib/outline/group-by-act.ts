@@ -4,38 +4,59 @@ import type { Beat as ExistingBeat } from '@/app/[locale]/(app)/studio/[bookId]/
 export type ActBeat = ExistingBeat & { act?: string | null }
 
 export type ActGroup = {
-  /** null = ungrouped (collapsible "No Act" group; only rendered if non-empty) */
+  /** null = ungrouped ("No Act") */
   act: string | null
   beats: ActBeat[]
 }
 
 /**
- * Groups beats into act blocks while preserving input order both BETWEEN groups
- * (first appearance of a given act name wins its position) and WITHIN groups.
- * Ungrouped beats (`act` null/undefined/empty) collect into a single null-keyed
- * group surfaced at the top of the returned array.
+ * Groups beats into act blocks.
+ *
+ * - When `actsOrder` is provided, returns groups in that order. Acts listed
+ *   in actsOrder that have zero beats still produce an empty group (needed
+ *   so the empty-drop-zone can render).
+ * - When `actsOrder` is undefined, falls back to insertion order: ungrouped
+ *   first, then named acts in order of first appearance.
+ * - Beats whose act is not present in actsOrder fall into a synthesized
+ *   trailing group (so no data is lost if actsOrder gets out of sync).
  */
-export function groupBeatsByAct(beats: readonly ActBeat[]): ActGroup[] {
-  const ungrouped: ActBeat[] = []
-  const orderedActs: string[] = []
-  const byAct = new Map<string, ActBeat[]>()
-
+export function groupBeatsByAct(
+  beats: readonly ActBeat[],
+  actsOrder?: ReadonlyArray<string | null>,
+): ActGroup[] {
+  const byAct = new Map<string | null, ActBeat[]>()
   for (const b of beats) {
-    const a = (b.act ?? '').trim()
-    if (!a) {
-      ungrouped.push(b)
-      continue
-    }
-    if (!byAct.has(a)) {
-      byAct.set(a, [])
-      orderedActs.push(a)
-    }
-    byAct.get(a)!.push(b)
+    const key = ((b.act ?? '').trim() || null) as string | null
+    if (!byAct.has(key)) byAct.set(key, [])
+    byAct.get(key)!.push(b)
   }
 
+  if (actsOrder && actsOrder.length > 0) {
+    const groups: ActGroup[] = []
+    const seen = new Set<string | null>()
+    for (const key of actsOrder) {
+      const normKey = (typeof key === 'string' ? key.trim() : null) || null
+      seen.add(normKey)
+      groups.push({ act: normKey, beats: byAct.get(normKey) ?? [] })
+    }
+    // Trailing groups for acts present in beats but missing from actsOrder.
+    for (const [key, list] of byAct) {
+      if (!seen.has(key)) groups.push({ act: key, beats: list })
+    }
+    return groups
+  }
+
+  // Legacy fallback — insertion order, ungrouped first.
+  const ungrouped = byAct.get(null) ?? []
   const groups: ActGroup[] = []
   if (ungrouped.length) groups.push({ act: null, beats: ungrouped })
-  for (const a of orderedActs) groups.push({ act: a, beats: byAct.get(a)! })
+  const seen = new Set<string | null>([null])
+  for (const b of beats) {
+    const key = ((b.act ?? '').trim() || null) as string | null
+    if (seen.has(key)) continue
+    seen.add(key)
+    groups.push({ act: key, beats: byAct.get(key)! })
+  }
   return groups
 }
 

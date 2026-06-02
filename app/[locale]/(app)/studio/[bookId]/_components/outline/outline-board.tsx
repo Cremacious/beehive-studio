@@ -35,7 +35,18 @@ export type Beat = {
   act?: string | null
 }
 
-export type OutlineContent = { beats: Beat[] }
+export type ActKey = string | null  // null = "No Act"
+
+export type OutlineContent = {
+  beats: Beat[]
+  /** Render order of acts. null sentinel = "No Act". Optional for backward
+   *  compatibility — legacy docs derive order from beat insertion order. */
+  actsOrder?: ActKey[]
+  /** Currently-collapsed acts. null = "No Act". */
+  collapsedActs?: ActKey[]
+  /** User clicked × on the sticky help banner. */
+  helpBannerDismissed?: boolean
+}
 
 type LegacyCard = {
   id: string

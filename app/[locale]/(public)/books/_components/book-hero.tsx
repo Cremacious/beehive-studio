@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { Globe, Lock, Users, Heart, Bookmark, Share2, BookOpen, Pencil } from 'lucide-react'
+import { Globe, Lock, Users, Heart, Bookmark, Share2, BookOpen } from 'lucide-react'
 import { toast } from 'sonner'
 import { toggleBookLikeAction, toggleBookmarkAction } from '@/lib/actions/social.actions'
 import type { PublicBook } from '@/lib/actions/discover.actions'
@@ -14,12 +14,13 @@ type Props = {
   book: PublicBook & { visibility: Visibility; commentCount: number }
   locale: string
   shareUrl: string
-  isAuthor: boolean
   isAuthenticated: boolean
   startReadingHref: string | null
   continueReadingHref: string | null
   totalChapters: number
   readCount: number
+  firstPublishedAt: Date | string
+  lastUpdatedAt: Date | string
   initialLiked: boolean
   initialBookmarked: boolean
   initialLikeCount: number
@@ -27,6 +28,11 @@ type Props = {
 
 function formatWordCount(n: number): string {
   return n >= 1000 ? `${Math.round(n / 1000)}k` : String(n)
+}
+
+function fmtDate(d: Date | string): string {
+  const date = typeof d === 'string' ? new Date(d) : d
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 const VISIBILITY_META: Record<Visibility, { Icon: typeof Globe; label: string }> = {
@@ -39,12 +45,13 @@ export function BookHero({
   book,
   locale,
   shareUrl,
-  isAuthor,
   isAuthenticated,
   startReadingHref,
   continueReadingHref,
   totalChapters,
   readCount,
+  firstPublishedAt,
+  lastUpdatedAt,
   initialLiked,
   initialBookmarked,
   initialLikeCount,
@@ -202,6 +209,10 @@ export function BookHero({
             ))}
           </div>
 
+          <div className="font-mono text-[10px] uppercase tracking-wider text-[var(--canvas-dark-ink-muted)]">
+            Published {fmtDate(firstPublishedAt)} · Updated {fmtDate(lastUpdatedAt)}
+          </div>
+
           {book.synopsis && (
             <p className="line-clamp-3 max-w-xl text-sm leading-relaxed text-[var(--canvas-dark-ink)]">
               {book.synopsis}
@@ -251,15 +262,6 @@ export function BookHero({
               />
               {bookmarked ? 'Bookmarked' : 'Bookmark'}
             </button>
-            {isAuthor && (
-              <Link
-                href={`/${locale}/studio/${book.id}`}
-                className="inline-flex items-center gap-1.5 text-sm text-[var(--canvas-dark-ink-muted)] hover:text-[var(--brand)]"
-              >
-                <Pencil className="h-3.5 w-3.5" />
-                Edit in studio →
-              </Link>
-            )}
           </div>
         </div>
       </div>

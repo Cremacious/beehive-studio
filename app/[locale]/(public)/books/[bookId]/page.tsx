@@ -1,5 +1,4 @@
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
 import { headers } from 'next/headers'
 import { db } from '@/db'
 import { books, binderItems, chapters, bookComments, userProfiles } from '@/db/schema'
@@ -13,7 +12,6 @@ import { getUserSocialStateAction } from '@/lib/actions/social.actions'
 import { AccessDenied } from '../_components/access-denied'
 import { ReaderPageShell } from '../_components/reader-page-shell'
 import { CommentsPanel } from '../_components/comments-panel'
-import { AboutSection } from '../_components/about-section'
 import { SeriesFooter } from '../../_components/series-footer'
 
 type Props = { params: Promise<{ locale: string; bookId: string }> }
@@ -102,8 +100,6 @@ export default async function BookReaderPage({ params }: Props) {
   const viewerAvatarUrl = viewerProfileRow?.[0]?.avatarUrl ?? null
 
   const readerBasePath = `/${locale}/books/${bookId}`
-  const backHref = isAuthor ? `/${locale}/studio/${bookId}` : `/${locale}/discover`
-  const backLabel = isAuthor ? '← Editor' : '← Discover'
 
   // Pick CTA targets — use the same reader-visible filter as <ChaptersPanel>.
   const isVisibleToViewer = (status: (typeof chapterRows)[number]['status']) =>
@@ -128,24 +124,18 @@ export default async function BookReaderPage({ params }: Props) {
   return (
     <div className="min-h-screen bg-[#262728]">
       <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
-        <Link
-          href={backHref}
-          className="mb-4 inline-block text-sm text-[var(--canvas-dark-ink-muted)] hover:text-[var(--canvas-dark-ink-strong)]"
-        >
-          {backLabel}
-        </Link>
-
         <div className="flex flex-col gap-6">
           <ReaderPageShell
             hero={{
               book: { ...book, visibility, commentCount },
               locale,
               shareUrl,
-              isAuthor,
               isAuthenticated: !!userId,
               startReadingHref,
               continueReadingHref,
               totalChapters: visibleChapters.length,
+              firstPublishedAt: bookExtra.createdAt,
+              lastUpdatedAt: bookExtra.updatedAt,
               initialLiked: social?.liked ?? false,
               initialBookmarked: social?.bookmarked ?? false,
               initialLikeCount: book.likeCount,
@@ -167,18 +157,6 @@ export default async function BookReaderPage({ params }: Props) {
               initialCount={commentCount}
               isAuthenticated={!!userId}
               viewerAvatarUrl={viewerAvatarUrl}
-            />
-            <AboutSection
-              locale={locale}
-              synopsis={book.synopsis}
-              firstPublishedAt={bookExtra.createdAt}
-              lastUpdatedAt={bookExtra.updatedAt}
-              author={{
-                userId: book.authorUserId,
-                username: book.authorUsername,
-                displayName: book.authorDisplayName,
-                avatarUrl: book.authorAvatarUrl,
-              }}
             />
             <SeriesFooter neighbors={seriesNeighbors} locale={locale} />
           </ReaderPageShell>

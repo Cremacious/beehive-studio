@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { BookHero } from './book-hero'
-import { BookTabStrip } from './book-tab-strip'
 import { ChaptersPanel } from './chapters-panel'
 import type { ComponentProps } from 'react'
 
@@ -22,7 +21,6 @@ export function ReaderPageShell({ hero, chapters, children }: Props) {
   return (
     <>
       <BookHero {...hero} readCount={readCount} />
-      <BookTabStrip />
       <ChaptersPanel {...chapters} onReadSetChange={setReadSet} />
       {children}
     </>

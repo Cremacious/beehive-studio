@@ -78,7 +78,7 @@
   /* Was warm coffee (hue 55-80°); replaced with the same neutral hue 256°
      as the chrome scale so the dark editor body sits cleanly inside the
      dark UI. Cream paper (light mode) is untouched. */
-  --canvas-dark-100: oklch(0.255 0.003 256);
+  --canvas-dark-100: #262728; /* rgb(38,39,40) — matches the (app) layout bg so editor canvas blends */
   --canvas-dark-150: oklch(0.275 0.003 256);
   --canvas-dark-200: oklch(0.295 0.003 256);
   --canvas-dark-250: oklch(0.325 0.003 256);

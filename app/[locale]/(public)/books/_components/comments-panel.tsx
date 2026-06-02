@@ -25,6 +25,30 @@ function relTime(date: Date | string): string {
   return `${Math.floor(seconds / 86400)}d ago`
 }
 
+const COMMENT_AVATAR_GRADIENTS = [
+  'linear-gradient(150deg, oklch(0.62 0.13 20), oklch(0.48 0.1 12))',
+  'linear-gradient(150deg, oklch(0.6 0.12 155), oklch(0.46 0.1 165))',
+  'linear-gradient(150deg, oklch(0.6 0.12 290), oklch(0.46 0.1 300))',
+  'linear-gradient(150deg, oklch(0.6 0.13 250), oklch(0.46 0.1 280))',
+  'linear-gradient(150deg, oklch(0.6 0.13 90), oklch(0.46 0.1 70))',
+] as const
+
+function avatarGradientFor(seed: string | null | undefined): string {
+  if (!seed) return COMMENT_AVATAR_GRADIENTS[0]
+  let h = 0
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0
+  return COMMENT_AVATAR_GRADIENTS[h % COMMENT_AVATAR_GRADIENTS.length]
+}
+
+function initialsFor(c: BookComment): string {
+  const name = c.authorDisplayName ?? c.authorUsername ?? ''
+  if (!name) return '??'
+  const parts = name.replace(/^@/, '').split(/[\s_.\-]+/).filter(Boolean)
+  if (parts.length === 0) return name.slice(0, 2).toUpperCase()
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return (parts[0][0] + parts[1][0]).toUpperCase()
+}
+
 export function CommentsPanel({
   bookId,
   locale,
@@ -74,45 +98,124 @@ export function CommentsPanel({
   return (
     <section
       id="comments"
-      className="scroll-mt-20 rounded-[var(--r-card)] p-6"
+      className="scroll-mt-20 rounded-[var(--r-card)]"
       style={{
+        padding: '30px 32px 32px',
         background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
         boxShadow: 'var(--sh-card)',
         borderTop: '1px solid var(--br-card)',
       }}
     >
-      <div className="mb-5 flex items-baseline justify-between">
-        <h2 className="font-comfortaa text-lg font-bold text-[var(--brand)]">Comments</h2>
-        <span className="text-xs text-[var(--canvas-dark-ink-muted)]">{count}</span>
+      <div className="mb-[22px] flex items-baseline justify-between gap-4">
+        <h2
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontWeight: 700,
+            fontSize: '22px',
+            letterSpacing: '-0.01em',
+            color: 'var(--brand)',
+            margin: 0,
+          }}
+        >
+          Comments
+        </h2>
+        <span
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '12px',
+            letterSpacing: '0.08em',
+            color: 'var(--canvas-dark-ink-muted)',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <b style={{ color: 'var(--canvas-dark-ink-strong)', fontWeight: 500 }}>{count}</b>{' '}
+          comments
+        </span>
       </div>
 
       {isAuthenticated ? (
-        <div className="mb-5 flex gap-3">
+        <div className="mb-[26px] flex" style={{ gap: '12px' }}>
           {viewerAvatarUrl ? (
             <img
               src={viewerAvatarUrl}
               alt=""
-              className="h-8 w-8 shrink-0 rounded-full object-cover"
+              style={{
+                width: '36px',
+                height: '36px',
+                flexShrink: 0,
+                borderRadius: 'var(--r-pill)',
+                objectFit: 'cover',
+              }}
             />
           ) : (
-            <div className="h-8 w-8 shrink-0 rounded-full bg-[var(--canvas-dark-300)]" />
+            <span
+              className="inline-flex items-center justify-center"
+              style={{
+                width: '36px',
+                height: '36px',
+                flexShrink: 0,
+                borderRadius: 'var(--r-pill)',
+                background:
+                  'linear-gradient(150deg, var(--brand), var(--brand-active, var(--brand)))',
+                fontFamily: 'var(--font-display)',
+                fontWeight: 700,
+                fontSize: '11px',
+                color: 'var(--brand-ink)',
+                letterSpacing: '0.05em',
+              }}
+            >
+              YOU
+            </span>
           )}
           <div className="flex-1">
             <textarea
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               placeholder="Add a comment…"
-              rows={2}
+              aria-label="Add a comment"
               maxLength={1000}
-              className="w-full resize-none rounded-[var(--r-row)] bg-[var(--canvas-dark-100)] px-3 py-2 text-sm text-[var(--canvas-dark-ink-strong)] outline-none placeholder:text-[var(--canvas-dark-ink-muted)]"
-              style={{ boxShadow: 'var(--sh-inset)' }}
+              style={{
+                width: '100%',
+                minHeight: '76px',
+                resize: 'vertical',
+                padding: '12px 14px',
+                border: 0,
+                borderRadius: 'var(--r-row)',
+                background: 'var(--canvas-dark-100)',
+                boxShadow: 'var(--sh-inset)',
+                color: 'var(--canvas-dark-ink-strong)',
+                fontFamily: 'var(--font-ui)',
+                fontSize: '14px',
+                lineHeight: 1.5,
+                outline: 'none',
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.boxShadow =
+                  'var(--sh-inset), 0 0 0 1px oklch(0.85 0.18 90 / 0.4)'
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.boxShadow = 'var(--sh-inset)'
+              }}
             />
-            <div className="mt-2 flex justify-end">
+            <div className="mt-[10px] flex justify-end">
               <button
                 type="button"
                 onClick={submit}
                 disabled={isPending || !draft.trim()}
-                className="rounded-[var(--r-btn)] bg-[var(--brand)] px-4 py-1.5 text-sm font-semibold text-[var(--brand-ink)] disabled:opacity-40"
+                style={{
+                  padding: '9px 20px',
+                  borderRadius: 'var(--r-pill)',
+                  background: 'var(--brand)',
+                  color: 'var(--brand-ink)',
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 700,
+                  fontSize: '14px',
+                  border: 0,
+                  cursor: 'pointer',
+                  boxShadow: '0 1px 0 0 oklch(1 0 0 / 0.2) inset',
+                  opacity: isPending || !draft.trim() ? 0.4 : 1,
+                  transition: 'background .14s',
+                }}
               >
                 Post
               </button>
@@ -120,74 +223,164 @@ export function CommentsPanel({
           </div>
         </div>
       ) : (
-        <p className="mb-5 text-sm text-[var(--canvas-dark-ink-muted)]">
+        <div
+          className="mb-[26px]"
+          style={{
+            padding: '16px 18px',
+            borderRadius: 'var(--r-row)',
+            background: 'var(--canvas-dark-100)',
+            boxShadow: 'var(--sh-inset)',
+            color: 'var(--canvas-dark-ink-muted)',
+            fontSize: '14px',
+          }}
+        >
           <Link
             href={`/${locale}/sign-in`}
-            className="text-[var(--brand)] hover:underline"
+            style={{
+              color: 'var(--brand)',
+              textDecoration: 'none',
+              fontWeight: 600,
+            }}
+            className="hover:underline"
           >
             Sign in
           </Link>{' '}
-          to leave a comment.
-        </p>
+          to join the conversation and leave a comment.
+        </div>
       )}
 
       {comments.length === 0 ? (
-        <p className="text-sm italic text-[var(--canvas-dark-ink-muted)]">No comments yet.</p>
+        <p
+          className="italic"
+          style={{ color: 'var(--canvas-dark-ink-muted)', fontSize: '14px', margin: 0 }}
+        >
+          No comments yet.
+        </p>
       ) : (
-        <ul className="flex flex-col gap-4">
-          {comments.map((c) => (
-            <li key={c.id} className="flex gap-3">
+        <div className="flex flex-col" style={{ gap: '4px' }}>
+          {comments.map((c, idx) => (
+            <article
+              key={c.id}
+              className="flex"
+              style={{
+                gap: '12px',
+                padding: '16px 0',
+                borderTop:
+                  idx === 0 ? '0' : '1px solid var(--canvas-dark-300)',
+              }}
+            >
               {c.authorAvatarUrl ? (
                 <img
                   src={c.authorAvatarUrl}
                   alt=""
-                  className="h-8 w-8 shrink-0 rounded-full object-cover"
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    flexShrink: 0,
+                    borderRadius: 'var(--r-pill)',
+                    objectFit: 'cover',
+                  }}
                 />
               ) : (
-                <div className="h-8 w-8 shrink-0 rounded-full bg-[var(--canvas-dark-300)]" />
+                <span
+                  className="inline-flex items-center justify-center"
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    flexShrink: 0,
+                    borderRadius: 'var(--r-pill)',
+                    background: avatarGradientFor(c.authorUsername ?? c.authorDisplayName),
+                    fontFamily: 'var(--font-display)',
+                    fontWeight: 700,
+                    fontSize: '13px',
+                    color: 'oklch(0.97 0.01 250)',
+                  }}
+                >
+                  {initialsFor(c)}
+                </span>
               )}
               <div className="min-w-0 flex-1">
-                <div className="flex items-baseline gap-2">
+                <div
+                  className="flex items-baseline"
+                  style={{ gap: '10px', marginBottom: '4px' }}
+                >
                   {c.authorUsername ? (
                     <Link
                       href={`/${locale}/u/${c.authorUsername}`}
-                      className="text-sm font-semibold text-[var(--canvas-dark-ink-strong)] hover:underline"
+                      style={{
+                        fontWeight: 600,
+                        fontSize: '14px',
+                        color: 'var(--canvas-dark-ink-strong)',
+                        textDecoration: 'none',
+                      }}
+                      className="hover:underline"
                     >
-                      {c.authorDisplayName ?? `@${c.authorUsername}`}
+                      @{c.authorUsername}
                     </Link>
                   ) : (
-                    <span className="text-sm font-semibold text-[var(--canvas-dark-ink-strong)]">
+                    <span
+                      style={{
+                        fontWeight: 600,
+                        fontSize: '14px',
+                        color: 'var(--canvas-dark-ink-strong)',
+                      }}
+                    >
                       {c.authorDisplayName ?? 'Anonymous'}
                     </span>
                   )}
-                  <span className="text-xs text-[var(--canvas-dark-ink-muted)]">
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '11px',
+                      letterSpacing: '0.04em',
+                      color: 'var(--canvas-dark-ink-muted)',
+                    }}
+                  >
                     {relTime(c.createdAt)}
                   </span>
                 </div>
-                <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-[var(--canvas-dark-ink)]">
+                <p
+                  style={{
+                    fontSize: '14px',
+                    lineHeight: 1.55,
+                    color: 'var(--canvas-dark-ink)',
+                    whiteSpace: 'pre-line',
+                    margin: 0,
+                  }}
+                >
                   {c.content}
                 </p>
               </div>
-            </li>
+            </article>
           ))}
-        </ul>
+        </div>
       )}
 
       {hasMore && (
-        <div className="mt-5 text-center">
-          <button
-            type="button"
-            onClick={loadMore}
-            disabled={isPending}
-            className="rounded-[var(--r-btn)] px-4 py-1.5 text-sm text-[var(--canvas-dark-ink)] disabled:opacity-40"
-            style={{
-              background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-              boxShadow: 'var(--sh-tile)',
-            }}
-          >
-            Load more
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={loadMore}
+          disabled={isPending}
+          style={{
+            width: '100%',
+            marginTop: '18px',
+            padding: '13px',
+            borderRadius: 'var(--r-row)',
+            background:
+              'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+            boxShadow: 'var(--sh-tile)',
+            color: 'var(--canvas-dark-ink)',
+            fontFamily: 'var(--font-ui)',
+            fontWeight: 500,
+            fontSize: '14px',
+            border: 0,
+            cursor: isPending ? 'default' : 'pointer',
+            opacity: isPending ? 0.6 : 1,
+            transition: 'color .14s',
+          }}
+        >
+          Load more comments
+        </button>
       )}
     </section>
   )

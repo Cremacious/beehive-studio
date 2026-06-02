@@ -252,6 +252,40 @@ export async function getBookCommentsAction(
   }
 }
 
+export type MoreByAuthorBook = {
+  id: string
+  title: string
+  authorUsername: string | null
+  authorDisplayName: string | null
+}
+
+export async function getMoreByAuthorAction(
+  authorUserId: string,
+  excludeBookId: string,
+): Promise<ActionResult<MoreByAuthorBook | null>> {
+  const rows = await db
+    .select({
+      id: books.id,
+      title: books.title,
+      authorUsername: userProfiles.username,
+      authorDisplayName: userProfiles.displayName,
+    })
+    .from(books)
+    .leftJoin(userProfiles, eq(books.userId, userProfiles.userId))
+    .where(
+      and(
+        eq(books.userId, authorUserId),
+        sql`${books.id} <> ${excludeBookId}`,
+        eq(books.visibility, 'PUBLIC'),
+        eq(books.discoverable, true),
+      ),
+    )
+    .orderBy(desc(books.updatedAt))
+    .limit(1)
+
+  return { success: true, data: rows[0] ?? null }
+}
+
 export async function getDiscoverWritersAction(): Promise<ActionResult<DiscoverWriter[]>> {
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
 

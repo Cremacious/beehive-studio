@@ -1,59 +1,153 @@
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowLeft, ArrowRight } from 'lucide-react'
 import type { SeriesNeighbors } from '@/lib/books/get-series-neighbors'
+
+type MoreByAuthor = {
+  id: string
+  title: string
+  authorUsername: string | null
+  authorDisplayName: string | null
+}
 
 type Props = {
   neighbors: SeriesNeighbors
   locale: string
+  moreByAuthor?: MoreByAuthor | null
 }
 
-export function SeriesFooter({ neighbors, locale }: Props) {
+function SeriesLink({
+  href,
+  direction,
+  name,
+  isNext,
+}: {
+  href: string
+  direction: string
+  name: string
+  isNext: boolean
+}) {
+  const Arrow = isNext ? ArrowRight : ArrowLeft
+  return (
+    <Link
+      href={href}
+      className="flex items-center no-underline"
+      style={{
+        gap: '14px',
+        padding: '14px 18px',
+        borderRadius: 'var(--r-row)',
+        background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+        boxShadow: 'var(--sh-tile)',
+        color: 'inherit',
+        transition: 'transform .14s',
+        flexDirection: isNext ? 'row-reverse' : 'row',
+        textAlign: isNext ? 'right' : 'left',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'translateY(-1px)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = ''
+      }}
+    >
+      <span
+        aria-hidden
+        className="inline-flex items-center justify-center"
+        style={{
+          flexShrink: 0,
+          width: '34px',
+          height: '34px',
+          borderRadius: 'var(--r-pill)',
+          background: 'var(--canvas-dark-100)',
+          boxShadow: 'var(--sh-inset)',
+          color: 'var(--canvas-dark-ink-muted)',
+        }}
+      >
+        <Arrow size={15} strokeWidth={2.2} />
+      </span>
+      <span className="min-w-0">
+        <span
+          className="block"
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '10px',
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: 'var(--canvas-dark-ink-muted)',
+          }}
+        >
+          {direction}
+        </span>
+        <span
+          className="block truncate"
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontWeight: 600,
+            fontSize: '14px',
+            color: 'var(--canvas-dark-ink-strong)',
+          }}
+        >
+          {name}
+        </span>
+      </span>
+    </Link>
+  )
+}
+
+export function SeriesFooter({ neighbors, locale, moreByAuthor = null }: Props) {
   const { previous, next } = neighbors
-  if (!previous && !next) return null
+  const hasSeries = previous || next
+
+  if (!hasSeries && !moreByAuthor) return null
 
   return (
-    <section
-      className="mt-6 grid grid-cols-1 gap-3 rounded-[var(--r-card)] p-5 sm:grid-cols-2"
+    <nav
+      aria-label={hasSeries ? 'Series navigation' : 'More by author'}
+      className="grid rounded-[var(--r-card)]"
       style={{
+        gridTemplateColumns: '1fr 1fr',
+        gap: '10px',
+        padding: '16px',
         background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
         boxShadow: 'var(--sh-card)',
         borderTop: '1px solid var(--br-card)',
       }}
     >
-      <div>
-        {previous && (
-          <Link
-            href={`/${locale}/books/${previous.id}`}
-            className="flex h-full flex-col gap-1 rounded-[var(--r-row)] p-3 hover:bg-[var(--canvas-dark-300)]"
-            style={{ boxShadow: 'var(--sh-tile)' }}
-          >
-            <span className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-[var(--canvas-dark-ink-muted)]">
-              <ChevronLeft size={12} /> Previous in series
-            </span>
-            <span className="text-sm text-[var(--canvas-dark-ink-strong)]">
-              {previous.seriesNumber !== null ? `Book ${previous.seriesNumber}: ` : ''}
-              {previous.title}
-            </span>
-          </Link>
-        )}
-      </div>
-      <div className="text-right">
-        {next && (
-          <Link
-            href={`/${locale}/books/${next.id}`}
-            className="flex h-full flex-col items-end gap-1 rounded-[var(--r-row)] p-3 hover:bg-[var(--canvas-dark-300)]"
-            style={{ boxShadow: 'var(--sh-tile)' }}
-          >
-            <span className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-[var(--canvas-dark-ink-muted)]">
-              Next in series <ChevronRight size={12} />
-            </span>
-            <span className="text-sm text-[var(--canvas-dark-ink-strong)]">
-              {next.seriesNumber !== null ? `Book ${next.seriesNumber}: ` : ''}
-              {next.title}
-            </span>
-          </Link>
-        )}
-      </div>
-    </section>
+      {hasSeries ? (
+        <>
+          <div>
+            {previous && (
+              <SeriesLink
+                href={`/${locale}/books/${previous.id}`}
+                direction="Previous in series"
+                name={`${previous.seriesNumber !== null ? `Book ${previous.seriesNumber}: ` : ''}${previous.title}`}
+                isNext={false}
+              />
+            )}
+          </div>
+          <div>
+            {next && (
+              <SeriesLink
+                href={`/${locale}/books/${next.id}`}
+                direction="Next in series"
+                name={`${next.seriesNumber !== null ? `Book ${next.seriesNumber}: ` : ''}${next.title}`}
+                isNext
+              />
+            )}
+          </div>
+        </>
+      ) : moreByAuthor ? (
+        <>
+          <div />
+          <div>
+            <SeriesLink
+              href={`/${locale}/books/${moreByAuthor.id}`}
+              direction={`More by @${moreByAuthor.authorUsername ?? 'this author'}`}
+              name={moreByAuthor.title}
+              isNext
+            />
+          </div>
+        </>
+      ) : null}
+    </nav>
   )
 }

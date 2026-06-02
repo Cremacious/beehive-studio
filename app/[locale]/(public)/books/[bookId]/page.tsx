@@ -6,7 +6,11 @@ import { and, eq, asc, count } from 'drizzle-orm'
 import { auth } from '@/lib/auth'
 import { canReadBook } from '@/lib/books/can-read'
 import { getSeriesNeighbors } from '@/lib/books/get-series-neighbors'
-import { getPublicBookAction, getBookCommentsAction } from '@/lib/actions/discover.actions'
+import {
+  getPublicBookAction,
+  getBookCommentsAction,
+  getMoreByAuthorAction,
+} from '@/lib/actions/discover.actions'
 import { getReadingProgressAction } from '@/lib/actions/reading.actions'
 import { getUserSocialStateAction } from '@/lib/actions/social.actions'
 import { AccessDenied } from '../_components/access-denied'
@@ -71,6 +75,7 @@ export default async function BookReaderPage({ params }: Props) {
     socialResult,
     seriesNeighbors,
     viewerProfileRow,
+    moreByAuthorResult,
   ] = await Promise.all([
     getBookCommentsAction(bookId, 1),
     userId ? getReadingProgressAction(bookId) : Promise.resolve(null),
@@ -91,6 +96,7 @@ export default async function BookReaderPage({ params }: Props) {
           .where(eq(userProfiles.userId, userId))
           .limit(1)
       : Promise.resolve(null),
+    getMoreByAuthorAction(book.authorUserId, bookId),
   ])
 
   const comments = commentsResult.success ? commentsResult.data.comments : []
@@ -98,6 +104,7 @@ export default async function BookReaderPage({ params }: Props) {
   const progress = progressResult?.success ? progressResult.data : null
   const social = socialResult?.success ? socialResult.data : null
   const viewerAvatarUrl = viewerProfileRow?.[0]?.avatarUrl ?? null
+  const moreByAuthor = moreByAuthorResult.success ? moreByAuthorResult.data : null
 
   const readerBasePath = `/${locale}/books/${bookId}`
 
@@ -122,9 +129,18 @@ export default async function BookReaderPage({ params }: Props) {
   const visibility = (bookExtra.visibility ?? 'PUBLIC') as 'PUBLIC' | 'FRIENDS' | 'PRIVATE'
 
   return (
-    <div className="min-h-screen bg-[#262728]">
-      <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
-        <div className="flex flex-col gap-6">
+    <div className="relative min-h-screen bg-[#262728]">
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 z-0"
+        style={{
+          backgroundImage:
+            'radial-gradient(circle at 1px 1px, oklch(1 0 0 / 0.012) 1px, transparent 0)',
+          backgroundSize: '26px 26px',
+        }}
+      />
+      <div className="relative z-10 mx-auto max-w-[1080px] px-4 py-10 sm:px-7">
+        <div className="flex flex-col gap-7">
           <ReaderPageShell
             hero={{
               book: { ...book, visibility, commentCount },
@@ -158,7 +174,11 @@ export default async function BookReaderPage({ params }: Props) {
               isAuthenticated={!!userId}
               viewerAvatarUrl={viewerAvatarUrl}
             />
-            <SeriesFooter neighbors={seriesNeighbors} locale={locale} />
+            <SeriesFooter
+              neighbors={seriesNeighbors}
+              locale={locale}
+              moreByAuthor={moreByAuthor}
+            />
           </ReaderPageShell>
         </div>
       </div>

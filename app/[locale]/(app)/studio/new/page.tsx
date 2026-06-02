@@ -16,5 +16,12 @@ export default async function NewBookPage({
     .where(eq(bookTemplates.isSystemTemplate, true))
     .orderBy(bookTemplates.name)
 
-  return <BookCreationForm locale={locale} templates={templates} />
+  return (
+    <div
+      className="flex-1 flex flex-col"
+      style={{ background: '#242526' }}
+    >
+      <BookCreationForm locale={locale} templates={templates} />
+    </div>
+  )
 }

@@ -2,7 +2,7 @@ import { pgTable, text, timestamp, integer, boolean, primaryKey, pgEnum, index, 
 import { createId } from '@paralleldrive/cuid2'
 import { relations } from 'drizzle-orm'
 import { users } from './auth'
-import { books, chapters } from './books'
+import { books, chapters, binderItems } from './books'
 
 export const friendshipStatusEnum = pgEnum('friendship_status', ['PENDING', 'ACCEPTED'])
 
@@ -59,6 +59,16 @@ export const readingProgress = pgTable('reading_progress', {
   chapterId: text('chapter_id').references(() => chapters.id, { onDelete: 'set null' }),
   lastOpenedAt: timestamp('last_opened_at').defaultNow().notNull(),
 }, (t) => [primaryKey({ columns: [t.userId, t.bookId] })])
+
+export const chapterReads = pgTable('chapter_reads', {
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  bookId: text('book_id').notNull().references(() => books.id, { onDelete: 'cascade' }),
+  chapterBinderItemId: text('chapter_binder_item_id').notNull().references(() => binderItems.id, { onDelete: 'cascade' }),
+  readAt: timestamp('read_at').defaultNow().notNull(),
+}, (t) => [
+  primaryKey({ columns: [t.userId, t.chapterBinderItemId] }),
+  index('chapter_reads_user_book_idx').on(t.userId, t.bookId),
+])
 
 export const notifications = pgTable('notifications', {
   id: text('id').primaryKey().$defaultFn(() => createId()),

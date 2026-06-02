@@ -4,8 +4,35 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { authClient } from '@/lib/auth-client'
 
+const panelStyle: React.CSSProperties = {
+  background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+  borderRadius: 'var(--r-card)',
+  boxShadow: 'var(--sh-card)',
+  border: 'var(--br-card)',
+  color: 'var(--canvas-dark-ink-strong, #fff)',
+}
+
+const inputStyle: React.CSSProperties = {
+  background: 'var(--canvas-dark-100)',
+  boxShadow: 'var(--sh-inset)',
+  borderRadius: 'var(--r-row)',
+  color: 'var(--canvas-dark-ink-strong, #fff)',
+  border: '1px solid transparent',
+}
+
+const inputErrorStyle: React.CSSProperties = {
+  ...inputStyle,
+  border: '1px solid oklch(0.62 0.18 25 / 0.55)',
+}
+
+const ctaStyle: React.CSSProperties = {
+  background: 'var(--brand)',
+  color: 'var(--brand-ink)',
+  borderRadius: 'var(--r-pill)',
+}
+
 const fieldClass =
-  'w-full bg-[#252525] border border-border rounded-xl px-4 py-3.5 text-[15px] text-white placeholder:text-white/30 focus:outline-none focus:border-brand/50 focus:ring-4 focus:ring-brand/[0.12] transition-all'
+  'w-full px-4 py-3.5 text-[15px] placeholder:opacity-40 focus:outline-none focus:ring-[3px] focus:ring-[oklch(from_var(--brand)_l_c_h_/_0.18)] transition-all'
 
 function getStrength(pw: string): 0 | 1 | 2 | 3 {
   if (!pw) return 0
@@ -20,17 +47,17 @@ function getStrength(pw: string): 0 | 1 | 2 | 3 {
 }
 
 const strengthMeta = {
-  0: { hint: '8+ chars, an uppercase letter, and a number', label: '—', color: 'text-white/45' },
-  1: { hint: 'Too weak — add length or a number', label: 'Weak', color: 'text-red-400' },
-  2: { hint: 'Getting there — try adding a symbol', label: 'Fair', color: 'text-brand' },
-  3: { hint: 'Nice. Solid password.', label: 'Strong', color: 'text-green-400' },
+  0: { hint: '8+ chars, an uppercase letter, and a number', label: '—', color: 'var(--canvas-dark-ink-muted)' },
+  1: { hint: 'Too weak — add length or a number', label: 'Weak', color: 'oklch(0.72 0.16 25)' },
+  2: { hint: 'Getting there — try adding a symbol', label: 'Fair', color: 'var(--brand)' },
+  3: { hint: 'Nice. Solid password.', label: 'Strong', color: 'oklch(0.72 0.16 145)' },
 } as const
 
 function segColor(strength: 0 | 1 | 2 | 3, index: number): string {
-  if (strength === 0 || index >= strength) return 'bg-border'
-  if (strength === 1) return 'bg-red-400'
-  if (strength === 2) return 'bg-brand'
-  return 'bg-green-400'
+  if (strength === 0 || index >= strength) return 'oklch(1 0 0 / 0.08)'
+  if (strength === 1) return 'oklch(0.72 0.16 25)'
+  if (strength === 2) return 'var(--brand)'
+  return 'oklch(0.72 0.16 145)'
 }
 
 export function ResetPasswordForm({ locale, token }: { locale: string; token: string }) {
@@ -62,20 +89,18 @@ export function ResetPasswordForm({ locale, token }: { locale: string; token: st
 
   if (done) {
     return (
-      <div className="w-full max-w-md">
-        <div className="paper-stack bg-card rounded-2xl p-8 sm:p-10 text-center">
-          <span className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-brand/15 border border-brand/30 mb-6 success-ring">
-            <svg viewBox="0 0 24 24" className="w-7 h-7 text-brand" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 6 9 17l-5-5"/>
-            </svg>
-          </span>
-          <h2 className="mainFont font-bold text-[24px] leading-tight">Password updated</h2>
-          <p className="text-white/55 text-[14.5px] mt-2.5 leading-relaxed">
+      <div className="w-full max-w-[440px]">
+        <div className="p-8 sm:p-10" style={panelStyle}>
+          <h2 className="mainFont font-bold text-[22px] leading-tight" style={{ color: 'var(--brand)' }}>
+            Password updated
+          </h2>
+          <p className="text-[14.5px] mt-2.5 leading-relaxed" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
             Your password has been reset. You can now sign in with your new password.
           </p>
           <Link
             href={`/${locale}/sign-in`}
-            className="mt-6 inline-flex items-center justify-center gap-2 bg-brand text-[#0a0a0a] font-bold mainFont rounded-full px-6 py-3 text-[14.5px] shadow-[0_6px_24px_-10px_rgba(255,195,0,0.55)] hover:bg-brand-hover hover:-translate-y-px transition-all"
+            className="mt-6 inline-flex items-center justify-center gap-2 mainFont font-bold px-6 py-3 text-[14.5px] hover:-translate-y-px transition-all"
+            style={ctaStyle}
           >
             Sign in
             <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -88,12 +113,13 @@ export function ResetPasswordForm({ locale, token }: { locale: string; token: st
   }
 
   return (
-    <div className="w-full max-w-md">
-      <div className="paper-stack bg-card rounded-2xl p-8 sm:p-10">
+    <div className="w-full max-w-[440px]">
+      <div className="p-8 sm:p-10" style={panelStyle}>
         {/* Back link */}
         <Link
           href={`/${locale}/sign-in`}
-          className="inline-flex items-center gap-2 text-[13.5px] text-white/60 hover:text-white transition-colors mb-7 group"
+          className="inline-flex items-center gap-2 text-[13.5px] transition-colors mb-7 group"
+          style={{ color: 'var(--canvas-dark-ink-muted)' }}
         >
           <svg viewBox="0 0 24 24" className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 12H5"/><path d="m12 19-7-7 7-7"/>
@@ -102,19 +128,23 @@ export function ResetPasswordForm({ locale, token }: { locale: string; token: st
         </Link>
 
         <div className="mb-7">
-          <span className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-brand/15 border border-brand/30 mb-5">
-            <svg viewBox="0 0 24 24" className="w-6 h-6 text-brand" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-            </svg>
-          </span>
-          <h1 className="mainFont font-bold text-[28px] leading-tight">Set new password</h1>
-          <p className="text-white/55 text-[14.5px] mt-2.5 leading-relaxed">Choose a strong password for your account.</p>
+          <h1 className="mainFont font-bold text-[22px] leading-tight" style={{ color: 'var(--brand)' }}>
+            Set new password
+          </h1>
+          <p className="text-[14.5px] mt-2.5 leading-relaxed" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
+            Choose a strong password for your account.
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="password" className="block text-[13px] font-medium text-white/80 mb-1.5">New password</label>
+            <label
+              htmlFor="password"
+              className="block text-[12px] font-mono uppercase tracking-wider mb-1.5"
+              style={{ color: 'var(--canvas-dark-ink-muted)' }}
+            >
+              New password
+            </label>
             <div className="relative">
               <input
                 id="password"
@@ -125,12 +155,14 @@ export function ResetPasswordForm({ locale, token }: { locale: string; token: st
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 className={`${fieldClass} pr-12`}
+                style={inputStyle}
               />
               <button
                 type="button"
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
                 onClick={() => setShowPassword(v => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/5 transition-colors"
+                style={{ color: 'var(--canvas-dark-ink-muted)' }}
               >
                 {showPassword ? (
                   <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -151,18 +183,28 @@ export function ResetPasswordForm({ locale, token }: { locale: string; token: st
             <div className="mt-2.5">
               <div className="flex items-center gap-1.5">
                 {[0, 1, 2].map(i => (
-                  <div key={i} className={`h-1 flex-1 rounded-full transition-colors duration-200 ${segColor(strength, i)}`} />
+                  <div
+                    key={i}
+                    className="h-1 flex-1 rounded-full transition-colors duration-200"
+                    style={{ background: segColor(strength, i) }}
+                  />
                 ))}
               </div>
               <div className="flex items-center justify-between mt-1.5">
-                <span className="text-[11.5px] text-white/45">{meta.hint}</span>
-                <span className={`text-[11.5px] font-medium tabular-nums ${meta.color}`}>{meta.label}</span>
+                <span className="text-[11.5px]" style={{ color: 'var(--canvas-dark-ink-muted)' }}>{meta.hint}</span>
+                <span className="text-[11.5px] font-medium tabular-nums" style={{ color: meta.color }}>{meta.label}</span>
               </div>
             </div>
           </div>
 
           <div>
-            <label htmlFor="confirm" className="block text-[13px] font-medium text-white/80 mb-1.5">Confirm password</label>
+            <label
+              htmlFor="confirm"
+              className="block text-[12px] font-mono uppercase tracking-wider mb-1.5"
+              style={{ color: 'var(--canvas-dark-ink-muted)' }}
+            >
+              Confirm password
+            </label>
             <div className="relative">
               <input
                 id="confirm"
@@ -172,25 +214,34 @@ export function ResetPasswordForm({ locale, token }: { locale: string; token: st
                 required
                 value={confirm}
                 onChange={e => setConfirm(e.target.value)}
-                className={`${passwordsMismatch
-                  ? 'w-full bg-[#252525] border border-red-400/50 rounded-xl px-4 py-3.5 text-[15px] text-white placeholder:text-white/30 focus:outline-none focus:border-red-400/50 focus:ring-4 focus:ring-red-400/10 transition-all'
-                  : fieldClass} pr-12`}
+                className={`${fieldClass} pr-12`}
+                style={passwordsMismatch ? inputErrorStyle : inputStyle}
               />
               <span className={`absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center transition-opacity ${passwordsMatch ? 'opacity-100' : 'opacity-0'}`}>
-                <svg viewBox="0 0 24 24" className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <svg viewBox="0 0 24 24" className="w-4 h-4" style={{ color: 'oklch(0.72 0.16 145)' }} fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M20 6 9 17l-5-5"/>
                 </svg>
               </span>
             </div>
             {(passwordsMatch || passwordsMismatch) && (
-              <p className={`text-[11.5px] mt-1.5 ${passwordsMatch ? 'text-green-400' : 'text-red-400'}`}>
+              <p
+                className="text-[11.5px] mt-1.5"
+                style={{ color: passwordsMatch ? 'oklch(0.72 0.16 145)' : 'oklch(0.72 0.16 25)' }}
+              >
                 {passwordsMatch ? 'Passwords match' : "Passwords don't match yet"}
               </p>
             )}
           </div>
 
           {error && (
-            <p className="text-[13px] text-red-400 bg-red-400/10 border border-red-400/20 rounded-xl px-4 py-3">
+            <p
+              className="text-[13px] rounded-xl px-4 py-3"
+              style={{
+                color: 'oklch(0.72 0.16 25)',
+                background: 'oklch(0.62 0.18 25 / 0.10)',
+                border: '1px solid oklch(0.62 0.18 25 / 0.25)',
+              }}
+            >
               {error}
             </p>
           )}
@@ -198,7 +249,8 @@ export function ResetPasswordForm({ locale, token }: { locale: string; token: st
           <button
             type="submit"
             disabled={loading || passwordsMismatch || !password || !confirm}
-            className="bg-brand text-[#0a0a0a] font-bold mainFont rounded-full w-full px-5 py-3.5 text-[15px] inline-flex items-center justify-center gap-2 mt-2 shadow-[0_6px_24px_-10px_rgba(255,195,0,0.55)] hover:bg-brand-hover hover:-translate-y-px disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none transition-all"
+            className="mainFont font-bold w-full px-5 py-3.5 text-[15px] inline-flex items-center justify-center gap-2 mt-2 hover:-translate-y-px disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none transition-all"
+            style={ctaStyle}
           >
             {loading ? 'Saving…' : 'Save new password'}
             {!loading && (

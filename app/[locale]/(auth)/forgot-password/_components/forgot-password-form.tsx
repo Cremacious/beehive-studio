@@ -4,8 +4,30 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { authClient } from '@/lib/auth-client'
 
+const panelStyle: React.CSSProperties = {
+  background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+  borderRadius: 'var(--r-card)',
+  boxShadow: 'var(--sh-card)',
+  border: 'var(--br-card)',
+  color: 'var(--canvas-dark-ink-strong, #fff)',
+}
+
+const inputStyle: React.CSSProperties = {
+  background: 'var(--canvas-dark-100)',
+  boxShadow: 'var(--sh-inset)',
+  borderRadius: 'var(--r-row)',
+  color: 'var(--canvas-dark-ink-strong, #fff)',
+  border: '1px solid transparent',
+}
+
+const ctaStyle: React.CSSProperties = {
+  background: 'var(--brand)',
+  color: 'var(--brand-ink)',
+  borderRadius: 'var(--r-pill)',
+}
+
 const fieldClass =
-  'w-full bg-[#252525] border border-border rounded-xl px-4 py-3.5 text-[15px] text-white placeholder:text-white/30 focus:outline-none focus:border-brand/50 focus:ring-4 focus:ring-brand/[0.12] transition-all'
+  'w-full px-4 py-3.5 text-[15px] placeholder:opacity-40 focus:outline-none focus:ring-[3px] focus:ring-[oklch(from_var(--brand)_l_c_h_/_0.18)] transition-all'
 
 export function ForgotPasswordForm({ locale }: { locale: string }) {
   const [email, setEmail] = useState('')
@@ -36,12 +58,13 @@ export function ForgotPasswordForm({ locale }: { locale: string }) {
   }
 
   return (
-    <div className="w-full max-w-md">
-      <div className="paper-stack bg-card rounded-2xl p-8 sm:p-10">
+    <div className="w-full max-w-[440px]">
+      <div className="p-8 sm:p-10" style={panelStyle}>
         {/* Back link */}
         <Link
           href={`/${locale}/sign-in`}
-          className="inline-flex items-center gap-2 text-[13.5px] text-white/60 hover:text-white transition-colors mb-7 group"
+          className="inline-flex items-center gap-2 text-[13.5px] transition-colors mb-7 group"
+          style={{ color: 'var(--canvas-dark-ink-muted)' }}
         >
           <svg viewBox="0 0 24 24" className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 12H5"/><path d="m12 19-7-7 7-7"/>
@@ -51,20 +74,17 @@ export function ForgotPasswordForm({ locale }: { locale: string }) {
 
         {sentEmail ? (
           /* Success state */
-          <div className="text-center">
-            <span className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-brand/15 border border-brand/30 mb-6 success-ring">
-              <svg viewBox="0 0 24 24" className="w-7 h-7 text-brand" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 6 9 17l-5-5"/>
-              </svg>
-            </span>
-            <h2 className="mainFont font-bold text-[24px] leading-tight">Check your inbox</h2>
-            <p className="text-white/55 text-[14.5px] mt-2.5 leading-relaxed">
-              We sent a reset link to<br/>
-              <span className="text-white font-medium">{sentEmail}</span>
+          <div>
+            <h2 className="mainFont font-bold text-[22px] leading-tight" style={{ color: 'var(--brand)' }}>
+              Check your inbox
+            </h2>
+            <p className="text-[14.5px] mt-2.5 leading-relaxed" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
+              We sent a reset link to{' '}
+              <span style={{ color: 'var(--canvas-dark-ink-strong)' }}>{sentEmail}</span>.
             </p>
-            <p className="text-white/40 text-[13px] mt-4 leading-relaxed">
+            <p className="text-[13px] mt-4 leading-relaxed" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
               Didn&apos;t get it? Check your spam folder or{' '}
-              <button onClick={resetToForm} className="text-brand hover:underline underline-offset-4">
+              <button onClick={resetToForm} className="hover:underline underline-offset-4" style={{ color: 'var(--brand)' }}>
                 try again
               </button>.
             </p>
@@ -73,19 +93,23 @@ export function ForgotPasswordForm({ locale }: { locale: string }) {
           /* Form state */
           <div>
             <div className="mb-7">
-              <span className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-brand/15 border border-brand/30 mb-5">
-                <svg viewBox="0 0 24 24" className="w-6 h-6 text-brand" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <rect width="20" height="16" x="2" y="4" rx="2"/>
-                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
-                </svg>
-              </span>
-              <h1 className="mainFont font-bold text-[28px] leading-tight">Reset your password</h1>
-              <p className="text-white/55 text-[14.5px] mt-2.5 leading-relaxed">Enter your email and we&apos;ll send you a reset link.</p>
+              <h1 className="mainFont font-bold text-[22px] leading-tight" style={{ color: 'var(--brand)' }}>
+                Reset your password
+              </h1>
+              <p className="text-[14.5px] mt-2.5 leading-relaxed" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
+                Enter your email and we&apos;ll send you a reset link.
+              </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label htmlFor="email" className="block text-[13px] font-medium text-white/80 mb-1.5">Email</label>
+                <label
+                  htmlFor="email"
+                  className="block text-[12px] font-mono uppercase tracking-wider mb-1.5"
+                  style={{ color: 'var(--canvas-dark-ink-muted)' }}
+                >
+                  Email
+                </label>
                 <input
                   id="email"
                   type="email"
@@ -95,11 +119,19 @@ export function ForgotPasswordForm({ locale }: { locale: string }) {
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   className={fieldClass}
+                  style={inputStyle}
                 />
               </div>
 
               {error && (
-                <p className="text-[13px] text-red-400 bg-red-400/10 border border-red-400/20 rounded-xl px-4 py-3">
+                <p
+                  className="text-[13px] rounded-xl px-4 py-3"
+                  style={{
+                    color: 'oklch(0.72 0.16 25)',
+                    background: 'oklch(0.62 0.18 25 / 0.10)',
+                    border: '1px solid oklch(0.62 0.18 25 / 0.25)',
+                  }}
+                >
                   {error}
                 </p>
               )}
@@ -107,7 +139,8 @@ export function ForgotPasswordForm({ locale }: { locale: string }) {
               <button
                 type="submit"
                 disabled={loading}
-                className="bg-brand text-[#0a0a0a] font-bold mainFont rounded-full w-full px-5 py-3.5 text-[15px] inline-flex items-center justify-center gap-2 mt-2 shadow-[0_6px_24px_-10px_rgba(255,195,0,0.55)] hover:bg-brand-hover hover:-translate-y-px disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none transition-all"
+                className="mainFont font-bold w-full px-5 py-3.5 text-[15px] inline-flex items-center justify-center gap-2 mt-2 hover:-translate-y-px disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none transition-all"
+                style={ctaStyle}
               >
                 {loading ? 'Sending…' : 'Send reset link'}
                 {!loading && (

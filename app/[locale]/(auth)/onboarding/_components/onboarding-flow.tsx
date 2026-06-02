@@ -7,8 +7,38 @@ import { checkUsernameAvailableAction, completeOnboardingAction } from '@/lib/ac
 type Step = 1 | 2 | 3
 type UsernameStatus = 'idle' | 'checking' | 'valid' | 'error'
 
+const panelStyle: React.CSSProperties = {
+  background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+  borderRadius: 'var(--r-card)',
+  boxShadow: 'var(--sh-card)',
+  border: 'var(--br-card)',
+  color: 'var(--canvas-dark-ink-strong, #fff)',
+}
+
+const inputStyle: React.CSSProperties = {
+  background: 'var(--canvas-dark-100)',
+  boxShadow: 'var(--sh-inset)',
+  borderRadius: 'var(--r-row)',
+  color: 'var(--canvas-dark-ink-strong, #fff)',
+  border: '1px solid transparent',
+}
+
+const tileStyle: React.CSSProperties = {
+  background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+  boxShadow: 'var(--sh-tile)',
+  borderRadius: 'var(--r-row)',
+  border: 'var(--br-card)',
+  color: 'var(--canvas-dark-ink-strong, #fff)',
+}
+
+const ctaStyle: React.CSSProperties = {
+  background: 'var(--brand)',
+  color: 'var(--brand-ink)',
+  borderRadius: 'var(--r-pill)',
+}
+
 const fieldClass =
-  'w-full bg-[#252525] border border-border rounded-xl px-4 py-3.5 text-[15px] text-white placeholder:text-white/30 focus:outline-none focus:border-brand/50 focus:ring-4 focus:ring-brand/[0.12] transition-all'
+  'w-full px-4 py-3.5 text-[15px] placeholder:opacity-40 focus:outline-none focus:ring-[3px] focus:ring-[oklch(from_var(--brand)_l_c_h_/_0.18)] transition-all'
 
 function CheckIcon({ className }: { className?: string }) {
   return (
@@ -20,7 +50,7 @@ function CheckIcon({ className }: { className?: string }) {
 
 function SpinnerIcon() {
   return (
-    <svg className="w-5 h-5 text-white/40 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+    <svg className="w-5 h-5 animate-spin" style={{ color: 'var(--canvas-dark-ink-muted)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
       <path d="M12 2v4" opacity="1"/><path d="M12 18v4" opacity=".3"/><path d="m4.93 4.93 2.83 2.83" opacity=".7"/>
       <path d="m16.24 16.24 2.83 2.83" opacity=".2"/><path d="M2 12h4" opacity=".5"/><path d="M18 12h4" opacity=".1"/>
       <path d="m4.93 19.07 2.83-2.83" opacity=".4"/><path d="m16.24 7.76 2.83-2.83" opacity=".6"/>
@@ -31,52 +61,43 @@ function SpinnerIcon() {
 function ProgressBar({ step }: { step: Step }) {
   const step3Label = step === 3 ? 'Photo' : 'Preferences'
 
-  function Badge({ n }: { n: number }) {
-    if (n < step) {
-      return (
-        <span className="w-7 h-7 rounded-full bg-brand/20 border border-brand/40 flex items-center justify-center shrink-0">
-          <CheckIcon className="w-4 h-4 text-brand" />
-        </span>
-      )
-    }
-    if (n === step) {
-      return (
-        <span className="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-[12px] font-bold text-black mainFont shrink-0">
-          {n}
-        </span>
-      )
-    }
-    return (
-      <span className="w-7 h-7 rounded-full border border-border bg-[#252525] flex items-center justify-center text-[12px] font-medium text-white/40 mainFont shrink-0">
-        {n}
-      </span>
-    )
-  }
+  function Pill({ n, label }: { n: number; label: string }) {
+    const isActive = n === step
+    const isDone = n < step
+    const isReached = isActive || isDone
 
-  function Label({ n, children }: { n: number; children: string }) {
+    const pillStyle: React.CSSProperties = isReached
+      ? { background: 'var(--brand)', color: 'var(--brand-ink)' }
+      : {
+          background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+          color: 'var(--canvas-dark-ink-muted)',
+        }
+
     return (
-      <span className={`text-[13px] ${n === step ? 'font-medium text-white' : n < step ? 'text-white/50' : 'text-white/40'}`}>
-        {children}
-      </span>
+      <div
+        className="flex items-center gap-2 px-3 py-1.5 text-[12px] font-medium mainFont"
+        style={{ ...pillStyle, borderRadius: 'var(--r-pill)' }}
+        aria-current={isActive ? 'step' : undefined}
+      >
+        <span
+          className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[11px] font-bold"
+          style={{
+            background: isReached ? 'var(--brand-ink)' : 'var(--canvas-dark-100)',
+            color: isReached ? 'var(--brand)' : 'var(--canvas-dark-ink-muted)',
+          }}
+        >
+          {isDone ? <CheckIcon className="w-3 h-3" /> : n}
+        </span>
+        <span>{label}</span>
+      </div>
     )
   }
 
   return (
-    <div className="flex items-center gap-2 mb-8 px-1">
-      <div className="flex items-center gap-2.5 flex-1">
-        <Badge n={1} />
-        <Label n={1}>Username</Label>
-      </div>
-      <div className={`h-px flex-1 max-w-[40px] ${step > 1 ? 'bg-brand/30' : 'bg-border'}`} />
-      <div className="flex items-center gap-2.5 flex-1">
-        <Badge n={2} />
-        <Label n={2}>Profile</Label>
-      </div>
-      <div className={`h-px flex-1 max-w-[40px] ${step > 2 ? 'bg-brand/30' : 'bg-border'}`} />
-      <div className="flex items-center gap-2.5 flex-1">
-        <Badge n={3} />
-        <Label n={3}>{step3Label}</Label>
-      </div>
+    <div className="flex items-center gap-2 mb-6 flex-wrap">
+      <Pill n={1} label="Username" />
+      <Pill n={2} label="Profile" />
+      <Pill n={3} label={step3Label} />
     </div>
   )
 }
@@ -168,63 +189,75 @@ export function OnboardingFlow({ locale }: { locale: string }) {
     }
   }
 
-  const usernameFieldClass = [
-    'w-full bg-[#252525] border rounded-xl pl-9 pr-11 py-3.5 text-[15px] text-white placeholder:text-white/30 focus:outline-none focus:ring-4 transition-all',
+  const usernameStatusBorder =
     usernameStatus === 'valid'
-      ? 'border-green-400/50 focus:border-green-400/50 focus:ring-green-400/[0.12]'
+      ? '1px solid oklch(0.72 0.16 145 / 0.55)'
       : usernameStatus === 'error'
-        ? 'border-red-400/50 focus:border-red-400/50 focus:ring-red-400/[0.10]'
-        : 'border-border focus:border-brand/50 focus:ring-brand/[0.12]',
-  ].join(' ')
+        ? '1px solid oklch(0.62 0.18 25 / 0.55)'
+        : '1px solid transparent'
+
+  const usernameInputStyle: React.CSSProperties = {
+    ...inputStyle,
+    border: usernameStatusBorder,
+  }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Backdrop */}
-      <div className="fixed inset-0 hex-bg opacity-50 pointer-events-none [mask-image:radial-gradient(ellipse_60%_50%_at_50%_40%,black,transparent_75%)]" />
-      <div className="fixed inset-0 auth-glow pointer-events-none" />
-
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ background: '#262728', color: 'var(--canvas-dark-ink-strong, #fff)' }}
+    >
       {/* Header */}
       <header className="relative z-10">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 h-16 flex items-center justify-between">
           <Link href={`/${locale}`} className="flex items-center gap-2.5">
-            <span className="relative inline-flex items-center justify-center w-9 h-9 rounded-xl bg-brand/15 border border-brand/30">
-              <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="#FFC300" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2 L20 6.5 L20 15.5 L12 20 L4 15.5 L4 6.5 Z"/>
-                <path d="M12 9 L16 11 L16 14.5 L12 16.5 L8 14.5 L8 11 Z" fill="#FFC300" fillOpacity="0.6" stroke="none"/>
-              </svg>
+            <span
+              className="mainFont font-bold text-[17px] tracking-tight"
+              style={{ color: 'var(--brand)' }}
+            >
+              Beehive Studio
             </span>
-            <span className="mainFont font-bold text-[17px] tracking-tight">Beehive Studio</span>
           </Link>
-          <span className="text-sm text-white/40">Step {step} of 3</span>
+          <span className="text-sm" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
+            Step {step} of 3
+          </span>
         </div>
       </header>
 
       {/* Main */}
       <main className="relative z-10 flex-1 flex items-center justify-center px-6 py-10">
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-[440px]">
           <ProgressBar step={step} />
 
-          <div className="paper-stack bg-card rounded-2xl p-8 sm:p-10">
+          <div className="p-8 sm:p-10" style={panelStyle}>
 
             {/* ── Step 1: Username ─────────────────────────── */}
             {step === 1 && (
               <div>
                 <div className="mb-7">
-                  <span className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-brand/15 border border-brand/30 mb-5">
-                    <svg viewBox="0 0 24 24" className="w-6 h-6 text-brand" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                      <circle cx="12" cy="7" r="4"/>
-                    </svg>
-                  </span>
-                  <h1 className="mainFont font-bold text-[28px] leading-tight">Choose your username</h1>
-                  <p className="text-white/55 text-[14.5px] mt-2.5 leading-relaxed">This is how other writers will find you.</p>
+                  <h1 className="mainFont font-bold text-[22px] leading-tight" style={{ color: 'var(--brand)' }}>
+                    Choose your username
+                  </h1>
+                  <p className="text-[14.5px] mt-2.5 leading-relaxed" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
+                    This is how other writers will find you.
+                  </p>
                 </div>
 
                 <form onSubmit={e => { e.preventDefault(); setStep(2) }} className="space-y-4">
                   <div>
-                    <label htmlFor="username" className="block text-[13px] font-medium text-white/80 mb-1.5">Username</label>
+                    <label
+                      htmlFor="username"
+                      className="block text-[12px] font-mono uppercase tracking-wider mb-1.5"
+                      style={{ color: 'var(--canvas-dark-ink-muted)' }}
+                    >
+                      Username
+                    </label>
                     <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 text-[15px] select-none pointer-events-none">@</span>
+                      <span
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-[15px] select-none pointer-events-none"
+                        style={{ color: 'var(--canvas-dark-ink-muted)' }}
+                      >
+                        @
+                      </span>
                       <input
                         id="username"
                         type="text"
@@ -235,33 +268,35 @@ export function OnboardingFlow({ locale }: { locale: string }) {
                         placeholder="mayavance"
                         value={username}
                         onChange={e => handleUsernameInput(e.target.value)}
-                        className={usernameFieldClass}
+                        className={`${fieldClass} pl-9 pr-11`}
+                        style={usernameInputStyle}
                       />
                       <div className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center">
                         {usernameStatus === 'checking' && <SpinnerIcon />}
                         {usernameStatus === 'valid' && (
-                          <svg className="w-5 h-5 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <svg className="w-5 h-5" style={{ color: 'oklch(0.72 0.16 145)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M20 6 9 17l-5-5"/>
                           </svg>
                         )}
                         {usernameStatus === 'error' && (
-                          <svg className="w-5 h-5 text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <svg className="w-5 h-5" style={{ color: 'oklch(0.72 0.16 25)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
                           </svg>
                         )}
                       </div>
                     </div>
                     <div className="mt-2 text-[12.5px] leading-snug min-h-[18px]">
-                      {usernameStatus === 'checking' && <span className="text-white/40">{usernameFeedback}</span>}
-                      {usernameStatus === 'valid' && <span className="text-green-400">{usernameFeedback}</span>}
-                      {usernameStatus === 'error' && <span className="text-red-400">{usernameFeedback}</span>}
+                      {usernameStatus === 'checking' && <span style={{ color: 'var(--canvas-dark-ink-muted)' }}>{usernameFeedback}</span>}
+                      {usernameStatus === 'valid' && <span style={{ color: 'oklch(0.72 0.16 145)' }}>{usernameFeedback}</span>}
+                      {usernameStatus === 'error' && <span style={{ color: 'oklch(0.72 0.16 25)' }}>{usernameFeedback}</span>}
                     </div>
                   </div>
 
                   <button
                     type="submit"
                     disabled={usernameStatus !== 'valid'}
-                    className="bg-brand text-[#0a0a0a] font-bold mainFont rounded-full w-full px-5 py-3.5 text-[15px] inline-flex items-center justify-center gap-2 mt-2 shadow-[0_6px_24px_-10px_rgba(255,195,0,0.55)] hover:bg-brand-hover hover:-translate-y-px disabled:opacity-35 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none transition-all"
+                    className="mainFont font-bold w-full px-5 py-3.5 text-[15px] inline-flex items-center justify-center gap-2 mt-2 hover:-translate-y-px disabled:opacity-35 disabled:cursor-not-allowed disabled:transform-none transition-all"
+                    style={ctaStyle}
                   >
                     Continue
                     <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -270,7 +305,7 @@ export function OnboardingFlow({ locale }: { locale: string }) {
                   </button>
                 </form>
 
-                <p className="text-white/35 text-[12px] mt-5 leading-relaxed text-center">
+                <p className="text-[12px] mt-5 leading-relaxed text-center" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
                   3–24 characters. Letters, numbers, underscores only.
                 </p>
               </div>
@@ -280,18 +315,23 @@ export function OnboardingFlow({ locale }: { locale: string }) {
             {step === 2 && (
               <div>
                 <div className="mb-7">
-                  <span className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-brand/15 border border-brand/30 mb-5">
-                    <svg viewBox="0 0 24 24" className="w-6 h-6 text-brand" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>
-                    </svg>
-                  </span>
-                  <h1 className="mainFont font-bold text-[28px] leading-tight">Tell us about yourself</h1>
-                  <p className="text-white/55 text-[14.5px] mt-2.5 leading-relaxed">Optional — you can always add this later.</p>
+                  <h1 className="mainFont font-bold text-[22px] leading-tight" style={{ color: 'var(--brand)' }}>
+                    Tell us about yourself
+                  </h1>
+                  <p className="text-[14.5px] mt-2.5 leading-relaxed" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
+                    Optional — you can always add this later.
+                  </p>
                 </div>
 
                 <div className="space-y-4">
                   <div>
-                    <label htmlFor="bio" className="block text-[13px] font-medium text-white/80 mb-1.5">Bio</label>
+                    <label
+                      htmlFor="bio"
+                      className="block text-[12px] font-mono uppercase tracking-wider mb-1.5"
+                      style={{ color: 'var(--canvas-dark-ink-muted)' }}
+                    >
+                      Bio
+                    </label>
                     <textarea
                       id="bio"
                       maxLength={200}
@@ -300,9 +340,13 @@ export function OnboardingFlow({ locale }: { locale: string }) {
                       value={bio}
                       onChange={e => setBio(e.target.value)}
                       className={`${fieldClass} resize-none`}
+                      style={inputStyle}
                     />
                     <div className="flex items-center justify-end mt-1.5">
-                      <span className={`text-[12px] tabular-nums ${bio.length >= 180 ? 'text-brand/70' : 'text-white/35'}`}>
+                      <span
+                        className="text-[12px] tabular-nums"
+                        style={{ color: bio.length >= 180 ? 'var(--brand)' : 'var(--canvas-dark-ink-muted)' }}
+                      >
                         {bio.length} / 200
                       </span>
                     </div>
@@ -312,7 +356,8 @@ export function OnboardingFlow({ locale }: { locale: string }) {
                     <button
                       type="button"
                       onClick={() => setStep(3)}
-                      className="bg-brand text-[#0a0a0a] font-bold mainFont rounded-full flex-1 px-5 py-3.5 text-[15px] inline-flex items-center justify-center gap-2 shadow-[0_6px_24px_-10px_rgba(255,195,0,0.55)] hover:bg-brand-hover hover:-translate-y-px transition-all"
+                      className="mainFont font-bold flex-1 px-5 py-3.5 text-[15px] inline-flex items-center justify-center gap-2 hover:-translate-y-px transition-all"
+                      style={ctaStyle}
                     >
                       Continue
                       <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -322,7 +367,8 @@ export function OnboardingFlow({ locale }: { locale: string }) {
                     <button
                       type="button"
                       onClick={() => setStep(3)}
-                      className="mainFont rounded-full px-5 py-3.5 text-[15px] text-white/55 font-medium hover:text-white hover:bg-white/5 transition-all"
+                      className="mainFont px-5 py-3.5 text-[15px] font-medium hover:opacity-80 transition-all"
+                      style={{ color: 'var(--canvas-dark-ink-muted)', borderRadius: 'var(--r-pill)' }}
                     >
                       Skip
                     </button>
@@ -334,15 +380,13 @@ export function OnboardingFlow({ locale }: { locale: string }) {
             {/* ── Step 3: Avatar ───────────────────────────── */}
             {step === 3 && (
               <div>
-                <div className="mb-7 text-center">
-                  <span className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-brand/15 border border-brand/30 mb-5">
-                    <svg viewBox="0 0 24 24" className="w-6 h-6 text-brand" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                      <circle cx="12" cy="13" r="4"/>
-                    </svg>
-                  </span>
-                  <h1 className="mainFont font-bold text-[28px] leading-tight">Add a profile photo</h1>
-                  <p className="text-white/55 text-[14.5px] mt-2.5 leading-relaxed">Optional.</p>
+                <div className="mb-7">
+                  <h1 className="mainFont font-bold text-[22px] leading-tight" style={{ color: 'var(--brand)' }}>
+                    Add a profile photo
+                  </h1>
+                  <p className="text-[14.5px] mt-2.5 leading-relaxed" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
+                    Optional.
+                  </p>
                 </div>
 
                 <div className="flex flex-col items-center mb-8">
@@ -352,11 +396,12 @@ export function OnboardingFlow({ locale }: { locale: string }) {
                     aria-label="Upload profile photo"
                     onClick={() => fileInputRef.current?.click()}
                     onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInputRef.current?.click() } }}
-                    className={`w-[140px] h-[140px] rounded-full relative overflow-hidden cursor-pointer transition-all group ${
+                    className="w-[140px] h-[140px] rounded-full relative overflow-hidden cursor-pointer transition-all group hover:-translate-y-px"
+                    style={
                       avatarPreview
-                        ? 'border-2 border-brand/40 shadow-[0_0_0_4px_rgba(255,195,0,0.08)] hover:border-brand/60'
-                        : 'border-2 border-dashed border-border bg-[#252525] hover:border-brand/50 hover:bg-[#2a2a2a] hover:scale-[1.02]'
-                    }`}
+                        ? { border: '2px solid oklch(from var(--brand) l c h / 0.4)' }
+                        : { ...tileStyle, borderRadius: '999px', border: '2px dashed oklch(1 0 0 / 0.12)' }
+                    }
                   >
                     {avatarPreview ? (
                       <>
@@ -370,9 +415,9 @@ export function OnboardingFlow({ locale }: { locale: string }) {
                       </>
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center gap-2">
-                        <svg viewBox="0 0 24 24" className="w-10 h-10 text-brand/50" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M12 2 L20 6.5 L20 15.5 L12 20 L4 15.5 L4 6.5 Z"/>
-                          <path d="M12 9 L16 11 L16 14.5 L12 16.5 L8 14.5 L8 11 Z" fill="currentColor" fillOpacity="0.3" stroke="none"/>
+                        <svg viewBox="0 0 24 24" className="w-10 h-10" style={{ color: 'oklch(from var(--brand) l c h / 0.5)' }} fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                          <circle cx="12" cy="13" r="4"/>
                         </svg>
                       </div>
                     )}
@@ -389,7 +434,8 @@ export function OnboardingFlow({ locale }: { locale: string }) {
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="text-[13px] text-brand mt-4 hover:underline hover:underline-offset-4 transition-colors bg-transparent border-0"
+                    className="text-[13px] mt-4 hover:underline hover:underline-offset-4 transition-colors bg-transparent border-0"
+                    style={{ color: 'var(--brand)' }}
                   >
                     {avatarPreview ? 'Change photo' : 'Click to upload'}
                   </button>
@@ -398,7 +444,8 @@ export function OnboardingFlow({ locale }: { locale: string }) {
                     <button
                       type="button"
                       onClick={removeAvatar}
-                      className="text-[12px] text-white/40 mt-1.5 hover:text-white/70 transition-colors"
+                      className="text-[12px] mt-1.5 hover:opacity-80 transition-colors"
+                      style={{ color: 'var(--canvas-dark-ink-muted)' }}
                     >
                       Remove photo
                     </button>
@@ -406,7 +453,14 @@ export function OnboardingFlow({ locale }: { locale: string }) {
                 </div>
 
                 {submitError && (
-                  <p className="text-[13px] text-red-400 bg-red-400/10 border border-red-400/20 rounded-xl px-4 py-3 mb-4">
+                  <p
+                    className="text-[13px] rounded-xl px-4 py-3 mb-4"
+                    style={{
+                      color: 'oklch(0.72 0.16 25)',
+                      background: 'oklch(0.62 0.18 25 / 0.10)',
+                      border: '1px solid oklch(0.62 0.18 25 / 0.25)',
+                    }}
+                  >
                     {submitError}
                   </p>
                 )}
@@ -416,7 +470,8 @@ export function OnboardingFlow({ locale }: { locale: string }) {
                     type="button"
                     onClick={handleFinish}
                     disabled={submitting}
-                    className="bg-brand text-[#0a0a0a] font-bold mainFont rounded-full flex-1 px-5 py-3.5 text-[15px] inline-flex items-center justify-center gap-2 shadow-[0_6px_24px_-10px_rgba(255,195,0,0.55)] hover:bg-brand-hover hover:-translate-y-px disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none transition-all"
+                    className="mainFont font-bold flex-1 px-5 py-3.5 text-[15px] inline-flex items-center justify-center gap-2 hover:-translate-y-px disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none transition-all"
+                    style={ctaStyle}
                   >
                     {submitting ? 'Setting up…' : 'Finish setup'}
                     {!submitting && (
@@ -427,7 +482,8 @@ export function OnboardingFlow({ locale }: { locale: string }) {
                     type="button"
                     onClick={handleFinish}
                     disabled={submitting}
-                    className="mainFont rounded-full px-5 py-3.5 text-[15px] text-white/55 font-medium hover:text-white hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                    className="mainFont px-5 py-3.5 text-[15px] font-medium hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                    style={{ color: 'var(--canvas-dark-ink-muted)', borderRadius: 'var(--r-pill)' }}
                   >
                     Skip for now
                   </button>
@@ -441,15 +497,14 @@ export function OnboardingFlow({ locale }: { locale: string }) {
 
       {/* Footer */}
       <footer className="relative z-10 py-6">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 flex flex-wrap items-center justify-between gap-3 text-[12px] text-white/40">
+        <div
+          className="max-w-7xl mx-auto px-6 lg:px-8 flex flex-wrap items-center justify-between gap-3 text-[12px]"
+          style={{ color: 'var(--canvas-dark-ink-muted)' }}
+        >
           <div>© 2026 Beehive Studio</div>
           <div className="flex items-center gap-5">
-            <Link href={`/${locale}/privacy`} className="hover:text-white/70 transition-colors">Privacy</Link>
-            <Link href={`/${locale}/terms`} className="hover:text-white/70 transition-colors">Terms</Link>
-            <span className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
-              All systems honey
-            </span>
+            <Link href={`/${locale}/privacy`} className="hover:opacity-80 transition-opacity">Privacy</Link>
+            <Link href={`/${locale}/terms`} className="hover:opacity-80 transition-opacity">Terms</Link>
           </div>
         </div>
       </footer>

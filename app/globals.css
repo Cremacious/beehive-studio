@@ -85,6 +85,7 @@
   --canvas-dark-300: oklch(0.360 0.003 256);
   --canvas-dark-350: oklch(0.400 0.003 256);
   --canvas-dark-400: oklch(0.450 0.003 256);
+  --canvas-dark-ink-faint:  oklch(0.500 0.003 256);
   --canvas-dark-ink-muted:  oklch(0.680 0.003 256);
   --canvas-dark-ink:        oklch(0.880 0.003 256);
   --canvas-dark-ink-strong: oklch(0.965 0.003 256);
@@ -113,20 +114,20 @@
 
   /* ── Wiki category accents (14) ────────────────────────────────── */
   /* Wiki category accents (oklch — match DP1 token system) */
-  --wiki-character:   oklch(0.74 0.13 80);   /* warm gold */
-  --wiki-location:    oklch(0.72 0.12 165);  /* teal */
-  --wiki-lore:        oklch(0.70 0.13 290);  /* violet */
-  --wiki-plot:        oklch(0.72 0.16 25);   /* warm red */
-  --wiki-artifact:    oklch(0.78 0.10 65);   /* amber */
-  --wiki-faction:     oklch(0.68 0.12 245);  /* steel blue */
-  --wiki-culture:     oklch(0.72 0.11 130);  /* sage */
-  --wiki-language:    oklch(0.70 0.10 200);  /* slate cyan */
-  --wiki-biology:     oklch(0.74 0.13 100);  /* leafy yellow-green */
-  --wiki-theme:       oklch(0.70 0.13 320);  /* magenta */
-  --wiki-economy:     oklch(0.74 0.11 55);   /* copper */
-  --wiki-terminology: oklch(0.68 0.05 270);  /* lavender gray */
-  --wiki-timeline:    oklch(0.74 0.10 180);  /* aqua */
-  --wiki-other:       oklch(0.68 0.04 270);  /* neutral */
+  --wiki-character:   oklch(0.58 0.15 75);   /* deep warm gold */
+  --wiki-location:    oklch(0.55 0.14 160);  /* dark teal-green */
+  --wiki-lore:        oklch(0.55 0.16 290);  /* deep violet */
+  --wiki-plot:        oklch(0.55 0.18 25);   /* dark warm red */
+  --wiki-artifact:    oklch(0.58 0.13 60);   /* dark amber */
+  --wiki-faction:     oklch(0.55 0.15 245);  /* dark steel blue */
+  --wiki-culture:     oklch(0.55 0.14 135);  /* dark sage */
+  --wiki-language:    oklch(0.55 0.12 200);  /* dark slate cyan */
+  --wiki-biology:     oklch(0.58 0.15 105);  /* dark leafy green */
+  --wiki-theme:       oklch(0.55 0.16 320);  /* dark magenta */
+  --wiki-economy:     oklch(0.58 0.13 50);   /* dark copper */
+  --wiki-terminology: oklch(0.55 0.06 270);  /* dark lavender gray */
+  --wiki-timeline:    oklch(0.58 0.12 180);  /* dark aqua */
+  --wiki-other:       oklch(0.55 0.04 270);  /* dark neutral */
 
   /* ── Validation ────────────────────────────────────────────────── */
   --success: oklch(0.72 0.130 152);

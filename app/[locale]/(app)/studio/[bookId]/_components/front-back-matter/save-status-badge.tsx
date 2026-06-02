@@ -15,7 +15,10 @@ type Props = {
 export function SaveStatusBadge({ status }: Props) {
   if (status === 'idle') {
     return (
-      <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground/70">
+      <span
+        className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-[0.10em] font-semibold"
+        style={{ color: 'var(--canvas-dark-ink)' }}
+      >
         Auto-saves as you type
       </span>
     )

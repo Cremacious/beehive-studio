@@ -1,6 +1,6 @@
 'use client'
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { CATEGORY_TEMPLATES } from '@/lib/wiki/category-templates'
 import type { WikiCategory } from '@/lib/wiki/category-templates'
 
@@ -17,18 +17,15 @@ export function WikiCategoryPicker({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         style={{
-          background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+          background: 'linear-gradient(180deg, var(--canvas-dark-200), var(--canvas-dark-150))',
           borderRadius: 'var(--r-card)',
           boxShadow: 'var(--sh-card)',
           border: 'var(--br-card)',
         }}
         className="sm:max-w-3xl"
       >
-        <DialogHeader>
-          <DialogTitle>What kind of wiki entry?</DialogTitle>
-        </DialogHeader>
-        <div className="grid grid-cols-4 gap-3 mt-4">
-          {CATEGORY_TEMPLATES.filter(t => t.category !== 'CHARACTER').map(t => {
+        <div className="grid grid-cols-4 gap-3 mt-2">
+          {CATEGORY_TEMPLATES.map(t => {
             const Icon = t.icon
             return (
               <button
@@ -38,10 +35,10 @@ export function WikiCategoryPicker({
                 style={{
                   borderRadius: 'var(--r-row)',
                   boxShadow: 'var(--sh-tile)',
-                  background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+                  background: 'linear-gradient(180deg, var(--canvas-dark-300), var(--canvas-dark-250))',
                   border: 'var(--br-card)',
                 }}
-                className="group flex flex-col items-start gap-2 p-3 text-left transition-all hover:ring-2 hover:ring-brand"
+                className="group cursor-pointer flex flex-col items-start gap-2 p-3 text-left transition-[box-shadow,filter] hover:brightness-110 hover:[box-shadow:var(--sh-tile),0_0_0_1px_oklch(from_var(--brand)_l_c_h_/_0.45)]"
               >
                 <span
                   className="inline-flex h-8 w-8 items-center justify-center rounded-md"
@@ -52,8 +49,18 @@ export function WikiCategoryPicker({
                 >
                   <Icon size={16} />
                 </span>
-                <div className="font-comfortaa font-bold text-[13px] leading-tight">{t.label}</div>
-                <div className="text-[11px] text-muted-foreground leading-snug">{t.blurb}</div>
+                <div
+                  className="font-comfortaa font-bold text-[13px] leading-tight"
+                  style={{ color: 'var(--canvas-dark-ink-strong)' }}
+                >
+                  {t.label}
+                </div>
+                <div
+                  className="text-[11px] leading-snug"
+                  style={{ color: 'var(--canvas-dark-ink)' }}
+                >
+                  {t.blurb}
+                </div>
               </button>
             )
           })}

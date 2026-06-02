@@ -7,7 +7,7 @@ import { requireAuth } from '@/lib/require-auth'
 import { assertHiveMember, assertHiveAdmin } from './_helpers'
 import { createTaskSchema, updateTaskSchema } from '@/lib/validations/hive'
 import { requireHiveMember, type HiveRole } from '@/lib/hive/permissions'
-import { tipTapToPlain } from '@/lib/tiptap-utils'
+import { extractWikiExcerpt } from '@/lib/wiki/excerpt'
 import type { WikiCategory } from '@/lib/wiki/category-templates'
 import type { BinderItemRow } from './binder.actions'
 import type { ChapterStatus } from '@/lib/books/is-chapter-reader-visible'
@@ -106,7 +106,7 @@ export async function getHiveWikiView(hiveId: string): Promise<ActionResult<Hive
         title: i.title,
         category: i.type === 'character' ? 'CHARACTER' : (content.category ?? 'OTHER'),
         tags: Array.isArray(content.tags) ? content.tags : [],
-        excerpt: tipTapToPlain(content.body, 120),
+        excerpt: extractWikiExcerpt(i.content, 120),
         authorId: i.authorId,
         authorUsername: profile?.username ?? null,
         authorAvatarUrl: profile?.avatarUrl ?? null,

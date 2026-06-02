@@ -9,6 +9,7 @@ import { createBinderItemAction } from '@/lib/actions/binder.actions'
 import type { HiveWikiViewData, HiveWikiEntry } from '@/lib/actions/hive-content.actions'
 import { canEditWiki } from '@/lib/hive/permissions'
 import { CATEGORY_TEMPLATE_MAP, type WikiCategory } from '@/lib/wiki/category-templates'
+import { createId } from '@paralleldrive/cuid2'
 import { WikiCategoryPicker } from '@/app/[locale]/(app)/studio/[bookId]/_components/binder/wiki-category-picker'
 import { ByCategoryView } from './by-category-view'
 import { ByFolderView } from './by-folder-view'
@@ -69,14 +70,31 @@ export function HiveWikiShell({
       ...wiki.folders.filter(f => f.parentId === null),
     ]
     const maxOrder = rootItems.length
+    // CHARACTER stays a first-class `character` binder type so the dedicated
+    // profile renderer handles it; getHiveWikiView union-coerces character
+    // rows back to CHARACTER-category wiki entries, so editor + hive stay
+    // in sync on the user-facing model.
+    const isCharacter = category === 'CHARACTER'
+    const type = isCharacter ? 'character' : 'wiki_entry'
+    const title = isCharacter ? 'Untitled Character' : `New ${template.label}`
+    // One empty "Notes" section — see studio binder-add-menu sibling.
+    const seededSections = isCharacter ? [] : [{ id: `s_${createId()}`, label: 'Notes', body: { type: 'doc', content: [{ type: 'paragraph' }] } }]
+    const content = isCharacter
+      ? null
+      : ({
+          category,
+          sections: seededSections,
+          tags: [],
+          hints: {},
+        } as unknown as Record<string, unknown>)
     startTransition(async () => {
       const r = await createBinderItemAction({
         bookId: wiki.bookId,
         parentId: null,
-        type: 'wiki_entry',
-        title: `New ${template.label}`,
+        type,
+        title,
         order: maxOrder + 1,
-        content: { category, body: template.defaultBody, tags: [] } as unknown as Record<string, unknown>,
+        content,
       })
       if (!r.success) {
         toast.error(r.error)

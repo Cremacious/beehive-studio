@@ -5,12 +5,14 @@ import { X, Plus } from 'lucide-react'
 import { acceptTag, MAX_TAGS } from '@/lib/wiki/tags'
 
 export function TagChipStrip({
-  tags, onChange, accentColor, readOnly = false,
+  tags, onChange, accentColor, readOnly = false, disableAdd = false,
 }: {
   tags: string[]
   onChange: (next: string[]) => void
   accentColor: string
   readOnly?: boolean
+  /** Hide the + tag affordance — consumers that don't want users adding tags inline. */
+  disableAdd?: boolean
 }) {
   const [adding, setAdding] = useState(false)
   const [draft, setDraft] = useState('')
@@ -46,7 +48,7 @@ export function TagChipStrip({
           )}
         </span>
       ))}
-      {!readOnly && tags.length < MAX_TAGS && (
+      {!readOnly && !disableAdd && tags.length < MAX_TAGS && (
         adding ? (
           <input
             autoFocus

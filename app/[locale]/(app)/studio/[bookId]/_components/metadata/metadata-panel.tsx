@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from 'react'
 import { Check, ChevronDown, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useBookEditor } from '../book-editor-provider'
-import { EmptyState } from '../empty-state'
 import { updateBinderItemAction } from '@/lib/actions/binder.actions'
 import {
   DropdownMenu,
@@ -31,7 +30,26 @@ type ChapterMeta = {
 }
 
 function EmptyPlaceholder() {
-  return <EmptyState title="No chapter selected" body="Select a chapter to see details." />
+  return (
+    <div className="flex-1 flex items-center justify-center p-8">
+      <div className="text-center max-w-sm flex flex-col items-center gap-3">
+        <h2
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: 22,
+            fontWeight: 700,
+            letterSpacing: '-0.01em',
+            color: 'var(--foreground)',
+          }}
+        >
+          No chapter selected
+        </h2>
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          Select a chapter to see details.
+        </p>
+      </div>
+    </div>
+  )
 }
 
 function ChapterMetadata() {
@@ -87,7 +105,7 @@ function ChapterMetadata() {
           <input
             ref={titleInputRef}
             defaultValue={activeItem!.title}
-            className="text-lg font-bold text-foreground bg-transparent border-b border-foreground/40 outline-none w-full font-[family-name:var(--font-display)]"
+            className="text-lg font-bold text-foreground bg-transparent border-b border-foreground/40 outline-none w-full text-center font-[family-name:var(--font-display)]"
             onKeyDown={e => {
               if (e.key === 'Enter') commitTitle()
               if (e.key === 'Escape') setIsEditingTitle(false)
@@ -96,7 +114,7 @@ function ChapterMetadata() {
           />
         ) : (
           <h2
-            className="text-lg font-bold text-foreground cursor-pointer hover:text-brand transition-colors leading-tight font-[family-name:var(--font-display)]"
+            className="text-lg font-bold text-foreground cursor-pointer hover:text-brand transition-colors leading-tight text-center font-[family-name:var(--font-display)]"
             onClick={() => setIsEditingTitle(true)}
           >
             {activeItem!.title}
@@ -271,7 +289,7 @@ export function MetadataPanel() {
             }
       }
       className={cn(
-        'flex-shrink-0 flex flex-col overflow-hidden',
+        'flex-1 min-h-0 flex flex-col overflow-hidden',
         'transition-[width,opacity,transform] duration-200 ease-out',
         hidden
           ? 'w-0 opacity-0 translate-x-2 pointer-events-none'

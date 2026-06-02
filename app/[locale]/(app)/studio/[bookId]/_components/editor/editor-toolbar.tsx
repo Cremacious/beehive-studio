@@ -69,10 +69,8 @@ function tbtnClass({
   return cn(
     'inline-flex items-center justify-center transition-colors',
     hasLabel ? 'h-[30px] gap-1.5 px-2.5 text-xs font-medium' : 'h-[30px] w-[30px]',
-    isActive
-      ? 'text-[var(--brand-ink)]'
-      : 'text-[var(--brand)]',
-    disabled && 'opacity-40 cursor-not-allowed',
+    !isActive && 'text-[var(--brand)]',
+    disabled && 'cursor-not-allowed opacity-70',
   )
 }
 
@@ -87,6 +85,7 @@ function tbtnStyle(isActive: boolean): React.CSSProperties {
       ? 'var(--brand)'
       : 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
     boxShadow: 'var(--sh-tile)',
+    color: isActive ? '#1a1a1a' : undefined,
   }
 }
 
@@ -182,7 +181,10 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
         className="flex items-center gap-1 px-3 py-2"
         style={{
           background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
-          borderRadius: 'var(--r-card)',
+          borderTopLeftRadius: 'var(--r-card)',
+          borderTopRightRadius: 'var(--r-card)',
+          borderBottomLeftRadius: 0,
+          borderBottomRightRadius: 0,
           boxShadow: 'var(--sh-card)',
           border: 'var(--br-card)',
         }}

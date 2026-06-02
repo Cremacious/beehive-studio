@@ -224,7 +224,8 @@ export function BinderItem({ node, depth }: Props) {
             on the left (12px icon + 8px gap), making icon + title look
             center-shifted instead of flush against the indent edge. */}
         <span
-          className="absolute left-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 text-muted-foreground pointer-events-none"
+          className="absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 text-muted-foreground pointer-events-none"
+          style={{ left: `${16 + depth * 12}px` }}
           aria-hidden
         >
           <GripVertical size={12} />

@@ -42,6 +42,7 @@ type BookEditorContextValue = {
   updateBinderItem: (id: string, patch: Partial<BinderItemRow>) => void
   removeBinderItem: (id: string) => void
   setBinderItems: React.Dispatch<React.SetStateAction<BinderItemRow[]>>
+  setLiveWordCount: (n: number) => void
   updateChapterContent: (content: unknown) => void
   flushPendingSave: () => Promise<void>
   updateChapterStatus: (status: ChapterData['status']) => Promise<void>
@@ -245,6 +246,7 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
 
     if (id === null) {
       setActiveItemIdState(null)
+      setWordCount(0)
       return
     }
 
@@ -259,15 +261,23 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     // forever and silently routed edits to the previous chapter.
     setActiveItemIdState(id)
 
-    if (!item || !CHAPTER_TYPES.has(item.type)) return
+    if (!item || !CHAPTER_TYPES.has(item.type)) {
+      setWordCount(0)
+      return
+    }
 
-    // Cache hit — nothing to do
-    if (chapterCacheRef.current.has(id)) return
+    // Cache hit — seed word count from cache; live updates take over on type
+    const cached = chapterCacheRef.current.get(id)
+    if (cached) {
+      setWordCount(cached.wordCount)
+      return
+    }
 
     // Cache miss — fetch and store (called directly, never inside a setState updater)
     getChapterAction(item.chapterId!).then(result => {
       if (result.success) {
         setChapterCache(c => new Map(c).set(id, result.data))
+        setWordCount(result.data.wordCount)
       } else {
         pushError(`Couldn't load chapter: ${result.error}`)
       }
@@ -439,6 +449,7 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     updateBinderItem,
     removeBinderItem,
     setBinderItems,
+    setLiveWordCount: setWordCount,
     updateChapterContent,
     flushPendingSave,
     updateChapterStatus,

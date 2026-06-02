@@ -367,7 +367,7 @@ export function BinderTree() {
                   ref={bookTitleInputRef}
                   defaultValue={localBookTitle}
                   style={{ color: 'var(--brand)' }}
-                  className="w-full bg-transparent border-b border-brand text-[15px] font-bold font-comfortaa tracking-tight outline-none leading-tight"
+                  className="w-full bg-transparent border-b border-brand text-[15px] font-bold font-comfortaa tracking-tight outline-none leading-tight text-center"
                   onKeyDown={e => {
                     if (e.key === 'Enter') commitBookRename()
                     if (e.key === 'Escape') setIsRenamingBook(false)
@@ -379,7 +379,7 @@ export function BinderTree() {
                   href={`/${locale}/books/${bookId}`}
                   aria-label="Preview as reader"
                   style={{ color: 'var(--brand)' }}
-                  className="block text-[15px] font-bold font-comfortaa tracking-tight leading-tight truncate cursor-pointer hover:underline transition-colors no-underline"
+                  className="block text-center text-[15px] font-bold font-comfortaa tracking-tight leading-tight truncate cursor-pointer hover:underline transition-colors no-underline"
                   onDoubleClick={(e) => {
                     e.preventDefault()
                     setIsRenamingBook(true)

@@ -16,7 +16,6 @@ import { SelectionPopover } from '@/components/hive/collab/selection-popover'
 import { CollaborationGutter } from '@/components/hive/collab/collaboration-gutter'
 import { useBookEditor } from '../book-editor-provider'
 import { EditorToolbar } from './editor-toolbar'
-import { EditorStatusBar } from './editor-status-bar'
 import { WritingAnalysis, extractPlainText } from './writing-analysis'
 import { createBinderItemAction } from '@/lib/actions/binder.actions'
 import { FindReplace } from './find-replace'
@@ -130,6 +129,7 @@ export function ChapterEditor() {
     gutterOpen,
     reloadActiveChapter,
     editorTheme,
+    setLiveWordCount,
   } = useBookEditor()
 
   const [analysisOpen, setAnalysisOpen] = useState(false)
@@ -163,6 +163,8 @@ export function ChapterEditor() {
       onUpdate: ({ editor }) => {
         updateChapterContent(editor.getJSON())
         setEditorText(extractPlainText(editor.getJSON()))
+        const cc = editor.storage.characterCount as { words?: () => number } | undefined
+        if (cc?.words) setLiveWordCount(cc.words())
       },
       editorProps: {
         attributes: {
@@ -387,7 +389,6 @@ export function ChapterEditor() {
           />
         )}
       </div>
-      {editor && <EditorStatusBar editor={editor} />}
       <KeyboardCheatsheet />
     </main>
   )

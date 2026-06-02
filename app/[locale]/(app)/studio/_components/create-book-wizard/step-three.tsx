@@ -183,79 +183,72 @@ function TemplateTile({
 export function StepThree({ templateId, isSeriesBook, seriesName, seriesNumber, publisherName, trimSize, edition, templates, onUpdate, onBack, onSkip, onNext, error }: Props) {
   return (
     <div className="space-y-5">
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 22 }}>
-        {/* Left: Structure */}
-        <div className="flex flex-col gap-3">
-          <HelperText>Pick a structure for your manuscript.</HelperText>
-          <StructureCard
-            active={!isSeriesBook}
-            title="Standalone"
-            helper="One self-contained story. Most novels live here."
-            onClick={() => onUpdate({ isSeriesBook: false })}
-          />
-          <StructureCard
-            active={isSeriesBook}
-            title="Part of a series"
-            helper="Linked to other books with prev/next navigation on the reader page."
-            onClick={() => onUpdate({ isSeriesBook: true })}
-          >
-            {isSeriesBook && (
-              <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <p
-                  style={{
-                    fontSize: '12px',
-                    lineHeight: 1.5,
-                    color: 'var(--canvas-dark-ink-muted)',
-                    margin: 0,
-                  }}
-                >
-                  If you&apos;re writing the second book of <em>The Stormlight Archive</em>, name the series and put <strong>&lsquo;2&rsquo;</strong> here. We&apos;ll show prev/next links on the reader page.
-                </p>
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 10 }}>
-                  <input
-                    type="text"
-                    placeholder="Series name"
-                    aria-label="Series name"
-                    value={seriesName}
-                    onChange={e => onUpdate({ seriesName: e.target.value })}
-                    onFocus={recessFocus}
-                    onBlur={recessBlur}
-                    style={RECESSED_INPUT_STYLE}
-                  />
-                  <input
-                    type="number"
-                    min={1}
-                    max={9999}
-                    placeholder="Book #"
-                    aria-label="Book number"
-                    value={seriesNumber}
-                    onChange={e => onUpdate({ seriesNumber: e.target.value })}
-                    onFocus={recessFocus}
-                    onBlur={recessBlur}
-                    style={RECESSED_INPUT_STYLE}
-                  />
-                </div>
+      {/* Structure — centered + widened (full inner width) */}
+      <div className="flex flex-col gap-3 mx-auto" style={{ maxWidth: 640, width: '100%' }}>
+        <HelperText>Pick a structure for your manuscript.</HelperText>
+        <StructureCard
+          active={!isSeriesBook}
+          title="Standalone"
+          helper="One self-contained story. Most novels live here."
+          onClick={() => onUpdate({ isSeriesBook: false })}
+        />
+        <StructureCard
+          active={isSeriesBook}
+          title="Part of a series"
+          helper="Linked to other books with prev/next navigation on the reader page."
+          onClick={() => onUpdate({ isSeriesBook: true })}
+        >
+          {isSeriesBook && (
+            <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <p
+                style={{
+                  fontSize: '12px',
+                  lineHeight: 1.5,
+                  color: 'var(--canvas-dark-ink-muted)',
+                  margin: 0,
+                }}
+              >
+                If you&apos;re writing the second book of <em>The Stormlight Archive</em>, name the series and put <strong>&lsquo;2&rsquo;</strong> here. We&apos;ll show prev/next links on the reader page.
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 10 }}>
+                <input
+                  type="text"
+                  placeholder="Series name"
+                  aria-label="Series name"
+                  value={seriesName}
+                  onChange={e => onUpdate({ seriesName: e.target.value })}
+                  onFocus={recessFocus}
+                  onBlur={recessBlur}
+                  style={RECESSED_INPUT_STYLE}
+                />
+                <input
+                  type="number"
+                  min={1}
+                  max={9999}
+                  placeholder="Book #"
+                  aria-label="Book number"
+                  value={seriesNumber}
+                  onChange={e => onUpdate({ seriesNumber: e.target.value })}
+                  onFocus={recessFocus}
+                  onBlur={recessBlur}
+                  style={RECESSED_INPUT_STYLE}
+                />
               </div>
-            )}
-          </StructureCard>
-        </div>
+            </div>
+          )}
+        </StructureCard>
+      </div>
 
-        {/* Right: Template */}
-        <div className="flex flex-col gap-3">
-          <HelperText>
-            Pick a manuscript template. <strong>Novel</strong> gives you 24 chapters, <strong>Short story</strong> gives you 1. Don&apos;t sweat it — you can add/remove chapters once you&apos;re inside.
-          </HelperText>
-          <div className="flex flex-col gap-2">
-            {templates.map(t => (
-              <TemplateTile
-                key={t.id}
-                template={t}
-                active={templateId === t.id}
-                onClick={() => onUpdate({ templateId: templateId === t.id ? '' : t.id })}
-              />
-            ))}
-          </div>
-        </div>
+      {/* Template — full width below */}
+      <div className="flex flex-col gap-2 mt-5">
+        {templates.map(t => (
+          <TemplateTile
+            key={t.id}
+            template={t}
+            active={templateId === t.id}
+            onClick={() => onUpdate({ templateId: templateId === t.id ? '' : t.id })}
+          />
+        ))}
       </div>
 
       {/* Publisher info — collapsible, full width */}

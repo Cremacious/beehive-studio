@@ -159,6 +159,9 @@ export function StepTwo({ genre, subgenre, tags, targetAudience, contentWarnings
           </SelectField>
         </WizardField>
         <WizardField label="Subgenre" optionalMarker="optional">
+          <HelperText>
+            Narrow it down if you can — readers browsing your genre can filter by subgenre to find exactly the kind of story they&apos;re after.
+          </HelperText>
           <SelectField
             value={subgenre}
             onChange={value => onUpdate({ subgenre: value })}

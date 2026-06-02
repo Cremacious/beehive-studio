@@ -135,7 +135,7 @@ export function LibraryGrid({ books, hives, locale }: Props) {
     filtered.length === 0 && (query.trim().length > 0 || tab !== 'all')
 
   return (
-    <section className="flex flex-col" style={{ marginTop: '8px' }}>
+    <section className="flex flex-col">
       {/* ── Controls bar (panel chrome) ── */}
       <div
         style={{

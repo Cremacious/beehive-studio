@@ -57,17 +57,6 @@ export default async function StudioPage({
         style={{ gridTemplateColumns: 'minmax(0, 1fr) 300px' }}
       >
         <div>
-          <h2
-            className="font-comfortaa font-bold m-0"
-            style={{
-              color: 'var(--brand)',
-              fontSize: '16px',
-              letterSpacing: '-0.01em',
-              marginBottom: '14px',
-            }}
-          >
-            Your books
-          </h2>
           {/* Pass hives=[] so the grid renders books only — hives live in the rail */}
           <LibraryGrid books={books} hives={[]} locale={locale} />
         </div>

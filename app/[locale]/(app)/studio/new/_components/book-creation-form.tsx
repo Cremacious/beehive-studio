@@ -149,7 +149,7 @@ export function BookCreationForm({ locale, templates }: Props) {
     <div
       className="min-h-screen w-full flex flex-col"
       style={{
-        background: 'var(--canvas-dark-50, #141414)',
+        background: 'transparent',
         color: 'var(--canvas-dark-ink-strong, #fff)',
         padding: '28px',
       }}

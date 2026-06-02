@@ -132,25 +132,52 @@ export function OutlineBoard({ item }: Props) {
   const [linkingBeatId, setLinkingBeatId] = useState<string | null>(null)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // CRITICAL: re-seed all state when the user switches to a different
+  // outline document. The parent passes `<OutlineBoard item={...} />` without
+  // a remounting `key`, so useState would otherwise hold the PRIOR doc's
+  // beats — every keystroke would then overwrite the newly-opened doc's
+  // content with the old doc's state on the next debounced save. Detect the
+  // id flip in render and resync atomically (React's "adjusting state when
+  // a prop changes" pattern).
+  const [trackedItemId, setTrackedItemId] = useState(item.id)
+  if (trackedItemId !== item.id) {
+    setTrackedItemId(item.id)
+    setBeats(initial.beats)
+    setActsOrder(initial.actsOrder ?? deriveActsOrder(initial.beats))
+    setCollapsedActs(initial.collapsedActs ?? [])
+    setHelpBannerDismissed(initial.helpBannerDismissed ?? false)
+    setSaveStatus('idle')
+    setLinkingBeatId(null)
+    setHelpPanelOpen(false)
+    // Do NOT clear saveTimer — its closure captured the PRIOR item.id and
+    // content, so letting it fire correctly persists pending edits to the
+    // outline the user just navigated away from.
+  }
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
 
+  // First-open migration — runs once per item.id so newly opened docs that
+  // never had OutlineContent written get the flat shape persisted.
+  const migrationRanFor = useRef<Set<string>>(new Set())
   useEffect(() => {
+    if (migrationRanFor.current.has(item.id)) return
+    migrationRanFor.current.add(item.id)
     const c = item.content as Partial<OutlineContent> | null
     if (!c || !Array.isArray(c.beats)) {
       const next: OutlineContent = {
-        beats,
-        actsOrder,
-        collapsedActs,
-        helpBannerDismissed,
+        beats: initial.beats,
+        actsOrder: initial.actsOrder ?? deriveActsOrder(initial.beats),
+        collapsedActs: initial.collapsedActs ?? [],
+        helpBannerDismissed: initial.helpBannerDismissed ?? false,
       }
       void updateBinderItemAction(item.id, { content: next })
       updateBinderItem(item.id, { content: next })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [item.id])
 
   function commit(partial: Partial<OutlineContent>) {
     const nextBeats = partial.beats ?? beats

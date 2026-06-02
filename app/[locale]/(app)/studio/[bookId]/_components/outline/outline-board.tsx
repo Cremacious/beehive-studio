@@ -254,6 +254,12 @@ export function OutlineBoard({ item }: Props) {
       return
     }
 
+    if (overId.startsWith('__actbody__:')) {
+      const targetAct = parseActBody(overId)
+      moveBeatToAct(activeId, targetAct)
+      return
+    }
+
     if (overId.startsWith('__empty__:')) {
       const targetAct = parseEmptyId(overId)
       moveBeatToAct(activeId, targetAct)
@@ -277,6 +283,10 @@ export function OutlineBoard({ item }: Props) {
   }
   function parseActHead(id: string): ActKey {
     const raw = id.slice('__acthead__:'.length)
+    return raw === '__noact__' ? null : raw
+  }
+  function parseActBody(id: string): ActKey {
+    const raw = id.slice('__actbody__:'.length)
     return raw === '__noact__' ? null : raw
   }
   function parseEmptyId(id: string): ActKey {
@@ -407,23 +417,6 @@ export function OutlineBoard({ item }: Props) {
           · {beats.length} beat{beats.length === 1 ? '' : 's'}
         </span>
         <div style={{ flex: 1 }} />
-        <button
-          type="button"
-          onClick={() => addBeat()}
-          title="Add a beat"
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6,
-            minHeight: 32, padding: '6px 12px',
-            borderRadius: 8,
-            background: 'var(--color-brand)',
-            color: 'oklch(0.18 0.02 60)',
-            border: 0, cursor: 'pointer',
-            fontSize: 12, fontWeight: 700,
-          }}
-        >
-          <Plus className="w-3.5 h-3.5" />
-          Add beat
-        </button>
         <button
           type="button"
           onClick={() => setHelpPanelOpen(true)}

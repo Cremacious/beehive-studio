@@ -53,14 +53,26 @@ export function OutlineActGroup(props: OutlineActGroupProps) {
   const actId = `__act__:${actKey ?? '__noact__'}`
   const sortable = useSortable({ id: actId, data: { type: 'act' } })
   const dropToHeader = useDroppable({ id: `__acthead__:${actKey ?? '__noact__'}` })
+  // Whole-drawer drop target — makes dropping a beat anywhere inside a
+  // non-empty act work reliably, not just on the header strip.
+  const dropToBody = useDroppable({ id: `__actbody__:${actKey ?? '__noact__'}` })
+
+  // Section-level ring fires when EITHER the cap or the drawer body is over.
+  const isActOver = dropToHeader.isOver || dropToBody.isOver
 
   const wrapperStyle: React.CSSProperties = {
     transform: CSS.Transform.toString(sortable.transform),
-    transition: sortable.transition,
+    // Compose sortable's transition with our ring transition so the highlight
+    // animates smoothly when the dragged beat enters/leaves the act surface.
+    transition: [sortable.transition, 'box-shadow 150ms ease']
+      .filter(Boolean)
+      .join(', '),
     opacity: sortable.isDragging ? 0.55 : 1,
+    borderRadius: 10,
+    boxShadow: isActOver
+      ? '0 0 0 2px oklch(from var(--color-brand) l c h / 0.55)'
+      : undefined,
   }
-
-  const isHeaderOver = dropToHeader.isOver
 
   return (
     <section ref={sortable.setNodeRef} style={wrapperStyle}>
@@ -75,10 +87,6 @@ export function OutlineActGroup(props: OutlineActGroupProps) {
           border: '1px solid var(--outline-rule)',
           borderBottom: collapsed ? '1px solid var(--outline-rule)' : 0,
           borderRadius: collapsed ? 10 : '10px 10px 0 0',
-          boxShadow: isHeaderOver
-            ? '0 0 0 2px oklch(from var(--color-brand) l c h / 0.55)'
-            : undefined,
-          transition: 'box-shadow 150ms ease',
         }}
       >
         <button
@@ -190,6 +198,7 @@ export function OutlineActGroup(props: OutlineActGroupProps) {
 
       {!collapsed ? (
         <div
+          ref={dropToBody.setNodeRef}
           style={{
             background: 'var(--outline-drawer-bg)',
             border: '1px solid var(--outline-rule)',

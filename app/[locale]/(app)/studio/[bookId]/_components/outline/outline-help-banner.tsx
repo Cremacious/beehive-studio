@@ -26,7 +26,7 @@ export function OutlineHelpBanner({
         padding: '10px 14px',
         borderRadius: 10,
         background: 'var(--outline-act-cap-bg)',
-        borderLeft: '3px solid var(--color-brand)',
+        border: '1px solid var(--outline-rule)',
         boxShadow: 'inset 0 1px 0 oklch(1 0 0 / 0.04)',
         display: 'flex',
         alignItems: 'center',

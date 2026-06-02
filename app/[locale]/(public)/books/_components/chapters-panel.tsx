@@ -63,18 +63,30 @@ export function ChaptersPanel({
       return
     }
     const wasRead = readSet.has(binderItemId)
-    const next = new Set(readSet)
-    if (wasRead) next.delete(binderItemId)
-    else next.add(binderItemId)
-    setReadSet(next)
-    onReadSetChange?.(next)
+    // Optimistic flip via functional updater so concurrent toggles
+    // each see the freshest prev. Compose the next set, push to the
+    // parent, then return it from the updater.
+    setReadSet((prev) => {
+      const next = new Set(prev)
+      if (wasRead) next.delete(binderItemId)
+      else next.add(binderItemId)
+      onReadSetChange?.(next)
+      return next
+    })
     startTransition(async () => {
       const result = wasRead
         ? await unmarkChapterReadAction(bookId, binderItemId)
         : await markChapterReadAction(bookId, binderItemId)
       if (!result.success) {
-        setReadSet(readSet)
-        onReadSetChange?.(readSet)
+        // Rollback inverts only THIS row's flip against the current
+        // state — never stomps concurrent successful toggles.
+        setReadSet((prev) => {
+          const reverted = new Set(prev)
+          if (wasRead) reverted.add(binderItemId)
+          else reverted.delete(binderItemId)
+          onReadSetChange?.(reverted)
+          return reverted
+        })
         toast.error(wasRead ? "Couldn't unmark" : "Couldn't mark as read")
       }
     })

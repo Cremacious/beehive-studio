@@ -11,7 +11,7 @@ Overhaul the public book overview page so it reads as a professional book page t
 ## Non-Goals
 
 - Touching the per-chapter reader at `/read/[chapterId]` (separate surface, auto-mark behavior stays).
-- DB / schema changes.
+- Touching the existing `readingProgress` cursor semantics (it stays — drives the "Continue Reading" link). One small additive DB change is needed (see Schema Change below) but no breaking changes to existing tables.
 - New social features (comment threading, per-comment likes, "more by author" grid, native share API).
 - Light-mode variant for this page.
 - Modifying the existing studio editor or any of its surfaces.
@@ -100,21 +100,60 @@ Touched / partially superseded:
 - `app/[locale]/(public)/_components/chapter-list.tsx` — superseded by the new `<ChaptersPanel>` for this surface. Audit other callers (e.g. `/read/[chapterId]` may consume it); if no other callers, delete.
 - `app/[locale]/(public)/_components/comments-panel.tsx` — superseded by the new colocated `<CommentsPanel>`. Same delete-audit.
 
-## Server Actions
+## Schema Change
 
-All existing actions used by the page remain. **One new action added:**
+The existing `readingProgress` table is a single-row-per-(userId, bookId) cursor — it stores `lastChapterId` and derives the "read set" as "every chapter at-or-before that cursor in order." That model can't support true manual checkbox semantics (mark arbitrary chapters in arbitrary order, unmark a middle chapter without affecting later ones).
+
+**New table** `chapter_reads`:
 
 ```ts
-// lib/actions/reading.actions.ts
-export async function unmarkChapterReadAction(
-  bookId: string,
-  chapterBinderItemId: string,
-): Promise<ActionResult<void>>
+// db/schema/social.ts
+export const chapterReads = pgTable('chapter_reads', {
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  bookId: text('book_id').notNull().references(() => books.id, { onDelete: 'cascade' }),
+  chapterBinderItemId: text('chapter_binder_item_id').notNull().references(() => binderItems.id, { onDelete: 'cascade' }),
+  readAt: timestamp('read_at').defaultNow().notNull(),
+}, (t) => [
+  primaryKey({ columns: [t.userId, t.chapterBinderItemId] }),
+  index('chapter_reads_user_book_idx').on(t.userId, t.bookId),
+])
 ```
 
-Mirrors `markChapterReadAction`'s gating: `requireAuth` → `canReadBook(bookId, userId)` (return `{success:false, error:'FORBIDDEN'}` if denied) → delete the matching `readingProgress` row(s) for that user + chapter. If `lastChapterId` on `readingProgress` points at the chapter being un-marked, leave it (it's a "last visited" marker, separate from the "read set"). Note: confirm the actual `readingProgress` schema during implementation; the action's exact shape may need adjusting based on whether reads are stored as a join table or an array column.
+- `bookId` is denormalized for fast "all reads for this user on this book" lookups (the index supports it). It is consistent with `binderItems.bookId` by FK chain.
+- Composite PK on `(userId, chapterBinderItemId)` enforces idempotency (mark-twice is a no-op).
+- Cascade deletes: if the user is deleted, their reads vanish; if the book or binder item is deleted, the read row vanishes.
 
-`markChapterReadAction` keeps its existing behavior (manual mark from this page; auto-mark from `/read/[chapterId]` is intentional and out of scope for this redesign).
+**`readingProgress` is NOT touched.** It continues to drive `lastChapterId` / "Continue Reading" (the auto-update from the chapter reader page) and its existing semantics are preserved for backward-compat with the rest of the app.
+
+Additive migration only; no data loss. Existing users have zero `chapter_reads` rows initially — their previously-implied progress (derived from `readingProgress.chapterId`) is lost from the checkbox UI, but the "Continue Reading" CTA still works because it reads `lastChapterId`.
+
+## Server Actions
+
+`markChapterReadAction` and `getReadingProgressAction` are reshaped to use `chapter_reads` as the source of truth for the "read set". One new sibling action is added for unmarking. All three live in `lib/actions/reading.actions.ts`.
+
+```ts
+// markChapterReadAction(bookId, chapterBinderItemId)
+//   - requireAuth + canReadBook (FORBIDDEN on denial)
+//   - INSERT into chapter_reads ON CONFLICT DO NOTHING (idempotent)
+//   - Also still upserts readingProgress.chapterId (cursor) so "Continue Reading"
+//     and the auto-mark from /read/[chapterId] keep working uninterrupted.
+
+// unmarkChapterReadAction(bookId, chapterBinderItemId)   // NEW
+//   - requireAuth + canReadBook
+//   - DELETE FROM chapter_reads WHERE userId AND chapterBinderItemId
+//   - Does NOT touch readingProgress (lastChapterId is a separate concern)
+
+// getReadingProgressAction(bookId)
+//   - shape unchanged: { lastChapterId, readChapterBinderItemIds }
+//   - lastChapterId continues to come from readingProgress
+//   - readChapterBinderItemIds NOW comes from chapter_reads
+//     (SELECT chapterBinderItemId WHERE userId AND bookId), not from
+//     the linear "at-or-before cursor" derivation.
+```
+
+**Signature change:** `markChapterReadAction`'s second arg is renamed from `chapterId` (the `chapters.id` PK) to `chapterBinderItemId` (the `binderItems.id` PK). This aligns it with how reads are tracked everywhere else in the app — `readChapterBinderItemIds` is already a `binderItems.id[]` in the existing return type. Internally the action still upserts `readingProgress.chapterId` using the `chapters.id` that corresponds to the binder item (1:1 via `chapters.binderItemId`). The call site in the per-chapter reader at `/read/[chapterId]` is updated to pass the binder item id (it has both available).
+
+The "auto-mark on visit" behavior on `/read/[chapterId]` is preserved — it still calls `markChapterReadAction` so visiting a chapter populates both `chapter_reads` and `readingProgress.chapterId`.
 
 ## Data Flow
 
@@ -208,7 +247,6 @@ Manual smoke (Chris's preference; documented in plan):
 
 ## Open Items for Implementation Plan
 
-- Confirm `readingProgress` schema shape (join table vs array column) and finalize `unmarkChapterReadAction` body accordingly.
 - Decide the exact lifting strategy for the shared `readSet` state between `<BookHero>` and `<ChaptersPanel>` (page-level client wrapper vs callback prop).
 - Audit the three superseded `(public)/_components/` files for non-page callers before deleting.
-- Confirm `book.synopsis` is present on `getPublicBookAction`'s return; if not, add it to the projection.
+- `book.synopsis` is already on `getPublicBookAction`'s return (confirmed during spec authoring).

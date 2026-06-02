@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useEffect, useState } from 'react'
+import { toast } from 'sonner'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
@@ -118,7 +119,6 @@ export function ChapterEditor() {
     activeChapter,
     updateChapterContent,
     flushPendingSave,
-    pushFlash,
     previewSnapshotId,
     previewSnapshotContent,
     bookOverflow,
@@ -199,12 +199,16 @@ export function ChapterEditor() {
         e.preventDefault()
         const json = editor.getJSON()
         updateChapterContent(json)
-        void flushPendingSave().then(() => pushFlash('Saved'))
+        const label = activeItem?.title ?? 'chapter'
+        void flushPendingSave().then(() => {
+          const stamp = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+          toast.success(`Saved ${label}`, { description: stamp })
+        })
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [editor, updateChapterContent, flushPendingSave, pushFlash])
+  }, [editor, updateChapterContent, flushPendingSave, activeItem])
 
   // When chapter data arrives after the async fetch, populate the editor.
   // useEditor initializes with null because activeChapter is always null on first render.

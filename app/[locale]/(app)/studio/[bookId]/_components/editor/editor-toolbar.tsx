@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import type { Editor } from '@tiptap/react'
 // Side-effect import: pulls in module augmentations for all StarterKit commands
@@ -26,7 +27,8 @@ import {
   MessagesSquare,
   Heading as HeadingIcon,
   Type as TypeIcon,
-  MoreHorizontal,
+  Save,
+  ChevronDown,
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -140,12 +142,15 @@ function ToolbarButton({ onClick, disabled, isActive, title, children }: Toolbar
   )
 }
 
-function Separator() {
-  return <span className="w-px h-[18px] bg-border mx-1.5" />
-}
-
 export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggleFind, findOpen }: Props) {
-  const { focusMode, toggleFocusMode, editorTheme, toggleEditorTheme, historyOpen, toggleHistory, bookId, locale, bookHive, gutterOpen, toggleGutter } = useBookEditor()
+  const { focusMode, toggleFocusMode, editorTheme, toggleEditorTheme, historyOpen, toggleHistory, bookId, locale, bookHive, gutterOpen, toggleGutter, flushPendingSave, saveStatus, activeItem } = useBookEditor()
+
+  async function handleManualSave() {
+    const label = activeItem?.title ?? 'chapter'
+    await flushPendingSave()
+    const stamp = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+    toast.success(`Saved ${label}`, { description: stamp })
+  }
   const router = useRouter()
 
   const [showExport, setShowExport] = useState(false)
@@ -191,6 +196,14 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
       >
         {/* FORMAT zone (left) */}
         <div className="flex items-center gap-0.5">
+          {/* Manual save */}
+          <ToolbarButton
+            onClick={() => { void handleManualSave() }}
+            title="Save (⌘S)"
+          >
+            <Save size={14} />
+          </ToolbarButton>
+
           {/* Inline */}
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleBold().run()}
@@ -207,14 +220,19 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
             <Italic size={14} />
           </ToolbarButton>
           <ToolbarButton
+            onClick={() => editor.chain().focus().toggleUnderline().run()}
+            isActive={editor.isActive('underline')}
+            title="Underline (⌘U)"
+          >
+            <Underline size={14} />
+          </ToolbarButton>
+          <ToolbarButton
             onClick={() => editor.chain().focus().toggleStrike().run()}
             isActive={editor.isActive('strike')}
             title="Strikethrough"
           >
             <Strikethrough size={14} />
           </ToolbarButton>
-
-          <Separator />
 
           {/* Heading dropdown — groups H1/H2/H3 into a single trigger so the
               toolbar stays single-row. Active state lights when any heading
@@ -266,8 +284,6 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Separator />
-
           {/* List dropdown — groups bullet + ordered into a single trigger. */}
           <DropdownMenu>
             <Tooltip>
@@ -316,8 +332,6 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
             <Minus size={14} />
           </ToolbarButton>
 
-          <Separator />
-
           {/* History */}
           <ToolbarButton
             onClick={() => editor.chain().focus().undo().run()}
@@ -334,16 +348,7 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
             <Redo size={14} />
           </ToolbarButton>
 
-          <Separator />
-
-          {/* Format: Underline, Highlight, Link */}
-          <ToolbarButton
-            onClick={() => editor.chain().focus().toggleUnderline().run()}
-            isActive={editor.isActive('underline')}
-            title="Underline (⌘U)"
-          >
-            <Underline size={14} />
-          </ToolbarButton>
+          {/* Format: Highlight, Link */}
           <ToolbarButton
             onClick={() => editor.chain().focus().toggleHighlight().run()}
             isActive={editor.isActive('highlight')}
@@ -358,8 +363,6 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
           >
             <Link size={14} />
           </ToolbarButton>
-
-          <Separator />
 
           {/* Align dropdown — groups L/C/R into one trigger. Icon reflects
               current alignment when set; defaults to AlignLeft. */}
@@ -413,6 +416,52 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          {/* Find & Replace — chapter-only */}
+          {onToggleFind && (
+            <ToolbarButton onClick={onToggleFind} isActive={findOpen} title="Find & replace (⌘F)">
+              <Search size={14} />
+            </ToolbarButton>
+          )}
+
+          {/* Font size — Word-style picker (label + current px + chevron) */}
+          <DropdownMenu>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    onMouseDown={e => e.preventDefault()}
+                    aria-label="Font size"
+                    className={cn(
+                      'inline-flex items-center gap-1.5 h-[30px] px-2.5 transition-colors',
+                      'text-[var(--brand)] text-[12px] font-mono tabular-nums',
+                    )}
+                    style={{
+                      ...tbtnStyle(false),
+                      minWidth: 108,
+                    }}
+                    onMouseEnter={e => tbtnHoverEnter(e, false)}
+                    onMouseLeave={e => tbtnHoverLeave(e, false)}
+                  >
+                    <span>Font Size {fontSize}</span>
+                    <ChevronDown size={12} />
+                  </button>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent>Font size</TooltipContent>
+            </Tooltip>
+            <DropdownMenuContent align="end" onCloseAutoFocus={e => e.preventDefault()} style={dropdownPanelStyle}>
+              {[12, 14, 16, 18, 20, 24].map(s => (
+                <DropdownMenuItem
+                  key={s}
+                  onSelect={() => setFontSize(s)}
+                  className={cn(fontSize === s && 'bg-brand/15 text-foreground')}
+                >
+                  {s}px
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Single spacer pushes everything after it to the right.
@@ -422,6 +471,14 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
 
         {/* VIEW zone (right) */}
         <div className="flex items-center gap-0.5">
+          {/* Keyboard shortcuts */}
+          <ToolbarButton
+            onClick={() => window.dispatchEvent(new Event('beehive:toggle-cheatsheet'))}
+            title="Keyboard shortcuts"
+          >
+            <HelpCircle size={14} />
+          </ToolbarButton>
+
           {/* Preview as reader */}
           <ToolbarButton
             onClick={() => router.push(`/${locale}/books/${bookId}`)}
@@ -429,13 +486,6 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
           >
             <Eye size={14} />
           </ToolbarButton>
-
-          {/* Find & Replace — chapter-only */}
-          {onToggleFind && (
-            <ToolbarButton onClick={onToggleFind} isActive={findOpen} title="Find & replace (⌘F)">
-              <Search size={14} />
-            </ToolbarButton>
-          )}
 
           {/* Version history */}
           <ToolbarButton onClick={toggleHistory} isActive={historyOpen} title="Version history">
@@ -472,61 +522,22 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
             </TooltipContent>
           </Tooltip>
 
-          {/* More menu — utilities (Help, Font size, Export, Writing analysis).
-              Keeps the toolbar single-row so Focus mode stays visible at
-              narrow viewports. */}
-          <DropdownMenu>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    onMouseDown={e => e.preventDefault()}
-                    aria-label="More"
-                    className={tbtnClass({ isActive: analysisOpen })}
-                    style={tbtnStyle(!!analysisOpen)}
-                    onMouseEnter={e => tbtnHoverEnter(e, !!analysisOpen)}
-                    onMouseLeave={e => tbtnHoverLeave(e, !!analysisOpen)}
-                  >
-                    <MoreHorizontal size={14} />
-                  </button>
-                </DropdownMenuTrigger>
-              </TooltipTrigger>
-              <TooltipContent>More</TooltipContent>
-            </Tooltip>
-            <DropdownMenuContent align="end" onCloseAutoFocus={e => e.preventDefault()} style={dropdownPanelStyle}>
-              <DropdownMenuItem
-                onSelect={() => window.dispatchEvent(new Event('beehive:toggle-cheatsheet'))}
-              >
-                <HelpCircle size={14} className="mr-2" /> Keyboard shortcuts
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setShowExport(true)}>
-                <Download size={14} className="mr-2" /> Export book
-              </DropdownMenuItem>
-              {onToggleAnalysis && (
-                <DropdownMenuItem
-                  onSelect={onToggleAnalysis}
-                  className={cn(analysisOpen && 'bg-brand/15 text-foreground')}
-                >
-                  <BarChart3 size={14} className="mr-2" /> Writing analysis
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
-              <div className="flex items-center gap-2 px-2 py-1.5 text-xs text-foreground/70">
-                <TypeIcon size={14} />
-                <span>Font size</span>
-                <select
-                  value={fontSize}
-                  onChange={e => setFontSize(Number(e.target.value))}
-                  aria-label="Font size"
-                  className="ml-auto h-[26px] rounded-[8px] bg-surface-elevated border border-border px-2 text-xs text-foreground/80 hover:text-foreground hover:border-foreground/30 transition-colors cursor-pointer focus:outline-none focus:ring-1 focus:ring-brand/40"
-                >
-                  {[12, 14, 16, 18, 20, 24].map(s => (
-                    <option key={s} value={s}>{s}px</option>
-                  ))}
-                </select>
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Export book */}
+          <ToolbarButton onClick={() => setShowExport(true)} title="Export book">
+            <Download size={14} />
+          </ToolbarButton>
+
+          {/* Writing analysis */}
+          {onToggleAnalysis && (
+            <ToolbarButton
+              onClick={onToggleAnalysis}
+              isActive={analysisOpen}
+              title="Writing analysis"
+            >
+              <BarChart3 size={14} />
+            </ToolbarButton>
+          )}
+
 
           {/* Focus mode toggle */}
           <Tooltip>

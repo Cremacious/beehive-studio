@@ -222,7 +222,7 @@ export function NewGoalModal({
                 value={endStr}
                 onChange={(e) => setEndStr(e.target.value)}
                 className="mt-2"
-                disabled={type !== 'TOTAL' && false}
+                disabled={type !== 'TOTAL'}
               />
             </div>
           </div>

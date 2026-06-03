@@ -72,15 +72,25 @@ New presentational component `chapter-metadata-header.tsx` colocated under `hive
 type Props = {
   status: 'IDEA' | 'OUTLINE' | 'FIRST_DRAFT' | 'REVISED' | 'FINAL'
   synopsis: string | null
-  scenes: Array<{ id: string; title: string }>  // from binder_items.content
+  scenePlanner: {
+    goal: string | null
+    conflict: string | null
+    outcome: string | null
+  }
 }
 ```
+
+Scene Planner is **not** a list of scenes — the studio metadata-panel implements it as three fixed labeled text fields per chapter (`sceneGoal`, `sceneConflict`, `sceneOutcome`) stored on `binder_items.content`. The hive header mirrors that shape.
 
 **Rendered structure (top to bottom):**
 
 1. Title row (existing) — chapter title + status pill on the same row. Status pill uses existing `--status-{LEVEL}` tokens. Uppercase mono small text.
 2. Synopsis paragraph — `<p>` with `line-clamp-3`, italic muted ink. Hidden when `synopsis === null || synopsis.trim() === ''`.
-3. Scene Planner block — `<details>` with summary `▶ Scene planner · {N} scenes`. Open shows `<ul>` of scene titles, one per row. Hidden entirely when `scenes.length === 0`.
+3. Scene Planner block — `<details>` with summary `▶ Scene planner`. Open shows three labeled stanzas:
+   - **Goal** — `scenePlanner.goal` (one paragraph, muted ink).
+   - **Conflict** — `scenePlanner.conflict`.
+   - **Outcome** — `scenePlanner.outcome`.
+   Each stanza is hidden when its field is null/empty. The whole `<details>` block is hidden when ALL three fields are empty.
 4. Hairline divider — `border-t` muted, ~16px margin top, between the header block and the prose surface.
 
 **Visual position:** between `<ChapterContributionByline>` and the prose `<EditorContent>`. Sits inside the same width column as the prose so the divider aligns.
@@ -133,13 +143,19 @@ Extend return shape with:
 {
   status: ChapterStatus
   synopsis: string | null
-  scenes: Array<{ id: string; title: string }>
+  scenePlanner: {
+    goal: string | null
+    conflict: string | null
+    outcome: string | null
+  }
 }
 ```
 
 - `status` from `chapters.status` (already present on the joined chapter row).
 - `synopsis` from `binder_items.content.synopsis` if the chapter's binder item carries it. Read via existing content jsonb access. Null when missing.
-- `scenes` from `binder_items.content.scenes` (or whichever key the studio metadata-panel writes for Scene Planner). Confirm exact key during impl by reading `metadata-panel.tsx`'s Scene Planner edit path. Empty array when missing/malformed.
+- `scenePlanner.goal` from `binder_items.content.sceneGoal`. Null when missing or blank-after-trim.
+- `scenePlanner.conflict` from `binder_items.content.sceneConflict`. Null when missing or blank.
+- `scenePlanner.outcome` from `binder_items.content.sceneOutcome`. Null when missing or blank.
 
 No annotation/suggestion counts here — the hive chapter view's gutter is always mounted and doesn't gate on a count. (The chapter index's per-row badges get counts from `getHiveChapterListAction` instead.)
 
@@ -252,15 +268,16 @@ Stays gated by `canReviewSuggestion`. Existing bulk-review UI (per-chapter group
 ## Edge cases
 
 1. **Chapter in a non-hive book.** Studio editor's `getChapterAction` skips the COUNT queries entirely and returns `0` for both. Provider's auto-open gate fails (count is 0). Toolbar badge hidden. No UI surprise.
-2. **Chapter with synopsis but no scenes.** Header strip renders synopsis paragraph; Scene Planner `<details>` omitted entirely.
-3. **Chapter with scenes but no synopsis.** Header strip omits the synopsis paragraph; Scene Planner `<details>` renders.
-4. **Chapter with no synopsis AND no scenes.** Header strip is just the title + status pill row. The hairline divider still renders (separates header from prose visually).
-5. **`scenes` is malformed JSON** (legacy data, hand-edited DB). The metadata-header reads it defensively: if `Array.isArray(scenes) === false` after parse, treats as empty.
-6. **Status enum has a value we don't recognize** (post-deploy schema migration races). Status pill renders the raw value uppercased; doesn't crash.
-7. **User closes the gutter on a chapter with items, then switches to another chapter with items, then returns.** The "fire-once per chapter switch" ref tracks the active chapter id; switching away and back re-fires the auto-open. Acceptable — the user's "close" intent was per-visit, not per-session.
-8. **User in a long editing session — annotation arrives mid-edit.** Out of scope (no real-time). Will appear on next chapter open or page reload.
-9. **Chapter with 99 annotations.** Badge shows `99 annotations`. Numeric badge on toolbar shows `99`. No cap at this stage — three-digit counts (100+) still render but tighter. If smoke flags this, cap at `99+` later.
-10. **Deleting a chapter that has annotations.** Existing cascade behavior (hive_annotations has `chapter_id` FK to chapters with `onDelete: 'cascade'` per the H3 migration) handles this. Counts are recomputed on next chapter list load. No new code needed.
+2. **Chapter with synopsis but no scene planner fields.** Header strip renders synopsis paragraph; Scene Planner `<details>` omitted entirely (all three fields null).
+3. **Chapter with scene planner fields but no synopsis.** Header strip omits the synopsis paragraph; Scene Planner `<details>` renders with whatever subset of goal/conflict/outcome is non-null.
+4. **Chapter with only one of the three scene planner fields filled** (e.g. only `sceneGoal`). The `<details>` block renders with just the Goal stanza; Conflict + Outcome stanzas hidden.
+5. **Chapter with no synopsis AND no scene planner fields.** Header strip is just the title + status pill row. The hairline divider still renders (separates header from prose visually).
+6. **`binder_items.content` is malformed or has unexpected types** (legacy data, hand-edited DB). The action's content access is defensive: non-string values for `synopsis` / `sceneGoal` / `sceneConflict` / `sceneOutcome` are coerced to null.
+7. **Status enum has a value we don't recognize** (post-deploy schema migration races). Status pill renders the raw value uppercased; doesn't crash.
+8. **User closes the gutter on a chapter with items, then switches to another chapter with items, then returns.** The "fire-once per chapter switch" ref tracks the active chapter id; switching away and back re-fires the auto-open. Acceptable — the user's "close" intent was per-visit, not per-session.
+9. **User in a long editing session — annotation arrives mid-edit.** Out of scope (no real-time). Will appear on next chapter open or page reload.
+10. **Chapter with 99 annotations.** Badge shows `99 annotations`. Numeric badge on toolbar shows `99`. No cap at this stage — three-digit counts (100+) still render but tighter. If smoke flags this, cap at `99+` later.
+11. **Deleting a chapter that has annotations.** Existing cascade behavior (hive_annotations has `chapter_id` FK to chapters with `onDelete: 'cascade'` per the H3 migration) handles this. Counts are recomputed on next chapter list load. No new code needed.
 
 ---
 

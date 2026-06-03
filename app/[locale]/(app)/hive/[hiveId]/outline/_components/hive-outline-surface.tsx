@@ -2,7 +2,6 @@
 
 import { useRef, useState } from 'react'
 import { createId } from '@paralleldrive/cuid2'
-import Link from 'next/link'
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent,
 } from '@dnd-kit/core'
@@ -14,13 +13,8 @@ import { groupBeatsByAct, distinctActs } from '@/lib/outline/group-by-act'
 import { canEditOutline, type HiveRole } from '@/lib/hive/permissions'
 import { SaveStatusBadge, type FormSaveStatus } from '@/app/[locale]/(app)/studio/[bookId]/_components/front-back-matter/save-status-badge'
 import { OutlineBeatRow } from '@/app/[locale]/(app)/studio/[bookId]/_components/outline/outline-card'
-import { readBeats, type Beat, type BeatStatus, type OutlineContent } from '@/app/[locale]/(app)/studio/[bookId]/_components/outline/outline-board'
-
-const STATUS_CYCLE: BeatStatus[] = ['idea', 'drafting', 'done']
-function nextStatus(s: BeatStatus | undefined): BeatStatus {
-  const i = STATUS_CYCLE.indexOf((s ?? 'idea') as BeatStatus)
-  return STATUS_CYCLE[(i + 1) % STATUS_CYCLE.length]!
-}
+import { readBeats, type Beat, type OutlineContent } from '@/app/[locale]/(app)/studio/[bookId]/_components/outline/outline-board'
+import { BeatDialog } from '@/app/[locale]/(app)/studio/[bookId]/_components/outline/beat-dialog'
 
 function relTime(d: Date): string {
   const seconds = Math.floor((Date.now() - new Date(d).getTime()) / 1000)
@@ -36,15 +30,13 @@ function relTime(d: Date): string {
 
 type ChapterRef = { id: string; title: string; order: number }
 
-type OutlineEntry = {
-  outline: BinderItemRow
-  lastEditedByUsername: string | null
-  lastEditedAt: Date | null
-}
-
 type HiveOutlineData = {
   bookId: string
-  outlines: OutlineEntry[]
+  entry: {
+    outline: BinderItemRow
+    lastEditedByUsername: string | null
+    lastEditedAt: Date | null
+  }
   chapters: ChapterRef[]
   viewerRole: HiveRole
 }
@@ -58,46 +50,16 @@ export function HiveOutlineSurface({
   hiveId: string
   locale: string
 }) {
-  if (data.outlines.length === 0) {
-    return (
-      <div
-        style={{
-          background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
-          borderRadius: 'var(--r-card)',
-          boxShadow: 'var(--sh-card)',
-          border: 'var(--br-card)',
-        }}
-        className="p-6"
-      >
-        <div className="text-center py-12">
-          <p className="text-sm mb-3" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
-            No outlines yet — the author can create one in the editor.
-          </p>
-          <Link
-            href={`/${locale}/studio/${data.bookId}`}
-            style={{ color: 'var(--brand)' }}
-            className="font-geist font-semibold text-sm"
-          >
-            Open the book in the studio →
-          </Link>
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className="flex flex-col gap-6">
-      {data.outlines.map(entry => (
-        <HiveOutlineSurfaceInner
-          key={entry.outline.id}
-          outline={entry.outline}
-          chapters={data.chapters}
-          viewerRole={data.viewerRole}
-          lastEditedByUsername={entry.lastEditedByUsername}
-          lastEditedAt={entry.lastEditedAt}
-        />
-      ))}
-    </div>
+    <HiveOutlineSurfaceInner
+      outline={data.entry.outline}
+      chapters={data.chapters}
+      viewerRole={data.viewerRole}
+      lastEditedByUsername={data.entry.lastEditedByUsername}
+      lastEditedAt={data.entry.lastEditedAt}
+      bookId={data.bookId}
+      locale={locale}
+    />
   )
 }
 
@@ -107,12 +69,16 @@ function HiveOutlineSurfaceInner({
   viewerRole,
   lastEditedByUsername,
   lastEditedAt,
+  bookId: _bookId,
+  locale: _locale,
 }: {
   outline: BinderItemRow
   chapters: ChapterRef[]
   viewerRole: HiveRole
   lastEditedByUsername: string | null
   lastEditedAt: Date | null
+  bookId: string
+  locale: string
 }) {
   const readOnly = !canEditOutline(viewerRole)
   const [beats, setBeats] = useState<Beat[]>(() => readBeats(outline.content))
@@ -136,25 +102,35 @@ function HiveOutlineSurfaceInner({
     }, 2000)
   }
 
-  function addBeat(act?: string | null) {
+  type DialogState =
+    | { mode: 'closed' }
+    | { mode: 'create'; defaultAct: string | null }
+    | { mode: 'edit'; beatId: string }
+
+  const [dialogState, setDialogState] = useState<DialogState>({ mode: 'closed' })
+
+  function openCreate(act: string | null = null) {
     if (readOnly) return
-    const resolvedAct = act !== undefined ? act : null
-    commit([...beats, { id: createId(), title: '', description: '', status: 'idea', linkedChapterId: null, act: resolvedAct }])
-    if (resolvedAct) setPendingActs(prev => prev.filter(a => a !== resolvedAct))
+    setDialogState({ mode: 'create', defaultAct: act })
+    if (act) setPendingActs(prev => prev.filter(a => a !== act))
   }
+
+  function openEdit(beat: Beat) {
+    setDialogState({ mode: 'edit', beatId: beat.id })
+  }
+
+  function closeDialog() {
+    setDialogState({ mode: 'closed' })
+  }
+
+  const editingBeat: Beat | null =
+    dialogState.mode === 'edit'
+      ? beats.find(b => b.id === dialogState.beatId) ?? null
+      : null
+
   function patchBeat(id: string, patch: Partial<Beat>) {
     if (readOnly) return
     commit(beats.map(b => b.id === id ? { ...b, ...patch } : b))
-  }
-  function deleteBeat(id: string) {
-    if (readOnly) return
-    commit(beats.filter(b => b.id !== id))
-  }
-  function cycleStatus(id: string) {
-    if (readOnly) return
-    const b = beats.find(x => x.id === id)
-    if (!b) return
-    patchBeat(id, { status: nextStatus(b.status) })
   }
   function renameAct(oldName: string | null, raw: string) {
     if (readOnly || oldName === null) return
@@ -250,7 +226,7 @@ function HiveOutlineSurfaceInner({
           {!readOnly && (
             <button
               type="button"
-              onClick={() => addBeat()}
+              onClick={() => openCreate(null)}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold"
               style={{
                 background: 'var(--color-brand)',
@@ -272,7 +248,7 @@ function HiveOutlineSurfaceInner({
             !readOnly ? (
               <button
                 type="button"
-                onClick={() => addBeat()}
+                onClick={() => openCreate(null)}
                 className="w-full mt-4 px-4 py-6 rounded-md text-sm font-semibold italic transition-colors"
                 style={{
                   background: 'transparent',
@@ -347,7 +323,7 @@ function HiveOutlineSurfaceInner({
                         {!readOnly && (
                           <button
                             type="button"
-                            onClick={() => addBeat(group.act)}
+                            onClick={() => openCreate(group.act)}
                             style={{ color: 'var(--brand)', borderRadius: 'var(--r-btn)' }}
                             className="inline-flex items-center gap-1 px-2 py-1 font-geist font-semibold text-xs"
                           >
@@ -371,6 +347,7 @@ function HiveOutlineSurfaceInner({
                                 onOpenLinkPopover={() => { if (!readOnly) setLinkingBeatId(beat.id) }}
                                 onUnlink={() => patchBeat(beat.id, { linkedChapterId: null })}
                                 onJumpToChapter={() => { /* no studio context in hive view */ }}
+                                onEditClick={openEdit}
                               />
                             )
                           })}
@@ -399,7 +376,7 @@ function HiveOutlineSurfaceInner({
                         </span>
                         <button
                           type="button"
-                          onClick={() => addBeat(name)}
+                          onClick={() => openCreate(name)}
                           style={{ color: 'var(--brand)', borderRadius: 'var(--r-btn)' }}
                           className="inline-flex items-center gap-1 px-2 py-1 font-geist font-semibold text-xs"
                         >
@@ -429,7 +406,7 @@ function HiveOutlineSurfaceInner({
           {!readOnly && (beats.length > 0 || pendingActs.length > 0) && (
             <button
               type="button"
-              onClick={() => addBeat()}
+              onClick={() => openCreate(null)}
               className="w-full mt-3 px-4 py-3 rounded-md text-sm font-semibold italic transition-colors flex items-center justify-center gap-2"
               style={{
                 background: 'transparent',
@@ -501,6 +478,38 @@ function HiveOutlineSurfaceInner({
           onClose={() => setLinkingBeatId(null)}
         />
       )}
+
+      <BeatDialog
+        open={dialogState.mode !== 'closed'}
+        mode={dialogState.mode === 'edit' ? 'edit' : 'create'}
+        initial={editingBeat ?? {}}
+        defaultAct={dialogState.mode === 'create' ? dialogState.defaultAct : null}
+        readOnly={readOnly}
+        onOpenChange={open => { if (!open) closeDialog() }}
+        onSave={patch => {
+          if (readOnly) return
+          if (dialogState.mode === 'create') {
+            const id = createId()
+            const newBeat: Beat = {
+              id,
+              title: patch.title ?? '',
+              description: patch.description,
+              color: patch.color,
+              label: patch.label,
+              act: dialogState.defaultAct,
+              linkedChapterId: null,
+            }
+            commit([...beats, newBeat])
+          } else if (dialogState.mode === 'edit' && editingBeat) {
+            commit(beats.map(b => b.id === editingBeat.id ? { ...b, ...patch } : b))
+          }
+        }}
+        onDelete={
+          dialogState.mode === 'edit' && editingBeat && !readOnly
+            ? () => commit(beats.filter(b => b.id !== editingBeat.id))
+            : undefined
+        }
+      />
     </div>
   )
 }

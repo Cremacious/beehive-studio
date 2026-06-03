@@ -137,7 +137,15 @@ function HiveWikiEntryEditorInner({
   const [content, setContent] = useState<WikiEntryContent>(initial)
   const [status, setStatus] = useState<FormSaveStatus>('idle')
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const template = CATEGORY_TEMPLATE_MAP[content.category]
+  // Characters are first-class `character` binder items (content typically
+  // null since the dedicated character renderer owns its own shape on the
+  // studio side). On the hive wiki surface we union-coerce them to the
+  // CHARACTER category so the badge + blurb match the list view (matches
+  // the shaping in getHiveWikiView). Without this override the editor
+  // falls back to OTHER for character rows.
+  const displayCategory: WikiCategory =
+    item.type === 'character' ? 'CHARACTER' : content.category
+  const template = CATEGORY_TEMPLATE_MAP[displayCategory]
 
   const scheduleSave = useCallback((next: WikiEntryContent) => {
     if (readOnly) return

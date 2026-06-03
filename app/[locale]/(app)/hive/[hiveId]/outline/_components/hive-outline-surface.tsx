@@ -36,13 +36,17 @@ function relTime(d: Date): string {
 
 type ChapterRef = { id: string; title: string; order: number }
 
-type HiveOutlineData = {
-  bookId: string
-  outline: BinderItemRow | null
-  chapters: ChapterRef[]
-  viewerRole: HiveRole
+type OutlineEntry = {
+  outline: BinderItemRow
   lastEditedByUsername: string | null
   lastEditedAt: Date | null
+}
+
+type HiveOutlineData = {
+  bookId: string
+  outlines: OutlineEntry[]
+  chapters: ChapterRef[]
+  viewerRole: HiveRole
 }
 
 export function HiveOutlineSurface({
@@ -54,7 +58,7 @@ export function HiveOutlineSurface({
   hiveId: string
   locale: string
 }) {
-  if (!data.outline) {
+  if (data.outlines.length === 0) {
     return (
       <div
         style={{
@@ -67,7 +71,7 @@ export function HiveOutlineSurface({
       >
         <div className="text-center py-12">
           <p className="text-sm mb-3" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
-            No outline yet — the author can create one in the editor.
+            No outlines yet — the author can create one in the editor.
           </p>
           <Link
             href={`/${locale}/studio/${data.bookId}`}
@@ -82,14 +86,18 @@ export function HiveOutlineSurface({
   }
 
   return (
-    <HiveOutlineSurfaceInner
-      key={data.outline.id}
-      outline={data.outline}
-      chapters={data.chapters}
-      viewerRole={data.viewerRole}
-      lastEditedByUsername={data.lastEditedByUsername}
-      lastEditedAt={data.lastEditedAt}
-    />
+    <div className="flex flex-col gap-6">
+      {data.outlines.map(entry => (
+        <HiveOutlineSurfaceInner
+          key={entry.outline.id}
+          outline={entry.outline}
+          chapters={data.chapters}
+          viewerRole={data.viewerRole}
+          lastEditedByUsername={entry.lastEditedByUsername}
+          lastEditedAt={entry.lastEditedAt}
+        />
+      ))}
+    </div>
   )
 }
 

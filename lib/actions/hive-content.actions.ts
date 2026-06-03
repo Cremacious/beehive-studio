@@ -141,13 +141,17 @@ export async function getHiveWikiView(hiveId: string): Promise<ActionResult<Hive
   }
 }
 
-export async function getHiveOutlineView(hiveId: string): Promise<ActionResult<{
-  bookId: string
-  outline: BinderItemRow | null
-  chapters: Array<{ id: string; title: string; order: number }>
-  viewerRole: HiveRole
+export type HiveOutlineEntry = {
+  outline: BinderItemRow
   lastEditedByUsername: string | null
   lastEditedAt: Date | null
+}
+
+export async function getHiveOutlineView(hiveId: string): Promise<ActionResult<{
+  bookId: string
+  outlines: HiveOutlineEntry[]
+  chapters: Array<{ id: string; title: string; order: number }>
+  viewerRole: HiveRole
 }>> {
   const userId = await requireAuth()
   const role = await requireHiveMember(hiveId, userId)
@@ -157,8 +161,9 @@ export async function getHiveOutlineView(hiveId: string): Promise<ActionResult<{
   })
   if (!hive || !hive.bookId) return { success: false, error: 'HIVE_NOT_FOUND' }
 
-  const outline = await db.query.binderItems.findFirst({
+  const outlineItems = await db.query.binderItems.findMany({
     where: and(eq(binderItems.bookId, hive.bookId), eq(binderItems.type, 'outline')),
+    orderBy: [asc(binderItems.order)],
   })
 
   const chapterItems = await db.query.binderItems.findMany({
@@ -167,24 +172,30 @@ export async function getHiveOutlineView(hiveId: string): Promise<ActionResult<{
     orderBy: [asc(binderItems.order)],
   })
 
-  let lastEditedByUsername: string | null = null
-  if (outline?.lastEditedBy) {
-    const profile = await db.query.userProfiles.findFirst({
-      where: eq(userProfiles.userId, outline.lastEditedBy),
-      columns: { username: true },
-    })
-    lastEditedByUsername = profile?.username ?? null
-  }
+  const editorIds = Array.from(
+    new Set(outlineItems.map(o => o.lastEditedBy).filter((v): v is string => !!v)),
+  )
+  const editorProfiles = editorIds.length
+    ? await db.query.userProfiles.findMany({
+        where: inArray(userProfiles.userId, editorIds),
+        columns: { userId: true, username: true },
+      })
+    : []
+  const usernameByUserId = new Map(editorProfiles.map(p => [p.userId, p.username]))
+
+  const outlines: HiveOutlineEntry[] = outlineItems.map(o => ({
+    outline: toBinderItemRow(o),
+    lastEditedByUsername: o.lastEditedBy ? (usernameByUserId.get(o.lastEditedBy) ?? null) : null,
+    lastEditedAt: o.updatedAt ?? null,
+  }))
 
   return {
     success: true,
     data: {
       bookId: hive.bookId,
-      outline: outline ? toBinderItemRow(outline) : null,
+      outlines,
       chapters: chapterItems,
       viewerRole: role,
-      lastEditedByUsername,
-      lastEditedAt: outline?.updatedAt ?? null,
     },
   }
 }

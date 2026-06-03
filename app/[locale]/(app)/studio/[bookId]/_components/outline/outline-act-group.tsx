@@ -31,9 +31,7 @@ export type OutlineActGroupProps = {
   onToggleCollapsed: () => void
   onRenameAct: (oldName: string, newName: string) => void
   onAddBeat: () => void
-  onPatchBeat: (id: string, patch: Partial<Beat>) => void
-  onDeleteBeat: (id: string) => void
-  onCycleStatus: (id: string) => void
+  onEditBeat: (beat: Beat) => void
   onOpenLinkPopover: (id: string) => void
   onUnlink: (id: string) => void
   onJumpToChapter: (chapterId: string) => void
@@ -45,7 +43,7 @@ export function OutlineActGroup(props: OutlineActGroupProps) {
   const {
     actKey, beats, startIndex, collapsed,
     onToggleCollapsed, onRenameAct, onAddBeat,
-    onPatchBeat, onDeleteBeat, onCycleStatus,
+    onEditBeat,
     onOpenLinkPopover, onUnlink, onJumpToChapter,
     chapterAvailable, chapterTitle,
   } = props
@@ -224,9 +222,7 @@ export function OutlineActGroup(props: OutlineActGroupProps) {
                     isLast={i === beats.length - 1}
                     chapterAvailable={chapterAvailable(beat.linkedChapterId)}
                     chapterTitle={chapterTitle(beat.linkedChapterId)}
-                    onChange={patch => onPatchBeat(beat.id, patch)}
-                    onDelete={() => onDeleteBeat(beat.id)}
-                    onCycleStatus={() => onCycleStatus(beat.id)}
+                    onEditClick={onEditBeat}
                     onOpenLinkPopover={() => onOpenLinkPopover(beat.id)}
                     onUnlink={() => onUnlink(beat.id)}
                     onJumpToChapter={() => {

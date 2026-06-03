@@ -368,9 +368,6 @@ function HiveOutlineSurfaceInner({
                                 isLast={idx === beats.length - 1}
                                 chapterAvailable={isChapterAvailable(beat.linkedChapterId)}
                                 chapterTitle={chapterTitleFor(beat.linkedChapterId)}
-                                onChange={patch => patchBeat(beat.id, patch)}
-                                onDelete={() => deleteBeat(beat.id)}
-                                onCycleStatus={() => cycleStatus(beat.id)}
                                 onOpenLinkPopover={() => { if (!readOnly) setLinkingBeatId(beat.id) }}
                                 onUnlink={() => patchBeat(beat.id, { linkedChapterId: null })}
                                 onJumpToChapter={() => { /* no studio context in hive view */ }}

@@ -28,6 +28,7 @@ import { ChapterLinkPopover } from './chapter-link-popover'
 import { OutlineActGroup } from './outline-act-group'
 import { OutlineHelpBanner } from './outline-help-banner'
 import { OutlineHelpPanel } from './outline-help-panel'
+import { BeatDialog } from './beat-dialog'
 import { groupBeatsByAct, distinctActs } from '@/lib/outline/group-by-act'
 import { migrateBeatStatus } from '@/lib/outline/migrate-beat-status'
 
@@ -122,12 +123,6 @@ export function readBeats(raw: unknown): Beat[] {
   return readContent(raw).beats
 }
 
-const STATUS_CYCLE: BeatStatus[] = ['idea', 'drafting', 'done']
-function nextStatus(s: BeatStatus | undefined): BeatStatus {
-  const i = STATUS_CYCLE.indexOf((s ?? 'idea') as BeatStatus)
-  return STATUS_CYCLE[(i + 1) % STATUS_CYCLE.length]!
-}
-
 // ── Component ──────────────────────────────────────────────────────────
 
 type Props = { item: BinderItemRow }
@@ -142,7 +137,22 @@ export function OutlineBoard({ item }: Props) {
   const [helpPanelOpen, setHelpPanelOpen] = useState(false)
   const [saveStatus, setSaveStatus] = useState<FormSaveStatus>('idle')
   const [linkingBeatId, setLinkingBeatId] = useState<string | null>(null)
+  type DialogState =
+    | { mode: 'closed' }
+    | { mode: 'create'; defaultAct: string | null }
+    | { mode: 'edit'; beatId: string }
+  const [dialogState, setDialogState] = useState<DialogState>({ mode: 'closed' })
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  function openCreate(act: string | null = null) {
+    setDialogState({ mode: 'create', defaultAct: act })
+  }
+  function openEdit(beat: Beat) {
+    setDialogState({ mode: 'edit', beatId: beat.id })
+  }
+  function closeDialog() {
+    setDialogState({ mode: 'closed' })
+  }
 
   // CRITICAL: re-seed all state when the user switches to a different
   // outline document. The parent passes `<OutlineBoard item={...} />` without
@@ -160,6 +170,7 @@ export function OutlineBoard({ item }: Props) {
     setHelpBannerDismissed(initial.helpBannerDismissed ?? false)
     setSaveStatus('idle')
     setLinkingBeatId(null)
+    setDialogState({ mode: 'closed' })
     setHelpPanelOpen(false)
     // Do NOT clear saveTimer — its closure captured the PRIOR item.id and
     // content, so letting it fire correctly persists pending edits to the
@@ -221,28 +232,8 @@ export function OutlineBoard({ item }: Props) {
     return [...current, act]
   }
 
-  function addBeat(act?: ActKey) {
-    const resolvedAct: ActKey = act === undefined ? null : act
-    const nextBeats = [
-      ...beats,
-      { id: createId(), title: '', description: '', status: 'idea' as const, linkedChapterId: null, act: resolvedAct },
-    ]
-    commit({
-      beats: nextBeats,
-      actsOrder: ensureActInOrder(resolvedAct, actsOrder),
-    })
-  }
-
   function patchBeat(id: string, patch: Partial<Beat>) {
     commit({ beats: beats.map(b => b.id === id ? { ...b, ...patch } : b) })
-  }
-  function deleteBeat(id: string) {
-    commit({ beats: beats.filter(b => b.id !== id) })
-  }
-  function cycleStatus(id: string) {
-    const b = beats.find(x => x.id === id)
-    if (!b) return
-    patchBeat(id, { status: nextStatus(b.status) })
   }
 
   function renameAct(oldName: string, raw: string) {
@@ -360,6 +351,11 @@ export function OutlineBoard({ item }: Props) {
     const binderItem = binderItems.find(b => b.type === 'chapter' && b.chapterId === chapterId)
     if (binderItem) setActiveItemId(binderItem.id)
   }
+
+  const editingBeat: Beat | null =
+    dialogState.mode === 'edit'
+      ? beats.find(b => b.id === dialogState.beatId) ?? null
+      : null
 
   const groups = useMemo(() => groupBeatsByAct(beats, actsOrder), [beats, actsOrder])
   const actIds = groups.map(g => `__act__:${g.act ?? '__noact__'}`)
@@ -520,10 +516,8 @@ export function OutlineBoard({ item }: Props) {
                     collapsed={collapsedActs.some(a => a === group.act)}
                     onToggleCollapsed={() => toggleActCollapsed(group.act)}
                     onRenameAct={renameAct}
-                    onAddBeat={() => addBeat(group.act)}
-                    onPatchBeat={patchBeat}
-                    onDeleteBeat={deleteBeat}
-                    onCycleStatus={cycleStatus}
+                    onAddBeat={() => openCreate(group.act)}
+                    onEditBeat={openEdit}
                     onOpenLinkPopover={id => setLinkingBeatId(id)}
                     onUnlink={id => patchBeat(id, { linkedChapterId: null })}
                     onJumpToChapter={jumpToChapter}
@@ -542,7 +536,7 @@ export function OutlineBoard({ item }: Props) {
           <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
             <button
               type="button"
-              onClick={() => addBeat()}
+              onClick={() => openCreate(null)}
               style={footerBtnStyle}
             >
               <Plus className="w-4 h-4" />
@@ -573,6 +567,48 @@ export function OutlineBoard({ item }: Props) {
         open={helpPanelOpen}
         onClose={() => setHelpPanelOpen(false)}
         onShowBannerAgain={() => commit({ helpBannerDismissed: false })}
+      />
+
+      <BeatDialog
+        open={dialogState.mode !== 'closed'}
+        mode={dialogState.mode === 'edit' ? 'edit' : 'create'}
+        initial={editingBeat ?? {}}
+        defaultAct={dialogState.mode === 'create' ? dialogState.defaultAct : null}
+        onOpenChange={open => { if (!open) closeDialog() }}
+        onSave={patch => {
+          if (dialogState.mode === 'create') {
+            const id = createId()
+            const newBeat: Beat = {
+              id,
+              title: patch.title ?? '',
+              description: patch.description,
+              color: patch.color,
+              label: patch.label,
+              act: dialogState.defaultAct,
+              linkedChapterId: null,
+            }
+            commit({
+              beats: [...beats, newBeat],
+              actsOrder: ensureActInOrder(dialogState.defaultAct, actsOrder),
+            })
+          } else if (dialogState.mode === 'edit' && editingBeat) {
+            const editingId = editingBeat.id
+            const next = beats.map(b =>
+              b.id === editingId
+                ? { ...b, ...patch }
+                : b,
+            )
+            commit({ beats: next })
+          }
+        }}
+        onDelete={
+          dialogState.mode === 'edit' && editingBeat
+            ? () => {
+                const editingId = editingBeat.id
+                commit({ beats: beats.filter(b => b.id !== editingId) })
+              }
+            : undefined
+        }
       />
     </main>
   )

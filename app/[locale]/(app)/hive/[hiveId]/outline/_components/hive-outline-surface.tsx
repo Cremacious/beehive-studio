@@ -212,7 +212,7 @@ function HiveOutlineSurfaceInner({
         <div className="min-w-0">
           <h1
             style={{ color: 'var(--brand)' }}
-            className="font-comfortaa font-bold text-4xl truncate"
+            className="font-comfortaa font-bold text-2xl truncate"
           >
             {outline.title || 'Untitled outline'}
           </h1>

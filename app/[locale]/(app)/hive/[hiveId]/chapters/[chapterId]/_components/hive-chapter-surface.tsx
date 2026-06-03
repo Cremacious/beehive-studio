@@ -20,6 +20,7 @@ import {
   type HiveRole,
 } from '@/lib/hive/permissions'
 import type { HiveChapterViewData } from '@/lib/actions/hive-content.actions'
+import { ChapterMetadataHeader } from './chapter-metadata-header'
 
 type Props = {
   data: HiveChapterViewData
@@ -220,6 +221,12 @@ export function HiveChapterSurface({
               </span>
             </div>
           </div>
+
+          <ChapterMetadataHeader
+            status={data.status}
+            synopsis={data.synopsis}
+            scenePlanner={data.scenePlanner}
+          />
 
           {/* Prose surface — UNCHANGED per plan Step 5 */}
           <div className="flex-1 overflow-y-auto">

@@ -11,13 +11,13 @@ export function ByCategoryView({
   canEdit,
   isSearching,
   onOpenEntry,
-  onAddEntry,
+  onAddEntryInCategory,
 }: {
   entries: HiveWikiEntry[]
   canEdit: boolean
   isSearching: boolean
   onOpenEntry: (id: string) => void
-  onAddEntry: () => void
+  onAddEntryInCategory: (category: WikiCategory) => void
 }) {
   const [selectedCategory, setSelectedCategory] = useState<WikiCategory | null>(null)
 
@@ -58,7 +58,7 @@ export function ByCategoryView({
           {canEdit && (
             <button
               type="button"
-              onClick={onAddEntry}
+              onClick={() => onAddEntryInCategory(selectedCategory)}
               style={{ color: 'var(--brand)', borderRadius: 'var(--r-btn)' }}
               className="inline-flex items-center gap-1.5 text-xs font-geist font-semibold px-2.5 py-1.5 hover:bg-[linear-gradient(180deg,var(--canvas-dark-350),var(--canvas-dark-300))]"
             >
@@ -109,7 +109,7 @@ export function ByCategoryView({
             {canEdit && (
               <button
                 type="button"
-                onClick={onAddEntry}
+                onClick={() => onAddEntryInCategory(selectedCategory)}
                 style={{ color: 'var(--brand)' }}
                 className="inline-flex items-center gap-1.5 text-xs font-geist font-semibold"
               >
@@ -144,7 +144,6 @@ export function ByCategoryView({
               borderRadius: 'var(--r-row)',
               boxShadow: 'var(--sh-tile)',
               border: 'var(--br-card)',
-              borderLeft: `3px solid var(${t.accentColor})`,
             }}
             className="text-left p-4 flex flex-col gap-2 min-h-[140px] hover:-translate-y-0.5 transition-transform"
           >
@@ -161,7 +160,7 @@ export function ByCategoryView({
               <span
                 className="text-xs font-mono px-2 py-0.5 rounded-full"
                 style={{
-                  color: 'var(--canvas-dark-ink-strong)',
+                  color: '#ffffff',
                   background: 'var(--canvas-dark-100)',
                   boxShadow: 'var(--sh-inset)',
                 }}
@@ -171,13 +170,13 @@ export function ByCategoryView({
             </div>
             <div
               className="font-comfortaa font-semibold text-base leading-tight"
-              style={{ color: 'var(--canvas-dark-ink-strong)' }}
+              style={{ color: '#ffffff' }}
             >
               {t.label}
             </div>
             <div
               className="text-xs line-clamp-2"
-              style={{ color: 'var(--canvas-dark-ink-muted)' }}
+              style={{ color: 'oklch(1 0 0 / 0.78)' }}
             >
               {t.blurb}
             </div>

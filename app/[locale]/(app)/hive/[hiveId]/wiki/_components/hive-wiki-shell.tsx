@@ -3,14 +3,13 @@
 import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Plus, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createBinderItemAction } from '@/lib/actions/binder.actions'
 import type { HiveWikiViewData, HiveWikiEntry } from '@/lib/actions/hive-content.actions'
 import { canEditWiki } from '@/lib/hive/permissions'
 import { CATEGORY_TEMPLATE_MAP, type WikiCategory } from '@/lib/wiki/category-templates'
 import { createId } from '@paralleldrive/cuid2'
-import { WikiCategoryPicker } from '@/app/[locale]/(app)/studio/[bookId]/_components/binder/wiki-category-picker'
 import { ByCategoryView } from './by-category-view'
 import { ByFolderView } from './by-folder-view'
 import { NotesView } from './notes-view'
@@ -48,8 +47,7 @@ export function HiveWikiShell({
   const [viewMode, setViewMode] = useState<ViewMode>('category')
   const [search, setSearch] = useState('')
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null)
-  const [pickerOpen, setPickerOpen] = useState(false)
-  const [pending, startTransition] = useTransition()
+  const [, startTransition] = useTransition()
 
   const canEdit = canEditWiki(wiki.viewerRole)
 
@@ -63,7 +61,6 @@ export function HiveWikiShell({
     : null
 
   function handlePickCategory(category: WikiCategory) {
-    setPickerOpen(false)
     const template = CATEGORY_TEMPLATE_MAP[category]
     const rootItems = [
       ...wiki.entries.filter(e => e.parentId === null),
@@ -138,17 +135,6 @@ export function HiveWikiShell({
             >
               Wiki
             </h1>
-            {canEdit && viewMode !== 'notes' && (
-              <button
-                type="button"
-                onClick={() => setPickerOpen(true)}
-                disabled={pending}
-                style={{ color: 'var(--brand)', borderRadius: 'var(--r-btn)' }}
-                className="inline-flex items-center gap-1.5 text-sm font-geist font-semibold px-3 py-2 hover:bg-[linear-gradient(180deg,var(--canvas-dark-350),var(--canvas-dark-300))] disabled:opacity-50"
-              >
-                <Plus size={14} /> New Entry
-              </button>
-            )}
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="relative flex-1">
@@ -208,7 +194,7 @@ export function HiveWikiShell({
             canEdit={canEdit}
             isSearching={search.trim().length > 0}
             onOpenEntry={setSelectedEntryId}
-            onAddEntry={() => setPickerOpen(true)}
+            onAddEntryInCategory={handlePickCategory}
           />
         )}
         {viewMode === 'folder' && (
@@ -226,11 +212,6 @@ export function HiveWikiShell({
           />
         )}
 
-        <WikiCategoryPicker
-          open={pickerOpen}
-          onOpenChange={setPickerOpen}
-          onPick={handlePickCategory}
-        />
       </div>
     </div>
   )

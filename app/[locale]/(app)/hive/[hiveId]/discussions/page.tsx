@@ -1,8 +1,10 @@
 import { notFound } from 'next/navigation'
 import { requireAuth } from '@/lib/require-auth'
 import { listDiscussionPostsAction } from '@/lib/actions/hive-discussions.actions'
-import { requireHiveMember } from '@/lib/hive/permissions'
+import { requireHiveMember, canPostDiscussion } from '@/lib/hive/permissions'
+import { HivePageShell } from '../_components/hive-page-shell'
 import { DiscussionsList } from './_components/discussions-list'
+import { NewDiscussionCTA } from './_components/new-discussion-cta'
 
 export default async function DiscussionsPage({
   params,
@@ -22,17 +24,22 @@ export default async function DiscussionsPage({
   const r = await listDiscussionPostsAction({ hiveId })
   if (!r.success) notFound()
 
+  const canPost = canPostDiscussion(viewerRole)
+
   return (
-    <main className="flex-1 overflow-y-auto">
-      <div className="mx-auto max-w-5xl px-6 py-8">
-        <DiscussionsList
-          posts={r.data}
-          hiveId={hiveId}
-          locale={locale}
-          viewerRole={viewerRole}
-          viewerUserId={userId}
-        />
-      </div>
-    </main>
+    <HivePageShell
+      width="wide"
+      title="Discussions"
+      subtitle="Talk shop with your hive."
+      headerSlot={canPost ? <NewDiscussionCTA hiveId={hiveId} /> : undefined}
+    >
+      <DiscussionsList
+        posts={r.data}
+        hiveId={hiveId}
+        locale={locale}
+        viewerRole={viewerRole}
+        viewerUserId={userId}
+      />
+    </HivePageShell>
   )
 }

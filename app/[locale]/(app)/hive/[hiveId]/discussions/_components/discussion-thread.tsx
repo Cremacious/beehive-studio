@@ -1,13 +1,10 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, MoreVertical, Pencil, Trash2, Reply } from 'lucide-react'
+import { MoreVertical, Pencil, Trash2, Reply } from 'lucide-react'
 import { toast } from 'sonner'
-import type {
-  DiscussionPostRow,
-} from '@/lib/actions/hive-discussions.actions'
+import type { DiscussionPostRow } from '@/lib/actions/hive-discussions.actions'
 import {
   replyToDiscussionPostAction,
   editDiscussionPostAction,
@@ -23,6 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { HiveSectionDivider } from '../../_components/hive-section-divider'
 import { TopicPill } from './discussion-row'
 
 function relTime(d: Date | string): string {
@@ -104,57 +102,13 @@ export function DiscussionThread({
     }
   }
 
-  const totalPosts = 1 + replies.length
+  const replyCount = replies.length
 
   return (
     <>
-      <Link
-        href={`/${locale}/hive/${hiveId}/discussions`}
-        className="inline-flex items-center gap-1.5 text-xs font-mono text-[var(--canvas-dark-ink-muted)] hover:text-[var(--brand)] mb-4"
-      >
-        <ArrowLeft size={12} />
-        Back to discussions
-      </Link>
-
-      {/* Thread header banner */}
-      <div
-        style={{
-          background:
-            'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
-          borderRadius: 'var(--r-card)',
-          boxShadow: 'var(--sh-card)',
-          border: 'var(--br-card)',
-        }}
-        className="px-6 py-5 mb-4"
-      >
-        <div className="flex items-center gap-2 mb-2 flex-wrap">
-          {post.topic && <TopicPill topic={post.topic} />}
-          <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--canvas-dark-ink-muted)]">
-            Thread · {totalPosts} {totalPosts === 1 ? 'post' : 'posts'}
-          </span>
-        </div>
-        <h1
-          style={{ color: 'var(--brand)' }}
-          className="font-comfortaa font-bold text-2xl leading-tight"
-        >
-          {(post.body.split('\n')[0] || 'Discussion').slice(0, 80)}
-        </h1>
-        <p className="text-xs font-mono text-[var(--canvas-dark-ink-muted)] mt-2">
-          started by{' '}
-          {post.username ? (
-            <span className="text-[var(--canvas-dark-ink)]">@{post.username}</span>
-          ) : (
-            'unknown'
-          )}{' '}
-          · {relTime(post.createdAt)}
-        </p>
-      </div>
-
-      {/* OP + replies as numbered posts */}
-      <div className="space-y-3">
-        <PostCard
+      <HiveSectionDivider label="Original post" hideTopBorder>
+        <PostBody
           post={post}
-          postNumber={1}
           isTopLevel
           viewerRole={viewerRole}
           viewerUserId={viewerUserId}
@@ -162,20 +116,12 @@ export function DiscussionThread({
           hiveId={hiveId}
           onReplyClick={() => focusReplyWithMention(post.username)}
         />
-        {replies.map((reply, i) => (
-          <PostCard
-            key={reply.id}
-            post={reply}
-            postNumber={i + 2}
-            isTopLevel={false}
-            viewerRole={viewerRole}
-            viewerUserId={viewerUserId}
-            locale={locale}
-            hiveId={hiveId}
-            onReplyClick={() => focusReplyWithMention(reply.username)}
-          />
-        ))}
-        {replies.length === 0 && (
+      </HiveSectionDivider>
+
+      <HiveSectionDivider
+        label={`${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}`}
+      >
+        {replies.length === 0 ? (
           <div
             style={{
               background: 'var(--canvas-dark-100)',
@@ -186,24 +132,25 @@ export function DiscussionThread({
           >
             No replies yet — be the first to chime in.
           </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {replies.map((reply) => (
+              <PostBody
+                key={reply.id}
+                post={reply}
+                isTopLevel={false}
+                viewerRole={viewerRole}
+                viewerUserId={viewerUserId}
+                locale={locale}
+                hiveId={hiveId}
+                onReplyClick={() => focusReplyWithMention(reply.username)}
+              />
+            ))}
+          </div>
         )}
-      </div>
+      </HiveSectionDivider>
 
-      {/* Quick reply composer */}
-      <div
-        style={{
-          background:
-            'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
-          borderRadius: 'var(--r-card)',
-          boxShadow: 'var(--sh-card)',
-          border: 'var(--br-card)',
-        }}
-        className="mt-6 p-5"
-      >
-        <h2 className="font-comfortaa font-bold text-sm uppercase tracking-wide text-[var(--canvas-dark-ink-muted)] mb-3 inline-flex items-center gap-2">
-          <Reply size={12} />
-          Quick reply
-        </h2>
+      <HiveSectionDivider label="Reply">
         <textarea
           ref={replyRef}
           value={replyDraft}
@@ -214,7 +161,6 @@ export function DiscussionThread({
             background: 'var(--canvas-dark-100)',
             borderRadius: 'var(--r-row)',
             boxShadow: 'var(--sh-inset)',
-            border: 'var(--br-card)',
             color: 'var(--canvas-dark-ink)',
           }}
           className="w-full px-3 py-2 min-h-[90px] resize-y font-geist text-sm focus:outline-none placeholder:text-[var(--canvas-dark-ink-muted)]"
@@ -226,23 +172,23 @@ export function DiscussionThread({
             disabled={!replyDraft.trim() || replying}
             style={{
               background: 'var(--brand)',
-              color: 'var(--brand-ink, oklch(0.18 0.02 60))',
-              borderRadius: 'var(--r-btn)',
+              color: 'var(--brand-ink)',
+              borderRadius: 'var(--r-pill)',
               boxShadow: 'var(--sh-tile)',
             }}
-            className="font-geist font-semibold text-sm px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="font-geist font-semibold text-[13px] px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5"
           >
+            <Reply size={12} />
             {replying ? 'Posting…' : 'Post Reply'}
           </button>
         </div>
-      </div>
+      </HiveSectionDivider>
     </>
   )
 }
 
-function PostCard({
+function PostBody({
   post,
-  postNumber,
   isTopLevel,
   viewerRole,
   viewerUserId,
@@ -251,7 +197,6 @@ function PostCard({
   onReplyClick,
 }: {
   post: DiscussionPostRow
-  postNumber: number
   isTopLevel: boolean
   viewerRole: HiveRole
   viewerUserId: string
@@ -307,31 +252,17 @@ function PostCard({
     <article
       style={{
         background:
-          'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
-        borderRadius: 'var(--r-card)',
-        boxShadow: 'var(--sh-card)',
-        border: 'var(--br-card)',
-        borderLeft: isTopLevel
-          ? '3px solid var(--brand)'
-          : '3px solid var(--canvas-dark-300)',
+          'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+        borderRadius: 'var(--r-row)',
+        boxShadow: 'var(--sh-tile)',
       }}
-      className="grid gap-0"
+      className="p-4"
     >
-      <div
-        className="grid items-stretch"
-        style={{ gridTemplateColumns: '180px 1fr' }}
-      >
-        {/* Author column (left rail) */}
-        <div
-          className="p-4 flex flex-col items-center gap-2 text-center"
-          style={{
-            borderRight: '1px solid var(--canvas-dark-300)',
-            background: 'oklch(from var(--canvas-dark-100) l c h / 0.4)',
-          }}
-        >
+      <header className="flex items-start justify-between gap-3 mb-3">
+        <div className="flex items-center gap-3 min-w-0">
           <span
             aria-hidden
-            className="inline-flex items-center justify-center w-14 h-14 rounded-full text-[var(--canvas-dark-ink-muted)] bg-[var(--canvas-dark-100)] text-base font-semibold"
+            className="inline-flex items-center justify-center w-10 h-10 rounded-full text-[var(--canvas-dark-ink-muted)] bg-[var(--canvas-dark-100)] text-sm font-semibold shrink-0"
             style={{ boxShadow: 'var(--sh-inset)' }}
           >
             {post.avatarUrl ? (
@@ -339,131 +270,107 @@ function PostCard({
               <img
                 src={post.avatarUrl}
                 alt=""
-                className="w-14 h-14 rounded-full object-cover"
+                className="w-10 h-10 rounded-full object-cover"
               />
             ) : (
               post.username?.[0]?.toUpperCase() ?? '?'
             )}
           </span>
-          <div className="min-w-0 w-full">
-            {post.username ? (
-              <div className="text-sm font-semibold text-[var(--canvas-dark-ink-strong)] truncate">
-                @{post.username}
-              </div>
-            ) : (
-              <div className="text-sm font-semibold text-[var(--canvas-dark-ink-muted)] italic">
-                Unknown
-              </div>
-            )}
-            {isTopLevel && (
-              <div
-                className="mt-1 inline-block text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded"
-                style={{
-                  color: 'var(--brand)',
-                  background: 'oklch(from var(--color-brand) l c h / 0.14)',
-                }}
-              >
-                Original Poster
-              </div>
-            )}
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              {post.username ? (
+                <span className="text-sm font-semibold text-[var(--canvas-dark-ink-strong)] truncate">
+                  @{post.username}
+                </span>
+              ) : (
+                <span className="text-sm font-semibold text-[var(--canvas-dark-ink-muted)] italic">
+                  Unknown
+                </span>
+              )}
+              {isTopLevel && post.topic && <TopicPill topic={post.topic} />}
+            </div>
+            <div className="text-[11px] font-mono text-[var(--canvas-dark-ink-muted)] mt-0.5">
+              {relTime(post.createdAt)}
+            </div>
           </div>
         </div>
-
-        {/* Body column */}
-        <div className="p-5 flex flex-col min-w-0">
-          <header className="flex items-center justify-between gap-2 mb-3 pb-2 border-b border-[var(--canvas-dark-300)]">
-            <div className="flex items-center gap-3 text-[11px] font-mono text-[var(--canvas-dark-ink-muted)]">
-              <span
-                className="px-2 py-0.5 rounded-full"
-                style={{
-                  background: 'var(--canvas-dark-100)',
-                  boxShadow: 'var(--sh-inset)',
-                  color: 'var(--canvas-dark-ink-strong)',
-                }}
-              >
-                #{postNumber}
-              </span>
-              <span>{relTime(post.createdAt)}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              {!isTopLevel && (
+        <div className="flex items-center gap-1 shrink-0">
+          {!isTopLevel && (
+            <button
+              type="button"
+              onClick={onReplyClick}
+              className="inline-flex items-center gap-1 text-[11px] font-mono text-[var(--canvas-dark-ink-muted)] hover:text-[var(--brand)] px-2 py-1 rounded"
+            >
+              <Reply size={11} />
+              Reply
+            </button>
+          )}
+          {canEdit && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  onClick={onReplyClick}
-                  className="inline-flex items-center gap-1 text-[11px] font-mono text-[var(--canvas-dark-ink-muted)] hover:text-[var(--brand)] px-2 py-1 rounded"
+                  aria-label="Post actions"
+                  className="p-1 rounded hover:bg-[var(--canvas-dark-100)] text-[var(--canvas-dark-ink-muted)]"
                 >
-                  <Reply size={11} />
-                  Reply
+                  <MoreVertical size={14} />
                 </button>
-              )}
-              {canEdit && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      type="button"
-                      aria-label="Post actions"
-                      className="p-1 rounded hover:bg-[var(--canvas-dark-100)] text-[var(--canvas-dark-ink-muted)]"
-                    >
-                      <MoreVertical size={14} />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem
-                      onSelect={(e) => {
-                        e.preventDefault()
-                        setDraft(post.body)
-                        setEditing(true)
-                      }}
-                    >
-                      <Pencil size={12} className="mr-2" />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="text-destructive"
-                      onSelect={(e) => {
-                        e.preventDefault()
-                        setConfirmDelete(true)
-                      }}
-                    >
-                      <Trash2 size={12} className="mr-2" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-            </div>
-          </header>
-
-          {editing ? (
-            <div className="space-y-2">
-              <Textarea
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                rows={Math.max(4, Math.min(draft.split('\n').length + 1, 16))}
-                autoFocus
-              />
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setEditing(false)
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault()
                     setDraft(post.body)
+                    setEditing(true)
                   }}
-                  disabled={saving}
                 >
-                  Cancel
-                </Button>
-                <Button size="sm" onClick={saveEdit} disabled={saving || !draft.trim()}>
-                  {saving ? 'Saving…' : 'Save'}
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-1">{renderBody(post.body)}</div>
+                  <Pencil size={12} className="mr-2" />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-destructive"
+                  onSelect={(e) => {
+                    e.preventDefault()
+                    setConfirmDelete(true)
+                  }}
+                >
+                  <Trash2 size={12} className="mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
-      </div>
+      </header>
+
+      {editing ? (
+        <div className="space-y-2">
+          <Textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            rows={Math.max(4, Math.min(draft.split('\n').length + 1, 16))}
+            autoFocus
+          />
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setEditing(false)
+                setDraft(post.body)
+              }}
+              disabled={saving}
+            >
+              Cancel
+            </Button>
+            <Button size="sm" onClick={saveEdit} disabled={saving || !draft.trim()}>
+              {saving ? 'Saving…' : 'Save'}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-1">{renderBody(post.body)}</div>
+      )}
 
       <ConfirmDialog
         open={confirmDelete}

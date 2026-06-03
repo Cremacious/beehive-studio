@@ -5,7 +5,12 @@ import { eq } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { getDiscussionThreadAction } from '@/lib/actions/hive-discussions.actions'
 import { requireHiveMember } from '@/lib/hive/permissions'
+import { HivePageShell } from '../../_components/hive-page-shell'
 import { DiscussionThread } from '../_components/discussion-thread'
+
+function deriveTitle(body: string): string {
+  return (body.split('\n')[0] || 'Discussion').slice(0, 80)
+}
 
 export default async function DiscussionThreadPage({
   params,
@@ -38,18 +43,28 @@ export default async function DiscussionThreadPage({
     notFound()
   }
 
+  const { post, replies } = r.data
+  const title = deriveTitle(post.body)
+  const subtitle = post.username ? `Started by @${post.username}` : 'Started by unknown'
+
   return (
-    <main className="flex-1 overflow-y-auto">
-      <div className="mx-auto max-w-5xl px-6 py-8">
-        <DiscussionThread
-          post={r.data.post}
-          replies={r.data.replies}
-          hiveId={hiveId}
-          locale={locale}
-          viewerRole={viewerRole}
-          viewerUserId={userId}
-        />
-      </div>
-    </main>
+    <HivePageShell
+      width="wide"
+      title={title}
+      subtitle={subtitle}
+      back={{
+        href: `/${locale}/hive/${hiveId}/discussions`,
+        label: 'discussions',
+      }}
+    >
+      <DiscussionThread
+        post={post}
+        replies={replies}
+        hiveId={hiveId}
+        locale={locale}
+        viewerRole={viewerRole}
+        viewerUserId={userId}
+      />
+    </HivePageShell>
   )
 }

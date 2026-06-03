@@ -1,9 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { MessageSquare } from 'lucide-react'
 import type { DiscussionPostSummary } from '@/lib/actions/hive-discussions.actions'
 import type { DiscussionTopic } from '@/lib/validations/hive-discussion'
+import { HivePill } from '../../_components/hive-pill'
 
 function relTime(d: Date | string): string {
   const date = new Date(d)
@@ -18,6 +18,8 @@ function relTime(d: Date | string): string {
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
 
+// Topic → CSS-var token. Reuses existing --wiki-* tokens since the codebase
+// has no dedicated --topic-* family yet.
 export const TOPIC_META: Record<DiscussionTopic, { label: string; tokenVar: string }> = {
   GENERAL: { label: 'General', tokenVar: '--wiki-other' },
   WORLDBUILDING: { label: 'Worldbuilding', tokenVar: '--wiki-lore' },
@@ -27,18 +29,7 @@ export const TOPIC_META: Record<DiscussionTopic, { label: string; tokenVar: stri
 
 export function TopicPill({ topic }: { topic: DiscussionTopic }) {
   const meta = TOPIC_META[topic]
-  const color = `var(${meta.tokenVar}, var(--color-brand))`
-  return (
-    <span
-      className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide shrink-0"
-      style={{
-        color,
-        background: `oklch(from ${color} l c h / 0.14)`,
-      }}
-    >
-      {meta.label}
-    </span>
-  )
+  return <HivePill token={meta.tokenVar}>{meta.label}</HivePill>
 }
 
 export function DiscussionRow({
@@ -50,62 +41,48 @@ export function DiscussionRow({
   hiveId: string
   locale: string
 }) {
-  const excerpt = row.bodyExcerpt.slice(row.title.length, row.title.length + 160).trim()
+  // Derive title from first line; excerpt is remainder.
+  const firstLine = row.bodyExcerpt.split('\n')[0] ?? ''
+  const title = (row.title || firstLine).slice(0, 80) || 'Untitled'
+  const remainder = row.bodyExcerpt.slice(title.length).trim()
 
   return (
     <Link
       href={`/${locale}/hive/${hiveId}/discussions/${row.id}`}
-      className="grid items-center gap-4 px-5 py-4 transition-colors hover:bg-[var(--canvas-dark-300)]"
-      style={{ gridTemplateColumns: '1fr 90px 130px' }}
+      className="grid grid-cols-[1fr_90px_130px] gap-3 px-4 py-3 transition-colors hover:bg-[var(--canvas-dark-300)]"
     >
-      <div className="flex items-start gap-3 min-w-0">
-        <span
-          aria-hidden
-          className="inline-flex items-center justify-center w-9 h-9 rounded-full text-[var(--canvas-dark-ink-muted)] bg-[var(--canvas-dark-100)] shrink-0 mt-0.5 text-xs font-semibold"
-          style={{ boxShadow: 'var(--sh-inset)' }}
-        >
-          {row.avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={row.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover" />
-          ) : (
-            row.username?.[0]?.toUpperCase() ?? '?'
-          )}
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 min-w-0">
-            <TopicPill topic={row.topic} />
-            <h3 className="font-comfortaa font-semibold text-base truncate text-[var(--canvas-dark-ink-strong)]">
-              {row.title || 'Untitled'}
-            </h3>
-          </div>
-          {excerpt && (
-            <p className="mt-1 text-xs text-[var(--canvas-dark-ink-muted)] line-clamp-1">
-              {excerpt}
-            </p>
-          )}
-          {row.username && (
-            <p className="mt-1.5 text-[11px] font-mono text-[var(--canvas-dark-ink-muted)]">
-              started by <span className="text-[var(--canvas-dark-ink)]">@{row.username}</span>
-            </p>
-          )}
+      <div className="min-w-0 flex flex-col gap-1.5">
+        <div className="flex items-center gap-2 min-w-0">
+          <TopicPill topic={row.topic} />
+          <h3 className="font-comfortaa font-semibold text-[15px] truncate text-[var(--canvas-dark-ink-strong)]">
+            {title}
+          </h3>
         </div>
+        {remainder && (
+          <p className="text-sm line-clamp-1 text-[var(--canvas-dark-ink-muted)]">
+            {remainder}
+          </p>
+        )}
+        {row.username && (
+          <p className="text-[11px] font-mono text-[var(--canvas-dark-ink-muted)]">
+            started by{' '}
+            <span className="text-[var(--canvas-dark-ink)]">@{row.username}</span>
+          </p>
+        )}
       </div>
 
-      <div className="text-center">
+      <div className="flex flex-col items-center justify-center text-center">
         <div className="font-comfortaa font-bold text-lg text-[var(--canvas-dark-ink-strong)] leading-none">
           {row.replyCount}
         </div>
         <div className="text-[10px] font-mono uppercase tracking-wider text-[var(--canvas-dark-ink-muted)] mt-0.5">
-          {row.replyCount === 1 ? 'reply' : 'replies'}
+          replies
         </div>
       </div>
 
-      <div className="text-right">
-        <div className="text-xs text-[var(--canvas-dark-ink)] inline-flex items-center gap-1 justify-end">
-          <MessageSquare size={11} className="text-[var(--canvas-dark-ink-muted)]" />
-          {relTime(row.lastActivityAt)}
-        </div>
-      </div>
+      <p className="text-[11px] font-mono text-right self-center text-[var(--canvas-dark-ink-muted)]">
+        {relTime(row.lastActivityAt)}
+      </p>
     </Link>
   )
 }

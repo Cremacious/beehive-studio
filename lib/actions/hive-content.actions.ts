@@ -381,6 +381,13 @@ export type HiveChapterViewData = {
     content: unknown
     authorUserId: string | null
   }
+  status: ChapterStatus
+  synopsis: string | null
+  scenePlanner: {
+    goal: string | null
+    conflict: string | null
+    outcome: string | null
+  }
   book: {
     id: string
     userId: string
@@ -398,6 +405,12 @@ export type HiveChapterViewData = {
     bookId: string
   }
   viewerRole: HiveRole
+}
+
+function safeString(v: unknown): string | null {
+  if (typeof v !== 'string') return null
+  const t = v.trim()
+  return t.length === 0 ? null : t
 }
 
 export async function getHiveChapterView(
@@ -421,20 +434,31 @@ export async function getHiveChapterView(
       binderItemId: true,
       content: true,
       authorUserId: true,
+      status: true,
     },
   })
   if (!chapter) return { success: false, error: 'NOT_FOUND' }
   // Cross-hive escape guard.
   if (chapter.bookId !== hive.bookId) return { success: false, error: 'NOT_FOUND' }
 
-  // Title lives on binder_items, not chapters.
+  // Title + synopsis + scene planner live on binder_items.content, not chapters.
   let title = 'Untitled Chapter'
+  let rawContent: Record<string, unknown> = {}
   if (chapter.binderItemId) {
     const bi = await db.query.binderItems.findFirst({
       where: eq(binderItems.id, chapter.binderItemId),
-      columns: { title: true },
+      columns: { title: true, content: true },
     })
     if (bi?.title) title = bi.title
+    if (bi?.content && typeof bi.content === 'object') {
+      rawContent = bi.content as Record<string, unknown>
+    }
+  }
+  const synopsis = safeString(rawContent.synopsis)
+  const scenePlanner = {
+    goal: safeString(rawContent.sceneGoal),
+    conflict: safeString(rawContent.sceneConflict),
+    outcome: safeString(rawContent.sceneOutcome),
   }
 
   const book = await db.query.books.findFirst({
@@ -473,6 +497,9 @@ export async function getHiveChapterView(
         content: chapter.content,
         authorUserId: chapter.authorUserId,
       },
+      status: chapter.status as ChapterStatus,
+      synopsis,
+      scenePlanner,
       book: {
         id: book.id,
         userId: book.userId,

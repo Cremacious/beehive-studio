@@ -32,6 +32,7 @@ import {
 import { patchDocWithMark } from '@/lib/tiptap-extensions/patch-mark'
 import { applySuggestionToDoc } from '@/lib/tiptap-extensions/apply-suggestion'
 import { findOrphanMarks, type PMNode } from '@/lib/tiptap-extensions/mark-scanning'
+import { stripMarkById } from '@/lib/tiptap-extensions/strip-mark'
 import { getUserPremiumStatus } from '@/lib/premium'
 import { extractWordCount } from '@/lib/tiptap-utils'
 import { desc } from 'drizzle-orm'
@@ -417,6 +418,12 @@ export async function rejectSuggestionAction(
   }
   if (!canReviewSuggestion(role)) return { success: false, error: 'NOT_AUTHORIZED' }
 
+  // Fetch chapter content so we can strip the suggestion highlight in-tx.
+  const chapter = await db.query.chapters.findFirst({
+    where: eq(chapters.id, suggestion.chapterId),
+    columns: { id: true, content: true },
+  })
+
   const now = new Date()
 
   await db.transaction(async (tx) => {
@@ -430,6 +437,26 @@ export async function rejectSuggestionAction(
         updatedAt: now,
       })
       .where(eq(hiveSuggestions.id, id))
+
+    // Strip the suggestion highlight from the chapter content so the reader
+    // surfaces stop rendering it. Accept-suggestion already replaces the
+    // marked text run, so the mark is gone naturally there; reject is the
+    // only path that leaves the mark behind without this strip.
+    if (chapter) {
+      const doc = (chapter.content ?? { type: 'doc', content: [] }) as PMNode
+      const { doc: stripped, stripped: didStrip } = stripMarkById(
+        doc,
+        'hiveSuggestion',
+        'suggestionId',
+        id,
+      )
+      if (didStrip) {
+        await tx
+          .update(chapters)
+          .set({ content: stripped, updatedAt: now })
+          .where(eq(chapters.id, chapter.id))
+      }
+    }
 
     // Activity payload shape (explicit reject path):
     //   { suggestionId, chapterId, note }

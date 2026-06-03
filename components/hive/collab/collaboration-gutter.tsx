@@ -1,6 +1,6 @@
 'use client'
 
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { PanelRightClose, PanelRightOpen, MessageSquare } from 'lucide-react'
 import type { Editor } from '@tiptap/react'
 import type { HiveRole } from '@/lib/hive/permissions'
@@ -14,7 +14,6 @@ import {
 } from './gutter-filter-strip'
 import { AnnotationCard } from './annotation-card'
 import { SuggestionCard } from './suggestion-card'
-import { OrphanSection } from './orphan-section'
 
 export type Viewer = {
   id: string
@@ -33,16 +32,46 @@ type Props = {
   /** Bumped by the parent after creating an annotation/suggestion to force
    *  a refetch of the gutter's data. */
   refreshTrigger?: number
+  /** Called whenever the gutter's live unresolved counts change. Drives the
+   *  toolbar's gutter-button badge so it reflects post-resolve state. */
+  onCountsChange?: (counts: { annotations: number; suggestions: number }) => void
+  /** Flush pending editor autosave. Wired so the mark-strip on resolve/reject
+   *  lands in DB immediately rather than racing the 2s debounce. */
+  flushPendingSave?: () => Promise<void>
+  /** Called after a successful resolve/reject so sibling subscribers (e.g.
+   *  the always-mounted CollabCountsTracker) can refetch and update the
+   *  toolbar badge in sync. */
+  onMutated?: () => void
+}
+
+function stripMarkInstancesById(
+  editor: Editor | null,
+  markName: string,
+  attrKey: string,
+  id: string,
+): boolean {
+  if (!editor || editor.isDestroyed) return false
+  const tr = editor.state.tr
+  let found = false
+  editor.state.doc.descendants((node, pos) => {
+    if (!node.isText) return
+    const mark = node.marks.find(
+      (m) =>
+        m.type.name === markName &&
+        (m.attrs as Record<string, unknown>)[attrKey] === id,
+    )
+    if (mark) {
+      tr.removeMark(pos, pos + node.nodeSize, mark)
+      found = true
+    }
+  })
+  if (found) editor.view.dispatch(tr)
+  return found
 }
 
 const EXPANDED_WIDTH = 320
 const COLLAPSED_WIDTH = 32
-const CARD_GAP = 12
-const VERTICAL_OFFSET = 8
-
-type AnchoredItem =
-  | { kind: 'annotation'; row: AnnotationRow }
-  | { kind: 'suggestion'; row: SuggestionRow }
+const CARD_GAP = 10
 
 export function CollaborationGutter({
   editor,
@@ -53,19 +82,70 @@ export function CollaborationGutter({
   onToggleCollapse,
   onAcceptedSuggestion,
   refreshTrigger,
+  onCountsChange,
+  flushPendingSave,
+  onMutated,
 }: Props) {
   const {
     annotations,
     suggestions,
-    orphanAnnotationIds,
-    orphanSuggestionIds,
     refresh,
     mutate,
   } = useCollabData({ chapterId, hiveId, refreshTrigger })
 
   const [filter, setFilter] = useState<FilterState>(defaultFilterState)
-  const gutterRef = useRef<HTMLDivElement | null>(null)
-  const [positions, setPositions] = useState<Record<string, number>>({})
+
+  // Wrap mutate so resolve/reject side-effect-strip the highlight from the
+  // editor. Acceptance already replaces the text run that carried the mark,
+  // so the mark is gone naturally there — only resolve + reject paths need
+  // explicit stripping.
+  const wrappedMutate = useMemo(() => {
+    return {
+      ...mutate,
+      resolveAnnotation: async (id: string) => {
+        const res = await mutate.resolveAnnotation(id)
+        if (res.success) {
+          const stripped = stripMarkInstancesById(
+            editor,
+            'hiveAnnotation',
+            'annotationId',
+            id,
+          )
+          if (stripped && flushPendingSave) {
+            try { await flushPendingSave() } catch { /* already toasted */ }
+          }
+          onMutated?.()
+        }
+        return res
+      },
+      unresolveAnnotation: async (id: string) => {
+        const res = await mutate.unresolveAnnotation(id)
+        if (res.success) onMutated?.()
+        return res
+      },
+      rejectSuggestion: async (id: string, note?: string) => {
+        const res = await mutate.rejectSuggestion(id, note)
+        if (res.success) {
+          const stripped = stripMarkInstancesById(
+            editor,
+            'hiveSuggestion',
+            'suggestionId',
+            id,
+          )
+          if (stripped && flushPendingSave) {
+            try { await flushPendingSave() } catch { /* already toasted */ }
+          }
+          onMutated?.()
+        }
+        return res
+      },
+      acceptSuggestion: async (id: string) => {
+        const res = await mutate.acceptSuggestion(id)
+        if (res.success) onMutated?.()
+        return res
+      },
+    }
+  }, [mutate, editor, flushPendingSave, onMutated])
 
   // Group replies by parentId.
   const annotationReplies = useMemo(() => {
@@ -92,97 +172,48 @@ export function CollaborationGutter({
     return map
   }, [suggestions])
 
-  // Top-level only, filtered.
+  // Top-level only, filtered. Orphan filtering removed — every annotation
+  // stays in the main list until manually resolved/rejected, even if its
+  // anchor mark is missing from the doc. (The Orphaned section was too noisy
+  // and incorrectly classified freshly-created rows under some edit races.)
   const visibleAnnotations = useMemo(() => {
     return annotations.filter((a) => {
       if (a.parentId) return false
-      if (orphanAnnotationIds.includes(a.id)) return false
       if (filter.layers.size > 0 && !filter.layers.has(a.layer)) return false
-      if (a.resolved && !filter.showResolved) return false
+      // Resolved is a view mode, not an add-on. When ON show ONLY resolved;
+      // when OFF show ONLY unresolved. Mixing the two confused users — the
+      // active list should never mingle resolved + unresolved items.
+      if (filter.showResolved ? !a.resolved : a.resolved) return false
       return true
     })
-  }, [annotations, orphanAnnotationIds, filter])
+  }, [annotations, filter])
 
   const visibleSuggestions = useMemo(() => {
     return suggestions.filter((s) => {
       if (s.parentId) return false
-      if (orphanSuggestionIds.includes(s.id)) return false
       if (!filter.showSuggestions) return false
-      if (s.resolved && !filter.showResolved) return false
+      if (filter.showResolved ? !s.resolved : s.resolved) return false
       return true
     })
-  }, [suggestions, orphanSuggestionIds, filter])
+  }, [suggestions, filter])
 
-  // Orphans (top-level only).
-  const orphanedAnnotations = useMemo(
-    () =>
-      annotations.filter(
-        (a) => !a.parentId && orphanAnnotationIds.includes(a.id),
-      ),
-    [annotations, orphanAnnotationIds],
+  // Live unresolved counts — reported up so the toolbar's gutter-button badge
+  // reflects the current state (not the stale server-fetched count). These
+  // ignore the filter; the badge is "unread/pending across all layers".
+  const liveAnnotationCount = useMemo(
+    () => annotations.filter((a) => !a.parentId && !a.resolved).length,
+    [annotations],
   )
-  const orphanedSuggestions = useMemo(
-    () =>
-      suggestions.filter(
-        (s) => !s.parentId && orphanSuggestionIds.includes(s.id),
-      ),
-    [suggestions, orphanSuggestionIds],
+  const liveSuggestionCount = useMemo(
+    () => suggestions.filter((s) => !s.parentId && !s.resolved).length,
+    [suggestions],
   )
-
-  // Compute anchor positions for cards via editor.view.coordsAtPos.
-  useLayoutEffect(() => {
-    if (collapsed) return
-    if (!editor || editor.isDestroyed) {
-      setPositions({})
-      return
-    }
-    const gutter = gutterRef.current
-    if (!gutter) return
-
-    function compute() {
-      if (!editor || editor.isDestroyed) return
-      const gutterRect = gutter!.getBoundingClientRect()
-      const docSize = editor.state.doc.content.size
-      const next: Record<string, number> = {}
-      const items: AnchoredItem[] = [
-        ...visibleAnnotations.map(
-          (a): AnchoredItem => ({ kind: 'annotation', row: a }),
-        ),
-        ...visibleSuggestions.map(
-          (s): AnchoredItem => ({ kind: 'suggestion', row: s }),
-        ),
-      ]
-      for (const item of items) {
-        const start =
-          item.kind === 'annotation'
-            ? item.row.selectionStart
-            : item.row.selectionStart
-        if (start === null || start === undefined) continue
-        if (start < 0 || start > docSize) continue
-        try {
-          const coords = editor.view.coordsAtPos(start)
-          next[item.row.id] = coords.top - gutterRect.top
-        } catch {
-          // ignore — position invalid for current doc state
-        }
-      }
-      setPositions(next)
-    }
-
-    compute()
-    // Recompute on common editor mutations.
-    const handler = () => compute()
-    editor.on('update', handler)
-    editor.on('selectionUpdate', handler)
-    window.addEventListener('resize', compute)
-    window.addEventListener('scroll', compute, true)
-    return () => {
-      editor.off('update', handler)
-      editor.off('selectionUpdate', handler)
-      window.removeEventListener('resize', compute)
-      window.removeEventListener('scroll', compute, true)
-    }
-  }, [editor, visibleAnnotations, visibleSuggestions, collapsed])
+  useEffect(() => {
+    onCountsChange?.({
+      annotations: liveAnnotationCount,
+      suggestions: liveSuggestionCount,
+    })
+  }, [liveAnnotationCount, liveSuggestionCount, onCountsChange])
 
   if (collapsed) {
     const badgeCount = visibleAnnotations.length + visibleSuggestions.length
@@ -211,46 +242,6 @@ export function CollaborationGutter({
     )
   }
 
-  // Determine layout: prefer anchored when editor + at least one position resolved.
-  const canAnchor =
-    editor !== null &&
-    !editor.isDestroyed &&
-    (visibleAnnotations.length + visibleSuggestions.length === 0 ||
-      Object.keys(positions).length > 0)
-
-  // For absolute layout: sort items by top, then collision-resolve so cards don't overlap.
-  const allAnchored: AnchoredItem[] = [
-    ...visibleAnnotations.map(
-      (a): AnchoredItem => ({ kind: 'annotation', row: a }),
-    ),
-    ...visibleSuggestions.map(
-      (s): AnchoredItem => ({ kind: 'suggestion', row: s }),
-    ),
-  ]
-  if (canAnchor) {
-    allAnchored.sort((a, b) => {
-      const ta = positions[a.row.id] ?? Number.POSITIVE_INFINITY
-      const tb = positions[b.row.id] ?? Number.POSITIVE_INFINITY
-      return ta - tb
-    })
-  }
-
-  // Estimated card height (only used for collision avoidance — actual height
-  // varies). 72px = compact card.
-  const ESTIMATED_HEIGHT = 84
-
-  const resolvedTops: Record<string, number> = {}
-  if (canAnchor) {
-    let lastBottom = 0
-    for (const item of allAnchored) {
-      const raw = positions[item.row.id]
-      if (raw === undefined) continue
-      const top = Math.max(raw, lastBottom + VERTICAL_OFFSET)
-      resolvedTops[item.row.id] = top
-      lastBottom = top + ESTIMATED_HEIGHT
-    }
-  }
-
   function handleAccepted() {
     onAcceptedSuggestion?.()
     void refresh()
@@ -258,7 +249,6 @@ export function CollaborationGutter({
 
   return (
     <aside
-      ref={gutterRef}
       style={{
         width: EXPANDED_WIDTH,
         background:
@@ -299,50 +289,6 @@ export function CollaborationGutter({
           <div className="px-3 py-8 text-center text-[11px] text-muted-foreground">
             No annotations or suggestions yet.
           </div>
-        ) : canAnchor ? (
-          <div
-            className="relative"
-            style={{
-              minHeight:
-                Object.values(resolvedTops).reduce(
-                  (max, t) => Math.max(max, t),
-                  0,
-                ) + ESTIMATED_HEIGHT,
-            }}
-          >
-            {allAnchored.map((item) => {
-              const top = resolvedTops[item.row.id]
-              if (top === undefined) return null
-              return (
-                <div
-                  key={item.row.id}
-                  className="absolute left-2 right-2"
-                  style={{ top }}
-                >
-                  {item.kind === 'annotation' ? (
-                    <AnnotationCard
-                      annotation={item.row as AnnotationRow}
-                      replies={
-                        annotationReplies.get(item.row.id) ?? []
-                      }
-                      viewer={viewer}
-                      mutate={mutate}
-                    />
-                  ) : (
-                    <SuggestionCard
-                      suggestion={item.row as SuggestionRow}
-                      replies={
-                        suggestionReplies.get(item.row.id) ?? []
-                      }
-                      viewer={{ id: viewer.id, role: viewer.role }}
-                      mutate={mutate}
-                      onAccepted={handleAccepted}
-                    />
-                  )}
-                </div>
-              )
-            })}
-          </div>
         ) : (
           <div
             className="flex flex-col p-2"
@@ -354,7 +300,7 @@ export function CollaborationGutter({
                 annotation={a}
                 replies={annotationReplies.get(a.id) ?? []}
                 viewer={viewer}
-                mutate={mutate}
+                mutate={wrappedMutate}
               />
             ))}
             {visibleSuggestions.map((s) => (
@@ -363,19 +309,13 @@ export function CollaborationGutter({
                 suggestion={s}
                 replies={suggestionReplies.get(s.id) ?? []}
                 viewer={{ id: viewer.id, role: viewer.role }}
-                mutate={mutate}
+                mutate={wrappedMutate}
                 onAccepted={handleAccepted}
               />
             ))}
           </div>
         )}
       </div>
-
-      <OrphanSection
-        orphanedAnnotations={orphanedAnnotations}
-        orphanedSuggestions={orphanedSuggestions}
-        mutate={mutate}
-      />
     </aside>
   )
 }

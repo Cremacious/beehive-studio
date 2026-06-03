@@ -69,6 +69,10 @@ type BookEditorContextValue = {
   bumpChapterContentVersion: () => void
   gutterOpen: boolean
   toggleGutter: () => void
+  liveCollabCounts: { annotations: number; suggestions: number } | null
+  setLiveCollabCounts: (
+    counts: { annotations: number; suggestions: number } | null,
+  ) => void
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
@@ -114,6 +118,14 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
   const [historyOpen, setHistoryOpen] = useState(false)
   const [gutterOpen, setGutterOpen] = useState(false)
   const [chapterContentVersion, setChapterContentVersion] = useState(0)
+  // Live unresolved counts fed by the CollaborationGutter for the active
+  // chapter. Null when the gutter hasn't reported yet (toolbar falls back to
+  // the server-fetched chapter counts in that window). Updates here drive
+  // the toolbar's collab-gutter badge so it reflects post-resolve state.
+  const [liveCollabCounts, setLiveCollabCounts] = useState<{
+    annotations: number
+    suggestions: number
+  } | null>(null)
   const [previewSnapshotId, setPreviewSnapshotId] = useState<string | null>(null)
   const [previewSnapshotContent, setPreviewSnapshotContent] = useState<unknown>(null)
   const [previewSnapshotCreatedAt, setPreviewSnapshotCreatedAt] = useState<Date | null>(null)
@@ -186,15 +198,11 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
   // without the ref guard the auto-open would fire twice on first mount.
   const autoOpenedForItemRef = useRef<string | null>(null)
 
-  function maybeAutoOpenGutter(itemId: string, data: ChapterData) {
-    if (autoOpenedForItemRef.current === itemId) return
-    if (!bookHive) return // non-hive book, never auto-open
-    const total = data.annotationCount + data.pendingSuggestionCount
-    if (total <= 0) return
-    autoOpenedForItemRef.current = itemId
-    setGutterOpen(true)
-    // Mutually-exclusive with the history drawer (preserve existing wiring).
-    setHistoryOpen(false)
+  function maybeAutoOpenGutter(_itemId: string, _data: ChapterData) {
+    // Auto-open disabled per UX feedback — chapters open with the gutter
+    // closed by default. The toolbar's pending-count badge is the surface
+    // for "you have unresolved collab items"; user opens it when ready.
+    return
   }
 
   const pushError = useCallback((msg: string) => {
@@ -261,6 +269,11 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     setPreviewSnapshotContent(null)
     setPreviewSnapshotCreatedAt(null)
 
+    // Drop stale live collab counts; the gutter on the new chapter will report
+    // its own once useCollabData resolves. Toolbar falls back to the chapter's
+    // server-fetched counts in the meantime.
+    setLiveCollabCounts(null)
+
     if (id === null) {
       setActiveItemIdState(null)
       setWordCount(0)
@@ -287,6 +300,10 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     const cached = chapterCacheRef.current.get(id)
     if (cached) {
       setWordCount(cached.wordCount)
+      setLiveCollabCounts({
+        annotations: cached.annotationCount,
+        suggestions: cached.pendingSuggestionCount,
+      })
       maybeAutoOpenGutter(id, cached)
       return
     }
@@ -296,6 +313,10 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
       if (result.success) {
         setChapterCache(c => new Map(c).set(id, result.data))
         setWordCount(result.data.wordCount)
+        setLiveCollabCounts({
+          annotations: result.data.annotationCount,
+          suggestions: result.data.pendingSuggestionCount,
+        })
         maybeAutoOpenGutter(id, result.data)
       } else {
         pushError(`Couldn't load chapter: ${result.error}`)
@@ -407,6 +428,10 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     const result = await getChapterAction(item.chapterId)
     if (result.success) {
       setChapterCache(c => new Map(c).set(itemId, result.data))
+      setLiveCollabCounts({
+        annotations: result.data.annotationCount,
+        suggestions: result.data.pendingSuggestionCount,
+      })
       maybeAutoOpenGutter(itemId, result.data)
     } else {
       pushError(`Couldn't reload chapter: ${result.error}`)
@@ -496,6 +521,8 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     bumpChapterContentVersion,
     gutterOpen,
     toggleGutter,
+    liveCollabCounts,
+    setLiveCollabCounts,
   }), [
     bookId,
     bookTitle,
@@ -539,6 +566,7 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     bumpChapterContentVersion,
     gutterOpen,
     toggleGutter,
+    liveCollabCounts,
   ])
 
   return <BookEditorContext.Provider value={value}>{children}</BookEditorContext.Provider>

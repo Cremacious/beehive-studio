@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Check, CornerDownRight, Loader2 } from 'lucide-react'
+import { Check, CornerDownRight, Loader2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -49,7 +49,12 @@ export function AnnotationCard({
   const [replyOpen, setReplyOpen] = useState(false)
   const [replyBody, setReplyBody] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [toggling, setToggling] = useState(false)
+  // Separate spinner state per button so the loader sits on whichever button
+  // the user actually clicked. A shared `toggling` flag put the spinner on
+  // the approve check even when reject (X) was pressed.
+  const [approving, setApproving] = useState(false)
+  const [rejecting, setRejecting] = useState(false)
+  const busy = approving || rejecting
 
   const color = LAYER_COLORS[annotation.layer]
   const authorName =
@@ -65,15 +70,30 @@ export function AnnotationCard({
   )
 
   async function toggleResolved() {
-    if (toggling) return
-    setToggling(true)
+    if (busy) return
+    setApproving(true)
     try {
       const res = annotation.resolved
         ? await mutate.unresolveAnnotation(annotation.id)
         : await mutate.resolveAnnotation(annotation.id)
       if (!res.success) toast.error(res.error)
     } finally {
-      setToggling(false)
+      setApproving(false)
+    }
+  }
+
+  // Reject and Approve both close out the annotation (mark it resolved).
+  // The distinction is currently UX-only — the schema has no disposition
+  // field. If we ever want to differentiate, add an `outcome` column on
+  // hive_annotations and branch here.
+  async function rejectAnnotation() {
+    if (busy || annotation.resolved) return
+    setRejecting(true)
+    try {
+      const res = await mutate.resolveAnnotation(annotation.id)
+      if (!res.success) toast.error(res.error)
+    } finally {
+      setRejecting(false)
     }
   }
 
@@ -139,28 +159,49 @@ export function AnnotationCard({
             </div>
           </div>
           {canResolve ? (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                void toggleResolved()
-              }}
-              disabled={toggling}
-              aria-label={annotation.resolved ? 'Unresolve' : 'Resolve'}
-              style={{ borderRadius: 'var(--r-btn)' }}
-              className={
-                'flex h-6 w-6 items-center justify-center border transition ' +
-                (annotation.resolved
-                  ? 'border-brand bg-brand/15 text-brand'
-                  : 'border-border text-muted-foreground hover:border-brand hover:text-foreground')
-              }
-            >
-              {toggling ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
-              ) : (
-                <Check className="h-3.5 w-3.5" />
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  void toggleResolved()
+                }}
+                disabled={busy}
+                aria-label={annotation.resolved ? 'Unresolve' : 'Approve'}
+                style={{ borderRadius: 'var(--r-btn)' }}
+                className={
+                  'flex h-6 w-6 items-center justify-center border transition ' +
+                  (annotation.resolved
+                    ? 'border-brand bg-brand/15 text-brand'
+                    : 'border-border text-muted-foreground hover:border-brand hover:text-foreground')
+                }
+              >
+                {approving ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Check className="h-3.5 w-3.5" />
+                )}
+              </button>
+              {annotation.resolved ? null : (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    void rejectAnnotation()
+                  }}
+                  disabled={busy}
+                  aria-label="Reject"
+                  style={{ borderRadius: 'var(--r-btn)' }}
+                  className="flex h-6 w-6 items-center justify-center border border-border text-muted-foreground transition hover:border-destructive hover:text-destructive"
+                >
+                  {rejecting ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <X className="h-3.5 w-3.5" />
+                  )}
+                </button>
               )}
-            </button>
+            </div>
           ) : null}
         </div>
 

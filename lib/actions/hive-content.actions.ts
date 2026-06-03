@@ -388,6 +388,7 @@ export async function getHiveChapterListAction(
         .where(and(
           inArray(hiveAnnotations.chapterId, chapterIds),
           isNull(hiveAnnotations.parentId),
+          eq(hiveAnnotations.resolved, false),
         ))
         .groupBy(hiveAnnotations.chapterId)
 

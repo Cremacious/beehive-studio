@@ -143,7 +143,7 @@ function ToolbarButton({ onClick, disabled, isActive, title, children }: Toolbar
 }
 
 export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggleFind, findOpen }: Props) {
-  const { focusMode, toggleFocusMode, editorTheme, toggleEditorTheme, historyOpen, toggleHistory, bookId, locale, bookHive, gutterOpen, toggleGutter, flushPendingSave, saveStatus, activeItem, activeChapter } = useBookEditor()
+  const { focusMode, toggleFocusMode, editorTheme, toggleEditorTheme, historyOpen, toggleHistory, bookId, locale, bookHive, gutterOpen, toggleGutter, flushPendingSave, saveStatus, activeItem, activeChapter, liveCollabCounts } = useBookEditor()
 
   async function handleManualSave() {
     const label = activeItem?.title ?? 'chapter'
@@ -498,10 +498,17 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
               when the gutter is closed and the active chapter has open
               annotations or pending suggestions. */}
           {bookHive && (() => {
-            const gutterPendingCount =
-              !gutterOpen && activeChapter
-                ? activeChapter.annotationCount + activeChapter.pendingSuggestionCount
-                : 0
+            // Prefer the gutter's live unresolved counts (updates after
+            // resolve/reject); fall back to the chapter's server-fetched
+            // counts during the window between chapter switch and the
+            // gutter's first useCollabData resolve.
+            const fallbackCount = activeChapter
+              ? activeChapter.annotationCount + activeChapter.pendingSuggestionCount
+              : 0
+            const liveCount = liveCollabCounts
+              ? liveCollabCounts.annotations + liveCollabCounts.suggestions
+              : fallbackCount
+            const gutterPendingCount = !gutterOpen ? liveCount : 0
             return (
               <Tooltip>
                 <TooltipTrigger asChild>

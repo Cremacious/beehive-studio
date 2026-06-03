@@ -28,6 +28,7 @@ import {
 } from '@/lib/validations/hive-annotation'
 import { findOrphanMarks, type PMNode } from '@/lib/tiptap-extensions/mark-scanning'
 import { patchDocWithMark } from '@/lib/tiptap-extensions/patch-mark'
+import { stripMarkById } from '@/lib/tiptap-extensions/strip-mark'
 import type { ActionResult } from './book.actions'
 
 // ── Public types ─────────────────────────────────────────────────────────────
@@ -220,7 +221,7 @@ async function setAnnotationResolved(
 
   const chapter = await db.query.chapters.findFirst({
     where: eq(chapters.id, ann.chapterId),
-    columns: { bookId: true },
+    columns: { id: true, bookId: true, content: true },
   })
   if (!chapter) return { success: false, error: 'NOT_FOUND' }
   const book = await db.query.books.findFirst({
@@ -249,6 +250,26 @@ async function setAnnotationResolved(
       updatedAt: new Date(),
     })
     .where(eq(hiveAnnotations.id, annotationId))
+
+  // When resolving, strip the highlight from the chapter content so reader
+  // surfaces (including a future re-open of the studio editor) no longer
+  // render the mark. Unresolve leaves content untouched — restoring the mark
+  // would require knowing the original range, and unresolve is rare.
+  if (resolved) {
+    const doc = (chapter.content ?? { type: 'doc', content: [] }) as PMNode
+    const { doc: stripped, stripped: didStrip } = stripMarkById(
+      doc,
+      'hiveAnnotation',
+      'annotationId',
+      annotationId,
+    )
+    if (didStrip) {
+      await db
+        .update(chapters)
+        .set({ content: stripped, updatedAt: new Date() })
+        .where(eq(chapters.id, chapter.id))
+    }
+  }
 
   return { success: true, data: undefined }
 }

@@ -130,6 +130,7 @@ export function ChapterEditor() {
     reloadActiveChapter,
     editorTheme,
     setLiveWordCount,
+    setLiveCollabCounts,
   } = useBookEditor()
 
   const [analysisOpen, setAnalysisOpen] = useState(false)
@@ -405,6 +406,16 @@ export function ChapterEditor() {
             onAcceptedSuggestion={() => {
               void reloadActiveChapter().then(() => bumpChapterContentVersion())
             }}
+            flushPendingSave={flushPendingSave}
+            onMutated={() => {
+              bumpCollabRefresh()
+              // The gutter's wrappedMutate already refreshed its useCollabData
+              // and onCountsChange fired; also reload the chapter so its
+              // cached annotationCount/pendingSuggestionCount stay accurate
+              // for the next time the gutter remounts.
+              void reloadActiveChapter()
+            }}
+            onCountsChange={setLiveCollabCounts}
           />
         )}
         {analysisOpen && (

@@ -76,6 +76,7 @@ export async function getChapterAction(
       .where(and(
         eq(hiveAnnotations.chapterId, chapterId),
         isNull(hiveAnnotations.parentId),
+        eq(hiveAnnotations.resolved, false),
       ))
     annotationCount = Number(annRow?.c ?? 0)
 

@@ -58,17 +58,15 @@ export function HiveSidebar({ hiveId, locale, hiveName, wordGoalPct }: Props) {
       className="w-[260px] shrink-0 flex flex-col overflow-hidden"
     >
       <div
-        className="px-4 py-4 flex items-center gap-3"
+        className="px-4 py-4 flex items-center justify-center"
         style={{ borderBottom: 'var(--br-card)' }}
       >
-        <div className="min-w-0">
-          <h2
-            style={{ color: 'var(--brand)' }}
-            className="font-comfortaa font-bold text-base truncate"
-          >
-            {hiveName}
-          </h2>
-        </div>
+        <h2
+          style={{ color: 'var(--brand)' }}
+          className="font-comfortaa font-bold text-base truncate text-center"
+        >
+          {hiveName}
+        </h2>
       </div>
       <nav className="flex flex-col gap-1 p-2 flex-1 overflow-y-auto">
         {NAV_ITEMS.map(({ label, icon: Icon, segment }) => {

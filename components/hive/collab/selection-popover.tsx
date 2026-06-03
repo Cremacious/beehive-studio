@@ -16,6 +16,12 @@ type Props = {
   canSuggestEdits: boolean
   onAnnotationCreated?: () => void
   onSuggestionCreated?: () => void
+  /** Flush any pending autosave before/after the mark application so the
+   *  editor's content (with the new mark) lands in the DB immediately,
+   *  rather than racing with the 2s debounce. Studio editor passes the
+   *  BookEditorProvider's flushPendingSave; the hive chapter view (which is
+   *  read-only) doesn't pass anything. */
+  flushPendingSave?: () => Promise<void>
 }
 
 const POPOVER_WIDTH = 200
@@ -30,6 +36,7 @@ export function SelectionPopover({
   canSuggestEdits,
   onAnnotationCreated,
   onSuggestionCreated,
+  flushPendingSave,
 }: Props) {
   const sel = useSelectionPopover(editor)
   const [annotateOpen, setAnnotateOpen] = useState(false)
@@ -144,6 +151,7 @@ export function SelectionPopover({
             from={captured.from}
             to={captured.to}
             selectedText={captured.text}
+            flushPendingSave={flushPendingSave}
             onSuccess={() => {
               onAnnotationCreated?.()
               sel.close()
@@ -161,6 +169,7 @@ export function SelectionPopover({
             from={captured.from}
             to={captured.to}
             selectedText={captured.text}
+            flushPendingSave={flushPendingSave}
             onSuccess={() => {
               onSuggestionCreated?.()
               sel.close()

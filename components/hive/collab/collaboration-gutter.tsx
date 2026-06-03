@@ -30,6 +30,9 @@ type Props = {
   collapsed?: boolean
   onToggleCollapse?: () => void
   onAcceptedSuggestion?: () => void
+  /** Bumped by the parent after creating an annotation/suggestion to force
+   *  a refetch of the gutter's data. */
+  refreshTrigger?: number
 }
 
 const EXPANDED_WIDTH = 320
@@ -49,6 +52,7 @@ export function CollaborationGutter({
   collapsed = false,
   onToggleCollapse,
   onAcceptedSuggestion,
+  refreshTrigger,
 }: Props) {
   const {
     annotations,
@@ -57,7 +61,7 @@ export function CollaborationGutter({
     orphanSuggestionIds,
     refresh,
     mutate,
-  } = useCollabData({ chapterId, hiveId })
+  } = useCollabData({ chapterId, hiveId, refreshTrigger })
 
   const [filter, setFilter] = useState<FilterState>(defaultFilterState)
   const gutterRef = useRef<HTMLDivElement | null>(null)

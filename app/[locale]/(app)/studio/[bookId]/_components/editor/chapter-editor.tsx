@@ -135,6 +135,12 @@ export function ChapterEditor() {
   const [analysisOpen, setAnalysisOpen] = useState(false)
   const [findOpen, setFindOpen] = useState(false)
   const [editorText, setEditorText] = useState('')
+  // Bumped after annotation/suggestion creation so the CollaborationGutter's
+  // useCollabData hook re-fetches and the new row appears immediately. The
+  // hive chapter view passes router.refresh() for this; the studio editor uses
+  // a local nonce because there's no route-level refresh to lean on.
+  const [collabRefreshNonce, setCollabRefreshNonce] = useState(0)
+  const bumpCollabRefresh = () => setCollabRefreshNonce((n) => n + 1)
   // Used by the Cmd+F/Cmd+S keydown handler to scope shortcuts to focus
   // inside the editor (or on document.body when user is between actions).
   // Without the guard, typing in a metadata-panel textarea + Cmd+F would
@@ -350,6 +356,9 @@ export function ChapterEditor() {
           chapterId={activeChapter.id}
           canAnnotate
           canSuggestEdits
+          flushPendingSave={flushPendingSave}
+          onAnnotationCreated={bumpCollabRefresh}
+          onSuggestionCreated={bumpCollabRefresh}
         />
       )}
       <div className="flex flex-1 overflow-hidden">
@@ -392,6 +401,7 @@ export function ChapterEditor() {
             chapterId={activeChapter.id}
             hiveId={bookHive.hiveId}
             viewer={{ id: currentUserId, role: 'OWNER', bookOwnerId: currentUserId }}
+            refreshTrigger={collabRefreshNonce}
             onAcceptedSuggestion={() => {
               void reloadActiveChapter().then(() => bumpChapterContentVersion())
             }}

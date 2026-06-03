@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
@@ -70,7 +71,14 @@ export function HiveChapterSurface({
     },
   })
 
-  const refresh = () => router.refresh()
+  // router.refresh() doesn't re-mount the client gutter in Next 16, so the
+  // useCollabData hook never re-fetches. Use a nonce instead — bumping it
+  // forces the gutter's effect to re-run getChapterAnnotationsAction.
+  const [collabRefreshNonce, setCollabRefreshNonce] = useState(0)
+  const refresh = () => {
+    router.refresh()
+    setCollabRefreshNonce((n) => n + 1)
+  }
 
   const viewerRole = data.viewerRole
   const canAnnotate = roleCanAnnotate(viewerRole)
@@ -248,6 +256,7 @@ export function HiveChapterSurface({
             role: viewerRole,
             bookOwnerId: data.book.userId,
           }}
+          refreshTrigger={collabRefreshNonce}
         />
       </div>
 

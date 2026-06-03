@@ -279,9 +279,12 @@ describe('patchDocWithMark — H3 T6', () => {
         },
       ],
     }
-    const out = patchDocWithMark(doc, 'hiveAnnotation', { annotationId: 'a1' }, 0, 5)
+    // PM positions: doc=0, p_open=1, "Hello"=1..6, " world"=6..12, p_close=12.
+    // Marking "Hello" → PM 1..6.
+    const out = patchDocWithMark(doc, 'hiveAnnotation', { annotationId: 'a1' }, 1, 6)
     const ranges = findMarkRanges(out, 'hiveAnnotation')
     expect(ranges.length).toBe(1)
+    // findMarkRanges still reports text offsets (it only walks text nodes).
     expect(ranges[0]).toMatchObject({ from: 0, to: 5, attrs: { annotationId: 'a1' } })
 
     // Verify the doc structure: paragraph should now have a "Hello" marked + " world" unmarked
@@ -304,10 +307,11 @@ describe('patchDocWithMark — H3 T6', () => {
         },
       ],
     }
-    // "lo wo" spans both — offsets 3..8
-    const out = patchDocWithMark(doc, 'hiveAnnotation', { annotationId: 'a1' }, 3, 8)
+    // PM positions: doc=0, p_open=1, "Hello "=1..7, "world!"=7..13, p_close=13.
+    // "lo wo" spans both text nodes — PM 4..9. findMarkRanges still reports
+    // contiguous text-offset ranges; 3..8 covers "lo wo" in text-only coords.
+    const out = patchDocWithMark(doc, 'hiveAnnotation', { annotationId: 'a1' }, 4, 9)
     const ranges = findMarkRanges(out, 'hiveAnnotation')
-    // Since findMarkRanges merges contiguous runs with equal attrs, expect one range 3..8
     expect(ranges.length).toBe(1)
     expect(ranges[0]).toMatchObject({ from: 3, to: 8 })
 
@@ -335,7 +339,9 @@ describe('patchDocWithMark — H3 T6', () => {
         },
       ],
     }
-    const out = patchDocWithMark(doc, 'hiveAnnotation', { annotationId: 'a1' }, 0, 4)
+    // PM positions: doc=0, p_open=1, "bold text"=1..10, p_close=10.
+    // Marking "bold" → PM 1..5.
+    const out = patchDocWithMark(doc, 'hiveAnnotation', { annotationId: 'a1' }, 1, 5)
     const para = out.content![0]
     const piece = para.content![0]
     expect(piece.text).toBe('bold')
@@ -345,5 +351,42 @@ describe('patchDocWithMark — H3 T6', () => {
     const tail = para.content![1]
     expect(tail.text).toBe(' text')
     expect(tail.marks?.map((m) => m.type)).toEqual(['bold'])
+  })
+
+  it('handles inline atoms (hardBreak) — selection past the atom lands on the right text', () => {
+    // This is the regression that caused new annotations to surface as
+    // orphaned immediately: when the doc has hardBreaks (or other leaf inline
+    // atoms), each one consumes ONE PM position with no text contribution.
+    // A naive text-offset walker treats hardBreak as a container (+2) and
+    // the PM/text-offset mismatch grows linearly with atom count; the mark
+    // either lands in the wrong range or falls outside any text node.
+    const doc: PMNode = {
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            { type: 'text', text: 'Line one' },
+            { type: 'hardBreak' },
+            { type: 'text', text: 'Line two' },
+          ],
+        },
+      ],
+    }
+    // PM positions: doc=0, p_open=1, "Line one"=1..9, hardBreak=9..10,
+    // "Line two"=10..18, p_close=18.
+    // Marking "Line two" → PM 10..18.
+    const out = patchDocWithMark(doc, 'hiveAnnotation', { annotationId: 'a1' }, 10, 18)
+    const ranges = findMarkRanges(out, 'hiveAnnotation')
+    expect(ranges.length).toBe(1)
+    // findMarkRanges reports text offsets; "Line one"=0..8, hardBreak=0,
+    // "Line two"=8..16. Marked range "Line two" → text 8..16.
+    expect(ranges[0]).toMatchObject({ from: 8, to: 16 })
+
+    // The hardBreak should still be present, unmarked.
+    const para = out.content![0]
+    const hb = para.content!.find((c) => c.type === 'hardBreak')
+    expect(hb).toBeDefined()
+    expect(hb!.marks).toBeUndefined()
   })
 })

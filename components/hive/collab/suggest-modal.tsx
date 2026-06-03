@@ -25,6 +25,10 @@ type Props = {
   to: number
   selectedText: string
   onSuccess?: () => void
+  /** Same contract as AnnotateModal's flushPendingSave — flush studio
+   *  editor's pending autosave before AND after the mark is applied so the
+   *  suggestion mark lands cleanly in DB without racing the 2s debounce. */
+  flushPendingSave?: () => Promise<void>
 }
 
 export function SuggestModal({
@@ -37,6 +41,7 @@ export function SuggestModal({
   to,
   selectedText,
   onSuccess,
+  flushPendingSave,
 }: Props) {
   const [suggestedText, setSuggestedText] = useState('')
   const [body, setBody] = useState('')
@@ -50,6 +55,11 @@ export function SuggestModal({
     if (!canSubmit) return
     setSubmitting(true)
     try {
+      // Flush pending editor autosave first — see annotate-modal for the
+      // rationale (avoid stale-DB-read race with debounced typing save).
+      if (flushPendingSave) {
+        try { await flushPendingSave() } catch { /* already toasted */ }
+      }
       const result = await createSuggestionAction({
         hiveId,
         chapterId,
@@ -69,6 +79,10 @@ export function SuggestModal({
         .setTextSelection({ from, to })
         .setHiveSuggestion({ suggestionId: result.data.id })
         .run()
+      // Force the locally-applied mark into the DB before the 2s debounce.
+      if (flushPendingSave) {
+        try { await flushPendingSave() } catch { /* already toasted */ }
+      }
       toast.success('Suggestion submitted')
       onSuccess?.()
       setSuggestedText('')

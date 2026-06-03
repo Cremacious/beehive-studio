@@ -20,6 +20,9 @@ export type UseCollabDataArgs = {
   chapterId: string
   hiveId: string
   enabled?: boolean
+  /** Bump this from the parent (e.g., after creating an annotation) to force
+   *  a refetch. Useful when the parent owns the create-flow callback. */
+  refreshTrigger?: number
 }
 
 export type CollabMutations = {
@@ -58,6 +61,7 @@ export function useCollabData({
   chapterId,
   hiveId,
   enabled = true,
+  refreshTrigger = 0,
 }: UseCollabDataArgs): UseCollabDataResult {
   const [annotations, setAnnotations] = useState<AnnotationRow[]>([])
   const [suggestions, setSuggestions] = useState<SuggestionRow[]>([])
@@ -95,7 +99,9 @@ export function useCollabData({
   useEffect(() => {
     if (!enabled) return
     void refresh()
-  }, [refresh, enabled])
+    // refreshTrigger is intentionally in deps — parents bump it after
+    // mutations like annotation create so the gutter re-fetches.
+  }, [refresh, enabled, refreshTrigger])
 
   const mutate: CollabMutations = {
     replyToAnnotation: async (input) => {

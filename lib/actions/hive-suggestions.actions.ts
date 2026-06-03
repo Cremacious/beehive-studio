@@ -30,7 +30,6 @@ import {
   type RejectSuggestionInput,
 } from '@/lib/validations/hive-suggestion'
 import { patchDocWithMark } from '@/lib/tiptap-extensions/patch-mark'
-import { pmPosToTextOffset } from '@/lib/tiptap-extensions/pm-pos'
 import { applySuggestionToDoc } from '@/lib/tiptap-extensions/apply-suggestion'
 import { findOrphanMarks, type PMNode } from '@/lib/tiptap-extensions/mark-scanning'
 import { getUserPremiumStatus } from '@/lib/premium'
@@ -149,20 +148,16 @@ export async function createSuggestionAction(
       .returning({ id: hiveSuggestions.id })
     const newId = inserted.id
 
-    // Patch chapter content with the suggestion mark.
-    // selectionStart/End come from editor.state.selection (ProseMirror
-    // positions); patchDocWithMark walks text offsets. Convert before passing —
-    // same fix as createAnnotationAction. Without this, multi-paragraph docs
-    // would have the mark fall in the wrong range or silently drop.
+    // Patch chapter content with the suggestion mark. selectionStart/End
+    // come from editor.state.selection — ProseMirror positions — which is the
+    // coordinate system patchDocWithMark walks natively (atom-aware).
     const doc = (chapter.content ?? { type: 'doc', content: [] }) as PMNode
-    const textStart = pmPosToTextOffset(doc, selectionStart)
-    const textEnd = pmPosToTextOffset(doc, selectionEnd)
     const nextDoc = patchDocWithMark(
       doc,
       'hiveSuggestion',
       { suggestionId: newId },
-      textStart,
-      textEnd,
+      selectionStart,
+      selectionEnd,
     )
     await tx
       .update(chapters)

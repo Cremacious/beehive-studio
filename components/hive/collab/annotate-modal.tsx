@@ -69,6 +69,12 @@ type Props = {
   to: number
   selectedText: string
   onSuccess?: () => void
+  /** Flush any pending editor autosave before AND after the mark is applied.
+   *  - Before: ensures the server reads the latest chapter content (no stale
+   *    DB) so patchDocWithMark mark-applies on top of the right base.
+   *  - After: forces the locally-applied mark to land in the DB immediately,
+   *    so a navigation/refresh in the next ~2s doesn't leave the row orphaned. */
+  flushPendingSave?: () => Promise<void>
 }
 
 export function AnnotateModal({
@@ -81,6 +87,7 @@ export function AnnotateModal({
   to,
   selectedText,
   onSuccess,
+  flushPendingSave,
 }: Props) {
   const [layer, setLayer] = useState<AnnotationLayer>('GENERAL')
   const [body, setBody] = useState('')
@@ -97,6 +104,13 @@ export function AnnotateModal({
     if (!canSubmit) return
     setSubmitting(true)
     try {
+      // Flush any pending editor autosave first so the server reads the
+      // up-to-date chapter content. Without this, a debounced typing-save
+      // could fire between our action's read and write and overwrite the
+      // server's mark application.
+      if (flushPendingSave) {
+        try { await flushPendingSave() } catch { /* save failures already toast */ }
+      }
       const result = await createAnnotationAction({
         hiveId,
         chapterId,
@@ -110,13 +124,21 @@ export function AnnotateModal({
         toast.error(result.error)
         return
       }
-      // Apply the mark locally so the gutter can anchor against it.
+      // Apply the mark locally so the gutter can anchor against it. The chain
+      // commits one transaction; onUpdate fires synchronously after .run(),
+      // queuing the editor's new content (with mark) into pendingSaveRef.
       editor
         .chain()
         .focus()
         .setTextSelection({ from, to })
         .setHiveAnnotation({ annotationId: result.data.id, layer })
         .run()
+      // Flush again so the mark hits DB immediately — guards against the user
+      // navigating away or the chapter recreating in the 2s debounce window,
+      // which would otherwise leave the row orphaned.
+      if (flushPendingSave) {
+        try { await flushPendingSave() } catch { /* same — already toasted */ }
+      }
       toast.success('Annotation added')
       onSuccess?.()
       // Reset local state for next open.

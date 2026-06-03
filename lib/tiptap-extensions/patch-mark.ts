@@ -2,13 +2,21 @@ import type { PMNode, PMMark } from './mark-scanning'
 
 /**
  * Walk a ProseMirror JSON doc and add `markName` (with `attrs`) to all text
- * that falls within `[from, to)` (text-offset coordinates matching
- * `findMarkRanges`). Text outside the range keeps its existing marks; text
- * inside gets the new mark added alongside any existing marks. Text nodes
- * straddling the boundary are split.
+ * within `[from, to)` — where `from`/`to` are **ProseMirror positions**, the
+ * same coordinate system the editor reports via `editor.state.selection.{from,to}`.
  *
- * Treats input as immutable — returns a new doc with the affected branches
- * cloned along the path of the edit.
+ * ProseMirror positions count:
+ *   - text characters: 1 each
+ *   - non-leaf block boundary (e.g. paragraph open/close): 1 each
+ *   - leaf inline atoms (hardBreak, image, horizontalRule, etc.): 1 each
+ *
+ * Without correct PM accounting, the mark either lands in the wrong range or
+ * — when the target exceeds total text characters — silently drops the patch
+ * entirely. The visible failure is "I just created an annotation and it shows
+ * up in the Orphaned tab immediately."
+ *
+ * Returns a new doc with the affected branches cloned along the path of the
+ * edit; the input is treated as immutable.
  */
 export function patchDocWithMark(
   doc: PMNode,
@@ -17,14 +25,14 @@ export function patchDocWithMark(
   from: number,
   to: number,
 ): PMNode {
-  let offset = 0
+  let pmCursor = 0
   const newMark: PMMark = { type: markName, attrs }
 
   function walk(node: PMNode): PMNode {
     if (node.type === 'text' && typeof node.text === 'string') {
-      const start = offset
-      const end = offset + node.text.length
-      offset = end
+      const start = pmCursor
+      const end = pmCursor + node.text.length
+      pmCursor = end
 
       if (end <= from || start >= to) return node
 
@@ -44,28 +52,68 @@ export function patchDocWithMark(
       return { type: '__split__', content: pieces }
     }
 
-    if (node.content && node.content.length > 0) {
-      const newChildren: PMNode[] = []
-      let changed = false
-      for (const child of node.content) {
-        const result = walk(child)
-        if (result.type === '__split__' && result.content) {
-          newChildren.push(...result.content)
-          changed = true
-        } else {
-          newChildren.push(result)
-          if (result !== child) changed = true
-        }
-      }
-      if (!changed) return node
-      return { ...node, content: newChildren }
+    // The doc node itself doesn't consume a position; its descendants do.
+    const isDoc = node.type === 'doc'
+    const hasChildren = !!(node.content && node.content.length > 0)
+    // Leaf inline atoms (hardBreak, image, etc.) take 1 PM position with no
+    // descendants. Containers — paragraph, heading, blockquote, list, etc. —
+    // take 1 position to enter, then content, then 1 to exit. An empty
+    // paragraph (no content) is still a container in PM (2 positions), but in
+    // serialized JSON it shows up as `{type: 'paragraph'}` with no `content`
+    // key — indistinguishable from a leaf at the JSON level. We use the
+    // heuristic: empty `content`-less nodes that are KNOWN block types get
+    // container treatment; everything else without children is a leaf.
+    const isLeaf = !isDoc && !hasChildren && !KNOWN_EMPTY_BLOCK_TYPES.has(node.type)
+
+    if (isLeaf) {
+      pmCursor += 1
+      return node
     }
 
-    return node
+    if (!isDoc) pmCursor += 1 // entering this container
+
+    if (!hasChildren) {
+      // Empty container (e.g. empty paragraph): just exit and return.
+      if (!isDoc) pmCursor += 1
+      return node
+    }
+
+    const newChildren: PMNode[] = []
+    let changed = false
+    for (const child of node.content!) {
+      const result = walk(child)
+      if (result.type === '__split__' && result.content) {
+        newChildren.push(...result.content)
+        changed = true
+      } else {
+        newChildren.push(result)
+        if (result !== child) changed = true
+      }
+    }
+
+    if (!isDoc) pmCursor += 1 // exiting
+
+    if (!changed) return node
+    return { ...node, content: newChildren }
   }
 
   return walk(doc)
 }
+
+/**
+ * Block-type names that can legitimately appear in JSON with no `content` key
+ * but still consume container-shaped PM positions (2: enter + exit). Used by
+ * patchDocWithMark to disambiguate empty containers from leaf inline atoms.
+ */
+const KNOWN_EMPTY_BLOCK_TYPES = new Set([
+  'paragraph',
+  'heading',
+  'blockquote',
+  'codeBlock',
+  'listItem',
+  'bulletList',
+  'orderedList',
+])
 
 function cloneTextWithSameMarks(original: PMNode, text: string): PMNode {
   const out: PMNode = { type: 'text', text }

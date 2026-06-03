@@ -28,7 +28,6 @@ import {
 } from '@/lib/validations/hive-annotation'
 import { findOrphanMarks, type PMNode } from '@/lib/tiptap-extensions/mark-scanning'
 import { patchDocWithMark } from '@/lib/tiptap-extensions/patch-mark'
-import { pmPosToTextOffset } from '@/lib/tiptap-extensions/pm-pos'
 import type { ActionResult } from './book.actions'
 
 // ── Public types ─────────────────────────────────────────────────────────────
@@ -119,21 +118,16 @@ export async function createAnnotationAction(
       .returning({ id: hiveAnnotations.id })
     const newId = inserted.id
 
-    // Patch chapter content with the annotation mark.
-    // selectionStart/End come from editor.state.selection (ProseMirror
-    // positions); patchDocWithMark walks text offsets. Convert before passing.
-    // Without this, marks land in the wrong range or — for multi-paragraph
-    // docs where PM > total text — silently drop, and the annotation surfaces
-    // immediately as orphaned in the gutter.
+    // Patch chapter content with the annotation mark. selectionStart/End
+    // come from editor.state.selection — ProseMirror positions — which is the
+    // coordinate system patchDocWithMark walks natively (atom-aware).
     const doc = (chapter.content ?? { type: 'doc', content: [] }) as PMNode
-    const textStart = pmPosToTextOffset(doc, selectionStart)
-    const textEnd = pmPosToTextOffset(doc, selectionEnd)
     const nextDoc = patchDocWithMark(
       doc,
       'hiveAnnotation',
       { annotationId: newId, layer },
-      textStart,
-      textEnd,
+      selectionStart,
+      selectionEnd,
     )
     await tx
       .update(chapters)

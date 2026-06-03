@@ -166,7 +166,7 @@ export function OutlineActGroup(props: OutlineActGroupProps) {
           />
         )}
 
-        <span style={{ fontSize: 11, color: 'var(--outline-ink-muted)' }}>
+        <span style={{ fontSize: 11, color: 'var(--outline-ink-strong)', fontWeight: 600 }}>
           {beats.length} beat{beats.length === 1 ? '' : 's'}
         </span>
 

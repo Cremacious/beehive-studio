@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
@@ -8,12 +7,14 @@ import Highlight from '@tiptap/extension-highlight'
 import TipTapLink from '@tiptap/extension-link'
 import Typography from '@tiptap/extension-typography'
 import TextAlign from '@tiptap/extension-text-align'
-import { ChevronLeft } from 'lucide-react'
 import type { GetSubmissionData } from '@/lib/actions/hive-submissions.actions'
+import { HivePageShell } from '../../_components/hive-page-shell'
+import { HiveSectionDivider } from '../../_components/hive-section-divider'
 import {
   SubmissionMetaHeader,
   ReadOnlyBodyStyles,
   ApprovedChapterLink,
+  StatusPill,
 } from './submission-shared'
 
 type Props = {
@@ -43,50 +44,38 @@ export function SubmissionRead({ submission, submitter, book, hiveId, locale }: 
   })
 
   return (
-    <main
-      data-slot="submission-read-pane"
-      className="flex-1 overflow-y-auto"
+    <HivePageShell
+      width="standard"
+      title={submission.title || 'Untitled submission'}
+      subtitle={`Submitted by @${submitter.username ?? 'unknown'}`}
+      back={{ href: `/${locale}/hive/${hiveId}/submissions`, label: 'submissions' }}
+      headerSlot={<StatusPill status={submission.draftStatus} />}
     >
-      <ReadOnlyBodyStyles />
-      <div className="mx-auto max-w-[760px] p-6">
-        <div
-          style={{
-            background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
-            borderRadius: 'var(--r-card)',
-            boxShadow: 'var(--sh-card)',
-            border: 'var(--br-card)',
-          }}
-          className="p-6 space-y-5"
-        >
-          <header className="flex items-center justify-between">
-            <Link
-              href={`/${locale}/hive/${hiveId}/submissions`}
-              className="text-[11px] uppercase tracking-wide inline-flex items-center gap-1 hover:text-[var(--canvas-dark-ink-strong)] transition-colors"
-              style={{ color: 'var(--canvas-dark-ink-muted)' }}
-            >
-              <ChevronLeft size={12} /> Back to submissions
-            </Link>
-          </header>
+      <div data-slot="submission-read-pane">
+        <ReadOnlyBodyStyles />
 
-          <h1
-            style={{ color: 'var(--brand)' }}
-            className="font-comfortaa font-bold text-2xl"
-          >
-            Submission
-          </h1>
-
+        <HiveSectionDivider label="Submission" hideTopBorder>
           <SubmissionMetaHeader submission={submission} submitter={submitter} />
+        </HiveSectionDivider>
 
-          {submission.draftStatus === 'APPROVED' && (
-            <section
-              style={{
-                background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-                borderRadius: 'var(--r-row)',
-                boxShadow: 'var(--sh-tile)',
-                border: 'var(--br-card)',
-              }}
-              className="p-4 flex items-center justify-between gap-3"
+        <HiveSectionDivider label="Body">
+          <EditorContent editor={editor} />
+        </HiveSectionDivider>
+
+        {submission.draftStatus === 'REJECTED' && (
+          <HiveSectionDivider label="Review note">
+            <p
+              className="text-sm whitespace-pre-wrap"
+              style={{ color: 'var(--canvas-dark-ink)' }}
             >
+              {submission.reviewNote || '(No note left by the reviewer.)'}
+            </p>
+          </HiveSectionDivider>
+        )}
+
+        {submission.draftStatus === 'APPROVED' && (
+          <HiveSectionDivider label="Approved chapter">
+            <div className="flex items-center justify-between gap-3">
               <div>
                 <p
                   className="text-sm font-semibold"
@@ -106,66 +95,21 @@ export function SubmissionRead({ submission, submitter, book, hiveId, locale }: 
                 bookId={book.id}
                 createdChapterId={submission.createdChapterId}
               />
-            </section>
-          )}
+            </div>
+          </HiveSectionDivider>
+        )}
 
-          {submission.draftStatus === 'REJECTED' && (
-            <section
-              style={{
-                background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-                borderRadius: 'var(--r-row)',
-                boxShadow: 'var(--sh-tile)',
-                border: 'var(--br-card)',
-              }}
-              className="p-4"
+        {submission.draftStatus === 'PENDING' && (
+          <HiveSectionDivider label="Status">
+            <p
+              className="text-sm italic"
+              style={{ color: 'var(--canvas-dark-ink-muted)' }}
             >
-              <p
-                className="text-sm font-semibold mb-1"
-                style={{ color: 'var(--canvas-dark-ink-strong)' }}
-              >
-                Review note
-              </p>
-              <p
-                className="text-sm whitespace-pre-wrap"
-                style={{ color: 'var(--canvas-dark-ink)' }}
-              >
-                {submission.reviewNote || '(No note left by the reviewer.)'}
-              </p>
-            </section>
-          )}
-
-          {submission.draftStatus === 'PENDING' && (
-            <section
-              style={{
-                background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-                borderRadius: 'var(--r-row)',
-                boxShadow: 'var(--sh-tile)',
-                border: 'var(--br-card)',
-              }}
-              className="p-4"
-            >
-              <p
-                className="text-sm italic"
-                style={{ color: 'var(--canvas-dark-ink-muted)' }}
-              >
-                Awaiting review by the hive owner.
-              </p>
-            </section>
-          )}
-
-          <section
-            style={{
-              background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-              borderRadius: 'var(--r-row)',
-              boxShadow: 'var(--sh-tile)',
-              border: 'var(--br-card)',
-            }}
-            className="p-6"
-          >
-            <EditorContent editor={editor} />
-          </section>
-        </div>
+              Awaiting review by the hive owner.
+            </p>
+          </HiveSectionDivider>
+        )}
       </div>
-    </main>
+    </HivePageShell>
   )
 }

@@ -2,12 +2,20 @@
 
 import Link from 'next/link'
 import type { GetSubmissionData, SubmissionDraftStatus } from '@/lib/actions/hive-submissions.actions'
+import { HivePill } from '../../_components/hive-pill'
 
-const STATUS_META: Record<SubmissionDraftStatus, { label: string; tokenVar: string }> = {
-  DRAFT:    { label: 'Draft',    tokenVar: '--status-idea' },
-  PENDING:  { label: 'Pending',  tokenVar: '--status-warning' },
-  APPROVED: { label: 'Approved', tokenVar: '--status-success' },
-  REJECTED: { label: 'Rejected', tokenVar: '--status-error' },
+const STATUS_LABEL: Record<SubmissionDraftStatus, string> = {
+  DRAFT: 'Draft',
+  PENDING: 'Pending',
+  APPROVED: 'Approved',
+  REJECTED: 'Rejected',
+}
+
+export const STATUS_TOKEN: Record<SubmissionDraftStatus, string> = {
+  DRAFT: '--status-idea',
+  PENDING: '--status-warning',
+  APPROVED: '--status-success',
+  REJECTED: '--status-error',
 }
 
 function targetOrderLabel(order: number | null): string {
@@ -23,19 +31,7 @@ function fmtDate(d: Date | string): string {
 }
 
 export function StatusPill({ status }: { status: SubmissionDraftStatus }) {
-  const meta = STATUS_META[status]
-  const color = `var(${meta.tokenVar}, var(--color-brand))`
-  return (
-    <span
-      className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide"
-      style={{
-        color,
-        background: `oklch(from ${color} l c h / 0.14)`,
-      }}
-    >
-      {meta.label}
-    </span>
-  )
+  return <HivePill token={STATUS_TOKEN[status]}>{STATUS_LABEL[status]}</HivePill>
 }
 
 export function SubmissionMetaHeader({
@@ -48,15 +44,7 @@ export function SubmissionMetaHeader({
   const initial = (submitter.username?.[0] ?? '?').toUpperCase()
 
   return (
-    <section
-      style={{
-        background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-        borderRadius: 'var(--r-row)',
-        boxShadow: 'var(--sh-tile)',
-        border: 'var(--br-card)',
-      }}
-      className="p-5 flex items-center gap-3"
-    >
+    <div className="flex items-center gap-3">
       <span
         aria-hidden
         className="inline-flex items-center justify-center w-10 h-10 rounded-full text-sm font-semibold shrink-0"
@@ -66,12 +54,12 @@ export function SubmissionMetaHeader({
       </span>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 min-w-0 flex-wrap">
-          <h1
+          <h2
             className="font-comfortaa font-bold text-lg truncate"
             style={{ color: 'var(--canvas-dark-ink-strong)' }}
           >
             {submission.title || 'Untitled submission'}
-          </h1>
+          </h2>
           <StatusPill status={submission.draftStatus} />
         </div>
         <div
@@ -87,7 +75,7 @@ export function SubmissionMetaHeader({
           <span>{submission.wordCount.toLocaleString()} words</span>
         </div>
       </div>
-    </section>
+    </div>
   )
 }
 

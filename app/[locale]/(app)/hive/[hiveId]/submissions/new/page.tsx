@@ -2,6 +2,7 @@ import { notFound, redirect } from 'next/navigation'
 import { requireAuth } from '@/lib/require-auth'
 import { requireHiveMember, canSubmitChapter } from '@/lib/hive/permissions'
 import { getHiveChapterListAction } from '@/lib/actions/hive-content.actions'
+import { HivePageShell } from '../../_components/hive-page-shell'
 import { SubmissionComposer } from '../_components/submission-composer'
 
 export default async function NewSubmissionPage({
@@ -26,11 +27,18 @@ export default async function NewSubmissionPage({
   if (!r.success) notFound()
 
   return (
-    <SubmissionComposer
-      mode="new"
-      hiveId={hiveId}
-      locale={locale}
-      chapters={r.data.chapters}
-    />
+    <HivePageShell
+      width="standard"
+      title="New submission"
+      subtitle="Auto-saves as you type."
+      back={{ href: `/${locale}/hive/${hiveId}/submissions`, label: 'submissions' }}
+    >
+      <SubmissionComposer
+        mode="new"
+        hiveId={hiveId}
+        locale={locale}
+        chapters={r.data.chapters}
+      />
+    </HivePageShell>
   )
 }

@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
@@ -10,7 +9,7 @@ import Highlight from '@tiptap/extension-highlight'
 import TipTapLink from '@tiptap/extension-link'
 import Typography from '@tiptap/extension-typography'
 import TextAlign from '@tiptap/extension-text-align'
-import { ChevronLeft, Send } from 'lucide-react'
+import { Send } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   saveSubmissionDraftAction,
@@ -18,6 +17,7 @@ import {
 } from '@/lib/actions/hive-submissions.actions'
 import { extractWordCount } from '@/lib/tiptap-utils'
 import { SaveStatusBadge, type FormSaveStatus } from '@/app/[locale]/(app)/studio/[bookId]/_components/front-back-matter/save-status-badge'
+import { HiveSectionDivider } from '../../_components/hive-section-divider'
 
 type ChapterRef = { id: string; title: string; order: number }
 
@@ -179,10 +179,7 @@ export function SubmissionComposer({
   const canSubmit = editable && submissionId !== null && wordCount > 0 && !submitting
 
   return (
-    <main
-      data-slot="submission-composer-pane"
-      className="flex-1 overflow-y-auto"
-    >
+    <div data-slot="submission-composer-pane">
       <style>{`
         [data-slot="submission-composer-pane"] .ProseMirror {
           color: var(--canvas-dark-ink);
@@ -213,142 +210,103 @@ export function SubmissionComposer({
         [data-slot="submission-composer-pane"] .ProseMirror ol { list-style: decimal; }
       `}</style>
 
-      <div className="mx-auto max-w-[760px] p-6">
-        <div
-          style={{
-            background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
-            borderRadius: 'var(--r-card)',
-            boxShadow: 'var(--sh-card)',
-            border: 'var(--br-card)',
-          }}
-          className="p-6 space-y-5"
-        >
-          <header className="flex items-center justify-between">
-            <Link
-              href={`/${locale}/hive/${hiveId}/submissions`}
-              className="text-[11px] uppercase tracking-wide inline-flex items-center gap-1 hover:text-[var(--canvas-dark-ink-strong)] transition-colors"
+      <HiveSectionDivider label="Save status" hideTopBorder>
+        <div className="flex items-center justify-between gap-3">
+          {editable ? (
+            <SaveStatusBadge status={saveStatus} />
+          ) : (
+            <span
+              className="text-xs italic"
               style={{ color: 'var(--canvas-dark-ink-muted)' }}
             >
-              <ChevronLeft size={12} /> Submissions {mode === 'new' ? '› New' : `› ${title || 'Untitled'}`}
-            </Link>
-            {editable && <SaveStatusBadge status={saveStatus} />}
-          </header>
-
-          <div className="flex items-center justify-between gap-3">
-            <h1
-              style={{ color: 'var(--brand)' }}
-              className="font-comfortaa font-bold text-2xl"
-            >
-              {mode === 'new' ? 'Submit a Chapter' : 'Edit Submission'}
-            </h1>
-          </div>
-
-          <section
-            style={{
-              background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-              borderRadius: 'var(--r-row)',
-              boxShadow: 'var(--sh-tile)',
-              border: 'var(--br-card)',
-            }}
-            className="p-5 space-y-4"
+              This submission is locked — already submitted.
+            </span>
+          )}
+          <span
+            className="text-[11px] font-mono"
+            style={{ color: 'var(--canvas-dark-ink-muted)' }}
           >
-            <div
-              role="textbox"
-              contentEditable={editable}
-              suppressContentEditableWarning
-              spellCheck
-              data-placeholder="Untitled submission"
-              className="font-comfortaa font-bold text-2xl outline-none"
-              style={{ color: 'var(--canvas-dark-ink-strong)' }}
-              onBlur={e => {
-                const next = (e.currentTarget.textContent ?? '').trim()
-                if (next !== title) {
-                  setTitle(next)
-                  titleRef.current = next
-                  scheduleSave()
-                }
-              }}
-            >
-              {initial?.title ?? ''}
-            </div>
-
-            <div
-              className="flex items-center gap-3 flex-wrap text-[11px] font-mono"
-              style={{ color: 'var(--canvas-dark-ink-muted)' }}
-            >
-              <label className="inline-flex items-center gap-2">
-                <span className="uppercase tracking-wide">Insert at</span>
-                <select
-                  value={encodeTarget(targetOrder)}
-                  disabled={!editable}
-                  onChange={e => {
-                    const v = decodeTarget(e.target.value)
-                    setTargetOrder(v)
-                    targetOrderRef.current = v
-                    scheduleSave()
-                  }}
-                  style={{
-                    background: 'var(--canvas-dark-100)',
-                    borderRadius: 'var(--r-btn)',
-                    boxShadow: 'var(--sh-inset)',
-                    border: 'var(--br-card)',
-                    color: 'var(--canvas-dark-ink)',
-                  }}
-                  className="px-2 py-1 text-xs focus:outline-none disabled:opacity-50"
-                >
-                  <option value="">End (default)</option>
-                  <option value="0">Beginning</option>
-                  {chapters.map(c => (
-                    <option key={c.id} value={String(c.order + 1)}>
-                      After &quot;{c.title || 'Untitled chapter'}&quot;
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <span>·</span>
-              <span>{wordCount.toLocaleString()} words</span>
-            </div>
-          </section>
-
-          <section
-            style={{
-              background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-              borderRadius: 'var(--r-row)',
-              boxShadow: 'var(--sh-tile)',
-              border: 'var(--br-card)',
-            }}
-            className="p-6"
-          >
-            <EditorContent editor={editor} />
-          </section>
-
-          <div className="flex items-center justify-end gap-2 pt-2">
-            {!editable && (
-              <span
-                className="text-xs italic"
-                style={{ color: 'var(--canvas-dark-ink-muted)' }}
-              >
-                This submission is locked — already submitted.
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={!canSubmit}
-              style={{
-                background: 'var(--brand)',
-                color: 'var(--brand-ink, oklch(0.18 0.02 60))',
-                borderRadius: 'var(--r-btn)',
-                boxShadow: 'var(--sh-tile)',
-              }}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-geist font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Send size={14} />
-              Submit for review
-            </button>
-          </div>
+            {wordCount.toLocaleString()} words
+          </span>
         </div>
-      </div>
-    </main>
+      </HiveSectionDivider>
+
+      <HiveSectionDivider label="Title">
+        <div
+          role="textbox"
+          contentEditable={editable}
+          suppressContentEditableWarning
+          spellCheck
+          data-placeholder="Untitled submission"
+          className="font-comfortaa font-bold text-2xl outline-none"
+          style={{ color: 'var(--canvas-dark-ink-strong)' }}
+          onBlur={e => {
+            const next = (e.currentTarget.textContent ?? '').trim()
+            if (next !== title) {
+              setTitle(next)
+              titleRef.current = next
+              scheduleSave()
+            }
+          }}
+        >
+          {initial?.title ?? ''}
+        </div>
+      </HiveSectionDivider>
+
+      <HiveSectionDivider label="Insert at">
+        <label className="inline-flex items-center gap-2 text-[11px] font-mono" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
+          <select
+            value={encodeTarget(targetOrder)}
+            disabled={!editable}
+            onChange={e => {
+              const v = decodeTarget(e.target.value)
+              setTargetOrder(v)
+              targetOrderRef.current = v
+              scheduleSave()
+            }}
+            style={{
+              background: 'var(--canvas-dark-100)',
+              borderRadius: 'var(--r-btn)',
+              boxShadow: 'var(--sh-inset)',
+              border: 'var(--br-card)',
+              color: 'var(--canvas-dark-ink)',
+            }}
+            className="px-2 py-1 text-xs focus:outline-none disabled:opacity-50"
+          >
+            <option value="">End (default)</option>
+            <option value="0">Beginning</option>
+            {chapters.map(c => (
+              <option key={c.id} value={String(c.order + 1)}>
+                After &quot;{c.title || 'Untitled chapter'}&quot;
+              </option>
+            ))}
+          </select>
+        </label>
+      </HiveSectionDivider>
+
+      <HiveSectionDivider label="Body">
+        <EditorContent editor={editor} />
+      </HiveSectionDivider>
+
+      <HiveSectionDivider label="Actions">
+        <div className="flex items-center justify-end">
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={!canSubmit}
+            style={{
+              background: 'var(--brand)',
+              color: 'var(--brand-ink, oklch(0.18 0.02 60))',
+              borderRadius: 'var(--r-pill)',
+              boxShadow: 'var(--sh-tile)',
+            }}
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-[13px] font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Send size={14} />
+            Submit for review
+          </button>
+        </div>
+      </HiveSectionDivider>
+    </div>
   )
 }

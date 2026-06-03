@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { FileText } from 'lucide-react'
-import type { SubmissionRow as SubmissionRowData, SubmissionDraftStatus } from '@/lib/actions/hive-submissions.actions'
+import type { SubmissionRow as SubmissionRowData } from '@/lib/actions/hive-submissions.actions'
+import { HivePill } from '../../_components/hive-pill'
+import { STATUS_TOKEN } from './submission-shared'
 
 function relTime(d: Date | string): string {
   const date = new Date(d)
@@ -23,11 +24,11 @@ function targetOrderLabel(order: number | null): string {
   return `Position ${order}`
 }
 
-const STATUS_META: Record<SubmissionDraftStatus, { label: string; tokenVar: string }> = {
-  DRAFT:    { label: 'Draft',    tokenVar: '--status-idea' },
-  PENDING:  { label: 'Pending',  tokenVar: '--status-warning' },
-  APPROVED: { label: 'Approved', tokenVar: '--status-success' },
-  REJECTED: { label: 'Rejected', tokenVar: '--status-error' },
+const STATUS_LABEL: Record<SubmissionRowData['draftStatus'], string> = {
+  DRAFT: 'Draft',
+  PENDING: 'Pending',
+  APPROVED: 'Approved',
+  REJECTED: 'Rejected',
 }
 
 export function SubmissionRow({
@@ -39,72 +40,35 @@ export function SubmissionRow({
   hiveId: string
   locale: string
 }) {
-  const status = STATUS_META[row.draftStatus]
-  const fallbackVar = '--color-brand'
-  const styleColor = `var(${status.tokenVar}, var(${fallbackVar}))`
-
   return (
     <Link
       href={`/${locale}/hive/${hiveId}/submissions/${row.id}`}
-      style={{
-        background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-        borderRadius: 'var(--r-row)',
-        boxShadow: 'var(--sh-tile)',
-        border: 'var(--br-card)',
-      }}
-      className="flex items-center gap-3 px-4 py-3 hover:translate-y-[-1px] transition-transform"
+      className="grid grid-cols-[1fr_110px_130px] items-center gap-3 px-4 py-3 transition-colors hover:bg-[var(--canvas-dark-300)]"
     >
-      <span
-        aria-hidden
-        className="inline-flex items-center justify-center w-7 h-7 rounded-full shrink-0"
-        style={{
-          background: 'oklch(from var(--brand) l c h / 0.14)',
-          color: 'var(--brand)',
-        }}
-      >
-        <FileText size={14} />
-      </span>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 min-w-0">
-          <span
-            className="font-comfortaa font-semibold text-sm truncate"
-            style={{ color: 'var(--canvas-dark-ink-strong)' }}
-          >
-            {row.title || 'Untitled submission'}
-          </span>
-          {row.authorUsername && (
-            <span
-              className="text-[11px] font-mono truncate"
-              style={{ color: 'var(--canvas-dark-ink-muted)' }}
-            >
-              @{row.authorUsername}
-            </span>
-          )}
-        </div>
-        <div
-          className="flex items-center gap-2 mt-0.5 text-[11px] font-mono"
+      <div className="min-w-0">
+        <p
+          className="font-comfortaa font-semibold text-sm truncate"
+          style={{ color: 'var(--canvas-dark-ink-strong)' }}
+        >
+          {row.title || 'Untitled submission'}
+        </p>
+        <p
+          className="text-[11px] font-mono mt-0.5 truncate"
           style={{ color: 'var(--canvas-dark-ink-muted)' }}
         >
-          <span>{row.wordCount.toLocaleString()} words</span>
-          <span>·</span>
-          <span>{targetOrderLabel(row.targetChapterOrder)}</span>
-        </div>
+          {row.authorUsername && <>@{row.authorUsername} · </>}
+          {row.wordCount.toLocaleString()} words · {targetOrderLabel(row.targetChapterOrder)}
+        </p>
       </div>
-      <span
-        className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide shrink-0"
-        style={{
-          color: styleColor,
-          background: `oklch(from ${styleColor} l c h / 0.14)`,
-        }}
-      >
-        {status.label}
-      </span>
-      <span
-        className="text-[11px] font-mono shrink-0"
+      <div>
+        <HivePill token={STATUS_TOKEN[row.draftStatus]}>{STATUS_LABEL[row.draftStatus]}</HivePill>
+      </div>
+      <p
+        className="text-[11px] font-mono text-right"
         style={{ color: 'var(--canvas-dark-ink-muted)' }}
       >
         {relTime(row.updatedAt)}
-      </span>
+      </p>
     </Link>
   )
 }

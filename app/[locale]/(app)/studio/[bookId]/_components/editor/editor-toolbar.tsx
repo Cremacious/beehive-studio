@@ -143,7 +143,7 @@ function ToolbarButton({ onClick, disabled, isActive, title, children }: Toolbar
 }
 
 export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggleFind, findOpen }: Props) {
-  const { focusMode, toggleFocusMode, editorTheme, toggleEditorTheme, historyOpen, toggleHistory, bookId, locale, bookHive, gutterOpen, toggleGutter, flushPendingSave, saveStatus, activeItem } = useBookEditor()
+  const { focusMode, toggleFocusMode, editorTheme, toggleEditorTheme, historyOpen, toggleHistory, bookId, locale, bookHive, gutterOpen, toggleGutter, flushPendingSave, saveStatus, activeItem, activeChapter } = useBookEditor()
 
   async function handleManualSave() {
     const label = activeItem?.title ?? 'chapter'
@@ -492,16 +492,60 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
             <History size={14} />
           </ToolbarButton>
 
-          {/* Collaboration gutter — only when this book has a hive */}
-          {bookHive && (
-            <ToolbarButton
-              onClick={toggleGutter}
-              isActive={gutterOpen}
-              title="Toggle collaboration gutter"
-            >
-              <MessagesSquare size={14} />
-            </ToolbarButton>
-          )}
+          {/* Collaboration gutter — only when this book has a hive.
+              Rendered inline (not via ToolbarButton) so we can stack a
+              brand-yellow pending-count badge over the top-right corner
+              when the gutter is closed and the active chapter has open
+              annotations or pending suggestions. */}
+          {bookHive && (() => {
+            const gutterPendingCount =
+              !gutterOpen && activeChapter
+                ? activeChapter.annotationCount + activeChapter.pendingSuggestionCount
+                : 0
+            return (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onMouseDown={e => e.preventDefault()}
+                    onClick={toggleGutter}
+                    aria-label="Toggle collaboration gutter"
+                    className={tbtnClass({ isActive: gutterOpen })}
+                    style={{ ...tbtnStyle(gutterOpen), position: 'relative' }}
+                    onMouseEnter={e => tbtnHoverEnter(e, gutterOpen)}
+                    onMouseLeave={e => tbtnHoverLeave(e, gutterOpen)}
+                  >
+                    <MessagesSquare size={14} />
+                    {gutterPendingCount > 0 && (
+                      <span
+                        aria-label={`${gutterPendingCount} pending collaboration items`}
+                        style={{
+                          position: 'absolute',
+                          top: -4,
+                          right: -4,
+                          minWidth: 16,
+                          height: 16,
+                          padding: '0 4px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderRadius: 999,
+                          background: 'var(--brand)',
+                          color: 'var(--brand-ink, #1a1a1a)',
+                          fontSize: 9,
+                          fontWeight: 700,
+                          lineHeight: 1,
+                          pointerEvents: 'none',
+                        }}
+                      >
+                        {gutterPendingCount > 99 ? '99+' : gutterPendingCount}
+                      </span>
+                    )}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Toggle collaboration gutter</TooltipContent>
+              </Tooltip>
+            )
+          })()}
 
           {/* Editor theme toggle (Sun/Moon) — shows the icon for the destination mode */}
           <Tooltip>

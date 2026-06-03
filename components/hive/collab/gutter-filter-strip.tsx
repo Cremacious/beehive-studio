@@ -12,7 +12,7 @@ export type FilterState = {
 export function defaultFilterState(): FilterState {
   return {
     layers: new Set<AnnotationLayer>(),
-    showSuggestions: true,
+    showSuggestions: false,
     showResolved: false,
   }
 }
@@ -57,7 +57,7 @@ function deserialize(raw: string | null): FilterState | null {
         Array.isArray(parsed.layers) ? parsed.layers : [],
       ),
       showSuggestions:
-        typeof parsed.showSuggestions === 'boolean' ? parsed.showSuggestions : true,
+        typeof parsed.showSuggestions === 'boolean' ? parsed.showSuggestions : false,
       showResolved:
         typeof parsed.showResolved === 'boolean' ? parsed.showResolved : false,
     }

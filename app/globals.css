@@ -117,6 +117,23 @@
   --status-revised:     oklch(0.74 0.080 155);
   --status-final:       oklch(0.68 0.130 35);
 
+  /* Submission status (read by hive/submissions/_components/submission-shared.tsx) */
+  --status-warning: oklch(0.78 0.13 70);   /* warm gold — pending review */
+  --status-success: oklch(0.74 0.12 145);  /* mint — approved */
+  --status-error:   oklch(0.66 0.18 25);   /* coral — rejected */
+
+  /* Hive member role (replaces --status-* misuse in hive/_components/hive-members.tsx) */
+  --role-owner:       oklch(0.78 0.13 70);   /* warm gold — owner authority */
+  --role-moderator:   oklch(0.72 0.11 250);  /* slate blue — review-y */
+  --role-contributor: oklch(0.74 0.12 145);  /* mint — productive */
+  --role-reader:      oklch(0.66 0.04 240);  /* cool gray — passive */
+
+  /* Word goal type (replaces --status-* misuse in hive/word-goals/_components/goal-card.tsx) */
+  --goal-daily:   oklch(0.78 0.13 70);   /* warm gold — daily energy */
+  --goal-weekly:  oklch(0.74 0.12 145);  /* mint — rhythm */
+  --goal-monthly: oklch(0.72 0.11 280);  /* lilac — long horizon */
+  --goal-custom:  oklch(0.66 0.04 240);  /* cool gray — bespoke */
+
   /* ── Binder item types (6) ─────────────────────────────────────── */
   --type-chapter:      var(--brand);
   --type-front-matter: oklch(0.74 0.065 290);

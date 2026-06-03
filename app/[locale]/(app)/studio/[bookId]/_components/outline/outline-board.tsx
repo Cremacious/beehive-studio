@@ -384,7 +384,10 @@ export function OutlineBoard({ item }: Props) {
         }
         [data-editor-theme="light"] [data-slot="outline-pane"] {
           --outline-canvas:      var(--paper-200);
-          --outline-act-cap-bg:  var(--paper-200);
+          /* Warmer, slightly darker tan than --outline-canvas so each act
+             header reads as its own band against the page. Sits between
+             --paper-200 and --paper-300 with a touch more chroma. */
+          --outline-act-cap-bg:  oklch(0.905 0.032 70);
           --outline-drawer-bg:   var(--paper-50);
           --outline-rule:        var(--paper-300);
           --outline-rule-soft:   oklch(from var(--paper-300) l c h / 0.6);

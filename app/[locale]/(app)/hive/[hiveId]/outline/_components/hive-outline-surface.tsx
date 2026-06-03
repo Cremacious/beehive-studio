@@ -209,13 +209,13 @@ function HiveOutlineSurfaceInner({
         data-slot="outline-surface-head"
         className="flex items-center justify-between gap-3 mb-6"
       >
-        <div className="flex items-baseline gap-3 min-w-0">
-          <h1 style={{ color: 'var(--brand)' }} className="font-comfortaa font-bold text-2xl">
-            Outline
+        <div className="min-w-0">
+          <h1
+            style={{ color: 'var(--brand)' }}
+            className="font-comfortaa font-bold text-4xl truncate"
+          >
+            {outline.title || 'Untitled outline'}
           </h1>
-          <span className="text-sm truncate" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
-            {outline.title}
-          </span>
         </div>
         <div className="flex items-center gap-3">
           {lastEditedAt && (

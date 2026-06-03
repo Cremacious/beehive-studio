@@ -180,6 +180,23 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
   const binderItemsRef = useRef(binderItems)
   binderItemsRef.current = binderItems
 
+  // Tracks the last item id we auto-opened the gutter for. Prevents re-opening
+  // when the user manually closes it and a re-render happens for the same
+  // chapter. React 19 strict-mode also double-invokes effects in dev, so
+  // without the ref guard the auto-open would fire twice on first mount.
+  const autoOpenedForItemRef = useRef<string | null>(null)
+
+  function maybeAutoOpenGutter(itemId: string, data: ChapterData) {
+    if (autoOpenedForItemRef.current === itemId) return
+    if (!bookHive) return // non-hive book, never auto-open
+    const total = data.annotationCount + data.pendingSuggestionCount
+    if (total <= 0) return
+    autoOpenedForItemRef.current = itemId
+    setGutterOpen(true)
+    // Mutually-exclusive with the history drawer (preserve existing wiring).
+    setHistoryOpen(false)
+  }
+
   const pushError = useCallback((msg: string) => {
     setErrors(prev => [...prev, msg])
   }, [])
@@ -270,6 +287,7 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     const cached = chapterCacheRef.current.get(id)
     if (cached) {
       setWordCount(cached.wordCount)
+      maybeAutoOpenGutter(id, cached)
       return
     }
 
@@ -278,6 +296,7 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
       if (result.success) {
         setChapterCache(c => new Map(c).set(id, result.data))
         setWordCount(result.data.wordCount)
+        maybeAutoOpenGutter(id, result.data)
       } else {
         pushError(`Couldn't load chapter: ${result.error}`)
       }
@@ -388,6 +407,7 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     const result = await getChapterAction(item.chapterId)
     if (result.success) {
       setChapterCache(c => new Map(c).set(itemId, result.data))
+      maybeAutoOpenGutter(itemId, result.data)
     } else {
       pushError(`Couldn't reload chapter: ${result.error}`)
     }

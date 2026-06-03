@@ -5,6 +5,7 @@ import {
   requireHiveMember,
   canReviewSuggestion,
 } from '@/lib/hive/permissions'
+import { HivePageShell } from '../_components/hive-page-shell'
 import { HiveChapterIndex } from './_components/hive-chapter-index'
 
 export default async function HiveChaptersPage({
@@ -18,12 +19,19 @@ export default async function HiveChaptersPage({
   const canReview = canReviewSuggestion(role)
   const r = await getHiveChapterListAction(hiveId)
   if (!r.success) notFound()
+  const count = r.data.chapters.length
   return (
-    <HiveChapterIndex
-      hiveId={hiveId}
-      locale={locale}
-      chapters={r.data.chapters}
-      canReview={canReview}
-    />
+    <HivePageShell
+      width="standard"
+      title="Chapters"
+      subtitle={`${count} ${count === 1 ? 'chapter' : 'chapters'}`}
+    >
+      <HiveChapterIndex
+        hiveId={hiveId}
+        locale={locale}
+        chapters={r.data.chapters}
+        canReview={canReview}
+      />
+    </HivePageShell>
   )
 }

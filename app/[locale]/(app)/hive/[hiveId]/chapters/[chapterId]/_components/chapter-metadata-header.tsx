@@ -1,6 +1,7 @@
 'use client'
 
 import type { ChapterStatus } from '@/lib/books/is-chapter-reader-visible'
+import { HivePill } from '../../../_components/hive-pill'
 
 const STATUS_DISPLAY: Record<ChapterStatus, string> = {
   IDEA: 'Idea',
@@ -8,6 +9,14 @@ const STATUS_DISPLAY: Record<ChapterStatus, string> = {
   FIRST_DRAFT: 'First Draft',
   REVISED: 'Revised',
   FINAL: 'Final',
+}
+
+const STATUS_TOKEN: Record<ChapterStatus, string> = {
+  IDEA: '--status-idea',
+  OUTLINE: '--status-outline',
+  FIRST_DRAFT: '--status-first-draft',
+  REVISED: '--status-revised',
+  FINAL: '--status-final',
 }
 
 type Props = {
@@ -27,25 +36,11 @@ export function ChapterMetadataHeader({ status, synopsis, scenePlanner }: Props)
     scenePlanner.outcome !== null
 
   return (
-    <div className="mb-6 pb-4 border-b" style={{ borderColor: 'var(--canvas-dark-300)' }}>
+    <div>
       <div className="flex items-center gap-2 mb-3 flex-wrap">
-        <span
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            padding: '2px 10px',
-            borderRadius: 'var(--r-pill)',
-            background: `oklch(from var(--status-${statusToken(status)}) l c h / 0.18)`,
-            color: `var(--status-${statusToken(status)})`,
-            fontSize: 10,
-            fontWeight: 700,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            fontFamily: 'ui-monospace, "SF Mono", monospace',
-          }}
-        >
+        <HivePill token={STATUS_TOKEN[status]}>
           {STATUS_DISPLAY[status] ?? status}
-        </span>
+        </HivePill>
       </div>
 
       {synopsis !== null && synopsis !== '' && (
@@ -99,14 +94,4 @@ function SceneStanza({ label, body }: { label: string; body: string }) {
       </p>
     </div>
   )
-}
-
-function statusToken(s: ChapterStatus): string {
-  switch (s) {
-    case 'IDEA': return 'idea'
-    case 'OUTLINE': return 'outline'
-    case 'FIRST_DRAFT': return 'first-draft'
-    case 'REVISED': return 'revised'
-    case 'FINAL': return 'final'
-  }
 }

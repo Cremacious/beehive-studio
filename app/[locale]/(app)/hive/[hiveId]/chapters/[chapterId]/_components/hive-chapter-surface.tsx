@@ -2,8 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { ChevronLeft } from 'lucide-react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
@@ -18,9 +16,9 @@ import { CollaborationGutter } from '@/components/hive/collab/collaboration-gutt
 import {
   canAnnotate as roleCanAnnotate,
   canSuggestEdits as roleCanSuggestEdits,
-  type HiveRole,
 } from '@/lib/hive/permissions'
 import type { HiveChapterViewData } from '@/lib/actions/hive-content.actions'
+import { HiveSectionDivider } from '../../../_components/hive-section-divider'
 import { ChapterMetadataHeader } from './chapter-metadata-header'
 
 type Props = {
@@ -31,18 +29,10 @@ type Props = {
   viewerUserId: string
 }
 
-const ROLE_LABEL: Record<HiveRole, string> = {
-  OWNER: 'Owner',
-  MODERATOR: 'Moderator',
-  CONTRIBUTOR: 'Contributor',
-  BETA_READER: 'Beta Reader',
-}
-
 export function HiveChapterSurface({
   data,
   hiveId,
   chapterId,
-  locale,
   viewerUserId,
 }: Props) {
   const router = useRouter()
@@ -84,14 +74,13 @@ export function HiveChapterSurface({
   const canAnnotate = roleCanAnnotate(viewerRole)
   const canSuggestEdits = roleCanSuggestEdits(viewerRole)
 
-  const isContribution =
-    !!data.author && data.author.userId !== data.book.userId
+  // status is always present (ChapterStatus enum), so metadata section
+  // always renders. Synopsis + scene planner are optional inputs to the
+  // header but the status pill alone is enough to anchor the section.
+  const hasMetadata = true
 
   return (
-    <main
-      data-slot="hive-chapter-pane"
-      className="flex-1 flex flex-col overflow-hidden p-6"
-    >
+    <div data-slot="hive-chapter-pane">
       <style>{`
         [data-slot="hive-chapter-pane"] {
           --sheet-canvas:     var(--background);
@@ -156,95 +145,24 @@ export function HiveChapterSurface({
         }
       `}</style>
 
-      {/* Outer panel: dark frame around the prose surface + collab gutter */}
-      <div
-        style={{
-          background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
-          borderRadius: 'var(--r-card)',
-          boxShadow: 'var(--sh-card)',
-          border: 'var(--br-card)',
-        }}
-        className="flex-1 flex gap-0 overflow-hidden"
-      >
-        <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-          {/* Header: back-link + title + byline */}
-          <div className="px-8 pt-6 pb-4">
-            <Link
-              href={`/${locale}/hive/${hiveId}/chapters`}
-              className="text-xs font-mono text-[var(--canvas-dark-ink-muted)] hover:text-[var(--brand)] mb-4 inline-flex items-center gap-1"
-            >
-              <ChevronLeft className="w-3 h-3" />
-              Back to chapters
-            </Link>
-            <div className="flex items-start gap-3">
-              <div className="flex-1 min-w-0">
-                <h1
-                  style={{ color: 'var(--brand)' }}
-                  className="font-comfortaa font-bold text-2xl truncate"
-                >
-                  {data.chapter.title}
-                </h1>
-                <p className="mt-1 text-sm italic text-[var(--canvas-dark-ink-muted)]">
-                  {isContribution ? (
-                    <>
-                      Written by{' '}
-                      <span className="font-medium not-italic text-[var(--canvas-dark-ink-strong)]">
-                        @{data.author?.username ?? 'unknown'}
-                      </span>
-                      {' '}— chapter contribution to{' '}
-                      <span className="not-italic">{data.book.title}</span>
-                      {data.book.ownerUsername ? (
-                        <>
-                          {' '}by{' '}
-                          <span className="font-medium not-italic text-[var(--canvas-dark-ink-strong)]">
-                            @{data.book.ownerUsername}
-                          </span>
-                        </>
-                      ) : null}
-                    </>
-                  ) : (
-                    <>
-                      Chapter from <span className="not-italic">{data.book.title}</span>
-                      {data.book.ownerUsername ? (
-                        <>
-                          {' '}by{' '}
-                          <span className="font-medium not-italic text-[var(--canvas-dark-ink-strong)]">
-                            @{data.book.ownerUsername}
-                          </span>
-                        </>
-                      ) : null}
-                    </>
-                  )}
-                </p>
-              </div>
-              <span
-                className="inline-flex shrink-0 items-center px-2 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider"
-                style={{
-                  background: 'oklch(from var(--color-brand) l c h / 0.15)',
-                  color: 'var(--color-brand)',
-                  border: '1px solid oklch(from var(--color-brand) l c h / 0.35)',
-                }}
-              >
-                {ROLE_LABEL[viewerRole]}
-              </span>
-            </div>
-          </div>
-
+      {hasMetadata && (
+        <HiveSectionDivider label="Metadata">
           <ChapterMetadataHeader
             status={data.status}
             synopsis={data.synopsis}
             scenePlanner={data.scenePlanner}
           />
+        </HiveSectionDivider>
+      )}
 
-          {/* Prose surface — UNCHANGED per plan Step 5 */}
-          <div className="flex-1 overflow-y-auto">
-            <div className="hive-chapter-prose mx-auto max-w-[720px] px-8 py-10">
-              {editor ? (
-                <EditorContent editor={editor} />
-              ) : (
-                <div className="text-sm text-muted-foreground">Loading…</div>
-              )}
-            </div>
+      <div className="flex gap-0">
+        <div className="flex-1 min-w-0">
+          <div className="hive-chapter-prose mx-auto max-w-[720px] px-6 py-8">
+            {editor ? (
+              <EditorContent editor={editor} />
+            ) : (
+              <div className="text-sm text-muted-foreground">Loading…</div>
+            )}
           </div>
         </div>
         <CollaborationGutter
@@ -271,6 +189,6 @@ export function HiveChapterSurface({
           onSuggestionCreated={refresh}
         />
       ) : null}
-    </main>
+    </div>
   )
 }

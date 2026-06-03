@@ -11,10 +11,25 @@ export function ChapterActivityBadges({
   pendingSuggestionCount,
   canReview,
 }: Props) {
-  if (annotationCount === 0 && pendingSuggestionCount === 0) return null
+  if (annotationCount === 0 && pendingSuggestionCount === 0) {
+    return (
+      <span
+        aria-hidden
+        className="invisible inline-flex items-center"
+        style={{
+          padding: '2px 8px',
+          fontFamily: 'ui-monospace, "SF Mono", monospace',
+          fontSize: 10,
+          fontWeight: 600,
+        }}
+      >
+        —
+      </span>
+    )
+  }
 
   return (
-    <div className="flex items-center gap-1.5 mt-1.5">
+    <div className="flex items-center gap-1.5">
       {annotationCount > 0 && (
         <Badge
           count={annotationCount}

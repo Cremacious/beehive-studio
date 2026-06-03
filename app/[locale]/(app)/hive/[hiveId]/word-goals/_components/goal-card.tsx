@@ -3,11 +3,12 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Pencil, Archive, CalendarDays, CalendarRange, CalendarClock, Target } from 'lucide-react'
+import { Pencil, Archive } from 'lucide-react'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { EditGoalModal } from './edit-goal-modal'
 import { archiveWordGoalAction, type WordGoalRecord } from '@/lib/actions/hive-word-goals.actions'
 import type { WordGoalType } from '@/lib/hive/goal-progress'
+import { HivePill } from '../../_components/hive-pill'
 import { cn } from '@/lib/utils'
 
 type Props = {
@@ -16,11 +17,18 @@ type Props = {
   canManage: boolean
 }
 
-const TYPE_META: Record<WordGoalType, { label: string; icon: typeof CalendarDays; accent: string }> = {
-  DAILY: { label: 'Daily', icon: CalendarDays, accent: 'var(--status-revised, var(--color-brand))' },
-  WEEKLY: { label: 'Weekly', icon: CalendarRange, accent: 'var(--status-drafting, var(--color-brand))' },
-  MONTHLY: { label: 'Monthly', icon: CalendarClock, accent: 'var(--status-final, var(--color-brand))' },
-  TOTAL: { label: 'Total', icon: Target, accent: 'var(--color-brand)' },
+const GOAL_TOKEN: Record<WordGoalType, string> = {
+  DAILY: '--goal-daily',
+  WEEKLY: '--goal-weekly',
+  MONTHLY: '--goal-monthly',
+  TOTAL: '--goal-custom',
+}
+
+const TYPE_LABEL: Record<WordGoalType, string> = {
+  DAILY: 'Daily',
+  WEEKLY: 'Weekly',
+  MONTHLY: 'Monthly',
+  TOTAL: 'Total',
 }
 
 function formatRemaining(endDate: Date | null): string | null {
@@ -39,8 +47,8 @@ export function GoalCard({ goal, progress, canManage }: Props) {
   const router = useRouter()
   const [editOpen, setEditOpen] = useState(false)
   const [confirmArchive, setConfirmArchive] = useState(false)
-  const meta = TYPE_META[goal.type]
-  const Icon = meta.icon
+  const token = GOAL_TOKEN[goal.type]
+  const label = TYPE_LABEL[goal.type]
   const pct = goal.targetWords > 0 ? Math.max(0, (progress / goal.targetWords) * 100) : 0
   const pctClamped = Math.min(100, pct)
   const remaining = formatRemaining(goal.endDate)
@@ -68,21 +76,9 @@ export function GoalCard({ goal, progress, canManage }: Props) {
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <div
-            className="h-7 w-7 rounded-md flex items-center justify-center flex-shrink-0"
-            style={{ background: `oklch(from ${meta.accent} l c h / 0.18)` }}
-          >
-            <Icon className="w-3.5 h-3.5" style={{ color: meta.accent }} />
-          </div>
-          <div className="min-w-0">
-            <h3
-              className="font-comfortaa font-semibold text-sm text-[var(--canvas-dark-ink-strong)]"
-            >
-              {meta.label}
-            </h3>
-            <div className="text-xs font-mono text-[var(--canvas-dark-ink-muted)] truncate">
-              {progress.toLocaleString()} / {goal.targetWords.toLocaleString()} words
-            </div>
+          <HivePill token={token}>{label}</HivePill>
+          <div className="text-xs font-mono text-[var(--canvas-dark-ink-muted)] truncate">
+            {progress.toLocaleString()} / {goal.targetWords.toLocaleString()} words
           </div>
         </div>
         {canManage && (
@@ -129,7 +125,10 @@ export function GoalCard({ goal, progress, canManage }: Props) {
           />
         </div>
         <div className="mt-1.5 flex items-center justify-between text-[11px] text-[var(--canvas-dark-ink-muted)]">
-          <span className={cn('font-mono', over && 'font-semibold')} style={over ? { color: 'var(--brand)' } : undefined}>
+          <span
+            className={cn('font-mono', over && 'font-semibold')}
+            style={over ? { color: 'var(--brand)' } : undefined}
+          >
             {pct.toFixed(0)}%
           </span>
           {remaining ? <span>{remaining}</span> : <span>No deadline</span>}
@@ -148,7 +147,7 @@ export function GoalCard({ goal, progress, canManage }: Props) {
           <ConfirmDialog
             open={confirmArchive}
             onOpenChange={setConfirmArchive}
-            title={`Archive this ${meta.label} goal?`}
+            title={`Archive this ${label} goal?`}
             description="You can still see it in History, but new word logs won't count toward it."
             confirmLabel="Archive goal"
             onConfirm={handleArchive}

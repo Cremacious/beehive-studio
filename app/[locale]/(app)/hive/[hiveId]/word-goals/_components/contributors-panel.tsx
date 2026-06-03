@@ -22,27 +22,11 @@ const TYPE_LABEL: Record<WordGoalType, string> = {
 export function ContributorsPanel({ primary, contributors, totalProgress, locale }: Props) {
   if (!primary) return null
   return (
-    <section
-      style={{
-        background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-        borderRadius: 'var(--r-card)',
-        boxShadow: 'var(--sh-tile)',
-        border: 'var(--br-card)',
-      }}
-      className="p-4"
-    >
+    <div>
       <header className="flex items-center justify-between mb-3">
-        <div>
-          <h2
-            style={{ color: 'var(--brand)' }}
-            className="font-comfortaa font-semibold text-sm"
-          >
-            Contributors
-          </h2>
-          <p className="text-xs text-[var(--canvas-dark-ink-muted)] mt-0.5">
-            Within the active {TYPE_LABEL[primary.type]} goal's window.
-          </p>
-        </div>
+        <p className="text-xs text-[var(--canvas-dark-ink-muted)]">
+          Within the active {TYPE_LABEL[primary.type]} goal&apos;s window.
+        </p>
         <span className="text-xs font-mono text-[var(--canvas-dark-ink-muted)]">
           {totalProgress.toLocaleString()} total
         </span>
@@ -106,6 +90,6 @@ export function ContributorsPanel({ primary, contributors, totalProgress, locale
           })}
         </ul>
       )}
-    </section>
+    </div>
   )
 }

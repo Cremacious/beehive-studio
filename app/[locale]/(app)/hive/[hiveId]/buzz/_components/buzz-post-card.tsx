@@ -31,6 +31,17 @@ function relTime(d: Date | string): string {
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
 
+function deriveTitleAndExcerpt(body: string): { title: string; excerpt: string | null } {
+  const trimmed = body.trim()
+  const firstNewline = trimmed.indexOf('\n')
+  if (firstNewline === -1) {
+    return { title: trimmed.slice(0, 80), excerpt: null }
+  }
+  const title = trimmed.slice(0, firstNewline).slice(0, 80)
+  const remainder = trimmed.slice(firstNewline + 1).trim()
+  return { title, excerpt: remainder || null }
+}
+
 export function BuzzPostCard({
   post,
   viewerRole,
@@ -61,12 +72,14 @@ export function BuzzPostCard({
       new Date(post.createdAt).getTime() >
       1000
 
+  const { title, excerpt } = deriveTitleAndExcerpt(post.body ?? '')
+
   return (
     <article
       style={{
         background:
           'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-        borderRadius: 'var(--r-card)',
+        borderRadius: 'var(--r-row)',
         boxShadow: 'var(--sh-tile)',
         border: 'var(--br-card)',
       }}
@@ -74,7 +87,7 @@ export function BuzzPostCard({
     >
       <span
         aria-hidden
-        className="inline-flex items-center justify-center w-9 h-9 rounded-full shrink-0 mt-0.5"
+        className="inline-flex items-center justify-center w-8 h-8 rounded-full shrink-0"
         style={{
           background: 'oklch(from var(--brand) l c h / 0.14)',
           color: 'var(--brand)',
@@ -85,7 +98,7 @@ export function BuzzPostCard({
           <img
             src={post.avatarUrl}
             alt=""
-            className="w-9 h-9 rounded-full object-cover"
+            className="w-8 h-8 rounded-full object-cover"
           />
         ) : (
           <span className="font-comfortaa font-semibold text-xs">
@@ -94,44 +107,94 @@ export function BuzzPostCard({
         )}
       </span>
       <div className="flex-1 min-w-0">
-        <div
-          className="flex items-center gap-2 text-[11px] font-mono"
-          style={{ color: 'var(--canvas-dark-ink-muted)' }}
-        >
+        <div className="flex items-center gap-2">
           <span
             className="font-comfortaa font-semibold text-sm"
             style={{ color: 'var(--canvas-dark-ink-strong)' }}
           >
             @{post.username ?? 'unknown'}
           </span>
-          <span>·</span>
-          <span>{relTime(post.createdAt)}</span>
-          {edited && <span className="italic">(edited)</span>}
+          <span
+            className="font-mono text-[11px]"
+            style={{ color: 'var(--canvas-dark-ink-muted)' }}
+          >
+            ·
+          </span>
+          <span
+            className="font-mono text-[11px]"
+            style={{ color: 'var(--canvas-dark-ink-muted)' }}
+          >
+            {relTime(post.createdAt)}
+          </span>
+          {edited && (
+            <span
+              className="italic font-mono text-[11px]"
+              style={{ color: 'var(--canvas-dark-ink-muted)' }}
+            >
+              (edited)
+            </span>
+          )}
+          {canEdit && (
+            <div className="ml-auto">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="Post actions"
+                    style={{
+                      color: 'var(--canvas-dark-ink-muted)',
+                      borderRadius: 'var(--r-btn)',
+                    }}
+                    className="p-1 hover:bg-[linear-gradient(180deg,var(--canvas-dark-250),var(--canvas-dark-200))]"
+                  >
+                    <MoreVertical size={16} />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onSelect={() => setEditOpen(true)}>
+                    <Pencil size={14} className="mr-2" />
+                    Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={(e) => {
+                      e.preventDefault()
+                      setDeleteOpen(true)
+                    }}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 size={14} className="mr-2" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
         </div>
 
-        {/* Body */}
-        {post.type === 'TEXT' ? (
-          <div
-            className="mt-2 text-sm font-prose leading-relaxed whitespace-pre-wrap break-words"
+        {title && (
+          <h3
+            className="font-comfortaa font-bold text-[16px] mt-1"
+            style={{ color: 'var(--brand)' }}
+          >
+            {title}
+          </h3>
+        )}
+        {excerpt && (
+          <p
+            className="text-sm mt-1 line-clamp-2 whitespace-pre-wrap break-words"
             style={{ color: 'var(--canvas-dark-ink)' }}
           >
-            {post.body}
-          </div>
-        ) : (
-          <div className="mt-2 space-y-2">
-            {post.body && (
-              <div
-                className="text-sm font-prose leading-relaxed whitespace-pre-wrap break-words"
-                style={{ color: 'var(--canvas-dark-ink)' }}
-              >
-                {post.body}
-              </div>
-            )}
-            {post.linkUrl && <LinkCard url={post.linkUrl} />}
+            {excerpt}
+          </p>
+        )}
+
+        {post.type === 'LINK' && post.linkUrl && (
+          <div className="mt-2">
+            <LinkCard url={post.linkUrl} />
           </div>
         )}
 
-        <div className="mt-3 flex items-center gap-1">
+        <div className="mt-3 flex items-center gap-3">
           <LikeButton
             buzzId={post.id}
             initialLiked={post.viewerLiked}
@@ -139,40 +202,6 @@ export function BuzzPostCard({
           />
         </div>
       </div>
-
-      {canEdit && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              aria-label="Post actions"
-              style={{
-                color: 'var(--canvas-dark-ink-muted)',
-                borderRadius: 'var(--r-btn)',
-              }}
-              className="p-1 hover:bg-[linear-gradient(180deg,var(--canvas-dark-250),var(--canvas-dark-200))] shrink-0"
-            >
-              <MoreVertical size={16} />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onSelect={() => setEditOpen(true)}>
-              <Pencil size={14} className="mr-2" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onSelect={(e) => {
-                e.preventDefault()
-                setDeleteOpen(true)
-              }}
-              className="text-destructive focus:text-destructive"
-            >
-              <Trash2 size={14} className="mr-2" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
 
       {canEdit && (
         <>

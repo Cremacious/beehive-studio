@@ -32,26 +32,7 @@ export function RecentActivityPanel({ hiveId, initialItems, initialCursor, local
   }
 
   return (
-    <section
-      style={{
-        background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-        borderRadius: 'var(--r-card)',
-        boxShadow: 'var(--sh-tile)',
-        border: 'var(--br-card)',
-      }}
-      className="p-4"
-    >
-      <header className="mb-3">
-        <h2
-          style={{ color: 'var(--brand)' }}
-          className="font-comfortaa font-semibold text-sm"
-        >
-          Recent Activity
-        </h2>
-        <p className="text-xs text-[var(--canvas-dark-ink-muted)] mt-0.5">
-          Latest word-log entries from the hive.
-        </p>
-      </header>
+    <div>
       {items.length === 0 ? (
         <p className="text-sm text-[var(--canvas-dark-ink-muted)] py-2">No activity yet.</p>
       ) : (
@@ -121,6 +102,6 @@ export function RecentActivityPanel({ hiveId, initialItems, initialCursor, local
           </button>
         </div>
       )}
-    </section>
+    </div>
   )
 }

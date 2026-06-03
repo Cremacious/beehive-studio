@@ -11,15 +11,7 @@ type Props = {
 
 export function EmptyState({ hiveId, canCreate, existingActiveTypes }: Props) {
   return (
-    <div
-      style={{
-        background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-        borderRadius: 'var(--r-card)',
-        boxShadow: 'var(--sh-tile)',
-        border: '1px dashed oklch(1 0 0 / 0.08)',
-      }}
-      className="p-10 flex flex-col items-center text-center gap-3"
-    >
+    <div className="py-12 flex flex-col items-center text-center gap-3">
       <div
         className="h-12 w-12 rounded-full flex items-center justify-center"
         style={{ background: 'oklch(from var(--brand) l c h / 0.15)' }}

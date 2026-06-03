@@ -30,8 +30,7 @@ export async function ActiveGoalsStrip({ hiveId, goals, canManage }: Props) {
   const activeTypes = active.map((g) => g.type)
 
   return (
-    <section>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {ORDER.map((type, i) => {
           const entry = progressList[i]
           if (entry) {
@@ -71,7 +70,6 @@ export async function ActiveGoalsStrip({ hiveId, goals, canManage }: Props) {
             </div>
           )
         })}
-      </div>
-    </section>
+    </div>
   )
 }

@@ -7,6 +7,8 @@ import {
 } from '@/lib/actions/hive-word-goals.actions'
 import { getRecentWordLogsAction } from '@/lib/actions/hive-word-logs.actions'
 import { pickPrimaryActiveGoal } from '@/lib/hive/goal-progress'
+import { HivePageShell } from '../_components/hive-page-shell'
+import { HiveSectionDivider } from '../_components/hive-section-divider'
 import { ActiveGoalsStrip } from './_components/active-goals-strip'
 import { ContributorsPanel } from './_components/contributors-panel'
 import { RecentActivityPanel } from './_components/recent-activity-panel'
@@ -50,62 +52,67 @@ export default async function WordGoalsPage({
   const recentItems = logsRes.success ? logsRes.data.items : []
   const recentCursor = logsRes.success ? logsRes.data.nextCursor : null
 
-  return (
-    <main className="flex-1 overflow-y-auto">
-      <div className="mx-auto max-w-4xl px-6 py-8">
-        <div
-          style={{
-            background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
-            borderRadius: 'var(--r-card)',
-            boxShadow: 'var(--sh-card)',
-            border: 'var(--br-card)',
-          }}
-          className="p-6"
-        >
-          <header className="flex items-center justify-between mb-6">
-            <div>
-              <h1
-                style={{ color: 'var(--brand)' }}
-                className="font-comfortaa font-bold text-2xl"
-              >
-                Word Goals
-              </h1>
-              <p className="text-xs text-[var(--canvas-dark-ink-muted)] mt-1">
-                Set a shared writing target. Word logs from the hive roll up against it.
-              </p>
-            </div>
-            {canManage && activeGoals.length > 0 && activeGoals.length < 4 && (
-              <NewGoalModal hiveId={hiveId} existingActiveTypes={activeTypes} />
-            )}
-          </header>
+  const canShowHeaderCTA = canManage && activeGoals.length > 0 && activeGoals.length < 4
 
-          {activeGoals.length === 0 ? (
-            <EmptyState hiveId={hiveId} canCreate={canManage} existingActiveTypes={activeTypes} />
-          ) : (
-            <div className="space-y-6">
-              <ActiveGoalsStrip hiveId={hiveId} goals={goals} canManage={canManage} />
-              {primary && primaryProgress && (
-                <ContributorsPanel
-                  primary={primary}
-                  contributors={primaryProgress.contributors}
-                  totalProgress={primaryProgress.progress}
-                  locale={locale}
-                />
-              )}
-              <RecentActivityPanel
-                hiveId={hiveId}
-                initialItems={recentItems}
-                initialCursor={recentCursor}
+  return (
+    <HivePageShell
+      width="standard"
+      title="Word Goals"
+      subtitle="Set a shared writing target with your hive."
+      headerSlot={
+        canShowHeaderCTA ? (
+          <NewGoalModal
+            hiveId={hiveId}
+            existingActiveTypes={activeTypes}
+            triggerLabel="+ New Goal"
+            triggerClassName="!px-4 !py-2 !text-[13px] !rounded-[var(--r-pill)]"
+          />
+        ) : undefined
+      }
+    >
+      {activeGoals.length === 0 ? (
+        <div className="px-6 pb-6">
+          <EmptyState
+            hiveId={hiveId}
+            canCreate={canManage}
+            existingActiveTypes={activeTypes}
+          />
+          {archivedGoals.length > 0 && (
+            <HiveSectionDivider label="History">
+              <GoalHistory archived={archivedGoals} />
+            </HiveSectionDivider>
+          )}
+        </div>
+      ) : (
+        <>
+          <HiveSectionDivider label="Active goals" hideTopBorder>
+            <ActiveGoalsStrip hiveId={hiveId} goals={goals} canManage={canManage} />
+          </HiveSectionDivider>
+          {primary && primaryProgress && (
+            <HiveSectionDivider label="Contributors">
+              <ContributorsPanel
+                primary={primary}
+                contributors={primaryProgress.contributors}
+                totalProgress={primaryProgress.progress}
                 locale={locale}
               />
-            </div>
+            </HiveSectionDivider>
           )}
-
-          <div className="mt-6">
-            <GoalHistory archived={archivedGoals} />
-          </div>
-        </div>
-      </div>
-    </main>
+          <HiveSectionDivider label="Recent activity">
+            <RecentActivityPanel
+              hiveId={hiveId}
+              initialItems={recentItems}
+              initialCursor={recentCursor}
+              locale={locale}
+            />
+          </HiveSectionDivider>
+          {archivedGoals.length > 0 && (
+            <HiveSectionDivider label="History">
+              <GoalHistory archived={archivedGoals} />
+            </HiveSectionDivider>
+          )}
+        </>
+      )}
+    </HivePageShell>
   )
 }

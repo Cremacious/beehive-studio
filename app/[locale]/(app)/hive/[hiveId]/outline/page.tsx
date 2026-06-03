@@ -1,34 +1,25 @@
 import { notFound } from 'next/navigation'
 import { getHiveOutlineView } from '@/lib/actions/hive-content.actions'
-import { HiveOutlineSurface } from './_components/hive-outline-surface'
+import { OutlineIndex } from './_components/outline-index'
 
-export default async function HiveOutlinePage({ params }: { params: Promise<{ hiveId: string; locale: string }> }) {
+export default async function HiveOutlineIndexPage({
+  params,
+}: {
+  params: Promise<{ hiveId: string; locale: string }>
+}) {
   const { hiveId, locale } = await params
   const r = await getHiveOutlineView(hiveId)
   if (!r.success) notFound()
 
-  // Interim shape bridge — T9 replaces this page with a proper index.
-  // Show the first outline if any exist; otherwise show an inline empty state.
-  if (r.data.outlines.length === 0) {
-    return (
-      <div className="mx-auto max-w-3xl px-6 py-8">
-        <p className="text-sm text-[var(--canvas-dark-ink-muted)] italic text-center">
-          No outlines yet — the author can create one in the studio.
-        </p>
-      </div>
-    )
-  }
-
   return (
-    <HiveOutlineSurface
-      data={{
-        bookId: r.data.bookId,
-        entry: r.data.outlines[0]!,
-        chapters: r.data.chapters,
-        viewerRole: r.data.viewerRole,
-      }}
-      hiveId={hiveId}
-      locale={locale}
-    />
+    <main className="flex-1 overflow-y-auto">
+      <div className="mx-auto max-w-5xl px-6 py-8">
+        <OutlineIndex
+          outlines={r.data.outlines}
+          hiveId={hiveId}
+          locale={locale}
+        />
+      </div>
+    </main>
   )
 }

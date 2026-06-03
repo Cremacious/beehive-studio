@@ -1,14 +1,15 @@
 'use server'
 
 import { db } from '@/db'
-import { books, chapters, chapterSnapshots } from '@/db/schema'
-import { eq, desc } from 'drizzle-orm'
+import { books, chapters, chapterSnapshots, hiveAnnotations, hiveSuggestions } from '@/db/schema'
+import { eq, desc, count, and, isNull } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { getUserPremiumStatus } from '@/lib/premium'
 import { isBookOverflow } from '@/lib/billing/book-overflow'
 import { extractWordCount } from '@/lib/tiptap-utils'
 import { updateChapterNotesSchema, chapterStatusSchema, updateChapterWordGoalSchema } from '@/lib/validations/book'
 import { logHiveWordDelta } from '@/lib/hive/log-word-delta'
+import { getBookHive } from '@/lib/hive/get-book-hive'
 import type { ActionResult } from './book.actions'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -24,6 +25,8 @@ export type ChapterData = {
   notes: string | null
   createdAt: Date
   updatedAt: Date
+  annotationCount: number
+  pendingSuggestionCount: number
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -59,6 +62,34 @@ export async function getChapterAction(
   const userId = await requireAuth()
   const { chapter } = await assertChapterOwner(chapterId, userId)
 
+  // Hive activity counts. Skip the queries entirely when the book has no
+  // linked hive — the vast majority of books aren't in hives and we don't
+  // want two extra round-trips per chapter load for them. getBookHive is
+  // React-cached so repeated calls in the same request are free.
+  const hive = await getBookHive(chapter.bookId)
+  let annotationCount = 0
+  let pendingSuggestionCount = 0
+  if (hive) {
+    const [annRow] = await db
+      .select({ c: count() })
+      .from(hiveAnnotations)
+      .where(and(
+        eq(hiveAnnotations.chapterId, chapterId),
+        isNull(hiveAnnotations.parentId),
+      ))
+    annotationCount = Number(annRow?.c ?? 0)
+
+    const [sugRow] = await db
+      .select({ c: count() })
+      .from(hiveSuggestions)
+      .where(and(
+        eq(hiveSuggestions.chapterId, chapterId),
+        eq(hiveSuggestions.resolved, false),
+        isNull(hiveSuggestions.parentId),
+      ))
+    pendingSuggestionCount = Number(sugRow?.c ?? 0)
+  }
+
   return {
     success: true,
     data: {
@@ -72,6 +103,8 @@ export async function getChapterAction(
       notes: chapter.notes,
       createdAt: chapter.createdAt,
       updatedAt: chapter.updatedAt,
+      annotationCount,
+      pendingSuggestionCount,
     },
   }
 }

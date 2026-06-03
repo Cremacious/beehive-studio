@@ -206,6 +206,7 @@ export function HiveWikiShell({
           <ByCategoryView
             entries={filteredEntries}
             canEdit={canEdit}
+            isSearching={search.trim().length > 0}
             onOpenEntry={setSelectedEntryId}
             onAddEntry={() => setPickerOpen(true)}
           />

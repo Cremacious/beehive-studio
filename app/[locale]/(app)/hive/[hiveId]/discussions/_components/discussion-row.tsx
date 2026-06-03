@@ -50,58 +50,61 @@ export function DiscussionRow({
   hiveId: string
   locale: string
 }) {
-  // Title = first 80 chars (already derived server-side); excerpt = next ~120
-  const excerpt = row.bodyExcerpt.slice(row.title.length, row.title.length + 120).trim()
+  const excerpt = row.bodyExcerpt.slice(row.title.length, row.title.length + 160).trim()
 
   return (
     <Link
       href={`/${locale}/hive/${hiveId}/discussions/${row.id}`}
-      style={{
-        background:
-          'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-        borderRadius: 'var(--r-row)',
-        boxShadow: 'var(--sh-tile)',
-        border: 'var(--br-card)',
-      }}
-      className="flex items-start gap-3 px-4 py-3 hover:-translate-y-px transition-transform"
+      className="grid items-center gap-4 px-5 py-4 transition-colors hover:bg-[var(--canvas-dark-300)]"
+      style={{ gridTemplateColumns: '1fr 90px 130px' }}
     >
-      <span
-        aria-hidden
-        className="inline-flex items-center justify-center w-8 h-8 rounded-full text-[var(--canvas-dark-ink-muted)] bg-[var(--canvas-dark-100)] shrink-0 mt-0.5 text-xs font-semibold"
-      >
-        {row.avatarUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={row.avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover" />
-        ) : (
-          row.username?.[0]?.toUpperCase() ?? '?'
-        )}
-      </span>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 min-w-0">
-          <TopicPill topic={row.topic} />
-          <h3 className="font-comfortaa font-semibold text-sm truncate text-[var(--canvas-dark-ink-strong)]">
-            {row.title || 'Untitled'}
-          </h3>
-        </div>
-        {excerpt && (
-          <p className="mt-1 text-xs text-[var(--canvas-dark-ink-muted)] line-clamp-2">
-            {excerpt}
-          </p>
-        )}
-        <p className="mt-1.5 text-[11px] font-mono text-[var(--canvas-dark-ink-muted)]">
-          {row.username && (
-            <>
-              <span>@{row.username}</span>
-              <span className="mx-1.5">·</span>
-            </>
+      <div className="flex items-start gap-3 min-w-0">
+        <span
+          aria-hidden
+          className="inline-flex items-center justify-center w-9 h-9 rounded-full text-[var(--canvas-dark-ink-muted)] bg-[var(--canvas-dark-100)] shrink-0 mt-0.5 text-xs font-semibold"
+          style={{ boxShadow: 'var(--sh-inset)' }}
+        >
+          {row.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={row.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover" />
+          ) : (
+            row.username?.[0]?.toUpperCase() ?? '?'
           )}
-          <span className="inline-flex items-center gap-1">
-            <MessageSquare size={11} />
-            {row.replyCount} {row.replyCount === 1 ? 'reply' : 'replies'}
-          </span>
-          <span className="mx-1.5">·</span>
-          <span>{relTime(row.lastActivityAt)}</span>
-        </p>
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 min-w-0">
+            <TopicPill topic={row.topic} />
+            <h3 className="font-comfortaa font-semibold text-base truncate text-[var(--canvas-dark-ink-strong)]">
+              {row.title || 'Untitled'}
+            </h3>
+          </div>
+          {excerpt && (
+            <p className="mt-1 text-xs text-[var(--canvas-dark-ink-muted)] line-clamp-1">
+              {excerpt}
+            </p>
+          )}
+          {row.username && (
+            <p className="mt-1.5 text-[11px] font-mono text-[var(--canvas-dark-ink-muted)]">
+              started by <span className="text-[var(--canvas-dark-ink)]">@{row.username}</span>
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="text-center">
+        <div className="font-comfortaa font-bold text-lg text-[var(--canvas-dark-ink-strong)] leading-none">
+          {row.replyCount}
+        </div>
+        <div className="text-[10px] font-mono uppercase tracking-wider text-[var(--canvas-dark-ink-muted)] mt-0.5">
+          {row.replyCount === 1 ? 'reply' : 'replies'}
+        </div>
+      </div>
+
+      <div className="text-right">
+        <div className="text-xs text-[var(--canvas-dark-ink)] inline-flex items-center gap-1 justify-end">
+          <MessageSquare size={11} className="text-[var(--canvas-dark-ink-muted)]" />
+          {relTime(row.lastActivityAt)}
+        </div>
       </div>
     </Link>
   )

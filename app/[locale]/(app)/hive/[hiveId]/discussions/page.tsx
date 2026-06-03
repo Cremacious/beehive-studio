@@ -24,25 +24,14 @@ export default async function DiscussionsPage({
 
   return (
     <main className="flex-1 overflow-y-auto">
-      <div className="mx-auto max-w-3xl px-6 py-8">
-        <div
-          style={{
-            background:
-              'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
-            borderRadius: 'var(--r-card)',
-            boxShadow: 'var(--sh-card)',
-            border: 'var(--br-card)',
-          }}
-          className="p-6"
-        >
-          <DiscussionsList
-            posts={r.data}
-            hiveId={hiveId}
-            locale={locale}
-            viewerRole={viewerRole}
-            viewerUserId={userId}
-          />
-        </div>
+      <div className="mx-auto max-w-5xl px-6 py-8">
+        <DiscussionsList
+          posts={r.data}
+          hiveId={hiveId}
+          locale={locale}
+          viewerRole={viewerRole}
+          viewerUserId={userId}
+        />
       </div>
     </main>
   )

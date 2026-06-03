@@ -28,6 +28,23 @@ const COLOR_DISPLAY: Record<BeatColor, string> = {
   slate: 'Slate',
 }
 
+// Direct color values mirror --beat-* tokens from globals.css. The dialog
+// portals to <body>, outside [data-slot="outline-pane"], so cascading the
+// CSS vars from the scoped outline block doesn't reach here reliably. Inline
+// the values so swatches always render. Tuned for the dark dialog chrome —
+// the equivalent paper-friendly values stay on the beat-row dots which live
+// inside the outline pane and pick up the theme-flipped --beat-* tokens.
+const COLOR_FILL: Record<BeatColor, string> = {
+  yellow: 'oklch(0.85 0.16 90)',
+  orange: 'oklch(0.74 0.16 50)',
+  pink:   'oklch(0.74 0.16 0)',
+  purple: 'oklch(0.70 0.18 295)',
+  blue:   'oklch(0.70 0.16 240)',
+  mint:   'oklch(0.78 0.14 165)',
+  lime:   'oklch(0.80 0.16 130)',
+  slate:  'oklch(0.65 0.04 250)',
+}
+
 const LABEL_ORDER: BeatLabel[] = [
   'character', 'scene', 'plot_point', 'subplot',
   'world_building', 'character_arc', 'conflict', 'note',
@@ -150,10 +167,10 @@ export function BeatDialog({
                       width: 28,
                       height: 28,
                       borderRadius: '50%',
-                      background: `var(--beat-${c})`,
+                      background: COLOR_FILL[c],
                       border: active ? '2px solid white' : '0',
                       boxShadow: active
-                        ? `0 0 0 2px var(--beat-${c})`
+                        ? `0 0 0 2px ${COLOR_FILL[c]}`
                         : 'var(--sh-tile)',
                       cursor: readOnly ? 'not-allowed' : 'pointer',
                     }}

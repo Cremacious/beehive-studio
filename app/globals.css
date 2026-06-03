@@ -74,6 +74,19 @@
   --paper-ink:        oklch(0.265 0.020 55);
   --paper-ink-strong: oklch(0.180 0.022 50);
 
+  /* Beat dot colors — outline beat color-code palette. Dark-mode values
+     tuned for legibility against --canvas-dark-200 (dark walnut). Light
+     overrides live scoped in outline-board.tsx so they only apply inside
+     the outline surface (cream paper). */
+  --beat-yellow: oklch(0.85 0.16 90);
+  --beat-orange: oklch(0.74 0.16 50);
+  --beat-pink:   oklch(0.74 0.16 0);
+  --beat-purple: oklch(0.70 0.18 295);
+  --beat-blue:   oklch(0.70 0.16 240);
+  --beat-mint:   oklch(0.78 0.14 165);
+  --beat-lime:   oklch(0.80 0.16 130);
+  --beat-slate:  oklch(0.65 0.04 250);
+
   /* ── Dark editor canvas (cool neutral grays — paired with chrome) ── */
   /* Was warm coffee (hue 55-80°); replaced with the same neutral hue 256°
      as the chrome scale so the dark editor body sits cleanly inside the

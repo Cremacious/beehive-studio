@@ -412,6 +412,16 @@ export function OutlineBoard({ item }: Props) {
           --paper-ink:           oklch(0.265 0.020 55);
           --paper-ink-muted:     oklch(0.520 0.022 60);
           --paper-100:           oklch(0.965 0.018 85);
+          /* Light-mode beat colors — darker, more saturated to read on
+             paper-200 cream canvas. */
+          --beat-yellow: oklch(0.70 0.18 85);
+          --beat-orange: oklch(0.65 0.18 50);
+          --beat-pink:   oklch(0.65 0.18 0);
+          --beat-purple: oklch(0.58 0.20 295);
+          --beat-blue:   oklch(0.55 0.18 245);
+          --beat-mint:   oklch(0.60 0.14 165);
+          --beat-lime:   oklch(0.65 0.16 130);
+          --beat-slate:  oklch(0.50 0.04 250);
           /* Strip stays dark in both themes (matches Notes pattern). */
           --outline-strip-bg:    var(--canvas-dark-100);
           --outline-strip-ink:   var(--canvas-dark-ink-strong);

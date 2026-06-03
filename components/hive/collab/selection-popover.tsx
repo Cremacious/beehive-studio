@@ -89,6 +89,14 @@ export function SelectionPopover({
         boxShadow: 'var(--sh-card)',
         border: 'var(--br-card)',
       }}
+      // Without this, mousedown on any popover button shifts focus off the
+      // (editable) TipTap editor → editor emits `blur` → useSelectionPopover
+      // hook clears state to null → by the time the click handler resolves,
+      // openAnnotate / openSuggest see sel.{from,to,text} === null and bail.
+      // The hive chapter view doesn't trip this because that editor is
+      // `editable: false` and blur fires differently. Preventing mousedown's
+      // default keeps the editor focused so the selection survives.
+      onMouseDown={(e) => e.preventDefault()}
       className="flex items-center gap-1 px-2 py-1"
     >
       <button

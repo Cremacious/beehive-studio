@@ -29,18 +29,30 @@ import { OutlineActGroup } from './outline-act-group'
 import { OutlineHelpBanner } from './outline-help-banner'
 import { OutlineHelpPanel } from './outline-help-panel'
 import { groupBeatsByAct, distinctActs } from '@/lib/outline/group-by-act'
+import { migrateBeatStatus } from '@/lib/outline/migrate-beat-status'
 
 // ── Types ──────────────────────────────────────────────────────────────
 
 export type BeatStatus = 'idea' | 'drafting' | 'done'
 
+export type BeatColor =
+  | 'yellow' | 'orange' | 'pink' | 'purple'
+  | 'blue' | 'mint' | 'lime' | 'slate'
+
+export type BeatLabel =
+  | 'character' | 'scene' | 'plot_point' | 'subplot'
+  | 'world_building' | 'character_arc' | 'conflict' | 'note'
+
 export type Beat = {
   id: string
   title: string
   description?: string
-  status?: BeatStatus
+  color?: BeatColor | null
+  label?: BeatLabel | null
   linkedChapterId?: string | null
   act?: string | null
+  /** @deprecated read-only legacy; mapped to `color` by readContent() */
+  status?: BeatStatus
 }
 
 export type ActKey = string | null  // null = "No Act"
@@ -73,7 +85,7 @@ export function readContent(raw: unknown): OutlineContent {
   const c = raw as Partial<OutlineContent> & LegacyOutlineContent
   if (Array.isArray(c.beats)) {
     return {
-      beats: c.beats,
+      beats: c.beats.map(b => migrateBeatStatus(b as Beat) as Beat),
       actsOrder: c.actsOrder,
       collapsedActs: c.collapsedActs,
       helpBannerDismissed: c.helpBannerDismissed,

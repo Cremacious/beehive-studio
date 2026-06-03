@@ -223,21 +223,6 @@ function HiveOutlineSurfaceInner({
               {lastEditedByUsername ? `Last edited by @${lastEditedByUsername} · ` : 'Last edited '}{relTime(lastEditedAt)}
             </p>
           )}
-          {!readOnly && (
-            <button
-              type="button"
-              onClick={() => openCreate(null)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold"
-              style={{
-                background: 'var(--color-brand)',
-                color: 'var(--brand-ink, oklch(0.18 0.02 60))',
-                borderRadius: 'var(--r-btn)',
-              }}
-            >
-              <Plus className="w-3.5 h-3.5" />
-              Add beat
-            </button>
-          )}
           <SaveStatusBadge status={saveStatus} />
         </div>
       </header>

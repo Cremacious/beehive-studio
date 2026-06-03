@@ -4,8 +4,6 @@ import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
-  ChevronDown,
-  ChevronRight,
   Check,
   X,
   ExternalLink,
@@ -31,6 +29,7 @@ import {
   type PendingSuggestionItem,
 } from '@/lib/actions/hive-suggestions.actions'
 import { relTime } from '@/components/hive/collab/rel-time'
+import { HiveSectionDivider } from '../../_components/hive-section-divider'
 
 type Props = {
   data: PendingByChapter[]
@@ -46,159 +45,50 @@ function truncate(s: string, max = MAX_EXCERPT): string {
 }
 
 export function SuggestionsByChapter({ data, hiveId, locale }: Props) {
-  const totalPending = data.reduce((sum, g) => sum + g.suggestions.length, 0)
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
-
-  function toggle(chapterId: string) {
-    setCollapsed((prev) => {
-      const next = new Set(prev)
-      if (next.has(chapterId)) next.delete(chapterId)
-      else next.add(chapterId)
-      return next
-    })
+  if (data.length === 0) {
+    return (
+      <div className="px-6 pb-6">
+        <div className="rounded-lg border border-dashed border-border px-6 py-12 text-center">
+          <p className="text-base font-medium text-foreground">
+            No pending suggestions
+          </p>
+          <p className="text-sm text-muted-foreground mt-1.5">
+            Contributors and beta readers can suggest edits from any chapter view.
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-2 py-2">
-      <div
-        style={{
-          background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
-          borderRadius: 'var(--r-card)',
-          boxShadow: 'var(--sh-card)',
-          border: 'var(--br-card)',
-        }}
-        className="p-6"
-      >
-        <header className="flex items-center justify-between mb-6">
-          <div>
-            <h1
-              style={{ color: 'var(--brand)' }}
-              className="font-comfortaa font-bold text-2xl"
-            >
-              Edit Suggestions
-            </h1>
-            <p
-              className="text-sm mt-1"
-              style={{ color: 'var(--canvas-dark-ink-muted)' }}
-            >
-              Review pending suggestions across this hive&apos;s chapters.
-            </p>
-          </div>
-          {totalPending > 0 && (
-            <span
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
-              style={{
-                background: 'var(--color-brand)',
-                color: 'var(--brand-ink, oklch(0.18 0.02 60))',
-              }}
-            >
-              {totalPending} pending
-            </span>
-          )}
-        </header>
-
-        {data.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-border px-6 py-12 text-center">
-            <p className="text-base font-medium text-foreground">
-              No pending suggestions
-            </p>
-            <p className="text-sm text-muted-foreground mt-1.5">
-              Contributors and beta readers can suggest edits from any chapter view.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-5">
-            {data.map((group) => (
-              <ChapterGroup
-                key={group.chapterId}
-                group={group}
-                hiveId={hiveId}
-                locale={locale}
-                collapsed={collapsed.has(group.chapterId)}
-                onToggle={() => toggle(group.chapterId)}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+    <>
+      {data.map((group, i) => {
+        const chapterLabel = group.chapterTitle
+        return (
+          <HiveSectionDivider
+            key={group.chapterId}
+            label={chapterLabel}
+            hideTopBorder={i === 0}
+          >
+            <div className="flex flex-col gap-3">
+              {group.suggestions.map((s) => (
+                <SuggestionCard
+                  key={s.id}
+                  suggestion={s}
+                  chapterId={group.chapterId}
+                  hiveId={hiveId}
+                  locale={locale}
+                />
+              ))}
+            </div>
+          </HiveSectionDivider>
+        )
+      })}
+    </>
   )
 }
 
-const SUGGESTION_COLOR = 'oklch(0.78 0.10 65)'
-
-function ChapterGroup({
-  group,
-  hiveId,
-  locale,
-  collapsed,
-  onToggle,
-}: {
-  group: PendingByChapter
-  hiveId: string
-  locale: string
-  collapsed: boolean
-  onToggle: () => void
-}) {
-  const chapterHref = `/${locale}/hive/${hiveId}/chapters/${group.chapterId}`
-
-  return (
-    <section>
-      <div
-        style={{
-          background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-          borderRadius: 'var(--r-row)',
-          boxShadow: 'var(--sh-tile)',
-        }}
-        className="flex items-center gap-2 px-4 py-2 mb-3"
-      >
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-label={collapsed ? 'Expand chapter' : 'Collapse chapter'}
-          style={{ color: 'var(--canvas-dark-ink-muted)' }}
-          className="hover:text-foreground"
-        >
-          {collapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
-        </button>
-        <h2
-          className="font-comfortaa font-semibold text-sm"
-          style={{ color: 'var(--canvas-dark-ink-strong)' }}
-        >
-          {group.chapterTitle}
-        </h2>
-        <span
-          className="text-xs font-mono"
-          style={{ color: 'var(--canvas-dark-ink-muted)' }}
-        >
-          {group.suggestions.length} pending
-        </span>
-        <Link
-          href={chapterHref}
-          className="ml-auto text-xs font-mono hover:text-brand"
-          style={{ color: 'var(--canvas-dark-ink-muted)' }}
-        >
-          Jump →
-        </Link>
-      </div>
-      {!collapsed && (
-        <ul className="space-y-2 pl-2">
-          {group.suggestions.map((s) => (
-            <SuggestionRow
-              key={s.id}
-              suggestion={s}
-              chapterId={group.chapterId}
-              hiveId={hiveId}
-              locale={locale}
-            />
-          ))}
-        </ul>
-      )}
-    </section>
-  )
-}
-
-function SuggestionRow({
+function SuggestionCard({
   suggestion,
   chapterId,
   hiveId,
@@ -255,93 +145,110 @@ function SuggestionRow({
     : 'Unknown'
 
   return (
-    <li
+    <article
       style={{
-        background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+        background:
+          'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
         borderRadius: 'var(--r-row)',
         boxShadow: 'var(--sh-tile)',
-        borderLeft: `3px solid ${SUGGESTION_COLOR}`,
       }}
-      className="flex items-start gap-3 px-4 py-3"
+      className="p-4"
     >
-      {suggestion.authorAvatar ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={suggestion.authorAvatar}
-          alt=""
-          className="size-7 rounded-full object-cover flex-shrink-0"
-        />
-      ) : (
-        <div className="size-7 rounded-full bg-muted flex-shrink-0 flex items-center justify-center text-[10px] font-semibold text-muted-foreground">
-          {(suggestion.authorUsername ?? '?').slice(0, 2).toUpperCase()}
-        </div>
-      )}
-
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1.5">
-          <span className="font-medium text-foreground">{authorLabel}</span>
-          <span>·</span>
-          <span>{relTime(suggestion.createdAt)}</span>
-          {suggestion.hasReplies && (
-            <>
-              <span>·</span>
-              <span
-                className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wide font-semibold"
-                title="This suggestion has replies"
-              >
-                <MessageSquare size={10} />
-                Has replies
-              </span>
-            </>
-          )}
-        </div>
-        <div className="text-sm leading-relaxed break-words">
-          <span className="line-through text-muted-foreground">
-            {truncate(suggestion.originalExcerpt)}
-          </span>
-          <ArrowRight
-            size={12}
-            className="inline-block mx-1.5 text-muted-foreground align-baseline"
+      <header className="flex items-center gap-2 text-xs mb-2">
+        {suggestion.authorAvatar ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={suggestion.authorAvatar}
+            alt=""
+            className="size-6 rounded-full object-cover flex-shrink-0"
           />
-          <span className="font-medium text-foreground">
-            {truncate(suggestion.suggestedText)}
+        ) : (
+          <div className="size-6 rounded-full bg-muted flex-shrink-0 flex items-center justify-center text-[9px] font-semibold text-muted-foreground">
+            {(suggestion.authorUsername ?? '?').slice(0, 2).toUpperCase()}
+          </div>
+        )}
+        <span
+          className="font-medium"
+          style={{ color: 'var(--canvas-dark-ink-strong)' }}
+        >
+          {authorLabel}
+        </span>
+        <span style={{ color: 'var(--canvas-dark-ink-muted)' }}>·</span>
+        <span style={{ color: 'var(--canvas-dark-ink-muted)' }}>
+          {relTime(suggestion.createdAt)}
+        </span>
+        {suggestion.hasReplies && (
+          <span
+            className="ml-2 inline-flex items-center gap-1 text-[10px] uppercase tracking-wide font-semibold"
+            style={{ color: 'var(--canvas-dark-ink-muted)' }}
+            title="This suggestion has replies"
+          >
+            <MessageSquare size={10} />
+            Has replies
           </span>
-        </div>
+        )}
+      </header>
+
+      <div className="text-sm leading-relaxed break-words mb-3">
+        <span
+          className="line-through"
+          style={{ color: 'var(--canvas-dark-ink-muted)' }}
+        >
+          {truncate(suggestion.originalExcerpt)}
+        </span>
+        <ArrowRight
+          size={12}
+          className="inline-block mx-1.5 align-baseline"
+          style={{ color: 'var(--canvas-dark-ink-muted)' }}
+        />
+        <span
+          className="font-medium"
+          style={{ color: 'var(--canvas-dark-ink-strong)' }}
+        >
+          {truncate(suggestion.suggestedText)}
+        </span>
       </div>
 
-      <div className="flex items-center gap-1 flex-shrink-0">
+      <div className="flex items-center gap-2">
         <button
           type="button"
           onClick={handleAccept}
           disabled={accepting || rejecting}
-          aria-label="Accept suggestion"
-          title="Accept suggestion"
-          className="inline-flex items-center justify-center size-8 rounded-md hover:bg-brand/20 disabled:opacity-50"
-          style={{ color: 'var(--color-brand)' }}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--r-pill)] text-xs font-semibold disabled:opacity-50"
+          style={{
+            background: 'var(--brand)',
+            color: 'var(--brand-ink)',
+          }}
         >
           {accepting ? (
-            <Loader2 size={16} className="animate-spin" />
+            <Loader2 size={12} className="animate-spin" />
           ) : (
-            <Check size={16} />
+            <Check size={12} />
           )}
+          Accept
         </button>
         <button
           type="button"
           onClick={() => setRejectOpen(true)}
           disabled={accepting || rejecting}
-          aria-label="Reject suggestion"
-          title="Reject suggestion"
-          className="inline-flex items-center justify-center size-8 rounded-md border border-border text-destructive hover:bg-destructive/10 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--r-pill)] text-xs font-semibold disabled:opacity-50"
+          style={{
+            background:
+              'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+            boxShadow: 'var(--sh-tile)',
+            color: 'var(--status-error)',
+          }}
         >
-          <X size={16} />
+          <X size={12} />
+          Reject
         </button>
         <Link
           href={openHref}
-          aria-label="Open in chapter"
-          title="Open in chapter"
-          className="inline-flex items-center justify-center size-8 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+          className="ml-auto inline-flex items-center gap-1 text-xs font-medium hover:underline"
+          style={{ color: 'var(--brand)' }}
         >
-          <ExternalLink size={16} />
+          Open
+          <ExternalLink size={12} />
         </Link>
       </div>
 
@@ -382,6 +289,6 @@ function SuggestionRow({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </li>
+    </article>
   )
 }

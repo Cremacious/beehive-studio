@@ -245,7 +245,10 @@ export function ChapterEditor() {
         previewSnapshotContent as Parameters<typeof editor.commands.setContent>[0],
         { emitUpdate: false },
       )
-      editor.setEditable(false)
+      // emitUpdate=false: setEditable defaults to firing the editor's `update`
+      // event, which would trip our onUpdate handler and queue a stale save
+      // (see overflow effect note below).
+      editor.setEditable(false, false)
       wasPreviewingRef.current = true
     } else if (wasPreviewingRef.current) {
       // Exiting preview — restore live content from activeChapter.
@@ -255,7 +258,7 @@ export function ChapterEditor() {
           { emitUpdate: false },
         )
       }
-      editor.setEditable(true)
+      editor.setEditable(true, false)
       wasPreviewingRef.current = false
     }
   }, [previewSnapshotId, previewSnapshotContent, activeChapter, editor])
@@ -263,10 +266,19 @@ export function ChapterEditor() {
   // Read-only when this book is in free-tier overflow. Skipped while a snapshot
   // preview is active (that effect already owns setEditable in that mode and
   // exits cleanly when preview ends).
+  //
+  // emitUpdate=false: TipTap's setEditable defaults to firing the editor's
+  // `update` event, which would trip our onUpdate handler and queue a save
+  // of the editor's CURRENT content. This effect runs on every editor
+  // re-creation (the `editor` dep flips when useEditor rebuilds on chapter
+  // switch). On a cache-miss switch the editor is briefly empty before the
+  // setContent effect loads cached content — without this guard, that brief
+  // empty state would be debounce-saved over the real content. Symptom: a
+  // wave of 0-word snapshots on every chapter navigation.
   useEffect(() => {
     if (!editor || editor.isDestroyed) return
     if (previewSnapshotId) return
-    editor.setEditable(!bookOverflow)
+    editor.setEditable(!bookOverflow, false)
   }, [bookOverflow, editor, previewSnapshotId])
 
   if (activeItemId === null) {

@@ -10,6 +10,9 @@ import type { HiveWikiViewData, HiveWikiEntry } from '@/lib/actions/hive-content
 import { canEditWiki } from '@/lib/hive/permissions'
 import { CATEGORY_TEMPLATE_MAP, type WikiCategory } from '@/lib/wiki/category-templates'
 import { createId } from '@paralleldrive/cuid2'
+import { WikiCategoryPicker } from '@/app/[locale]/(app)/studio/[bookId]/_components/binder/wiki-category-picker'
+import { HivePageShell } from '../../_components/hive-page-shell'
+import { HiveSectionDivider } from '../../_components/hive-section-divider'
 import { ByCategoryView } from './by-category-view'
 import { ByFolderView } from './by-folder-view'
 import { NotesView } from './notes-view'
@@ -47,6 +50,7 @@ export function HiveWikiShell({
   const [viewMode, setViewMode] = useState<ViewMode>('category')
   const [search, setSearch] = useState('')
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null)
+  const [pickerOpen, setPickerOpen] = useState(false)
   const [, startTransition] = useTransition()
 
   const canEdit = canEditWiki(wiki.viewerRole)
@@ -102,42 +106,92 @@ export function HiveWikiShell({
     })
   }
 
+  // Entry-view mode — render the editor inside the shell with a "back to wiki"
+  // affordance via the shell's `back` prop. Since the back is a client-side
+  // state mutation (not a URL), HivePageShell only handles URL backs — we
+  // omit `back` here and keep the back button inside HiveWikiEntryEditor.
   if (selectedEntry) {
+    const template = CATEGORY_TEMPLATE_MAP[selectedEntry.category]
     return (
-      <HiveWikiEntryEditor
-        entryId={selectedEntry.id}
-        bookId={wiki.bookId}
-        hiveId={hiveId}
-        viewerRole={wiki.viewerRole}
-        authorUsername={selectedEntry.authorUsername}
-        lastEditedAt={selectedEntry.lastEditedAt}
-        onBack={() => setSelectedEntryId(null)}
-      />
+      <HivePageShell
+        width="wide"
+        title={selectedEntry.title || 'Untitled entry'}
+        subtitle={template.label}
+      >
+        <HiveWikiEntryEditor
+          entryId={selectedEntry.id}
+          bookId={wiki.bookId}
+          hiveId={hiveId}
+          viewerRole={wiki.viewerRole}
+          authorUsername={selectedEntry.authorUsername}
+          lastEditedAt={selectedEntry.lastEditedAt}
+          onBack={() => setSelectedEntryId(null)}
+        />
+      </HivePageShell>
     )
   }
 
+  const entryCount = wiki.entries.length
+  const folderCount = wiki.folders.length
+  const subtitle = `${entryCount} ${entryCount === 1 ? 'entry' : 'entries'} across ${folderCount} ${folderCount === 1 ? 'folder' : 'folders'}`
+
+  const headerSlot = canEdit ? (
+    <button
+      type="button"
+      onClick={() => setPickerOpen(true)}
+      style={{
+        background: 'var(--brand)',
+        color: 'var(--brand-ink)',
+        borderRadius: 'var(--r-pill)',
+        boxShadow: 'var(--sh-tile)',
+      }}
+      className="px-4 py-2 text-[13px] font-semibold"
+    >
+      + New Entry
+    </button>
+  ) : undefined
+
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <div
-        style={{
-          background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
-          borderRadius: 'var(--r-card)',
-          boxShadow: 'var(--sh-card)',
-          border: 'var(--br-card)',
-        }}
-        className="p-6 space-y-6 min-h-[calc(100vh-160px)]"
+    <>
+      <HivePageShell
+        width="wide"
+        title="Wiki"
+        subtitle={subtitle}
+        headerSlot={headerSlot}
       >
-        <header className="flex flex-col gap-4">
-          <div className="flex items-center justify-between gap-4">
-            <h1
-              style={{ color: 'var(--brand)' }}
-              className="font-comfortaa font-bold text-2xl"
-            >
-              Wiki
-            </h1>
+        <HiveSectionDivider label="View" hideTopBorder>
+          <div className="flex gap-1" role="tablist">
+            {(['category', 'folder', 'notes'] as ViewMode[]).map(m => {
+              const isActive = viewMode === m
+              return (
+                <button
+                  key={m}
+                  role="tab"
+                  aria-selected={isActive}
+                  type="button"
+                  onClick={() => setViewMode(m)}
+                  style={{
+                    background: isActive
+                      ? 'var(--brand)'
+                      : 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+                    color: isActive ? 'var(--brand-ink)' : 'var(--canvas-dark-ink)',
+                    borderRadius: 'var(--r-pill)',
+                    boxShadow: 'var(--sh-tile)',
+                  }}
+                  className={cn(
+                    'px-4 py-1.5 text-xs font-geist font-semibold',
+                  )}
+                >
+                  {m === 'category' ? 'By Category' : m === 'folder' ? 'By Folder' : 'Notes'}
+                </button>
+              )
+            })}
           </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="relative flex-1">
+        </HiveSectionDivider>
+
+        {wiki.entries.length > 0 && (
+          <HiveSectionDivider label="Search">
+            <div className="relative">
               <Search
                 size={14}
                 className="absolute left-3 top-1/2 -translate-y-1/2"
@@ -158,61 +212,43 @@ export function HiveWikiShell({
                 className="w-full pl-9 pr-3 py-2 text-sm font-geist placeholder:text-[var(--canvas-dark-ink-muted)] focus:outline-none"
               />
             </div>
-            <div className="flex gap-1" role="tablist">
-              {(['category', 'folder', 'notes'] as ViewMode[]).map(m => {
-                const isActive = viewMode === m
-                return (
-                  <button
-                    key={m}
-                    role="tab"
-                    aria-selected={isActive}
-                    type="button"
-                    onClick={() => setViewMode(m)}
-                    style={{
-                      background: isActive
-                        ? 'var(--brand)'
-                        : 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-                      color: isActive ? 'var(--brand-ink)' : 'var(--canvas-dark-ink)',
-                      borderRadius: 'var(--r-pill)',
-                      boxShadow: 'var(--sh-tile)',
-                    }}
-                    className={cn(
-                      'px-4 py-1.5 text-xs font-geist font-semibold',
-                    )}
-                  >
-                    {m === 'category' ? 'By Category' : m === 'folder' ? 'By Folder' : 'Notes'}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        </header>
-
-        {viewMode === 'category' && (
-          <ByCategoryView
-            entries={filteredEntries}
-            canEdit={canEdit}
-            isSearching={search.trim().length > 0}
-            onOpenEntry={setSelectedEntryId}
-            onAddEntryInCategory={handlePickCategory}
-          />
-        )}
-        {viewMode === 'folder' && (
-          <ByFolderView
-            entries={filteredEntries}
-            folders={wiki.folders}
-            onOpenEntry={setSelectedEntryId}
-          />
-        )}
-        {viewMode === 'notes' && (
-          <NotesView
-            notes={notes.notes}
-            bookId={wiki.bookId}
-            canEdit={canEdit}
-          />
+          </HiveSectionDivider>
         )}
 
-      </div>
-    </div>
+        <div className="px-6 pb-6">
+          {viewMode === 'category' && (
+            <ByCategoryView
+              entries={filteredEntries}
+              canEdit={canEdit}
+              isSearching={search.trim().length > 0}
+              onOpenEntry={setSelectedEntryId}
+              onAddEntryInCategory={handlePickCategory}
+            />
+          )}
+          {viewMode === 'folder' && (
+            <ByFolderView
+              entries={filteredEntries}
+              folders={wiki.folders}
+              onOpenEntry={setSelectedEntryId}
+            />
+          )}
+          {viewMode === 'notes' && (
+            <NotesView
+              notes={notes.notes}
+              bookId={wiki.bookId}
+              canEdit={canEdit}
+            />
+          )}
+        </div>
+      </HivePageShell>
+      <WikiCategoryPicker
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        onPick={c => {
+          setPickerOpen(false)
+          handlePickCategory(c)
+        }}
+      />
+    </>
   )
 }

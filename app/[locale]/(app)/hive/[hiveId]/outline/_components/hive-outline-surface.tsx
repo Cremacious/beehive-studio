@@ -16,18 +16,6 @@ import { OutlineBeatRow } from '@/app/[locale]/(app)/studio/[bookId]/_components
 import { readBeats, type Beat, type OutlineContent } from '@/app/[locale]/(app)/studio/[bookId]/_components/outline/outline-board'
 import { BeatDialog } from '@/app/[locale]/(app)/studio/[bookId]/_components/outline/beat-dialog'
 
-function relTime(d: Date): string {
-  const seconds = Math.floor((Date.now() - new Date(d).getTime()) / 1000)
-  if (seconds < 60) return 'just now'
-  const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return `${minutes}m ago`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}h ago`
-  const days = Math.floor(hours / 24)
-  if (days < 7) return `${days}d ago`
-  return new Date(d).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-}
-
 type ChapterRef = { id: string; title: string; order: number }
 
 type HiveOutlineData = {
@@ -55,8 +43,6 @@ export function HiveOutlineSurface({
       outline={data.entry.outline}
       chapters={data.chapters}
       viewerRole={data.viewerRole}
-      lastEditedByUsername={data.entry.lastEditedByUsername}
-      lastEditedAt={data.entry.lastEditedAt}
       bookId={data.bookId}
       locale={locale}
     />
@@ -67,16 +53,12 @@ function HiveOutlineSurfaceInner({
   outline,
   chapters,
   viewerRole,
-  lastEditedByUsername,
-  lastEditedAt,
   bookId: _bookId,
   locale: _locale,
 }: {
   outline: BinderItemRow
   chapters: ChapterRef[]
   viewerRole: HiveRole
-  lastEditedByUsername: string | null
-  lastEditedAt: Date | null
   bookId: string
   locale: string
 }) {
@@ -170,16 +152,7 @@ function HiveOutlineSurfaceInner({
   }
 
   return (
-    <div
-      data-slot="outline-pane"
-      style={{
-        background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
-        borderRadius: 'var(--r-card)',
-        boxShadow: 'var(--sh-card)',
-        border: 'var(--br-card)',
-      }}
-      className="p-6"
-    >
+    <div data-slot="outline-pane" className="px-6 pb-6">
       <style>{`
         [data-slot="outline-pane"] {
           --sheet-canvas:     transparent;
@@ -205,27 +178,9 @@ function HiveOutlineSurfaceInner({
         }
       `}</style>
 
-      <header
-        data-slot="outline-surface-head"
-        className="flex items-center justify-between gap-3 mb-6"
-      >
-        <div className="min-w-0">
-          <h1
-            style={{ color: 'var(--brand)' }}
-            className="font-comfortaa font-bold text-2xl truncate"
-          >
-            {outline.title || 'Untitled outline'}
-          </h1>
-        </div>
-        <div className="flex items-center gap-3">
-          {lastEditedAt && (
-            <p className="text-xs font-mono" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
-              {lastEditedByUsername ? `Last edited by @${lastEditedByUsername} · ` : 'Last edited '}{relTime(lastEditedAt)}
-            </p>
-          )}
-          <SaveStatusBadge status={saveStatus} />
-        </div>
-      </header>
+      <div className="flex justify-end mb-4">
+        <SaveStatusBadge status={saveStatus} />
+      </div>
 
       <div data-slot="outline-pane-body">
         <div className="mx-auto" style={{ maxWidth: 760 }}>

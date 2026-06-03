@@ -191,17 +191,7 @@ function HiveWikiEntryEditorInner({
   const onlyOneSection = content.sections.length <= 1
 
   return (
-    <main
-      data-slot="wiki-entry-pane"
-      className="flex-1 overflow-y-auto"
-      style={{
-        background:
-          'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
-        borderRadius: 'var(--r-card)',
-        boxShadow: 'var(--sh-card)',
-        border: 'var(--br-card)',
-      }}
-    >
+    <div data-slot="wiki-entry-pane">
       <style>{`
         [data-slot="wiki-entry-pane"] {
           --wiki-ink:           var(--canvas-dark-ink-strong);
@@ -436,6 +426,6 @@ function HiveWikiEntryEditorInner({
           </p>
         )}
       </div>
-    </main>
+    </div>
   )
 }

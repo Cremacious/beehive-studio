@@ -1,12 +1,21 @@
 import Link from 'next/link'
 import { BookOpen, ChevronRight } from 'lucide-react'
+import { ChapterActivityBadges } from './chapter-activity-badges'
 
-type Chapter = { id: string; chapterId: string | null; title: string; order: number }
+type Chapter = {
+  id: string
+  chapterId: string | null
+  title: string
+  order: number
+  annotationCount: number
+  pendingSuggestionCount: number
+}
 
 type Props = {
   hiveId: string
   locale: string
   chapters: Chapter[]
+  canReview: boolean
 }
 
 const PANEL_STYLE = {
@@ -23,7 +32,7 @@ const ROW_STYLE = {
   border: 'var(--br-card)',
 } as const
 
-export function HiveChapterIndex({ hiveId, locale, chapters }: Props) {
+export function HiveChapterIndex({ hiveId, locale, chapters, canReview }: Props) {
   const base = `/${locale}/hive/${hiveId}`
 
   if (chapters.length === 0) {
@@ -73,10 +82,17 @@ export function HiveChapterIndex({ hiveId, locale, chapters }: Props) {
                 {String(i + 1).padStart(2, '0')}
               </span>
             )
-            const title = (
-              <span className="flex-1 font-comfortaa font-semibold text-sm text-[var(--canvas-dark-ink-strong)] truncate">
-                {chapter.title}
-              </span>
+            const titleBlock = (
+              <div className="flex-1 min-w-0">
+                <span className="block font-comfortaa font-semibold text-sm text-[var(--canvas-dark-ink-strong)] truncate">
+                  {chapter.title}
+                </span>
+                <ChapterActivityBadges
+                  annotationCount={chapter.annotationCount}
+                  pendingSuggestionCount={chapter.pendingSuggestionCount}
+                  canReview={canReview}
+                />
+              </div>
             )
             // chapterId is null for binder-item rows that have no backing chapters
             // row (shouldn't happen for type='chapter' under normal conditions,
@@ -89,7 +105,7 @@ export function HiveChapterIndex({ hiveId, locale, chapters }: Props) {
                   className="flex items-center gap-3 px-4 py-3 opacity-60"
                 >
                   {num}
-                  {title}
+                  {titleBlock}
                   <span className="text-xs text-[var(--canvas-dark-ink-muted)] italic flex-shrink-0">
                     Unavailable
                   </span>
@@ -104,7 +120,7 @@ export function HiveChapterIndex({ hiveId, locale, chapters }: Props) {
                   className="flex items-center gap-3 px-4 py-3 hover:translate-y-[-1px] transition-transform group"
                 >
                   {num}
-                  {title}
+                  {titleBlock}
                   <ChevronRight className="w-4 h-4 text-[var(--canvas-dark-ink-muted)] group-hover:text-[var(--brand)] transition-colors flex-shrink-0" />
                 </Link>
               </li>

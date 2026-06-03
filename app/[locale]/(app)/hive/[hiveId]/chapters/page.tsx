@@ -1,6 +1,10 @@
 import { notFound } from 'next/navigation'
 import { requireAuth } from '@/lib/require-auth'
 import { getHiveChapterListAction } from '@/lib/actions/hive-content.actions'
+import {
+  requireHiveMember,
+  canReviewSuggestion,
+} from '@/lib/hive/permissions'
 import { HiveChapterIndex } from './_components/hive-chapter-index'
 
 export default async function HiveChaptersPage({
@@ -9,7 +13,9 @@ export default async function HiveChaptersPage({
   params: Promise<{ hiveId: string; locale: string }>
 }) {
   const { hiveId, locale } = await params
-  await requireAuth()
+  const userId = await requireAuth()
+  const role = await requireHiveMember(hiveId, userId)
+  const canReview = canReviewSuggestion(role)
   const r = await getHiveChapterListAction(hiveId)
   if (!r.success) notFound()
   return (
@@ -17,6 +23,7 @@ export default async function HiveChaptersPage({
       hiveId={hiveId}
       locale={locale}
       chapters={r.data.chapters}
+      canReview={canReview}
     />
   )
 }

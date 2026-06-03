@@ -200,6 +200,60 @@ export async function getHiveOutlineView(hiveId: string): Promise<ActionResult<{
   }
 }
 
+export async function getHiveOutlineByIdAction(
+  hiveId: string,
+  outlineId: string,
+): Promise<ActionResult<{
+  entry: HiveOutlineEntry
+  chapters: Array<{ id: string; title: string; order: number }>
+  viewerRole: HiveRole
+}>> {
+  const userId = await requireAuth()
+  const role = await requireHiveMember(hiveId, userId)
+  const hive = await db.query.hives.findFirst({
+    where: eq(hives.id, hiveId),
+    columns: { bookId: true },
+  })
+  if (!hive || !hive.bookId) return { success: false, error: 'HIVE_NOT_FOUND' }
+
+  const outline = await db.query.binderItems.findFirst({
+    where: and(
+      eq(binderItems.id, outlineId),
+      eq(binderItems.bookId, hive.bookId),
+      eq(binderItems.type, 'outline'),
+    ),
+  })
+  if (!outline) return { success: false, error: 'OUTLINE_NOT_FOUND' }
+
+  const chapterItems = await db.query.binderItems.findMany({
+    where: and(eq(binderItems.bookId, hive.bookId), eq(binderItems.type, 'chapter')),
+    columns: { id: true, title: true, order: true },
+    orderBy: [asc(binderItems.order)],
+  })
+
+  let lastEditedByUsername: string | null = null
+  if (outline.lastEditedBy) {
+    const profile = await db.query.userProfiles.findFirst({
+      where: eq(userProfiles.userId, outline.lastEditedBy),
+      columns: { username: true },
+    })
+    lastEditedByUsername = profile?.username ?? null
+  }
+
+  return {
+    success: true,
+    data: {
+      entry: {
+        outline: toBinderItemRow(outline),
+        lastEditedByUsername,
+        lastEditedAt: outline.updatedAt ?? null,
+      },
+      chapters: chapterItems,
+      viewerRole: role,
+    },
+  }
+}
+
 export async function getHiveNotesView(hiveId: string): Promise<ActionResult<{
   bookId: string
   notes: Array<BinderItemRow & { authorUsername: string | null }>

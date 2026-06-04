@@ -2,7 +2,7 @@
 
 import { db } from '@/db'
 import { hives, hiveMembers, hiveInvites, notifications, books } from '@/db/schema'
-import { eq, and, count, sql, ne } from 'drizzle-orm'
+import { eq, and, count, sql, ne, or, inArray } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { assertHiveMember, assertHiveOwner, assertHiveAdmin } from './_helpers'
 import { getUserPremiumStatus, FREE_HIVE_LIMIT, FREE_HIVE_MEMBER_LIMIT } from '@/lib/premium'
@@ -10,6 +10,7 @@ import { createHiveSchema, updateHiveSchema } from '@/lib/validations/hive'
 import { getBookHive } from '@/lib/hive/get-book-hive'
 import { requireHiveMod } from '@/lib/hive/permissions'
 import { recordHiveActivity } from '@/lib/hive/record-activity'
+import { friendships } from '@/db/schema/social'
 import { createId } from '@paralleldrive/cuid2'
 import type { ActionResult } from './book.actions'
 
@@ -330,9 +331,35 @@ export async function leaveHiveAction(hiveId: string): Promise<ActionResult> {
 }
 
 export async function getDiscoverableHivesAction(): Promise<ActionResult<HiveSummary[]>> {
-  await requireAuth()
+  const viewerUserId = await requireAuth()
+
+  // Pre-fetch viewer's ACCEPTED friend ids so FRIENDS-tier hives only surface
+  // when the viewer is friends with the hive owner. PUBLIC hives surface
+  // unconditionally; PRIVATE hives never surface.
+  const friendRows = await db.query.friendships.findMany({
+    where: and(
+      eq(friendships.status, 'ACCEPTED'),
+      or(
+        eq(friendships.requesterId, viewerUserId),
+        eq(friendships.recipientId, viewerUserId),
+      ),
+    ),
+    columns: { requesterId: true, recipientId: true },
+  })
+  const friendIds = friendRows.map((r) =>
+    r.requesterId === viewerUserId ? r.recipientId : r.requesterId,
+  )
+
   const rows = await db.query.hives.findMany({
-    where: and(eq(hives.visibility, 'PUBLIC'), eq(hives.discoverable, true)),
+    where: and(
+      eq(hives.discoverable, true),
+      friendIds.length > 0
+        ? or(
+            eq(hives.visibility, 'PUBLIC'),
+            and(eq(hives.visibility, 'FRIENDS'), inArray(hives.ownerId, friendIds)),
+          )
+        : eq(hives.visibility, 'PUBLIC'),
+    ),
     orderBy: (t, { desc }) => [desc(t.createdAt)],
     limit: 50,
   })

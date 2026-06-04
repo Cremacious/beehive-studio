@@ -211,6 +211,8 @@ export async function getProfileSparksAction(
       deadline: sparks.deadline,
       wordLimit: sparks.wordLimit,
       winnerEntryId: sparks.winnerEntryId,
+      visibility: sparks.visibility,
+      votingEndsAt: sparks.votingEndsAt,
       creatorUsername: userProfiles.username,
       creatorDisplayName: userProfiles.displayName,
       entryCount: count(sparkEntries.id),
@@ -225,6 +227,8 @@ export async function getProfileSparksAction(
       sparks.deadline,
       sparks.wordLimit,
       sparks.winnerEntryId,
+      sparks.visibility,
+      sparks.votingEndsAt,
       userProfiles.username,
       userProfiles.displayName
     )
@@ -236,6 +240,8 @@ export async function getProfileSparksAction(
     deadline: r.deadline ?? new Date(0),
     wordLimit: r.wordLimit ?? null,
     status: computeSparkStatus(r.deadline ?? new Date(0)),
+    visibility: r.visibility,
+    votingEndsAt: r.votingEndsAt ?? null,
     entryCount: Number(r.entryCount),
     creatorUsername: r.creatorUsername ?? null,
     creatorDisplayName: r.creatorDisplayName ?? null,

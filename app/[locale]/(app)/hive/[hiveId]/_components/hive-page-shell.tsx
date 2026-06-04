@@ -39,7 +39,7 @@ export function HivePageShell({
   children,
 }: HivePageShellProps) {
   return (
-    <div className={`mx-auto w-full ${WIDTH_CLASS[width]} p-6`}>
+    <div className={`mx-auto w-full ${WIDTH_CLASS[width]} p-6 flex flex-col min-h-screen`}>
       {back && (
         <Link
           href={back.href}
@@ -51,7 +51,7 @@ export function HivePageShell({
       )}
 
       <section
-        className="rounded-[var(--r-card)] overflow-hidden"
+        className="rounded-[var(--r-card)] overflow-hidden flex-1"
         style={{
           background:
             'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',

@@ -134,6 +134,13 @@
   --goal-monthly: oklch(0.72 0.11 280);  /* lilac — long horizon */
   --goal-custom:  oklch(0.66 0.04 240);  /* cool gray — bespoke */
 
+  /* Annotation layers (5) — promoted from inline oklch values in hive collab UI */
+  --layer-grammar:    oklch(0.78 0.13 70);   /* gold */
+  --layer-plot:       oklch(0.66 0.18 25);   /* coral */
+  --layer-tone:       oklch(0.72 0.11 280);  /* lilac */
+  --layer-continuity: oklch(0.74 0.12 145);  /* mint */
+  --layer-general:    oklch(0.66 0.04 240);  /* cool gray */
+
   /* ── Binder item types (6) ─────────────────────────────────────── */
   --type-chapter:      var(--brand);
   --type-front-matter: oklch(0.74 0.065 290);

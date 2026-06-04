@@ -1,68 +1,114 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { getHiveActivityFeedAction, type HiveActivityEvent } from '@/lib/actions/hive-activity.actions'
+import { useState, useTransition } from 'react'
+import { getCommunityFeedAction, type FeedRow } from '@/lib/actions/community.actions'
 import { ActivityEventRow } from './activity-event-row'
 
 export function ActivityFeed({
-  initialItems,
-  initialNextCursor,
+  initialRows,
+  initialCursor,
+  locale,
 }: {
-  initialItems: HiveActivityEvent[]
-  initialNextCursor: string | null
+  initialRows: FeedRow[]
+  initialCursor: string | null
+  locale: string
 }) {
-  const params = useParams<{ locale: string }>()
-  const locale = params.locale
-  const [items, setItems] = useState(initialItems)
-  const [cursor, setCursor] = useState(initialNextCursor)
+  const [rows, setRows] = useState(initialRows)
+  const [cursor, setCursor] = useState(initialCursor)
   const [pending, startTransition] = useTransition()
 
   function loadOlder() {
     if (!cursor) return
     startTransition(async () => {
-      const res = await getHiveActivityFeedAction({ cursor, limit: 30 })
+      const res = await getCommunityFeedAction({ cursor, limit: 20 })
       if (res.success) {
-        setItems(prev => [...prev, ...res.data.items])
+        setRows((prev) => [...prev, ...res.data.rows])
         setCursor(res.data.nextCursor)
       }
     })
   }
 
-  if (items.length === 0) {
+  if (rows.length === 0) {
     return (
-      <section className="bg-card border border-border rounded-lg p-6 text-center flex flex-col gap-2">
-        <p className="text-sm text-foreground">You&apos;re not in any hives yet.</p>
-        <p className="text-xs text-muted-foreground">
-          Hives are small writing groups where you swap drafts, leave suggestions, and ship together.
-        </p>
-        <Link
-          href={`/${locale}/studio`}
-          className="text-xs px-3 py-1.5 rounded bg-brand/10 text-brand border border-brand/20 hover:bg-brand/20 transition-colors inline-block self-center mt-1"
+      <section
+        style={{
+          background:
+            'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+          borderRadius: 'var(--r-card)',
+          boxShadow: 'var(--sh-card)',
+          border: 'var(--br-card)',
+        }}
+        className="flex flex-col items-center gap-3 p-8 text-center"
+      >
+        <p
+          style={{ color: 'var(--canvas-dark-ink-strong)' }}
+          className="text-sm font-semibold"
         >
-          Find or create a Hive
-        </Link>
+          Your feed is quiet right now
+        </p>
+        <p
+          style={{ color: 'var(--canvas-dark-ink-muted)' }}
+          className="max-w-md text-xs"
+        >
+          Add friends or follow writers to fill your feed.
+        </p>
+        <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+          <Link
+            href={`/${locale}/friends`}
+            style={{
+              background: 'var(--brand)',
+              color: 'var(--brand-ink)',
+              borderRadius: 'var(--r-pill)',
+            }}
+            className="px-4 py-2 text-xs font-semibold"
+          >
+            Find friends
+          </Link>
+          <Link
+            href={`/${locale}/discover`}
+            style={{
+              background: 'var(--brand)',
+              color: 'var(--brand-ink)',
+              borderRadius: 'var(--r-pill)',
+            }}
+            className="px-4 py-2 text-xs font-semibold"
+          >
+            Discover writers
+          </Link>
+        </div>
       </section>
     )
   }
 
   return (
     <div className="flex flex-col gap-3">
-      {items.map(e => (
-        <ActivityEventRow key={e.id} event={e} locale={locale} />
+      {rows.map((row) => (
+        <ActivityEventRow key={row.id} row={row} locale={locale} />
       ))}
-
       {cursor ? (
         <button
+          type="button"
           onClick={loadOlder}
           disabled={pending}
-          className="text-xs px-4 py-2 rounded border border-border text-foreground hover:bg-surface-elevated transition-colors disabled:opacity-50 self-center"
+          style={{
+            background:
+              'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+            boxShadow: 'var(--sh-tile)',
+            borderRadius: 'var(--r-pill)',
+            color: 'var(--canvas-dark-ink-strong)',
+          }}
+          className="self-center px-4 py-2 text-xs font-semibold disabled:opacity-50"
         >
           {pending ? 'Loading…' : 'Load older'}
         </button>
       ) : (
-        <p className="text-xs text-muted-foreground text-center py-2">You&apos;re all caught up.</p>
+        <p
+          style={{ color: 'var(--canvas-dark-ink-muted)' }}
+          className="py-2 text-center text-xs"
+        >
+          You&apos;re all caught up.
+        </p>
       )}
     </div>
   )

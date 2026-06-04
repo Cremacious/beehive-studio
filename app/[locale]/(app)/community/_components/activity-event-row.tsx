@@ -1,8 +1,11 @@
-import Link from 'next/link'
-import type { HiveActivityEvent } from '@/lib/actions/hive-activity.actions'
+'use client'
 
-function relTime(d: Date): string {
-  const seconds = Math.floor((Date.now() - new Date(d).getTime()) / 1000)
+import Link from 'next/link'
+import type { FeedRow } from '@/lib/actions/community.actions'
+
+function relTime(d: Date | string): string {
+  const date = new Date(d)
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000)
   if (seconds < 60) return 'just now'
   const minutes = Math.floor(seconds / 60)
   if (minutes < 60) return `${minutes}m ago`
@@ -10,89 +13,152 @@ function relTime(d: Date): string {
   if (hours < 24) return `${hours}h ago`
   const days = Math.floor(hours / 24)
   if (days < 7) return `${days}d ago`
-  return new Date(d).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
 
-const VERB: Record<string, string> = {
-  chapter_submitted: 'submitted a chapter',
-  chapter_submitted_approved: 'had a chapter approved',
-  chapter_submitted_rejected: 'had a chapter sent back for revision',
-  annotation_added: 'left an annotation',
-  suggestion_proposed: 'proposed a suggestion',
-  suggestion_accepted: 'had a suggestion accepted',
-  suggestion_rejected: 'had a suggestion declined',
-  buzz_posted: 'posted a buzz',
-  discussion_posted: 'posted in discussion',
-  member_joined: 'joined the hive',
+const VERB: Record<FeedRow['type'], string> = {
+  book_published: 'published',
+  chapter_posted: 'posted a new chapter',
+  book_liked: 'liked',
+  book_commented: 'commented on',
+  spark_entry_submitted: 'entered the Spark',
+  spark_won_community: 'won the community vote for the Spark',
+  spark_won_creator_choice: "was picked as the creator's choice for the Spark",
+  hive_created: 'started a new hive',
+  hive_joined: 'joined the hive',
 }
 
-// Activity payload shape (set by createBuzzPostAction):
-//   { type: 'TEXT' | 'LINK', bodyExcerpt: string, linkUrl: string | null }
-function buzzVerb(payload: unknown): string {
-  if (!payload || typeof payload !== 'object') return VERB.buzz_posted
-  const p = payload as { type?: unknown; bodyExcerpt?: unknown; linkUrl?: unknown }
-  if (p.type === 'LINK' && typeof p.linkUrl === 'string') {
-    try {
-      const host = new URL(p.linkUrl).hostname
-      return `shared a link to ${host}`
-    } catch {
-      return 'shared a link'
+function subjectHref(row: FeedRow, locale: string): string | null {
+  const { subject } = row
+  if (!subject) return null
+  switch (subject.type) {
+    case 'book':
+      return `/${locale}/books/${subject.id}`
+    case 'chapter':
+      return subject.bookId ? `/${locale}/books/${subject.bookId}/read/${subject.id}` : null
+    case 'hive':
+      return `/${locale}/hive/${subject.id}`
+    default:
+      return null
+  }
+}
+
+export function ActivityEventRow({ row, locale }: { row: FeedRow; locale: string }) {
+  const verb = VERB[row.type] ?? 'made an update'
+  const handle = row.actor.username ? `@${row.actor.username}` : row.actor.displayName ?? 'Someone'
+  const initial = (row.actor.username ?? row.actor.displayName ?? '?')[0]?.toUpperCase() ?? '?'
+  const href = subjectHref(row, locale)
+  const subjectTitle = row.subject?.title ?? null
+  const italicizeSubject = row.subject?.type === 'book' || row.subject?.type === 'chapter'
+
+  const subjectNode = (() => {
+    if (!subjectTitle) {
+      return <span style={{ color: 'var(--canvas-dark-ink-muted)' }}>[subject]</span>
     }
-  }
-  if (p.type === 'TEXT' && typeof p.bodyExcerpt === 'string') {
-    const excerpt = p.bodyExcerpt.length > 80 ? `${p.bodyExcerpt.slice(0, 80)}...` : p.bodyExcerpt
-    return `posted: '${excerpt}'`
-  }
-  return VERB.buzz_posted
-}
-
-export function ActivityEventRow({ event, locale }: { event: HiveActivityEvent; locale: string }) {
-  const verb = event.type === 'buzz_posted' ? buzzVerb(event.payload) : (VERB[event.type] ?? 'made an update')
-  const handle = event.actorUsername ? `@${event.actorUsername}` : 'Someone'
-  const initial = event.actorUsername?.[0]?.toUpperCase() ?? '?'
+    const inner = italicizeSubject ? <em>{subjectTitle}</em> : <span>{subjectTitle}</span>
+    if (href) {
+      return (
+        <Link
+          href={href}
+          style={{ color: 'var(--canvas-dark-ink-strong)' }}
+          className="hover:underline"
+        >
+          {inner}
+        </Link>
+      )
+    }
+    return <span style={{ color: 'var(--canvas-dark-ink-strong)' }}>{inner}</span>
+  })()
 
   return (
-    <article className="bg-card border border-border rounded-lg p-4 flex gap-3">
-      {event.actorUsername ? (
-        <Link href={`/${locale}/u/${event.actorUsername}`} className="shrink-0">
-          {event.actorAvatarUrl ? (
+    <article
+      style={{
+        background:
+          'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+        borderRadius: 'var(--r-card)',
+        boxShadow: 'var(--sh-card)',
+        border: 'var(--br-card)',
+        borderLeft: row.isFriend ? '2px solid var(--brand)' : undefined,
+      }}
+      className="flex gap-3 p-4"
+    >
+      {row.actor.username ? (
+        <Link href={`/${locale}/u/${row.actor.username}`} className="shrink-0">
+          {row.actor.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={event.actorAvatarUrl} alt="" className="w-8 h-8 rounded-full object-cover" />
+            <img
+              src={row.actor.avatarUrl}
+              alt=""
+              className="h-9 w-9 rounded-full object-cover"
+            />
           ) : (
-            <span className="w-8 h-8 rounded-full bg-brand/20 border border-brand/30 flex items-center justify-center text-[11px] font-bold text-brand">
+            <span
+              style={{
+                background: 'oklch(from var(--brand) l c h / 0.18)',
+                border: '1px solid oklch(from var(--brand) l c h / 0.3)',
+                color: 'var(--brand)',
+              }}
+              className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold"
+            >
               {initial}
             </span>
           )}
         </Link>
       ) : (
-        <span className="w-8 h-8 rounded-full bg-brand/20 border border-brand/30 flex items-center justify-center text-[11px] font-bold text-brand shrink-0">
+        <span
+          style={{
+            background: 'oklch(from var(--brand) l c h / 0.18)',
+            border: '1px solid oklch(from var(--brand) l c h / 0.3)',
+            color: 'var(--brand)',
+          }}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+        >
           {initial}
         </span>
       )}
 
-      <div className="flex-1 min-w-0 flex flex-col gap-1">
-        <div className="flex items-center justify-between gap-2 text-xs">
-          <div className="truncate">
-            {event.actorUsername ? (
+      <div className="flex min-w-0 flex-1 flex-col gap-2">
+        <div className="flex items-start justify-between gap-2">
+          <p style={{ color: 'var(--canvas-dark-ink)' }} className="text-sm leading-snug">
+            {row.actor.username ? (
               <Link
-                href={`/${locale}/u/${event.actorUsername}`}
-                className="text-foreground font-medium hover:text-brand"
+                href={`/${locale}/u/${row.actor.username}`}
+                style={{ color: 'var(--canvas-dark-ink-strong)' }}
+                className="font-semibold hover:underline"
               >
                 {handle}
               </Link>
             ) : (
-              <span className="text-foreground font-medium">{handle}</span>
-            )}
-            <span className="text-muted-foreground"> {verb} in </span>
-            <Link
-              href={`/${locale}/hive/${event.hiveId}`}
-              className="text-foreground font-medium hover:text-brand"
-            >
-              {event.hiveName}
-            </Link>
-          </div>
-          <span className="text-[10px] text-muted-foreground shrink-0">{relTime(event.createdAt)}</span>
+              <span style={{ color: 'var(--canvas-dark-ink-strong)' }} className="font-semibold">
+                {handle}
+              </span>
+            )}{' '}
+            <span style={{ color: 'var(--canvas-dark-ink-muted)' }}>{verb}</span>{' '}
+            {subjectNode}
+          </p>
+          <span
+            style={{ color: 'var(--canvas-dark-ink-muted)' }}
+            className="shrink-0 font-mono text-[10px] uppercase tracking-wider"
+          >
+            {relTime(row.createdAt)}
+          </span>
         </div>
+
+        {row.subject?.coverUrl &&
+        (row.subject.type === 'book' || row.subject.type === 'chapter') ? (
+          <div className="flex">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={row.subject.coverUrl}
+              alt=""
+              style={{
+                borderRadius: 'var(--r-row)',
+                boxShadow: 'var(--sh-tile)',
+              }}
+              className="h-16 w-12 object-cover"
+            />
+          </div>
+        ) : null}
       </div>
     </article>
   )

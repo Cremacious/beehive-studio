@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, integer, boolean, primaryKey, pgEnum, index, AnyPgColumn } from 'drizzle-orm/pg-core'
+import { pgTable, text, timestamp, integer, boolean, primaryKey, pgEnum, index, jsonb, AnyPgColumn } from 'drizzle-orm/pg-core'
 import { createId } from '@paralleldrive/cuid2'
 import { relations } from 'drizzle-orm'
 import { users } from './auth'
@@ -23,6 +23,7 @@ export const notificationTypeEnum = pgEnum('notification_type', [
   'HIVE_INVITE', 'HIVE_SUBMISSION', 'HIVE_SUGGESTION', 'SPARK_WIN',
   'HIVE_JOIN_REQUEST', 'HIVE_JOIN_APPROVED', 'HIVE_MEMBER_JOINED',
   'CHAPTER_EDITED', 'HIVE_COMMENT', 'TASK_ASSIGNED', 'TASK_COMPLETED',
+  'FRIEND_REQUEST', 'FRIEND_ACCEPTED',
 ])
 
 export const follows = pgTable('follows', {
@@ -129,3 +130,54 @@ export const bookCommentsRelations = relations(bookComments, ({ one, many }) => 
 export const notificationsRelations = relations(notifications, ({ one }) => ({
   actor: one(users, { fields: [notifications.actorId], references: [users.id] }),
 }))
+
+export const socialActivityTypeEnum = pgEnum('social_activity_type', [
+  'book_published',
+  'chapter_posted',
+  'book_liked',
+  'book_commented',
+  'spark_entry_submitted',
+  'spark_won_community',
+  'spark_won_creator_choice',
+  'hive_created',
+  'hive_joined',
+])
+
+export type SocialActivityType = (typeof socialActivityTypeEnum.enumValues)[number]
+
+export const socialActivity = pgTable('social_activity', {
+  id: text('id').primaryKey().$defaultFn(() => createId()),
+  actorId: text('actor_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  type: socialActivityTypeEnum('type').notNull(),
+  subjectType: text('subject_type').notNull(),
+  subjectId: text('subject_id').notNull(),
+  payload: jsonb('payload').$type<Record<string, unknown>>(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (t) => [
+  index('social_activity_actor_created_idx').on(t.actorId, t.createdAt),
+  index('social_activity_subject_idx').on(t.subjectType, t.subjectId),
+])
+
+export const userBlocks = pgTable('user_blocks', {
+  blockerId: text('blocker_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  blockedId: text('blocked_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (t) => [
+  primaryKey({ columns: [t.blockerId, t.blockedId] }),
+  index('user_blocks_blocked_idx').on(t.blockedId),
+])
+
+export const userMutes = pgTable('user_mutes', {
+  muterId: text('muter_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  mutedId: text('muted_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (t) => [primaryKey({ columns: [t.muterId, t.mutedId] })])
+
+export const friendInvites = pgTable('friend_invites', {
+  token: text('token').primaryKey(),
+  inviterId: text('inviter_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  expiresAt: timestamp('expires_at').notNull(),
+  claimedBy: text('claimed_by').references(() => users.id, { onDelete: 'set null' }),
+  claimedAt: timestamp('claimed_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (t) => [index('friend_invites_inviter_idx').on(t.inviterId)])

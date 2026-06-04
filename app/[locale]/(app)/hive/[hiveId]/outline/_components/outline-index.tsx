@@ -75,7 +75,7 @@ export function OutlineIndex({
   }, [outlines, search, sort])
 
   return (
-    <div className="px-6 pb-6">
+    <div className="pb-6">
       <HiveSectionDivider label="Filter" hideTopBorder>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div
@@ -127,14 +127,23 @@ export function OutlineIndex({
         </div>
       </HiveSectionDivider>
 
-      <HiveSectionDivider label="Outlines">
+      <section
+        className="pt-1"
+        style={{ borderTop: '1px solid oklch(from var(--canvas-dark-300) l c h / 0.5)' }}
+      >
+        <p
+          className="px-6 pt-5 pb-3 font-mono text-[10px] uppercase tracking-wider"
+          style={{ color: 'var(--canvas-dark-ink-muted)' }}
+        >
+          Outlines
+        </p>
         <div
-          className="grid items-center gap-4 px-5 py-2.5 text-[10px] font-mono uppercase tracking-wider"
+          className="grid items-center gap-4 px-6 py-2.5 text-[10px] font-mono uppercase tracking-wider"
           style={{
             gridTemplateColumns: '1fr 90px 130px',
             color: 'var(--canvas-dark-ink-muted)',
             background: 'var(--canvas-dark-100)',
-            borderRadius: 'var(--r-row) var(--r-row) 0 0',
+            borderTop: '1px solid var(--br-card)',
             borderBottom: '1px solid var(--br-card)',
           }}
         >
@@ -144,7 +153,7 @@ export function OutlineIndex({
         </div>
 
         {filtered.length === 0 ? (
-          <div className="px-5 py-16 text-center">
+          <div className="px-6 py-16 text-center">
             <p className="text-sm font-medium" style={{ color: 'var(--canvas-dark-ink-strong)' }}>
               {outlines.length === 0 ? 'No outlines yet' : 'No matches'}
             </p>
@@ -166,7 +175,7 @@ export function OutlineIndex({
                 <li key={o.outline.id}>
                   <Link
                     href={`/${locale}/hive/${hiveId}/outline/${o.outline.id}`}
-                    className="grid items-center gap-4 px-5 py-4 transition-colors hover:bg-[var(--canvas-dark-300)]"
+                    className="grid items-center gap-4 px-6 py-4 transition-colors hover:bg-[var(--canvas-dark-300)]"
                     style={{ gridTemplateColumns: '1fr 90px 130px' }}
                   >
                     <div className="min-w-0 flex flex-col gap-[7px]">
@@ -227,7 +236,7 @@ export function OutlineIndex({
             })}
           </ul>
         )}
-      </HiveSectionDivider>
+      </section>
     </div>
   )
 }

@@ -34,6 +34,11 @@ export function StatusPill({ status }: { status: SubmissionDraftStatus }) {
   return <HivePill token={STATUS_TOKEN[status]}>{STATUS_LABEL[status]}</HivePill>
 }
 
+/**
+ * Submitter meta block — avatar + identity + word-count badge.
+ * Renders FLAT (no panel chrome) because callers mount it inside <HiveSectionDivider>.
+ * Mirrors the `.review-meta` shape from the Claude Design mockup.
+ */
 export function SubmissionMetaHeader({
   submission,
   submitter,
@@ -47,34 +52,42 @@ export function SubmissionMetaHeader({
     <div className="flex items-center gap-3">
       <span
         aria-hidden
-        className="inline-flex items-center justify-center w-10 h-10 rounded-full text-sm font-semibold shrink-0"
-        style={{ background: 'oklch(from var(--color-brand) l c h / 0.18)', color: 'var(--color-brand)' }}
+        className="inline-flex items-center justify-center w-8 h-8 rounded-full text-[13px] font-semibold shrink-0"
+        style={{
+          background: 'oklch(from var(--color-brand) l c h / 0.18)',
+          color: 'var(--color-brand)',
+        }}
       >
         {initial}
       </span>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 min-w-0 flex-wrap">
-          <h2
-            className="font-comfortaa font-bold text-lg truncate"
-            style={{ color: 'var(--canvas-dark-ink-strong)' }}
-          >
-            {submission.title || 'Untitled submission'}
-          </h2>
-          <StatusPill status={submission.draftStatus} />
+        <div
+          className="font-comfortaa font-medium text-[14px] truncate"
+          style={{ color: 'var(--canvas-dark-ink-strong)' }}
+        >
+          {submitter.username ? `@${submitter.username}` : 'Unknown submitter'}
         </div>
         <div
-          className="flex items-center gap-2 text-[11px] font-mono mt-1 flex-wrap"
+          className="flex items-center gap-2 text-[11px] font-mono mt-0.5 flex-wrap"
           style={{ color: 'var(--canvas-dark-ink-muted)' }}
         >
-          {submitter.username && <span>@{submitter.username}</span>}
-          <span>·</span>
           <span>Submitted {fmtDate(submission.createdAt)}</span>
           <span>·</span>
           <span>{targetOrderLabel(submission.targetChapterOrder)}</span>
-          <span>·</span>
-          <span>{submission.wordCount.toLocaleString()} words</span>
         </div>
       </div>
+      <span
+        aria-hidden
+        className="inline-flex items-center font-mono text-[11px] px-2.5 py-1 shrink-0"
+        style={{
+          background: 'var(--canvas-dark-100)',
+          boxShadow: 'var(--sh-inset)',
+          borderRadius: 'var(--r-pill)',
+          color: 'var(--canvas-dark-ink-muted)',
+        }}
+      >
+        {submission.wordCount.toLocaleString()} words
+      </span>
     </div>
   )
 }

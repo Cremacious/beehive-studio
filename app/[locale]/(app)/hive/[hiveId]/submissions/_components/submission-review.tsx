@@ -9,6 +9,7 @@ import Highlight from '@tiptap/extension-highlight'
 import TipTapLink from '@tiptap/extension-link'
 import Typography from '@tiptap/extension-typography'
 import TextAlign from '@tiptap/extension-text-align'
+import { Check, X } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   approveSubmissionAction,
@@ -93,36 +94,72 @@ export function SubmissionReview({ submission, submitter, book, hiveId, locale }
     }
   }
 
+  const busy = approving || rejecting
+
   const approveRejectGroup = (
     <div className="flex items-center gap-2">
       <button
         type="button"
-        onClick={() => setRejectOpen(true)}
-        disabled={approving || rejecting}
-        style={{
-          background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-          color: 'var(--status-error)',
-          border: '1px solid oklch(from var(--status-error) l c h / 0.3)',
-          borderRadius: 'var(--r-pill)',
-          boxShadow: 'var(--sh-tile)',
-        }}
-        className="px-4 py-2 text-[13px] font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        Reject
-      </button>
-      <button
-        type="button"
         onClick={handleApprove}
-        disabled={approving || rejecting}
+        disabled={busy}
         style={{
           background: 'var(--brand)',
           color: 'var(--brand-ink)',
           borderRadius: 'var(--r-pill)',
           boxShadow: 'var(--sh-tile)',
+          transition: 'background .14s, transform .1s',
         }}
-        className="px-4 py-2 text-[13px] font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+        onMouseEnter={(e) => {
+          if (busy) return
+          e.currentTarget.style.background = 'var(--brand-hover)'
+          e.currentTarget.style.transform = 'translateY(-1px)'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'var(--brand)'
+          e.currentTarget.style.transform = 'none'
+        }}
+        onMouseDown={(e) => {
+          if (busy) return
+          e.currentTarget.style.background = 'var(--brand-active)'
+          e.currentTarget.style.transform = 'none'
+        }}
+        onMouseUp={(e) => {
+          if (busy) return
+          e.currentTarget.style.background = 'var(--brand-hover)'
+          e.currentTarget.style.transform = 'translateY(-1px)'
+        }}
+        className="inline-flex items-center gap-1.5 px-4 py-2 text-[13px] font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
       >
+        <Check size={14} />
         {approving ? 'Approving…' : 'Approve'}
+      </button>
+      <button
+        type="button"
+        onClick={() => setRejectOpen(true)}
+        disabled={busy}
+        style={{
+          background:
+            'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+          color: 'var(--status-error)',
+          border: '1px solid oklch(from var(--status-error) l c h / 0.3)',
+          borderRadius: 'var(--r-pill)',
+          boxShadow: 'var(--sh-tile)',
+          transition: 'color .14s, transform .1s',
+        }}
+        onMouseEnter={(e) => {
+          if (busy) return
+          e.currentTarget.style.color =
+            'oklch(from var(--status-error) calc(l + 0.08) c h)'
+          e.currentTarget.style.transform = 'translateY(-1px)'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.color = 'var(--status-error)'
+          e.currentTarget.style.transform = 'none'
+        }}
+        className="inline-flex items-center gap-1.5 px-4 py-2 text-[13px] font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <X size={14} />
+        Reject
       </button>
     </div>
   )
@@ -141,7 +178,16 @@ export function SubmissionReview({ submission, submitter, book, hiveId, locale }
           <SubmissionMetaHeader submission={submission} submitter={submitter} />
         </HiveSectionDivider>
         <HiveSectionDivider label="Body">
-          <EditorContent editor={editor} />
+          <div
+            style={{
+              background: 'var(--canvas-dark-100)',
+              boxShadow: 'var(--sh-inset)',
+              borderRadius: 'var(--r-row)',
+              padding: '22px 26px',
+            }}
+          >
+            <EditorContent editor={editor} />
+          </div>
         </HiveSectionDivider>
       </div>
 

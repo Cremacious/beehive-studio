@@ -59,17 +59,35 @@ export function SubmissionRead({ submission, submitter, book, hiveId, locale }: 
         </HiveSectionDivider>
 
         <HiveSectionDivider label="Body">
-          <EditorContent editor={editor} />
+          <div
+            style={{
+              background: 'var(--canvas-dark-100)',
+              boxShadow: 'var(--sh-inset)',
+              borderRadius: 'var(--r-row)',
+              padding: '22px 26px',
+            }}
+          >
+            <EditorContent editor={editor} />
+          </div>
         </HiveSectionDivider>
 
         {submission.draftStatus === 'REJECTED' && (
-          <HiveSectionDivider label="Review note">
-            <p
-              className="text-sm whitespace-pre-wrap"
-              style={{ color: 'var(--canvas-dark-ink)' }}
+          <HiveSectionDivider label="Review note" tone="danger">
+            <div
+              style={{
+                background: 'var(--canvas-dark-100)',
+                boxShadow: 'var(--sh-inset)',
+                borderRadius: 'var(--r-row)',
+                padding: '16px 18px',
+              }}
             >
-              {submission.reviewNote || '(No note left by the reviewer.)'}
-            </p>
+              <p
+                className="text-sm whitespace-pre-wrap m-0"
+                style={{ color: 'var(--canvas-dark-ink)' }}
+              >
+                {submission.reviewNote || '(No note left by the reviewer.)'}
+              </p>
+            </div>
           </HiveSectionDivider>
         )}
 

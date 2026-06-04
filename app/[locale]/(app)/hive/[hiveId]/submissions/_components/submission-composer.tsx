@@ -17,6 +17,7 @@ import {
 } from '@/lib/actions/hive-submissions.actions'
 import { extractWordCount } from '@/lib/tiptap-utils'
 import { SaveStatusBadge, type FormSaveStatus } from '@/app/[locale]/(app)/studio/[bookId]/_components/front-back-matter/save-status-badge'
+import { HivePageShell } from '../../_components/hive-page-shell'
 import { HiveSectionDivider } from '../../_components/hive-section-divider'
 
 type ChapterRef = { id: string; title: string; order: number }
@@ -178,135 +179,211 @@ export function SubmissionComposer({
 
   const canSubmit = editable && submissionId !== null && wordCount > 0 && !submitting
 
+  const shellTitle =
+    mode === 'new'
+      ? title.trim() || 'New submission'
+      : title.trim() || 'Untitled submission'
+
   return (
-    <div data-slot="submission-composer-pane">
-      <style>{`
-        [data-slot="submission-composer-pane"] .ProseMirror {
-          color: var(--canvas-dark-ink);
-          caret-color: var(--brand);
-          outline: none;
-          font-family: var(--font-prose, var(--font-newsreader, serif));
-          font-size: 17px;
-          line-height: 1.7;
-          min-height: 360px;
-        }
-        [data-slot="submission-composer-pane"] .ProseMirror p { margin: 0 0 1em; }
-        [data-slot="submission-composer-pane"] .ProseMirror h1,
-        [data-slot="submission-composer-pane"] .ProseMirror h2,
-        [data-slot="submission-composer-pane"] .ProseMirror h3 {
-          color: var(--canvas-dark-ink-strong);
-          font-family: var(--font-display);
-          font-weight: 700;
-        }
-        [data-slot="submission-composer-pane"] .ProseMirror strong { color: var(--canvas-dark-ink-strong); font-weight: 600; }
-        [data-slot="submission-composer-pane"] .ProseMirror blockquote {
-          color: var(--canvas-dark-ink-muted);
-          border-left: 3px solid oklch(from var(--brand) l c h / 0.55);
-          padding-left: 0.9em; margin: 0.6em 0;
-        }
-        [data-slot="submission-composer-pane"] .ProseMirror ul,
-        [data-slot="submission-composer-pane"] .ProseMirror ol { padding-left: 1.4em; margin: 0 0 1em; }
-        [data-slot="submission-composer-pane"] .ProseMirror ul { list-style: disc; }
-        [data-slot="submission-composer-pane"] .ProseMirror ol { list-style: decimal; }
-      `}</style>
+    <HivePageShell
+      width="standard"
+      title={shellTitle}
+      subtitle="Auto-saves as you type."
+      back={{ href: `/${locale}/hive/${hiveId}/submissions`, label: 'submissions' }}
+    >
+      <div data-slot="submission-composer-pane">
+        <style>{`
+          [data-slot="submission-composer-pane"] .ProseMirror {
+            color: var(--canvas-dark-ink);
+            caret-color: var(--brand);
+            outline: none;
+            font-family: var(--font-prose, var(--font-newsreader, serif));
+            font-size: 18px;
+            line-height: 1.78;
+            min-height: 240px;
+          }
+          [data-slot="submission-composer-pane"] .ProseMirror p { margin: 0 0 1.1em; text-wrap: pretty; }
+          [data-slot="submission-composer-pane"] .ProseMirror p:last-child { margin-bottom: 0; }
+          [data-slot="submission-composer-pane"] .ProseMirror h1,
+          [data-slot="submission-composer-pane"] .ProseMirror h2,
+          [data-slot="submission-composer-pane"] .ProseMirror h3 {
+            color: var(--canvas-dark-ink-strong);
+            font-family: var(--font-display);
+            font-weight: 700;
+          }
+          [data-slot="submission-composer-pane"] .ProseMirror strong { color: var(--canvas-dark-ink-strong); font-weight: 600; }
+          [data-slot="submission-composer-pane"] .ProseMirror blockquote {
+            color: var(--canvas-dark-ink-muted);
+            border-left: 3px solid oklch(from var(--brand) l c h / 0.55);
+            padding-left: 0.9em; margin: 0.6em 0;
+          }
+          [data-slot="submission-composer-pane"] .ProseMirror ul,
+          [data-slot="submission-composer-pane"] .ProseMirror ol { padding-left: 1.4em; margin: 0 0 1em; }
+          [data-slot="submission-composer-pane"] .ProseMirror ul { list-style: disc; }
+          [data-slot="submission-composer-pane"] .ProseMirror ol { list-style: decimal; }
+          [data-slot="submission-composer-pane"] [data-placeholder]:empty::before {
+            content: attr(data-placeholder);
+            color: var(--canvas-dark-ink-muted);
+            pointer-events: none;
+          }
+        `}</style>
 
-      <HiveSectionDivider label="Save status" hideTopBorder>
-        <div className="flex items-center justify-between gap-3">
-          {editable ? (
-            <SaveStatusBadge status={saveStatus} />
-          ) : (
-            <span
-              className="text-xs italic"
-              style={{ color: 'var(--canvas-dark-ink-muted)' }}
-            >
-              This submission is locked — already submitted.
-            </span>
-          )}
-          <span
-            className="text-[11px] font-mono"
-            style={{ color: 'var(--canvas-dark-ink-muted)' }}
-          >
-            {wordCount.toLocaleString()} words
-          </span>
-        </div>
-      </HiveSectionDivider>
+        <HiveSectionDivider label="Draft" hideTopBorder>
+          <div className="flex flex-col gap-4">
+            {/* Save status row */}
+            <div className="flex items-center justify-between gap-3">
+              {editable ? (
+                <SaveStatusBadge status={saveStatus} />
+              ) : (
+                <span
+                  className="text-xs italic"
+                  style={{ color: 'var(--canvas-dark-ink-muted)' }}
+                >
+                  This submission is locked — already submitted.
+                </span>
+              )}
+              <span
+                className="font-mono text-[11px]"
+                style={{ color: 'var(--canvas-dark-ink-muted)' }}
+              >
+                {wordCount.toLocaleString()} words
+              </span>
+            </div>
 
-      <HiveSectionDivider label="Title">
-        <div
-          role="textbox"
-          contentEditable={editable}
-          suppressContentEditableWarning
-          spellCheck
-          data-placeholder="Untitled submission"
-          className="font-comfortaa font-bold text-2xl outline-none"
-          style={{ color: 'var(--canvas-dark-ink-strong)' }}
-          onBlur={e => {
-            const next = (e.currentTarget.textContent ?? '').trim()
-            if (next !== title) {
-              setTitle(next)
-              titleRef.current = next
-              scheduleSave()
-            }
-          }}
-        >
-          {initial?.title ?? ''}
-        </div>
-      </HiveSectionDivider>
+            {/* Large title input (mockup uses borderless Comfortaa 22px) */}
+            <input
+              type="text"
+              value={title}
+              disabled={!editable}
+              placeholder="Untitled submission"
+              onChange={(e) => {
+                setTitle(e.target.value)
+                titleRef.current = e.target.value
+                scheduleSave()
+              }}
+              className="w-full outline-none disabled:opacity-60"
+              style={{
+                background: 'transparent',
+                border: 0,
+                padding: '4px 0',
+                fontFamily: 'var(--font-display)',
+                fontWeight: 700,
+                fontSize: '22px',
+                color: 'var(--canvas-dark-ink-strong)',
+              }}
+            />
 
-      <HiveSectionDivider label="Insert at">
-        <label className="inline-flex items-center gap-2 text-[11px] font-mono" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
-          <select
-            value={encodeTarget(targetOrder)}
-            disabled={!editable}
-            onChange={e => {
-              const v = decodeTarget(e.target.value)
-              setTargetOrder(v)
-              targetOrderRef.current = v
-              scheduleSave()
-            }}
-            style={{
-              background: 'var(--canvas-dark-100)',
-              borderRadius: 'var(--r-btn)',
-              boxShadow: 'var(--sh-inset)',
-              border: 'var(--br-card)',
-              color: 'var(--canvas-dark-ink)',
-            }}
-            className="px-2 py-1 text-xs focus:outline-none disabled:opacity-50"
-          >
-            <option value="">End (default)</option>
-            <option value="0">Beginning</option>
-            {chapters.map(c => (
-              <option key={c.id} value={String(c.order + 1)}>
-                After &quot;{c.title || 'Untitled chapter'}&quot;
-              </option>
-            ))}
-          </select>
-        </label>
-      </HiveSectionDivider>
+            {/* Insert at */}
+            <div>
+              <label
+                className="block mb-[7px] font-mono uppercase"
+                style={{
+                  fontSize: '10px',
+                  letterSpacing: '0.12em',
+                  color: 'var(--canvas-dark-ink-muted)',
+                }}
+              >
+                Insert at
+              </label>
+              <select
+                value={encodeTarget(targetOrder)}
+                disabled={!editable}
+                onChange={(e) => {
+                  const v = decodeTarget(e.target.value)
+                  setTargetOrder(v)
+                  targetOrderRef.current = v
+                  scheduleSave()
+                }}
+                className="w-full outline-none disabled:opacity-60"
+                style={{
+                  padding: '11px 14px',
+                  border: 0,
+                  borderRadius: 'var(--r-row)',
+                  background: 'var(--canvas-dark-100)',
+                  boxShadow: 'var(--sh-inset)',
+                  color: 'var(--canvas-dark-ink-strong)',
+                  fontFamily: 'var(--font-ui)',
+                  fontSize: '14px',
+                  appearance: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                <option value="">End (default)</option>
+                <option value="0">Beginning</option>
+                {chapters.map((c) => (
+                  <option key={c.id} value={String(c.order + 1)}>
+                    After &quot;{c.title || 'Untitled chapter'}&quot;
+                  </option>
+                ))}
+              </select>
+            </div>
 
-      <HiveSectionDivider label="Body">
-        <EditorContent editor={editor} />
-      </HiveSectionDivider>
+            {/* Body */}
+            <div>
+              <label
+                className="block mb-[7px] font-mono uppercase"
+                style={{
+                  fontSize: '10px',
+                  letterSpacing: '0.12em',
+                  color: 'var(--canvas-dark-ink-muted)',
+                }}
+              >
+                Body
+              </label>
+              <div
+                style={{
+                  background: 'var(--canvas-dark-100)',
+                  boxShadow: 'var(--sh-inset)',
+                  borderRadius: 'var(--r-row)',
+                  padding: '18px 22px',
+                  minHeight: '240px',
+                }}
+              >
+                <EditorContent editor={editor} />
+              </div>
+            </div>
 
-      <HiveSectionDivider label="Actions">
-        <div className="flex items-center justify-end">
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={!canSubmit}
-            style={{
-              background: 'var(--brand)',
-              color: 'var(--brand-ink, oklch(0.18 0.02 60))',
-              borderRadius: 'var(--r-pill)',
-              boxShadow: 'var(--sh-tile)',
-            }}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-[13px] font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Send size={14} />
-            Submit for review
-          </button>
-        </div>
-      </HiveSectionDivider>
-    </div>
+            {/* Submit */}
+            <div className="flex items-center justify-end pt-2">
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={!canSubmit}
+                style={{
+                  background: 'var(--brand)',
+                  color: 'var(--brand-ink)',
+                  borderRadius: 'var(--r-pill)',
+                  boxShadow: 'var(--sh-tile)',
+                  transition: 'background .14s, transform .1s',
+                }}
+                onMouseEnter={(e) => {
+                  if (!canSubmit) return
+                  e.currentTarget.style.background = 'var(--brand-hover)'
+                  e.currentTarget.style.transform = 'translateY(-1px)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'var(--brand)'
+                  e.currentTarget.style.transform = 'none'
+                }}
+                onMouseDown={(e) => {
+                  if (!canSubmit) return
+                  e.currentTarget.style.background = 'var(--brand-active)'
+                  e.currentTarget.style.transform = 'none'
+                }}
+                onMouseUp={(e) => {
+                  if (!canSubmit) return
+                  e.currentTarget.style.background = 'var(--brand-hover)'
+                  e.currentTarget.style.transform = 'translateY(-1px)'
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-[13px] font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Send size={14} />
+                {submitting ? 'Submitting…' : 'Submit for review'}
+              </button>
+            </div>
+          </div>
+        </HiveSectionDivider>
+      </div>
+    </HivePageShell>
   )
 }

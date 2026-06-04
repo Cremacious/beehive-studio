@@ -3,7 +3,6 @@ import Link from 'next/link'
 import { db } from '@/db'
 import { chapters, binderItems, books, userProfiles } from '@/db/schema'
 import { and, eq, asc } from 'drizzle-orm'
-import { ChapterContributionByline } from './_components/chapter-contribution-byline'
 import { tiptapToHtml } from '@/lib/export/tiptap-to-html'
 import { markChapterReadAction } from '@/lib/actions/reading.actions'
 import { auth } from '@/lib/auth'
@@ -12,6 +11,7 @@ import { canReadBook } from '@/lib/books/can-read'
 import { isChapterReaderVisible } from '@/lib/books/is-chapter-reader-visible'
 import { AccessDenied } from '../../../_components/access-denied'
 import { Clock } from 'lucide-react'
+import { ReaderSurface } from './_components/reader-surface'
 
 type Props = { params: Promise<{ locale: string; bookId: string; chapterId: string }> }
 
@@ -86,7 +86,6 @@ export default async function ChapterReaderPage({ params }: Props) {
   const current = allChapters[currentIndex]
   const chapterNumber = currentIndex + 1
   const totalChapters = allChapters.length
-  const progressPercent = Math.round((chapterNumber / totalChapters) * 100)
 
   // Mark chapter as read for authenticated users
   if (userId) {
@@ -99,113 +98,66 @@ export default async function ChapterReaderPage({ params }: Props) {
     chapter.authorUserId !== null && chapter.authorUserId !== book.userId
 
   return (
-    <div className="min-h-screen bg-[#141414]">
-      {/* Top bar */}
-      <div className="bg-[#1a1a1a] border-b border-[#2a2a2a] px-6 py-2.5 flex items-center justify-between sticky top-0 z-10">
-        <Link
-          href={`/${locale}/books/${bookId}`}
-          className="text-[#888] text-[13px] hover:text-white transition-colors"
-        >
-          ← {book.title}
-        </Link>
-        <div className="flex items-center gap-3">
-          <span className="text-[#555] text-[12px]">Ch {chapterNumber} of {totalChapters}</span>
-          <div className="w-20 h-0.5 bg-[#2a2a2a] rounded-full overflow-hidden">
-            <div className="h-full bg-[#FFC300] rounded-full" style={{ width: `${progressPercent}%` }} />
-          </div>
-        </div>
-        <Link
-          href={`/${locale}/books/${bookId}`}
-          className="px-3 py-1 bg-transparent border border-[#2a2a2a] text-[#888] rounded text-[12px] hover:text-white transition-colors"
-        >
-          ♥ Like book
-        </Link>
-      </div>
-
-      {/* Chapter content */}
-      <div className="max-w-[640px] mx-auto px-6 py-12">
-        <p className="text-[#555] text-[12px] uppercase tracking-widest mb-1.5">Chapter {chapterNumber}</p>
-        <h2 className="text-white text-[24px] font-semibold mb-9">{current.title}</h2>
-        {showContributionByline && (
-          <ChapterContributionByline
-            chapterAuthor={{
-              username: chapter.chapterAuthorUsername,
-              displayName: chapter.chapterAuthorDisplayName,
-            }}
-            bookAuthor={{
-              username: book.bookAuthorUsername,
-              displayName: book.bookAuthorDisplayName,
-            }}
-            bookTitle={book.title}
-            locale={locale}
-          />
-        )}
-        <div className="public-reader">
-          <div
-            className="prose-chapter text-[#ccc] text-[16px] leading-[1.9]"
-            dangerouslySetInnerHTML={{ __html: htmlContent }}
-          />
-        </div>
-      </div>
-
-      {/* Footer nav */}
-      <div className="border-t border-[#2a2a2a] px-6 py-4 flex items-center justify-between bg-[#1a1a1a]">
-        {prevChapter ? (
-          <Link
-            href={`/${locale}/books/${bookId}/read/${prevChapter.chapterId}`}
-            className="px-4 py-2 bg-transparent border border-[#2a2a2a] text-[#888] rounded-md text-[13px] hover:text-white transition-colors"
-          >
-            ← {prevChapter.title}
-          </Link>
-        ) : (
-          <Link
-            href={`/${locale}/books/${bookId}`}
-            className="px-4 py-2 bg-transparent border border-[#2a2a2a] text-[#888] rounded-md text-[13px] hover:text-white transition-colors"
-          >
-            ← Back to book
-          </Link>
-        )}
-        <div className="text-center">
-          <p className="text-[#555] text-[11px]">
-            {(chapter.wordCount ?? 0).toLocaleString()} words
-          </p>
-        </div>
-        {nextChapter ? (
-          <Link
-            href={`/${locale}/books/${bookId}/read/${nextChapter.chapterId}`}
-            className="px-4 py-2 bg-[#FFC300] text-black font-semibold rounded-md text-[13px] hover:bg-yellow-400 transition-colors"
-          >
-            {nextChapter.title} →
-          </Link>
-        ) : (
-          <Link
-            href={`/${locale}/books/${bookId}`}
-            className="px-4 py-2 bg-[#2a2a2a] text-[#aaa] rounded-md text-[13px] hover:text-white transition-colors"
-          >
-            Finished ✓ Back to book
-          </Link>
-        )}
-      </div>
-    </div>
+    <ReaderSurface
+      htmlContent={htmlContent}
+      chapterTitle={current.title}
+      chapterNumber={chapterNumber}
+      totalChapters={totalChapters}
+      wordCount={chapter.wordCount ?? 0}
+      bookTitle={book.title}
+      backHref={`/${locale}/books/${bookId}`}
+      prev={
+        prevChapter
+          ? {
+              href: `/${locale}/books/${bookId}/read/${prevChapter.chapterId}`,
+              title: prevChapter.title,
+            }
+          : null
+      }
+      next={
+        nextChapter
+          ? {
+              href: `/${locale}/books/${bookId}/read/${nextChapter.chapterId}`,
+              title: nextChapter.title,
+            }
+          : null
+      }
+      contributionByline={
+        showContributionByline
+          ? {
+              chapterAuthor: {
+                username: chapter.chapterAuthorUsername,
+                displayName: chapter.chapterAuthorDisplayName,
+              },
+              bookAuthor: {
+                username: book.bookAuthorUsername,
+                displayName: book.bookAuthorDisplayName,
+              },
+              bookTitle: book.title,
+              locale,
+            }
+          : null
+      }
+    />
   )
 }
 
 function LockedChapterPlaceholder({ bookId, locale }: { bookId: string; locale: string }) {
   return (
-    <main className="min-h-screen bg-[#141414] flex items-center justify-center px-6">
+    <main className="min-h-screen bg-[#232425] flex items-center justify-center px-6">
       <div className="max-w-md text-center">
-        <div className="mx-auto w-14 h-14 rounded-full bg-[#1f1f1f] border border-[#2a2a2a] flex items-center justify-center mb-5">
-          <Clock className="w-6 h-6 text-[#888]" />
+        <div className="mx-auto w-14 h-14 rounded-full bg-[var(--canvas-dark-150)] border border-[var(--canvas-dark-350)] flex items-center justify-center mb-5">
+          <Clock className="w-6 h-6 text-[rgba(255,255,255,0.7)]" />
         </div>
         <h1 className="text-white text-[20px] font-semibold mb-2">
           This chapter is still being drafted
         </h1>
-        <p className="text-[#888] text-[14px] mb-6">
+        <p className="text-[rgba(255,255,255,0.7)] text-[14px] mb-6">
           The author hasn&apos;t published this chapter yet. Check back soon.
         </p>
         <Link
           href={`/${locale}/books/${bookId}`}
-          className="inline-block px-5 py-2 bg-[#FFC300] text-black font-semibold rounded-md text-[14px] hover:bg-yellow-400 transition-colors"
+          className="inline-block px-5 py-2 bg-[var(--brand)] text-[var(--brand-ink)] font-semibold rounded-md text-[14px] hover:bg-[var(--brand-hover)] transition-colors"
         >
           Back to chapters
         </Link>

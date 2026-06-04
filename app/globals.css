@@ -448,15 +448,82 @@ body {
   background: rgba(255,195,0,0.5);
 }
 
-/* Chapter reader prose */
-.prose-chapter p { margin-bottom: 1.25rem; }
-.prose-chapter h1, .prose-chapter h2, .prose-chapter h3 { color: #fff; margin: 2rem 0 1rem; }
-.prose-chapter strong { color: #e0e0e0; }
+/* ───────────────────────────────────────────────────────────────────────────
+   Reader-theme tokens — drive the chapter prose panel only.
+
+   Applied via `data-reader-theme="dark|white|cream"` on the prose-panel
+   wrapper (NOT on <html> or <body> — app chrome stays dark). The
+   useReaderTheme() hook in lib/hooks/use-reader-theme.ts persists the
+   choice to localStorage so it applies across every chapter and book.
+   ─────────────────────────────────────────────────────────────────────────── */
+[data-reader-theme="dark"] {
+  --prose-bg:           #2d2e2f;
+  --prose-bg-elevated:  #36373a;
+  --prose-ink:          #e8e8e8;
+  --prose-ink-strong:   #ffffff;
+  --prose-ink-muted:    rgba(255, 255, 255, 0.55);
+  --prose-rule:         #3a3b3d;
+  --prose-accent:       #FFC300;
+}
+[data-reader-theme="white"] {
+  --prose-bg:           #ffffff;
+  --prose-bg-elevated:  #fafafa;
+  --prose-ink:          #1a1a1a;
+  --prose-ink-strong:   #000000;
+  --prose-ink-muted:    rgba(0, 0, 0, 0.55);
+  --prose-rule:         #e5e5e5;
+  --prose-accent:       #b8860b;
+}
+[data-reader-theme="cream"] {
+  --prose-bg:           #f5ecd7;
+  --prose-bg-elevated:  #efe4c8;
+  --prose-ink:          #3a2f1f;
+  --prose-ink-strong:   #1f1810;
+  --prose-ink-muted:    rgba(58, 47, 31, 0.65);
+  --prose-rule:         #d8c9a8;
+  --prose-accent:       #8a5a00;
+}
+
+/* Chapter reader prose — body styles consume --prose-* so the chapter content
+   flips colors when the reader-theme wrapper above it changes. */
+.prose-chapter { color: var(--prose-ink); }
+.prose-chapter p { margin-bottom: 1.2em; text-wrap: pretty; }
+.prose-chapter p:last-child { margin-bottom: 0; }
+.prose-chapter h1, .prose-chapter h2, .prose-chapter h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--prose-ink-strong);
+  letter-spacing: -0.01em;
+}
+/* Heading sizes are em-based so they scale with the parent .prose-chapter
+   font-size (reader-controlled via the A- / A+ stepper). Relative ratios
+   match the original 28/24/18 against an 18px body. */
+.prose-chapter h1 { font-size: 1.56em; line-height: 1.15; margin: 2em 0 0.5em; }
+.prose-chapter h2 { font-size: 1.33em; line-height: 1.2; margin: 2em 0 0.5em; }
+.prose-chapter h3 { font-size: 1em; margin: 1.6em 0 0.4em; }
+.prose-chapter strong { font-weight: 700; color: var(--prose-ink-strong); }
 .prose-chapter em { font-style: italic; }
-.prose-chapter blockquote { border-left: 3px solid #2a2a2a; padding-left: 1rem; color: #888; }
-.prose-chapter ul { list-style: disc; padding-left: 1.5rem; margin-bottom: 1.25rem; }
-.prose-chapter ol { list-style: decimal; padding-left: 1.5rem; margin-bottom: 1.25rem; }
+.prose-chapter blockquote {
+  margin: 1.5em 0;
+  border-left: 3px solid var(--prose-accent);
+  padding-left: 20px;
+  font-style: italic;
+  color: var(--prose-ink-muted);
+}
+.prose-chapter ul { list-style: disc; padding-left: 1.5rem; margin-bottom: 1.2em; }
+.prose-chapter ol { list-style: decimal; padding-left: 1.5rem; margin-bottom: 1.2em; }
 .prose-chapter li { margin-bottom: 0.25rem; }
+.prose-chapter hr {
+  border: 0;
+  text-align: center;
+  margin: 2em auto;
+  color: var(--prose-ink-muted);
+}
+.prose-chapter hr::before {
+  content: '· · ·';
+  letter-spacing: 0.5em;
+  font-size: 0.9em;
+}
 
 /* ───────────────────────────────────────────────────────────────────────────
    Editor (TipTap / ProseMirror) prose styles

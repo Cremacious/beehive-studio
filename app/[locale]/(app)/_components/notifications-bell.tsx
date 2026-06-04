@@ -40,6 +40,10 @@ export function NotificationsBell() {
     setUnreadCount(prev => Math.max(0, prev - 1))
     if (n.resourceId && n.type === 'HIVE_INVITE') {
       window.location.href = `/en/hive/${n.resourceId}`
+    } else if (n.type === 'FRIEND_REQUEST') {
+      window.location.href = `/en/friends?tab=requests`
+    } else if (n.type === 'FRIEND_ACCEPTED') {
+      window.location.href = `/en/friends`
     }
   }
 
@@ -54,6 +58,8 @@ export function NotificationsBell() {
     NEW_LIKE: 'liked your book',
     NEW_COMMENT: 'commented on your book',
     SPARK_WIN: 'your Spark entry won!',
+    FRIEND_REQUEST: 'sent you a friend request',
+    FRIEND_ACCEPTED: 'accepted your friend request',
   }
 
   return (

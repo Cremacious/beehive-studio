@@ -20,13 +20,13 @@ export function BeatLabelBadge({ label }: { label: BeatLabel | null | undefined 
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        padding: '2px 8px',
+        padding: '2px 9px',
         fontSize: 11,
         fontWeight: 500,
         borderRadius: 'var(--r-pill)',
-        color: 'var(--outline-ink-strong)',
-        background: 'oklch(from var(--outline-ink-strong) l c h / 0.08)',
-        border: '1px solid var(--outline-rule)',
+        color: 'var(--canvas-dark-ink-strong)',
+        background: 'var(--canvas-dark-100)',
+        boxShadow: 'var(--sh-inset)',
         whiteSpace: 'nowrap',
       }}
     >

@@ -45,8 +45,23 @@ export function HiveOutlineSurface({
       viewerRole={data.viewerRole}
       bookId={data.bookId}
       locale={locale}
+      lastEditedByUsername={data.entry.lastEditedByUsername}
+      lastEditedAt={data.entry.lastEditedAt}
     />
   )
+}
+
+function relTime(d: Date | null): string {
+  if (!d) return ''
+  const seconds = Math.floor((Date.now() - new Date(d).getTime()) / 1000)
+  if (seconds < 60) return 'just now'
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${minutes}m ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  if (days < 7) return `${days}d ago`
+  return new Date(d).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
 
 function HiveOutlineSurfaceInner({
@@ -55,16 +70,33 @@ function HiveOutlineSurfaceInner({
   viewerRole,
   bookId: _bookId,
   locale: _locale,
+  lastEditedByUsername,
+  lastEditedAt,
 }: {
   outline: BinderItemRow
   chapters: ChapterRef[]
   viewerRole: HiveRole
   bookId: string
   locale: string
+  lastEditedByUsername: string | null
+  lastEditedAt: Date | null
 }) {
   const readOnly = !canEditOutline(viewerRole)
+  const [title, setTitle] = useState<string>(outline.title || '')
   const [beats, setBeats] = useState<Beat[]>(() => readBeats(outline.content))
   const [saveStatus, setSaveStatus] = useState<FormSaveStatus>('idle')
+
+  async function commitTitle(next: string) {
+    const trimmed = next.trim()
+    if (readOnly) return
+    if (trimmed === (outline.title || '').trim()) return
+    setTitle(trimmed)
+    const r = await updateBinderItemAction(outline.id, { title: trimmed || 'Untitled outline' })
+    if (!r.success) {
+      // Roll back local state if the server rejected the rename.
+      setTitle(outline.title || '')
+    }
+  }
   const [linkingBeatId, setLinkingBeatId] = useState<string | null>(null)
   const [pendingActs, setPendingActs] = useState<string[]>([])
   const [newActDraft, setNewActDraft] = useState<string | null>(null)
@@ -178,9 +210,45 @@ function HiveOutlineSurfaceInner({
         }
       `}</style>
 
-      <div className="flex justify-end mb-4">
-        <SaveStatusBadge status={saveStatus} />
-      </div>
+      <header className="flex items-start justify-between gap-4 pt-6 pb-5 mb-2">
+        <div className="min-w-0 flex-1">
+          <h1
+            role="textbox"
+            aria-label="Outline title"
+            contentEditable={!readOnly}
+            suppressContentEditableWarning
+            data-placeholder="Untitled outline"
+            className="font-comfortaa font-bold leading-tight outline-none"
+            style={{
+              color: 'var(--brand)',
+              fontSize: 28,
+              cursor: readOnly ? 'default' : 'text',
+            }}
+            onBlur={e => commitTitle(e.currentTarget.textContent ?? '')}
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                ;(e.currentTarget as HTMLElement).blur()
+              }
+            }}
+          >
+            {title || ''}
+          </h1>
+          {(lastEditedByUsername || lastEditedAt) && (
+            <p
+              className="mt-1 text-[13px]"
+              style={{ color: 'var(--canvas-dark-ink-muted)' }}
+            >
+              {lastEditedByUsername
+                ? `Last edited by @${lastEditedByUsername}${lastEditedAt ? ` · ${relTime(lastEditedAt)}` : ''}`
+                : `Last edited ${relTime(lastEditedAt)}`}
+            </p>
+          )}
+        </div>
+        <div className="shrink-0 pt-1">
+          <SaveStatusBadge status={saveStatus} />
+        </div>
+      </header>
 
       <div data-slot="outline-pane-body">
         <div className="mx-auto" style={{ maxWidth: '100%' }}>

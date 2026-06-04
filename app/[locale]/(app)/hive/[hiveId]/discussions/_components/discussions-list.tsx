@@ -77,12 +77,6 @@ export function DiscussionsList({ posts, hiveId, locale }: Props) {
       </HiveSectionDivider>
 
       <section className="pt-6">
-        <p
-          className="px-6 text-[10px] font-mono uppercase tracking-wider text-[var(--canvas-dark-ink-muted)] mb-3"
-          style={{ letterSpacing: '0.12em' }}
-        >
-          Threads
-        </p>
         <div
           className="grid items-center gap-3 px-5 py-2.5 text-[10px] font-mono uppercase tracking-wider text-[var(--canvas-dark-ink-muted)]"
           style={{

@@ -1,8 +1,8 @@
 'use server'
 
 import { db } from '@/db'
-import { hiveTasks, notifications, hives, binderItems, userProfiles, chapters, books, hiveAnnotations, hiveSuggestions } from '@/db/schema'
-import { eq, and, asc, inArray, count, isNull, max } from 'drizzle-orm'
+import { hiveTasks, notifications, hives, binderItems, userProfiles, chapters, books } from '@/db/schema'
+import { eq, and, asc, inArray, isNull, max } from 'drizzle-orm'
 import { createId } from '@paralleldrive/cuid2'
 import { requireAuth } from '@/lib/require-auth'
 import { assertHiveMember, assertHiveAdmin } from './_helpers'
@@ -345,8 +345,7 @@ export async function getHiveChapterListAction(
     chapterId: string | null
     title: string
     order: number
-    annotationCount: number
-    pendingSuggestionCount: number
+    updatedAt: Date
   }>
 }>> {
   const userId = await requireAuth()
@@ -360,6 +359,8 @@ export async function getHiveChapterListAction(
   // `id` is the binderItems PK (kept for submission target-order callers).
   // `chapterId` is the chapters PK, joined via chapters.binderItemId — that's
   // what /hive/[hiveId]/chapters/[chapterId] (T13) expects in its URL.
+  // `updatedAt` prefers chapters.updatedAt (content edit) and falls back to
+  // binderItems.updatedAt (title/order changes) when null.
   const rows = await db
     .select({
       id: binderItems.id,
@@ -367,58 +368,23 @@ export async function getHiveChapterListAction(
       title: binderItems.title,
       order: binderItems.order,
       parentId: binderItems.parentId,
+      binderUpdatedAt: binderItems.updatedAt,
+      chapterUpdatedAt: chapters.updatedAt,
     })
     .from(binderItems)
     .leftJoin(chapters, eq(chapters.binderItemId, binderItems.id))
     .where(and(eq(binderItems.bookId, hive.bookId), eq(binderItems.type, 'chapter')))
     .orderBy(asc(binderItems.order))
 
-  const topLevelRows = rows.filter(r => r.parentId === null)
-  const chapterIds = topLevelRows
-    .map(r => r.chapterId)
-    .filter((id): id is string => id !== null)
-
-  const annCounts = chapterIds.length === 0
-    ? []
-    : await db
-        .select({
-          chapterId: hiveAnnotations.chapterId,
-          c: count(),
-        })
-        .from(hiveAnnotations)
-        .where(and(
-          inArray(hiveAnnotations.chapterId, chapterIds),
-          isNull(hiveAnnotations.parentId),
-          eq(hiveAnnotations.resolved, false),
-        ))
-        .groupBy(hiveAnnotations.chapterId)
-
-  const sugCounts = chapterIds.length === 0
-    ? []
-    : await db
-        .select({
-          chapterId: hiveSuggestions.chapterId,
-          c: count(),
-        })
-        .from(hiveSuggestions)
-        .where(and(
-          inArray(hiveSuggestions.chapterId, chapterIds),
-          eq(hiveSuggestions.resolved, false),
-          isNull(hiveSuggestions.parentId),
-        ))
-        .groupBy(hiveSuggestions.chapterId)
-
-  const annByChapter = new Map(annCounts.map(r => [r.chapterId, Number(r.c)]))
-  const sugByChapter = new Map(sugCounts.map(r => [r.chapterId, Number(r.c)]))
-
-  const topLevel = topLevelRows.map(({ id, chapterId, title, order }) => ({
-    id,
-    chapterId,
-    title,
-    order,
-    annotationCount: chapterId ? (annByChapter.get(chapterId) ?? 0) : 0,
-    pendingSuggestionCount: chapterId ? (sugByChapter.get(chapterId) ?? 0) : 0,
-  }))
+  const topLevel = rows
+    .filter(r => r.parentId === null)
+    .map(({ id, chapterId, title, order, binderUpdatedAt, chapterUpdatedAt }) => ({
+      id,
+      chapterId,
+      title,
+      order,
+      updatedAt: chapterUpdatedAt ?? binderUpdatedAt,
+    }))
 
   return { success: true, data: { bookId: hive.bookId, chapters: topLevel } }
 }

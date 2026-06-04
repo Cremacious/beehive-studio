@@ -6,6 +6,12 @@ import { books, chapters, binderItems } from './books'
 
 export const friendshipStatusEnum = pgEnum('friendship_status', ['PENDING', 'ACCEPTED'])
 
+export const sparkVisibilityEnum = pgEnum('spark_visibility', ['PUBLIC', 'FRIENDS', 'PRIVATE'])
+export const sparkStatusEnum = pgEnum('spark_status', ['OPEN', 'VOTING', 'CLOSED'])
+
+export type SparkVisibility = (typeof sparkVisibilityEnum.enumValues)[number]
+export type SparkStatus = (typeof sparkStatusEnum.enumValues)[number]
+
 export const friendships = pgTable('friendships', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
   requesterId: text('requester_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
@@ -92,6 +98,10 @@ export const sparks = pgTable('sparks', {
   wordLimit: integer('word_limit'),
   creatorChoiceEntryId: text('creator_choice_entry_id').references((): AnyPgColumn => sparkEntries.id),
   winnerEntryId: text('winner_entry_id').references((): AnyPgColumn => sparkEntries.id),
+  visibility: sparkVisibilityEnum('visibility').notNull().default('PUBLIC'),
+  discoverable: boolean('discoverable').notNull().default(true),
+  status: sparkStatusEnum('status').notNull().default('OPEN'),
+  votingEndsAt: timestamp('voting_ends_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
 
@@ -101,6 +111,8 @@ export const sparkEntries = pgTable('spark_entries', {
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   content: text('content').notNull().default(''),
   wordCount: integer('word_count').notNull().default(0),
+  title: text('title'),
+  likeCount: integer('like_count').notNull().default(0),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (t) => [index('spark_entries_spark_id_idx').on(t.sparkId)])
 
@@ -117,6 +129,7 @@ export const sparkEntryComments = pgTable('spark_entry_comments', {
   entryId: text('entry_id').notNull().references(() => sparkEntries.id, { onDelete: 'cascade' }),
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   content: text('content').notNull(),
+  parentId: text('parent_id').references((): AnyPgColumn => sparkEntryComments.id, { onDelete: 'cascade' }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (t) => [index('spark_entry_comments_entry_id_idx').on(t.entryId)])
 

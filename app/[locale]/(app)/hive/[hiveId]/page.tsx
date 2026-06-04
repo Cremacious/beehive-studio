@@ -2,9 +2,11 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { BookOpen, ExternalLink, Users } from 'lucide-react'
 import { getHiveAction } from '@/lib/actions/hive.actions'
+import { getHiveActivityFeedAction } from '@/lib/actions/hive-activity.actions'
 import { requireAuth } from '@/lib/require-auth'
 import { HivePageShell } from './_components/hive-page-shell'
 import { HiveSectionDivider } from './_components/hive-section-divider'
+import { HiveDashboardActivitySection } from './_components/hive-dashboard-activity-section'
 
 function relTime(d: Date): string {
   const seconds = Math.floor((Date.now() - new Date(d).getTime()) / 1000)
@@ -21,10 +23,14 @@ function relTime(d: Date): string {
 export default async function HiveDashboardPage({ params }: { params: Promise<{ locale: string; hiveId: string }> }) {
   const { locale, hiveId } = await params
   const viewerId = await requireAuth()
-  const result = await getHiveAction(hiveId).catch(() => null)
+  const [result, activityResult] = await Promise.all([
+    getHiveAction(hiveId).catch(() => null),
+    getHiveActivityFeedAction({ hiveId, limit: 8 }).catch(() => null),
+  ])
   if (!result?.success) notFound()
 
   const { hive, members, book } = result.data
+  const activityEvents = activityResult?.success ? activityResult.data.items : []
   const lastActive = hive.updatedAt
   const isShadow = book?.status === 'STANDALONE_HIVE_SHADOW'
   const isAuthor = book?.userId === viewerId
@@ -107,6 +113,12 @@ export default async function HiveDashboardPage({ params }: { params: Promise<{ 
           <p className="text-sm text-muted-foreground">No book linked to this hive.</p>
         </HiveSectionDivider>
       )}
+
+      <HiveDashboardActivitySection
+        events={activityEvents}
+        hiveId={hiveId}
+        locale={locale}
+      />
     </HivePageShell>
   )
 }

@@ -1,14 +1,16 @@
 'use server'
 
 import { db } from '@/db'
-import { friendships, userProfiles } from '@/db/schema'
-import { and, desc, eq, or } from 'drizzle-orm'
+import { friendships, notifications, userBlocks, userProfiles } from '@/db/schema'
+import { and, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
+import { isBlocked } from '@/lib/social/is-blocked'
 import type { ActionResult } from './book.actions'
 import {
   sendFriendRequestSchema,
   friendshipIdSchema,
   unfriendSchema,
+  searchUsersSchema,
 } from '@/lib/validations/friendship'
 
 export type FriendshipStatus =
@@ -61,6 +63,10 @@ export async function sendFriendRequestAction(
   const { recipientId } = parsed.data
   if (recipientId === userId) return { success: false, error: 'CANNOT_FRIEND_SELF' }
 
+  if (await isBlocked(userId, recipientId)) {
+    return { success: false, error: 'BLOCKED' }
+  }
+
   const existing = await findPairRow(userId, recipientId)
   if (existing) {
     if (existing.status === 'ACCEPTED') return { success: false, error: 'ALREADY_FRIENDS' }
@@ -68,18 +74,40 @@ export async function sendFriendRequestAction(
     if (existing.requesterId === userId) {
       return { success: false, error: 'ALREADY_REQUESTED' }
     }
-    // PENDING_INCOMING → auto-accept
-    await db
-      .update(friendships)
-      .set({ status: 'ACCEPTED', acceptedAt: new Date() })
-      .where(eq(friendships.id, existing.id))
+    // PENDING_INCOMING → auto-accept (fires FRIEND_ACCEPTED to the original requester)
+    await db.transaction(async (tx) => {
+      await tx
+        .update(friendships)
+        .set({ status: 'ACCEPTED', acceptedAt: new Date() })
+        .where(eq(friendships.id, existing.id))
+      await tx.insert(notifications).values({
+        userId: existing.requesterId,
+        type: 'FRIEND_ACCEPTED',
+        actorId: userId,
+        resourceType: 'friendship',
+        resourceId: existing.id,
+      })
+    })
     return { success: true, data: { autoAccepted: true } }
   }
 
-  await db.insert(friendships).values({
-    requesterId: userId,
-    recipientId,
-    status: 'PENDING',
+  await db.transaction(async (tx) => {
+    const [inserted] = await tx
+      .insert(friendships)
+      .values({
+        requesterId: userId,
+        recipientId,
+        status: 'PENDING',
+      })
+      .returning({ id: friendships.id })
+    if (!inserted) throw new Error('FRIENDSHIP_INSERT_FAILED')
+    await tx.insert(notifications).values({
+      userId: recipientId,
+      type: 'FRIEND_REQUEST',
+      actorId: userId,
+      resourceType: 'friendship',
+      resourceId: inserted.id,
+    })
   })
   return { success: true, data: { autoAccepted: false } }
 }
@@ -100,10 +128,19 @@ export async function acceptFriendRequestAction(
   if (row.recipientId !== userId) return { success: false, error: 'NOT_AUTHORIZED' }
   if (row.status !== 'PENDING') return { success: false, error: 'NOT_PENDING' }
 
-  await db
-    .update(friendships)
-    .set({ status: 'ACCEPTED', acceptedAt: new Date() })
-    .where(eq(friendships.id, row.id))
+  await db.transaction(async (tx) => {
+    await tx
+      .update(friendships)
+      .set({ status: 'ACCEPTED', acceptedAt: new Date() })
+      .where(eq(friendships.id, row.id))
+    await tx.insert(notifications).values({
+      userId: row.requesterId,
+      type: 'FRIEND_ACCEPTED',
+      actorId: userId,
+      resourceType: 'friendship',
+      resourceId: row.id,
+    })
+  })
   return { success: true, data: null }
 }
 
@@ -291,4 +328,85 @@ export async function listPendingFriendRequestsAction(): Promise<
     else outgoing.push(summary)
   }
   return { success: true, data: { incoming, outgoing } }
+}
+
+export type UserSearchResult = {
+  userId: string
+  username: string | null
+  displayName: string | null
+  avatarUrl: string | null
+}
+
+export async function getFriendCountAction(
+  targetUserId: string,
+): Promise<ActionResult<number>> {
+  const [row] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(friendships)
+    .where(
+      and(
+        eq(friendships.status, 'ACCEPTED'),
+        or(
+          eq(friendships.requesterId, targetUserId),
+          eq(friendships.recipientId, targetUserId),
+        ),
+      ),
+    )
+  return { success: true, data: row?.count ?? 0 }
+}
+
+export async function searchUsersAction(
+  input: { query: string; limit?: number },
+): Promise<ActionResult<UserSearchResult[]>> {
+  const userId = await requireAuth()
+  const parsed = searchUsersSchema.safeParse(input)
+  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  const { query, limit = 10 } = parsed.data
+
+  const needle = `%${query}%`
+  // Overscan so we can filter out self + blocked pairs and still return up to `limit`.
+  const overscan = Math.max(limit * 3, limit + 5)
+
+  const candidates = await db
+    .select({
+      userId: userProfiles.userId,
+      username: userProfiles.username,
+      displayName: userProfiles.displayName,
+      avatarUrl: userProfiles.avatarUrl,
+    })
+    .from(userProfiles)
+    .where(or(ilike(userProfiles.username, needle), ilike(userProfiles.displayName, needle)))
+    .limit(overscan)
+
+  const otherIds = candidates.map((c) => c.userId).filter((id) => id !== userId)
+  if (otherIds.length === 0) return { success: true, data: [] }
+
+  // Find any block row involving the viewer + a candidate (either direction).
+  const blockRows = await db
+    .select({ blockerId: userBlocks.blockerId, blockedId: userBlocks.blockedId })
+    .from(userBlocks)
+    .where(
+      or(
+        and(eq(userBlocks.blockerId, userId), inArray(userBlocks.blockedId, otherIds)),
+        and(eq(userBlocks.blockedId, userId), inArray(userBlocks.blockerId, otherIds)),
+      ),
+    )
+  const blockedIds = new Set<string>()
+  for (const r of blockRows) {
+    blockedIds.add(r.blockerId === userId ? r.blockedId : r.blockerId)
+  }
+
+  const filtered: UserSearchResult[] = []
+  for (const c of candidates) {
+    if (c.userId === userId) continue
+    if (blockedIds.has(c.userId)) continue
+    filtered.push({
+      userId: c.userId,
+      username: c.username,
+      displayName: c.displayName,
+      avatarUrl: c.avatarUrl,
+    })
+    if (filtered.length >= limit) break
+  }
+  return { success: true, data: filtered }
 }

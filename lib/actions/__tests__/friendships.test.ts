@@ -81,7 +81,8 @@ function evalPred(pred: any, row: Row): boolean {
 
 // ── DB mock ────────────────────────────────────────────────────────────────
 vi.mock('@/db', () => {
-  return {
+  const dbRef: any = {}
+  const mod = {
     db: {
       select: (_proj?: any) => ({
         from: (table: any) => {
@@ -118,19 +119,33 @@ vi.mock('@/db', () => {
           }
         },
       }),
-      insert: (_table: any) => ({
-        values: async (values: any) => {
-          const id = `fr-${++idCounter}`
-          store.rows.push({
-            id,
-            requesterId: values.requesterId,
-            recipientId: values.recipientId,
-            status: values.status ?? 'PENDING',
-            createdAt: new Date(),
-            acceptedAt: null,
-          })
-        },
-      }),
+      insert: (table: any) => {
+        const tname = tableName(table)
+        return {
+          values: (values: any) => {
+            if (tname === 'friendships') {
+              const id = `fr-${++idCounter}`
+              store.rows.push({
+                id,
+                requesterId: values.requesterId,
+                recipientId: values.recipientId,
+                status: values.status ?? 'PENDING',
+                createdAt: new Date(),
+                acceptedAt: null,
+              })
+              return {
+                returning: async () => [{ id }],
+                then: (cb: any) => cb(undefined),
+              }
+            }
+            // notifications / other tables — no-op
+            return {
+              returning: async () => [],
+              then: (cb: any) => cb(undefined),
+            }
+          },
+        }
+      },
       update: (_table: any) => ({
         set: (values: any) => ({
           where: async (pred: any) => {
@@ -145,8 +160,16 @@ vi.mock('@/db', () => {
           store.rows = store.rows.filter((r) => !evalPred(pred, r))
         },
       }),
+      transaction: async (fn: any) => fn(mod.db),
+      query: {
+        userBlocks: {
+          findFirst: async () => undefined,
+        },
+      },
     },
   }
+  dbRef.db = mod.db
+  return mod
 })
 
 vi.mock('@/lib/require-auth', () => ({

@@ -1,7 +1,8 @@
 import { db } from '@/db'
 import { books } from '@/db/schema'
 import { eq } from 'drizzle-orm'
-import { areUsersFriends } from '@/lib/friendships/are-friends'
+import { areFriends } from '@/lib/social/are-friends'
+import { isBlocked } from '@/lib/social/is-blocked'
 
 export type BookAccess =
   | { ok: true }
@@ -19,10 +20,17 @@ export async function canReadBook(
 
   if (!book) return { ok: false, reason: 'NOT_FOUND' }
   if (viewerUserId && book.userId === viewerUserId) return { ok: true }
+
+  // Block masquerade: if either direction blocked, surface NOT_FOUND so the
+  // existence of the block (and the book) is never revealed.
+  if (viewerUserId && (await isBlocked(viewerUserId, book.userId))) {
+    return { ok: false, reason: 'NOT_FOUND' }
+  }
+
   if (book.visibility === 'PUBLIC') return { ok: true }
   if (book.visibility === 'FRIENDS') {
     if (!viewerUserId) return { ok: false, reason: 'FRIENDS_ONLY' }
-    const friends = await areUsersFriends(viewerUserId, book.userId)
+    const friends = await areFriends(viewerUserId, book.userId)
     return friends ? { ok: true } : { ok: false, reason: 'FRIENDS_ONLY' }
   }
   return { ok: false, reason: 'PRIVATE' }

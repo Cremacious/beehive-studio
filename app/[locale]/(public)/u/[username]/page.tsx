@@ -9,11 +9,16 @@ import {
   getProfileActivityAction,
 } from '@/lib/actions/user-profile.actions'
 import { FollowButton } from './_components/follow-button'
+import { FriendStatusSection } from './_components/friend-status-section'
+import { ProfileUnavailable } from './_components/profile-unavailable'
 import { SeriesLine } from '@/components/book/series-line'
 import { FriendButton } from '@/components/friendship/friend-button'
 import { db } from '@/db'
-import { friendships } from '@/db/schema'
+import { friendships, userMutes } from '@/db/schema'
 import { and, eq, or } from 'drizzle-orm'
+import { isBlocked } from '@/lib/social/is-blocked'
+import { getMutualFriends } from '@/lib/social/get-mutual-friends'
+import { getFriendCountAction } from '@/lib/actions/friendships.actions'
 
 type Props = { params: Promise<{ locale: string; username: string }> }
 
@@ -26,15 +31,23 @@ export default async function AuthorProfilePage({ params }: Props) {
   if (!profileResult.success) notFound()
   const profile = profileResult.data
 
-  const [booksResult, sparksResult, activityResult] = await Promise.all([
+  // Block-aware fetch — masquerade as "profile unavailable" when either party
+  // has blocked the other. NEVER reveal block existence.
+  if (userId && (await isBlocked(userId, profile.userId))) {
+    return <ProfileUnavailable locale={locale} />
+  }
+
+  const [booksResult, sparksResult, activityResult, friendCountResult] = await Promise.all([
     getProfileBooksAction(profile.userId),
     getProfileSparksAction(profile.userId),
     getProfileActivityAction(profile.userId),
+    getFriendCountAction(profile.userId),
   ])
 
   const books = booksResult.success ? booksResult.data : []
   const openSparks = sparksResult.success ? sparksResult.data : []
   const activity = activityResult.success ? activityResult.data : []
+  const friendsCount = friendCountResult.success ? friendCountResult.data : 0
 
   // Resolve friendship status for the FriendButton initial render.
   let friendshipStatus: 'NONE' | 'PENDING_OUTGOING' | 'PENDING_INCOMING' | 'ACCEPTED' = 'NONE'
@@ -55,6 +68,23 @@ export default async function AuthorProfilePage({ params }: Props) {
       else if (row.requesterId === userId) friendshipStatus = 'PENDING_OUTGOING'
       else friendshipStatus = 'PENDING_INCOMING'
     }
+  }
+
+  // Mutuals + mute lookup for the section. Only meaningful for authenticated
+  // non-self viewers; we still compute mutuals total so the section can show
+  // the row to anonymous viewers when relevant (never).
+  const mutuals = userId && !isSelf
+    ? await getMutualFriends(userId, profile.userId, 9)
+    : { mutuals: [], total: 0 }
+
+  let initialMuted = false
+  if (userId && !isSelf && friendshipStatus === 'ACCEPTED') {
+    const [row] = await db
+      .select({ mutedId: userMutes.mutedId })
+      .from(userMutes)
+      .where(and(eq(userMutes.muterId, userId), eq(userMutes.mutedId, profile.userId)))
+      .limit(1)
+    initialMuted = !!row
   }
 
   const ACTIVITY_ICONS: Record<string, string> = {
@@ -106,6 +136,7 @@ export default async function AuthorProfilePage({ params }: Props) {
             <div className="flex gap-4 flex-wrap text-[12px]">
               <span className="text-[#888]"><strong className="text-[#ddd]">{profile.followerCount}</strong> followers</span>
               <span className="text-[#888]"><strong className="text-[#ddd]">{profile.followingCount}</strong> following</span>
+              <span className="text-[#888]"><strong className="text-[#ddd]">{friendsCount}</strong> friends</span>
               <span className="text-[#333]">·</span>
               <span className="text-[#888]"><strong className="text-[#ddd]">{fmtWords(profile.wordCount)}</strong> words written</span>
               <span className="text-[#888]"><strong className="text-[#ddd]">{profile.bookCount}</strong> books published</span>
@@ -117,6 +148,18 @@ export default async function AuthorProfilePage({ params }: Props) {
 
       {/* Content */}
       <div className="px-6 py-6">
+
+        {/* Friendship status + mutuals + kebab */}
+        <FriendStatusSection
+          status={friendshipStatus}
+          targetUserId={profile.userId}
+          targetUsername={profile.username}
+          mutuals={mutuals}
+          initialMuted={initialMuted}
+          viewerIsSelf={isSelf}
+          isAuthenticated={!!userId}
+          locale={locale}
+        />
 
         {/* Published Books */}
         {books.length > 0 && (

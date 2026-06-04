@@ -6,10 +6,9 @@ import { useRouter } from 'next/navigation'
 import {
   Check,
   X,
-  ExternalLink,
-  MessageSquare,
-  Loader2,
   ArrowRight,
+  MessageCircle,
+  Loader2,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -37,7 +36,7 @@ type Props = {
   locale: string
 }
 
-const MAX_EXCERPT = 150
+const MAX_EXCERPT = 180
 
 function truncate(s: string, max = MAX_EXCERPT): string {
   if (!s) return ''
@@ -48,42 +47,34 @@ export function SuggestionsByChapter({ data, hiveId, locale }: Props) {
   if (data.length === 0) {
     return (
       <div className="px-6 pb-6">
-        <div className="rounded-lg border border-dashed border-border px-6 py-12 text-center">
-          <p className="text-base font-medium text-foreground">
-            No pending suggestions
-          </p>
-          <p className="text-sm text-muted-foreground mt-1.5">
-            Contributors and beta readers can suggest edits from any chapter view.
-          </p>
-        </div>
+        <p className="text-sm italic text-[var(--canvas-dark-ink-muted)]">
+          No pending suggestions. Contributors and beta readers can suggest edits from any chapter view.
+        </p>
       </div>
     )
   }
 
   return (
     <>
-      {data.map((group, i) => {
-        const chapterLabel = group.chapterTitle
-        return (
-          <HiveSectionDivider
-            key={group.chapterId}
-            label={chapterLabel}
-            hideTopBorder={i === 0}
-          >
-            <div className="flex flex-col gap-3">
-              {group.suggestions.map((s) => (
-                <SuggestionCard
-                  key={s.id}
-                  suggestion={s}
-                  chapterId={group.chapterId}
-                  hiveId={hiveId}
-                  locale={locale}
-                />
-              ))}
-            </div>
-          </HiveSectionDivider>
-        )
-      })}
+      {data.map((group, i) => (
+        <HiveSectionDivider
+          key={group.chapterId}
+          label={group.chapterTitle}
+          hideTopBorder={i === 0}
+        >
+          <div className="flex flex-col gap-3">
+            {group.suggestions.map((s) => (
+              <SuggestionCard
+                key={s.id}
+                suggestion={s}
+                chapterId={group.chapterId}
+                hiveId={hiveId}
+                locale={locale}
+              />
+            ))}
+          </div>
+        </HiveSectionDivider>
+      ))}
     </>
   )
 }
@@ -139,10 +130,9 @@ function SuggestionCard({
   }
 
   const openHref = `/${locale}/hive/${hiveId}/chapters/${chapterId}#sug-${suggestion.id}`
-
-  const authorLabel = suggestion.authorUsername
-    ? `@${suggestion.authorUsername}`
-    : 'Unknown'
+  const username = suggestion.authorUsername ?? 'Unknown'
+  const initials = (suggestion.authorUsername ?? '?').slice(0, 2).toUpperCase()
+  const busy = accepting || rejecting
 
   return (
     <article
@@ -154,52 +144,82 @@ function SuggestionCard({
       }}
       className="p-4"
     >
-      <header className="flex items-center gap-2 text-xs mb-2">
+      <header className="flex items-center gap-3 mb-3">
         {suggestion.authorAvatar ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={suggestion.authorAvatar}
             alt=""
-            className="size-6 rounded-full object-cover flex-shrink-0"
+            className="size-7 rounded-full object-cover flex-shrink-0"
           />
         ) : (
-          <div className="size-6 rounded-full bg-muted flex-shrink-0 flex items-center justify-center text-[9px] font-semibold text-muted-foreground">
-            {(suggestion.authorUsername ?? '?').slice(0, 2).toUpperCase()}
+          <div
+            className="size-7 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-semibold"
+            style={{
+              background: 'var(--canvas-dark-100)',
+              boxShadow: 'var(--sh-inset)',
+              color: 'var(--canvas-dark-ink-muted)',
+            }}
+          >
+            {initials}
           </div>
         )}
         <span
-          className="font-medium"
+          className="text-[13.5px] font-semibold"
           style={{ color: 'var(--canvas-dark-ink-strong)' }}
         >
-          {authorLabel}
+          {username}
         </span>
-        <span style={{ color: 'var(--canvas-dark-ink-muted)' }}>·</span>
-        <span style={{ color: 'var(--canvas-dark-ink-muted)' }}>
+        <span
+          className="font-mono text-[11px] uppercase tracking-wider"
+          style={{ color: 'var(--canvas-dark-ink-muted)' }}
+        >
           {relTime(suggestion.createdAt)}
         </span>
         {suggestion.hasReplies && (
           <span
-            className="ml-2 inline-flex items-center gap-1 text-[10px] uppercase tracking-wide font-semibold"
-            style={{ color: 'var(--canvas-dark-ink-muted)' }}
+            className="ml-auto inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider"
+            style={{
+              background: 'var(--canvas-dark-100)',
+              boxShadow: 'var(--sh-inset)',
+              color: 'var(--canvas-dark-ink-muted)',
+              borderRadius: 'var(--r-pill)',
+              padding: '4px 9px',
+            }}
             title="This suggestion has replies"
           >
-            <MessageSquare size={10} />
-            Has replies
+            <MessageCircle size={12} />
+            replies
           </span>
         )}
       </header>
 
-      <div className="text-sm leading-relaxed break-words mb-3">
+      <div
+        className="flex items-start gap-2 flex-wrap"
+        style={{
+          background: 'var(--canvas-dark-100)',
+          boxShadow: 'var(--sh-inset)',
+          borderRadius: 'var(--r-row)',
+          padding: '12px 14px',
+          fontFamily: 'var(--font-prose)',
+          fontSize: '15px',
+          lineHeight: 1.6,
+        }}
+      >
         <span
-          className="line-through"
-          style={{ color: 'var(--canvas-dark-ink-muted)' }}
+          className="line-through opacity-80"
+          style={{
+            color: 'var(--status-error)',
+            textDecorationColor:
+              'oklch(from var(--status-error) l c h / 0.7)',
+          }}
         >
           {truncate(suggestion.originalExcerpt)}
         </span>
         <ArrowRight
-          size={12}
-          className="inline-block mx-1.5 align-baseline"
-          style={{ color: 'var(--canvas-dark-ink-muted)' }}
+          size={14}
+          className="flex-shrink-0 mt-[5px]"
+          style={{ color: 'var(--canvas-dark-ink-faint)' }}
         />
         <span
           className="font-medium"
@@ -209,46 +229,52 @@ function SuggestionCard({
         </span>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 mt-3">
         <button
           type="button"
           onClick={handleAccept}
-          disabled={accepting || rejecting}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--r-pill)] text-xs font-semibold disabled:opacity-50"
+          disabled={busy}
+          className="inline-flex items-center gap-1.5 font-semibold transition-[transform,background] hover:-translate-y-px active:translate-y-0 disabled:opacity-50 disabled:hover:translate-y-0"
           style={{
             background: 'var(--brand)',
             color: 'var(--brand-ink)',
+            borderRadius: 'var(--r-pill)',
+            padding: '7px 16px',
+            fontSize: '13px',
           }}
         >
           {accepting ? (
-            <Loader2 size={12} className="animate-spin" />
+            <Loader2 size={14} className="animate-spin" />
           ) : (
-            <Check size={12} />
+            <Check size={14} />
           )}
           Accept
         </button>
         <button
           type="button"
           onClick={() => setRejectOpen(true)}
-          disabled={accepting || rejecting}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--r-pill)] text-xs font-semibold disabled:opacity-50"
+          disabled={busy}
+          className="inline-flex items-center gap-1.5 font-semibold transition-[transform,color] hover:-translate-y-px active:translate-y-0 disabled:opacity-50 disabled:hover:translate-y-0"
           style={{
             background:
               'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
             boxShadow: 'var(--sh-tile)',
             color: 'var(--status-error)',
+            borderRadius: 'var(--r-pill)',
+            padding: '7px 16px',
+            fontSize: '13px',
           }}
         >
-          <X size={12} />
+          <X size={14} />
           Reject
         </button>
         <Link
           href={openHref}
-          className="ml-auto inline-flex items-center gap-1 text-xs font-medium hover:underline"
+          className="ml-auto inline-flex items-center gap-1 text-[13px] font-medium hover:underline underline-offset-2"
           style={{ color: 'var(--brand)' }}
         >
-          Open
-          <ExternalLink size={12} />
+          Open in chapter
+          <ArrowRight size={13} />
         </Link>
       </div>
 

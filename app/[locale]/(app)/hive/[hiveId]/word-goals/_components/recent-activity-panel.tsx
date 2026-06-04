@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { User } from 'lucide-react'
 import {
   getRecentWordLogsAction,
   type RecentWordLogItem,
@@ -31,76 +30,102 @@ export function RecentActivityPanel({ hiveId, initialItems, initialCursor, local
     })
   }
 
+  if (items.length === 0) {
+    return (
+      <p className="text-sm italic text-[var(--canvas-dark-ink-muted)] py-2">
+        No activity yet.
+      </p>
+    )
+  }
+
   return (
     <div>
-      {items.length === 0 ? (
-        <p className="text-sm text-[var(--canvas-dark-ink-muted)] py-2">No activity yet.</p>
-      ) : (
-        <ul className="space-y-2">
-          {items.map((item) => {
-            const profileHref = item.user.username ? `/${locale}/u/${item.user.username}` : null
-            const positive = item.wordsAdded >= 0
-            return (
-              <li key={item.id} className="flex items-center gap-2.5 text-sm">
-                <div
-                  className="h-6 w-6 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden"
-                  style={{ background: 'var(--canvas-dark-100)', boxShadow: 'var(--sh-inset)' }}
-                >
-                  {item.user.avatarUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={item.user.avatarUrl} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    <User className="w-3 h-3 text-[var(--canvas-dark-ink-muted)]" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  {profileHref ? (
-                    <Link
-                      href={profileHref}
-                      className="font-medium text-[var(--canvas-dark-ink-strong)] hover:underline"
-                    >
-                      {item.user.username}
-                    </Link>
-                  ) : (
-                    <span className="font-medium text-[var(--canvas-dark-ink-strong)]">
-                      Unknown writer
-                    </span>
-                  )}
-                  <span className="text-[var(--canvas-dark-ink-muted)]">
-                    {' '}
-                    <span
-                      className="font-mono"
-                      style={{ color: positive ? 'var(--brand)' : 'var(--destructive)' }}
-                    >
-                      {positive ? '+' : ''}
-                      {item.wordsAdded.toLocaleString()}
-                    </span>{' '}
-                    words in{' '}
-                    <span className="italic text-[var(--canvas-dark-ink)]">
-                      {item.chapterTitle ?? 'a chapter'}
-                    </span>
+      <div className="flex flex-col">
+        {items.map((item) => {
+          const profileHref = item.user.username
+            ? `/${locale}/u/${item.user.username}`
+            : null
+          const positive = item.wordsAdded > 0
+          const handle = item.user.username ? `@${item.user.username}` : 'Unknown writer'
+          return (
+            <div
+              key={item.id}
+              className="flex items-baseline gap-3"
+              style={{
+                padding: '9px 0',
+                borderTop:
+                  '1px solid oklch(from var(--canvas-dark-300) l c h / 0.4)',
+              }}
+            >
+              <span
+                className="font-mono text-[11px] uppercase tracking-wider flex-shrink-0 text-right"
+                style={{ width: '64px', color: 'var(--canvas-dark-ink-muted)' }}
+              >
+                {relTime(item.loggedAt)}
+              </span>
+              <span
+                className="flex-1 text-[13.5px]"
+                style={{ color: 'var(--canvas-dark-ink)' }}
+              >
+                {profileHref ? (
+                  <Link
+                    href={profileHref}
+                    className="font-semibold hover:underline"
+                    style={{ color: 'var(--canvas-dark-ink-strong)' }}
+                  >
+                    {handle}
+                  </Link>
+                ) : (
+                  <span
+                    className="font-semibold"
+                    style={{ color: 'var(--canvas-dark-ink-strong)' }}
+                  >
+                    {handle}
                   </span>
-                </div>
-                <span className="text-xs text-[var(--canvas-dark-ink-muted)] flex-shrink-0">
-                  {relTime(item.loggedAt)}
-                </span>
-              </li>
-            )
-          })}
-        </ul>
-      )}
+                )}{' '}
+                logged{' '}
+                <span
+                  className="font-semibold"
+                  style={{ color: 'var(--canvas-dark-ink-strong)' }}
+                >
+                  {positive ? '+' : ''}
+                  {item.wordsAdded.toLocaleString()}
+                </span>{' '}
+                words
+                {item.chapterTitle ? (
+                  <>
+                    {' '}on{' '}
+                    <span
+                      className="italic"
+                      style={{ color: 'var(--canvas-dark-ink-strong)' }}
+                    >
+                      {item.chapterTitle}
+                    </span>
+                  </>
+                ) : null}
+              </span>
+            </div>
+          )
+        })}
+      </div>
       {cursor && (
-        <div className="mt-3 flex justify-center">
-          <button
-            type="button"
-            onClick={loadOlder}
-            disabled={pending}
-            style={{ borderRadius: 'var(--r-btn)' }}
-            className="text-xs text-[var(--canvas-dark-ink-muted)] hover:text-[var(--canvas-dark-ink-strong)] px-3 py-1.5 hover:bg-[linear-gradient(180deg,var(--canvas-dark-300),var(--canvas-dark-200))] disabled:opacity-50"
-          >
-            {pending ? 'Loading…' : 'Load older'}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={loadOlder}
+          disabled={pending}
+          className="inline-flex items-center font-semibold text-[13px] hover:text-[var(--canvas-dark-ink-strong)] transition-[color,transform] hover:-translate-y-px active:translate-y-0 disabled:opacity-50 disabled:hover:translate-y-0"
+          style={{
+            marginTop: '14px',
+            background:
+              'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+            boxShadow: 'var(--sh-tile)',
+            borderRadius: 'var(--r-pill)',
+            padding: '7px 14px',
+            color: 'var(--canvas-dark-ink-muted)',
+          }}
+        >
+          {pending ? 'Loading…' : 'Load older'}
+        </button>
       )}
     </div>
   )

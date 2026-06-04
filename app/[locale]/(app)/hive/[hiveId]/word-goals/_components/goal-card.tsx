@@ -3,13 +3,18 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Pencil, Archive } from 'lucide-react'
+import { MoreVertical, Pencil, Archive } from 'lucide-react'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { EditGoalModal } from './edit-goal-modal'
 import { archiveWordGoalAction, type WordGoalRecord } from '@/lib/actions/hive-word-goals.actions'
 import type { WordGoalType } from '@/lib/hive/goal-progress'
 import { HivePill } from '../../_components/hive-pill'
-import { cn } from '@/lib/utils'
 
 type Props = {
   goal: WordGoalRecord
@@ -37,9 +42,9 @@ function formatRemaining(endDate: Date | null): string | null {
   if (ms <= 0) return 'Window closed'
   const days = Math.floor(ms / 86_400_000)
   const hours = Math.floor((ms % 86_400_000) / 3_600_000)
-  if (days > 0) return `${days}d ${hours}h left`
+  if (days > 0) return `${days} day${days === 1 ? '' : 's'} left`
+  if (hours > 0) return `${hours}h left`
   const minutes = Math.floor((ms % 3_600_000) / 60_000)
-  if (hours > 0) return `${hours}h ${minutes}m left`
   return `${minutes}m left`
 }
 
@@ -52,7 +57,6 @@ export function GoalCard({ goal, progress, canManage }: Props) {
   const pct = goal.targetWords > 0 ? Math.max(0, (progress / goal.targetWords) * 100) : 0
   const pctClamped = Math.min(100, pct)
   const remaining = formatRemaining(goal.endDate)
-  const over = pct > 100
 
   async function handleArchive() {
     const result = await archiveWordGoalAction(goal.id)
@@ -70,76 +74,101 @@ export function GoalCard({ goal, progress, canManage }: Props) {
         background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
         borderRadius: 'var(--r-row)',
         boxShadow: 'var(--sh-tile)',
-        border: 'var(--br-card)',
+        padding: '18px',
       }}
-      className="p-4 flex flex-col gap-3"
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <HivePill token={token}>{label}</HivePill>
-          <div className="text-xs font-mono text-[var(--canvas-dark-ink-muted)] truncate">
-            {progress.toLocaleString()} / {goal.targetWords.toLocaleString()} words
-          </div>
-        </div>
+      <div className="flex items-center gap-3 mb-3">
+        <span
+          className="font-comfortaa font-bold"
+          style={{
+            color: 'var(--canvas-dark-ink-strong)',
+            fontSize: '17px',
+          }}
+        >
+          {`${label} goal`}
+        </span>
+        <HivePill token={token}>{label}</HivePill>
         {canManage && (
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <button
-              type="button"
-              onClick={() => setEditOpen(true)}
-              style={{ borderRadius: 'var(--r-btn)' }}
-              className="p-1 text-[var(--canvas-dark-ink-muted)] hover:text-[var(--canvas-dark-ink-strong)] hover:bg-[linear-gradient(180deg,var(--canvas-dark-300),var(--canvas-dark-200))]"
-              aria-label="Edit goal"
-            >
-              <Pencil className="w-3.5 h-3.5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setConfirmArchive(true)}
-              style={{ borderRadius: 'var(--r-btn)' }}
-              className="p-1 text-[var(--canvas-dark-ink-muted)] hover:text-[var(--canvas-dark-ink-strong)] hover:bg-[linear-gradient(180deg,var(--canvas-dark-300),var(--canvas-dark-200))]"
-              aria-label="Archive goal"
-            >
-              <Archive className="w-3.5 h-3.5" />
-            </button>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                aria-label="Goal options"
+                className="ml-auto inline-flex items-center justify-center rounded-md p-1 text-[var(--canvas-dark-ink-muted)] hover:text-[var(--canvas-dark-ink-strong)] hover:bg-[var(--canvas-dark-100)]"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => setEditOpen(true)}>
+                <Pencil className="h-4 w-4 mr-2" />
+                Edit goal
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setConfirmArchive(true)}>
+                <Archive className="h-4 w-4 mr-2" />
+                Archive
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
       </div>
 
-      <div>
+      <div
+        style={{
+          height: '8px',
+          borderRadius: 'var(--r-pill)',
+          background: 'var(--canvas-dark-100)',
+          boxShadow: 'var(--sh-inset)',
+          overflow: 'hidden',
+        }}
+      >
         <div
+          className="transition-[width] duration-300"
           style={{
-            background: 'var(--canvas-dark-100)',
+            width: `${pctClamped}%`,
+            height: '100%',
+            background: 'var(--brand)',
             borderRadius: 'var(--r-pill)',
-            boxShadow: 'var(--sh-inset)',
+            boxShadow: '0 0 12px oklch(from var(--brand) l c h / 0.4)',
           }}
-          className="h-2 w-full overflow-hidden"
-        >
-          <div
-            className={cn('h-full transition-[width] duration-300', over && 'animate-pulse')}
-            style={{
-              width: `${pctClamped}%`,
-              background: 'var(--brand)',
-              borderRadius: 'var(--r-pill)',
-            }}
-            aria-label={`Progress: ${pct.toFixed(0)}%`}
-          />
-        </div>
-        <div className="mt-1.5 flex items-center justify-between text-[11px] text-[var(--canvas-dark-ink-muted)]">
-          <span
-            className={cn('font-mono', over && 'font-semibold')}
-            style={over ? { color: 'var(--brand)' } : undefined}
-          >
-            {pct.toFixed(0)}%
-          </span>
-          {remaining ? <span>{remaining}</span> : <span>No deadline</span>}
-        </div>
+          aria-label={`Progress: ${pct.toFixed(0)}%`}
+        />
       </div>
 
-      {goal.endDate && (
-        <div className="text-[10px] uppercase tracking-wide text-[var(--canvas-dark-ink-muted)] font-mono opacity-70">
-          Ends {goal.endDate.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
-        </div>
-      )}
+      <div
+        className="flex items-center justify-between mt-3"
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: '12px',
+          color: 'var(--canvas-dark-ink-muted)',
+        }}
+      >
+        <span>
+          <b
+            style={{
+              fontFamily: 'var(--font-display)',
+              color: 'var(--canvas-dark-ink-strong)',
+              fontWeight: 700,
+            }}
+          >
+            {progress.toLocaleString()}
+          </b>{' '}
+          / {goal.targetWords.toLocaleString()} words
+        </span>
+        {remaining ? (
+          <span>{remaining}</span>
+        ) : goal.endDate ? (
+          <span>
+            Ends{' '}
+            {goal.endDate.toLocaleDateString(undefined, {
+              month: 'short',
+              day: 'numeric',
+            })}
+          </span>
+        ) : (
+          <span>No deadline</span>
+        )}
+      </div>
 
       {canManage && (
         <>

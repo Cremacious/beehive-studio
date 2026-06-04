@@ -52,7 +52,7 @@ export default async function WordGoalsPage({
   const recentItems = logsRes.success ? logsRes.data.items : []
   const recentCursor = logsRes.success ? logsRes.data.nextCursor : null
 
-  const canShowHeaderCTA = canManage && activeGoals.length > 0 && activeGoals.length < 4
+  const canShowHeaderCTA = canManage && activeGoals.length < 4
 
   return (
     <HivePageShell
@@ -89,7 +89,11 @@ export default async function WordGoalsPage({
             <ActiveGoalsStrip hiveId={hiveId} goals={goals} canManage={canManage} />
           </HiveSectionDivider>
           {primary && primaryProgress && (
-            <HiveSectionDivider label="Contributors">
+            <HiveSectionDivider
+              label={`Contributors · ${
+                primary.type.charAt(0) + primary.type.slice(1).toLowerCase()
+              } goal`}
+            >
               <ContributorsPanel
                 primary={primary}
                 contributors={primaryProgress.contributors}

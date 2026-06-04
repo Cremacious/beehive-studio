@@ -154,7 +154,7 @@ export const socialActivity = pgTable('social_activity', {
   payload: jsonb('payload').$type<Record<string, unknown>>(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (t) => [
-  index('social_activity_actor_created_idx').on(t.actorId, t.createdAt),
+  index('social_activity_actor_created_idx').on(t.actorId, t.createdAt.desc()),
   index('social_activity_subject_idx').on(t.subjectType, t.subjectId),
 ])
 

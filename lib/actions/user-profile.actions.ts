@@ -13,7 +13,8 @@ import {
   userProfiles,
 } from '@/db/schema'
 import { eq, and, count, sql, desc, gt } from 'drizzle-orm'
-import { requireAuth } from '@/lib/require-auth'
+import { requireAuth, getOptionalUserId } from '@/lib/require-auth'
+import { canViewSpark } from '@/lib/sparks/predicates'
 import type { ActionResult } from './book.actions'
 import type { SparkSummary } from './sparks.actions'
 
@@ -203,6 +204,7 @@ export async function getProfileSparksAction(
   userId: string
 ): Promise<ActionResult<SparkSummary[]>> {
   const votingEnd = new Date(Date.now() - VOTING_WINDOW_MS)
+  const viewerId = await getOptionalUserId()
 
   const rows = await db
     .select({
@@ -211,7 +213,9 @@ export async function getProfileSparksAction(
       deadline: sparks.deadline,
       wordLimit: sparks.wordLimit,
       winnerEntryId: sparks.winnerEntryId,
+      creatorId: sparks.creatorId,
       visibility: sparks.visibility,
+      status: sparks.status,
       votingEndsAt: sparks.votingEndsAt,
       creatorUsername: userProfiles.username,
       creatorDisplayName: userProfiles.displayName,
@@ -227,14 +231,28 @@ export async function getProfileSparksAction(
       sparks.deadline,
       sparks.wordLimit,
       sparks.winnerEntryId,
+      sparks.creatorId,
       sparks.visibility,
+      sparks.status,
       sparks.votingEndsAt,
       userProfiles.username,
       userProfiles.displayName
     )
     .orderBy(sparks.deadline)
 
-  const result: SparkSummary[] = rows.map((r) => ({
+  // Per-row canViewSpark gate — masquerade FRIENDS/PRIVATE sparks as absent for
+  // non-friend / non-creator / blocked viewers. Mirrors getSparksAction pattern (T4).
+  const visible = (
+    await Promise.all(
+      rows.map(async (r) =>
+        (await canViewSpark(viewerId, { creatorId: r.creatorId, visibility: r.visibility, status: r.status }))
+          ? r
+          : null
+      )
+    )
+  ).filter((r): r is NonNullable<typeof r> => r !== null)
+
+  const result: SparkSummary[] = visible.map((r) => ({
     id: r.id,
     prompt: r.title,
     deadline: r.deadline ?? new Date(0),

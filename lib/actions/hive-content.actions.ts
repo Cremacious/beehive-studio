@@ -9,7 +9,7 @@ import { assertHiveMember, assertHiveAdmin } from './_helpers'
 import { createTaskSchema, updateTaskSchema } from '@/lib/validations/hive'
 import { requireHiveMember, canEditOutline, type HiveRole } from '@/lib/hive/permissions'
 import { extractWikiExcerpt } from '@/lib/wiki/excerpt'
-import type { WikiCategory } from '@/lib/wiki/category-templates'
+import { CATEGORY_TEMPLATES, type WikiCategory } from '@/lib/wiki/category-templates'
 import type { BinderItemRow } from './binder.actions'
 import type { ChapterStatus } from '@/lib/books/is-chapter-reader-visible'
 import type { ActionResult } from './book.actions'
@@ -30,18 +30,10 @@ export type HiveWikiEntry = {
   parentId: string | null
 }
 
-export type HiveWikiFolder = {
-  id: string
-  title: string
-  description: string | null
-  parentId: string | null
-  entryCount: number
-}
-
 export type HiveWikiViewData = {
   bookId: string
-  entries: HiveWikiEntry[]
-  folders: HiveWikiFolder[]
+  /** Per-category entry count for the wiki landing page. */
+  counts: Record<WikiCategory, number>
   viewerRole: HiveRole
   authorUserId: string
 }
@@ -68,6 +60,16 @@ function toBinderItemRow(
   }
 }
 
+/**
+ * Wiki landing page data: per-category entry counts.
+ *
+ * Q2=B: NO character UNION. Wiki shows only true `wiki_entry` rows.
+ * Characters remain first-class `character` binder items on the studio side
+ * and do NOT surface on the hive wiki surface.
+ *
+ * Q1=A: IA collapsed to categories-only — folders + notes are no longer
+ * surfaced on the wiki. Folder binder items still exist but aren't returned.
+ */
 export async function getHiveWikiView(hiveId: string): Promise<ActionResult<HiveWikiViewData>> {
   const userId = await requireAuth()
   const role = await requireHiveMember(hiveId, userId)
@@ -81,13 +83,69 @@ export async function getHiveWikiView(hiveId: string): Promise<ActionResult<Hive
   const items = await db.query.binderItems.findMany({
     where: and(
       eq(binderItems.bookId, hive.bookId),
-      inArray(binderItems.type, ['wiki_entry', 'wiki_folder', 'character', 'research_folder']),
+      eq(binderItems.type, 'wiki_entry'),
+    ),
+    columns: { id: true, content: true },
+  })
+
+  const counts = Object.fromEntries(
+    CATEGORY_TEMPLATES.map(t => [t.category, 0]),
+  ) as Record<WikiCategory, number>
+  for (const i of items) {
+    const c = (i.content ?? {}) as { category?: WikiCategory }
+    const cat: WikiCategory = c.category ?? 'OTHER'
+    if (cat in counts) counts[cat]++
+    else counts.OTHER++
+  }
+
+  return {
+    success: true,
+    data: {
+      bookId: hive.bookId,
+      counts,
+      viewerRole: role,
+      authorUserId: hive.book.userId,
+    },
+  }
+}
+
+/**
+ * Wiki category drill-down: returns all wiki_entry rows for a given category.
+ * NO character UNION (Q2=B).
+ */
+export async function getHiveWikiEntriesByCategory(
+  hiveId: string,
+  category: WikiCategory,
+): Promise<ActionResult<{
+  bookId: string
+  entries: HiveWikiEntry[]
+  viewerRole: HiveRole
+}>> {
+  const userId = await requireAuth()
+  const role = await requireHiveMember(hiveId, userId)
+  const hive = await db.query.hives.findFirst({
+    where: eq(hives.id, hiveId),
+    columns: { bookId: true },
+  })
+  if (!hive || !hive.bookId) return { success: false, error: 'HIVE_NOT_FOUND' }
+
+  const items = await db.query.binderItems.findMany({
+    where: and(
+      eq(binderItems.bookId, hive.bookId),
+      eq(binderItems.type, 'wiki_entry'),
     ),
     orderBy: [asc(binderItems.order)],
   })
 
+  // Filter by category in JS (no JSONB query pattern in codebase yet).
+  const inCategory = items.filter(i => {
+    const c = (i.content ?? {}) as { category?: WikiCategory }
+    const cat: WikiCategory = c.category ?? 'OTHER'
+    return cat === category
+  })
+
   const authorIds = Array.from(
-    new Set(items.flatMap(i => [i.authorId, i.lastEditedBy]).filter((v): v is string => !!v)),
+    new Set(inCategory.flatMap(i => [i.authorId, i.lastEditedBy]).filter((v): v is string => !!v)),
   )
   const profiles = authorIds.length
     ? await db.query.userProfiles.findMany({
@@ -97,48 +155,31 @@ export async function getHiveWikiView(hiveId: string): Promise<ActionResult<Hive
     : []
   const profileByUserId = new Map(profiles.map(p => [p.userId, p]))
 
-  const entries: HiveWikiEntry[] = items
-    .filter(i => i.type === 'wiki_entry' || i.type === 'character')
-    .map(i => {
-      const content = (i.content ?? {}) as { category?: WikiCategory; body?: unknown; tags?: string[] }
-      const profile = i.authorId ? profileByUserId.get(i.authorId) : null
-      return {
-        id: i.id,
-        title: i.title,
-        category: i.type === 'character' ? 'CHARACTER' : (content.category ?? 'OTHER'),
-        tags: Array.isArray(content.tags) ? content.tags : [],
-        excerpt: extractWikiExcerpt(i.content, 120),
-        authorId: i.authorId,
-        authorUsername: profile?.username ?? null,
-        authorAvatarUrl: profile?.avatarUrl ?? null,
-        lastEditedBy: i.lastEditedBy,
-        lastEditedAt: i.updatedAt,
-        parentId: i.parentId,
-      }
-    })
-
-  const folders: HiveWikiFolder[] = items
-    .filter(i => i.type === 'wiki_folder' || i.type === 'research_folder')
-    .map(i => {
-      const c = (i.content ?? {}) as { description?: string }
-      return {
-        id: i.id,
-        title: i.title,
-        description: c.description ?? null,
-        parentId: i.parentId,
-        entryCount: entries.filter(e => e.parentId === i.id).length,
-      }
-    })
+  const entries: HiveWikiEntry[] = inCategory.map(i => {
+    const content = (i.content ?? {}) as { category?: WikiCategory; body?: unknown; tags?: string[] }
+    const profile = i.lastEditedBy
+      ? profileByUserId.get(i.lastEditedBy)
+      : i.authorId
+        ? profileByUserId.get(i.authorId)
+        : null
+    return {
+      id: i.id,
+      title: i.title,
+      category: content.category ?? 'OTHER',
+      tags: Array.isArray(content.tags) ? content.tags : [],
+      excerpt: extractWikiExcerpt(i.content, 160),
+      authorId: i.authorId,
+      authorUsername: profile?.username ?? null,
+      authorAvatarUrl: profile?.avatarUrl ?? null,
+      lastEditedBy: i.lastEditedBy,
+      lastEditedAt: i.updatedAt,
+      parentId: i.parentId,
+    }
+  })
 
   return {
     success: true,
-    data: {
-      bookId: hive.bookId,
-      entries,
-      folders,
-      viewerRole: role,
-      authorUserId: hive.book.userId,
-    },
+    data: { bookId: hive.bookId, entries, viewerRole: role },
   }
 }
 

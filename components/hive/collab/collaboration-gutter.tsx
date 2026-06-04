@@ -29,6 +29,10 @@ type Props = {
   collapsed?: boolean
   onToggleCollapse?: () => void
   onAcceptedSuggestion?: () => void
+  /** When true, render without panel chrome — left-border + sticky positioning
+   *  inside an existing panel. Used by the hive chapter view where the gutter
+   *  shares the page panel's chrome. */
+  inline?: boolean
   /** Bumped by the parent after creating an annotation/suggestion to force
    *  a refetch of the gutter's data. */
   refreshTrigger?: number
@@ -85,6 +89,7 @@ export function CollaborationGutter({
   onCountsChange,
   flushPendingSave,
   onMutated,
+  inline = false,
 }: Props) {
   const {
     annotations,
@@ -245,6 +250,68 @@ export function CollaborationGutter({
   function handleAccepted() {
     onAcceptedSuggestion?.()
     void refresh()
+  }
+
+  const activeCount = visibleAnnotations.length + visibleSuggestions.length
+
+  if (inline) {
+    return (
+      <aside
+        style={{
+          width: EXPANDED_WIDTH,
+          borderLeft:
+            '1px solid oklch(from var(--canvas-dark-300) l c h / 0.5)',
+          paddingLeft: 20,
+          position: 'sticky',
+          top: 16,
+          alignSelf: 'flex-start',
+        }}
+        className="flex shrink-0 flex-col gap-3"
+      >
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--canvas-dark-ink-muted)]">
+            Collaboration
+          </span>
+          <span className="font-mono text-[10px] text-[var(--canvas-dark-ink-muted)]">
+            {activeCount} active
+          </span>
+        </div>
+
+        <GutterFilterStrip
+          chapterId={chapterId}
+          value={filter}
+          onChange={setFilter}
+        />
+
+        {visibleAnnotations.length === 0 && visibleSuggestions.length === 0 ? (
+          <div className="py-6 text-center text-[11px] text-muted-foreground">
+            No annotations or suggestions yet.
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {visibleAnnotations.map((a) => (
+              <AnnotationCard
+                key={a.id}
+                annotation={a}
+                replies={annotationReplies.get(a.id) ?? []}
+                viewer={viewer}
+                mutate={wrappedMutate}
+              />
+            ))}
+            {visibleSuggestions.map((s) => (
+              <SuggestionCard
+                key={s.id}
+                suggestion={s}
+                replies={suggestionReplies.get(s.id) ?? []}
+                viewer={{ id: viewer.id, role: viewer.role }}
+                mutate={wrappedMutate}
+                onAccepted={handleAccepted}
+              />
+            ))}
+          </div>
+        )}
+      </aside>
+    )
   }
 
   return (

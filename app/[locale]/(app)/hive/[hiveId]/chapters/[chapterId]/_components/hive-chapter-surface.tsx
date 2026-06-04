@@ -146,7 +146,7 @@ export function HiveChapterSurface({
       `}</style>
 
       {hasMetadata && (
-        <HiveSectionDivider label="Metadata">
+        <HiveSectionDivider label="Metadata" hideTopBorder>
           <ChapterMetadataHeader
             status={data.status}
             synopsis={data.synopsis}
@@ -155,28 +155,39 @@ export function HiveChapterSurface({
         </HiveSectionDivider>
       )}
 
-      <div className="flex gap-0">
-        <div className="flex-1 min-w-0">
-          <div className="hive-chapter-prose mx-auto max-w-[720px] px-6 py-8">
-            {editor ? (
-              <EditorContent editor={editor} />
-            ) : (
-              <div className="text-sm text-muted-foreground">Loading…</div>
-            )}
+      <HiveSectionDivider label="Body">
+        <div className="flex items-start gap-6">
+          <div className="flex-1 min-w-0">
+            <div
+              className="hive-chapter-prose"
+              style={{
+                background: 'var(--canvas-dark-100)',
+                boxShadow: 'var(--sh-inset)',
+                borderRadius: 'var(--r-row)',
+                padding: '26px 28px',
+              }}
+            >
+              {editor ? (
+                <EditorContent editor={editor} />
+              ) : (
+                <div className="text-sm text-muted-foreground">Loading…</div>
+              )}
+            </div>
           </div>
+          <CollaborationGutter
+            editor={editor}
+            chapterId={chapterId}
+            hiveId={hiveId}
+            viewer={{
+              id: viewerUserId,
+              role: viewerRole,
+              bookOwnerId: data.book.userId,
+            }}
+            refreshTrigger={collabRefreshNonce}
+            inline
+          />
         </div>
-        <CollaborationGutter
-          editor={editor}
-          chapterId={chapterId}
-          hiveId={hiveId}
-          viewer={{
-            id: viewerUserId,
-            role: viewerRole,
-            bookOwnerId: data.book.userId,
-          }}
-          refreshTrigger={collabRefreshNonce}
-        />
-      </div>
+      </HiveSectionDivider>
 
       {editor ? (
         <SelectionPopover

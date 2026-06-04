@@ -43,7 +43,7 @@ export function SubmissionRow({
   return (
     <Link
       href={`/${locale}/hive/${hiveId}/submissions/${row.id}`}
-      className="grid grid-cols-[1fr_110px_130px] items-center gap-3 px-4 py-3 transition-colors hover:bg-[var(--canvas-dark-300)]"
+      className="grid grid-cols-[1fr_110px_130px] items-center gap-3 px-5 py-3 transition-colors hover:bg-[var(--canvas-dark-300)]"
     >
       <div className="min-w-0">
         <p
@@ -60,14 +60,14 @@ export function SubmissionRow({
           {row.wordCount.toLocaleString()} words · {targetOrderLabel(row.targetChapterOrder)}
         </p>
       </div>
-      <div>
+      <div className="flex justify-center">
         <HivePill token={STATUS_TOKEN[row.draftStatus]}>{STATUS_LABEL[row.draftStatus]}</HivePill>
       </div>
       <p
-        className="text-[11px] font-mono text-right"
+        className="text-[11px] font-mono tracking-wider text-right"
         style={{ color: 'var(--canvas-dark-ink-muted)' }}
       >
-        {relTime(row.updatedAt)}
+        {row.draftStatus === 'DRAFT' ? '—' : relTime(row.updatedAt)}
       </p>
     </Link>
   )

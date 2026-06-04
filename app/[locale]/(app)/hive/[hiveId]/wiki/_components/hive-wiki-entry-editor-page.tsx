@@ -8,9 +8,9 @@ import type { HiveRole } from '@/lib/hive/permissions'
 /**
  * Wrapper that mounts the entry editor inside a HivePageShell at its own URL.
  *
- * The entry editor owns its own header (edited-by line + save status badge).
- * We deliberately omit the shell's title/subtitle/back so the editor's header
- * is the only top-of-page chrome. Browser back handles navigation.
+ * Shell renders only the "← Back to wiki" mono breadcrumb ABOVE the panel.
+ * Title + subtitle are intentionally omitted — the entry editor owns its own
+ * header (edited-by line + save status badge) directly under the panel top edge.
  */
 export function HiveWikiEntryEditorPage({
   entryId,
@@ -33,7 +33,7 @@ export function HiveWikiEntryEditorPage({
   const backHref = `/${locale}/hive/${hiveId}/wiki`
 
   return (
-    <HivePageShell width="wide">
+    <HivePageShell width="wide" back={{ href: backHref, label: 'wiki' }}>
       <HiveWikiEntryEditor
         entryId={entryId}
         bookId={bookId}

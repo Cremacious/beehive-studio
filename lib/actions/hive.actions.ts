@@ -10,6 +10,7 @@ import { createHiveSchema, updateHiveSchema } from '@/lib/validations/hive'
 import { getBookHive } from '@/lib/hive/get-book-hive'
 import { requireHiveMod } from '@/lib/hive/permissions'
 import { recordHiveActivity } from '@/lib/hive/record-activity'
+import { recordSocialActivityTx } from '@/lib/social/record-activity'
 import { friendships } from '@/db/schema/social'
 import { createId } from '@paralleldrive/cuid2'
 import type { ActionResult } from './book.actions'
@@ -111,6 +112,17 @@ export async function createHiveAction(input: unknown): Promise<ActionResult<{ h
         userId,
         role: 'OWNER',
       })
+
+      // C1 T8 hook: hive_created. Gate on PUBLIC+discoverable. Spec §3.4.
+      if (data.visibility === 'PUBLIC' && data.discoverable === true) {
+        await recordSocialActivityTx(tx, {
+          actorId: userId,
+          type: 'hive_created',
+          subjectType: 'hive',
+          subjectId: hiveId,
+          payload: { name: data.name },
+        })
+      }
     })
 
     return { success: true, data: { hiveId } }
@@ -273,7 +285,25 @@ export async function joinHiveByLinkAction(token: string): Promise<ActionResult<
   })
   if (alreadyMember) return { success: true, data: { hiveId: invite.hiveId } }
 
-  await db.insert(hiveMembers).values({ hiveId: invite.hiveId, userId, role: invite.role })
+  await db.transaction(async (tx) => {
+    await tx.insert(hiveMembers).values({ hiveId: invite.hiveId, userId, role: invite.role })
+
+    // C1 T8 hook: hive_joined. Gate on PUBLIC+discoverable. Spec §3.4.
+    const [hiveRow] = await tx
+      .select({ name: hives.name, visibility: hives.visibility, discoverable: hives.discoverable })
+      .from(hives)
+      .where(eq(hives.id, invite.hiveId))
+      .limit(1)
+    if (hiveRow && hiveRow.visibility === 'PUBLIC' && hiveRow.discoverable === true) {
+      await recordSocialActivityTx(tx, {
+        actorId: userId,
+        type: 'hive_joined',
+        subjectType: 'hive',
+        subjectId: invite.hiveId,
+        payload: { name: hiveRow.name },
+      })
+    }
+  })
   return { success: true, data: { hiveId: invite.hiveId } }
 }
 
@@ -288,6 +318,22 @@ export async function acceptHiveInviteAction(inviteId: string): Promise<ActionRe
   await db.transaction(async (tx) => {
     await tx.update(hiveInvites).set({ status: 'ACCEPTED' }).where(eq(hiveInvites.id, inviteId))
     await tx.insert(hiveMembers).values({ hiveId: invite.hiveId, userId, role: invite.role })
+
+    // C1 T8 hook: hive_joined. Gate on PUBLIC+discoverable. Spec §3.4.
+    const [hive] = await tx
+      .select({ name: hives.name, visibility: hives.visibility, discoverable: hives.discoverable })
+      .from(hives)
+      .where(eq(hives.id, invite.hiveId))
+      .limit(1)
+    if (hive && hive.visibility === 'PUBLIC' && hive.discoverable === true) {
+      await recordSocialActivityTx(tx, {
+        actorId: userId,
+        type: 'hive_joined',
+        subjectType: 'hive',
+        subjectId: invite.hiveId,
+        payload: { name: hive.name },
+      })
+    }
   })
   await recordHiveActivity({
     hiveId: invite.hiveId,

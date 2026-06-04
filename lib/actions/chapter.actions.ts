@@ -10,6 +10,7 @@ import { extractWordCount } from '@/lib/tiptap-utils'
 import { updateChapterNotesSchema, chapterStatusSchema, updateChapterWordGoalSchema } from '@/lib/validations/book'
 import { logHiveWordDelta } from '@/lib/hive/log-word-delta'
 import { getBookHive } from '@/lib/hive/get-book-hive'
+import { recordSocialActivityTx } from '@/lib/social/record-activity'
 import type { ActionResult } from './book.actions'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -190,12 +191,38 @@ export async function updateChapterStatusAction(
     return { success: false, error: parsed.error.issues[0].message }
   }
 
-  await assertChapterOwner(chapterId, userId)
+  const { chapter, bookId } = await assertChapterOwner(chapterId, userId)
+  const priorStatus = chapter.status
+  const newStatus = parsed.data
 
-  await db
-    .update(chapters)
-    .set({ status: parsed.data, updatedAt: new Date() })
-    .where(eq(chapters.id, chapterId))
+  await db.transaction(async (tx) => {
+    await tx
+      .update(chapters)
+      .set({ status: newStatus, updatedAt: new Date() })
+      .where(eq(chapters.id, chapterId))
+
+    // C1 T8 hook: chapter_posted. Fires only when status TRANSITIONS into REVISED/FINAL
+    // (prior was something else) AND parent book is PUBLIC+discoverable. Spec §3.4.
+    const transitionsIntoVisible =
+      (newStatus === 'REVISED' || newStatus === 'FINAL') &&
+      priorStatus !== newStatus
+    if (transitionsIntoVisible) {
+      const [book] = await tx
+        .select({ visibility: books.visibility, discoverable: books.discoverable })
+        .from(books)
+        .where(eq(books.id, bookId))
+        .limit(1)
+      if (book && book.visibility === 'PUBLIC' && book.discoverable === true) {
+        await recordSocialActivityTx(tx, {
+          actorId: userId,
+          type: 'chapter_posted',
+          subjectType: 'chapter',
+          subjectId: chapter.binderItemId ?? chapterId,
+          payload: { bookId, status: newStatus },
+        })
+      }
+    }
+  })
 
   return { success: true, data: undefined }
 }

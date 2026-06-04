@@ -23,6 +23,7 @@ import {
 } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { z } from 'zod'
+import { recordSocialActivityTx } from '@/lib/social/record-activity'
 import type { ActionResult } from './book.actions'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -253,31 +254,41 @@ export async function getSparkAction(
 
     const top = topEntries[0]
     if (top) {
-      // Guard against race: only update if still null, use .returning() to know if we won the race
-      const updated = await db
-        .update(sparks)
-        .set({ winnerEntryId: top.entryId })
-        .where(and(eq(sparks.id, sparkId), isNull(sparks.winnerEntryId)))
-        .returning({ id: sparks.id })
+      await db.transaction(async (tx) => {
+        // Guard against race: only update if still null, use .returning() to know if we won the race
+        const updated = await tx
+          .update(sparks)
+          .set({ winnerEntryId: top.entryId })
+          .where(and(eq(sparks.id, sparkId), isNull(sparks.winnerEntryId)))
+          .returning({ id: sparks.id })
 
-      // Only fire notification if THIS request was the one that set the winner
-      if (updated.length > 0) {
-        // Look up the entry's userId for notification
-        const [entry] = await db
-          .select({ userId: sparkEntries.userId })
-          .from(sparkEntries)
-          .where(eq(sparkEntries.id, top.entryId))
-          .limit(1)
+        // Only fire notification + activity if THIS request was the one that set the winner
+        if (updated.length > 0) {
+          const [entry] = await tx
+            .select({ userId: sparkEntries.userId })
+            .from(sparkEntries)
+            .where(eq(sparkEntries.id, top.entryId))
+            .limit(1)
 
-        if (entry) {
-          await db.insert(notifications).values({
-            userId: entry.userId,
-            type: 'SPARK_WIN',
-            resourceType: 'spark',
-            resourceId: sparkId,
-          })
+          if (entry) {
+            await tx.insert(notifications).values({
+              userId: entry.userId,
+              type: 'SPARK_WIN',
+              resourceType: 'spark',
+              resourceId: sparkId,
+            })
+
+            // C1 T8 hook: spark_won_community. Actor is the WINNER. Always fire.
+            await recordSocialActivityTx(tx, {
+              actorId: entry.userId,
+              type: 'spark_won_community',
+              subjectType: 'spark_entry',
+              subjectId: top.entryId,
+              payload: { sparkId, sparkTitle: spark.title },
+            })
+          }
         }
-      }
+      })
 
       winnerEntryId = top.entryId
     }
@@ -565,15 +576,28 @@ export async function submitSparkEntryAction(
     return { success: false, error: 'WORD_LIMIT_EXCEEDED' }
   }
 
-  const [created] = await db
-    .insert(sparkEntries)
-    .values({
-      sparkId,
-      userId,
-      content: parsed.data.content,
-      wordCount,
+  const created = await db.transaction(async (tx) => {
+    const [row] = await tx
+      .insert(sparkEntries)
+      .values({
+        sparkId,
+        userId,
+        content: parsed.data.content,
+        wordCount,
+      })
+      .returning({ id: sparkEntries.id })
+
+    // C1 T8 hook: spark_entry_submitted. Sparks have no privacy field — always public.
+    await recordSocialActivityTx(tx, {
+      actorId: userId,
+      type: 'spark_entry_submitted',
+      subjectType: 'spark_entry',
+      subjectId: row.id,
+      payload: { sparkId, sparkTitle: spark.title },
     })
-    .returning({ id: sparkEntries.id })
+
+    return row
+  })
 
   return { success: true, data: { entryId: created.id } }
 }
@@ -708,27 +732,41 @@ export async function setCreatorChoiceAction(
     return { success: false, error: 'ENTRY_NOT_IN_SPARK' }
   }
 
-  await db
-    .update(sparks)
-    .set({ creatorChoiceEntryId: entryId })
-    .where(eq(sparks.id, sparkId))
+  await db.transaction(async (tx) => {
+    await tx
+      .update(sparks)
+      .set({ creatorChoiceEntryId: entryId })
+      .where(eq(sparks.id, sparkId))
 
-  // Look up entry author and fire SPARK_WIN notification
-  const [entry] = await db
-    .select({ userId: sparkEntries.userId })
-    .from(sparkEntries)
-    .where(eq(sparkEntries.id, entryId))
-    .limit(1)
+    // Look up entry author and fire SPARK_WIN notification
+    const [entry] = await tx
+      .select({ userId: sparkEntries.userId })
+      .from(sparkEntries)
+      .where(eq(sparkEntries.id, entryId))
+      .limit(1)
 
-  if (entry && entry.userId !== userId) {
-    await db.insert(notifications).values({
-      userId: entry.userId,
-      type: 'SPARK_WIN',
-      actorId: userId,
-      resourceType: 'spark',
-      resourceId: sparkId,
-    })
-  }
+    if (entry && entry.userId !== userId) {
+      await tx.insert(notifications).values({
+        userId: entry.userId,
+        type: 'SPARK_WIN',
+        actorId: userId,
+        resourceType: 'spark',
+        resourceId: sparkId,
+      })
+    }
+
+    // C1 T8 hook: spark_won_creator_choice. Actor is the WINNER (entry author), not
+    // the spark creator picking them. Always fire (spark wins inherently public).
+    if (entry) {
+      await recordSocialActivityTx(tx, {
+        actorId: entry.userId,
+        type: 'spark_won_creator_choice',
+        subjectType: 'spark_entry',
+        subjectId: entryId,
+        payload: { sparkId, sparkTitle: spark.title },
+      })
+    }
+  })
 
   return { success: true, data: undefined }
 }

@@ -13,6 +13,7 @@ import { createId } from '@paralleldrive/cuid2'
 import { revalidatePath } from 'next/cache'
 import { summarizeBookStatus, type BookSummaryStatus } from '@/lib/books/summarize-status'
 import { scopedBooksForUser } from '@/lib/books/scoped'
+import { recordSocialActivityTx } from '@/lib/social/record-activity'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -430,10 +431,29 @@ export async function publishBookAction(bookId: string): Promise<ActionResult> {
   const userId = await requireAuth()
   await assertBookOwner(bookId, userId)
 
-  await db
-    .update(books)
-    .set({ visibility: 'PUBLIC', status: 'PUBLISHED', updatedAt: new Date() })
-    .where(eq(books.id, bookId))
+  await db.transaction(async (tx) => {
+    await tx
+      .update(books)
+      .set({ visibility: 'PUBLIC', status: 'PUBLISHED', updatedAt: new Date() })
+      .where(eq(books.id, bookId))
+
+    // C1 T8 hook: book_published. publishBookAction always sets visibility=PUBLIC;
+    // discoverable is independent (spec §3.4 gate requires both).
+    const [book] = await tx
+      .select({ title: books.title, discoverable: books.discoverable })
+      .from(books)
+      .where(eq(books.id, bookId))
+      .limit(1)
+    if (book && book.discoverable === true) {
+      await recordSocialActivityTx(tx, {
+        actorId: userId,
+        type: 'book_published',
+        subjectType: 'book',
+        subjectId: bookId,
+        payload: { title: book.title },
+      })
+    }
+  })
 
   return { success: true, data: undefined }
 }

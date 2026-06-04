@@ -6,6 +6,7 @@ import { and, eq } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { canReadBook } from '@/lib/books/can-read'
 import { z } from 'zod'
+import { recordSocialActivityTx } from '@/lib/social/record-activity'
 import type { ActionResult } from './book.actions'
 import type { BookComment } from './discover.actions'
 
@@ -25,18 +26,36 @@ export async function toggleBookLikeAction(bookId: string): Promise<ActionResult
     return { success: true, data: { liked: false } }
   }
 
-  await db.insert(bookLikes).values({ userId, bookId })
+  await db.transaction(async (tx) => {
+    await tx.insert(bookLikes).values({ userId, bookId })
 
-  const [book] = await db.select({ userId: books.userId }).from(books).where(eq(books.id, bookId)).limit(1)
-  if (book && book.userId !== userId) {
-    await db.insert(notifications).values({
-      userId: book.userId,
-      type: 'NEW_LIKE',
-      actorId: userId,
-      resourceType: 'book',
-      resourceId: bookId,
-    })
-  }
+    const [book] = await tx
+      .select({ userId: books.userId, visibility: books.visibility, discoverable: books.discoverable })
+      .from(books)
+      .where(eq(books.id, bookId))
+      .limit(1)
+    if (book && book.userId !== userId) {
+      await tx.insert(notifications).values({
+        userId: book.userId,
+        type: 'NEW_LIKE',
+        actorId: userId,
+        resourceType: 'book',
+        resourceId: bookId,
+      })
+    }
+
+    // C1 T8 hook: book_liked. Fire only on LIKE (insert path). Gate on PUBLIC+discoverable.
+    // Per-6h dedupe is automatic via T3's DEDUPE_ELIGIBLE set.
+    if (book && book.visibility === 'PUBLIC' && book.discoverable === true) {
+      await recordSocialActivityTx(tx, {
+        actorId: userId,
+        type: 'book_liked',
+        subjectType: 'book',
+        subjectId: bookId,
+        payload: { bookOwnerId: book.userId },
+      })
+    }
+  })
 
   return { success: true, data: { liked: true } }
 }
@@ -108,21 +127,40 @@ export async function addCommentAction(
   const parsed = addCommentSchema.safeParse({ content })
   if (!parsed.success) return { success: false, error: 'INVALID_CONTENT' }
 
-  const [comment] = await db
-    .insert(bookComments)
-    .values({ bookId, userId, content: parsed.data.content })
-    .returning()
+  const comment = await db.transaction(async (tx) => {
+    const [created] = await tx
+      .insert(bookComments)
+      .values({ bookId, userId, content: parsed.data.content })
+      .returning()
 
-  const [book] = await db.select({ userId: books.userId }).from(books).where(eq(books.id, bookId)).limit(1)
-  if (book && book.userId !== userId) {
-    await db.insert(notifications).values({
-      userId: book.userId,
-      type: 'NEW_COMMENT',
-      actorId: userId,
-      resourceType: 'book',
-      resourceId: bookId,
-    })
-  }
+    const [book] = await tx
+      .select({ userId: books.userId, visibility: books.visibility, discoverable: books.discoverable })
+      .from(books)
+      .where(eq(books.id, bookId))
+      .limit(1)
+    if (book && book.userId !== userId) {
+      await tx.insert(notifications).values({
+        userId: book.userId,
+        type: 'NEW_COMMENT',
+        actorId: userId,
+        resourceType: 'book',
+        resourceId: bookId,
+      })
+    }
+
+    // C1 T8 hook: book_commented. Gate on PUBLIC+discoverable. Spec §3.4.
+    if (book && book.visibility === 'PUBLIC' && book.discoverable === true) {
+      await recordSocialActivityTx(tx, {
+        actorId: userId,
+        type: 'book_commented',
+        subjectType: 'comment',
+        subjectId: created.id,
+        payload: { bookId, excerpt: created.content.slice(0, 120) },
+      })
+    }
+
+    return created
+  })
 
   const [profile] = await db
     .select({

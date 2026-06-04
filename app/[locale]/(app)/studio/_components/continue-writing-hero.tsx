@@ -20,12 +20,11 @@ function formatRelative(d: Date): string {
   return `${Math.floor(days / 30)}mo ago`
 }
 
-function statusToken(status: BookSummary['status']): { token: string; label: string } {
-  switch (status) {
-    case 'Published': return { token: 'var(--status-final)', label: 'Published' }
-    case 'Revised':   return { token: 'var(--status-revised)', label: 'Revised' }
-    case 'Drafting':  return { token: 'var(--status-first-draft)', label: 'Drafting' }
-  }
+/** "1 chapter" / "12 chapters" with optional " · Genre" suffix. */
+function bookSubtitle(book: BookSummary): string {
+  const noun = book.chapterCount === 1 ? 'chapter' : 'chapters'
+  const head = `${book.chapterCount} ${noun}`
+  return book.genre ? `${head} · ${book.genre}` : head
 }
 
 const PANEL_STYLE = {
@@ -123,9 +122,6 @@ export function ContinueWritingHero({ book, locale }: Props) {
     )
   }
 
-  const { token: statusColor, label: statusLabel } = statusToken(book.status)
-  const WORD_GOAL = 80_000
-  const pct = Math.min(100, Math.round((book.wordCount / WORD_GOAL) * 100))
   const hasChapters = book.chapterCount > 0
 
   return (
@@ -155,24 +151,6 @@ export function ContinueWritingHero({ book, locale }: Props) {
             }}
           />
           Continue writing
-        </span>
-        <span style={{ width: '1px', height: '12px', background: 'var(--canvas-dark-300)' }} />
-        <span
-          className="inline-flex items-center gap-1.5 uppercase"
-          style={{
-            padding: '3px 9px 3px 7px',
-            borderRadius: 'var(--r-full)',
-            background: `oklch(from ${statusColor} l c h / 0.16)`,
-            border: `1px solid oklch(from ${statusColor} l c h / 0.32)`,
-            color: statusColor,
-            fontFamily: 'var(--font-display)',
-            fontSize: '10px',
-            fontWeight: 700,
-            letterSpacing: '0.06em',
-          }}
-        >
-          <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: statusColor }} />
-          {statusLabel}
         </span>
         <span style={{ width: '1px', height: '12px', background: 'var(--canvas-dark-300)' }} />
         <span>Last edited {formatRelative(book.lastEditedAt)}</span>
@@ -212,23 +190,7 @@ export function ContinueWritingHero({ book, locale }: Props) {
             }}
           >
             {hasChapters ? (
-              <>
-                <em
-                  style={{
-                    fontFamily: 'var(--font-display)',
-                    fontStyle: 'normal',
-                    fontWeight: 700,
-                    fontSize: '13px',
-                    letterSpacing: '0.02em',
-                    textTransform: 'uppercase',
-                    color: 'var(--canvas-dark-ink-muted)',
-                    marginRight: '8px',
-                  }}
-                >
-                  Chapter {book.chapterCount}
-                </em>
-                {book.genre ?? '—'}
-              </>
+              bookSubtitle(book)
             ) : (
               <span style={{ color: 'var(--canvas-dark-ink-muted)', fontStyle: 'italic' }}>
                 No chapters yet — open the book to add your first.
@@ -237,137 +199,42 @@ export function ContinueWritingHero({ book, locale }: Props) {
           </p>
         </div>
 
-        {/* RIGHT — action stack */}
-        <div className="flex flex-col gap-4">
-          {/* Progress */}
-          <div className="flex flex-col gap-2" aria-label="Word goal progress">
-            <div
-              className="flex items-baseline justify-between"
+        {/* RIGHT — primary CTA */}
+        <div className="flex flex-col gap-4 items-end">
+          <Link
+            href={`/${locale}/studio/${book.id}`}
+            aria-label={`Continue writing: ${book.title}`}
+            className="inline-flex items-center justify-between transition-colors no-underline group"
+            style={{
+              gap: '14px',
+              minWidth: '180px',
+              padding: '12px 18px',
+              borderRadius: 'var(--r-row)',
+              background: 'var(--brand)',
+              color: 'var(--brand-ink)',
+              boxShadow: 'var(--sh-tile)',
+              fontFamily: 'var(--font-display)',
+              fontWeight: 700,
+              fontSize: '14px',
+              letterSpacing: '0.005em',
+            }}
+          >
+            Open editor
+            <span
+              className="inline-flex items-center justify-center"
               style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '11px',
-                letterSpacing: '0.04em',
-                color: 'var(--canvas-dark-ink-muted)',
-              }}
-            >
-              <span>
-                <b
-                  style={{
-                    color: 'var(--canvas-dark-ink-strong)',
-                    fontFamily: 'var(--font-display)',
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    letterSpacing: 0,
-                    marginRight: '4px',
-                  }}
-                >
-                  {book.wordCount.toLocaleString()}
-                </b>
-                of{' '}
-                <b
-                  style={{
-                    color: 'var(--canvas-dark-ink-strong)',
-                    fontFamily: 'var(--font-display)',
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    letterSpacing: 0,
-                    marginRight: '4px',
-                  }}
-                >
-                  {WORD_GOAL.toLocaleString()}
-                </b>
-                words
-              </span>
-              <span>
-                <b
-                  style={{
-                    color: 'var(--canvas-dark-ink-strong)',
-                    fontFamily: 'var(--font-display)',
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    letterSpacing: 0,
-                    marginRight: '4px',
-                  }}
-                >
-                  {pct}%
-                </b>
-                to draft
-              </span>
-            </div>
-            <div
-              className="relative overflow-hidden"
-              style={{
-                height: '8px',
+                width: '24px',
+                height: '24px',
                 borderRadius: 'var(--r-full)',
-                background: 'var(--canvas-dark-300)',
+                background: 'var(--brand-ink)',
+                color: 'var(--brand)',
               }}
             >
-              <span
-                className="absolute left-0 top-0 bottom-0"
-                style={{
-                  width: `${pct}%`,
-                  background: statusColor,
-                  borderRadius: 'var(--r-full)',
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Action row: Resume + New book */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <Link
-              href={`/${locale}/studio/${book.id}`}
-              aria-label={`Continue writing: ${book.title}`}
-              className="inline-flex items-center justify-between transition-colors no-underline group flex-1"
-              style={{
-                gap: '14px',
-                minWidth: '180px',
-                padding: '12px 18px',
-                borderRadius: 'var(--r-row)',
-                background: 'var(--brand)',
-                color: 'var(--brand-ink)',
-                boxShadow: 'var(--sh-tile)',
-                fontFamily: 'var(--font-display)',
-                fontWeight: 700,
-                fontSize: '14px',
-                letterSpacing: '0.005em',
-              }}
-            >
-              Open editor
-              <span
-                className="inline-flex items-center justify-center"
-                style={{
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: 'var(--r-full)',
-                  background: 'var(--brand-ink)',
-                  color: 'var(--brand)',
-                }}
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M5 12h14M13 6l6 6-6 6" />
-                </svg>
-              </span>
-            </Link>
-            <Link
-              href={`/${locale}/studio/new`}
-              className="inline-flex items-center gap-1.5 no-underline"
-              style={{
-                padding: '11px 14px',
-                borderRadius: 'var(--r-pill)',
-                background: 'transparent',
-                color: 'var(--canvas-dark-ink)',
-                border: '1px solid var(--canvas-dark-300)',
-                fontFamily: 'var(--font-display)',
-                fontWeight: 700,
-                fontSize: '13px',
-                letterSpacing: '0.02em',
-              }}
-            >
-              <Plus size={14} strokeWidth={2.5} />
-              New book
-            </Link>
-          </div>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14M13 6l6 6-6 6" />
+              </svg>
+            </span>
+          </Link>
         </div>
       </div>
 

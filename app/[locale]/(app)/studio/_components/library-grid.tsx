@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
-import { Search, ChevronDown, Hexagon } from 'lucide-react'
+import { Search, ChevronDown, Hexagon, Plus } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -286,6 +287,28 @@ export function LibraryGrid({ books, hives, locale }: Props) {
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
+
+          {/* Primary library action — moved here from the Continue Writing hero
+              so the hero stays focused on the resume CTA. */}
+          <Link
+            href={`/${locale}/studio/new`}
+            className="inline-flex items-center gap-1.5 no-underline transition-colors"
+            style={{
+              height: '36px',
+              padding: '0 16px',
+              borderRadius: 'var(--r-pill)',
+              background: 'var(--brand)',
+              color: 'var(--brand-ink)',
+              fontFamily: 'var(--font-display)',
+              fontSize: '12px',
+              fontWeight: 700,
+              letterSpacing: '0.02em',
+              boxShadow: 'var(--sh-tile)',
+            }}
+          >
+            <Plus size={14} strokeWidth={2.5} />
+            New book
+          </Link>
         </div>
       </div>
 

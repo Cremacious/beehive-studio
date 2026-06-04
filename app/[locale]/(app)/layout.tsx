@@ -20,14 +20,14 @@ export default async function AppLayout({
 
   const profile = await db.query.userProfiles.findFirst({
     where: eq(userProfiles.userId, session.user.id),
-    columns: { onboardingComplete: true },
+    columns: { onboardingComplete: true, username: true },
   })
 
   if (!profile?.onboardingComplete) redirect(`/${locale}/onboarding`)
 
   return (
     <div className="min-h-screen bg-[#262728] flex flex-col">
-      <AppNav locale={locale} user={session.user} />
+      <AppNav locale={locale} user={session.user} username={profile.username ?? null} />
       <main className="flex-1 flex flex-col pt-1.5">{children}</main>
     </div>
   )

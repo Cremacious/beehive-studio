@@ -49,38 +49,52 @@ export function DiscussionRow({
   return (
     <Link
       href={`/${locale}/hive/${hiveId}/discussions/${row.id}`}
-      className="grid grid-cols-[1fr_90px_130px] gap-3 px-4 py-3 transition-colors hover:bg-[var(--canvas-dark-300)]"
+      className="grid grid-cols-[1fr_90px_130px] items-center gap-3 px-5 py-4 transition-colors hover:bg-[var(--canvas-dark-300)]"
     >
       <div className="min-w-0 flex flex-col gap-1.5">
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex items-center gap-2.5 min-w-0">
           <TopicPill topic={row.topic} />
           <h3 className="font-comfortaa font-semibold text-[15px] truncate text-[var(--canvas-dark-ink-strong)]">
             {title}
           </h3>
         </div>
         {remainder && (
-          <p className="text-sm line-clamp-1 text-[var(--canvas-dark-ink-muted)]">
+          <p
+            className="text-[13px] truncate text-[var(--canvas-dark-ink-muted)]"
+            style={{ letterSpacing: '0.01em' }}
+          >
             {remainder}
           </p>
         )}
         {row.username && (
-          <p className="text-[11px] font-mono text-[var(--canvas-dark-ink-muted)]">
+          <p
+            className="text-[11px] font-mono text-[var(--canvas-dark-ink-muted)]"
+            style={{ letterSpacing: '0.04em' }}
+          >
             started by{' '}
-            <span className="text-[var(--canvas-dark-ink)]">@{row.username}</span>
+            <span className="text-[var(--canvas-dark-ink)] font-medium">
+              @{row.username}
+            </span>
           </p>
         )}
       </div>
 
       <div className="flex flex-col items-center justify-center text-center">
-        <div className="font-comfortaa font-bold text-lg text-[var(--canvas-dark-ink-strong)] leading-none">
+        <div className="font-comfortaa font-bold text-[18px] text-[var(--canvas-dark-ink-strong)] leading-none">
           {row.replyCount}
         </div>
-        <div className="text-[10px] font-mono uppercase tracking-wider text-[var(--canvas-dark-ink-muted)] mt-0.5">
+        <div
+          className="text-[10px] font-mono uppercase tracking-wider text-[var(--canvas-dark-ink-muted)] mt-1"
+          style={{ letterSpacing: '0.12em' }}
+        >
           replies
         </div>
       </div>
 
-      <p className="text-[11px] font-mono text-right self-center text-[var(--canvas-dark-ink-muted)]">
+      <p
+        className="text-[11px] font-mono text-right self-center text-[var(--canvas-dark-ink-muted)]"
+        style={{ letterSpacing: '0.04em' }}
+      >
         {relTime(row.lastActivityAt)}
       </p>
     </Link>

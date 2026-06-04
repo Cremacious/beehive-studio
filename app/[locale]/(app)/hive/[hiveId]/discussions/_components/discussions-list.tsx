@@ -1,7 +1,6 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { MessageSquare } from 'lucide-react'
 import type { DiscussionPostSummary } from '@/lib/actions/hive-discussions.actions'
 import type { DiscussionTopic } from '@/lib/validations/hive-discussion'
 import type { HiveRole } from '@/lib/hive/permissions'
@@ -54,7 +53,7 @@ export function DiscussionsList({ posts, hiveId, locale }: Props) {
 
   return (
     <>
-      <HiveSectionDivider label="Filter" hideTopBorder>
+      <HiveSectionDivider label="Filter by topic" hideTopBorder>
         <div className="flex flex-wrap gap-2">
           <FilterChip
             label={`All (${posts.length})`}
@@ -77,54 +76,47 @@ export function DiscussionsList({ posts, hiveId, locale }: Props) {
         </div>
       </HiveSectionDivider>
 
-      <HiveSectionDivider label="Threads">
+      <section className="pt-6">
+        <p
+          className="px-6 text-[10px] font-mono uppercase tracking-wider text-[var(--canvas-dark-ink-muted)] mb-3"
+          style={{ letterSpacing: '0.12em' }}
+        >
+          Threads
+        </p>
         <div
-          className="overflow-hidden rounded-[var(--r-row)]"
+          className="grid items-center gap-3 px-5 py-2.5 text-[10px] font-mono uppercase tracking-wider text-[var(--canvas-dark-ink-muted)]"
           style={{
-            border: '1px solid oklch(from var(--canvas-dark-300) l c h / 0.5)',
+            gridTemplateColumns: '1fr 90px 130px',
+            background: 'var(--canvas-dark-100)',
+            borderTop: 'var(--br-card)',
+            borderBottom: 'var(--br-card)',
+            letterSpacing: '0.12em',
           }}
         >
-          <div
-            className="grid items-center gap-3 px-4 py-2.5 text-[10px] font-mono uppercase tracking-wider text-[var(--canvas-dark-ink-muted)]"
-            style={{
-              gridTemplateColumns: '1fr 90px 130px',
-              borderBottom:
-                '1px solid oklch(from var(--canvas-dark-300) l c h / 0.5)',
-              background:
-                'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-            }}
-          >
-            <span>Thread</span>
-            <span className="text-center inline-flex items-center justify-center gap-1">
-              <MessageSquare size={10} />
-              Replies
-            </span>
-            <span className="text-right">Last activity</span>
-          </div>
-
-          {filtered.length === 0 ? (
-            <div className="px-4 py-12 text-center">
-              <p className="text-sm font-medium text-[var(--canvas-dark-ink-strong)]">
-                No threads yet
-              </p>
-              <p className="text-xs font-mono text-[var(--canvas-dark-ink-muted)] mt-1">
-                Be the first to start a discussion on this board.
-              </p>
-            </div>
-          ) : (
-            <ul
-              className="divide-y"
-              style={{ borderColor: 'oklch(from var(--canvas-dark-300) l c h / 0.5)' }}
-            >
-              {filtered.map((row) => (
-                <li key={row.id}>
-                  <DiscussionRow row={row} hiveId={hiveId} locale={locale} />
-                </li>
-              ))}
-            </ul>
-          )}
+          <span>Thread</span>
+          <span className="text-center">Replies</span>
+          <span className="text-right">Last activity</span>
         </div>
-      </HiveSectionDivider>
+
+        {filtered.length === 0 ? (
+          <div className="px-5 py-12 text-center">
+            <p className="text-sm font-medium text-[var(--canvas-dark-ink-strong)]">
+              No threads yet
+            </p>
+            <p className="text-xs font-mono text-[var(--canvas-dark-ink-muted)] mt-1">
+              Be the first to start a discussion on this board.
+            </p>
+          </div>
+        ) : (
+          <ul className="divide-y divide-[var(--canvas-dark-300)]/40">
+            {filtered.map((row) => (
+              <li key={row.id}>
+                <DiscussionRow row={row} hiveId={hiveId} locale={locale} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </>
   )
 }
@@ -140,28 +132,49 @@ function FilterChip({
   onClick: () => void
   tokenVar?: string
 }) {
-  const color = tokenVar ? `var(${tokenVar}, var(--color-brand))` : 'var(--color-brand)'
+  // Tokenized chip (e.g. topic-specific): alpha-tint when ON, recessed inset when OFF.
+  if (tokenVar) {
+    const accent = `var(${tokenVar})`
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        aria-pressed={active}
+        className="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wider transition border"
+        style={
+          active
+            ? {
+                background: `oklch(from ${accent} l c h / 0.20)`,
+                color: accent,
+                borderColor: `oklch(from ${accent} l c h / 0.45)`,
+              }
+            : {
+                background: `oklch(from ${accent} l c h / 0.10)`,
+                color: accent,
+                borderColor: `oklch(from ${accent} l c h / 0.22)`,
+                opacity: 0.6,
+              }
+        }
+      >
+        {label}
+      </button>
+    )
+  }
+  // Neutral "All" chip: recessed inset; brightens when active.
   return (
     <button
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition border"
-      style={
-        active
-          ? {
-              color,
-              background: `oklch(from ${color} l c h / 0.14)`,
-              borderColor: `oklch(from ${color} l c h / 0.3)`,
-            }
-          : {
-              background:
-                'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-              borderColor: 'oklch(from var(--canvas-dark-300) l c h / 0.5)',
-              color: 'var(--canvas-dark-ink-muted)',
-              boxShadow: 'var(--sh-tile)',
-            }
-      }
+      className="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wider transition border"
+      style={{
+        background: 'var(--canvas-dark-100)',
+        boxShadow: 'var(--sh-inset)',
+        borderColor: 'transparent',
+        color: active
+          ? 'var(--canvas-dark-ink-strong)'
+          : 'var(--canvas-dark-ink-muted)',
+      }}
     >
       {label}
     </button>

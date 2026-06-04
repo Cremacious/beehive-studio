@@ -36,15 +36,24 @@ function relTime(d: Date | string): string {
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
 
-function renderBody(body: string) {
-  return body.split('\n').map((line, i) => (
-    <p
-      key={i}
-      className="font-prose text-sm leading-relaxed text-[var(--canvas-dark-ink)] whitespace-pre-wrap"
-    >
-      {line || ' '}
-    </p>
-  ))
+// Deterministic per-username avatar gradient (mimics mockup .av-* classes).
+const AV_GRADIENTS = [
+  'linear-gradient(150deg, oklch(0.6 0.13 250), oklch(0.46 0.1 280))', // blue
+  'linear-gradient(150deg, oklch(0.62 0.13 20), oklch(0.48 0.1 12))', // rose
+  'linear-gradient(150deg, oklch(0.6 0.12 155), oklch(0.46 0.1 165))', // mint
+  'linear-gradient(150deg, oklch(0.6 0.12 290), oklch(0.46 0.1 300))', // violet
+  'linear-gradient(150deg, oklch(0.7 0.13 70), oklch(0.55 0.12 55))', // amber
+]
+function gradientFor(username: string | null): string {
+  if (!username) return AV_GRADIENTS[0]
+  let hash = 0
+  for (let i = 0; i < username.length; i++) hash = (hash * 31 + username.charCodeAt(i)) | 0
+  return AV_GRADIENTS[Math.abs(hash) % AV_GRADIENTS.length]
+}
+
+function initials(username: string | null): string {
+  if (!username) return '?'
+  return username.slice(0, 2).toUpperCase()
 }
 
 type Props = {
@@ -133,7 +142,7 @@ export function DiscussionThread({
             No replies yet — be the first to chime in.
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col">
             {replies.map((reply) => (
               <PostBody
                 key={reply.id}
@@ -151,39 +160,95 @@ export function DiscussionThread({
       </HiveSectionDivider>
 
       <HiveSectionDivider label="Reply">
-        <textarea
-          ref={replyRef}
-          value={replyDraft}
-          onChange={(e) => setReplyDraft(e.target.value)}
-          placeholder="Add to the conversation…"
-          rows={3}
-          style={{
-            background: 'var(--canvas-dark-100)',
-            borderRadius: 'var(--r-row)',
-            boxShadow: 'var(--sh-inset)',
-            color: 'var(--canvas-dark-ink)',
-          }}
-          className="w-full px-3 py-2 min-h-[90px] resize-y font-geist text-sm focus:outline-none placeholder:text-[var(--canvas-dark-ink-muted)]"
-        />
-        <div className="flex justify-end mt-2">
-          <button
-            type="button"
-            onClick={submitReply}
-            disabled={!replyDraft.trim() || replying}
-            style={{
-              background: 'var(--brand)',
-              color: 'var(--brand-ink)',
-              borderRadius: 'var(--r-pill)',
-              boxShadow: 'var(--sh-tile)',
-            }}
-            className="font-geist font-semibold text-[13px] px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5"
-          >
-            <Reply size={12} />
-            {replying ? 'Posting…' : 'Post Reply'}
-          </button>
+        <div className="flex gap-3">
+          <Avatar size="md" username="you" />
+          <div className="flex-1 min-w-0">
+            <textarea
+              ref={replyRef}
+              value={replyDraft}
+              onChange={(e) => setReplyDraft(e.target.value)}
+              placeholder="Add a reply…"
+              rows={3}
+              style={{
+                background: 'var(--canvas-dark-100)',
+                borderRadius: 'var(--r-row)',
+                boxShadow: 'var(--sh-inset)',
+                color: 'var(--canvas-dark-ink-strong)',
+              }}
+              className="w-full px-3.5 py-3 min-h-[100px] resize-y font-geist text-sm leading-relaxed focus:outline-none placeholder:text-[var(--canvas-dark-ink-muted)]"
+            />
+            <div className="flex justify-end mt-2.5">
+              <button
+                type="button"
+                onClick={submitReply}
+                disabled={!replyDraft.trim() || replying}
+                style={{
+                  background: 'var(--brand)',
+                  color: 'var(--brand-ink)',
+                  borderRadius: 'var(--r-pill)',
+                  boxShadow: 'var(--sh-tile)',
+                  transition: 'background .14s, transform .1s',
+                }}
+                onMouseEnter={(e) => {
+                  if (e.currentTarget.disabled) return
+                  e.currentTarget.style.background = 'var(--brand-hover)'
+                  e.currentTarget.style.transform = 'translateY(-1px)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'var(--brand)'
+                  e.currentTarget.style.transform = 'none'
+                }}
+                onMouseDown={(e) => {
+                  if (e.currentTarget.disabled) return
+                  e.currentTarget.style.background = 'var(--brand-active)'
+                  e.currentTarget.style.transform = 'none'
+                }}
+                onMouseUp={(e) => {
+                  if (e.currentTarget.disabled) return
+                  e.currentTarget.style.background = 'var(--brand-hover)'
+                  e.currentTarget.style.transform = 'translateY(-1px)'
+                }}
+                className="font-geist font-semibold text-[13px] px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5"
+              >
+                <Reply size={12} />
+                {replying ? 'Posting…' : 'Post Reply'}
+              </button>
+            </div>
+          </div>
         </div>
       </HiveSectionDivider>
     </>
+  )
+}
+
+function Avatar({
+  size,
+  username,
+  avatarUrl,
+}: {
+  size: 'md' | 'lg'
+  username: string | null
+  avatarUrl?: string | null
+}) {
+  const dims = size === 'lg' ? 'w-12 h-12 text-sm' : 'w-9 h-9 text-xs'
+  if (avatarUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={avatarUrl}
+        alt=""
+        className={`${dims} rounded-full object-cover shrink-0`}
+      />
+    )
+  }
+  return (
+    <span
+      aria-hidden
+      className={`${dims} rounded-full inline-flex items-center justify-center font-comfortaa font-bold shrink-0 text-white`}
+      style={{ background: gradientFor(username) }}
+    >
+      {initials(username)}
+    </span>
   )
 }
 
@@ -248,129 +313,98 @@ function PostBody({
     }
   }
 
-  return (
-    <article
-      style={{
-        background:
-          'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-        borderRadius: 'var(--r-row)',
-        boxShadow: 'var(--sh-tile)',
-      }}
-      className="p-4"
-    >
-      <header className="flex items-start justify-between gap-3 mb-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <span
-            aria-hidden
-            className="inline-flex items-center justify-center w-10 h-10 rounded-full text-[var(--canvas-dark-ink-muted)] bg-[var(--canvas-dark-100)] text-sm font-semibold shrink-0"
-            style={{ boxShadow: 'var(--sh-inset)' }}
-          >
-            {post.avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={post.avatarUrl}
-                alt=""
-                className="w-10 h-10 rounded-full object-cover"
-              />
-            ) : (
-              post.username?.[0]?.toUpperCase() ?? '?'
-            )}
-          </span>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              {post.username ? (
-                <span className="text-sm font-semibold text-[var(--canvas-dark-ink-strong)] truncate">
-                  @{post.username}
-                </span>
-              ) : (
-                <span className="text-sm font-semibold text-[var(--canvas-dark-ink-muted)] italic">
-                  Unknown
-                </span>
-              )}
-              {isTopLevel && post.topic && <TopicPill topic={post.topic} />}
-            </div>
-            <div className="text-[11px] font-mono text-[var(--canvas-dark-ink-muted)] mt-0.5">
-              {relTime(post.createdAt)}
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-1 shrink-0">
-          {!isTopLevel && (
-            <button
-              type="button"
-              onClick={onReplyClick}
-              className="inline-flex items-center gap-1 text-[11px] font-mono text-[var(--canvas-dark-ink-muted)] hover:text-[var(--brand)] px-2 py-1 rounded"
-            >
-              <Reply size={11} />
-              Reply
-            </button>
-          )}
-          {canEdit && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  aria-label="Post actions"
-                  className="p-1 rounded hover:bg-[var(--canvas-dark-100)] text-[var(--canvas-dark-ink-muted)]"
-                >
-                  <MoreVertical size={14} />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onSelect={(e) => {
-                    e.preventDefault()
-                    setDraft(post.body)
-                    setEditing(true)
-                  }}
-                >
-                  <Pencil size={12} className="mr-2" />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="text-destructive"
-                  onSelect={(e) => {
-                    e.preventDefault()
-                    setConfirmDelete(true)
-                  }}
-                >
-                  <Trash2 size={12} className="mr-2" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-        </div>
-      </header>
+  // Top-level posts use the .post shape (bare flex, no chrome).
+  // Replies use .reply-row shape (hairline border-top between siblings).
+  const rootClass = isTopLevel
+    ? 'flex gap-4'
+    : 'flex gap-3 py-4 first:pt-0 first:border-t-0 border-t border-[var(--canvas-dark-300)]/40'
 
-      {editing ? (
-        <div className="space-y-2">
-          <Textarea
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            rows={Math.max(4, Math.min(draft.split('\n').length + 1, 16))}
-            autoFocus
-          />
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setEditing(false)
-                setDraft(post.body)
-              }}
-              disabled={saving}
+  return (
+    <article className={rootClass}>
+      <Avatar
+        size={isTopLevel ? 'lg' : 'md'}
+        username={post.username}
+        avatarUrl={post.avatarUrl}
+      />
+      <div className="flex-1 min-w-0">
+        <header className="flex items-center gap-2.5 flex-wrap mb-2">
+          {post.username ? (
+            <span
+              className={`font-comfortaa font-bold text-[var(--canvas-dark-ink-strong)] ${
+                isTopLevel ? 'text-[15px]' : 'text-sm'
+              }`}
             >
-              Cancel
-            </Button>
-            <Button size="sm" onClick={saveEdit} disabled={saving || !draft.trim()}>
-              {saving ? 'Saving…' : 'Save'}
-            </Button>
+              @{post.username}
+            </span>
+          ) : (
+            <span className="text-sm font-semibold text-[var(--canvas-dark-ink-muted)] italic">
+              Unknown
+            </span>
+          )}
+          <span
+            className="text-[11px] font-mono text-[var(--canvas-dark-ink-muted)]"
+            style={{ letterSpacing: '0.04em' }}
+          >
+            {relTime(post.createdAt)}
+          </span>
+          {isTopLevel && post.topic && (
+            <span className="ml-auto">
+              <TopicPill topic={post.topic} />
+            </span>
+          )}
+          {!isTopLevel && (
+            <div className="ml-auto flex items-center gap-1">
+              <button
+                type="button"
+                onClick={onReplyClick}
+                className="inline-flex items-center gap-1 text-[11px] font-mono text-[var(--canvas-dark-ink-muted)] hover:text-[var(--brand)] px-2 py-1 rounded transition-colors"
+              >
+                <Reply size={11} />
+                Reply
+              </button>
+              {canEdit && <PostKebab onEdit={() => { setDraft(post.body); setEditing(true) }} onDelete={() => setConfirmDelete(true)} />}
+            </div>
+          )}
+          {isTopLevel && canEdit && (
+            <PostKebab onEdit={() => { setDraft(post.body); setEditing(true) }} onDelete={() => setConfirmDelete(true)} />
+          )}
+        </header>
+
+        {editing ? (
+          <div className="space-y-2">
+            <Textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              rows={Math.max(4, Math.min(draft.split('\n').length + 1, 16))}
+              autoFocus
+            />
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setEditing(false)
+                  setDraft(post.body)
+                }}
+                disabled={saving}
+              >
+                Cancel
+              </Button>
+              <Button size="sm" onClick={saveEdit} disabled={saving || !draft.trim()}>
+                {saving ? 'Saving…' : 'Save'}
+              </Button>
+            </div>
           </div>
-        </div>
-      ) : (
-        <div className="space-y-1">{renderBody(post.body)}</div>
-      )}
+        ) : (
+          <p
+            className={`m-0 whitespace-pre-line text-[var(--canvas-dark-ink)] ${
+              isTopLevel ? 'text-[14.5px] leading-[1.7]' : 'text-sm leading-[1.6]'
+            }`}
+          >
+            {post.body}
+          </p>
+        )}
+      </div>
 
       <ConfirmDialog
         open={confirmDelete}
@@ -386,5 +420,48 @@ function PostBody({
         onConfirm={confirmDeletePost}
       />
     </article>
+  )
+}
+
+function PostKebab({
+  onEdit,
+  onDelete,
+}: {
+  onEdit: () => void
+  onDelete: () => void
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          aria-label="Post actions"
+          className="p-1 rounded hover:bg-[var(--canvas-dark-100)] text-[var(--canvas-dark-ink-muted)] transition-colors"
+        >
+          <MoreVertical size={14} />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem
+          onSelect={(e) => {
+            e.preventDefault()
+            onEdit()
+          }}
+        >
+          <Pencil size={12} className="mr-2" />
+          Edit
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="text-destructive"
+          onSelect={(e) => {
+            e.preventDefault()
+            onDelete()
+          }}
+        >
+          <Trash2 size={12} className="mr-2" />
+          Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

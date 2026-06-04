@@ -1,27 +1,276 @@
 'use server'
 
-// Schema notes (divergences from the plan code, captured here for future readers):
+// Schema notes (divergences from any documentation, captured here for future readers):
 // - follows table uses followerId / followeeId (NOT followingId).
-// - userProfiles uses avatarUrl (NOT image). We alias to `image` in FeedAuthor.
+// - userProfiles uses avatarUrl (NOT image). We alias to `image` in legacy
+//   SuggestedWriter shape.
 // - books has no publishedAt column; "published" = status='PUBLISHED'. We use
-//   books.updatedAt as the publish timestamp for new_book items (the row is
-//   touched when publishBookAction sets status, see lib/actions/book.actions.ts).
-// - chapters table has no publishedAt either. Per spec §10 we fall back to
-//   binderItems.updatedAt for chapter feed items, scoped to chapters whose
-//   parent book is PUBLISHED.
+//   books.updatedAt as the publish timestamp for getSuggestedWritersAction.
 // - sparks uses `title` for the prompt text (NOT `prompt`).
 // - userProfiles.username is nullable; we filter rows missing a username out so
 //   FeedAuthor.username is always a string.
+// - social_activity event store drives getCommunityFeedAction as of C1.
 
 import { db } from '@/db'
-import { books, sparks, sparkEntries, follows, users, userProfiles } from '@/db/schema'
-import { and, eq, notInArray, or, isNull, sql, gte, desc } from 'drizzle-orm'
+import {
+  books,
+  binderItems,
+  sparks,
+  sparkEntries,
+  follows,
+  users,
+  userProfiles,
+  socialActivity,
+  friendships,
+  userBlocks,
+  userMutes,
+  hives,
+  type SocialActivityType,
+} from '@/db/schema'
+import {
+  and,
+  desc,
+  eq,
+  gte,
+  inArray,
+  isNull,
+  lt,
+  notInArray,
+  or,
+  sql,
+} from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import type { ActionResult } from './book.actions'
 import type { SuggestedWriter, ActiveSparkEntry } from '@/lib/types/community'
 
-// getCommunityFeedAction removed in H1-T10 — replaced by getHiveActivityFeedAction
-// (lib/actions/hive-activity.actions.ts). Page wiring lands in H1-T14.
+// ─── getCommunityFeedAction ───────────────────────────────────────────────────
+// Drives the /community feed from the social_activity event store. Returns
+// cursor-paginated rows authored by anyone the viewer follows or is friends
+// with (set union), minus anyone the viewer has blocked / muted or who has
+// blocked the viewer. Hydrates actor profiles + subject titles for book /
+// chapter / hive subjects. spark_entry + comment subjects are returned with
+// raw subjectId only (T9 UI can fall back to ids; C1 launch deferral).
+
+export type FeedRow = {
+  id: string
+  type: SocialActivityType
+  createdAt: Date
+  actor: {
+    userId: string
+    username: string | null
+    displayName: string | null
+    avatarUrl: string | null
+  }
+  subject: {
+    type: 'book' | 'chapter' | 'spark_entry' | 'hive' | 'comment'
+    id: string
+    title?: string | null
+    coverUrl?: string | null
+    bookId?: string | null
+  }
+  payload: Record<string, unknown> | null
+  isFriend: boolean
+}
+
+export async function getCommunityFeedAction(
+  input?: { cursor?: string; limit?: number }
+): Promise<ActionResult<{ rows: FeedRow[]; nextCursor: string | null }>> {
+  const userId = await requireAuth()
+  const limit = Math.min(input?.limit ?? 20, 50)
+
+  // 1. Resolve viewer's friend / follow / block / mute sets in parallel.
+  const [friendRows, followRows, blockedRows, mutedRows] = await Promise.all([
+    db.query.friendships.findMany({
+      where: and(
+        eq(friendships.status, 'ACCEPTED'),
+        or(eq(friendships.requesterId, userId), eq(friendships.recipientId, userId)),
+      ),
+      columns: { requesterId: true, recipientId: true },
+    }),
+    db.query.follows.findMany({
+      where: eq(follows.followerId, userId),
+      columns: { followeeId: true },
+    }),
+    db.query.userBlocks.findMany({
+      where: or(eq(userBlocks.blockerId, userId), eq(userBlocks.blockedId, userId)),
+      columns: { blockerId: true, blockedId: true },
+    }),
+    db.query.userMutes.findMany({
+      where: eq(userMutes.muterId, userId),
+      columns: { mutedId: true },
+    }),
+  ])
+
+  const friendIds = new Set(
+    friendRows.map((r) => (r.requesterId === userId ? r.recipientId : r.requesterId)),
+  )
+  const followIds = new Set(followRows.map((r) => r.followeeId))
+  const sources = new Set<string>([...friendIds, ...followIds])
+  if (sources.size === 0) {
+    return { success: true, data: { rows: [], nextCursor: null } }
+  }
+
+  const blockedIds = new Set<string>()
+  for (const r of blockedRows) {
+    blockedIds.add(r.blockerId === userId ? r.blockedId : r.blockerId)
+  }
+  const mutedIds = new Set(mutedRows.map((r) => r.mutedId))
+  const excluded = new Set<string>([...blockedIds, ...mutedIds])
+
+  const actorIds = Array.from(sources).filter((id) => !excluded.has(id))
+  if (actorIds.length === 0) {
+    return { success: true, data: { rows: [], nextCursor: null } }
+  }
+
+  // 2. Decode cursor (base64url-encoded JSON {createdAt, id}).
+  let cursorDate: Date | null = null
+  let cursorId: string | null = null
+  if (input?.cursor) {
+    try {
+      const decoded = JSON.parse(
+        Buffer.from(input.cursor, 'base64url').toString('utf8'),
+      ) as { createdAt: string; id: string }
+      cursorDate = new Date(decoded.createdAt)
+      cursorId = decoded.id
+      if (Number.isNaN(cursorDate.getTime()) || !cursorId) {
+        return { success: false, error: 'INVALID_CURSOR' }
+      }
+    } catch {
+      return { success: false, error: 'INVALID_CURSOR' }
+    }
+  }
+
+  // 3. Feed query (overscan by 1 to detect hasMore).
+  const cursorPredicate =
+    cursorDate && cursorId
+      ? or(
+          lt(socialActivity.createdAt, cursorDate),
+          and(eq(socialActivity.createdAt, cursorDate), lt(socialActivity.id, cursorId)),
+        )
+      : undefined
+
+  const events = await db.query.socialActivity.findMany({
+    where: cursorPredicate
+      ? and(inArray(socialActivity.actorId, actorIds), cursorPredicate)
+      : inArray(socialActivity.actorId, actorIds),
+    orderBy: [desc(socialActivity.createdAt), desc(socialActivity.id)],
+    limit: limit + 1,
+  })
+
+  const hasMore = events.length > limit
+  const pageEvents = hasMore ? events.slice(0, limit) : events
+
+  if (pageEvents.length === 0) {
+    return { success: true, data: { rows: [], nextCursor: null } }
+  }
+
+  // 4. Hydrate actor profiles.
+  const actorIdList = Array.from(new Set(pageEvents.map((e) => e.actorId)))
+  const actorProfiles = actorIdList.length
+    ? await db.query.userProfiles.findMany({
+        where: inArray(userProfiles.userId, actorIdList),
+        columns: { userId: true, username: true, displayName: true, avatarUrl: true },
+      })
+    : []
+  const actorMap = new Map(actorProfiles.map((p) => [p.userId, p]))
+
+  // 5. Hydrate subjects by type. spark_entry + comment skipped per C1 launch.
+  const bookIds = Array.from(
+    new Set(pageEvents.filter((e) => e.subjectType === 'book').map((e) => e.subjectId)),
+  )
+  const chapterBinderItemIds = Array.from(
+    new Set(
+      pageEvents.filter((e) => e.subjectType === 'chapter').map((e) => e.subjectId),
+    ),
+  )
+  const hiveIds = Array.from(
+    new Set(pageEvents.filter((e) => e.subjectType === 'hive').map((e) => e.subjectId)),
+  )
+
+  const [bookRows, chapterRows, hiveRows] = await Promise.all([
+    bookIds.length
+      ? db.query.books.findMany({
+          where: inArray(books.id, bookIds),
+          columns: { id: true, title: true, coverUrl: true },
+        })
+      : Promise.resolve([]),
+    chapterBinderItemIds.length
+      ? db.query.binderItems.findMany({
+          where: inArray(binderItems.id, chapterBinderItemIds),
+          columns: { id: true, title: true, bookId: true },
+        })
+      : Promise.resolve([]),
+    hiveIds.length
+      ? db.query.hives.findMany({
+          where: inArray(hives.id, hiveIds),
+          columns: { id: true, name: true },
+        })
+      : Promise.resolve([]),
+  ])
+  const bookMap = new Map(bookRows.map((b) => [b.id, b]))
+  const chapterMap = new Map(chapterRows.map((c) => [c.id, c]))
+  const hiveMap = new Map(hiveRows.map((h) => [h.id, h]))
+
+  // 6. Compose FeedRow[].
+  const rows: FeedRow[] = pageEvents.map((e) => {
+    const profile = actorMap.get(e.actorId)
+    const actor = {
+      userId: e.actorId,
+      username: profile?.username ?? null,
+      displayName: profile?.displayName ?? null,
+      avatarUrl: profile?.avatarUrl ?? null,
+    }
+
+    let subjectTitle: string | null = null
+    let subjectCover: string | null = null
+    let subjectBookId: string | null = null
+    if (e.subjectType === 'book') {
+      const b = bookMap.get(e.subjectId)
+      subjectTitle = b?.title ?? null
+      subjectCover = b?.coverUrl ?? null
+    } else if (e.subjectType === 'chapter') {
+      const c = chapterMap.get(e.subjectId)
+      subjectTitle = c?.title ?? null
+      subjectBookId = c?.bookId ?? null
+    } else if (e.subjectType === 'hive') {
+      const h = hiveMap.get(e.subjectId)
+      subjectTitle = h?.name ?? null
+    }
+
+    const subjectType = (
+      ['book', 'chapter', 'spark_entry', 'hive', 'comment'].includes(e.subjectType)
+        ? e.subjectType
+        : 'book'
+    ) as FeedRow['subject']['type']
+
+    return {
+      id: e.id,
+      type: e.type,
+      createdAt: e.createdAt,
+      actor,
+      subject: {
+        type: subjectType,
+        id: e.subjectId,
+        title: subjectTitle,
+        coverUrl: subjectCover,
+        bookId: subjectBookId,
+      },
+      payload: e.payload ?? null,
+      isFriend: friendIds.has(e.actorId),
+    }
+  })
+
+  let nextCursor: string | null = null
+  if (hasMore) {
+    const last = pageEvents[pageEvents.length - 1]
+    nextCursor = Buffer.from(
+      JSON.stringify({ createdAt: last.createdAt.toISOString(), id: last.id }),
+      'utf8',
+    ).toString('base64url')
+  }
+
+  return { success: true, data: { rows, nextCursor } }
+}
 
 // ─── getSuggestedWritersAction ────────────────────────────────────────────────
 // Surfaces users with published books touched in the last 30 days, excluding

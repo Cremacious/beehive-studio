@@ -7,7 +7,7 @@ import { requireHiveMember } from '@/lib/hive/permissions'
 import { db } from '@/db'
 import { hives, userProfiles } from '@/db/schema'
 import { eq } from 'drizzle-orm'
-import { CATEGORY_TEMPLATE_MAP, type WikiCategory } from '@/lib/wiki/category-templates'
+import type { WikiCategory } from '@/lib/wiki/category-templates'
 import { HiveWikiEntryEditorPage } from '../../_components/hive-wiki-entry-editor-page'
 
 export default async function HiveWikiEntryPage({
@@ -31,9 +31,9 @@ export default async function HiveWikiEntryPage({
   const entry = tree.data.find(i => i.id === entryId && i.type === 'wiki_entry')
   if (!entry) notFound()
 
+  // Validate category (for cross-hive escape symmetry with the wiki landing).
   const content = (entry.content ?? {}) as { category?: WikiCategory }
-  const category: WikiCategory = content.category ?? 'OTHER'
-  const template = CATEGORY_TEMPLATE_MAP[category]
+  void content.category
 
   // Resolve last-edited author for the header line.
   let authorUsername: string | null = null
@@ -52,8 +52,6 @@ export default async function HiveWikiEntryPage({
       bookId={hive.bookId}
       hiveId={hiveId}
       locale={locale}
-      title={entry.title}
-      categoryLabel={template.label}
       viewerRole={viewerRole}
       authorUsername={authorUsername}
       lastEditedAt={entry.updatedAt}

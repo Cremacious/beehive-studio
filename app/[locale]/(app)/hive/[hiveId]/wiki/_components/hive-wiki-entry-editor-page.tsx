@@ -8,18 +8,15 @@ import type { HiveRole } from '@/lib/hive/permissions'
 /**
  * Wrapper that mounts the entry editor inside a HivePageShell at its own URL.
  *
- * Trade-off: back link points at the wiki landing rather than the source
- * category drill-down — the URL doesn't carry that info and a `?from=...`
- * round-trip felt heavier than the win. If users complain, add the source
- * category as a search param threaded through the cat-card Link → editor flow.
+ * The entry editor owns its own header (edited-by line + save status badge).
+ * We deliberately omit the shell's title/subtitle/back so the editor's header
+ * is the only top-of-page chrome. Browser back handles navigation.
  */
 export function HiveWikiEntryEditorPage({
   entryId,
   bookId,
   hiveId,
   locale,
-  title,
-  categoryLabel,
   viewerRole,
   authorUsername,
   lastEditedAt,
@@ -28,8 +25,6 @@ export function HiveWikiEntryEditorPage({
   bookId: string
   hiveId: string
   locale: string
-  title: string
-  categoryLabel: string
   viewerRole: HiveRole
   authorUsername: string | null
   lastEditedAt: Date
@@ -38,12 +33,7 @@ export function HiveWikiEntryEditorPage({
   const backHref = `/${locale}/hive/${hiveId}/wiki`
 
   return (
-    <HivePageShell
-      width="wide"
-      back={{ href: backHref, label: 'wiki' }}
-      title={title || 'Untitled entry'}
-      subtitle={categoryLabel}
-    >
+    <HivePageShell width="wide">
       <HiveWikiEntryEditor
         entryId={entryId}
         bookId={bookId}

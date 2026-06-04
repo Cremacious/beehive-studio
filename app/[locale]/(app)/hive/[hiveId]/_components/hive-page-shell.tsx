@@ -7,8 +7,8 @@ import type { ReactNode } from 'react'
 export type HivePageShellProps = {
   /** Outer max-width tier per spec §2. */
   width: 'standard' | 'wide'
-  /** Page title — Comfortaa bold 28px brand-yellow. */
-  title: string
+  /** Page title — Comfortaa bold 28px brand-yellow. Omit to skip the panel header entirely (e.g. wiki entry editor that owns its own header). */
+  title?: string
   /** Subtitle under title — plain Geist 13px muted. Optional. */
   subtitle?: string
   /** Back-link config. Renders mono uppercase link ABOVE the panel. Omit on top-level pages. */
@@ -59,25 +59,29 @@ export function HivePageShell({
           boxShadow: 'var(--sh-card)',
         }}
       >
-        <header className="flex items-start justify-between gap-4 px-6 pt-6 pb-4">
-          <div className="min-w-0 flex-1">
-            <h1
-              className="font-comfortaa text-[28px] font-bold leading-tight"
-              style={{ color: 'var(--brand)' }}
-            >
-              {title}
-            </h1>
-            {subtitle && (
-              <p
-                className="mt-1 text-[13px]"
-                style={{ color: 'var(--canvas-dark-ink-muted)' }}
-              >
-                {subtitle}
-              </p>
-            )}
-          </div>
-          {headerSlot && <div className="shrink-0">{headerSlot}</div>}
-        </header>
+        {(title || subtitle || headerSlot) && (
+          <header className="flex items-start justify-between gap-4 px-6 pt-6 pb-4">
+            <div className="min-w-0 flex-1">
+              {title && (
+                <h1
+                  className="font-comfortaa text-[28px] font-bold leading-tight"
+                  style={{ color: 'var(--brand)' }}
+                >
+                  {title}
+                </h1>
+              )}
+              {subtitle && (
+                <p
+                  className="mt-1 text-[13px]"
+                  style={{ color: 'var(--canvas-dark-ink-muted)' }}
+                >
+                  {subtitle}
+                </p>
+              )}
+            </div>
+            {headerSlot && <div className="shrink-0">{headerSlot}</div>}
+          </header>
+        )}
         {children}
       </section>
     </div>

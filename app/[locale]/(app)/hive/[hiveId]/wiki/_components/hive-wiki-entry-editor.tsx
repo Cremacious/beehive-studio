@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ChevronLeft, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { updateBinderItemAction } from '@/lib/actions/binder.actions'
 import { getBinderTreeForHiveAction } from '@/lib/actions/hive-content.actions'
 import type { BinderItemRow } from '@/lib/actions/binder.actions'
@@ -334,22 +334,13 @@ function HiveWikiEntryEditorInner({
 
       <div className="mx-auto max-w-[840px] p-8">
         <header
-          className="flex items-center justify-between gap-3 pb-5"
+          className="flex items-center justify-end gap-3 pb-5"
           style={{ borderBottom: '1px solid oklch(from var(--canvas-dark-300) l c h / 0.5)' }}
         >
-          <button
-            type="button"
-            onClick={onBack}
-            className="wiki-ink-muted text-[10px] font-mono uppercase tracking-[0.10em] font-semibold inline-flex items-center gap-1 hover:[color:var(--wiki-ink-strong)] transition-colors"
-          >
-            <ChevronLeft size={12} /> Back to wiki
-          </button>
-          <div className="flex items-center gap-3">
-            <span className="wiki-ink-muted text-[10px] font-mono uppercase tracking-[0.08em]">
-              {authorUsername ? `Edited by @${authorUsername} · ` : ''}{relTime(lastEditedAt)}
-            </span>
-            {!readOnly && <SaveStatusBadge status={status} />}
-          </div>
+          <span className="wiki-ink-muted text-[10px] font-mono uppercase tracking-[0.08em]">
+            {authorUsername ? `Edited by @${authorUsername} · ` : ''}{relTime(lastEditedAt)}
+          </span>
+          {!readOnly && <SaveStatusBadge status={status} />}
         </header>
 
         <section className="space-y-4 pt-7 text-center">

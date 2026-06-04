@@ -183,7 +183,7 @@ function HiveOutlineSurfaceInner({
       </div>
 
       <div data-slot="outline-pane-body">
-        <div className="mx-auto" style={{ maxWidth: 760 }}>
+        <div className="mx-auto" style={{ maxWidth: '100%' }}>
           {beats.length === 0 && pendingActs.length === 0 && newActDraft === null ? (
             !readOnly ? (
               <button
@@ -209,7 +209,7 @@ function HiveOutlineSurfaceInner({
             )
           ) : (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <div className="flex flex-col gap-6">
+              <div className="flex flex-col gap-3.5">
                 {groupBeatsByAct(beats).map(group => {
                   let globalIdx = 0
                   for (const b of beats) {
@@ -217,26 +217,42 @@ function HiveOutlineSurfaceInner({
                     globalIdx++
                   }
                   return (
-                    <section key={group.act ?? '__noact__'} className="space-y-2">
+                    <article
+                      key={group.act ?? '__noact__'}
+                      style={{
+                        background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+                        borderRadius: 'var(--r-row)',
+                        boxShadow: 'var(--sh-tile)',
+                        overflow: 'hidden',
+                      }}
+                    >
                       <header
+                        className="flex items-center justify-between gap-3 px-4 py-[11px]"
                         style={{
-                          background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-                          borderRadius: 'var(--r-row)',
-                          boxShadow: 'var(--sh-tile)',
+                          borderBottom: '1px solid oklch(from var(--canvas-dark-200) l c h / 0.6)',
                         }}
-                        className="flex items-center gap-3 px-4 py-2"
                       >
                         {group.act === null ? (
                           <span
-                            className="font-comfortaa font-semibold text-sm"
-                            style={{ color: 'var(--canvas-dark-ink-muted)' }}
+                            style={{
+                              fontFamily: 'var(--font-mono)',
+                              fontSize: 11,
+                              letterSpacing: '0.12em',
+                              textTransform: 'uppercase',
+                              color: 'var(--canvas-dark-ink-muted)',
+                            }}
                           >
                             No Act
                           </span>
                         ) : readOnly ? (
                           <span
-                            className="font-comfortaa font-semibold text-sm"
-                            style={{ color: 'var(--canvas-dark-ink-strong)' }}
+                            style={{
+                              fontFamily: 'var(--font-mono)',
+                              fontSize: 11,
+                              letterSpacing: '0.12em',
+                              textTransform: 'uppercase',
+                              color: 'var(--canvas-dark-ink-strong)',
+                            }}
                           >
                             {group.act}
                           </span>
@@ -253,27 +269,59 @@ function HiveOutlineSurfaceInner({
                                 ;(e.target as HTMLInputElement).blur()
                               }
                             }}
-                            style={{ background: 'transparent', color: 'var(--canvas-dark-ink-strong)' }}
-                            className="font-comfortaa font-semibold text-sm focus:outline-none"
+                            style={{
+                              background: 'transparent',
+                              fontFamily: 'var(--font-mono)',
+                              fontSize: 11,
+                              letterSpacing: '0.12em',
+                              textTransform: 'uppercase',
+                              color: 'var(--canvas-dark-ink-strong)',
+                            }}
+                            className="focus:outline-none flex-1 min-w-0"
                           />
                         )}
-                        <span className="ml-auto text-xs font-mono" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
-                          {group.beats.length} {group.beats.length === 1 ? 'beat' : 'beats'}
-                        </span>
                         {!readOnly && (
                           <button
                             type="button"
                             onClick={() => openCreate(group.act)}
-                            style={{ color: 'var(--brand)', borderRadius: 'var(--r-btn)' }}
-                            className="inline-flex items-center gap-1 px-2 py-1 font-geist font-semibold text-xs"
+                            className="inline-flex items-center gap-1.5 font-semibold transition-[background,transform] duration-150"
+                            style={{
+                              background: 'var(--brand)',
+                              color: 'var(--brand-ink)',
+                              borderRadius: 'var(--r-pill)',
+                              boxShadow: 'var(--sh-tile)',
+                              padding: '8px 18px',
+                              fontSize: 13,
+                              whiteSpace: 'nowrap',
+                            }}
+                            onMouseEnter={e => {
+                              const el = e.currentTarget
+                              el.style.background = 'var(--brand-hover)'
+                              el.style.transform = 'translateY(-1px)'
+                            }}
+                            onMouseLeave={e => {
+                              const el = e.currentTarget
+                              el.style.background = 'var(--brand)'
+                              el.style.transform = 'translateY(0)'
+                            }}
+                            onMouseDown={e => {
+                              const el = e.currentTarget
+                              el.style.background = 'var(--brand-active)'
+                              el.style.transform = 'translateY(0)'
+                            }}
+                            onMouseUp={e => {
+                              const el = e.currentTarget
+                              el.style.background = 'var(--brand-hover)'
+                              el.style.transform = 'translateY(-1px)'
+                            }}
                           >
-                            <Plus className="w-3 h-3" />
-                            Add beat
+                            <Plus className="w-[15px] h-[15px]" strokeWidth={2.4} />
+                            Add a beat
                           </button>
                         )}
                       </header>
                       <SortableContext items={group.beats.map(b => b.id)}>
-                        <div className="flex flex-col gap-1.5">
+                        <div>
                           {group.beats.map((beat, i) => {
                             const idx = globalIdx + i
                             return (
@@ -281,7 +329,7 @@ function HiveOutlineSurfaceInner({
                                 key={beat.id}
                                 beat={beat}
                                 index={idx + 1}
-                                isLast={idx === beats.length - 1}
+                                isLast={i === group.beats.length - 1}
                                 chapterAvailable={isChapterAvailable(beat.linkedChapterId)}
                                 chapterTitle={chapterTitleFor(beat.linkedChapterId)}
                                 onOpenLinkPopover={() => { if (!readOnly) setLinkingBeatId(beat.id) }}
@@ -293,47 +341,78 @@ function HiveOutlineSurfaceInner({
                           })}
                         </div>
                       </SortableContext>
-                    </section>
+                    </article>
                   )
                 })}
                 {!readOnly && pendingActs
                   .filter(name => !beats.some(b => b.act === name))
                   .map(name => (
-                    <section key={`pending:${name}`} className="space-y-2">
+                    <article
+                      key={`pending:${name}`}
+                      style={{
+                        background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+                        borderRadius: 'var(--r-row)',
+                        boxShadow: 'var(--sh-tile)',
+                        overflow: 'hidden',
+                      }}
+                    >
                       <header
+                        className="flex items-center justify-between gap-3 px-4 py-[11px]"
                         style={{
-                          background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-                          borderRadius: 'var(--r-row)',
-                          boxShadow: 'var(--sh-tile)',
+                          borderBottom: '1px solid oklch(from var(--canvas-dark-200) l c h / 0.6)',
                         }}
-                        className="flex items-center gap-3 px-4 py-2"
                       >
-                        <span className="font-comfortaa font-semibold text-sm" style={{ color: 'var(--canvas-dark-ink-strong)' }}>
+                        <span
+                          style={{
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: 11,
+                            letterSpacing: '0.12em',
+                            textTransform: 'uppercase',
+                            color: 'var(--canvas-dark-ink-strong)',
+                          }}
+                        >
                           {name}
                         </span>
-                        <span className="ml-auto text-xs font-mono" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
-                          0 beats
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => openCreate(name)}
-                          style={{ color: 'var(--brand)', borderRadius: 'var(--r-btn)' }}
-                          className="inline-flex items-center gap-1 px-2 py-1 font-geist font-semibold text-xs"
-                        >
-                          <Plus className="w-3 h-3" />
-                          Add beat
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setPendingActs(prev => prev.filter(a => a !== name))}
-                          aria-label={`Discard empty act ${name}`}
-                          className="inline-flex items-center px-1.5 py-1 rounded text-[11px]"
-                          style={{ color: 'var(--canvas-dark-ink-muted)' }}
-                        >
-                          ×
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openCreate(name)}
+                            className="inline-flex items-center gap-1.5 font-semibold transition-[background,transform] duration-150"
+                            style={{
+                              background: 'var(--brand)',
+                              color: 'var(--brand-ink)',
+                              borderRadius: 'var(--r-pill)',
+                              boxShadow: 'var(--sh-tile)',
+                              padding: '8px 18px',
+                              fontSize: 13,
+                              whiteSpace: 'nowrap',
+                            }}
+                            onMouseEnter={e => {
+                              const el = e.currentTarget
+                              el.style.background = 'var(--brand-hover)'
+                              el.style.transform = 'translateY(-1px)'
+                            }}
+                            onMouseLeave={e => {
+                              const el = e.currentTarget
+                              el.style.background = 'var(--brand)'
+                              el.style.transform = 'translateY(0)'
+                            }}
+                          >
+                            <Plus className="w-[15px] h-[15px]" strokeWidth={2.4} />
+                            Add a beat
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setPendingActs(prev => prev.filter(a => a !== name))}
+                            aria-label={`Discard empty act ${name}`}
+                            className="inline-flex items-center px-2 py-1 rounded text-base"
+                            style={{ color: 'var(--canvas-dark-ink-muted)' }}
+                          >
+                            ×
+                          </button>
+                        </div>
                       </header>
-                    </section>
+                    </article>
                   ))}
               </div>
             </DndContext>
@@ -342,23 +421,6 @@ function HiveOutlineSurfaceInner({
           <datalist id="hive-outline-act-suggestions">
             {distinctActs(beats).map(a => <option key={a} value={a} />)}
           </datalist>
-
-          {!readOnly && (beats.length > 0 || pendingActs.length > 0) && (
-            <button
-              type="button"
-              onClick={() => openCreate(null)}
-              className="w-full mt-3 px-4 py-3 rounded-md text-sm font-semibold italic transition-colors flex items-center justify-center gap-2"
-              style={{
-                background: 'transparent',
-                border: '1.5px dashed var(--sheet-rule)',
-                color: 'var(--sheet-ink-muted)',
-                fontFamily: 'var(--font-display)',
-              }}
-            >
-              <Plus className="w-4 h-4" />
-              Add a beat
-            </button>
-          )}
 
           {!readOnly && (newActDraft !== null ? (
             <input
@@ -371,26 +433,37 @@ function HiveOutlineSurfaceInner({
                 if (e.key === 'Escape') { setNewActDraft(null) }
               }}
               placeholder="Act name"
-              className="w-full mt-3 px-4 py-3 rounded-md text-sm font-semibold bg-transparent outline-none"
+              className="w-full mt-3.5 px-4 py-[13px] rounded-[var(--r-row)] text-sm font-medium bg-transparent outline-none"
               style={{
-                border: '1.5px dashed var(--color-brand)',
-                color: 'var(--sheet-ink)',
-                fontFamily: 'var(--font-display)',
+                border: '1px dashed var(--color-brand)',
+                color: 'var(--canvas-dark-ink)',
+                fontFamily: 'var(--font-ui)',
               }}
             />
           ) : (
             <button
               type="button"
               onClick={() => setNewActDraft('')}
-              className="w-full mt-3 px-4 py-3 rounded-md text-sm font-semibold italic transition-colors flex items-center justify-center gap-2"
+              className="w-full mt-3.5 py-[13px] flex items-center justify-center gap-2 text-sm font-medium transition-colors duration-150"
               style={{
                 background: 'transparent',
-                border: '1.5px dashed var(--sheet-rule-soft)',
-                color: 'var(--sheet-ink-muted)',
-                fontFamily: 'var(--font-display)',
+                border: '1px dashed var(--canvas-dark-350)',
+                borderRadius: 'var(--r-row)',
+                color: 'var(--canvas-dark-ink-muted)',
+                fontFamily: 'var(--font-ui)',
+              }}
+              onMouseEnter={e => {
+                const el = e.currentTarget
+                el.style.color = 'var(--canvas-dark-ink)'
+                el.style.borderColor = 'var(--canvas-dark-400)'
+              }}
+              onMouseLeave={e => {
+                const el = e.currentTarget
+                el.style.color = 'var(--canvas-dark-ink-muted)'
+                el.style.borderColor = 'var(--canvas-dark-350)'
               }}
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3.5 h-3.5" strokeWidth={2.4} />
               New Act
             </button>
           ))}

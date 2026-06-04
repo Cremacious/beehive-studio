@@ -1,7 +1,9 @@
 import { notFound } from 'next/navigation'
 import { getHiveOutlineView } from '@/lib/actions/hive-content.actions'
+import { canEditOutline } from '@/lib/hive/permissions'
 import { HivePageShell } from '../_components/hive-page-shell'
 import { OutlineIndex } from './_components/outline-index'
+import { NewOutlineCTA } from './_components/new-outline-cta'
 
 export default async function HiveOutlineIndexPage({
   params,
@@ -14,9 +16,15 @@ export default async function HiveOutlineIndexPage({
 
   const count = r.data.outlines.length
   const subtitle = `${count} ${count === 1 ? 'outline' : 'outlines'} in this hive`
+  const showCta = canEditOutline(r.data.viewerRole)
 
   return (
-    <HivePageShell width="wide" title="Outlines" subtitle={subtitle}>
+    <HivePageShell
+      width="wide"
+      title="Outlines"
+      subtitle={subtitle}
+      headerSlot={showCta ? <NewOutlineCTA hiveId={hiveId} locale={locale} /> : null}
+    >
       <OutlineIndex
         outlines={r.data.outlines}
         hiveId={hiveId}

@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { ListOrdered } from 'lucide-react'
 import type { BinderItemRow } from '@/lib/actions/binder.actions'
 import { readContent, type Beat, type BeatColor } from '@/app/[locale]/(app)/studio/[bookId]/_components/outline/outline-board'
 import { HiveSectionDivider } from '../../_components/hive-section-divider'
@@ -76,23 +75,39 @@ export function OutlineIndex({
   }, [outlines, search, sort])
 
   return (
-    <>
+    <div className="px-6 pb-6">
       <HiveSectionDivider label="Filter" hideTopBorder>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search outline titles…"
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div
+            className="flex flex-1 items-center gap-2 px-3 py-2"
             style={{
               background: 'var(--canvas-dark-100)',
               borderRadius: 'var(--r-row)',
               boxShadow: 'var(--sh-inset)',
-              border: 'var(--br-card)',
-              color: 'var(--canvas-dark-ink)',
             }}
-            className="flex-1 px-3 py-2 text-sm font-geist placeholder:text-[var(--canvas-dark-ink-muted)] focus:outline-none"
-          />
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.9"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-4 h-4 flex-shrink-0"
+              style={{ color: 'var(--canvas-dark-ink-muted)' }}
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search outlines…"
+              className="flex-1 bg-transparent text-sm font-geist placeholder:text-[var(--canvas-dark-ink-muted)] focus:outline-none"
+              style={{ color: 'var(--canvas-dark-ink)' }}
+            />
+          </div>
           <select
             value={sort}
             onChange={e => setSort(e.target.value as SortKey)}
@@ -100,105 +115,119 @@ export function OutlineIndex({
               background: 'var(--canvas-dark-100)',
               borderRadius: 'var(--r-row)',
               boxShadow: 'var(--sh-inset)',
-              border: 'var(--br-card)',
               color: 'var(--canvas-dark-ink)',
+              width: 190,
             }}
-            className="px-3 py-2 text-sm font-geist focus:outline-none"
+            className="px-3 py-2 text-sm font-geist focus:outline-none flex-shrink-0"
           >
-            <option value="recent">Recent</option>
-            <option value="alpha">A → Z</option>
+            <option value="recent">Recently edited</option>
             <option value="beats">Most beats</option>
+            <option value="alpha">A – Z</option>
           </select>
         </div>
       </HiveSectionDivider>
 
       <HiveSectionDivider label="Outlines">
         <div
-          className="overflow-hidden rounded-[var(--r-row)]"
+          className="grid items-center gap-4 px-5 py-2.5 text-[10px] font-mono uppercase tracking-wider"
           style={{
-            border: '1px solid oklch(from var(--canvas-dark-300) l c h / 0.5)',
+            gridTemplateColumns: '1fr 90px 130px',
+            color: 'var(--canvas-dark-ink-muted)',
+            background: 'var(--canvas-dark-100)',
+            borderRadius: 'var(--r-row) var(--r-row) 0 0',
+            borderBottom: '1px solid var(--br-card)',
           }}
         >
-          <div
-            className="grid items-center gap-4 px-5 py-2.5 text-[10px] font-mono uppercase tracking-wider text-[var(--canvas-dark-ink-muted)]"
-            style={{
-              gridTemplateColumns: '1fr 90px 130px',
-              borderBottom: '1px solid var(--canvas-dark-300)',
-              background:
-                'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-            }}
-          >
-            <span>Outline</span>
-            <span className="text-center inline-flex items-center justify-center gap-1">
-              <ListOrdered size={10} />
-              Beats
-            </span>
-            <span className="text-right">Last edit</span>
-          </div>
-
-          {filtered.length === 0 ? (
-            <div className="px-5 py-16 text-center">
-              <p className="text-sm font-medium text-[var(--canvas-dark-ink-strong)]">
-                {outlines.length === 0 ? 'No outlines yet' : 'No matches'}
-              </p>
-              <p className="text-xs font-mono text-[var(--canvas-dark-ink-muted)] mt-1">
-                {outlines.length === 0
-                  ? 'The author can create an outline in the studio.'
-                  : 'Try a different search term.'}
-              </p>
-            </div>
-          ) : (
-            <ul className="divide-y" style={{ borderColor: 'var(--canvas-dark-300)' }}>
-              {filtered.map(o => {
-                const beats = getBeats(o.outline)
-                const colors = uniqueColorsInUse(beats)
-                return (
-                  <li key={o.outline.id}>
-                    <Link
-                      href={`/${locale}/hive/${hiveId}/outline/${o.outline.id}`}
-                      className="grid items-center gap-4 px-5 py-4 transition-colors hover:bg-[var(--canvas-dark-300)]"
-                      style={{ gridTemplateColumns: '1fr 90px 130px' }}
-                    >
-                      <div className="min-w-0">
-                        <h3 className="font-comfortaa font-semibold text-base truncate text-[var(--canvas-dark-ink-strong)]">
-                          {o.outline.title || 'Untitled outline'}
-                        </h3>
-                        {colors.length > 0 && (
-                          <div className="flex gap-1 mt-2">
-                            {colors.map(c => (
-                              <span
-                                key={c}
-                                style={{
-                                  width: 8,
-                                  height: 8,
-                                  borderRadius: '50%',
-                                  background: `var(--beat-${c})`,
-                                  display: 'inline-block',
-                                }}
-                              />
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      <div className="text-center">
-                        <div className="font-comfortaa font-bold text-lg text-[var(--canvas-dark-ink-strong)] leading-none">
-                          {beats.length}
-                        </div>
-                        <div className="text-[10px] font-mono uppercase tracking-wider text-[var(--canvas-dark-ink-muted)] mt-0.5">
-                          {beats.length === 1 ? 'beat' : 'beats'}
-                        </div>
-                      </div>
-                      <div className="text-right text-xs text-[var(--canvas-dark-ink)]">
-                        {relTime(o.lastEditedAt)}
-                      </div>
-                    </Link>
-                  </li>
-                )
-              })}
-            </ul>
-          )}
+          <span>Outline</span>
+          <span className="text-center">Beats</span>
+          <span className="text-right">Last edit</span>
         </div>
+
+        {filtered.length === 0 ? (
+          <div className="px-5 py-16 text-center">
+            <p className="text-sm font-medium" style={{ color: 'var(--canvas-dark-ink-strong)' }}>
+              {outlines.length === 0 ? 'No outlines yet' : 'No matches'}
+            </p>
+            <p className="text-xs font-mono mt-1" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
+              {outlines.length === 0
+                ? 'Start one with the New Outline button above.'
+                : 'Try a different search term.'}
+            </p>
+          </div>
+        ) : (
+          <ul
+            className="divide-y"
+            style={{ borderColor: 'oklch(from var(--canvas-dark-300) l c h / 0.4)' }}
+          >
+            {filtered.map(o => {
+              const beats = getBeats(o.outline)
+              const colors = uniqueColorsInUse(beats)
+              return (
+                <li key={o.outline.id}>
+                  <Link
+                    href={`/${locale}/hive/${hiveId}/outline/${o.outline.id}`}
+                    className="grid items-center gap-4 px-5 py-4 transition-colors hover:bg-[var(--canvas-dark-300)]"
+                    style={{ gridTemplateColumns: '1fr 90px 130px' }}
+                  >
+                    <div className="min-w-0 flex flex-col gap-[7px]">
+                      <span
+                        className="font-comfortaa truncate"
+                        style={{
+                          color: 'var(--canvas-dark-ink-strong)',
+                          fontWeight: 500,
+                          fontSize: 15,
+                        }}
+                      >
+                        {o.outline.title || 'Untitled outline'}
+                      </span>
+                      {colors.length > 0 && (
+                        <span className="inline-flex gap-[5px]">
+                          {colors.map(c => (
+                            <span
+                              key={c}
+                              style={{
+                                width: 12,
+                                height: 12,
+                                borderRadius: 'var(--r-pill)',
+                                background: `var(--beat-${c})`,
+                                boxShadow: `0 0 0 2px oklch(from var(--beat-${c}) l c h / 0.18)`,
+                                display: 'inline-block',
+                                flexShrink: 0,
+                              }}
+                            />
+                          ))}
+                        </span>
+                      )}
+                    </div>
+                    <span
+                      className="text-center"
+                      style={{
+                        fontVariantNumeric: 'tabular-nums',
+                        fontFamily: 'var(--font-mono)',
+                        color: 'var(--canvas-dark-ink-muted)',
+                        fontSize: 13,
+                      }}
+                    >
+                      {beats.length}
+                    </span>
+                    <span
+                      className="text-right"
+                      style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: 11,
+                        letterSpacing: '0.04em',
+                        color: 'var(--canvas-dark-ink-muted)',
+                      }}
+                    >
+                      {relTime(o.lastEditedAt)}
+                    </span>
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+        )}
       </HiveSectionDivider>
-    </>
+    </div>
   )
 }

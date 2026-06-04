@@ -2,11 +2,12 @@
 
 import { db } from '@/db'
 import { hiveTasks, notifications, hives, binderItems, userProfiles, chapters, books, hiveAnnotations, hiveSuggestions } from '@/db/schema'
-import { eq, and, asc, inArray, count, isNull } from 'drizzle-orm'
+import { eq, and, asc, inArray, count, isNull, max } from 'drizzle-orm'
+import { createId } from '@paralleldrive/cuid2'
 import { requireAuth } from '@/lib/require-auth'
 import { assertHiveMember, assertHiveAdmin } from './_helpers'
 import { createTaskSchema, updateTaskSchema } from '@/lib/validations/hive'
-import { requireHiveMember, type HiveRole } from '@/lib/hive/permissions'
+import { requireHiveMember, canEditOutline, type HiveRole } from '@/lib/hive/permissions'
 import { extractWikiExcerpt } from '@/lib/wiki/excerpt'
 import type { WikiCategory } from '@/lib/wiki/category-templates'
 import type { BinderItemRow } from './binder.actions'
@@ -662,4 +663,48 @@ export async function deleteTaskAction(taskId: string): Promise<ActionResult> {
   if (task.creatorId !== userId) await assertHiveAdmin(task.hiveId, userId)
   await db.delete(hiveTasks).where(eq(hiveTasks.id, taskId))
   return { success: true, data: undefined }
+}
+
+/**
+ * Creates a new outline binder item on the hive's linked book.
+ *
+ * Permission: hive member with `canEditOutline(role)` (OWNER/MODERATOR/
+ * CONTRIBUTOR — BETA_READER blocked). Lands a top-level (parentId=null)
+ * `outline` binder item with empty beats; caller redirects into the
+ * outline detail editor.
+ */
+export async function createHiveOutlineAction(
+  hiveId: string,
+): Promise<ActionResult<{ outlineId: string }>> {
+  const userId = await requireAuth()
+  const role = await requireHiveMember(hiveId, userId)
+  if (!canEditOutline(role)) return { success: false, error: 'NOT_AUTHORIZED' }
+
+  const hive = await db.query.hives.findFirst({
+    where: eq(hives.id, hiveId),
+    columns: { bookId: true },
+  })
+  if (!hive || !hive.bookId) return { success: false, error: 'HIVE_NOT_FOUND' }
+
+  // Resolve next top-level order on this book.
+  const [maxRow] = await db
+    .select({ maxOrder: max(binderItems.order) })
+    .from(binderItems)
+    .where(and(eq(binderItems.bookId, hive.bookId), isNull(binderItems.parentId)))
+  const nextOrder = (maxRow?.maxOrder ?? -1) + 1
+
+  const outlineId = createId()
+  await db.insert(binderItems).values({
+    id: outlineId,
+    bookId: hive.bookId,
+    parentId: null,
+    type: 'outline',
+    title: 'Untitled Outline',
+    order: nextOrder,
+    content: { beats: [] },
+    authorId: userId,
+    lastEditedBy: userId,
+  })
+
+  return { success: true, data: { outlineId } }
 }

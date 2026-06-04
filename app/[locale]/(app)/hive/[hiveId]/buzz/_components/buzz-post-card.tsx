@@ -68,9 +68,7 @@ export function BuzzPostCard({
 
   const edited =
     post.updatedAt &&
-    new Date(post.updatedAt).getTime() -
-      new Date(post.createdAt).getTime() >
-      1000
+    new Date(post.updatedAt).getTime() - new Date(post.createdAt).getTime() > 1000
 
   const { title, excerpt } = deriveTitleAndExcerpt(post.body ?? '')
 
@@ -82,125 +80,114 @@ export function BuzzPostCard({
         borderRadius: 'var(--r-row)',
         boxShadow: 'var(--sh-tile)',
         border: 'var(--br-card)',
+        padding: 24,
       }}
-      className="flex items-start gap-3 p-5"
     >
-      <span
-        aria-hidden
-        className="inline-flex items-center justify-center w-8 h-8 rounded-full shrink-0"
-        style={{
-          background: 'oklch(from var(--brand) l c h / 0.14)',
-          color: 'var(--brand)',
-        }}
-      >
-        {post.avatarUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={post.avatarUrl}
-            alt=""
-            className="w-8 h-8 rounded-full object-cover"
-          />
-        ) : (
-          <span className="font-comfortaa font-semibold text-xs">
-            {post.username?.[0]?.toUpperCase() ?? '?'}
-          </span>
-        )}
-      </span>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span
-            className="font-comfortaa font-semibold text-sm"
-            style={{ color: 'var(--canvas-dark-ink-strong)' }}
-          >
-            @{post.username ?? 'unknown'}
-          </span>
-          <span
-            className="font-mono text-[11px]"
-            style={{ color: 'var(--canvas-dark-ink-muted)' }}
-          >
-            ·
-          </span>
-          <span
-            className="font-mono text-[11px]"
-            style={{ color: 'var(--canvas-dark-ink-muted)' }}
-          >
-            {relTime(post.createdAt)}
-          </span>
-          {edited && (
-            <span
-              className="italic font-mono text-[11px]"
-              style={{ color: 'var(--canvas-dark-ink-muted)' }}
-            >
-              (edited)
+      {/* Header row */}
+      <div className="flex items-center gap-[9px] mb-3">
+        <span
+          aria-hidden
+          className="inline-flex items-center justify-center w-9 h-9 rounded-full shrink-0 overflow-hidden"
+          style={{
+            background: 'oklch(from var(--brand) l c h / 0.14)',
+            color: 'var(--brand)',
+          }}
+        >
+          {post.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={post.avatarUrl}
+              alt=""
+              className="w-9 h-9 rounded-full object-cover"
+            />
+          ) : (
+            <span className="font-comfortaa font-semibold text-xs">
+              {post.username?.[0]?.toUpperCase() ?? '?'}
             </span>
           )}
-          {canEdit && (
-            <div className="ml-auto">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    aria-label="Post actions"
-                    style={{
-                      color: 'var(--canvas-dark-ink-muted)',
-                      borderRadius: 'var(--r-btn)',
-                    }}
-                    className="p-1 hover:bg-[linear-gradient(180deg,var(--canvas-dark-250),var(--canvas-dark-200))]"
-                  >
-                    <MoreVertical size={16} />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onSelect={() => setEditOpen(true)}>
-                    <Pencil size={14} className="mr-2" />
-                    Edit
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={(e) => {
-                      e.preventDefault()
-                      setDeleteOpen(true)
-                    }}
-                    className="text-destructive focus:text-destructive"
-                  >
-                    <Trash2 size={14} className="mr-2" />
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          )}
-        </div>
-
-        {title && (
-          <h3
-            className="font-comfortaa font-bold text-[16px] mt-1"
-            style={{ color: 'var(--brand)' }}
+        </span>
+        <span
+          className="font-comfortaa font-semibold text-[14px]"
+          style={{ color: 'var(--canvas-dark-ink-strong)' }}
+        >
+          @{post.username ?? 'unknown'}
+        </span>
+        <span
+          className="font-mono text-[11px] tracking-wider"
+          style={{ color: 'var(--canvas-dark-ink-muted)' }}
+        >
+          · {relTime(post.createdAt)}
+        </span>
+        {edited && (
+          <span
+            className="italic font-mono text-[11px] tracking-wider"
+            style={{ color: 'var(--canvas-dark-ink-muted)' }}
           >
-            {title}
-          </h3>
+            · (edited)
+          </span>
         )}
-        {excerpt && (
-          <p
-            className="text-sm mt-1 line-clamp-2 whitespace-pre-wrap break-words"
-            style={{ color: 'var(--canvas-dark-ink)' }}
-          >
-            {excerpt}
-          </p>
-        )}
-
-        {post.type === 'LINK' && post.linkUrl && (
-          <div className="mt-2">
-            <LinkCard url={post.linkUrl} />
+        {canEdit && (
+          <div className="ml-auto">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  aria-label="Post actions"
+                  style={{
+                    color: 'var(--canvas-dark-ink-muted)',
+                    borderRadius: 'var(--r-btn)',
+                  }}
+                  className="p-1 transition-colors hover:bg-[var(--canvas-dark-100)] hover:text-[var(--canvas-dark-ink-strong)]"
+                >
+                  <MoreVertical size={16} />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onSelect={() => setEditOpen(true)}>
+                  <Pencil size={14} className="mr-2" />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={(e) => {
+                    e.preventDefault()
+                    setDeleteOpen(true)
+                  }}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 size={14} className="mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         )}
+      </div>
 
-        <div className="mt-3 flex items-center gap-3">
-          <LikeButton
-            buzzId={post.id}
-            initialLiked={post.viewerLiked}
-            initialCount={post.likeCount}
-          />
-        </div>
+      {title && (
+        <h3
+          className="font-comfortaa font-bold text-[16px] mt-1"
+          style={{ color: 'var(--brand)', margin: '8px 0 0' }}
+        >
+          {title}
+        </h3>
+      )}
+      {excerpt && (
+        <p
+          className="text-[14px] mt-1 line-clamp-2 whitespace-pre-wrap break-words"
+          style={{ color: 'var(--canvas-dark-ink)', lineHeight: 1.5, margin: '6px 0 0' }}
+        >
+          {excerpt}
+        </p>
+      )}
+
+      {post.type === 'LINK' && post.linkUrl && <LinkCard url={post.linkUrl} />}
+
+      <div className="flex items-center gap-4 mt-3">
+        <LikeButton
+          buzzId={post.id}
+          initialLiked={post.viewerLiked}
+          initialCount={post.likeCount}
+        />
       </div>
 
       {canEdit && (

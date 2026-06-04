@@ -51,14 +51,14 @@ export function BuzzFeed({
 
   if (posts.length === 0) {
     return (
-      <div className="px-6 pb-6">
-        <BuzzEmptyState canPost={canPost} />
+      <div className="p-6">
+        <BuzzEmptyState canPost={canPost} hiveId={hiveId} />
       </div>
     )
   }
 
   return (
-    <div className="px-6 pb-6 flex flex-col gap-3">
+    <div className="p-6 flex flex-col gap-3">
       {posts.map((post) => (
         <BuzzPostCard
           key={post.id}
@@ -68,7 +68,7 @@ export function BuzzFeed({
         />
       ))}
       {cursor && (
-        <div className="pt-4 flex justify-center">
+        <div className="pt-2 flex justify-center">
           <button
             type="button"
             onClick={loadOlder}
@@ -77,7 +77,7 @@ export function BuzzFeed({
               color: 'var(--canvas-dark-ink-muted)',
               borderRadius: 'var(--r-btn)',
             }}
-            className="font-geist text-sm px-3 py-2 hover:bg-[linear-gradient(180deg,var(--canvas-dark-350),var(--canvas-dark-300))] disabled:opacity-50"
+            className="font-mono text-[12px] tracking-wider px-3 py-2 transition-colors hover:text-[var(--canvas-dark-ink-strong)] disabled:opacity-50"
           >
             {loadingMore ? 'Loading…' : 'Load older'}
           </button>

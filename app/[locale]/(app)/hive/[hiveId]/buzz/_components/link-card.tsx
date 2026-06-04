@@ -1,6 +1,6 @@
 'use client'
 
-import { ExternalLink } from 'lucide-react'
+import { Link2 } from 'lucide-react'
 
 export function LinkCard({ url }: { url: string }) {
   let hostname = url
@@ -9,7 +9,6 @@ export function LinkCard({ url }: { url: string }) {
   } catch {
     // fall back to raw url
   }
-  const favicon = `https://www.google.com/s2/favicons?domain=${hostname}&sz=32`
 
   return (
     <a
@@ -17,40 +16,39 @@ export function LinkCard({ url }: { url: string }) {
       target="_blank"
       rel="noopener noreferrer"
       style={{
-        background:
-          'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
-        borderRadius: 'var(--r-row)',
+        background: 'var(--canvas-dark-100)',
         boxShadow: 'var(--sh-inset)',
-        border: 'var(--br-card)',
+        borderRadius: 'var(--r-row)',
       }}
-      className="flex items-center gap-3 p-3 mt-1 hover:translate-y-[-1px] transition-transform"
+      className="flex items-center gap-3 p-3 mt-3 no-underline"
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={favicon}
-        alt=""
-        className="w-6 h-6 rounded shrink-0"
-        loading="lazy"
-      />
-      <div className="flex-1 min-w-0">
-        <div
-          className="text-xs font-comfortaa font-semibold truncate"
+      <span
+        aria-hidden
+        className="inline-flex items-center justify-center shrink-0"
+        style={{
+          width: 48,
+          height: 48,
+          borderRadius: 10,
+          background: 'linear-gradient(150deg, oklch(0.4 0.06 256), oklch(0.3 0.04 256))',
+          color: 'var(--canvas-dark-ink-muted)',
+        }}
+      >
+        <Link2 size={20} strokeWidth={1.8} />
+      </span>
+      <span className="flex-1 min-w-0 flex flex-col">
+        <span
+          className="text-[14px] font-medium truncate"
           style={{ color: 'var(--canvas-dark-ink-strong)' }}
         >
           {hostname}
-        </div>
-        <div
-          className="text-[11px] font-mono truncate"
-          style={{ color: 'var(--brand)' }}
+        </span>
+        <span
+          className="font-mono text-[11px] tracking-wider truncate mt-0.5"
+          style={{ color: 'var(--canvas-dark-ink-muted)' }}
         >
           {url}
-        </div>
-      </div>
-      <ExternalLink
-        size={14}
-        className="shrink-0"
-        style={{ color: 'var(--brand)' }}
-      />
+        </span>
+      </span>
     </a>
   )
 }

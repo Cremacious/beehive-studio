@@ -21,19 +21,42 @@ type Props = {
   }
 }
 
-const VISIBILITY_OPTIONS: { value: Visibility; icon: typeof Lock; label: string; desc: string }[] = [
-  { value: 'PRIVATE', icon: Lock, label: 'Private', desc: 'Only members can see this hive.' },
-  { value: 'FRIENDS', icon: Users, label: 'Friends', desc: 'Visible to your friends.' },
-  { value: 'PUBLIC', icon: Globe, label: 'Public', desc: 'Anyone with the link can find this hive.' },
+const VISIBILITY_OPTIONS: {
+  value: Visibility
+  icon: typeof Lock
+  label: string
+  desc: string
+}[] = [
+  {
+    value: 'PRIVATE',
+    icon: Lock,
+    label: 'Private',
+    desc: 'Invite only. Hidden from everyone else.',
+  },
+  {
+    value: 'FRIENDS',
+    icon: Users,
+    label: 'Friends',
+    desc: 'Your friends can find and request to join.',
+  },
+  {
+    value: 'PUBLIC',
+    icon: Globe,
+    label: 'Public',
+    desc: 'Anyone can discover and request to join.',
+  },
 ]
 
-const inputStyle: React.CSSProperties = {
+const fieldStyle: React.CSSProperties = {
   background: 'var(--canvas-dark-100)',
   borderRadius: 'var(--r-row)',
   boxShadow: 'var(--sh-inset)',
-  border: 'var(--br-card)',
   color: 'var(--canvas-dark-ink-strong)',
+  border: 'none',
 }
+
+const fieldLabelClass =
+  'block mb-2 font-mono text-[10px] uppercase tracking-wider text-[var(--canvas-dark-ink-muted)]'
 
 export function HiveSettingsForm({ hiveId, locale, initial }: Props) {
   const router = useRouter()
@@ -86,166 +109,190 @@ export function HiveSettingsForm({ hiveId, locale, initial }: Props) {
   const discoverableDisabled = visibility !== 'PUBLIC'
 
   return (
-    <>
-      <form onSubmit={handleSave}>
-        <HiveSectionDivider label="Basics" hideTopBorder>
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label
-                className="font-mono text-[10px] uppercase tracking-wider"
-                style={{ color: 'var(--canvas-dark-ink-muted)' }}
-              >
-                Name
-              </label>
-              <input
-                value={name}
-                onChange={e => setName(e.target.value)}
-                style={inputStyle}
-                className="w-full px-3 py-2 text-sm font-geist focus:outline-none"
-                required
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label
-                className="font-mono text-[10px] uppercase tracking-wider"
-                style={{ color: 'var(--canvas-dark-ink-muted)' }}
-              >
-                Description
-              </label>
-              <textarea
-                value={description}
-                onChange={e => setDescription(e.target.value)}
-                rows={3}
-                style={inputStyle}
-                className="w-full px-3 py-2 text-sm font-geist focus:outline-none resize-none"
-              />
-            </div>
-          </div>
-        </HiveSectionDivider>
-
-        <HiveSectionDivider label="Visibility">
-          <div className="grid grid-cols-3 gap-3">
-            {VISIBILITY_OPTIONS.map(({ value, icon: Icon, label, desc }) => {
-              const active = visibility === value
-              return (
-                <label
-                  key={value}
-                  style={{
-                    background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-                    borderRadius: 'var(--r-row)',
-                    boxShadow: 'var(--sh-tile)',
-                    border: active ? '2px solid var(--brand)' : 'var(--br-card)',
-                  }}
-                  className="flex flex-col items-start gap-2 p-4 cursor-pointer"
-                >
-                  <input
-                    type="radio"
-                    name="visibility"
-                    value={value}
-                    checked={active}
-                    onChange={() => setVisibility(value)}
-                    className="sr-only"
-                  />
-                  <Icon
-                    className="w-5 h-5"
-                    style={{ color: active ? 'var(--brand)' : 'var(--canvas-dark-ink-muted)' }}
-                  />
-                  <span
-                    style={{ color: active ? 'var(--brand)' : 'var(--canvas-dark-ink-strong)' }}
-                    className="font-comfortaa font-semibold text-sm"
-                  >
-                    {label}
-                  </span>
-                  <span
-                    style={{ color: 'var(--canvas-dark-ink-muted)' }}
-                    className="text-xs leading-tight"
-                  >
-                    {desc}
-                  </span>
-                </label>
-              )
-            })}
-          </div>
-        </HiveSectionDivider>
-
-        <HiveSectionDivider label="Discoverability">
-          <label
-            className="flex items-center gap-3 cursor-pointer"
-            style={{ opacity: discoverableDisabled ? 0.5 : 1 }}
-          >
+    <form onSubmit={handleSave}>
+      <HiveSectionDivider label="Basics" hideTopBorder>
+        <div className="flex flex-col gap-4">
+          <div>
+            <label className={fieldLabelClass}>Hive name</label>
             <input
-              type="checkbox"
-              checked={discoverable}
-              disabled={discoverableDisabled}
-              onChange={e => setDiscoverable(e.target.checked)}
-              className="sr-only"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              style={fieldStyle}
+              className="w-full px-3 py-2.5 text-sm font-geist focus:outline-none focus:shadow-[var(--sh-inset),0_0_0_1px_oklch(0.85_0.18_90_/_0.4)]"
+              required
             />
-            <span
-              aria-hidden="true"
-              style={{
-                width: 20,
-                height: 20,
-                borderRadius: 4,
-                background: discoverable ? 'var(--brand)' : 'var(--canvas-dark-100)',
-                boxShadow: discoverable ? 'var(--sh-tile)' : 'var(--sh-inset)',
-                border: discoverable ? 'none' : 'var(--br-card)',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
-              {discoverable && <Check className="w-3.5 h-3.5" style={{ color: 'var(--brand-ink)' }} strokeWidth={3} />}
-            </span>
-            <span style={{ color: 'var(--canvas-dark-ink-strong)' }} className="text-sm">
-              Show in Discover
-            </span>
-          </label>
-          <p
-            style={{ color: 'var(--canvas-dark-ink-muted)' }}
-            className="text-xs mt-2"
-          >
-            Discoverable hives appear on the public Discover feed. Only available for Public visibility.
-          </p>
-          <div className="mt-5 flex justify-end">
-            <button
-              type="submit"
-              disabled={saving}
-              style={{
-                background: 'var(--brand)',
-                color: 'var(--brand-ink)',
-                borderRadius: 'var(--r-btn)',
-                boxShadow: 'var(--sh-tile)',
-                opacity: saving ? 0.5 : 1,
-              }}
-              className="font-geist font-semibold text-sm px-4 py-2"
-            >
-              {saving ? 'Saving…' : 'Save changes'}
-            </button>
           </div>
-        </HiveSectionDivider>
-      </form>
+          <div>
+            <label className={fieldLabelClass}>Description</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={4}
+              style={{ ...fieldStyle, minHeight: 100 }}
+              className="w-full px-3 py-2.5 text-sm font-geist focus:outline-none focus:shadow-[var(--sh-inset),0_0_0_1px_oklch(0.85_0.18_90_/_0.4)] resize-y"
+            />
+          </div>
+        </div>
+      </HiveSectionDivider>
+
+      <HiveSectionDivider label="Visibility">
+        <div className="grid grid-cols-3 gap-3">
+          {VISIBILITY_OPTIONS.map(({ value, icon: Icon, label, desc }) => {
+            const active = visibility === value
+            return (
+              <label
+                key={value}
+                style={{
+                  background:
+                    'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+                  borderRadius: 'var(--r-row)',
+                  boxShadow: active
+                    ? 'var(--sh-tile), 0 0 0 3px oklch(from var(--brand) l c h / 0.15)'
+                    : 'var(--sh-tile)',
+                  border: active
+                    ? '1px solid var(--brand)'
+                    : '1px solid var(--canvas-dark-300)',
+                  padding: 16,
+                  cursor: 'pointer',
+                  transition: 'border-color .14s, box-shadow .14s',
+                }}
+                className="flex flex-col items-start"
+              >
+                <input
+                  type="radio"
+                  name="visibility"
+                  value={value}
+                  checked={active}
+                  onChange={() => setVisibility(value)}
+                  className="sr-only"
+                />
+                <span
+                  aria-hidden
+                  className="inline-flex items-center justify-center mb-[10px]"
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 9,
+                    background: active
+                      ? 'var(--brand-soft)'
+                      : 'var(--canvas-dark-300)',
+                    color: active ? 'var(--brand)' : 'var(--canvas-dark-ink)',
+                  }}
+                >
+                  <Icon size={16} strokeWidth={1.8} />
+                </span>
+                <span
+                  className="font-comfortaa font-semibold text-[14px]"
+                  style={{ color: 'var(--canvas-dark-ink-strong)' }}
+                >
+                  {label}
+                </span>
+                <span
+                  className="text-[12.5px] mt-1"
+                  style={{ color: 'var(--canvas-dark-ink-muted)' }}
+                >
+                  {desc}
+                </span>
+              </label>
+            )
+          })}
+        </div>
+      </HiveSectionDivider>
+
+      <HiveSectionDivider label="Discoverability">
+        <label
+          className="flex gap-3 items-start cursor-pointer"
+          style={{ opacity: discoverableDisabled ? 0.5 : 1 }}
+        >
+          <input
+            type="checkbox"
+            checked={discoverable}
+            disabled={discoverableDisabled}
+            onChange={(e) => setDiscoverable(e.target.checked)}
+            className="sr-only"
+          />
+          <span
+            aria-hidden="true"
+            style={{
+              width: 20,
+              height: 20,
+              borderRadius: 6,
+              background: discoverable
+                ? 'var(--brand-soft)'
+                : 'var(--canvas-dark-100)',
+              boxShadow: 'var(--sh-inset)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--brand)',
+              flexShrink: 0,
+              marginTop: 1,
+            }}
+          >
+            {discoverable && <Check size={12} strokeWidth={3} />}
+          </span>
+          <div>
+            <div
+              className="text-sm font-medium"
+              style={{ color: 'var(--canvas-dark-ink-strong)' }}
+            >
+              List this hive in Discover
+            </div>
+            <div
+              className="text-[12.5px] mt-1"
+              style={{ color: 'var(--canvas-dark-ink-muted)' }}
+            >
+              Only available when visibility is set to Public.
+            </div>
+          </div>
+        </label>
+      </HiveSectionDivider>
 
       <HiveSectionDivider label="Danger zone" tone="danger">
-        <p
-          style={{ color: 'var(--canvas-dark-ink-muted)' }}
-          className="text-xs mb-4"
-        >
-          Deleting this hive cannot be undone. All discussions, annotations, submissions, and word goals are permanently removed.
-        </p>
-        <button
-          type="button"
-          onClick={() => setDeleteOpen(true)}
-          style={{
-            color: 'var(--destructive)',
-            borderRadius: 'var(--r-btn)',
-            border: '1px solid color-mix(in oklch, var(--destructive) 40%, transparent)',
-          }}
-          className="font-geist font-semibold text-sm px-3 py-2 hover:bg-[color-mix(in_oklch,var(--destructive)_10%,transparent)] transition-colors"
-        >
-          Delete hive
-        </button>
+        <div className="flex items-center justify-between gap-4">
+          <p
+            className="text-[12.5px] m-0"
+            style={{ color: 'var(--canvas-dark-ink-muted)' }}
+          >
+            Permanently delete this hive and all of its outlines, wiki,
+            discussions and goals. This cannot be undone.
+          </p>
+          <button
+            type="button"
+            onClick={() => setDeleteOpen(true)}
+            style={{
+              flexShrink: 0,
+              background:
+                'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+              boxShadow: 'var(--sh-tile)',
+              borderRadius: 'var(--r-btn)',
+              color: 'var(--status-error)',
+              border:
+                '1px solid oklch(from var(--status-error) l c h / 0.3)',
+            }}
+            className="inline-flex items-center px-4 py-2.5 font-geist text-[13px] transition-all hover:-translate-y-px"
+          >
+            Delete hive
+          </button>
+        </div>
       </HiveSectionDivider>
+
+      <section className="px-6 py-5 flex justify-end">
+        <button
+          type="submit"
+          disabled={saving}
+          style={{
+            background: 'var(--brand)',
+            color: 'var(--brand-ink)',
+            borderRadius: 'var(--r-pill)',
+            boxShadow: 'var(--sh-tile)',
+            opacity: saving ? 0.5 : 1,
+          }}
+          className="inline-flex items-center px-4 py-2 font-geist font-semibold text-[13px] transition-transform hover:-translate-y-px hover:bg-[var(--brand-hover)] active:translate-y-0 active:bg-[var(--brand-active)]"
+        >
+          {saving ? 'Saving…' : 'Save changes'}
+        </button>
+      </section>
 
       <ConfirmDialog
         open={deleteOpen}
@@ -256,6 +303,6 @@ export function HiveSettingsForm({ hiveId, locale, initial }: Props) {
         confirmLabel="Delete hive"
         onConfirm={handleDelete}
       />
-    </>
+    </form>
   )
 }

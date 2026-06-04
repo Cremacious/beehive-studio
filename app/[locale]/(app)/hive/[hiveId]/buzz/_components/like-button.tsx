@@ -32,7 +32,6 @@ export function LikeButton({
         setCount(prevCount)
         toast.error('Could not update like')
       } else {
-        // Replace with server-truth (handles serialized races)
         setLiked(res.data.liked)
         setCount(res.data.likeCount)
       }
@@ -47,15 +46,15 @@ export function LikeButton({
       aria-pressed={liked}
       aria-label={liked ? 'Unlike' : 'Like'}
       style={{
-        color: liked ? 'var(--brand)' : 'var(--canvas-dark-ink-muted)',
-        borderRadius: 'var(--r-pill)',
+        color: liked ? 'var(--status-success)' : 'var(--canvas-dark-ink-muted)',
       }}
-      className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-mono transition-colors hover:bg-[linear-gradient(180deg,var(--canvas-dark-250),var(--canvas-dark-200))] disabled:opacity-60"
+      className="inline-flex items-center gap-[7px] bg-transparent border-0 cursor-pointer font-mono text-[12px] tracking-wider p-0 disabled:opacity-60"
     >
       <Heart
-        size={14}
-        fill={liked ? 'var(--brand)' : 'none'}
-        strokeWidth={liked ? 2 : 1.75}
+        size={16}
+        fill={liked ? 'var(--status-success)' : 'none'}
+        stroke={liked ? 'var(--status-success)' : 'currentColor'}
+        strokeWidth={1.9}
       />
       <span>{count}</span>
     </button>

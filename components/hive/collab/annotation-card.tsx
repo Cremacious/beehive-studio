@@ -23,11 +23,11 @@ export type Viewer = {
 }
 
 const LAYER_COLORS: Record<AnnotationLayer, string> = {
-  GRAMMAR:    'oklch(0.72 0.10 165)',
-  PLOT:       'oklch(0.72 0.13 25)',
-  TONE:       'oklch(0.72 0.13 290)',
-  CONTINUITY: 'oklch(0.72 0.10 200)',
-  GENERAL:    'oklch(0.74 0.13 80)',
+  GRAMMAR:    'var(--layer-grammar)',
+  PLOT:       'var(--layer-plot)',
+  TONE:       'var(--layer-tone)',
+  CONTINUITY: 'var(--layer-continuity)',
+  GENERAL:    'var(--layer-general)',
 }
 
 type Props = {

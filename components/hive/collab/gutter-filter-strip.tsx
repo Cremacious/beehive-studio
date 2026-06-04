@@ -24,11 +24,11 @@ type LayerPill = {
 }
 
 const LAYER_PILLS: LayerPill[] = [
-  { layer: 'GRAMMAR',    label: 'Grammar',    dot: 'oklch(0.72 0.10 165)' },
-  { layer: 'PLOT',       label: 'Plot',       dot: 'oklch(0.72 0.13 25)' },
-  { layer: 'TONE',       label: 'Tone',       dot: 'oklch(0.72 0.13 290)' },
-  { layer: 'CONTINUITY', label: 'Continuity', dot: 'oklch(0.72 0.10 200)' },
-  { layer: 'GENERAL',    label: 'General',    dot: 'oklch(0.74 0.13 80)' },
+  { layer: 'GRAMMAR',    label: 'Grammar',    dot: 'var(--layer-grammar)' },
+  { layer: 'PLOT',       label: 'Plot',       dot: 'var(--layer-plot)' },
+  { layer: 'TONE',       label: 'Tone',       dot: 'var(--layer-tone)' },
+  { layer: 'CONTINUITY', label: 'Continuity', dot: 'var(--layer-continuity)' },
+  { layer: 'GENERAL',    label: 'General',    dot: 'var(--layer-general)' },
 ]
 
 const SUGGESTION_DOT = 'oklch(0.78 0.10 65)'

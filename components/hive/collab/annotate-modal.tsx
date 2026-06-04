@@ -20,8 +20,8 @@ type LayerCard = {
   layer: AnnotationLayer
   label: string
   subtitle: string
-  // T3 source-of-truth color (no CSS var exists for these — inline oklch).
-  dot: string
+  /** CSS custom property name (without var()) driving the dot color. */
+  token: string
 }
 
 const LAYER_CARDS: LayerCard[] = [
@@ -29,31 +29,31 @@ const LAYER_CARDS: LayerCard[] = [
     layer: 'GRAMMAR',
     label: 'Grammar',
     subtitle: 'Spelling, punctuation, mechanics',
-    dot: 'oklch(0.72 0.10 165)',
+    token: '--layer-grammar',
   },
   {
     layer: 'PLOT',
     label: 'Plot',
     subtitle: 'Structure, pacing, beats',
-    dot: 'oklch(0.72 0.13 25)',
+    token: '--layer-plot',
   },
   {
     layer: 'TONE',
     label: 'Tone',
     subtitle: 'Voice, mood, register',
-    dot: 'oklch(0.72 0.13 290)',
+    token: '--layer-tone',
   },
   {
     layer: 'CONTINUITY',
     label: 'Continuity',
     subtitle: 'World rules, facts, refs',
-    dot: 'oklch(0.72 0.10 200)',
+    token: '--layer-continuity',
   },
   {
     layer: 'GENERAL',
     label: 'General',
     subtitle: 'Other feedback',
-    dot: 'oklch(0.74 0.13 80)',
+    token: '--layer-general',
   },
 ]
 
@@ -189,7 +189,7 @@ export function AnnotateModal({
                   <span
                     aria-hidden="true"
                     className="inline-block h-3 w-3 rounded-full"
-                    style={{ background: card.dot }}
+                    style={{ background: `var(${card.token})` }}
                   />
                   <span className="text-sm font-medium">{card.label}</span>
                 </div>

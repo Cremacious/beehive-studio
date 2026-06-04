@@ -332,8 +332,11 @@ function HiveWikiEntryEditorInner({
         }
       `}</style>
 
-      <div className="mx-auto max-w-[840px] px-8 py-8 space-y-6">
-        <header className="flex items-center justify-between gap-3">
+      <div className="mx-auto max-w-[840px] p-8">
+        <header
+          className="flex items-center justify-between gap-3 pb-5"
+          style={{ borderBottom: '1px solid oklch(from var(--canvas-dark-300) l c h / 0.5)' }}
+        >
           <button
             type="button"
             onClick={onBack}
@@ -342,14 +345,14 @@ function HiveWikiEntryEditorInner({
             <ChevronLeft size={12} /> Back to wiki
           </button>
           <div className="flex items-center gap-3">
-            <span className="wiki-ink-muted text-[10px] font-mono uppercase tracking-[0.10em]">
+            <span className="wiki-ink-muted text-[10px] font-mono uppercase tracking-[0.08em]">
               {authorUsername ? `Edited by @${authorUsername} · ` : ''}{relTime(lastEditedAt)}
             </span>
             {!readOnly && <SaveStatusBadge status={status} />}
           </div>
         </header>
 
-        <section className="space-y-4 pt-2">
+        <section className="space-y-4 pt-7 text-center">
           <div
             role="textbox"
             aria-label="Entry title"
@@ -362,12 +365,13 @@ function HiveWikiEntryEditorInner({
           >
             {item.title}
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-2">
+          <div className="flex flex-wrap items-center justify-center gap-2 mt-4">
             <span
-              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-mono font-semibold uppercase tracking-[0.10em]"
+              className="inline-flex items-center gap-1.5 rounded-full px-[11px] py-[3px] text-[10px] font-mono font-medium uppercase tracking-[0.10em]"
               style={{
                 color: `var(${template.accentColor})`,
                 background: `oklch(from var(${template.accentColor}) l c h / 0.14)`,
+                border: `1px solid oklch(from var(${template.accentColor}) l c h / 0.3)`,
               }}
             >
               <IconComponent size={12} /> {template.label}
@@ -380,12 +384,12 @@ function HiveWikiEntryEditorInner({
               disableAdd
             />
           </div>
-          <p className="wiki-ink-muted text-center text-sm italic max-w-[560px] mx-auto leading-relaxed">
+          <p className="wiki-ink-muted text-center text-sm italic max-w-[560px] mx-auto leading-relaxed mt-4">
             {template.blurb}
           </p>
         </section>
 
-        <section className="space-y-2 pt-1">
+        <section className="space-y-2 pt-8">
           {readOnly && (
             <div className="flex justify-end px-1">
               <span className="wiki-ink-muted text-[10px] font-mono uppercase tracking-[0.10em] font-semibold">
@@ -394,7 +398,7 @@ function HiveWikiEntryEditorInner({
             </div>
           )}
 
-          <div className="space-y-5">
+          <div className="flex flex-col gap-[22px]">
             {content.sections.map(section => (
               <WikiSection
                 key={section.id}
@@ -409,7 +413,7 @@ function HiveWikiEntryEditorInner({
           </div>
 
           {!readOnly && (
-            <div className="pt-2 space-y-2">
+            <div className="pt-[22px] space-y-[14px]">
               <button type="button" onClick={addSection} className="wiki-add-section">
                 <Plus size={14} /> Add section
               </button>

@@ -32,9 +32,11 @@ import type { ActionResult } from './book.actions'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-// SparkStatus + SparkVisibility re-exported from schema for backward-compat with
-// existing consumers that imported `SparkStatus` from this file.
-export type { SparkStatus, SparkVisibility }
+// NOTE: SparkStatus + SparkVisibility are NOT re-exported from this file.
+// Next.js's `'use server'` bundler treats every export as a runtime-callable
+// async function; type re-exports fail at build time with "Export X doesn't
+// exist in target module". Consumers import these types directly from
+// `@/db/schema/social`.
 
 export type SparkSummary = {
   id: string

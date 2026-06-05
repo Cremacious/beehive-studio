@@ -1,7 +1,7 @@
 'use client'
 import { useState, useTransition } from 'react'
 import { voteSparkEntryAction } from '@/lib/actions/sparks.actions'
-import type { SparkStatus } from '@/lib/actions/sparks.actions'
+import type { SparkStatus } from '@/db/schema/social'
 
 type Props = {
   entryId: string

@@ -3,7 +3,8 @@ import Link from 'next/link'
 import { useTransition } from 'react'
 import { SparkVoteButton } from './spark-vote-button'
 import { setCreatorChoiceAction } from '@/lib/actions/sparks.actions'
-import type { SparkEntrySummary, SparkStatus } from '@/lib/actions/sparks.actions'
+import type { SparkEntrySummary } from '@/lib/actions/sparks.actions'
+import type { SparkStatus } from '@/db/schema/social'
 import { deriveTitle } from '@/lib/sparks/derive-title'
 
 type Props = {

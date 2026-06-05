@@ -29,7 +29,7 @@ const VERB: Record<FeedRow['type'], string> = {
   reading_list_created: 'created a list',
   books_added_batch: 'added books to a reading list',
   book_club_created: 'started a book club',
-  book_club_current_book_changed: 'picked a new current book for the club',
+  book_club_current_book_changed: 'is now reading',
 }
 
 function subjectHref(row: FeedRow, locale: string): string | null {
@@ -44,6 +44,8 @@ function subjectHref(row: FeedRow, locale: string): string | null {
       return `/${locale}/hive/${subject.id}`
     case 'reading_list':
       return `/${locale}/reading-lists/${subject.id}`
+    case 'book_club':
+      return `/${locale}/clubs/${subject.id}`
     default:
       return null
   }
@@ -67,15 +69,39 @@ export function ActivityEventRow({ row, locale }: { row: FeedRow; locale: string
     const payloadTitle = typeof rawTitle === 'string' && rawTitle.length > 0 ? rawTitle : null
     verb = `added ${count} ${count === 1 ? 'book' : 'books'} to`
     subjectTitle = payloadTitle ?? row.subject?.title ?? null
+  } else if (row.type === 'book_club_created') {
+    // payload: { name }; subject hydrated to club name. Prefer subject (live),
+    // fall back to payload snapshot.
+    const payload = row.payload ?? {}
+    const rawName = (payload as { name?: unknown }).name
+    const payloadName = typeof rawName === 'string' && rawName.length > 0 ? rawName : null
+    verb = 'started a book club'
+    subjectTitle = row.subject?.title ?? payloadName
+  } else if (row.type === 'book_club_current_book_changed') {
+    // payload: { clubName, fromBookTitle, toBookTitle }. The meaningful subject
+    // here is the NEW book the club is reading. Use the club name (subject) in
+    // the verb so the bold subjectTitle is the book.
+    const payload = row.payload ?? {}
+    const rawClub = (payload as { clubName?: unknown }).clubName
+    const rawTo = (payload as { toBookTitle?: unknown }).toBookTitle
+    const clubName = typeof rawClub === 'string' && rawClub.length > 0
+      ? rawClub
+      : row.subject?.title ?? null
+    const toBookTitle = typeof rawTo === 'string' && rawTo.length > 0 ? rawTo : null
+    verb = clubName ? `'s club ${clubName} is now reading` : 'is now reading'
+    subjectTitle = toBookTitle
   } else {
     verb = VERB[row.type] ?? 'made an update'
     subjectTitle = row.subject?.title ?? null
   }
 
-  // For reading_list_created + books_added_batch we want bold subject title (not
-  // italic). Other types keep the italic-book-title treatment.
+  // For reading_list_created + books_added_batch + book_club_* we want bold
+  // subject title (not italic). Other types keep the italic-book-title treatment.
   const boldSubject =
-    row.type === 'reading_list_created' || row.type === 'books_added_batch'
+    row.type === 'reading_list_created' ||
+    row.type === 'books_added_batch' ||
+    row.type === 'book_club_created' ||
+    row.type === 'book_club_current_book_changed'
 
   const subjectNode = (() => {
     if (!subjectTitle) {

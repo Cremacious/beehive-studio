@@ -44,6 +44,14 @@ export function NotificationsBell() {
       window.location.href = `/en/friends?tab=requests`
     } else if (n.type === 'FRIEND_ACCEPTED') {
       window.location.href = `/en/friends`
+    } else if (n.type === 'CLUB_JOIN_APPROVED' && n.resourceId) {
+      // CLUB_JOIN_APPROVED.resourceId IS the clubId (see book-clubs.actions.ts).
+      window.location.href = `/en/clubs/${n.resourceId}`
+    } else if (n.type === 'CLUB_INVITE' || n.type === 'CLUB_JOIN_REQUEST') {
+      // CLUB_INVITE.resourceId = inviteId; CLUB_JOIN_REQUEST.resourceId =
+      // joinRequestId. Neither carries the clubId directly, so route to the
+      // clubs index — matches the FRIEND_REQUEST -> /friends precedent.
+      window.location.href = `/en/clubs`
     }
   }
 
@@ -60,6 +68,9 @@ export function NotificationsBell() {
     SPARK_WIN: 'your Spark entry won!',
     FRIEND_REQUEST: 'sent you a friend request',
     FRIEND_ACCEPTED: 'accepted your friend request',
+    CLUB_INVITE: 'invited you to a book club',
+    CLUB_JOIN_REQUEST: 'requested to join your book club',
+    CLUB_JOIN_APPROVED: 'approved your request to join their book club',
   }
 
   return (

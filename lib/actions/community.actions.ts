@@ -26,6 +26,7 @@ import {
   userMutes,
   hives,
   readingLists,
+  bookClubs,
   type SocialActivityType,
 } from '@/db/schema'
 import {
@@ -63,7 +64,7 @@ export type FeedRow = {
     avatarUrl: string | null
   }
   subject: {
-    type: 'book' | 'chapter' | 'spark_entry' | 'hive' | 'comment' | 'reading_list'
+    type: 'book' | 'chapter' | 'spark_entry' | 'hive' | 'comment' | 'reading_list' | 'book_club'
     id: string
     title?: string | null
     coverUrl?: string | null
@@ -192,8 +193,13 @@ export async function getCommunityFeedAction(
       pageEvents.filter((e) => e.subjectType === 'reading_list').map((e) => e.subjectId),
     ),
   )
+  const bookClubIds = Array.from(
+    new Set(
+      pageEvents.filter((e) => e.subjectType === 'book_club').map((e) => e.subjectId),
+    ),
+  )
 
-  const [bookRows, chapterRows, hiveRows, readingListRows] = await Promise.all([
+  const [bookRows, chapterRows, hiveRows, readingListRows, bookClubRows] = await Promise.all([
     bookIds.length
       ? db.query.books.findMany({
           where: inArray(books.id, bookIds),
@@ -218,11 +224,18 @@ export async function getCommunityFeedAction(
           columns: { id: true, title: true },
         })
       : Promise.resolve([]),
+    bookClubIds.length
+      ? db.query.bookClubs.findMany({
+          where: inArray(bookClubs.id, bookClubIds),
+          columns: { id: true, name: true },
+        })
+      : Promise.resolve([]),
   ])
   const bookMap = new Map(bookRows.map((b) => [b.id, b]))
   const chapterMap = new Map(chapterRows.map((c) => [c.id, c]))
   const hiveMap = new Map(hiveRows.map((h) => [h.id, h]))
   const readingListMap = new Map(readingListRows.map((l) => [l.id, l]))
+  const bookClubMap = new Map(bookClubRows.map((c) => [c.id, c]))
 
   // 6. Compose FeedRow[].
   const rows: FeedRow[] = pageEvents.map((e) => {
@@ -251,10 +264,13 @@ export async function getCommunityFeedAction(
     } else if (e.subjectType === 'reading_list') {
       const l = readingListMap.get(e.subjectId)
       subjectTitle = l?.title ?? null
+    } else if (e.subjectType === 'book_club') {
+      const c = bookClubMap.get(e.subjectId)
+      subjectTitle = c?.name ?? null
     }
 
     const subjectType = (
-      ['book', 'chapter', 'spark_entry', 'hive', 'comment', 'reading_list'].includes(
+      ['book', 'chapter', 'spark_entry', 'hive', 'comment', 'reading_list', 'book_club'].includes(
         e.subjectType,
       )
         ? e.subjectType

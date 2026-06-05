@@ -1,27 +1,25 @@
 'use client'
+
+import { useState } from 'react'
 import { Plus } from 'lucide-react'
+import { AddBookModal } from './add-book-modal'
 
 type Props = { listId: string }
 
-/**
- * T10 stub. T12 will replace this with a trigger that opens <AddBookModal>
- * (2-tab Beehive search + external add).
- */
 export function AddBookCTA({ listId }: Props) {
-  void listId
+  const [open, setOpen] = useState(false)
   return (
-    <button
-      type="button"
-      disabled
-      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[var(--r-pill)] text-sm font-semibold mt-4 mb-2 opacity-60 cursor-not-allowed"
-      style={{
-        background: 'var(--brand)',
-        color: 'var(--brand-ink)',
-      }}
-      title="Coming soon (T12)"
-    >
-      <Plus className="h-4 w-4" />
-      Add book
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-[var(--r-pill)] text-sm font-semibold mt-4 mb-2"
+        style={{ background: 'var(--brand)', color: 'var(--brand-ink)' }}
+      >
+        <Plus className="h-4 w-4" />
+        Add book
+      </button>
+      <AddBookModal listId={listId} open={open} onOpenChange={setOpen} />
+    </>
   )
 }

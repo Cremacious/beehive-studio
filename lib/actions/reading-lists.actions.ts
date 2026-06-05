@@ -1,7 +1,7 @@
 'use server'
 
 import { createId } from '@paralleldrive/cuid2'
-import { and, asc, desc, eq, gte, inArray, lt, or, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, gte, inArray, lt, ne, or, sql } from 'drizzle-orm'
 import { db } from '@/db'
 import {
   readingLists,
@@ -832,4 +832,82 @@ export async function getDiscoverableListsAction(input: {
     cursor: input.cursor,
     limit: input.limit,
   })
+}
+
+// ─── T15: Public profile Lists section ────────────────────────────────────────
+// Returns a target user's CUSTOM lists (excludes Liked) that the viewer can
+// see, respecting block + visibility. Mirrors T4 discover-list canViewList
+// per-row filter. Overscan ×2 to absorb post-filter loss without paging.
+//
+// NOT cursor-paginated — caller is the profile page which shows up to `limit`
+// (default 5). isFollowing left false; this surface doesn't expose follow CTA.
+
+export async function getUserPublicListsAction(
+  targetUserId: string,
+  limit = 5,
+): Promise<ActionResult<ListSummary[]>> {
+  const viewerId = await getOptionalUserId()
+  const cap = Math.min(Math.max(limit, 1), MAX_PAGE_SIZE)
+
+  const candidates = await db
+    .select({
+      id: readingLists.id,
+      userId: readingLists.userId,
+      kind: readingLists.kind,
+      title: readingLists.title,
+      description: readingLists.description,
+      visibility: readingLists.visibility,
+      discoverable: readingLists.discoverable,
+      tags: readingLists.tags,
+      bookCount: readingLists.bookCount,
+      followerCount: readingLists.followerCount,
+      createdAt: readingLists.createdAt,
+      updatedAt: readingLists.updatedAt,
+      ownerUsername: userProfiles.username,
+      ownerDisplayName: userProfiles.displayName,
+      ownerAvatarUrl: userProfiles.avatarUrl,
+    })
+    .from(readingLists)
+    .leftJoin(userProfiles, eq(userProfiles.userId, readingLists.userId))
+    .where(
+      and(
+        eq(readingLists.userId, targetUserId),
+        ne(readingLists.kind, 'LIKED'),
+      ),
+    )
+    .orderBy(desc(readingLists.createdAt), desc(readingLists.id))
+    .limit(cap * 2)
+
+  const visible: ListSummary[] = []
+  for (const row of candidates) {
+    const allowed = await canViewList(viewerId, {
+      userId: row.userId,
+      visibility: row.visibility,
+    })
+    if (!allowed) continue
+    visible.push({
+      id: row.id,
+      userId: row.userId,
+      kind: row.kind,
+      title: row.title,
+      description: row.description,
+      visibility: row.visibility,
+      discoverable: row.discoverable,
+      tags: row.tags ?? [],
+      bookCount: row.bookCount,
+      followerCount: row.followerCount,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      owner: {
+        userId: row.userId,
+        username: row.ownerUsername,
+        displayName: row.ownerDisplayName,
+        avatarUrl: row.ownerAvatarUrl,
+      },
+      isFollowing: false,
+    })
+    if (visible.length >= cap) break
+  }
+
+  return { success: true, data: visible }
 }

@@ -26,7 +26,7 @@ const VERB: Record<FeedRow['type'], string> = {
   spark_won_creator_choice: "was picked as the creator's choice for the Spark",
   hive_created: 'started a new hive',
   hive_joined: 'joined the hive',
-  reading_list_created: 'created a reading list',
+  reading_list_created: 'created a list',
   books_added_batch: 'added books to a reading list',
 }
 
@@ -40,24 +40,52 @@ function subjectHref(row: FeedRow, locale: string): string | null {
       return subject.bookId ? `/${locale}/books/${subject.bookId}/read/${subject.id}` : null
     case 'hive':
       return `/${locale}/hive/${subject.id}`
+    case 'reading_list':
+      return `/${locale}/reading-lists/${subject.id}`
     default:
       return null
   }
 }
 
 export function ActivityEventRow({ row, locale }: { row: FeedRow; locale: string }) {
-  const verb = VERB[row.type] ?? 'made an update'
   const handle = row.actor.username ? `@${row.actor.username}` : row.actor.displayName ?? 'Someone'
   const initial = (row.actor.username ?? row.actor.displayName ?? '?')[0]?.toUpperCase() ?? '?'
   const href = subjectHref(row, locale)
-  const subjectTitle = row.subject?.title ?? null
   const italicizeSubject = row.subject?.type === 'book' || row.subject?.type === 'chapter'
+
+  // books_added_batch renders count-aware copy with payload.listTitle preferred
+  // over subject.title. Bold list title, link if href resolvable.
+  let verb: string
+  let subjectTitle: string | null
+  if (row.type === 'books_added_batch') {
+    const payload = row.payload ?? {}
+    const rawCount = (payload as { count?: unknown }).count
+    const count = typeof rawCount === 'number' && rawCount > 0 ? rawCount : 1
+    const rawTitle = (payload as { listTitle?: unknown }).listTitle
+    const payloadTitle = typeof rawTitle === 'string' && rawTitle.length > 0 ? rawTitle : null
+    verb = `added ${count} ${count === 1 ? 'book' : 'books'} to`
+    subjectTitle = payloadTitle ?? row.subject?.title ?? null
+  } else {
+    verb = VERB[row.type] ?? 'made an update'
+    subjectTitle = row.subject?.title ?? null
+  }
+
+  // For reading_list_created + books_added_batch we want bold subject title (not
+  // italic). Other types keep the italic-book-title treatment.
+  const boldSubject =
+    row.type === 'reading_list_created' || row.type === 'books_added_batch'
 
   const subjectNode = (() => {
     if (!subjectTitle) {
       return <span style={{ color: 'var(--canvas-dark-ink-muted)' }}>[subject]</span>
     }
-    const inner = italicizeSubject ? <em>{subjectTitle}</em> : <span>{subjectTitle}</span>
+    const inner = boldSubject ? (
+      <strong>{subjectTitle}</strong>
+    ) : italicizeSubject ? (
+      <em>{subjectTitle}</em>
+    ) : (
+      <span>{subjectTitle}</span>
+    )
     if (href) {
       return (
         <Link

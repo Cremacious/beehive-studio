@@ -25,6 +25,7 @@ import {
   userBlocks,
   userMutes,
   hives,
+  readingLists,
   type SocialActivityType,
 } from '@/db/schema'
 import {
@@ -62,7 +63,7 @@ export type FeedRow = {
     avatarUrl: string | null
   }
   subject: {
-    type: 'book' | 'chapter' | 'spark_entry' | 'hive' | 'comment'
+    type: 'book' | 'chapter' | 'spark_entry' | 'hive' | 'comment' | 'reading_list'
     id: string
     title?: string | null
     coverUrl?: string | null
@@ -186,8 +187,13 @@ export async function getCommunityFeedAction(
   const hiveIds = Array.from(
     new Set(pageEvents.filter((e) => e.subjectType === 'hive').map((e) => e.subjectId)),
   )
+  const readingListIds = Array.from(
+    new Set(
+      pageEvents.filter((e) => e.subjectType === 'reading_list').map((e) => e.subjectId),
+    ),
+  )
 
-  const [bookRows, chapterRows, hiveRows] = await Promise.all([
+  const [bookRows, chapterRows, hiveRows, readingListRows] = await Promise.all([
     bookIds.length
       ? db.query.books.findMany({
           where: inArray(books.id, bookIds),
@@ -206,10 +212,17 @@ export async function getCommunityFeedAction(
           columns: { id: true, name: true },
         })
       : Promise.resolve([]),
+    readingListIds.length
+      ? db.query.readingLists.findMany({
+          where: inArray(readingLists.id, readingListIds),
+          columns: { id: true, title: true },
+        })
+      : Promise.resolve([]),
   ])
   const bookMap = new Map(bookRows.map((b) => [b.id, b]))
   const chapterMap = new Map(chapterRows.map((c) => [c.id, c]))
   const hiveMap = new Map(hiveRows.map((h) => [h.id, h]))
+  const readingListMap = new Map(readingListRows.map((l) => [l.id, l]))
 
   // 6. Compose FeedRow[].
   const rows: FeedRow[] = pageEvents.map((e) => {
@@ -235,10 +248,15 @@ export async function getCommunityFeedAction(
     } else if (e.subjectType === 'hive') {
       const h = hiveMap.get(e.subjectId)
       subjectTitle = h?.name ?? null
+    } else if (e.subjectType === 'reading_list') {
+      const l = readingListMap.get(e.subjectId)
+      subjectTitle = l?.title ?? null
     }
 
     const subjectType = (
-      ['book', 'chapter', 'spark_entry', 'hive', 'comment'].includes(e.subjectType)
+      ['book', 'chapter', 'spark_entry', 'hive', 'comment', 'reading_list'].includes(
+        e.subjectType,
+      )
         ? e.subjectType
         : 'book'
     ) as FeedRow['subject']['type']

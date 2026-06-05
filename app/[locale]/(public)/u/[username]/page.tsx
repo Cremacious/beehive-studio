@@ -7,6 +7,7 @@ import {
   getProfileBooksAction,
   getProfileSparksAction,
   getProfileActivityAction,
+  getUserPublicClubsAction,
 } from '@/lib/actions/user-profile.actions'
 import { FollowButton } from './_components/follow-button'
 import { FriendStatusSection } from './_components/friend-status-section'
@@ -21,6 +22,7 @@ import { getMutualFriends } from '@/lib/social/get-mutual-friends'
 import { getFriendCountAction } from '@/lib/actions/friendships.actions'
 import { getUserPublicListsAction } from '@/lib/actions/reading-lists.actions'
 import { ListCard } from '@/app/[locale]/(app)/reading-lists/_components/list-card'
+import { ClubCard } from '@/app/[locale]/(app)/clubs/_components/club-card'
 
 type Props = { params: Promise<{ locale: string; username: string }> }
 
@@ -45,12 +47,14 @@ export default async function AuthorProfilePage({ params }: Props) {
     activityResult,
     friendCountResult,
     listsResult,
+    clubsResult,
   ] = await Promise.all([
     getProfileBooksAction(profile.userId),
     getProfileSparksAction(profile.userId),
     getProfileActivityAction(profile.userId),
     getFriendCountAction(profile.userId),
     getUserPublicListsAction(profile.userId, 5),
+    getUserPublicClubsAction(profile.userId, 5),
   ])
 
   const books = booksResult.success ? booksResult.data : []
@@ -58,6 +62,7 @@ export default async function AuthorProfilePage({ params }: Props) {
   const activity = activityResult.success ? activityResult.data : []
   const friendsCount = friendCountResult.success ? friendCountResult.data : 0
   const lists = listsResult.success ? listsResult.data : []
+  const clubs = clubsResult.success ? clubsResult.data : []
 
   // Resolve friendship status for the FriendButton initial render.
   let friendshipStatus: 'NONE' | 'PENDING_OUTGOING' | 'PENDING_INCOMING' | 'ACCEPTED' = 'NONE'
@@ -203,6 +208,18 @@ export default async function AuthorProfilePage({ params }: Props) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {lists.map((list) => (
                 <ListCard key={list.id} list={list} locale={locale} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Book Clubs */}
+        {clubs.length > 0 && (
+          <section className="mb-8">
+            <p className="text-[#555] text-[11px] uppercase tracking-widest mb-3">Clubs</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {clubs.map((club) => (
+                <ClubCard key={club.id} club={club} locale={locale} />
               ))}
             </div>
           </section>

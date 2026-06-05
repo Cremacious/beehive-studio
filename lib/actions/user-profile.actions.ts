@@ -11,12 +11,18 @@ import {
   sparkEntryComments,
   bookLikes,
   userProfiles,
+  bookClubs,
+  bookClubMembers,
+  bookClubBooks,
 } from '@/db/schema'
-import { eq, and, count, sql, desc, gt } from 'drizzle-orm'
+import { eq, and, count, sql, desc, gt, inArray } from 'drizzle-orm'
 import { requireAuth, getOptionalUserId } from '@/lib/require-auth'
 import { canViewSpark } from '@/lib/sparks/predicates'
+import { canViewClub } from '@/lib/book-clubs/predicates'
+import { getClubMembership } from '@/lib/book-clubs/get-membership'
 import type { ActionResult } from './book.actions'
 import type { SparkSummary } from './sparks.actions'
+import type { ClubSummary, ClubCurrentBook } from './book-clubs.actions'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -363,4 +369,113 @@ export async function getProfileActivityAction(
   })
 
   return { success: true, data: events }
+}
+
+/**
+ * Fetch up to `limit` book clubs that `targetUserId` is a member of,
+ * filtered through canViewClub so PRIVATE/FRIENDS clubs only surface
+ * to viewers who can see them. Mirrors getUserPublicListsAction (C3 T15)
+ * with 2× overscan to defuse the per-row visibility filter shrinking
+ * the result set.
+ */
+export async function getUserPublicClubsAction(
+  targetUserId: string,
+  limit = 5,
+): Promise<ActionResult<ClubSummary[]>> {
+  const viewerId = await getOptionalUserId()
+  const cap = Math.min(Math.max(limit, 1), 20)
+
+  const candidates = await db
+    .select({
+      id: bookClubs.id,
+      ownerId: bookClubs.ownerId,
+      name: bookClubs.name,
+      description: bookClubs.description,
+      rules: bookClubs.rules,
+      visibility: bookClubs.visibility,
+      discoverable: bookClubs.discoverable,
+      openJoin: bookClubs.openJoin,
+      tags: bookClubs.tags,
+      memberCount: bookClubs.memberCount,
+      currentBookId: bookClubs.currentBookId,
+      createdAt: bookClubs.createdAt,
+      updatedAt: bookClubs.updatedAt,
+      ownerUsername: userProfiles.username,
+      ownerDisplayName: userProfiles.displayName,
+      ownerAvatarUrl: userProfiles.avatarUrl,
+    })
+    .from(bookClubs)
+    .innerJoin(
+      bookClubMembers,
+      and(
+        eq(bookClubMembers.clubId, bookClubs.id),
+        eq(bookClubMembers.userId, targetUserId),
+      ),
+    )
+    .leftJoin(userProfiles, eq(userProfiles.userId, bookClubs.ownerId))
+    .orderBy(desc(bookClubs.createdAt), desc(bookClubs.id))
+    .limit(cap * 2)
+
+  // Per-row canViewClub gate — masquerade PRIVATE/FRIENDS clubs as absent
+  // for viewers who can't see them. Mirrors getClubsAction discover branch.
+  const visible: typeof candidates = []
+  for (const row of candidates) {
+    const membership = await getClubMembership(viewerId, row.id)
+    const allowed = await canViewClub(
+      viewerId,
+      { ownerId: row.ownerId, visibility: row.visibility },
+      membership,
+    )
+    if (!allowed) continue
+    visible.push(row)
+    if (visible.length >= cap) break
+  }
+
+  // Hydrate currentBook for rows that have a currentBookId
+  const currentBookIds = visible
+    .map((r) => r.currentBookId)
+    .filter((id): id is string => id !== null)
+  let currentBookMap = new Map<string, ClubCurrentBook>()
+  if (currentBookIds.length > 0) {
+    const bookRows = await db
+      .select({
+        id: bookClubBooks.id,
+        title: bookClubBooks.title,
+        author: bookClubBooks.author,
+        coverUrl: bookClubBooks.coverUrl,
+      })
+      .from(bookClubBooks)
+      .where(inArray(bookClubBooks.id, currentBookIds))
+    currentBookMap = new Map(bookRows.map((b) => [b.id, b]))
+  }
+
+  // Hydrate viewerMembership for each row (profile section doesn't render
+  // membership-gated CTAs, but ClubSummary requires the field).
+  const memberships = await Promise.all(
+    visible.map((r) => getClubMembership(viewerId, r.id)),
+  )
+
+  const result: ClubSummary[] = visible.map((r, i) => ({
+    id: r.id,
+    name: r.name,
+    description: r.description,
+    rules: r.rules,
+    visibility: r.visibility,
+    discoverable: r.discoverable,
+    openJoin: r.openJoin,
+    tags: r.tags ?? [],
+    memberCount: r.memberCount,
+    currentBook: r.currentBookId ? currentBookMap.get(r.currentBookId) ?? null : null,
+    owner: {
+      userId: r.ownerId,
+      username: r.ownerUsername,
+      displayName: r.ownerDisplayName,
+      avatarUrl: r.ownerAvatarUrl,
+    },
+    viewerMembership: memberships[i],
+    createdAt: r.createdAt,
+    updatedAt: r.updatedAt,
+  }))
+
+  return { success: true, data: result }
 }

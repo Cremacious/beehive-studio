@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, integer, boolean, primaryKey, pgEnum, index, jsonb, AnyPgColumn } from 'drizzle-orm/pg-core'
+import { pgTable, text, timestamp, integer, boolean, primaryKey, pgEnum, index, uniqueIndex, jsonb, AnyPgColumn } from 'drizzle-orm/pg-core'
 import { createId } from '@paralleldrive/cuid2'
 import { relations, sql } from 'drizzle-orm'
 import { users } from './auth'
@@ -15,6 +15,16 @@ export type SparkStatus = (typeof sparkStatusEnum.enumValues)[number]
 export const readingListKindEnum = pgEnum('reading_list_kind', ['CUSTOM', 'LIKED'])
 
 export type ReadingListKind = (typeof readingListKindEnum.enumValues)[number]
+
+export const bookClubMemberRoleEnum = pgEnum('book_club_member_role', ['OWNER', 'MODERATOR', 'MEMBER'])
+export const bookClubBookStatusEnum = pgEnum('book_club_book_status', ['CURRENT', 'PAST', 'QUEUE'])
+export const bookClubInviteStatusEnum = pgEnum('book_club_invite_status', ['PENDING', 'ACCEPTED', 'REJECTED', 'CANCELED'])
+export const bookClubJoinRequestStatusEnum = pgEnum('book_club_join_request_status', ['PENDING', 'ACCEPTED', 'REJECTED'])
+
+export type BookClubMemberRole = (typeof bookClubMemberRoleEnum.enumValues)[number]
+export type BookClubBookStatus = (typeof bookClubBookStatusEnum.enumValues)[number]
+export type BookClubInviteStatus = (typeof bookClubInviteStatusEnum.enumValues)[number]
+export type BookClubJoinRequestStatus = (typeof bookClubJoinRequestStatusEnum.enumValues)[number]
 
 export const friendships = pgTable('friendships', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
@@ -34,6 +44,7 @@ export const notificationTypeEnum = pgEnum('notification_type', [
   'HIVE_JOIN_REQUEST', 'HIVE_JOIN_APPROVED', 'HIVE_MEMBER_JOINED',
   'CHAPTER_EDITED', 'HIVE_COMMENT', 'TASK_ASSIGNED', 'TASK_COMPLETED',
   'FRIEND_REQUEST', 'FRIEND_ACCEPTED',
+  'CLUB_INVITE', 'CLUB_JOIN_REQUEST', 'CLUB_JOIN_APPROVED',
 ])
 
 export const follows = pgTable('follows', {
@@ -160,6 +171,8 @@ export const socialActivityTypeEnum = pgEnum('social_activity_type', [
   'hive_joined',
   'reading_list_created',
   'books_added_batch',
+  'book_club_created',
+  'book_club_current_book_changed',
 ])
 
 export type SocialActivityType = (typeof socialActivityTypeEnum.enumValues)[number]
@@ -254,4 +267,186 @@ export const readingListFollows = pgTable(
     primaryKey({ columns: [t.userId, t.listId] }),
     index('reading_list_follows_list_idx').on(t.listId),
   ],
+)
+
+// ============================================================================
+// C4 — Book Clubs (11 tables)
+// ============================================================================
+
+export const bookClubs = pgTable(
+  'book_clubs',
+  {
+    id: text('id').primaryKey().$defaultFn(() => createId()),
+    ownerId: text('owner_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    description: text('description'),
+    rules: text('rules'),
+    tags: text('tags').array().notNull().default(sql`'{}'::text[]`),
+    visibility: bookVisibilityEnum('visibility').notNull().default('PUBLIC'),
+    discoverable: boolean('discoverable').notNull().default(true),
+    openJoin: boolean('open_join').notNull().default(true),
+    memberCount: integer('member_count').notNull().default(1),
+    // FK to book_club_books added via raw ALTER in migration step 14 (forward ref).
+    currentBookId: text('current_book_id'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (t) => [
+    index('book_clubs_owner_created_idx').on(t.ownerId, t.createdAt.desc()),
+    index('book_clubs_discoverable_visibility_idx').on(t.discoverable, t.visibility),
+  ],
+)
+
+export const bookClubBooks = pgTable(
+  'book_club_books',
+  {
+    id: text('id').primaryKey().$defaultFn(() => createId()),
+    clubId: text('club_id').notNull().references(() => bookClubs.id, { onDelete: 'cascade' }),
+    bookId: text('book_id').references(() => books.id, { onDelete: 'set null' }),
+    title: text('title').notNull(),
+    author: text('author').notNull(),
+    coverUrl: text('cover_url'),
+    status: bookClubBookStatusEnum('status').notNull().default('QUEUE'),
+    order: integer('order').notNull().default(0),
+    addedAt: timestamp('added_at').notNull().defaultNow(),
+    startedAt: timestamp('started_at'),
+    finishedAt: timestamp('finished_at'),
+  },
+  (t) => [
+    index('book_club_books_club_status_order_idx').on(t.clubId, t.status, t.order),
+  ],
+)
+
+export const bookClubMembers = pgTable(
+  'book_club_members',
+  {
+    id: text('id').primaryKey().$defaultFn(() => createId()),
+    clubId: text('club_id').notNull().references(() => bookClubs.id, { onDelete: 'cascade' }),
+    userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    role: bookClubMemberRoleEnum('role').notNull().default('MEMBER'),
+    joinedAt: timestamp('joined_at').notNull().defaultNow(),
+  },
+  (t) => [
+    index('book_club_members_user_idx').on(t.userId),
+    uniqueIndex('book_club_members_club_user_unique').on(t.clubId, t.userId),
+  ],
+)
+
+export const bookClubInvites = pgTable(
+  'book_club_invites',
+  {
+    id: text('id').primaryKey().$defaultFn(() => createId()),
+    clubId: text('club_id').notNull().references(() => bookClubs.id, { onDelete: 'cascade' }),
+    inviterId: text('inviter_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    recipientId: text('recipient_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    status: bookClubInviteStatusEnum('status').notNull().default('PENDING'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    respondedAt: timestamp('responded_at'),
+  },
+  (t) => [
+    index('book_club_invites_recipient_status_idx').on(t.recipientId, t.status),
+    index('book_club_invites_club_idx').on(t.clubId),
+  ],
+)
+
+export const bookClubInviteTokens = pgTable(
+  'book_club_invite_tokens',
+  {
+    token: text('token').primaryKey(),
+    clubId: text('club_id').notNull().references(() => bookClubs.id, { onDelete: 'cascade' }),
+    inviterId: text('inviter_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    expiresAt: timestamp('expires_at').notNull(),
+    claimedBy: text('claimed_by').references(() => users.id, { onDelete: 'set null' }),
+    claimedAt: timestamp('claimed_at'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => [index('book_club_invite_tokens_club_idx').on(t.clubId)],
+)
+
+export const bookClubJoinRequests = pgTable(
+  'book_club_join_requests',
+  {
+    id: text('id').primaryKey().$defaultFn(() => createId()),
+    clubId: text('club_id').notNull().references(() => bookClubs.id, { onDelete: 'cascade' }),
+    userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    status: bookClubJoinRequestStatusEnum('status').notNull().default('PENDING'),
+    requestedAt: timestamp('requested_at').notNull().defaultNow(),
+    respondedAt: timestamp('responded_at'),
+  },
+  (t) => [
+    index('book_club_join_requests_club_status_idx').on(t.clubId, t.status),
+    uniqueIndex('book_club_join_requests_club_user_unique').on(t.clubId, t.userId),
+  ],
+)
+
+export const bookClubScheduleItems = pgTable(
+  'book_club_schedule_items',
+  {
+    id: text('id').primaryKey().$defaultFn(() => createId()),
+    clubId: text('club_id').notNull().references(() => bookClubs.id, { onDelete: 'cascade' }),
+    bookId: text('book_id').notNull().references(() => bookClubBooks.id, { onDelete: 'cascade' }),
+    chapterStart: integer('chapter_start').notNull(),
+    chapterEnd: integer('chapter_end').notNull(),
+    targetDate: timestamp('target_date').notNull(),
+    label: text('label'),
+    order: integer('order').notNull().default(0),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => [
+    index('book_club_schedule_items_club_book_order_idx').on(t.clubId, t.bookId, t.order),
+  ],
+)
+
+export const bookClubDiscussions = pgTable(
+  'book_club_discussions',
+  {
+    id: text('id').primaryKey().$defaultFn(() => createId()),
+    clubId: text('club_id').notNull().references(() => bookClubs.id, { onDelete: 'cascade' }),
+    authorId: text('author_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    title: text('title').notNull(),
+    content: text('content').notNull(),
+    isPinned: boolean('is_pinned').notNull().default(false),
+    likeCount: integer('like_count').notNull().default(0),
+    replyCount: integer('reply_count').notNull().default(0),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (t) => [
+    index('book_club_discussions_club_pinned_created_idx').on(t.clubId, t.isPinned.desc(), t.createdAt.desc()),
+  ],
+)
+
+export const bookClubDiscussionReplies = pgTable(
+  'book_club_discussion_replies',
+  {
+    id: text('id').primaryKey().$defaultFn(() => createId()),
+    discussionId: text('discussion_id').notNull().references(() => bookClubDiscussions.id, { onDelete: 'cascade' }),
+    authorId: text('author_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    content: text('content').notNull(),
+    likeCount: integer('like_count').notNull().default(0),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => [
+    index('book_club_discussion_replies_discussion_created_idx').on(t.discussionId, t.createdAt),
+  ],
+)
+
+export const bookClubDiscussionLikes = pgTable(
+  'book_club_discussion_likes',
+  {
+    userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    discussionId: text('discussion_id').notNull().references(() => bookClubDiscussions.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.discussionId] })],
+)
+
+export const bookClubDiscussionReplyLikes = pgTable(
+  'book_club_discussion_reply_likes',
+  {
+    userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    replyId: text('reply_id').notNull().references(() => bookClubDiscussionReplies.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.replyId] })],
 )

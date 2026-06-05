@@ -28,6 +28,8 @@ const VERB: Record<FeedRow['type'], string> = {
   hive_joined: 'joined the hive',
   reading_list_created: 'created a list',
   books_added_batch: 'added books to a reading list',
+  book_club_created: 'started a book club',
+  book_club_current_book_changed: 'picked a new current book for the club',
 }
 
 function subjectHref(row: FeedRow, locale: string): string | null {

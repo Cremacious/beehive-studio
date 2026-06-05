@@ -1,13 +1,14 @@
 'use client'
 import { useRouter, usePathname } from 'next/navigation'
 
-type Tab = 'books' | 'sparks' | 'hives' | 'lists'
+type Tab = 'books' | 'sparks' | 'hives' | 'lists' | 'clubs'
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'books', label: 'Books' },
   { id: 'sparks', label: '⚡ Sparks' },
   { id: 'hives', label: 'Hives' },
   { id: 'lists', label: 'Lists' },
+  { id: 'clubs', label: 'Clubs' },
 ]
 
 export function DiscoverTabs({ currentTab }: { currentTab: Tab }) {

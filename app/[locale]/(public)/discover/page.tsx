@@ -11,8 +11,9 @@ import { SparkCard } from './_components/spark-card'
 import { HiveCard } from './_components/hive-card'
 import { CreateSparkModal } from './_components/create-spark-modal'
 import { ListsTabContent } from './_components/lists-tab-content'
+import { ClubsTabContent } from './_components/clubs-tab-content'
 
-type Tab = 'books' | 'sparks' | 'hives' | 'lists'
+type Tab = 'books' | 'sparks' | 'hives' | 'lists' | 'clubs'
 
 type Props = {
   params: Promise<{ locale: string }>
@@ -22,7 +23,7 @@ type Props = {
 export default async function DiscoverPage({ params, searchParams }: Props) {
   const { locale } = await params
   const resolved = await searchParams
-  const tab: Tab = (resolved.tab === 'sparks' || resolved.tab === 'hives' || resolved.tab === 'lists') ? resolved.tab : 'books'
+  const tab: Tab = (resolved.tab === 'sparks' || resolved.tab === 'hives' || resolved.tab === 'lists' || resolved.tab === 'clubs') ? resolved.tab : 'books'
   const sort: 'trending' | 'popular' | 'new' = (resolved.sort === 'popular' || resolved.sort === 'new') ? resolved.sort : 'trending'
   const genre = resolved.genre
 
@@ -41,6 +42,7 @@ export default async function DiscoverPage({ params, searchParams }: Props) {
       {tab === 'sparks' && <SparksTab locale={locale} />}
       {tab === 'hives' && <HivesTab locale={locale} />}
       {tab === 'lists' && <ListsTab locale={locale} />}
+      {tab === 'clubs' && <ClubsTab locale={locale} />}
     </div>
   )
 }
@@ -137,6 +139,15 @@ async function ListsTab({ locale }: { locale: string }) {
     <div className="px-6 py-6">
       <p className="text-[#555] text-[11px] uppercase tracking-wider mb-4">Discoverable Reading Lists</p>
       <ListsTabContent locale={locale} />
+    </div>
+  )
+}
+
+async function ClubsTab({ locale }: { locale: string }) {
+  return (
+    <div className="px-6 py-6">
+      <p className="text-[#555] text-[11px] uppercase tracking-wider mb-4">Discoverable Book Clubs</p>
+      <ClubsTabContent locale={locale} />
     </div>
   )
 }

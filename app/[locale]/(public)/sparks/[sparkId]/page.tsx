@@ -5,6 +5,9 @@ import { headers } from 'next/headers'
 import { getSparkAction, getSparkEntriesAction, getSparkEntryAction } from '@/lib/actions/sparks.actions'
 import { SparkEntryCard } from '../../discover/_components/spark-entry-card'
 import { SparkSubmitPanel } from '../../discover/_components/spark-submit-panel'
+import { StatusPill } from '../../discover/_components/status-pill'
+import { VisibilityPill } from '../../discover/_components/visibility-pill'
+import { Countdown } from '../../discover/_components/countdown'
 
 type Props = { params: Promise<{ locale: string; sparkId: string }> }
 
@@ -50,13 +53,6 @@ export default async function SparkDetailPage({ params }: Props) {
     year: 'numeric',
   })
 
-  const STATUS_STYLES = {
-    OPEN: { badge: '⚡ OPEN', bg: 'bg-[#2a1a00]', text: 'text-[#FFC300]' },
-    VOTING: { badge: '🗳 VOTING', bg: 'bg-[#1a1a3a]', text: 'text-[#8888ff]' },
-    CLOSED: { badge: '✓ CLOSED', bg: 'bg-[#1e1e1e]', text: 'text-[#555]' },
-  }
-  const statusStyle = STATUS_STYLES[spark.status]
-
   return (
     <div className="min-h-screen bg-[#141414]">
       {/* Nav */}
@@ -72,22 +68,10 @@ export default async function SparkDetailPage({ params }: Props) {
       {/* Hero */}
       <div className="px-6 py-6 border-b border-[#2a2a2a]">
         <div className="flex items-center gap-2 mb-3 flex-wrap">
-          <span
-            className={`inline-block text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${statusStyle.bg} ${statusStyle.text}`}
-          >
-            {statusStyle.badge}
-          </span>
-          {/* T14 will replace these placeholder pills with <StatusPill> / <VisibilityPill> / <Countdown> */}
-          <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full border border-[var(--br-card)] text-[var(--canvas-dark-ink-muted)]">
-            {spark.status}
-          </span>
-          <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full border border-[var(--br-card)] text-[var(--canvas-dark-ink-muted)]">
-            {spark.visibility}
-          </span>
+          <StatusPill status={spark.status} />
+          <VisibilityPill visibility={spark.visibility} />
           {spark.status === 'VOTING' && spark.votingEndsAt && (
-            <span className="text-xs text-[var(--canvas-dark-ink-muted)]">
-              Voting ends {new Date(spark.votingEndsAt).toLocaleString()}
-            </span>
+            <Countdown to={spark.votingEndsAt} prefix="Voting ends in" />
           )}
         </div>
         <p className="text-white text-[20px] font-bold leading-snug max-w-[640px] mb-3">

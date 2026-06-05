@@ -1,4 +1,7 @@
 import type { BookClubMemberRole } from '@/db/schema/social'
+import { listClubDiscussionsAction } from '@/lib/actions/book-clubs.actions'
+import { DiscussionCard } from './discussion-card'
+import { DiscussionComposerButton } from './discussion-composer-button'
 
 type Props = {
   clubId: string
@@ -6,18 +9,30 @@ type Props = {
   locale: string
 }
 
-/**
- * T11 stub. T14 will enrich with: discussion thread list via
- * listClubDiscussionsAction, pinned-first sort, new-discussion CTA gated
- * on membership, reply counts, like/pin affordances.
- */
-export function ClubDiscussionsPanel({ clubId, viewerRole, locale }: Props) {
-  void clubId
-  void viewerRole
-  void locale
+export async function ClubDiscussionsPanel({ clubId, viewerRole, locale }: Props) {
+  const result = await listClubDiscussionsAction({ clubId, limit: 20 })
+  const discussions = result.success ? result.data.rows : []
+
   return (
-    <div className="text-[var(--canvas-dark-ink-muted)] italic">
-      Discussions coming soon (T14).
+    <div className="space-y-4">
+      {viewerRole !== null && (
+        <div className="flex justify-end">
+          <DiscussionComposerButton clubId={clubId} />
+        </div>
+      )}
+      {discussions.length === 0 ? (
+        <p className="text-center py-8 italic text-[var(--canvas-dark-ink-muted)]">
+          No discussions yet. Be the first to start one.
+        </p>
+      ) : (
+        <ul className="space-y-3">
+          {discussions.map((d) => (
+            <li key={d.id}>
+              <DiscussionCard discussion={d} clubId={clubId} locale={locale} />
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }

@@ -2112,3 +2112,138 @@ export async function listClubMembersAction(input: {
 
   return { success: true, data: { members: rows } }
 }
+
+// ═════════════════════════════════════════════════════════════════════════════
+// T23 closeout — list pending invites + join requests for Settings panel
+// ═════════════════════════════════════════════════════════════════════════════
+
+export type ClubMemberSummary = {
+  userId: string
+  username: string | null
+  displayName: string | null
+  avatarUrl: string | null
+}
+
+export type ClubPendingInviteRow = {
+  inviteId: string
+  recipient: ClubMemberSummary
+  inviter: ClubMemberSummary
+  createdAt: Date
+}
+
+export type ClubJoinRequestRow = {
+  requestId: string
+  requester: ClubMemberSummary
+  createdAt: Date
+}
+
+export async function listClubPendingInvitesAction(
+  input: unknown,
+): Promise<ActionResult<{ rows: ClubPendingInviteRow[] }>> {
+  const userId = await requireAuth()
+  const parsed = v.clubIdSchema.safeParse(input)
+  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+
+  const membership = await getClubMembership(userId, parsed.data.clubId)
+  if (!canInviteUser(membership.role)) {
+    return { success: false, error: 'NOT_AUTHORIZED' }
+  }
+
+  // Two leftJoins to userProfiles (recipient + inviter) — alias via raw SQL select.
+  const rows = await db
+    .select({
+      inviteId: bookClubInvites.id,
+      createdAt: bookClubInvites.createdAt,
+      recipientUserId: bookClubInvites.recipientId,
+      recipientUsername: sql<string | null>`r_prof.username`,
+      recipientDisplayName: sql<string | null>`r_prof.display_name`,
+      recipientAvatarUrl: sql<string | null>`r_prof.avatar_url`,
+      inviterUserId: bookClubInvites.inviterId,
+      inviterUsername: sql<string | null>`i_prof.username`,
+      inviterDisplayName: sql<string | null>`i_prof.display_name`,
+      inviterAvatarUrl: sql<string | null>`i_prof.avatar_url`,
+    })
+    .from(bookClubInvites)
+    .leftJoin(
+      sql`${userProfiles} as r_prof`,
+      sql`r_prof.user_id = ${bookClubInvites.recipientId}`,
+    )
+    .leftJoin(
+      sql`${userProfiles} as i_prof`,
+      sql`i_prof.user_id = ${bookClubInvites.inviterId}`,
+    )
+    .where(
+      and(
+        eq(bookClubInvites.clubId, parsed.data.clubId),
+        eq(bookClubInvites.status, 'PENDING'),
+      ),
+    )
+    .orderBy(desc(bookClubInvites.createdAt))
+
+  const projected: ClubPendingInviteRow[] = rows.map((r) => ({
+    inviteId: r.inviteId,
+    recipient: {
+      userId: r.recipientUserId,
+      username: r.recipientUsername,
+      displayName: r.recipientDisplayName,
+      avatarUrl: r.recipientAvatarUrl,
+    },
+    inviter: {
+      userId: r.inviterUserId,
+      username: r.inviterUsername,
+      displayName: r.inviterDisplayName,
+      avatarUrl: r.inviterAvatarUrl,
+    },
+    createdAt: r.createdAt,
+  }))
+
+  return { success: true, data: { rows: projected } }
+}
+
+export async function listClubJoinRequestsAction(
+  input: unknown,
+): Promise<ActionResult<{ rows: ClubJoinRequestRow[] }>> {
+  const userId = await requireAuth()
+  const parsed = v.clubIdSchema.safeParse(input)
+  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+
+  const membership = await getClubMembership(userId, parsed.data.clubId)
+  if (!canApproveJoinRequest(membership.role)) {
+    return { success: false, error: 'NOT_AUTHORIZED' }
+  }
+
+  const rows = await db
+    .select({
+      requestId: bookClubJoinRequests.id,
+      createdAt: bookClubJoinRequests.requestedAt,
+      requesterUserId: bookClubJoinRequests.userId,
+      requesterUsername: userProfiles.username,
+      requesterDisplayName: userProfiles.displayName,
+      requesterAvatarUrl: userProfiles.avatarUrl,
+    })
+    .from(bookClubJoinRequests)
+    .leftJoin(
+      userProfiles,
+      eq(userProfiles.userId, bookClubJoinRequests.userId),
+    )
+    .where(
+      and(
+        eq(bookClubJoinRequests.clubId, parsed.data.clubId),
+        eq(bookClubJoinRequests.status, 'PENDING'),
+      ),
+    )
+    .orderBy(desc(bookClubJoinRequests.requestedAt))
+
+  const projected: ClubJoinRequestRow[] = rows.map((r) => ({
+    requestId: r.requestId,
+    requester: {
+      userId: r.requesterUserId,
+      username: r.requesterUsername,
+      displayName: r.requesterDisplayName,
+      avatarUrl: r.requesterAvatarUrl,
+    },
+    createdAt: r.createdAt,
+  }))
+
+  return { success: true, data: { rows: projected } }
+}

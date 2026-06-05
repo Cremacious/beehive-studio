@@ -37,7 +37,7 @@ export function ActiveSparksPanel({
           {entries.slice(0, 3).map(e => (
             <li key={e.entryId}>
               <Link
-                href={`/${locale}/discover/spark/${e.sparkId}`}
+                href={`/${locale}/sparks/${e.sparkId}`}
                 className="flex flex-col gap-1 text-xs hover:text-brand transition-colors group"
               >
                 <span className="text-foreground truncate group-hover:text-brand">{e.sparkPrompt}</span>

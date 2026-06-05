@@ -115,7 +115,7 @@ async function SparksTab({ locale }: { locale: string }) {
           <p className="text-[#555] text-[11px] uppercase tracking-wider mb-3">Past Sparks</p>
           <div className="flex flex-col gap-2">
             {closedSparks.map(spark => (
-              <Link key={spark.id} href={`/${locale}/discover/spark/${spark.id}`} className="flex items-center gap-3 py-2.5 border-b border-[#1e1e1e] hover:bg-[#1a1a1a] px-2 rounded transition-colors">
+              <Link key={spark.id} href={`/${locale}/sparks/${spark.id}`} className="flex items-center gap-3 py-2.5 border-b border-[#1e1e1e] hover:bg-[#1a1a1a] px-2 rounded transition-colors">
                 <p className="text-[#777] text-[13px] flex-1 truncate">&ldquo;{spark.prompt}&rdquo;</p>
                 {spark.winnerUsername && (
                   <span className="text-[#FFC300] text-[11px] shrink-0">🏆 {spark.winnerUsername}</span>

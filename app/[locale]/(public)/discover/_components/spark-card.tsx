@@ -1,11 +1,7 @@
 import Link from 'next/link'
 import type { SparkSummary } from '@/lib/actions/sparks.actions'
-
-const STATUS_STYLES = {
-  OPEN: { badge: '⚡ OPEN', bg: 'bg-[#2a1a00]', text: 'text-[#FFC300]' },
-  VOTING: { badge: '🗳 VOTING', bg: 'bg-[#1a1a3a]', text: 'text-[#8888ff]' },
-  CLOSED: { badge: '✓ CLOSED', bg: 'bg-[#1e1e1e]', text: 'text-[#444]' },
-}
+import { StatusPill } from './status-pill'
+import { VisibilityPill } from './visibility-pill'
 
 function timeLeft(deadline: Date): string {
   const ms = deadline.getTime() - Date.now()
@@ -16,19 +12,26 @@ function timeLeft(deadline: Date): string {
 }
 
 export function SparkCard({ spark, locale }: { spark: SparkSummary; locale: string }) {
-  const style = STATUS_STYLES[spark.status]
+  const showStatusPill = spark.status !== 'OPEN'
+  const showVisibilityPill = spark.visibility !== 'PUBLIC'
   return (
-    <Link href={`/${locale}/discover/spark/${spark.id}`} className="block">
+    <Link href={`/${locale}/sparks/${spark.id}`} className="block">
       <div className={`border border-[#2a2a2a] rounded-lg p-4 cursor-pointer hover:border-[#3a3a3a] transition-colors ${
         spark.status === 'VOTING' ? 'bg-[#1a1a2a] border-[#3a3a5a]' : 'bg-[#1a1a1a]'
       }`}>
-        <div className="flex justify-between items-start mb-2.5">
-          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${style.bg} ${style.text}`}>
-            {style.badge}{spark.status === 'OPEN' ? timeLeft(spark.deadline) : ''}
-          </span>
-          <span className="text-[#555] text-[11px]">{spark.entryCount} entries</span>
+        <div className="flex justify-between items-start mb-2.5 gap-2">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {showStatusPill && <StatusPill status={spark.status} />}
+            {showVisibilityPill && <VisibilityPill visibility={spark.visibility} />}
+            {spark.status === 'OPEN' && (
+              <span className="text-[10px] font-mono uppercase tracking-wider text-[#FFC300]">
+                Open{timeLeft(spark.deadline)}
+              </span>
+            )}
+          </div>
+          <span className="text-[#555] text-[11px] shrink-0">{spark.entryCount} entries</span>
         </div>
-        <p className="text-white text-[14px] font-semibold leading-snug mb-2.5">"{spark.prompt}"</p>
+        <p className="text-white text-[14px] font-semibold leading-snug mb-2.5">&ldquo;{spark.prompt}&rdquo;</p>
         <div className="flex items-center gap-2 flex-wrap">
           <div className="w-5 h-5 rounded-full bg-[#2a2a2a] shrink-0" />
           <span className="text-[#666] text-[11px]">

@@ -22,7 +22,7 @@ export function SectionRail({
   const tiles: Tile[] = [
     { label: 'Friends', href: `/${locale}/friends`, icon: Users, count: friendsCount },
     { label: 'Hives', href: `/${locale}/studio`, icon: Hexagon, count: hivesCount },
-    { label: 'Sparks', href: `/${locale}/discover?tab=sparks`, icon: Zap, count: sparksCount },
+    { label: 'Sparks', href: `/${locale}/sparks`, icon: Zap, count: sparksCount },
     { label: 'Reading Lists', href: `/${locale}/reading-lists`, icon: BookMarked, count: 0 },
     { label: 'Book Clubs', href: `/${locale}/clubs`, icon: BookOpen, count: 0 },
   ]

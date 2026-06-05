@@ -192,7 +192,7 @@ export default async function AuthorProfilePage({ params }: Props) {
             <p className="text-[#555] text-[11px] uppercase tracking-widest mb-3">Open Sparks</p>
             <div className="flex flex-col gap-2">
               {openSparks.map(spark => (
-                <Link key={spark.id} href={`/${locale}/discover/spark/${spark.id}`}
+                <Link key={spark.id} href={`/${locale}/sparks/${spark.id}`}
                   className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg px-3.5 py-2.5 flex items-center gap-3 hover:border-[#3a3a3a] transition-colors">
                   <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${
                     spark.status === 'VOTING' ? 'bg-[#1a1a3a] text-[#8888ff]' : 'bg-[#2a1a00] text-[#FFC300]'

@@ -26,6 +26,8 @@ const VERB: Record<FeedRow['type'], string> = {
   spark_won_creator_choice: "was picked as the creator's choice for the Spark",
   hive_created: 'started a new hive',
   hive_joined: 'joined the hive',
+  reading_list_created: 'created a reading list',
+  books_added_batch: 'added books to a reading list',
 }
 
 function subjectHref(row: FeedRow, locale: string): string | null {

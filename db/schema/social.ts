@@ -1,8 +1,8 @@
 import { pgTable, text, timestamp, integer, boolean, primaryKey, pgEnum, index, jsonb, AnyPgColumn } from 'drizzle-orm/pg-core'
 import { createId } from '@paralleldrive/cuid2'
-import { relations } from 'drizzle-orm'
+import { relations, sql } from 'drizzle-orm'
 import { users } from './auth'
-import { books, chapters, binderItems } from './books'
+import { books, chapters, binderItems, bookVisibilityEnum } from './books'
 
 export const friendshipStatusEnum = pgEnum('friendship_status', ['PENDING', 'ACCEPTED'])
 
@@ -11,6 +11,10 @@ export const sparkStatusEnum = pgEnum('spark_status', ['OPEN', 'VOTING', 'CLOSED
 
 export type SparkVisibility = (typeof sparkVisibilityEnum.enumValues)[number]
 export type SparkStatus = (typeof sparkStatusEnum.enumValues)[number]
+
+export const readingListKindEnum = pgEnum('reading_list_kind', ['CUSTOM', 'LIKED'])
+
+export type ReadingListKind = (typeof readingListKindEnum.enumValues)[number]
 
 export const friendships = pgTable('friendships', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
@@ -154,6 +158,8 @@ export const socialActivityTypeEnum = pgEnum('social_activity_type', [
   'spark_won_creator_choice',
   'hive_created',
   'hive_joined',
+  'reading_list_created',
+  'books_added_batch',
 ])
 
 export type SocialActivityType = (typeof socialActivityTypeEnum.enumValues)[number]
@@ -194,3 +200,58 @@ export const friendInvites = pgTable('friend_invites', {
   claimedAt: timestamp('claimed_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (t) => [index('friend_invites_inviter_idx').on(t.inviterId)])
+
+export const readingLists = pgTable(
+  'reading_lists',
+  {
+    id: text('id').primaryKey().$defaultFn(() => createId()),
+    userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    kind: readingListKindEnum('kind').notNull().default('CUSTOM'),
+    title: text('title').notNull(),
+    description: text('description'),
+    visibility: bookVisibilityEnum('visibility').notNull().default('PUBLIC'),
+    discoverable: boolean('discoverable').notNull().default(true),
+    tags: text('tags').array().notNull().default(sql`'{}'::text[]`),
+    bookCount: integer('book_count').notNull().default(0),
+    followerCount: integer('follower_count').notNull().default(0),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (t) => [
+    index('reading_lists_user_created_idx').on(t.userId, t.createdAt.desc()),
+    index('reading_lists_discoverable_visibility_idx').on(t.discoverable, t.visibility),
+  ],
+)
+
+export const readingListBooks = pgTable(
+  'reading_list_books',
+  {
+    id: text('id').primaryKey().$defaultFn(() => createId()),
+    listId: text('list_id').notNull().references(() => readingLists.id, { onDelete: 'cascade' }),
+    bookId: text('book_id').references(() => books.id, { onDelete: 'set null' }),
+    title: text('title').notNull(),
+    author: text('author').notNull(),
+    coverUrl: text('cover_url'),
+    isRead: boolean('is_read').notNull().default(false),
+    rating: integer('rating'),
+    commentary: text('commentary'),
+    order: integer('order').notNull().default(0),
+    addedAt: timestamp('added_at').notNull().defaultNow(),
+  },
+  (t) => [
+    index('reading_list_books_list_order_idx').on(t.listId, t.order),
+  ],
+)
+
+export const readingListFollows = pgTable(
+  'reading_list_follows',
+  {
+    userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    listId: text('list_id').notNull().references(() => readingLists.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.listId] }),
+    index('reading_list_follows_list_idx').on(t.listId),
+  ],
+)

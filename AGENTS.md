@@ -12,7 +12,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-05 (C4 Wave 5 SHIPPED — 17 of 23 tasks done — 606/606 tests — awaiting Chris's checkpoint on Wave 6 integrations dispatch)
+> **Last updated:** 2026-06-05 (C4 Wave 6 SHIPPED — 21 of 23 tasks done — 606/606 tests — awaiting Chris's checkpoint on W7 closeout dispatch)
+>
+> **C4 Wave 6 SHIPPED** (4-way parallel, zero file overlap, clean — no `git add -A` fusions this time):
+> - T19 [237943a](https://github.com/Cremacious/beehive-studio/commit/237943a) `/discover?tab=clubs` 5th tab + `<ClubsTabContent>` server component. Cross-feature `<ClubCard>` import from `(app)/clubs/_components/`. Returns `{ rows, nextCursor }` (identical shape to lists tab — no Load-more).
+> - T20 [aa97d6e](https://github.com/Cremacious/beehive-studio/commit/aa97d6e) `<ActivityEventRow>` verb-map finalized for 2 club events (`book_club_created` → "@actor started a book club ClubName"; `book_club_current_book_changed` → "@actor's club ClubName is now reading BookTitle"). `getCommunityFeedAction` extended with `subjectType='book_club'` IN-list hydration mirroring reading_list precedent. Bell-copy map gets CLUB_INVITE/CLUB_JOIN_REQUEST/CLUB_JOIN_APPROVED — **CLUB_INVITE + CLUB_JOIN_REQUEST route to `/clubs` index** (not specific club) because resourceId is invite/request id not clubId — adapter pattern matching FRIEND_REQUEST → /friends (C1 lesson). CLUB_JOIN_APPROVED routes directly to clubId since resourceId IS the club.
+> - T21 [9e65b14](https://github.com/Cremacious/beehive-studio/commit/9e65b14) profile page Clubs section between Lists and Open Sparks + new `getUserPublicClubsAction(targetUserId, limit=5)` (2-arg matches C3 T15 — viewer resolved internally via `getOptionalUserId`, NOT 3-arg as plan suggested). 3-col responsive grid, hidden when empty (matches Lists posture).
+> - T22 [38d0410](https://github.com/Cremacious/beehive-studio/commit/38d0410) `/clubs/[clubId]/invite/[token]/page.tsx` claim route + `<InviteResult>` error screen component. Mirrors C1 friend-invite — auth gate → `/sign-up?next=<encoded full path>` → claim → success redirects to `/clubs/${clubId}?invite_claimed=1` (matches C1's pattern; sonner toast handler is a future follow-up shared between C1 + C4). **Error states**: TOKEN_NOT_FOUND / TOKEN_EXPIRED / TOKEN_ALREADY_CLAIMED / SELF_INVITE rendered with panel chrome + lucide icon + brand-pill back CTA. **BLOCKED masquerades as TOKEN_NOT_FOUND** for safety. **ALREADY_MEMBER silent-redirects** to `/clubs/${clubId}` (no error screen — UX parallel to typing the URL).
+>
+> **Prior — Last updated:** 2026-06-05 (C4 Wave 5 SHIPPED — 17 of 23 tasks done)
 >
 > **C4 Wave 5 SHIPPED** (6 parallel + T13 alone per C3 Wave 5 precedent — preserves shared stub prop signatures):
 > - T12 [0020ed4](https://github.com/Cremacious/beehive-studio/commit/0020ed4) `<CreateClubModal>` + `<EditClubMetadataDialog>` + `<CreateClubButton>` trigger. Reuses C2 `<VisibilityPicker>` + C3 `<TagInput>` via cross-feature imports. New for C4: open_join checkbox.

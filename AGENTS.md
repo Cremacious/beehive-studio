@@ -12,7 +12,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-05 (C4 Book Clubs ✅ SHIPPED — 23 of 23 tasks done — 606/606 tests — awaiting Chris's smoke pass)
+> **Last updated:** 2026-06-05 (C4 Book Clubs ✅ SHIPPED + smoke passed — 23 of 23 tasks done — 606/606 tests — awaiting Chris's pick on C5 polish vs other)
 >
 > **C4 Book Clubs ✅ CODE-COMPLETE.** All 23 tasks shipped across 7 waves. The full Book Clubs feature ships end-to-end: 11 new tables + 4 new pgEnums + 2 additions to `socialActivityTypeEnum` + 3 additions to `notificationTypeEnum`; 3 helpers (`canViewClub`/`canJoinClub` + 10 role predicates, `getClubMembership` React-cached, `deriveCurrentBookTx` atomic 4-step transition); 40 server actions in `lib/actions/book-clubs.actions.ts`; `/clubs` index hub + `/clubs/[clubId]` detail hub with 6 panels (About/Discussions/Books/Members/Schedule/Settings) + single-thread `/clubs/[clubId]/discussions/[discussionId]` route + `/clubs/[clubId]/invite/[token]` claim route; `/discover?tab=clubs` 5th discovery tab; profile page Clubs section; activity verb-map + bell-copy for 3 CLUB_* notification types + feed subject hydration for `book_club`. Full breakdown at "What Has Been Built → Community Phase — C4 Book Clubs".
 >

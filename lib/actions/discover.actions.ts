@@ -3,9 +3,11 @@
 import { db } from '@/db'
 import { books, binderItems, chapters, bookLikes, bookmarks, bookComments } from '@/db/schema'
 import { userProfiles } from '@/db/schema'
-import { eq, and, desc, sql, count, isNull } from 'drizzle-orm'
+import { eq, and, desc, sql, count, isNull, ilike, or } from 'drizzle-orm'
 import { getOptionalUserId } from '@/lib/require-auth'
 import { canReadBook } from '@/lib/books/can-read'
+import { isBlocked } from '@/lib/social/is-blocked'
+import { searchBooksSchema } from '@/lib/validations/reading-list'
 
 export type DiscoverBook = {
   id: string
@@ -309,4 +311,60 @@ export async function getDiscoverWritersAction(): Promise<ActionResult<DiscoverW
     .limit(3)
 
   return { success: true, data: rows }
+}
+
+export type SearchBookHit = {
+  bookId: string
+  title: string
+  author: string
+  coverUrl: string | null
+}
+
+/**
+ * C3 T7: search public+discoverable books by title or author display name,
+ * filtered through bidirectional `isBlocked` on author. Used by AddBookModal's
+ * Beehive search tab.
+ */
+export async function searchBooksAction(
+  input: unknown,
+): Promise<ActionResult<{ rows: SearchBookHit[] }>> {
+  const viewerId = await getOptionalUserId()
+  const parsed = searchBooksSchema.safeParse(input)
+  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  const limit = parsed.data.limit ?? 10
+  const q = `%${parsed.data.query}%`
+
+  const rows = await db
+    .select({
+      bookId: books.id,
+      title: books.title,
+      coverUrl: books.coverUrl,
+      authorUserId: books.userId,
+      authorUsername: userProfiles.username,
+      authorDisplayName: userProfiles.displayName,
+    })
+    .from(books)
+    .leftJoin(userProfiles, eq(userProfiles.userId, books.userId))
+    .where(
+      and(
+        eq(books.visibility, 'PUBLIC'),
+        eq(books.discoverable, true),
+        or(ilike(books.title, q), ilike(userProfiles.displayName, q)),
+      ),
+    )
+    .limit(limit * 2)
+
+  const filtered: SearchBookHit[] = []
+  for (const r of rows) {
+    if (viewerId && (await isBlocked(viewerId, r.authorUserId))) continue
+    filtered.push({
+      bookId: r.bookId,
+      title: r.title,
+      author: r.authorDisplayName ?? r.authorUsername ?? 'Unknown author',
+      coverUrl: r.coverUrl,
+    })
+    if (filtered.length >= limit) break
+  }
+
+  return { success: true, data: { rows: filtered } }
 }

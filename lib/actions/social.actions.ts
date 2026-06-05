@@ -7,6 +7,7 @@ import { requireAuth } from '@/lib/require-auth'
 import { canReadBook } from '@/lib/books/can-read'
 import { z } from 'zod'
 import { recordSocialActivityTx } from '@/lib/social/record-activity'
+import { ensureLikedListAction } from '@/lib/reading-lists/ensure-liked-list'
 import type { ActionResult } from './book.actions'
 import type { BookComment } from './discover.actions'
 
@@ -56,6 +57,12 @@ export async function toggleBookLikeAction(bookId: string): Promise<ActionResult
       })
     }
   })
+
+  // C3 T8: lazy-create the user's Liked auto-list on first like. Best-effort
+  // outside the tx — failure must never block the like (mirrors C1 record-
+  // activity precedent). Idempotent via the partial-unique index on
+  // reading_lists(user_id) WHERE kind='LIKED'.
+  await ensureLikedListAction(userId)
 
   return { success: true, data: { liked: true } }
 }

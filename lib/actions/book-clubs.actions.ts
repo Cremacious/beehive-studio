@@ -2056,3 +2056,59 @@ export async function getMyClubsCountAction(): Promise<ActionResult<{ count: num
     .where(eq(bookClubMembers.userId, userId))
   return { success: true, data: { count: row?.count ?? 0 } }
 }
+
+// ═════════════════════════════════════════════════════════════════════════════
+// T13 — Member roster
+// ═════════════════════════════════════════════════════════════════════════════
+
+export type ClubMemberListItem = {
+  id: string
+  userId: string
+  role: BookClubMemberRole
+  joinedAt: Date
+  username: string | null
+  displayName: string | null
+  avatarUrl: string | null
+}
+
+export async function listClubMembersAction(input: {
+  clubId: string
+}): Promise<ActionResult<{ members: ClubMemberListItem[] }>> {
+  const viewerId = await getOptionalUserId()
+  const parsed = v.clubIdSchema.safeParse(input)
+  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+
+  const club = await db.query.bookClubs.findFirst({
+    where: eq(bookClubs.id, parsed.data.clubId),
+    columns: { id: true, ownerId: true, visibility: true },
+  })
+  if (!club) return { success: false, error: 'NOT_FOUND' }
+
+  const membership = viewerId
+    ? await getClubMembership(viewerId, club.id)
+    : { role: null }
+  if (!(await canViewClub(viewerId, club, membership))) {
+    return { success: false, error: 'NOT_FOUND' } // masquerade
+  }
+
+  const rows = await db
+    .select({
+      id: bookClubMembers.id,
+      userId: bookClubMembers.userId,
+      role: bookClubMembers.role,
+      joinedAt: bookClubMembers.joinedAt,
+      username: userProfiles.username,
+      displayName: userProfiles.displayName,
+      avatarUrl: userProfiles.avatarUrl,
+    })
+    .from(bookClubMembers)
+    .leftJoin(userProfiles, eq(userProfiles.userId, bookClubMembers.userId))
+    .where(eq(bookClubMembers.clubId, club.id))
+    .orderBy(
+      // OWNER first, then MOD, then MEMBER; within role, oldest first.
+      sql`case ${bookClubMembers.role} when 'OWNER' then 0 when 'MODERATOR' then 1 else 2 end`,
+      asc(bookClubMembers.joinedAt),
+    )
+
+  return { success: true, data: { members: rows } }
+}

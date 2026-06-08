@@ -20,6 +20,9 @@ import {
   recordHiveActivityTx,
   type DrizzleTx,
 } from '@/lib/hive/record-activity'
+import { extractMentionUsernamesFromText } from '@/lib/mentions/extract-mentions'
+import { resolveMentionedUsers } from '@/lib/mentions/resolve-mentions'
+import { recordMentionNotificationsTx } from '@/lib/mentions/record-mention-notifications'
 import {
   createAnnotationSchema,
   replyToAnnotationSchema,
@@ -102,6 +105,12 @@ export async function createAnnotationAction(
     return { success: false, error: 'NOT_FOUND' }
   }
 
+  // Mention extraction + early cap check (before tx)
+  const textUsernames = extractMentionUsernamesFromText(body)
+  if (textUsernames.length > 5) {
+    return { success: false, error: 'MENTION_CAP_EXCEEDED' }
+  }
+
   const result = await db.transaction(async (tx) => {
     const [inserted] = await tx
       .insert(hiveAnnotations)
@@ -150,6 +159,31 @@ export async function createAnnotationAction(
       },
     })
 
+    // Mention notifications
+    if (textUsernames.length > 0) {
+      const mentionResult = await resolveMentionedUsers({
+        tiptapUserIds: [],
+        textUsernames,
+        actorId: userId,
+        resourceType: 'hive_annotation',
+        resourceId: newId,
+      })
+      if (!mentionResult.ok) {
+        throw new Error(mentionResult.error)
+      }
+      const toNotify = mentionResult.users
+        .filter((u) => !mentionResult.alreadyNotified.has(u.userId))
+        .map((u) => u.userId)
+      if (toNotify.length > 0) {
+        await recordMentionNotificationsTx(tx, {
+          actorId: userId,
+          mentionedUserIds: toNotify,
+          resourceType: 'hive_annotation',
+          resourceId: newId,
+        })
+      }
+    }
+
     return newId
   })
 
@@ -186,23 +220,60 @@ export async function replyToAnnotationAction(
   }
   if (!canAnnotate(role)) return { success: false, error: 'NOT_AUTHORIZED' }
 
-  const [inserted] = await db
-    .insert(hiveAnnotations)
-    .values({
-      hiveId: parent.hiveId,
-      chapterId: parent.chapterId,
-      authorId: userId,
-      parentId: parent.id,
-      layer: parent.layer,
-      selectionStart: null,
-      selectionEnd: null,
-      selectedText: null,
-      body,
-    })
-    .returning({ id: hiveAnnotations.id })
+  // Mention extraction + early cap check (before tx)
+  const textUsernames = extractMentionUsernamesFromText(body)
+  if (textUsernames.length > 5) {
+    return { success: false, error: 'MENTION_CAP_EXCEEDED' }
+  }
+
+  const insertedId = await db.transaction(async (tx) => {
+    const [inserted] = await tx
+      .insert(hiveAnnotations)
+      .values({
+        hiveId: parent.hiveId,
+        chapterId: parent.chapterId,
+        authorId: userId,
+        parentId: parent.id,
+        layer: parent.layer,
+        selectionStart: null,
+        selectionEnd: null,
+        selectedText: null,
+        body,
+      })
+      .returning({ id: hiveAnnotations.id })
+    const newId = inserted.id
+
+    // Mention notifications — replies use the parent annotation as the resource
+    // (no separate surface type for annotation replies).
+    if (textUsernames.length > 0) {
+      const mentionResult = await resolveMentionedUsers({
+        tiptapUserIds: [],
+        textUsernames,
+        actorId: userId,
+        resourceType: 'hive_annotation',
+        resourceId: newId,
+      })
+      if (!mentionResult.ok) {
+        throw new Error(mentionResult.error)
+      }
+      const toNotify = mentionResult.users
+        .filter((u) => !mentionResult.alreadyNotified.has(u.userId))
+        .map((u) => u.userId)
+      if (toNotify.length > 0) {
+        await recordMentionNotificationsTx(tx, {
+          actorId: userId,
+          mentionedUserIds: toNotify,
+          resourceType: 'hive_annotation',
+          resourceId: newId,
+        })
+      }
+    }
+
+    return newId
+  })
 
   // No activity event for replies.
-  return { success: true, data: { id: inserted.id } }
+  return { success: true, data: { id: insertedId } }
 }
 
 // ── resolveAnnotationAction / unresolveAnnotationAction ─────────────────────

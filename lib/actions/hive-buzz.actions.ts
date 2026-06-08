@@ -13,6 +13,9 @@ import {
   type HiveRole,
 } from '@/lib/hive/permissions'
 import { recordHiveActivityTx, type DrizzleTx } from '@/lib/hive/record-activity'
+import { extractMentionUsernamesFromText } from '@/lib/mentions/extract-mentions'
+import { resolveMentionedUsers } from '@/lib/mentions/resolve-mentions'
+import { recordMentionNotificationsTx } from '@/lib/mentions/record-mention-notifications'
 import {
   createBuzzPostSchema,
   updateBuzzPostSchema,
@@ -64,6 +67,12 @@ export async function createBuzzPostAction(
   const id = createId()
   const linkUrl = data.type === 'LINK' ? data.linkUrl : null
 
+  // Mention extraction + early cap check (before tx)
+  const textUsernames = extractMentionUsernamesFromText(data.body)
+  if (textUsernames.length > 5) {
+    return { success: false, error: 'MENTION_CAP_EXCEEDED' }
+  }
+
   await db.transaction(async (tx) => {
     await tx.insert(hiveBuzzPosts).values({
       id,
@@ -88,6 +97,31 @@ export async function createBuzzPostAction(
         linkUrl,
       },
     })
+
+    // Mention notifications
+    if (textUsernames.length > 0) {
+      const mentionResult = await resolveMentionedUsers({
+        tiptapUserIds: [],
+        textUsernames,
+        actorId: userId,
+        resourceType: 'hive_buzz_post',
+        resourceId: id,
+      })
+      if (!mentionResult.ok) {
+        throw new Error(mentionResult.error)
+      }
+      const toNotify = mentionResult.users
+        .filter((u) => !mentionResult.alreadyNotified.has(u.userId))
+        .map((u) => u.userId)
+      if (toNotify.length > 0) {
+        await recordMentionNotificationsTx(tx, {
+          actorId: userId,
+          mentionedUserIds: toNotify,
+          resourceType: 'hive_buzz_post',
+          resourceId: id,
+        })
+      }
+    }
   })
 
   return { success: true, data: { id } }
@@ -132,7 +166,40 @@ export async function updateBuzzPostAction(
     }
   }
 
-  await db.update(hiveBuzzPosts).set(set).where(eq(hiveBuzzPosts.id, id))
+  // Mention extraction + early cap check (before tx)
+  const textUsernames = extractMentionUsernamesFromText(body)
+  if (textUsernames.length > 5) {
+    return { success: false, error: 'MENTION_CAP_EXCEEDED' }
+  }
+
+  await db.transaction(async (tx) => {
+    await tx.update(hiveBuzzPosts).set(set).where(eq(hiveBuzzPosts.id, id))
+
+    // Mention notifications (edit-fire diff vs 24h dedupe window)
+    if (textUsernames.length > 0) {
+      const mentionResult = await resolveMentionedUsers({
+        tiptapUserIds: [],
+        textUsernames,
+        actorId: userId,
+        resourceType: 'hive_buzz_post',
+        resourceId: id,
+      })
+      if (!mentionResult.ok) {
+        throw new Error(mentionResult.error)
+      }
+      const toNotify = mentionResult.users
+        .filter((u) => !mentionResult.alreadyNotified.has(u.userId))
+        .map((u) => u.userId)
+      if (toNotify.length > 0) {
+        await recordMentionNotificationsTx(tx, {
+          actorId: userId,
+          mentionedUserIds: toNotify,
+          resourceType: 'hive_buzz_post',
+          resourceId: id,
+        })
+      }
+    }
+  })
 
   return { success: true, data: undefined }
 }

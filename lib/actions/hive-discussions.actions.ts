@@ -12,6 +12,9 @@ import {
   type HiveRole,
 } from '@/lib/hive/permissions'
 import { recordHiveActivityTx, type DrizzleTx } from '@/lib/hive/record-activity'
+import { extractMentionUsernamesFromText } from '@/lib/mentions/extract-mentions'
+import { resolveMentionedUsers } from '@/lib/mentions/resolve-mentions'
+import { recordMentionNotificationsTx } from '@/lib/mentions/record-mention-notifications'
 import {
   createDiscussionPostSchema,
   replyToDiscussionPostSchema,
@@ -83,6 +86,12 @@ export async function createDiscussionPostAction(
   const id = createId()
   const title = deriveTitle(body)
 
+  // Mention extraction + early cap check (before tx)
+  const textUsernames = extractMentionUsernamesFromText(body)
+  if (textUsernames.length > 5) {
+    return { success: false, error: 'MENTION_CAP_EXCEEDED' }
+  }
+
   await db.transaction(async (tx) => {
     await tx.insert(hiveDiscussionPosts).values({
       id,
@@ -102,6 +111,31 @@ export async function createDiscussionPostAction(
       subjectId: id,
       payload: { postId: id, topic, title },
     })
+
+    // Mention notifications
+    if (textUsernames.length > 0) {
+      const mentionResult = await resolveMentionedUsers({
+        tiptapUserIds: [],
+        textUsernames,
+        actorId: userId,
+        resourceType: 'hive_discussion',
+        resourceId: id,
+      })
+      if (!mentionResult.ok) {
+        throw new Error(mentionResult.error)
+      }
+      const toNotify = mentionResult.users
+        .filter((u) => !mentionResult.alreadyNotified.has(u.userId))
+        .map((u) => u.userId)
+      if (toNotify.length > 0) {
+        await recordMentionNotificationsTx(tx, {
+          actorId: userId,
+          mentionedUserIds: toNotify,
+          resourceType: 'hive_discussion',
+          resourceId: id,
+        })
+      }
+    }
   })
 
   return { success: true, data: { id } }
@@ -137,13 +171,47 @@ export async function replyToDiscussionPostAction(
   if (!canPostDiscussion(role)) return { success: false, error: 'NOT_AUTHORIZED' }
 
   const id = createId()
-  await db.insert(hiveDiscussionPosts).values({
-    id,
-    hiveId: parent.hiveId,
-    authorId: userId,
-    content: body,
-    parentId: parent.id,
-    topic: null,
+
+  // Mention extraction + early cap check (before tx)
+  const textUsernames = extractMentionUsernamesFromText(body)
+  if (textUsernames.length > 5) {
+    return { success: false, error: 'MENTION_CAP_EXCEEDED' }
+  }
+
+  await db.transaction(async (tx) => {
+    await tx.insert(hiveDiscussionPosts).values({
+      id,
+      hiveId: parent.hiveId,
+      authorId: userId,
+      content: body,
+      parentId: parent.id,
+      topic: null,
+    })
+
+    // Mention notifications
+    if (textUsernames.length > 0) {
+      const mentionResult = await resolveMentionedUsers({
+        tiptapUserIds: [],
+        textUsernames,
+        actorId: userId,
+        resourceType: 'hive_discussion_reply',
+        resourceId: id,
+      })
+      if (!mentionResult.ok) {
+        throw new Error(mentionResult.error)
+      }
+      const toNotify = mentionResult.users
+        .filter((u) => !mentionResult.alreadyNotified.has(u.userId))
+        .map((u) => u.userId)
+      if (toNotify.length > 0) {
+        await recordMentionNotificationsTx(tx, {
+          actorId: userId,
+          mentionedUserIds: toNotify,
+          resourceType: 'hive_discussion_reply',
+          resourceId: id,
+        })
+      }
+    }
   })
 
   return { success: true, data: { id } }
@@ -175,10 +243,51 @@ export async function editDiscussionPostAction(
     return { success: false, error: 'NOT_AUTHORIZED' }
   }
 
-  await db
-    .update(hiveDiscussionPosts)
-    .set({ content: body })
-    .where(eq(hiveDiscussionPosts.id, postId))
+  // Mention extraction + early cap check (before tx)
+  const textUsernames = extractMentionUsernamesFromText(body)
+  if (textUsernames.length > 5) {
+    return { success: false, error: 'MENTION_CAP_EXCEEDED' }
+  }
+
+  // Determine whether this is a top-level post or a reply for the resourceType.
+  const fullPost = await db.query.hiveDiscussionPosts.findFirst({
+    where: eq(hiveDiscussionPosts.id, postId),
+    columns: { parentId: true },
+  })
+  const resourceType: 'hive_discussion' | 'hive_discussion_reply' =
+    fullPost?.parentId ? 'hive_discussion_reply' : 'hive_discussion'
+
+  await db.transaction(async (tx) => {
+    await tx
+      .update(hiveDiscussionPosts)
+      .set({ content: body })
+      .where(eq(hiveDiscussionPosts.id, postId))
+
+    // Mention notifications (edit-fire diff vs 24h dedupe window)
+    if (textUsernames.length > 0) {
+      const mentionResult = await resolveMentionedUsers({
+        tiptapUserIds: [],
+        textUsernames,
+        actorId: userId,
+        resourceType,
+        resourceId: postId,
+      })
+      if (!mentionResult.ok) {
+        throw new Error(mentionResult.error)
+      }
+      const toNotify = mentionResult.users
+        .filter((u) => !mentionResult.alreadyNotified.has(u.userId))
+        .map((u) => u.userId)
+      if (toNotify.length > 0) {
+        await recordMentionNotificationsTx(tx, {
+          actorId: userId,
+          mentionedUserIds: toNotify,
+          resourceType,
+          resourceId: postId,
+        })
+      }
+    }
+  })
 
   return { success: true, data: undefined }
 }

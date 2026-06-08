@@ -21,6 +21,9 @@ import {
   recordHiveActivityTx,
   type DrizzleTx,
 } from '@/lib/hive/record-activity'
+import { extractMentionUsernamesFromText } from '@/lib/mentions/extract-mentions'
+import { resolveMentionedUsers } from '@/lib/mentions/resolve-mentions'
+import { recordMentionNotificationsTx } from '@/lib/mentions/record-mention-notifications'
 import {
   createSuggestionSchema,
   replyToSuggestionSchema,
@@ -132,6 +135,13 @@ export async function createSuggestionAction(
     return { success: false, error: 'NOT_FOUND' }
   }
 
+  // Mention extraction + early cap check on the rationale body (before tx).
+  // Suggestion `body` is optional; absent rationale yields zero mentions.
+  const textUsernames = extractMentionUsernamesFromText(body ?? '')
+  if (textUsernames.length > 5) {
+    return { success: false, error: 'MENTION_CAP_EXCEEDED' }
+  }
+
   const result = await db.transaction(async (tx) => {
     const [inserted] = await tx
       .insert(hiveSuggestions)
@@ -179,6 +189,31 @@ export async function createSuggestionAction(
         suggestedText,
       },
     })
+
+    // Mention notifications (rationale body only)
+    if (textUsernames.length > 0) {
+      const mentionResult = await resolveMentionedUsers({
+        tiptapUserIds: [],
+        textUsernames,
+        actorId: userId,
+        resourceType: 'hive_suggestion',
+        resourceId: newId,
+      })
+      if (!mentionResult.ok) {
+        throw new Error(mentionResult.error)
+      }
+      const toNotify = mentionResult.users
+        .filter((u) => !mentionResult.alreadyNotified.has(u.userId))
+        .map((u) => u.userId)
+      if (toNotify.length > 0) {
+        await recordMentionNotificationsTx(tx, {
+          actorId: userId,
+          mentionedUserIds: toNotify,
+          resourceType: 'hive_suggestion',
+          resourceId: newId,
+        })
+      }
+    }
 
     return newId
   })

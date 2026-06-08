@@ -124,14 +124,18 @@ export async function getCommunityFeedAction(
     return { success: true, data: { rows: [], nextCursor: null } }
   }
 
-  // 2. Decode cursor (base64url-encoded JSON {createdAt, id}).
+  // 2. Decode cursor — extended format {isFriend, createdAt, id}.
+  //    Backward-compat: old cursors lacking `isFriend` are treated as false
+  //    (followed tail) so in-flight pagination sessions don't break on deploy.
+  let cursorIsFriend: boolean | null = null
   let cursorDate: Date | null = null
   let cursorId: string | null = null
   if (input?.cursor) {
     try {
       const decoded = JSON.parse(
         Buffer.from(input.cursor, 'base64url').toString('utf8'),
-      ) as { createdAt: string; id: string }
+      ) as { isFriend?: boolean; createdAt: string; id: string }
+      cursorIsFriend = typeof decoded.isFriend === 'boolean' ? decoded.isFriend : false
       cursorDate = new Date(decoded.createdAt)
       cursorId = decoded.id
       if (Number.isNaN(cursorDate.getTime()) || !cursorId) {
@@ -142,12 +146,29 @@ export async function getCommunityFeedAction(
     }
   }
 
-  // 3. Feed query (overscan by 1 to detect hasMore).
+  // 3. Feed query — friend-first sort tuple (isFriend DESC, createdAt DESC, id DESC).
+  //    `isFriend` is a per-row boolean computed from the viewer's friend set;
+  //    when friendIds is empty we use NULL = ANY('{}'::text[]) → false, so the
+  //    sort becomes equivalent to the prior (createdAt DESC, id DESC).
+  const friendIdsArray = Array.from(friendIds)
+  const isFriendExpr = sql<boolean>`(${socialActivity.actorId} = ANY(${friendIdsArray}::text[]))`
+
   const cursorPredicate =
     cursorDate && cursorId
       ? or(
-          lt(socialActivity.createdAt, cursorDate),
-          and(eq(socialActivity.createdAt, cursorDate), lt(socialActivity.id, cursorId)),
+          // Strictly lower isFriend bucket (true → false transition).
+          sql`(${isFriendExpr})::int < ${cursorIsFriend ? 1 : 0}`,
+          // Same bucket, earlier createdAt.
+          and(
+            sql`(${isFriendExpr})::int = ${cursorIsFriend ? 1 : 0}`,
+            lt(socialActivity.createdAt, cursorDate),
+          ),
+          // Same bucket + same createdAt, lower id.
+          and(
+            sql`(${isFriendExpr})::int = ${cursorIsFriend ? 1 : 0}`,
+            eq(socialActivity.createdAt, cursorDate),
+            lt(socialActivity.id, cursorId),
+          ),
         )
       : undefined
 
@@ -155,7 +176,7 @@ export async function getCommunityFeedAction(
     where: cursorPredicate
       ? and(inArray(socialActivity.actorId, actorIds), cursorPredicate)
       : inArray(socialActivity.actorId, actorIds),
-    orderBy: [desc(socialActivity.createdAt), desc(socialActivity.id)],
+    orderBy: [desc(isFriendExpr), desc(socialActivity.createdAt), desc(socialActivity.id)],
     limit: limit + 1,
   })
 
@@ -298,7 +319,11 @@ export async function getCommunityFeedAction(
   if (hasMore) {
     const last = pageEvents[pageEvents.length - 1]
     nextCursor = Buffer.from(
-      JSON.stringify({ createdAt: last.createdAt.toISOString(), id: last.id }),
+      JSON.stringify({
+        isFriend: friendIds.has(last.actorId),
+        createdAt: last.createdAt.toISOString(),
+        id: last.id,
+      }),
       'utf8',
     ).toString('base64url')
   }

@@ -32,68 +32,116 @@ export default async function SparkEntryPage({ params }: Props) {
 
   const isOwnEntry = userId === entry.authorUserId
   const displayTitle = deriveTitle(entry.title, entry.content)
+  const authorLabel = entry.authorDisplayName ?? entry.authorUsername ?? 'Anonymous'
+  const paragraphs = entry.content.split(/\n\n+/).filter((p) => p.trim().length > 0)
 
   return (
-    <div className="min-h-screen bg-[#141414]">
-      {/* Top nav */}
-      <div className="bg-[#1a1a1a] border-b border-[#2a2a2a] px-6 py-2.5 flex items-center justify-between">
+    <main className="cm-main">
+      <div className="cm-wrap w-3xl" data-screen-label="Spark entry reader">
         <Link
           href={`/${locale}/sparks/${sparkId}`}
-          className="text-[#888] text-[13px] hover:text-white transition-colors"
+          className="eyebrow-mono"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            textDecoration: 'none',
+            marginBottom: 6,
+          }}
         >
-          ← Back to Spark
+          ← Spark · {spark.prompt}
         </Link>
-        <SparkVoteButton
-          entryId={entry.id}
-          initialVoted={entry.userHasVoted}
-          initialCount={entry.voteCount}
-          status={spark.status}
-          isOwnEntry={isOwnEntry}
-          isAuthenticated={!!userId}
-        />
-      </div>
 
-      {/* Prompt context bar */}
-      <div className="px-6 py-2.5 bg-[#181818] border-b border-[#2a2a2a]">
-        <p className="text-[#555] text-[12px]">
-          ⚡ Spark prompt: <span className="text-[#888] italic">&quot;{spark.prompt}&quot;</span>
-        </p>
-      </div>
-
-      {/* Entry content */}
-      <div className="max-w-[640px] mx-auto px-6 py-9">
-        {/* Derived title */}
-        <h1
-          className="text-2xl font-bold text-white mb-4"
-          style={{ fontFamily: 'var(--font-comfortaa)' }}
-        >
-          {displayTitle}
-        </h1>
-
-        {/* Author header */}
-        <div className="flex items-center gap-3 mb-5">
-          <div className="w-7 h-7 rounded-full bg-[#2a2a2a] shrink-0" />
-          <div>
-            <p className="text-[#aaa] text-[13px] font-semibold">
-              {entry.authorDisplayName ?? entry.authorUsername ?? 'Anonymous'}
-            </p>
-            <p className="text-[#555] text-[11px]">
-              {entry.wordCount} words · submitted {timeAgo(entry.createdAt)}
-            </p>
+        <header style={{ marginBottom: 22 }}>
+          <h1
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontWeight: 700,
+              fontSize: 32,
+              letterSpacing: '-0.02em',
+              lineHeight: 1.08,
+              color: 'var(--canvas-dark-ink-strong)',
+              margin: '12px 0 16px',
+              textWrap: 'balance',
+            }}
+          >
+            {displayTitle}
+          </h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+            <span className="avatar s40 a-mint" aria-hidden="true">
+              {authorLabel.slice(0, 2).toUpperCase()}
+            </span>
+            <div>
+              <div
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 600,
+                  fontSize: 14,
+                  color: 'var(--canvas-dark-ink-strong)',
+                }}
+              >
+                {authorLabel}
+              </div>
+              <div
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 11,
+                  color: 'var(--canvas-dark-ink-muted)',
+                  marginTop: 2,
+                }}
+              >
+                {entry.authorUsername ? `@${entry.authorUsername} · ` : ''}
+                {entry.wordCount} words · submitted {timeAgo(entry.createdAt)}
+              </div>
+            </div>
           </div>
+        </header>
+
+        <article
+          style={{
+            fontFamily: 'var(--font-prose)',
+            fontSize: 18,
+            lineHeight: 1.75,
+            color: 'var(--canvas-dark-ink)',
+          }}
+        >
+          {paragraphs.length > 0 ? (
+            paragraphs.map((para, i) => (
+              <p
+                key={i}
+                style={{ margin: '0 0 1.3em', textWrap: 'pretty', whiteSpace: 'pre-wrap' }}
+              >
+                {para}
+              </p>
+            ))
+          ) : (
+            <p style={{ margin: '0 0 1.3em', whiteSpace: 'pre-wrap' }}>{entry.content}</p>
+          )}
+        </article>
+
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 14,
+            padding: '20px 0',
+            margin: '8px 0 28px',
+            borderTop:
+              '1px solid oklch(from var(--canvas-dark-300) l c h / 0.5)',
+            borderBottom:
+              '1px solid oklch(from var(--canvas-dark-300) l c h / 0.5)',
+          }}
+        >
+          <SparkVoteButton
+            entryId={entry.id}
+            initialVoted={entry.userHasVoted}
+            initialCount={entry.voteCount}
+            status={spark.status}
+            isOwnEntry={isOwnEntry}
+            isAuthenticated={!!userId}
+          />
         </div>
 
-        {/* Full prose */}
-        <div className="text-[#ccc] text-[16px] leading-[1.9] whitespace-pre-wrap">
-          {entry.content}
-        </div>
-      </div>
-
-      {/* Divider */}
-      <div className="border-t border-[#2a2a2a] mx-6" />
-
-      {/* Comments */}
-      <div className="max-w-[640px] mx-auto px-6 py-6">
         <SparkEntryCommentsPanel
           entryId={entryId}
           initialComments={comments}
@@ -102,7 +150,7 @@ export default async function SparkEntryPage({ params }: Props) {
           locale={locale}
         />
       </div>
-    </div>
+    </main>
   )
 }
 

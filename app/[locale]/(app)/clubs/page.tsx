@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { getClubsAction } from '@/lib/actions/book-clubs.actions'
 import { requireAuth } from '@/lib/require-auth'
+import { PageHead } from '@/components/community/page-head'
 import { ClubCard } from './_components/club-card'
 import { CreateClubButton } from './_components/create-club-button'
 
@@ -16,7 +17,7 @@ export default async function ClubsPage({
 
   if (!result.success) {
     return (
-      <main className="max-w-5xl mx-auto px-4 py-6 sm:px-6">
+      <main className="cm-wrap w-5xl">
         <p className="text-red-400">Failed to load your clubs.</p>
       </main>
     )
@@ -25,43 +26,42 @@ export default async function ClubsPage({
   const mine = result.data.rows
 
   return (
-    <main className="max-w-5xl mx-auto px-4 py-6 sm:px-6">
-      <header className="flex items-baseline justify-between mb-8">
-        <div>
-          <h1
-            className="text-3xl font-bold text-[var(--brand)]"
-            style={{ fontFamily: 'var(--font-comfortaa)' }}
-          >
-            Book clubs
-          </h1>
-          <p className="text-sm text-[var(--canvas-dark-ink-muted)] mt-1">
-            Read together. Discuss what you love.
-          </p>
-        </div>
-        <CreateClubButton locale={locale} />
-      </header>
+    <main className="cm-wrap w-5xl">
+      <PageHead
+        title="Book clubs"
+        subtitle="Read together with friends. Discuss, schedule, and keep up with the current book."
+        headerSlot={<CreateClubButton locale={locale} />}
+      />
 
-      <section className="mb-10">
-        <h2 className="text-[11px] font-mono uppercase tracking-wider text-[var(--canvas-dark-ink-muted)] mb-3">
-          My clubs
-        </h2>
+      <div className="sec-block">
+        <div className="sec-label">
+          <h2>My clubs</h2>
+          <span className="count meta-mono">
+            {mine.length} {mine.length === 1 ? 'joined' : 'joined'}
+          </span>
+        </div>
         {mine.length === 0 ? (
           <p className="text-[var(--canvas-dark-ink-muted)] italic">
             Create or join a club to get started.
           </p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid-3">
             {mine.map((club) => (
               <ClubCard key={club.id} club={club} locale={locale} />
             ))}
           </div>
         )}
-      </section>
+      </div>
 
-      <div className="text-center">
+      <div style={{ textAlign: 'center', marginTop: '20px' }}>
         <Link
           href={`/${locale}/discover?tab=clubs`}
-          className="text-sm text-[var(--brand)] hover:underline"
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '12px',
+            color: 'var(--brand)',
+            textDecoration: 'none',
+          }}
         >
           Discover more clubs →
         </Link>

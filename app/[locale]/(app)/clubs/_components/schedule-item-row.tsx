@@ -22,6 +22,7 @@ type Props = {
   currentBookId: string | null
   currentBookTitle: string | null
   viewerRole: BookClubMemberRole | null
+  isLast?: boolean
 }
 
 type Bucket = 'past' | 'today' | 'future'
@@ -40,8 +41,13 @@ const bucketFor = (target: Date): Bucket => {
   return 'future'
 }
 
-const formatDate = (d: Date): string =>
-  new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+const monthAbbr = (d: Date): string =>
+  new Date(d).toLocaleDateString('en-US', { month: 'short' })
+
+const dayNum = (d: Date): string => {
+  const day = new Date(d).getDate()
+  return day < 10 ? `0${day}` : `${day}`
+}
 
 export function ScheduleItemRow({
   item,
@@ -49,6 +55,7 @@ export function ScheduleItemRow({
   currentBookId,
   currentBookTitle,
   viewerRole,
+  isLast = false,
 }: Props) {
   const isModPlus = viewerRole === 'OWNER' || viewerRole === 'MODERATOR'
   const [editOpen, setEditOpen] = useState(false)
@@ -57,18 +64,6 @@ export function ScheduleItemRow({
   const router = useRouter()
 
   const bucket = bucketFor(item.targetDate)
-  const borderColor =
-    bucket === 'today'
-      ? 'var(--brand)'
-      : bucket === 'past'
-        ? 'var(--canvas-dark-300)'
-        : 'var(--br-card)'
-  const dateColor =
-    bucket === 'today'
-      ? 'var(--brand)'
-      : bucket === 'past'
-        ? 'var(--canvas-dark-ink-muted)'
-        : 'var(--canvas-dark-ink)'
 
   const chapterText =
     item.chapterStart === item.chapterEnd
@@ -87,44 +82,96 @@ export function ScheduleItemRow({
     })
   }
 
+  // Date pill styling per bucket
+  const datePillStyle: React.CSSProperties = {
+    background:
+      bucket === 'today' ? 'var(--brand-soft)' : 'var(--canvas-dark-100)',
+    boxShadow:
+      bucket === 'today'
+        ? 'inset 0 0 0 1px oklch(from var(--brand) l c h / 0.4)'
+        : 'var(--sh-inset)',
+    opacity: bucket === 'past' ? 0.5 : 1,
+  }
+
+  const dateInkColor =
+    bucket === 'today' ? 'var(--brand)' : 'var(--canvas-dark-ink-strong)'
+  const dateMonoColor =
+    bucket === 'today' ? 'var(--brand)' : 'var(--canvas-dark-ink-muted)'
+
   return (
     <>
       <li
-        className="flex items-center gap-4 px-4 py-3 rounded-[var(--r-row)] border-l-2"
+        className="grid items-center gap-[18px] py-4"
         style={{
-          background:
-            'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-          borderLeftColor: borderColor,
-          boxShadow: 'var(--sh-tile)',
-          opacity: bucket === 'past' ? 0.7 : 1,
+          gridTemplateColumns: '88px 1fr 40px',
+          borderBottom: isLast
+            ? 'none'
+            : '1px solid oklch(from var(--canvas-dark-300) l c h / 0.5)',
         }}
       >
-        <div
-          className="shrink-0 px-3 py-1.5 rounded-[var(--r-pill)] text-xs font-mono font-semibold uppercase tracking-wider"
-          style={{
-            background: 'var(--canvas-dark-100)',
-            color: dateColor,
-            boxShadow: 'var(--sh-inset)',
-          }}
+        <span
+          className="inline-flex flex-col items-center py-[9px] rounded-[var(--r-row)]"
+          style={datePillStyle}
         >
-          {formatDate(item.targetDate)}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-sm font-semibold text-[var(--canvas-dark-ink)]">
-            {chapterText}
+          <span
+            className="font-mono uppercase"
+            style={{
+              fontSize: '10px',
+              letterSpacing: '0.1em',
+              color: dateMonoColor,
+            }}
+          >
+            {monthAbbr(item.targetDate)}
+          </span>
+          <span
+            className="font-comfortaa font-bold"
+            style={{
+              fontSize: '20px',
+              color: dateInkColor,
+            }}
+          >
+            {dayNum(item.targetDate)}
+          </span>
+        </span>
+        <div className="min-w-0">
+          <div className="font-comfortaa font-bold text-[15px] text-[var(--canvas-dark-ink-strong)] flex items-center gap-2 flex-wrap">
+            <span>{chapterText}</span>
+            {bucket === 'today' && (
+              <span
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[var(--r-pill)] font-mono uppercase"
+                style={{
+                  fontSize: '10px',
+                  letterSpacing: '0.06em',
+                  background: 'var(--brand-soft)',
+                  color: 'var(--brand)',
+                  boxShadow:
+                    'inset 0 0 0 1px oklch(from var(--brand) l c h / 0.3)',
+                }}
+              >
+                <span
+                  className="inline-block rounded-full"
+                  style={{
+                    width: 5,
+                    height: 5,
+                    background: 'var(--brand)',
+                  }}
+                />
+                This week
+              </span>
+            )}
           </div>
           {item.label && (
-            <div className="text-xs italic text-[var(--canvas-dark-ink-muted)] mt-0.5 truncate">
+            <div className="text-[13px] text-[var(--canvas-dark-ink-muted)] mt-[3px] truncate">
               {item.label}
             </div>
           )}
         </div>
-        {isModPlus && (
+        {isModPlus ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="shrink-0 p-1.5 rounded-md text-[var(--canvas-dark-ink-muted)] hover:text-[var(--canvas-dark-ink)] hover:bg-[var(--canvas-dark-300)]"
+                className="justify-self-end shrink-0 p-1.5 rounded-md text-[var(--canvas-dark-ink-muted)] hover:text-[var(--canvas-dark-ink)] hover:bg-[var(--canvas-dark-300)]"
                 aria-label="Milestone actions"
               >
                 <MoreHorizontal size={16} />
@@ -146,6 +193,8 @@ export function ScheduleItemRow({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+        ) : (
+          <span />
         )}
       </li>
       {isModPlus && (currentBookId ?? item.bookId) && (

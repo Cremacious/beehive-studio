@@ -24,26 +24,19 @@ export async function ClubSchedulePanel({
   const items = result.success ? result.data.items : []
 
   return (
-    <section
-      className="rounded-[var(--r-card)] p-6"
-      style={{
-        background:
-          'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
-        boxShadow: 'var(--sh-card)',
-        borderTop: '1px solid var(--br-card)',
-      }}
-    >
-      <div className="flex items-center justify-between mb-5">
-        <div>
-          <h2 className="font-comfortaa font-bold text-xl text-[var(--brand)]">
-            Reading schedule
-          </h2>
+    <div>
+      <div className="flex items-center justify-between mb-[14px]">
+        <h2 className="font-comfortaa font-bold text-base text-[var(--canvas-dark-ink-strong)] m-0">
+          Reading schedule
           {currentBook && (
-            <p className="text-xs font-mono uppercase tracking-wider text-[var(--canvas-dark-ink-muted)] mt-1">
-              {currentBook.title}
-            </p>
+            <>
+              {' · '}
+              <span className="font-medium text-[var(--canvas-dark-ink-muted)]">
+                {currentBook.title}
+              </span>
+            </>
           )}
-        </div>
+        </h2>
         {isModPlus && currentBook && (
           <AddScheduleItemCTA
             clubId={clubId}
@@ -53,28 +46,39 @@ export async function ClubSchedulePanel({
         )}
       </div>
 
-      {!currentBook ? (
-        <p className="text-sm italic text-[var(--canvas-dark-ink-muted)]">
-          Pick a current book first to schedule milestones.
-        </p>
-      ) : items.length === 0 ? (
-        <p className="text-sm italic text-[var(--canvas-dark-ink-muted)]">
-          No milestones scheduled yet.
-        </p>
-      ) : (
-        <ul className="flex flex-col gap-3">
-          {items.map((item) => (
-            <ScheduleItemRow
-              key={item.id}
-              item={item}
-              clubId={clubId}
-              currentBookId={currentBook.id}
-              currentBookTitle={currentBook.title}
-              viewerRole={viewerRole}
-            />
-          ))}
-        </ul>
-      )}
-    </section>
+      <section
+        className="rounded-[var(--r-card)] p-6"
+        style={{
+          background:
+            'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+          boxShadow: 'var(--sh-card)',
+          borderTop: '1px solid var(--br-card)',
+        }}
+      >
+        {!currentBook ? (
+          <p className="text-sm italic text-[var(--canvas-dark-ink-muted)]">
+            Pick a current book first to schedule milestones.
+          </p>
+        ) : items.length === 0 ? (
+          <p className="text-sm italic text-[var(--canvas-dark-ink-muted)]">
+            No milestones scheduled yet.
+          </p>
+        ) : (
+          <ul className="relative pl-2">
+            {items.map((item, idx) => (
+              <ScheduleItemRow
+                key={item.id}
+                item={item}
+                clubId={clubId}
+                currentBookId={currentBook.id}
+                currentBookTitle={currentBook.title}
+                viewerRole={viewerRole}
+                isLast={idx === items.length - 1}
+              />
+            ))}
+          </ul>
+        )}
+      </section>
+    </div>
   )
 }

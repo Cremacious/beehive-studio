@@ -12,7 +12,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-05 (C5a @-mentions ✅ CODE-COMPLETE — 13 of 15 tasks shipped, T11 skipped as no-op, T15 = smoke + ship — 626/626 tests — awaiting Chris's smoke pass)
+> **Last updated:** 2026-06-05 (C5a @-mentions ✅ SHIPPED + smoke passed — 626/626 tests — C5b brainstorm starting)
 >
 > **C5a @-mentions ✅ CODE-COMPLETE.** All 13 implementation tasks shipped across 5 waves of subagent-driven execution (T11 TipTap UI wiring skipped — Wave 4 reality-check found all 12 mention surfaces use plain text fields not TipTap docs, so the TipTap surface count is zero; T3+T4 ship as future-ready infrastructure). 626/626 tests, tsc clean throughout. The full @-mentions feature ships: `MENTION` notification type; `lib/mentions/` helpers (extract Tiptap + text regex, resolve with block + self + cap + 24h dedupe, recordTx multi-row fan-out); shared `MentionMark` TipTap extension (4 round-trip tests); `useMentionPopover` hook + `<MentionPopover>` dropdown + `<MentionLink>` + `<MentionableTextarea>` drop-in + `<RenderMentionsInText>` server-component parser; 12 mention surfaces wired across spark entry comments + reading lists + book clubs + hive discussions/buzz/annotations/suggestions + book comments + profile bio (bio path skips notification write per spec Q8); 12 textarea sites swapped to `<MentionableTextarea>`; bell `renderLabel(n)` helper + `mentionHref(n)` click router with v1 approximate deep links matching C1 FRIEND_REQUEST adapter pattern; 12 display sites wrapped in `<RenderMentionsInText>`; tiptap-to-html mark switch extended with `mention` case for future-readiness.
 >

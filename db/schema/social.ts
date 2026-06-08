@@ -104,6 +104,14 @@ export const notifications = pgTable('notifications', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (t) => [index('notifications_user_id_idx').on(t.userId)])
 
+export type NotificationType = (typeof notificationTypeEnum.enumValues)[number]
+
+export const notificationPreferences = pgTable('notification_preferences', {
+  userId: text('user_id').primaryKey().notNull().references(() => users.id, { onDelete: 'cascade' }),
+  optedOutTypes: text('opted_out_types').array().notNull().default(sql`'{}'::text[]`),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
 export const sparks = pgTable('sparks', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
   creatorId: text('creator_id').notNull().references(() => users.id, { onDelete: 'cascade' }),

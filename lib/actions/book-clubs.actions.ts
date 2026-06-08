@@ -44,6 +44,9 @@ import {
 import { getClubMembership } from '@/lib/book-clubs/get-membership'
 import { deriveCurrentBookTx } from '@/lib/book-clubs/derive-current-book'
 import * as v from '@/lib/validations/book-club'
+import { extractMentionUsernamesFromText } from '@/lib/mentions/extract-mentions'
+import { resolveMentionedUsers } from '@/lib/mentions/resolve-mentions'
+import { recordMentionNotificationsTx } from '@/lib/mentions/record-mention-notifications'
 import type { ActionResult } from './book.actions'
 
 const DEFAULT_PAGE_SIZE = 20
@@ -189,6 +192,13 @@ export async function createClubAction(
   const parsed = v.createClubSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
+  // C5a: extract mentions from description + rules separately; per-field cap check.
+  const descUsernames = extractMentionUsernamesFromText(parsed.data.description ?? '')
+  const rulesUsernames = extractMentionUsernamesFromText(parsed.data.rules ?? '')
+  if (descUsernames.length > 5 || rulesUsernames.length > 5) {
+    return { success: false, error: 'MENTION_CAP_EXCEEDED' }
+  }
+
   const id = createId()
   await db.transaction(async (tx) => {
     await tx.insert(bookClubs).values({
@@ -217,6 +227,54 @@ export async function createClubAction(
         subjectId: id,
         payload: { name: parsed.data.name },
       })
+    }
+
+    // C5a: resolve + record mentions for description.
+    if (descUsernames.length > 0) {
+      const r = await resolveMentionedUsers({
+        tiptapUserIds: [],
+        textUsernames: descUsernames,
+        actorId: userId,
+        resourceType: 'book_club_description',
+        resourceId: id,
+      })
+      if (r.ok && r.users.length > 0) {
+        const toNotify = r.users
+          .filter((u) => !r.alreadyNotified.has(u.userId))
+          .map((u) => u.userId)
+        if (toNotify.length > 0) {
+          await recordMentionNotificationsTx(tx, {
+            actorId: userId,
+            mentionedUserIds: toNotify,
+            resourceType: 'book_club_description',
+            resourceId: id,
+          })
+        }
+      }
+    }
+
+    // C5a: resolve + record mentions for rules.
+    if (rulesUsernames.length > 0) {
+      const r = await resolveMentionedUsers({
+        tiptapUserIds: [],
+        textUsernames: rulesUsernames,
+        actorId: userId,
+        resourceType: 'book_club_rules',
+        resourceId: id,
+      })
+      if (r.ok && r.users.length > 0) {
+        const toNotify = r.users
+          .filter((u) => !r.alreadyNotified.has(u.userId))
+          .map((u) => u.userId)
+        if (toNotify.length > 0) {
+          await recordMentionNotificationsTx(tx, {
+            actorId: userId,
+            mentionedUserIds: toNotify,
+            resourceType: 'book_club_rules',
+            resourceId: id,
+          })
+        }
+      }
     }
   })
   return { success: true, data: { id } }
@@ -519,7 +577,70 @@ export async function updateClubAction(
 
   updates.updatedAt = new Date()
 
-  await db.update(bookClubs).set(updates).where(eq(bookClubs.id, parsed.data.clubId))
+  // C5a: extract mentions for any changed text fields; per-field cap check.
+  const descUsernames =
+    parsed.data.description !== undefined
+      ? extractMentionUsernamesFromText(parsed.data.description ?? '')
+      : []
+  const rulesUsernames =
+    parsed.data.rules !== undefined
+      ? extractMentionUsernamesFromText(parsed.data.rules ?? '')
+      : []
+  if (descUsernames.length > 5 || rulesUsernames.length > 5) {
+    return { success: false, error: 'MENTION_CAP_EXCEEDED' }
+  }
+
+  await db.transaction(async (tx) => {
+    await tx.update(bookClubs).set(updates).where(eq(bookClubs.id, parsed.data.clubId))
+
+    // C5a: resolve + record mentions for description.
+    if (descUsernames.length > 0) {
+      const r = await resolveMentionedUsers({
+        tiptapUserIds: [],
+        textUsernames: descUsernames,
+        actorId: userId,
+        resourceType: 'book_club_description',
+        resourceId: parsed.data.clubId,
+      })
+      if (r.ok && r.users.length > 0) {
+        const toNotify = r.users
+          .filter((u) => !r.alreadyNotified.has(u.userId))
+          .map((u) => u.userId)
+        if (toNotify.length > 0) {
+          await recordMentionNotificationsTx(tx, {
+            actorId: userId,
+            mentionedUserIds: toNotify,
+            resourceType: 'book_club_description',
+            resourceId: parsed.data.clubId,
+          })
+        }
+      }
+    }
+
+    // C5a: resolve + record mentions for rules.
+    if (rulesUsernames.length > 0) {
+      const r = await resolveMentionedUsers({
+        tiptapUserIds: [],
+        textUsernames: rulesUsernames,
+        actorId: userId,
+        resourceType: 'book_club_rules',
+        resourceId: parsed.data.clubId,
+      })
+      if (r.ok && r.users.length > 0) {
+        const toNotify = r.users
+          .filter((u) => !r.alreadyNotified.has(u.userId))
+          .map((u) => u.userId)
+        if (toNotify.length > 0) {
+          await recordMentionNotificationsTx(tx, {
+            actorId: userId,
+            mentionedUserIds: toNotify,
+            resourceType: 'book_club_rules',
+            resourceId: parsed.data.clubId,
+          })
+        }
+      }
+    }
+  })
   return { success: true, data: { updated: true } }
 }
 
@@ -1508,13 +1629,45 @@ export async function createClubDiscussionAction(
     return { success: false, error: 'NOT_FOUND' }
   }
 
+  // C5a: extract mentions from content (stored as plain text per Zod schema); cap check.
+  const contentUsernames = extractMentionUsernamesFromText(parsed.data.content)
+  if (contentUsernames.length > 5) {
+    return { success: false, error: 'MENTION_CAP_EXCEEDED' }
+  }
+
   const id = createId()
-  await db.insert(bookClubDiscussions).values({
-    id,
-    clubId: parsed.data.clubId,
-    authorId: userId,
-    title: parsed.data.title,
-    content: parsed.data.content,
+  await db.transaction(async (tx) => {
+    await tx.insert(bookClubDiscussions).values({
+      id,
+      clubId: parsed.data.clubId,
+      authorId: userId,
+      title: parsed.data.title,
+      content: parsed.data.content,
+    })
+
+    // C5a: resolve + record mentions.
+    if (contentUsernames.length > 0) {
+      const r = await resolveMentionedUsers({
+        tiptapUserIds: [],
+        textUsernames: contentUsernames,
+        actorId: userId,
+        resourceType: 'book_club_discussion',
+        resourceId: id,
+      })
+      if (r.ok && r.users.length > 0) {
+        const toNotify = r.users
+          .filter((u) => !r.alreadyNotified.has(u.userId))
+          .map((u) => u.userId)
+        if (toNotify.length > 0) {
+          await recordMentionNotificationsTx(tx, {
+            actorId: userId,
+            mentionedUserIds: toNotify,
+            resourceType: 'book_club_discussion',
+            resourceId: id,
+          })
+        }
+      }
+    }
   })
   return { success: true, data: { id } }
 }
@@ -1542,10 +1695,45 @@ export async function updateClubDiscussionAction(
   if (parsed.data.content !== undefined) updates.content = parsed.data.content
   updates.updatedAt = new Date()
 
-  await db
-    .update(bookClubDiscussions)
-    .set(updates)
-    .where(eq(bookClubDiscussions.id, parsed.data.discussionId))
+  // C5a: extract mentions if content changed; cap check.
+  const contentUsernames =
+    parsed.data.content !== undefined
+      ? extractMentionUsernamesFromText(parsed.data.content)
+      : []
+  if (contentUsernames.length > 5) {
+    return { success: false, error: 'MENTION_CAP_EXCEEDED' }
+  }
+
+  await db.transaction(async (tx) => {
+    await tx
+      .update(bookClubDiscussions)
+      .set(updates)
+      .where(eq(bookClubDiscussions.id, parsed.data.discussionId))
+
+    // C5a: resolve + record mentions (edit-fire dedupe gives real alreadyNotified set).
+    if (contentUsernames.length > 0) {
+      const r = await resolveMentionedUsers({
+        tiptapUserIds: [],
+        textUsernames: contentUsernames,
+        actorId: userId,
+        resourceType: 'book_club_discussion',
+        resourceId: parsed.data.discussionId,
+      })
+      if (r.ok && r.users.length > 0) {
+        const toNotify = r.users
+          .filter((u) => !r.alreadyNotified.has(u.userId))
+          .map((u) => u.userId)
+        if (toNotify.length > 0) {
+          await recordMentionNotificationsTx(tx, {
+            actorId: userId,
+            mentionedUserIds: toNotify,
+            resourceType: 'book_club_discussion',
+            resourceId: parsed.data.discussionId,
+          })
+        }
+      }
+    }
+  })
   return { success: true, data: { updated: true } }
 }
 
@@ -1625,6 +1813,12 @@ export async function replyToClubDiscussionAction(
     return { success: false, error: 'NOT_FOUND' }
   }
 
+  // C5a: extract mentions from reply content; cap check.
+  const contentUsernames = extractMentionUsernamesFromText(parsed.data.content)
+  if (contentUsernames.length > 5) {
+    return { success: false, error: 'MENTION_CAP_EXCEEDED' }
+  }
+
   const id = createId()
   await db.transaction(async (tx) => {
     await tx.insert(bookClubDiscussionReplies).values({
@@ -1637,6 +1831,30 @@ export async function replyToClubDiscussionAction(
       .update(bookClubDiscussions)
       .set({ replyCount: sql`${bookClubDiscussions.replyCount} + 1` })
       .where(eq(bookClubDiscussions.id, parsed.data.discussionId))
+
+    // C5a: resolve + record mentions.
+    if (contentUsernames.length > 0) {
+      const r = await resolveMentionedUsers({
+        tiptapUserIds: [],
+        textUsernames: contentUsernames,
+        actorId: userId,
+        resourceType: 'book_club_discussion_reply',
+        resourceId: id,
+      })
+      if (r.ok && r.users.length > 0) {
+        const toNotify = r.users
+          .filter((u) => !r.alreadyNotified.has(u.userId))
+          .map((u) => u.userId)
+        if (toNotify.length > 0) {
+          await recordMentionNotificationsTx(tx, {
+            actorId: userId,
+            mentionedUserIds: toNotify,
+            resourceType: 'book_club_discussion_reply',
+            resourceId: id,
+          })
+        }
+      }
+    }
   })
   return { success: true, data: { id } }
 }

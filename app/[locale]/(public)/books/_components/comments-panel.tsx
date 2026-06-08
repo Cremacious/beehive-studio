@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { toast } from 'sonner'
 import { addCommentAction } from '@/lib/actions/social.actions'
 import { getBookCommentsAction, type BookComment } from '@/lib/actions/discover.actions'
+import { RenderMentionsInText } from '@/components/mentions/render-mentions-in-text'
 
 type Props = {
   bookId: string
@@ -348,7 +349,7 @@ export function CommentsPanel({
                     margin: 0,
                   }}
                 >
-                  {c.content}
+                  <RenderMentionsInText text={c.content} />
                 </p>
               </div>
             </article>

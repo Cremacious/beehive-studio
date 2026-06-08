@@ -9,6 +9,8 @@ import {
   replyToSparkCommentAction,
 } from '@/lib/actions/sparks.actions'
 import type { EntryComment } from '@/lib/actions/sparks.actions'
+import { MentionableTextarea } from '@/components/mentions/mentionable-textarea'
+import { RenderMentionsInText } from '@/components/mentions/render-mentions-in-text'
 
 type Props = {
   entryId: string
@@ -54,7 +56,7 @@ function CommentRow({
           <span className="text-[#555] text-[11px]">{timeAgo(comment.createdAt)}</span>
         </p>
         <p className="text-[#777] text-[12px] leading-relaxed whitespace-pre-wrap">
-          {comment.content}
+          <RenderMentionsInText text={comment.content} />
         </p>
         {!isReply && onReplyClick && (
           <button
@@ -91,9 +93,9 @@ function ReplyComposer({
     <div className="flex gap-2.5 mt-2">
       <div className="w-7 h-7 rounded-full bg-[#2a2a2a] shrink-0" />
       <div className="flex-1">
-        <textarea
+        <MentionableTextarea
           value={draft}
-          onChange={(e) => setDraft(e.target.value)}
+          onChange={setDraft}
           placeholder="Write a reply…"
           rows={2}
           maxLength={1000}
@@ -194,9 +196,9 @@ export function SparkEntryCommentsPanel({
         <div className="flex gap-2.5 mb-4">
           <div className="w-7 h-7 rounded-full bg-[#2a2a2a] shrink-0" />
           <div className="flex-1">
-            <textarea
+            <MentionableTextarea
               value={draft}
-              onChange={(e) => setDraft(e.target.value)}
+              onChange={setDraft}
               placeholder="Add a comment…"
               rows={2}
               maxLength={1000}

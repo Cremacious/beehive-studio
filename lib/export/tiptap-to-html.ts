@@ -54,6 +54,15 @@ function renderNode(node: TiptapNode): string {
             }
             break
           }
+          case 'mention': {
+            const userId = mark.attrs?.userId
+            const username = mark.attrs?.username
+            if (typeof username === 'string') {
+              const userIdAttr = typeof userId === 'string' ? ` data-mention-user-id="${escapeHtml(userId)}"` : ''
+              html = `<a href="/u/${escapeHtml(username)}" class="mention"${userIdAttr}>${html}</a>`
+            }
+            break
+          }
         }
       }
       return html

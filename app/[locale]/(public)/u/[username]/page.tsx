@@ -22,6 +22,7 @@ import { getMutualFriends } from '@/lib/social/get-mutual-friends'
 import { getFriendCountAction } from '@/lib/actions/friendships.actions'
 import { getUserPublicListsAction } from '@/lib/actions/reading-lists.actions'
 import { ListCard } from '@/app/[locale]/(app)/reading-lists/_components/list-card'
+import { RenderMentionsInText } from '@/components/mentions/render-mentions-in-text'
 import { ClubCard } from '@/app/[locale]/(app)/clubs/_components/club-card'
 
 type Props = { params: Promise<{ locale: string; username: string }> }
@@ -145,7 +146,7 @@ export default async function AuthorProfilePage({ params }: Props) {
               />
             </div>
             {profile.bio && (
-              <p className="text-[#888] text-[13px] leading-relaxed max-w-md mb-3">{profile.bio}</p>
+              <p className="text-[#888] text-[13px] leading-relaxed max-w-md mb-3"><RenderMentionsInText text={profile.bio} /></p>
             )}
             {/* Stats row */}
             <div className="flex gap-4 flex-wrap text-[12px]">

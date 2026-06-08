@@ -15,6 +15,7 @@ import type {
 } from '@/lib/actions/hive-annotations.actions'
 import type { CollabMutations } from '@/lib/hooks/use-collab-data'
 import { relTime } from './rel-time'
+import { RenderMentionsInText } from '@/components/mentions/render-mentions-in-text'
 
 export type Viewer = {
   id: string
@@ -217,7 +218,7 @@ export function AnnotationCard({
               (expanded ? '' : ' line-clamp-2')
             }
           >
-            {annotation.body}
+            <RenderMentionsInText text={annotation.body} />
           </p>
           {!expanded && replyCount > 0 ? (
             <div className="mt-1 text-[10.5px] text-muted-foreground">
@@ -245,7 +246,7 @@ export function AnnotationCard({
                           <span>{relTime(r.createdAt)}</span>
                         </div>
                         <p className="text-[12px] leading-snug text-foreground whitespace-pre-wrap">
-                          {r.body}
+                          <RenderMentionsInText text={r.body} />
                         </p>
                       </div>
                     </div>

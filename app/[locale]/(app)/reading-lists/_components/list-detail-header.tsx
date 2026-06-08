@@ -18,6 +18,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu'
+import { RenderMentionsInText } from '@/components/mentions/render-mentions-in-text'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { FollowListButton } from './follow-list-button'
 import { EditListMetadataDialog } from './edit-list-metadata-dialog'
@@ -128,7 +129,7 @@ export function ListDetailHeader({
 
       {list.description && (
         <p className="text-sm text-[var(--canvas-dark-ink)] mb-3 max-w-prose">
-          {list.description}
+          <RenderMentionsInText text={list.description} />
         </p>
       )}
 

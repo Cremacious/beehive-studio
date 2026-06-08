@@ -17,6 +17,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { LikeButton } from './like-button'
 import { LinkCard } from './link-card'
 import { EditBuzzModal } from './edit-buzz-modal'
+import { RenderMentionsInText } from '@/components/mentions/render-mentions-in-text'
 
 function relTime(d: Date | string): string {
   const date = new Date(d)
@@ -168,7 +169,7 @@ export function BuzzPostCard({
           className="font-comfortaa font-bold text-[16px] mt-1"
           style={{ color: 'var(--brand)', margin: '8px 0 0' }}
         >
-          {title}
+          <RenderMentionsInText text={title} />
         </h3>
       )}
       {excerpt && (
@@ -176,7 +177,7 @@ export function BuzzPostCard({
           className="text-[14px] mt-1 line-clamp-2 whitespace-pre-wrap break-words"
           style={{ color: 'var(--canvas-dark-ink)', lineHeight: 1.5, margin: '6px 0 0' }}
         >
-          {excerpt}
+          <RenderMentionsInText text={excerpt} />
         </p>
       )}
 

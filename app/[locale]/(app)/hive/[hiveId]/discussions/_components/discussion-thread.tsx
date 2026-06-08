@@ -12,7 +12,6 @@ import {
 } from '@/lib/actions/hive-discussions.actions'
 import { canEditDiscussionPost, type HiveRole } from '@/lib/hive/permissions'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import {
   DropdownMenu,
@@ -22,6 +21,8 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { HiveSectionDivider } from '../../_components/hive-section-divider'
 import { TopicPill } from './discussion-row'
+import { RenderMentionsInText } from '@/components/mentions/render-mentions-in-text'
+import { MentionableTextarea } from '@/components/mentions/mentionable-textarea'
 
 function relTime(d: Date | string): string {
   const date = new Date(d)
@@ -163,10 +164,10 @@ export function DiscussionThread({
         <div className="flex gap-3">
           <Avatar size="md" username="you" />
           <div className="flex-1 min-w-0">
-            <textarea
+            <MentionableTextarea
               ref={replyRef}
               value={replyDraft}
-              onChange={(e) => setReplyDraft(e.target.value)}
+              onChange={setReplyDraft}
               placeholder="Add a reply…"
               rows={3}
               style={{
@@ -372,9 +373,9 @@ function PostBody({
 
         {editing ? (
           <div className="space-y-2">
-            <Textarea
+            <MentionableTextarea
               value={draft}
-              onChange={(e) => setDraft(e.target.value)}
+              onChange={setDraft}
               rows={Math.max(4, Math.min(draft.split('\n').length + 1, 16))}
               autoFocus
             />
@@ -401,7 +402,7 @@ function PostBody({
               isTopLevel ? 'text-[14.5px] leading-[1.7]' : 'text-sm leading-[1.6]'
             }`}
           >
-            {post.body}
+            <RenderMentionsInText text={post.body} />
           </p>
         )}
       </div>

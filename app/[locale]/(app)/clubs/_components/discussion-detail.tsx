@@ -10,6 +10,7 @@ import { relTime } from '../../friends/_components/shared'
 import { LikeButton } from './like-button'
 import { PinToggle } from './pin-toggle'
 import { ReplyComposer } from './reply-composer'
+import { RenderMentionsInText } from '@/components/mentions/render-mentions-in-text'
 
 type Props = {
   discussion: ClubDiscussionRow
@@ -97,7 +98,7 @@ export function DiscussionDetail({
           className="mt-4 text-sm leading-relaxed text-[var(--canvas-dark-ink)] whitespace-pre-wrap"
           style={{ fontFamily: 'var(--font-newsreader)' }}
         >
-          {discussion.content}
+          <RenderMentionsInText text={discussion.content} />
         </div>
         <div className="mt-4 pt-3 border-t border-[var(--br-card)] flex items-center gap-4">
           <LikeButton
@@ -142,7 +143,7 @@ export function DiscussionDetail({
                   className="mt-2 text-sm leading-relaxed text-[var(--canvas-dark-ink)] whitespace-pre-wrap"
                   style={{ fontFamily: 'var(--font-newsreader)' }}
                 >
-                  {r.content}
+                  <RenderMentionsInText text={r.content} />
                 </div>
                 <div className="mt-3 pt-2 border-t border-[var(--br-card)]">
                   <LikeButton

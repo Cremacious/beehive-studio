@@ -10,6 +10,7 @@ import { canReviewSuggestion, type HiveRole } from '@/lib/hive/permissions'
 import type { SuggestionRow } from '@/lib/actions/hive-suggestions.actions'
 import type { CollabMutations } from '@/lib/hooks/use-collab-data'
 import { relTime } from './rel-time'
+import { RenderMentionsInText } from '@/components/mentions/render-mentions-in-text'
 
 const SUGGESTION_COLOR = 'oklch(0.78 0.10 65)'
 
@@ -245,7 +246,7 @@ export function SuggestionCard({
           <div className="mt-3 space-y-2">
             {hasBody ? (
               <p className="text-[12px] italic text-muted-foreground whitespace-pre-wrap">
-                {suggestion.body}
+                <RenderMentionsInText text={suggestion.body ?? ''} />
               </p>
             ) : null}
 
@@ -266,7 +267,7 @@ export function SuggestionCard({
                           <span>{relTime(r.createdAt)}</span>
                         </div>
                         <p className="text-[12px] leading-snug text-foreground whitespace-pre-wrap">
-                          {r.body}
+                          <RenderMentionsInText text={r.body ?? ''} />
                         </p>
                       </div>
                     </div>

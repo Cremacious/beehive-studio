@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { EditBookRowDialog } from './edit-book-row-dialog'
+import { RenderMentionsInText } from '@/components/mentions/render-mentions-in-text'
 
 type Props = {
   book: ListBookRow | DerivedBookRow
@@ -241,7 +242,7 @@ export function BookRow({ book, isOwner, locale }: Props) {
                 expanded ? '' : 'line-clamp-2'
               }`}
             >
-              {commentary}
+              <RenderMentionsInText text={commentary} />
             </p>
             {commentaryIsLong && (
               <button

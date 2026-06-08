@@ -1,5 +1,6 @@
 import { BookOpen } from 'lucide-react'
 import type { ClubSummary, ClubCurrentBook } from '@/lib/actions/book-clubs.actions'
+import { RenderMentionsInText } from '@/components/mentions/render-mentions-in-text'
 
 type Props = {
   club: ClubSummary
@@ -32,7 +33,7 @@ export function ClubAboutPanel({ club, currentBook, locale }: Props) {
         </h2>
         {club.description ? (
           <p className="text-sm text-[var(--canvas-dark-ink)] whitespace-pre-wrap max-w-prose">
-            {club.description}
+            <RenderMentionsInText text={club.description} />
           </p>
         ) : (
           <p className="text-sm text-[var(--canvas-dark-ink-muted)] italic">
@@ -99,7 +100,7 @@ export function ClubAboutPanel({ club, currentBook, locale }: Props) {
             House rules
           </h2>
           <p className="text-sm text-[var(--canvas-dark-ink)] whitespace-pre-wrap max-w-prose">
-            {club.rules}
+            <RenderMentionsInText text={club.rules} />
           </p>
         </section>
       )}

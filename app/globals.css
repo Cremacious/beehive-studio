@@ -104,6 +104,22 @@
   --canvas-dark-ink-strong: oklch(0.965 0.003 256);
 
   /* ── Brand & accent ────────────────────────────────────────────── */
+  /* --brand sanctioned usage map (13 places, per AGENTS.md design system note):
+   * 1. chrome headings (Comfortaa h1/h2)
+   * 2. app logo
+   * 3. active nav link
+   * 4. active toolbar tile
+   * 5. active status pill
+   * 6. premium badge
+   * 7. word-goal progress fill
+   * 8. save indicator dot
+   * 9. + Add CTA text
+   * 10. Go to Hive footer text
+   * 11. unsaved dot
+   * 12. layer accents
+   * 13. club Owner role pill (C5d bent-rule, designer rationale: categorical
+   *     twin of active status pill + premium badge; max once per members
+   *     table; reinforces yellow=authority semantics) */
   --brand:        #FFC300;
   --brand-hover:  #FFD040;
   --brand-active: #E0AC01;
@@ -140,6 +156,22 @@
   --layer-tone:       oklch(0.72 0.11 280);  /* lilac */
   --layer-continuity: oklch(0.74 0.12 145);  /* mint */
   --layer-general:    oklch(0.66 0.04 240);  /* cool gray */
+
+  /* ── NEW categorical accent tokens (C5d Community port) ────────── */
+  /* List/visibility — cross-cutting books/lists/clubs/sparks visibility pills */
+  --list-visibility-public:  oklch(0.72 0.11 230); /* sky blue — open to the world (Globe) */
+  --list-visibility-friends: oklch(0.74 0.12 145); /* mint — your circle (Users) */
+  --list-visibility-private: oklch(0.66 0.04 240); /* cool gray — closed (Lock) */
+
+  /* Spark status — state machine (heartbeat of /sparks) */
+  --spark-status-open:   oklch(0.74 0.12 145); /* mint — accepting entries */
+  --spark-status-voting: oklch(0.78 0.13 70);  /* warm gold — voting live */
+  --spark-status-closed: oklch(0.66 0.04 240); /* cool gray — finished */
+
+  /* Club role — Owner intentionally maps to --brand (13th sanctioned surface — see comment near --brand above) */
+  --club-role-mod:    oklch(0.72 0.11 250);   /* slate blue */
+  --club-role-member: oklch(0.680 0.003 256); /* muted ink */
+  /* --club-role-owner is NOT a separate token. .pill.role-owner consumer reads var(--brand) directly. */
 
   /* ── Binder item types (6) ─────────────────────────────────────── */
   --type-chapter:      var(--brand);

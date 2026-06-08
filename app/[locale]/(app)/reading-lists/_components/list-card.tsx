@@ -1,6 +1,6 @@
 import Link from 'next/link'
+import { Globe, Users, Lock, Heart, BookMarked } from 'lucide-react'
 import type { ListSummary } from '@/lib/actions/reading-lists.actions'
-import { VisibilityPill } from '@/app/[locale]/(public)/discover/_components/visibility-pill'
 
 type Props = {
   list: ListSummary
@@ -9,10 +9,44 @@ type Props = {
   viewerIsOwner?: boolean
 }
 
+type Visibility = 'PUBLIC' | 'FRIENDS' | 'PRIVATE'
+
+const VIS_META: Record<
+  Visibility,
+  { label: string; pillClass: string; Icon: typeof Globe; coverVar: string }
+> = {
+  PUBLIC: {
+    label: 'Public',
+    pillClass: 'pill vis-public',
+    Icon: Globe,
+    coverVar: 'var(--list-visibility-public)',
+  },
+  FRIENDS: {
+    label: 'Friends',
+    pillClass: 'pill vis-friends',
+    Icon: Users,
+    coverVar: 'var(--list-visibility-friends)',
+  },
+  PRIVATE: {
+    label: 'Private',
+    pillClass: 'pill vis-private',
+    Icon: Lock,
+    coverVar: 'var(--list-visibility-private)',
+  },
+}
+
+function ownerInitials(owner: ListSummary['owner']): string {
+  const source = owner?.displayName || owner?.username || '?'
+  const parts = source.replace(/^@/, '').split(/[\s._-]+/).filter(Boolean)
+  if (parts.length === 0) return '?'
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return (parts[0][0] + parts[1][0]).toUpperCase()
+}
+
 /**
- * T13 enriched: visibility pill (non-PUBLIC), Liked-variant 🤍 Auto pill,
- * owner row (hidden for owner-viewers), tag chips (first 3 + "+N more"),
- * meta row.
+ * C5d port: chrome refresh to .ccard structure. Liked variant gets
+ * .pill.auto + .pill.vis-private (mutually-exclusive logic preserved:
+ * Liked is always PRIVATE per server coercion). Tags first-3 + "+N".
  */
 export function ListCard({ list, locale, viewerIsOwner }: Props) {
   const isLiked = list.kind === 'LIKED'
@@ -22,88 +56,85 @@ export function ListCard({ list, locale, viewerIsOwner }: Props) {
   const owner = list.owner
   const showOwner = !viewerIsOwner && !!owner?.username
 
+  const visibility = list.visibility as Visibility
+  const visMeta = VIS_META[visibility] ?? VIS_META.PUBLIC
+  const coverAccent = isLiked ? 'var(--status-error)' : visMeta.coverVar
+
   return (
     <Link
       href={`/${locale}/reading-lists/${list.id}`}
-      className="block p-4 rounded-[var(--r-card)] border border-[var(--br-card)] hover:border-[var(--canvas-dark-ink-muted)] transition-colors"
-      style={{
-        background:
-          'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
-        boxShadow: 'var(--sh-card)',
-      }}
+      className="ccard"
+      style={{ display: 'flex', flexDirection: 'column' }}
     >
-      <div className="flex items-start gap-2 mb-1">
-        <h3
-          className="font-bold text-[var(--canvas-dark-ink-strong)] flex-1 min-w-0 truncate"
-          style={{ fontFamily: 'var(--font-comfortaa)' }}
-        >
-          {list.title}
-        </h3>
-        {isLiked ? (
-          <span
-            className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider border border-[var(--br-card)] text-[var(--canvas-dark-ink-muted)]"
-            title="Auto-managed Liked list"
-          >
-            🤍 Auto
-          </span>
-        ) : list.visibility !== 'PUBLIC' ? (
-          <span className="shrink-0">
-            <VisibilityPill visibility={list.visibility} />
-          </span>
-        ) : null}
-      </div>
-
-      {list.description && (
-        <p className="text-xs text-[var(--canvas-dark-ink-muted)] line-clamp-2 mb-2">
-          {list.description}
-        </p>
-      )}
-
-      {showOwner && (
-        <div className="flex items-center gap-2 mb-2">
-          {owner.avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={owner.avatarUrl}
-              alt=""
-              className="h-6 w-6 rounded-full object-cover"
-            />
-          ) : (
-            <div
-              className="h-6 w-6 rounded-full"
-              style={{
-                background:
-                  'linear-gradient(135deg, var(--canvas-dark-300), var(--canvas-dark-200))',
-              }}
-            />
-          )}
-          <span className="text-xs text-[var(--canvas-dark-ink-muted)]">
-            @{owner.username}
+      <div
+        className="cc-cover cover-grad"
+        style={{ ['--pt' as string]: coverAccent }}
+      >
+        <div className="cc-pills">
+          {isLiked ? (
+            <span className="pill auto" title="Auto-managed Liked list">
+              <Heart fill="currentColor" stroke="none" />
+              Auto
+            </span>
+          ) : null}
+          <span className={visMeta.pillClass}>
+            <visMeta.Icon />
+            {visMeta.label}
           </span>
         </div>
-      )}
+      </div>
 
-      {visibleTags.length > 0 && (
-        <ul className="flex flex-wrap gap-1 mb-2">
-          {visibleTags.map((tag) => (
-            <li
-              key={tag}
-              className="px-2 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider border border-[var(--br-card)] text-[var(--canvas-dark-ink-muted)]"
-            >
-              {tag}
-            </li>
-          ))}
-          {extraTagCount > 0 && (
-            <li className="px-2 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider border border-[var(--br-card)] text-[var(--canvas-dark-ink-muted)]">
-              +{extraTagCount} more
-            </li>
-          )}
-        </ul>
-      )}
+      <div className="cc-body">
+        <h3 className="cc-title">{list.title}</h3>
 
-      <p className="text-[10px] font-mono uppercase tracking-wider text-[var(--canvas-dark-ink-muted)]">
-        {list.bookCount ?? 0} books · {list.followerCount ?? 0} followers
-      </p>
+        {list.description ? (
+          <p className="cc-desc">{list.description}</p>
+        ) : null}
+
+        {visibleTags.length > 0 ? (
+          <div className="lc-tags">
+            {visibleTags.map((tag) => (
+              <span key={tag} className="tag">
+                {tag}
+              </span>
+            ))}
+            {extraTagCount > 0 ? (
+              <span className="tag">+{extraTagCount}</span>
+            ) : null}
+          </div>
+        ) : null}
+
+        <div className="cc-foot">
+          {showOwner ? (
+            <span className="owner-card">
+              {owner.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={owner.avatarUrl}
+                  alt=""
+                  className="avatar s24"
+                  style={{ objectFit: 'cover' }}
+                />
+              ) : (
+                <span className="avatar s24 brand">{ownerInitials(owner)}</span>
+              )}
+              <span className="oc-handle">@{owner.username}</span>
+            </span>
+          ) : null}
+          <div className="cc-stats">
+            <span className="cc-stat">
+              <BookMarked />
+              {list.bookCount ?? 0} {(list.bookCount ?? 0) === 1 ? 'book' : 'books'}
+            </span>
+            {!isLiked ? (
+              <span className="cc-stat">
+                {list.followerCount ?? 0}{' '}
+                {(list.followerCount ?? 0) === 1 ? 'follower' : 'followers'}
+              </span>
+            ) : null}
+          </div>
+        </div>
+      </div>
     </Link>
   )
 }

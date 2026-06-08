@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { getListsAction } from '@/lib/actions/reading-lists.actions'
+import { PageHead } from '@/components/community/page-head'
 import { ListCard } from './_components/list-card'
 import { CreateListButton } from './_components/create-list-button'
 
@@ -17,7 +18,7 @@ export default async function ReadingListsPage({
 
   if (!mineResult.success) {
     return (
-      <main className="max-w-5xl mx-auto px-4 py-6 sm:px-6">
+      <main className="cm-wrap w-5xl">
         <p className="text-red-400">Failed to load your lists.</p>
       </main>
     )
@@ -25,34 +26,37 @@ export default async function ReadingListsPage({
 
   const mine = mineResult.data.rows
   const following = followingResult.success ? followingResult.data.rows : []
+  const bothEmpty = mine.length === 0 && following.length === 0
 
   return (
-    <main className="max-w-5xl mx-auto px-4 py-6 sm:px-6">
-      <header className="flex items-baseline justify-between mb-8">
-        <div>
-          <h1
-            className="text-3xl font-bold text-[var(--brand)]"
-            style={{ fontFamily: 'var(--font-comfortaa)' }}
-          >
-            Reading lists
-          </h1>
-          <p className="text-sm text-[var(--canvas-dark-ink-muted)] mt-1">
-            Curate the books you love. Follow lists from writers you admire.
+    <main className="cm-wrap w-5xl">
+      <PageHead
+        title="Reading lists"
+        subtitle="Curate books worth reading. Follow friends' lists to track what they're loving."
+        headerSlot={<CreateListButton locale={locale} />}
+      />
+
+      {bothEmpty ? (
+        <div className="sec-block">
+          <p className="text-[var(--canvas-dark-ink-muted)] italic">
+            Create your first reading list to get started.
           </p>
         </div>
-        <CreateListButton locale={locale} />
-      </header>
+      ) : null}
 
-      <section className="mb-10">
-        <h2 className="text-[11px] font-mono uppercase tracking-wider text-[var(--canvas-dark-ink-muted)] mb-3">
-          My lists
-        </h2>
+      <div className="sec-block">
+        <div className="sec-label">
+          <h2>My lists</h2>
+          <span className="count meta-mono">
+            {mine.length} {mine.length === 1 ? 'list' : 'lists'}
+          </span>
+        </div>
         {mine.length === 0 ? (
           <p className="text-[var(--canvas-dark-ink-muted)] italic">
             Create your first reading list.
           </p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid-3">
             {mine.map((list) => (
               <ListCard
                 key={list.id}
@@ -63,18 +67,21 @@ export default async function ReadingListsPage({
             ))}
           </div>
         )}
-      </section>
+      </div>
 
-      <section className="mb-10">
-        <h2 className="text-[11px] font-mono uppercase tracking-wider text-[var(--canvas-dark-ink-muted)] mb-3">
-          Lists I follow
-        </h2>
+      <div className="sec-block">
+        <div className="sec-label">
+          <h2>Lists I follow</h2>
+          <span className="count meta-mono">
+            {following.length} {following.length === 1 ? 'list' : 'lists'}
+          </span>
+        </div>
         {following.length === 0 ? (
           <p className="text-[var(--canvas-dark-ink-muted)] italic">
             Lists you follow appear here.
           </p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid-3">
             {following.map((list) => (
               <ListCard
                 key={list.id}
@@ -85,12 +92,17 @@ export default async function ReadingListsPage({
             ))}
           </div>
         )}
-      </section>
+      </div>
 
-      <div className="text-center">
+      <div style={{ textAlign: 'center', marginTop: '18px' }}>
         <Link
           href={`/${locale}/discover?tab=lists`}
-          className="text-sm text-[var(--brand)] hover:underline"
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '12px',
+            color: 'var(--brand)',
+            textDecoration: 'none',
+          }}
         >
           Discover more lists →
         </Link>

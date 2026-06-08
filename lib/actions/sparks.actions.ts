@@ -27,6 +27,9 @@ import { recordSocialActivityTx } from '@/lib/social/record-activity'
 import { canViewSpark, canEnterSpark, canVoteSpark } from '@/lib/sparks/predicates'
 import { sweepSparkStatuses } from '@/lib/sparks/sweep-status'
 import { isBlocked } from '@/lib/social/is-blocked'
+import { extractMentionUsernamesFromText } from '@/lib/mentions/extract-mentions'
+import { resolveMentionedUsers } from '@/lib/mentions/resolve-mentions'
+import { recordMentionNotificationsTx } from '@/lib/mentions/record-mention-notifications'
 import type { SparkStatus, SparkVisibility } from '@/db/schema/social'
 import type { ActionResult } from './book.actions'
 
@@ -1002,30 +1005,65 @@ export async function addSparkEntryCommentAction(
 
   if (!entry) return { success: false, error: 'NOT_FOUND' }
 
-  const [inserted] = await db
-    .insert(sparkEntryComments)
-    .values({
-      entryId,
-      userId,
-      content: parsed.data.content,
-    })
-    .returning({
-      id: sparkEntryComments.id,
-      content: sparkEntryComments.content,
-      createdAt: sparkEntryComments.createdAt,
-      parentId: sparkEntryComments.parentId,
-    })
-
-  // Notify the entry author if they are not the commenter
-  if (entry.userId !== userId) {
-    await db.insert(notifications).values({
-      userId: entry.userId,
-      type: 'NEW_COMMENT',
-      actorId: userId,
-      resourceType: 'spark_entry',
-      resourceId: entryId,
-    })
+  // Mention extraction + early cap check (before tx)
+  const textUsernames = extractMentionUsernamesFromText(parsed.data.content)
+  if (textUsernames.length > 5) {
+    return { success: false, error: 'MENTION_CAP_EXCEEDED' }
   }
+
+  const inserted = await db.transaction(async (tx) => {
+    const [row] = await tx
+      .insert(sparkEntryComments)
+      .values({
+        entryId,
+        userId,
+        content: parsed.data.content,
+      })
+      .returning({
+        id: sparkEntryComments.id,
+        content: sparkEntryComments.content,
+        createdAt: sparkEntryComments.createdAt,
+        parentId: sparkEntryComments.parentId,
+      })
+
+    // Notify the entry author if they are not the commenter
+    if (entry.userId !== userId) {
+      await tx.insert(notifications).values({
+        userId: entry.userId,
+        type: 'NEW_COMMENT',
+        actorId: userId,
+        resourceType: 'spark_entry',
+        resourceId: entryId,
+      })
+    }
+
+    // Mention notifications
+    if (textUsernames.length > 0) {
+      const mentionResult = await resolveMentionedUsers({
+        tiptapUserIds: [],
+        textUsernames,
+        actorId: userId,
+        resourceType: 'spark_entry_comment',
+        resourceId: row.id,
+      })
+      if (!mentionResult.ok) {
+        throw new Error(mentionResult.error)
+      }
+      const toNotify = mentionResult.users
+        .filter((u) => !mentionResult.alreadyNotified.has(u.userId))
+        .map((u) => u.userId)
+      if (toNotify.length > 0) {
+        await recordMentionNotificationsTx(tx, {
+          actorId: userId,
+          mentionedUserIds: toNotify,
+          resourceType: 'spark_entry_comment',
+          resourceId: row.id,
+        })
+      }
+    }
+
+    return row
+  })
 
   const [profile] = await db
     .select({
@@ -1118,15 +1156,49 @@ export async function replyToSparkCommentAction(input: {
     return { success: false, error: 'NOT_ALLOWED' }
   }
 
-  const [inserted] = await db
-    .insert(sparkEntryComments)
-    .values({
-      entryId: parsed.data.entryId,
-      userId,
-      content: parsed.data.content,
-      parentId: parsed.data.parentId,
-    })
-    .returning({ id: sparkEntryComments.id })
+  // Mention extraction + early cap check
+  const textUsernames = extractMentionUsernamesFromText(parsed.data.content)
+  if (textUsernames.length > 5) {
+    return { success: false, error: 'MENTION_CAP_EXCEEDED' }
+  }
+
+  const inserted = await db.transaction(async (tx) => {
+    const [row] = await tx
+      .insert(sparkEntryComments)
+      .values({
+        entryId: parsed.data.entryId,
+        userId,
+        content: parsed.data.content,
+        parentId: parsed.data.parentId,
+      })
+      .returning({ id: sparkEntryComments.id })
+
+    if (textUsernames.length > 0) {
+      const mentionResult = await resolveMentionedUsers({
+        tiptapUserIds: [],
+        textUsernames,
+        actorId: userId,
+        resourceType: 'spark_entry_comment_reply',
+        resourceId: row.id,
+      })
+      if (!mentionResult.ok) {
+        throw new Error(mentionResult.error)
+      }
+      const toNotify = mentionResult.users
+        .filter((u) => !mentionResult.alreadyNotified.has(u.userId))
+        .map((u) => u.userId)
+      if (toNotify.length > 0) {
+        await recordMentionNotificationsTx(tx, {
+          actorId: userId,
+          mentionedUserIds: toNotify,
+          resourceType: 'spark_entry_comment_reply',
+          resourceId: row.id,
+        })
+      }
+    }
+
+    return row
+  })
 
   return { success: true, data: { id: inserted.id } }
 }

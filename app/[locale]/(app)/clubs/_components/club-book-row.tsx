@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, type ReactNode } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { BookOpen, MoreHorizontal, Star, Trash2, Pencil } from 'lucide-react'
@@ -22,6 +22,8 @@ type Props = {
   book: ClubBookRowType
   canManage: boolean
   locale: string
+  /** Slot for an externally-rendered drag handle (queue rows only). */
+  handleSlot?: ReactNode
 }
 
 const STATUS_LABEL: Record<ClubBookRowType['status'], string> = {
@@ -30,7 +32,13 @@ const STATUS_LABEL: Record<ClubBookRowType['status'], string> = {
   PAST: 'Past read',
 }
 
-export function ClubBookRow({ book, canManage, locale }: Props) {
+/**
+ * B7 chrome refresh: row uses A2's `.book-row` grid
+ * (`18px 64px 1fr auto`) with an explicit drag-handle column.
+ * `handleSlot` is rendered by <ClubBooksPanelClient> for queue rows;
+ * CURRENT + PAST rows render an empty first cell to keep alignment.
+ */
+export function ClubBookRow({ book, canManage, locale, handleSlot }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [editing, setEditing] = useState(false)
@@ -92,129 +100,116 @@ export function ClubBookRow({ book, canManage, locale }: Props) {
     })
   }
 
-  const rowInner = (
-    <div
-      className="flex items-stretch gap-4 p-3 rounded-[var(--r-row)]"
-      style={{ background: 'var(--canvas-dark-100)' }}
+  const thumb = book.coverUrl ? (
+    /* eslint-disable-next-line @next/next/no-img-element */
+    <img
+      src={book.coverUrl}
+      alt=""
+      className="br-thumb object-cover"
+      style={{ width: 64, height: 96 }}
+    />
+  ) : (
+    <span
+      className="br-thumb cover-paper flex items-center justify-center"
+      aria-hidden
     >
-      {/* Thumb */}
-      <div className="shrink-0 w-[64px] h-[96px] sm:w-[96px] sm:h-[144px] rounded-md overflow-hidden">
-        {book.coverUrl ? (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img
-            src={book.coverUrl}
-            alt=""
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div
-            className="w-full h-full flex items-center justify-center"
-            style={{
-              background:
-                'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-              boxShadow: 'var(--sh-tile)',
-            }}
-          >
-            <BookOpen
-              className="h-8 w-8"
-              style={{ color: 'var(--canvas-dark-ink-muted)' }}
-              aria-hidden
-            />
-          </div>
-        )}
-      </div>
+      <BookOpen
+        className="h-6 w-6"
+        style={{ color: 'var(--canvas-dark-ink-muted)' }}
+        aria-hidden
+      />
+    </span>
+  )
 
-      {/* Meta */}
-      <div className="flex-1 min-w-0 flex flex-col gap-1">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <h3 className="font-comfortaa font-bold text-lg leading-tight truncate">
-              {book.title}
-            </h3>
-            <p
-              className="text-sm truncate mt-0.5"
-              style={{ color: 'var(--canvas-dark-ink-muted)' }}
+  const statusPill = (
+    <span
+      className={`pill ${isCurrent ? 'first-draft' : ''}`}
+      style={
+        isCurrent
+          ? undefined
+          : {
+              background: 'var(--canvas-dark-100)',
+              color: 'var(--canvas-dark-ink-muted)',
+              borderColor: 'transparent',
+            }
+      }
+    >
+      {isCurrent ? <span className="dot" /> : null}
+      {STATUS_LABEL[book.status]}
+    </span>
+  )
+
+  const kebab =
+    canManage && !editing ? (
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          aria-label="Book actions"
+          className="kebab shrink-0"
+        >
+          <MoreHorizontal aria-hidden />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {isQueue && (
+            <DropdownMenuItem
+              onSelect={(e) => {
+                e.preventDefault()
+                handleSetCurrent()
+              }}
+              disabled={isPending}
             >
-              {book.author}
-            </p>
-          </div>
-
-          {canManage && (
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                aria-label="Book actions"
-                className="shrink-0 p-1 rounded-md hover:bg-[var(--canvas-dark-200)]"
-              >
-                <MoreHorizontal className="h-4 w-4" aria-hidden />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {isQueue && (
-                  <DropdownMenuItem
-                    onSelect={(e) => {
-                      e.preventDefault()
-                      handleSetCurrent()
-                    }}
-                    disabled={isPending}
-                  >
-                    <Star className="h-4 w-4" aria-hidden />
-                    Set as current
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem
-                  onSelect={(e) => {
-                    e.preventDefault()
-                    setEditing(true)
-                  }}
-                  disabled={isPending}
-                >
-                  <Pencil className="h-4 w-4" aria-hidden />
-                  Edit
-                </DropdownMenuItem>
-                {!isCurrent && (
-                  <DropdownMenuItem
-                    onSelect={(e) => {
-                      e.preventDefault()
-                      handleRemove()
-                    }}
-                    disabled={isPending}
-                    variant="destructive"
-                  >
-                    <Trash2 className="h-4 w-4" aria-hidden />
-                    Remove
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+              <Star className="h-4 w-4" aria-hidden />
+              Set as current
+            </DropdownMenuItem>
           )}
-        </div>
-
-        <div className="flex items-center gap-2 mt-1">
-          <span
-            className="text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-[var(--r-pill)]"
-            style={{
-              background: isCurrent
-                ? 'oklch(from var(--brand) l c h / 0.18)'
-                : 'var(--canvas-dark-200)',
-              color: isCurrent
-                ? 'var(--brand)'
-                : 'var(--canvas-dark-ink-muted)',
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault()
+              setEditing(true)
             }}
+            disabled={isPending}
           >
-            {STATUS_LABEL[book.status]}
-          </span>
-        </div>
+            <Pencil className="h-4 w-4" aria-hidden />
+            Edit
+          </DropdownMenuItem>
+          {!isCurrent && (
+            <DropdownMenuItem
+              onSelect={(e) => {
+                e.preventDefault()
+                handleRemove()
+              }}
+              disabled={isPending}
+              variant="destructive"
+            >
+              <Trash2 className="h-4 w-4" aria-hidden />
+              Remove
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    ) : null
+
+  const rowBody = (
+    <div className="book-row">
+      {/* Col 1: drag handle (queue) or spacer */}
+      <div className="br-handle">{handleSlot ?? null}</div>
+      {/* Col 2: thumbnail */}
+      {thumb}
+      {/* Col 3: title + author + status pill */}
+      <div className="min-w-0">
+        <h3 className="br-title truncate">{book.title}</h3>
+        <p className="br-author truncate">{book.author}</p>
+        <div style={{ marginTop: 8 }}>{statusPill}</div>
       </div>
+      {/* Col 4: kebab */}
+      <div className="self-start">{kebab}</div>
     </div>
   )
 
   if (editing) {
     return (
       <div
-        className="p-3 rounded-[var(--r-row)] flex flex-col gap-2"
-        style={{
-          background: 'var(--canvas-dark-100)',
-          boxShadow: 'var(--sh-inset)',
-        }}
+        className="tile tile-pad"
+        style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
       >
         <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium">Title *</span>
@@ -292,12 +287,12 @@ export function ClubBookRow({ book, canManage, locale }: Props) {
     return (
       <Link
         href={`/${locale}/books/${book.bookId}`}
-        className="block transition-colors hover:opacity-95"
+        className="tile tile-pad block transition-colors hover:opacity-95"
       >
-        {rowInner}
+        {rowBody}
       </Link>
     )
   }
 
-  return rowInner
+  return <div className="tile tile-pad">{rowBody}</div>
 }

@@ -18,6 +18,9 @@ type Props = {
  * T16. Server component fetches the club's full book list and partitions
  * it into CURRENT / QUEUE / PAST. Renders three sections; the QUEUE list +
  * Add-book CTA + dnd-kit reorder live in <ClubBooksPanelClient>.
+ *
+ * B7 chrome refresh: section headers as `.sec-head > h2`, rows wrapped in
+ * `.panel.panel-pad` + `.cstack`, Past reads as a `<details>` accordion.
  */
 export async function ClubBooksPanel({
   clubId,
@@ -49,21 +52,23 @@ export async function ClubBooksPanel({
     })
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col" style={{ gap: 26 }}>
       {/* Currently reading */}
       <section>
-        <h2 className="font-comfortaa font-bold text-xl text-[var(--brand)] mb-3">
-          Currently reading
-        </h2>
-        {current ? (
-          <ClubBookRow book={current} canManage={canManage} locale={locale} />
-        ) : (
-          <p className="text-[var(--canvas-dark-ink-muted)] italic">
-            {canManage
-              ? 'No current book — pick one from the queue or add a new one.'
-              : 'No current book yet.'}
-          </p>
-        )}
+        <div className="sec-head">
+          <h2>Currently reading</h2>
+        </div>
+        <section className="panel panel-pad">
+          {current ? (
+            <ClubBookRow book={current} canManage={canManage} locale={locale} />
+          ) : (
+            <p className="text-[var(--canvas-dark-ink-muted)] italic">
+              {canManage
+                ? 'No current book — pick one from the queue or add a new one.'
+                : 'No current book yet.'}
+            </p>
+          )}
+        </section>
       </section>
 
       {/* Up next (queue) + Add-book CTA + dnd-kit reorder */}
@@ -76,34 +81,50 @@ export async function ClubBooksPanel({
 
       {/* Past reads */}
       <section>
-        <details>
-          <summary className="cursor-pointer font-comfortaa font-bold text-xl text-[var(--brand)] mb-3 list-none flex items-center gap-2 select-none">
-            <span>Past reads</span>
-            <span
-              className="text-xs font-normal"
-              style={{ color: 'var(--canvas-dark-ink-muted)' }}
-            >
-              ({past.length})
-            </span>
-          </summary>
+        <div className="sec-head">
+          <h2>Past reads</h2>
+          <span className="count">
+            {past.length} {past.length === 1 ? 'book' : 'books'}
+          </span>
+        </div>
+        <section className="panel">
           {past.length === 0 ? (
-            <p className="text-[var(--canvas-dark-ink-muted)] italic mt-2">
+            <p
+              className="text-[var(--canvas-dark-ink-muted)] italic"
+              style={{ padding: '14px 16px' }}
+            >
               No past reads yet.
             </p>
           ) : (
-            <ul className="flex flex-col gap-3 mt-3">
-              {past.map((book) => (
-                <li key={book.id}>
-                  <ClubBookRow
-                    book={book}
-                    canManage={canManage}
-                    locale={locale}
-                  />
-                </li>
-              ))}
-            </ul>
+            <details>
+              <summary
+                className="cursor-pointer select-none"
+                style={{
+                  listStyle: 'none',
+                  padding: '14px 16px',
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 600,
+                  fontSize: 13.5,
+                  color: 'var(--canvas-dark-ink)',
+                }}
+              >
+                Show {past.length}{' '}
+                {past.length === 1 ? 'finished book' : 'finished books'}
+              </summary>
+              <ul className="cstack" style={{ padding: '0 16px 16px', gap: 10 }}>
+                {past.map((book) => (
+                  <li key={book.id}>
+                    <ClubBookRow
+                      book={book}
+                      canManage={canManage}
+                      locale={locale}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </details>
           )}
-        </details>
+        </section>
       </section>
     </div>
   )

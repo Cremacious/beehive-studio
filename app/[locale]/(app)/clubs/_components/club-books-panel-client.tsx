@@ -32,7 +32,9 @@ type Props = {
 
 /**
  * Owns: Add-book modal state + dnd-kit queue reorder (MOD+ only).
- * Non-managers get a static <ul>; empty queue gets an empty state.
+ * B7 chrome refresh: header is `.sec-head`, list is `.cstack` inside
+ * `.panel.panel-pad`, drag handle threads through ClubBookRow's
+ * explicit 18px drag-handle grid column via the `handleSlot` prop.
  */
 export function ClubBooksPanelClient({
   clubId,
@@ -44,43 +46,39 @@ export function ClubBooksPanelClient({
 
   return (
     <section>
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="font-comfortaa font-bold text-xl text-[var(--brand)]">
-          Up next
-        </h2>
+      <div className="sec-head">
+        <h2>Up next</h2>
         {canManage && (
           <button
             type="button"
             onClick={() => setAddOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--r-pill)] text-sm font-semibold"
-            style={{
-              background: 'var(--brand)',
-              color: 'var(--brand-ink)',
-            }}
+            className="btn-tile btn-sm"
           >
-            <Plus className="h-4 w-4" aria-hidden />
+            <Plus aria-hidden />
             Add book
           </button>
         )}
       </div>
 
-      {queue.length === 0 ? (
-        <p className="text-[var(--canvas-dark-ink-muted)] italic">
-          {canManage
-            ? 'No books in the queue yet. Add one to get started.'
-            : 'No books queued yet.'}
-        </p>
-      ) : canManage ? (
-        <SortableQueue clubId={clubId} queue={queue} locale={locale} />
-      ) : (
-        <ul className="flex flex-col gap-3">
-          {queue.map((book) => (
-            <li key={book.id}>
-              <ClubBookRow book={book} canManage={false} locale={locale} />
-            </li>
-          ))}
-        </ul>
-      )}
+      <section className="panel panel-pad">
+        {queue.length === 0 ? (
+          <p className="text-[var(--canvas-dark-ink-muted)] italic">
+            {canManage
+              ? 'No books in the queue yet. Add one to get started.'
+              : 'No books queued yet.'}
+          </p>
+        ) : canManage ? (
+          <SortableQueue clubId={clubId} queue={queue} locale={locale} />
+        ) : (
+          <ul className="cstack" style={{ gap: 10 }}>
+            {queue.map((book) => (
+              <li key={book.id}>
+                <ClubBookRow book={book} canManage={false} locale={locale} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       {canManage && (
         <AddBookToClubModal
@@ -146,11 +144,9 @@ function SortableQueue({
         items={order.map((b) => b.id)}
         strategy={verticalListSortingStrategy}
       >
-        <ul className="flex flex-col gap-3">
+        <ul className="cstack" style={{ gap: 10 }}>
           {order.map((book) => (
-            <SortableItem key={book.id} id={book.id}>
-              <ClubBookRow book={book} canManage={true} locale={locale} />
-            </SortableItem>
+            <SortableItem key={book.id} id={book.id} book={book} locale={locale} />
           ))}
         </ul>
       </SortableContext>
@@ -160,10 +156,12 @@ function SortableQueue({
 
 function SortableItem({
   id,
-  children,
+  book,
+  locale,
 }: {
   id: string
-  children: React.ReactNode
+  book: ClubBookRowType
+  locale: string
 }) {
   const {
     attributes,
@@ -178,19 +176,26 @@ function SortableItem({
     transition,
     opacity: isDragging ? 0.6 : 1,
   }
+  const handle = (
+    <button
+      type="button"
+      {...attributes}
+      {...listeners}
+      aria-label="Drag to reorder"
+      className="br-handle cursor-grab active:cursor-grabbing touch-none inline-flex items-center justify-center bg-transparent border-0 p-0"
+      style={{ touchAction: 'none', color: 'inherit' }}
+    >
+      <GripVertical style={{ width: 14, height: 14 }} aria-hidden />
+    </button>
+  )
   return (
-    <li ref={setNodeRef} style={style} className="flex items-stretch gap-2">
-      <button
-        type="button"
-        {...attributes}
-        {...listeners}
-        aria-label="Drag to reorder"
-        className="shrink-0 flex items-center justify-center px-1 rounded-md text-[var(--canvas-dark-ink-muted)] hover:text-[var(--canvas-dark-ink-strong)] cursor-grab active:cursor-grabbing touch-none"
-        style={{ touchAction: 'none' }}
-      >
-        <GripVertical className="h-4 w-4" aria-hidden />
-      </button>
-      <div className="flex-1 min-w-0">{children}</div>
+    <li ref={setNodeRef} style={style}>
+      <ClubBookRow
+        book={book}
+        canManage={true}
+        locale={locale}
+        handleSlot={handle}
+      />
     </li>
   )
 }

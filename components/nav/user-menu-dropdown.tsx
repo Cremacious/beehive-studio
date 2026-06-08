@@ -108,7 +108,7 @@ export function UserMenuDropdown({
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href={`/${locale}/settings`} className="cursor-pointer no-underline">
+          <Link href={`/${locale}/settings/notifications`} className="cursor-pointer no-underline">
             <SettingsIcon size={14} /> Settings
           </Link>
         </DropdownMenuItem>

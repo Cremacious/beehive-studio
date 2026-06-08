@@ -1,4 +1,7 @@
+import Link from 'next/link'
+import { Plus } from 'lucide-react'
 import { getSparksAction } from '@/lib/actions/sparks.actions'
+import { PageHead } from '@/components/community/page-head'
 import { SparkCard } from '../discover/_components/spark-card'
 
 type Props = { params: Promise<{ locale: string }> }
@@ -12,8 +15,10 @@ export default async function SparksIndexPage({ params }: Props) {
 
   if (!activeResult.success || !closedResult.success) {
     return (
-      <main className="max-w-5xl mx-auto px-4 py-6 sm:px-6">
-        <p className="text-red-400 text-sm">Failed to load sparks.</p>
+      <main className="cm-main">
+        <div className="cm-wrap w-5xl">
+          <p className="text-red-400 text-sm">Failed to load sparks.</p>
+        </div>
       </main>
     )
   }
@@ -24,65 +29,67 @@ export default async function SparksIndexPage({ params }: Props) {
   const closed = closedResult.data.sparks
 
   return (
-    <main className="max-w-5xl mx-auto px-4 py-6 sm:px-6">
-      <header className="mb-8">
-        <h1
-          className="text-3xl font-bold text-[var(--brand)]"
-          style={{ fontFamily: 'var(--font-comfortaa)' }}
-        >
-          Sparks
-        </h1>
-        <p className="text-sm text-[var(--canvas-dark-ink-muted)] mt-1">
-          Quick writing prompts. Enter, vote, win.
-        </p>
-      </header>
+    <main className="cm-main">
+      <div className="cm-wrap w-5xl">
+        <PageHead
+          title="Sparks"
+          subtitle="Quick prompts, real deadlines. Write, share, and vote on the best entries."
+          headerSlot={
+            <Link href={`/${locale}/sparks/new`} className="btn-brand">
+              <Plus />
+              New Spark
+            </Link>
+          }
+        />
 
-      <section className="mb-10">
-        <h2 className="text-[11px] font-mono uppercase tracking-wider text-[var(--canvas-dark-ink-muted)] mb-3">
-          Active sparks
-        </h2>
-        {active.length === 0 ? (
-          <p className="text-[var(--canvas-dark-ink-muted)] italic text-sm">
-            No active sparks. Be the first to start one.
-          </p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {active.map((s) => (
-              <SparkCard key={s.id} spark={s} locale={locale} />
-            ))}
+        <div className="sec-block">
+          <div className="sec-label">
+            <h2>Accepting entries</h2>
+            <span className="count">
+              {active.length} open
+            </span>
+          </div>
+          {active.length === 0 ? (
+            <p className="text-[var(--canvas-dark-ink-muted)] italic text-sm">
+              No active sparks. Be the first to start one.
+            </p>
+          ) : (
+            <div className="grid-3">
+              {active.map((s) => (
+                <SparkCard key={s.id} spark={s} locale={locale} />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {voting.length > 0 && (
+          <div className="sec-block">
+            <div className="sec-label">
+              <h2>Voting now</h2>
+              <span className="count">{voting.length} in voting</span>
+            </div>
+            <div className="grid-3">
+              {voting.map((s) => (
+                <SparkCard key={s.id} spark={s} locale={locale} />
+              ))}
+            </div>
           </div>
         )}
-      </section>
 
-      {voting.length > 0 && (
-        <section className="mb-10">
-          <h2 className="text-[11px] font-mono uppercase tracking-wider text-[var(--canvas-dark-ink-muted)] mb-3">
-            Voting now
-          </h2>
-          <ul className="space-y-2">
-            {voting.map((s) => (
-              <li key={s.id}>
-                <SparkCard spark={s} locale={locale} />
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {closed.length > 0 && (
-        <section className="mb-10">
-          <h2 className="text-[11px] font-mono uppercase tracking-wider text-[var(--canvas-dark-ink-muted)] mb-3">
-            Past sparks
-          </h2>
-          <ul className="space-y-2">
-            {closed.map((s) => (
-              <li key={s.id}>
-                <SparkCard spark={s} locale={locale} />
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+        {closed.length > 0 && (
+          <div className="sec-block" style={{ marginBottom: 0 }}>
+            <div className="sec-label">
+              <h2>Past sparks</h2>
+              <span className="count">{closed.length} closed</span>
+            </div>
+            <div className="grid-2">
+              {closed.map((s) => (
+                <SparkCard key={s.id} spark={s} locale={locale} />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </main>
   )
 }

@@ -5,6 +5,7 @@ import { users, userProfiles } from '@/db/schema'
 import { eq, and, ne } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { usernameSchema, onboardingSchema } from '@/lib/validations/onboarding'
+import { extractMentionUsernamesFromText } from '@/lib/mentions/extract-mentions'
 
 export async function checkUsernameAvailableAction(username: string): Promise<{
   available: boolean
@@ -43,6 +44,18 @@ export async function completeOnboardingAction(data: {
   }
 
   const { username, bio, avatarUrl } = parsed.data
+
+  // C5a T10: profile bio is LINK-ONLY per spec §3.4 — the @-username text is
+  // rendered as a clickable <MentionLink> at read time via <RenderMentionsInText>,
+  // but NO notifications fire. We deliberately skip resolveMentionedUsers +
+  // recordMentionNotificationsTx here. The cap check still applies so a bio
+  // can't be loaded with more than 5 @-mentions (matches surface budgets in §3.5).
+  if (bio) {
+    const bioUsernames = extractMentionUsernamesFromText(bio)
+    if (bioUsernames.length > 5) {
+      return { success: false, error: 'MENTION_CAP_EXCEEDED' }
+    }
+  }
 
   const existing = await db.query.userProfiles.findFirst({
     where: and(

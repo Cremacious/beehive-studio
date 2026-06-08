@@ -8,6 +8,9 @@ import { canReadBook } from '@/lib/books/can-read'
 import { z } from 'zod'
 import { recordSocialActivityTx } from '@/lib/social/record-activity'
 import { ensureLikedListAction } from '@/lib/reading-lists/ensure-liked-list'
+import { extractMentionUsernamesFromText } from '@/lib/mentions/extract-mentions'
+import { resolveMentionedUsers } from '@/lib/mentions/resolve-mentions'
+import { recordMentionNotificationsTx } from '@/lib/mentions/record-mention-notifications'
 import type { ActionResult } from './book.actions'
 import type { BookComment } from './discover.actions'
 
@@ -134,40 +137,78 @@ export async function addCommentAction(
   const parsed = addCommentSchema.safeParse({ content })
   if (!parsed.success) return { success: false, error: 'INVALID_CONTENT' }
 
-  const comment = await db.transaction(async (tx) => {
-    const [created] = await tx
-      .insert(bookComments)
-      .values({ bookId, userId, content: parsed.data.content })
-      .returning()
+  // C5a T10: mention extraction + early cap check (text surface — book comments are plain textareas).
+  const textUsernames = extractMentionUsernamesFromText(parsed.data.content)
+  if (textUsernames.length > 5) return { success: false, error: 'MENTION_CAP_EXCEEDED' }
 
-    const [book] = await tx
-      .select({ userId: books.userId, visibility: books.visibility, discoverable: books.discoverable })
-      .from(books)
-      .where(eq(books.id, bookId))
-      .limit(1)
-    if (book && book.userId !== userId) {
-      await tx.insert(notifications).values({
-        userId: book.userId,
-        type: 'NEW_COMMENT',
+  let comment: typeof bookComments.$inferSelect
+  try {
+    comment = await db.transaction(async (tx) => {
+      const [created] = await tx
+        .insert(bookComments)
+        .values({ bookId, userId, content: parsed.data.content })
+        .returning()
+
+      const [book] = await tx
+        .select({ userId: books.userId, visibility: books.visibility, discoverable: books.discoverable })
+        .from(books)
+        .where(eq(books.id, bookId))
+        .limit(1)
+      if (book && book.userId !== userId) {
+        await tx.insert(notifications).values({
+          userId: book.userId,
+          type: 'NEW_COMMENT',
+          actorId: userId,
+          resourceType: 'book',
+          resourceId: bookId,
+        })
+      }
+
+      // C1 T8 hook: book_commented. Gate on PUBLIC+discoverable. Spec §3.4.
+      if (book && book.visibility === 'PUBLIC' && book.discoverable === true) {
+        await recordSocialActivityTx(tx, {
+          actorId: userId,
+          type: 'book_commented',
+          subjectType: 'comment',
+          subjectId: created.id,
+          payload: { bookId, excerpt: created.content.slice(0, 120) },
+        })
+      }
+
+      // C5a T10: resolve + record mention notifications. resourceType
+      // = 'book_comment' per spec §3.4. resourceId is the new comment id.
+      // First-write CREATE: alreadyNotified will be empty since the row didn't
+      // exist before this tx; the dedupe query is still cheap + correct.
+      const mentionResult = await resolveMentionedUsers({
+        tiptapUserIds: [],
+        textUsernames,
         actorId: userId,
-        resourceType: 'book',
-        resourceId: bookId,
+        resourceType: 'book_comment',
+        resourceId: created.id,
       })
-    }
+      if (!mentionResult.ok) {
+        throw new Error(mentionResult.error)
+      }
+      const toNotify = mentionResult.users
+        .filter((u) => !mentionResult.alreadyNotified.has(u.userId))
+        .map((u) => u.userId)
+      if (toNotify.length > 0) {
+        await recordMentionNotificationsTx(tx, {
+          actorId: userId,
+          mentionedUserIds: toNotify,
+          resourceType: 'book_comment',
+          resourceId: created.id,
+        })
+      }
 
-    // C1 T8 hook: book_commented. Gate on PUBLIC+discoverable. Spec §3.4.
-    if (book && book.visibility === 'PUBLIC' && book.discoverable === true) {
-      await recordSocialActivityTx(tx, {
-        actorId: userId,
-        type: 'book_commented',
-        subjectType: 'comment',
-        subjectId: created.id,
-        payload: { bookId, excerpt: created.content.slice(0, 120) },
-      })
+      return created
+    })
+  } catch (e) {
+    if (e instanceof Error && e.message === 'MENTION_CAP_EXCEEDED') {
+      return { success: false, error: 'MENTION_CAP_EXCEEDED' }
     }
-
-    return created
-  })
+    throw e
+  }
 
   const [profile] = await db
     .select({

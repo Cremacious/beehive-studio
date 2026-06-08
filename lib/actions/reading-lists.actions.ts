@@ -22,6 +22,9 @@ import {
 import { recordSocialActivityTx } from '@/lib/social/record-activity'
 import { getLikedListBooks, type DerivedBookRow } from '@/lib/reading-lists/liked-list-books'
 import { canReadBook } from '@/lib/books/can-read'
+import { extractMentionUsernamesFromText } from '@/lib/mentions/extract-mentions'
+import { resolveMentionedUsers } from '@/lib/mentions/resolve-mentions'
+import { recordMentionNotificationsTx } from '@/lib/mentions/record-mention-notifications'
 import {
   createListSchema,
   updateListSchema,
@@ -116,6 +119,14 @@ export async function createListAction(
   const parsed = createListSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
+  // C5a: extract mentions from description; early cap check.
+  const descUsernames = extractMentionUsernamesFromText(
+    parsed.data.description ?? '',
+  )
+  if (descUsernames.length > 5) {
+    return { success: false, error: 'MENTION_CAP_EXCEEDED' }
+  }
+
   const id = createId()
   await db.transaction(async (tx) => {
     await tx.insert(readingLists).values({
@@ -136,6 +147,30 @@ export async function createListAction(
         subjectId: id,
         payload: { title: parsed.data.title },
       })
+    }
+
+    // C5a: resolve + record mentions for description.
+    if (descUsernames.length > 0) {
+      const r = await resolveMentionedUsers({
+        tiptapUserIds: [],
+        textUsernames: descUsernames,
+        actorId: userId,
+        resourceType: 'reading_list_description',
+        resourceId: id,
+      })
+      if (r.ok && r.users.length > 0) {
+        const toNotify = r.users
+          .filter((u) => !r.alreadyNotified.has(u.userId))
+          .map((u) => u.userId)
+        if (toNotify.length > 0) {
+          await recordMentionNotificationsTx(tx, {
+            actorId: userId,
+            mentionedUserIds: toNotify,
+            resourceType: 'reading_list_description',
+            resourceId: id,
+          })
+        }
+      }
     }
   })
 
@@ -494,6 +529,15 @@ export async function updateListAction(
   if (!list) return { success: false, error: 'NOT_FOUND' }
   if (!canEditList(userId, list)) return { success: false, error: 'NOT_ALLOWED' }
 
+  // C5a: extract mentions from description; early cap check.
+  const descUsernames =
+    parsed.data.description !== undefined
+      ? extractMentionUsernamesFromText(parsed.data.description ?? '')
+      : []
+  if (descUsernames.length > 5) {
+    return { success: false, error: 'MENTION_CAP_EXCEEDED' }
+  }
+
   const updates: Partial<typeof readingLists.$inferInsert> = {}
   if (parsed.data.title !== undefined) updates.title = parsed.data.title
   if (parsed.data.description !== undefined)
@@ -519,10 +563,36 @@ export async function updateListAction(
   }
   updates.updatedAt = new Date()
 
-  await db
-    .update(readingLists)
-    .set(updates)
-    .where(eq(readingLists.id, parsed.data.listId))
+  await db.transaction(async (tx) => {
+    await tx
+      .update(readingLists)
+      .set(updates)
+      .where(eq(readingLists.id, parsed.data.listId))
+
+    // C5a: resolve + record mentions for description on edit.
+    if (descUsernames.length > 0) {
+      const r = await resolveMentionedUsers({
+        tiptapUserIds: [],
+        textUsernames: descUsernames,
+        actorId: userId,
+        resourceType: 'reading_list_description',
+        resourceId: parsed.data.listId,
+      })
+      if (r.ok && r.users.length > 0) {
+        const toNotify = r.users
+          .filter((u) => !r.alreadyNotified.has(u.userId))
+          .map((u) => u.userId)
+        if (toNotify.length > 0) {
+          await recordMentionNotificationsTx(tx, {
+            actorId: userId,
+            mentionedUserIds: toNotify,
+            resourceType: 'reading_list_description',
+            resourceId: parsed.data.listId,
+          })
+        }
+      }
+    }
+  })
 
   return { success: true, data: { updated: true } }
 }
@@ -658,6 +728,15 @@ export async function updateListBookAction(
   if (list.kind === 'LIKED')
     return { success: false, error: 'LIKED_LIST_IMMUTABLE' }
 
+  // C5a: extract mentions from commentary; early cap check.
+  const commentaryUsernames =
+    parsed.data.commentary !== undefined
+      ? extractMentionUsernamesFromText(parsed.data.commentary ?? '')
+      : []
+  if (commentaryUsernames.length > 5) {
+    return { success: false, error: 'MENTION_CAP_EXCEEDED' }
+  }
+
   const updates: Partial<typeof readingListBooks.$inferInsert> = {}
   if (parsed.data.isRead !== undefined) updates.isRead = parsed.data.isRead
   if (parsed.data.rating !== undefined) updates.rating = parsed.data.rating
@@ -665,10 +744,36 @@ export async function updateListBookAction(
     updates.commentary = parsed.data.commentary
   if (parsed.data.order !== undefined) updates.order = parsed.data.order
 
-  await db
-    .update(readingListBooks)
-    .set(updates)
-    .where(eq(readingListBooks.id, parsed.data.bookRowId))
+  await db.transaction(async (tx) => {
+    await tx
+      .update(readingListBooks)
+      .set(updates)
+      .where(eq(readingListBooks.id, parsed.data.bookRowId))
+
+    // C5a: resolve + record mentions for commentary edit.
+    if (commentaryUsernames.length > 0) {
+      const r = await resolveMentionedUsers({
+        tiptapUserIds: [],
+        textUsernames: commentaryUsernames,
+        actorId: userId,
+        resourceType: 'reading_list_book_commentary',
+        resourceId: parsed.data.bookRowId,
+      })
+      if (r.ok && r.users.length > 0) {
+        const toNotify = r.users
+          .filter((u) => !r.alreadyNotified.has(u.userId))
+          .map((u) => u.userId)
+        if (toNotify.length > 0) {
+          await recordMentionNotificationsTx(tx, {
+            actorId: userId,
+            mentionedUserIds: toNotify,
+            resourceType: 'reading_list_book_commentary',
+            resourceId: parsed.data.bookRowId,
+          })
+        }
+      }
+    }
+  })
 
   return { success: true, data: { updated: true } }
 }

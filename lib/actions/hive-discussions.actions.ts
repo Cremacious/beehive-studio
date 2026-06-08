@@ -480,3 +480,40 @@ export async function getDiscussionThreadAction(
     },
   }
 }
+
+// -----------------------------------------------------------------------------
+// C5b T9 — Parent-id lookup actions for MENTION notification deep links.
+// -----------------------------------------------------------------------------
+
+export async function getHiveDiscussionParentsAction(
+  discussionId: string,
+): Promise<
+  | { success: true; data: { hiveId: string } }
+  | { success: false; error: string }
+> {
+  await requireAuth()
+  const row = await db.query.hiveDiscussionPosts.findFirst({
+    where: eq(hiveDiscussionPosts.id, discussionId),
+    columns: { hiveId: true, parentId: true },
+  })
+  if (!row || row.parentId !== null) return { success: false, error: 'NOT_FOUND' }
+  return { success: true, data: { hiveId: row.hiveId } }
+}
+
+export async function getHiveReplyParentsAction(
+  replyId: string,
+): Promise<
+  | { success: true; data: { discussionId: string; hiveId: string } }
+  | { success: false; error: string }
+> {
+  await requireAuth()
+  const reply = await db.query.hiveDiscussionPosts.findFirst({
+    where: eq(hiveDiscussionPosts.id, replyId),
+    columns: { hiveId: true, parentId: true },
+  })
+  if (!reply || reply.parentId === null) return { success: false, error: 'NOT_FOUND' }
+  return {
+    success: true,
+    data: { discussionId: reply.parentId, hiveId: reply.hiveId },
+  }
+}

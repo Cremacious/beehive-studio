@@ -84,7 +84,7 @@ export type ClubSummary = {
   memberCount: number
   currentBook: ClubCurrentBook | null
   owner: ClubOwner
-  viewerMembership: { role: BookClubMemberRole | null }
+  viewerMembership: { role: BookClubMemberRole | null; pendingJoinRequest: boolean }
   createdAt: Date
   updatedAt: Date
 }
@@ -93,7 +93,7 @@ export type ClubDetail = {
   club: ClubSummary
   owner: ClubOwner
   viewerRole: BookClubMemberRole | null
-  viewerMembership: { role: BookClubMemberRole | null }
+  viewerMembership: { role: BookClubMemberRole | null; pendingJoinRequest: boolean }
   currentBook: ClubCurrentBook | null
   memberCount: number
 }
@@ -1211,6 +1211,31 @@ export async function cancelJoinRequestAction(
     .delete(bookClubJoinRequests)
     .where(eq(bookClubJoinRequests.id, parsed.data.requestId))
   return { success: true, data: { canceled: true } }
+}
+
+export async function cancelMyPendingJoinRequestAction(input: {
+  clubId: string
+}): Promise<ActionResult<void>> {
+  const userId = await requireAuth()
+  if (!input || typeof input.clubId !== 'string' || input.clubId.length === 0) {
+    return { success: false, error: 'INVALID_INPUT' }
+  }
+
+  const existing = await db.query.bookClubJoinRequests.findFirst({
+    where: and(
+      eq(bookClubJoinRequests.clubId, input.clubId),
+      eq(bookClubJoinRequests.userId, userId),
+      eq(bookClubJoinRequests.status, 'PENDING'),
+    ),
+    columns: { id: true },
+  })
+  if (!existing) return { success: false, error: 'REQUEST_NOT_FOUND' }
+
+  await db
+    .delete(bookClubJoinRequests)
+    .where(eq(bookClubJoinRequests.id, existing.id))
+
+  return { success: true, data: undefined }
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -2477,4 +2502,46 @@ export async function listClubJoinRequestsAction(
   }))
 
   return { success: true, data: { rows: projected } }
+}
+
+// -----------------------------------------------------------------------------
+// C5b T9 — Parent-id lookup actions for MENTION notification deep links.
+// -----------------------------------------------------------------------------
+
+export async function getDiscussionClubIdAction(
+  discussionId: string,
+): Promise<
+  | { success: true; data: { clubId: string } }
+  | { success: false; error: string }
+> {
+  await requireAuth()
+  const row = await db.query.bookClubDiscussions.findFirst({
+    where: eq(bookClubDiscussions.id, discussionId),
+    columns: { clubId: true },
+  })
+  if (!row) return { success: false, error: 'NOT_FOUND' }
+  return { success: true, data: { clubId: row.clubId } }
+}
+
+export async function getReplyDiscussionAndClubIdAction(
+  replyId: string,
+): Promise<
+  | { success: true; data: { discussionId: string; clubId: string } }
+  | { success: false; error: string }
+> {
+  await requireAuth()
+  const reply = await db.query.bookClubDiscussionReplies.findFirst({
+    where: eq(bookClubDiscussionReplies.id, replyId),
+    columns: { discussionId: true },
+  })
+  if (!reply) return { success: false, error: 'NOT_FOUND' }
+  const discussion = await db.query.bookClubDiscussions.findFirst({
+    where: eq(bookClubDiscussions.id, reply.discussionId),
+    columns: { clubId: true },
+  })
+  if (!discussion) return { success: false, error: 'NOT_FOUND' }
+  return {
+    success: true,
+    data: { discussionId: reply.discussionId, clubId: discussion.clubId },
+  }
 }

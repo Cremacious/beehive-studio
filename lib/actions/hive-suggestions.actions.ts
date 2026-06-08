@@ -686,3 +686,22 @@ export async function getPendingSuggestionsForHiveAction(
 
   return { success: true, data: Array.from(byChapter.values()) }
 }
+
+// -----------------------------------------------------------------------------
+// C5b T9 — Parent-id lookup action for MENTION notification deep links.
+// -----------------------------------------------------------------------------
+
+export async function getSuggestionParentsAction(
+  suggestionId: string,
+): Promise<
+  | { success: true; data: { hiveId: string; chapterId: string } }
+  | { success: false; error: string }
+> {
+  await requireAuth()
+  const row = await db.query.hiveSuggestions.findFirst({
+    where: eq(hiveSuggestions.id, suggestionId),
+    columns: { hiveId: true, chapterId: true },
+  })
+  if (!row) return { success: false, error: 'NOT_FOUND' }
+  return { success: true, data: { hiveId: row.hiveId, chapterId: row.chapterId } }
+}

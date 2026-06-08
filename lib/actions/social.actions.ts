@@ -261,3 +261,22 @@ export async function getUserSocialStateAction(
     },
   }
 }
+
+// -----------------------------------------------------------------------------
+// C5b T9 — Parent-id lookup action for MENTION notification deep links.
+// -----------------------------------------------------------------------------
+
+export async function getCommentBookIdAction(
+  commentId: string,
+): Promise<
+  | { success: true; data: { bookId: string } }
+  | { success: false; error: string }
+> {
+  await requireAuth()
+  const row = await db.query.bookComments.findFirst({
+    where: eq(bookComments.id, commentId),
+    columns: { bookId: true },
+  })
+  if (!row) return { success: false, error: 'NOT_FOUND' }
+  return { success: true, data: { bookId: row.bookId } }
+}

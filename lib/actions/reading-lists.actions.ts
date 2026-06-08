@@ -1016,3 +1016,22 @@ export async function getUserPublicListsAction(
 
   return { success: true, data: visible }
 }
+
+// -----------------------------------------------------------------------------
+// C5b T9 — Parent-id lookup action for MENTION notification deep links.
+// -----------------------------------------------------------------------------
+
+export async function getListBookCommentaryListIdAction(
+  rowId: string,
+): Promise<
+  | { success: true; data: { listId: string } }
+  | { success: false; error: string }
+> {
+  await requireAuth()
+  const row = await db.query.readingListBooks.findFirst({
+    where: eq(readingListBooks.id, rowId),
+    columns: { listId: true },
+  })
+  if (!row) return { success: false, error: 'NOT_FOUND' }
+  return { success: true, data: { listId: row.listId } }
+}

@@ -1209,3 +1209,31 @@ export async function replyToSparkCommentAction(input: {
 
   return { success: true, data: { id: inserted.id } }
 }
+
+// -----------------------------------------------------------------------------
+// C5b T9 — Parent-id lookup action for MENTION notification deep links.
+// Handles both top-level comments AND replies — walks parentId up to root.
+// -----------------------------------------------------------------------------
+
+export async function getSparkEntryCommentParentsAction(
+  commentId: string,
+): Promise<
+  | { success: true; data: { sparkId: string; entryId: string } }
+  | { success: false; error: string }
+> {
+  await requireAuth()
+  const comment = await db.query.sparkEntryComments.findFirst({
+    where: eq(sparkEntryComments.id, commentId),
+    columns: { entryId: true },
+  })
+  if (!comment) return { success: false, error: 'NOT_FOUND' }
+  const entry = await db.query.sparkEntries.findFirst({
+    where: eq(sparkEntries.id, comment.entryId),
+    columns: { sparkId: true },
+  })
+  if (!entry) return { success: false, error: 'NOT_FOUND' }
+  return {
+    success: true,
+    data: { sparkId: entry.sparkId, entryId: comment.entryId },
+  }
+}

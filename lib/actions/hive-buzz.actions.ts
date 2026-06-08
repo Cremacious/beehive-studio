@@ -381,3 +381,22 @@ export async function toggleBuzzLikeAction(
 
   return { success: true, data: { liked: result.liked, likeCount } }
 }
+
+// -----------------------------------------------------------------------------
+// C5b T9 — Parent-id lookup action for MENTION notification deep links.
+// -----------------------------------------------------------------------------
+
+export async function getBuzzHiveIdAction(
+  buzzId: string,
+): Promise<
+  | { success: true; data: { hiveId: string } }
+  | { success: false; error: string }
+> {
+  await requireAuth()
+  const row = await db.query.hiveBuzzPosts.findFirst({
+    where: eq(hiveBuzzPosts.id, buzzId),
+    columns: { hiveId: true },
+  })
+  if (!row) return { success: false, error: 'NOT_FOUND' }
+  return { success: true, data: { hiveId: row.hiveId } }
+}

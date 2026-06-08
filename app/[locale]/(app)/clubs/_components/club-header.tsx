@@ -13,13 +13,17 @@ import {
   joinClubAction,
   leaveClubAction,
   deleteClubAction,
+  cancelMyPendingJoinRequestAction,
 } from '@/lib/actions/book-clubs.actions'
 
 type Props = {
   club: ClubSummary
   owner: ClubOwner
   viewerRole: BookClubMemberRole | null
-  viewerMembership: { role: BookClubMemberRole | null }
+  viewerMembership: {
+    role: BookClubMemberRole | null
+    pendingJoinRequest: boolean
+  }
   memberCount: number
   isOwner: boolean
   locale: string
@@ -34,7 +38,6 @@ export function ClubHeader({
   isOwner,
   locale,
 }: Props) {
-  void viewerMembership // membership.role is the same as viewerRole here
   const [isPending, startTransition] = useTransition()
   const [kebabOpen, setKebabOpen] = useState(false)
   const [leaveOpen, setLeaveOpen] = useState(false)
@@ -163,16 +166,53 @@ export function ClubHeader({
               Join club
             </button>
           )}
-          {viewerRole === null && !club.openJoin && (
-            <button
-              type="button"
-              onClick={handleJoin}
-              disabled={isPending}
-              className="px-4 py-2 rounded-[var(--r-pill)] bg-[var(--brand)] text-[var(--brand-ink)] text-sm font-semibold hover:bg-brand-hover disabled:opacity-60"
-            >
-              Request to join
-            </button>
-          )}
+          {viewerRole === null &&
+            !club.openJoin &&
+            viewerMembership.pendingJoinRequest && (
+              <div className="flex items-center gap-2">
+                <span
+                  className="px-3 py-1 text-xs rounded-full"
+                  style={{
+                    background: 'var(--canvas-dark-300)',
+                    color: 'var(--canvas-dark-ink-muted)',
+                  }}
+                >
+                  Request pending
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    startTransition(async () => {
+                      const result = await cancelMyPendingJoinRequestAction({
+                        clubId: club.id,
+                      })
+                      if (result.success) {
+                        toast.success('Request canceled')
+                        router.refresh()
+                      } else {
+                        toast.error('Could not cancel request')
+                      }
+                    })
+                  }
+                  disabled={isPending}
+                  className="text-xs underline text-[var(--canvas-dark-ink-muted)] hover:text-[var(--brand)] disabled:opacity-60"
+                >
+                  Cancel request
+                </button>
+              </div>
+            )}
+          {viewerRole === null &&
+            !club.openJoin &&
+            !viewerMembership.pendingJoinRequest && (
+              <button
+                type="button"
+                onClick={handleJoin}
+                disabled={isPending}
+                className="px-4 py-2 rounded-[var(--r-pill)] bg-[var(--brand)] text-[var(--brand-ink)] text-sm font-semibold hover:bg-brand-hover disabled:opacity-60"
+              >
+                Request to join
+              </button>
+            )}
           {viewerRole === 'MEMBER' && (
             <button
               type="button"

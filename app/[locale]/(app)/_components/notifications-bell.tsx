@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useParams } from 'next/navigation'
 import type { NotificationRow } from '@/lib/actions/notifications.actions'
 import {
   getNotificationsAction, markNotificationReadAction,
   markAllNotificationsReadAction,
 } from '@/lib/actions/notifications.actions'
+import { resolveMentionDeepLink } from '@/lib/notifications/mention-deep-links'
 import { cn } from '@/lib/utils'
 
 function mentionSurfaceLabel(rt: string | null): string {
@@ -28,36 +30,16 @@ function mentionSurfaceLabel(rt: string | null): string {
   }
 }
 
-function mentionHref(n: NotificationRow): string {
-  const rid = n.resourceId ?? ''
-  switch (n.resourceType) {
-    case 'book_comment': return `/en/books/${rid}`
-    case 'spark_entry_comment':
-    case 'spark_entry_comment_reply':
-      return `/en/sparks`
-    case 'book_club_discussion':
-    case 'book_club_discussion_reply':
-      return `/en/clubs`
-    case 'hive_discussion':
-    case 'hive_discussion_reply':
-    case 'hive_buzz_post':
-    case 'hive_annotation':
-    case 'hive_suggestion':
-      return `/en/community`
-    case 'reading_list_description':
-    case 'reading_list_book_commentary':
-      return `/en/reading-lists/${rid}`
-    case 'book_club_description':
-    case 'book_club_rules':
-      return `/en/clubs/${rid}`
-    default: return `/en/community`
-  }
-}
-
 export function NotificationsBell() {
+  const params = useParams<{ locale: string }>()
+  const locale = params?.locale ?? 'en'
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState<NotificationRow[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
+  // C5b T9: track per-row loading state so MENTION rows show a spinner while
+  // the server-side deep-link lookup is in flight (typically <50ms but visible
+  // on cold network).
+  const [pendingRowId, setPendingRowId] = useState<string | null>(null)
 
   async function load() {
     const result = await getNotificationsAction()
@@ -81,25 +63,38 @@ export function NotificationsBell() {
   }
 
   async function handleNotificationClick(n: NotificationRow) {
+    // Defend against double-click while a MENTION lookup is in flight.
+    if (pendingRowId === n.id) return
+
     await markNotificationReadAction(n.id)
     setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, read: true } : x))
     setUnreadCount(prev => Math.max(0, prev - 1))
     if (n.resourceId && n.type === 'HIVE_INVITE') {
-      window.location.href = `/en/hive/${n.resourceId}`
+      window.location.href = `/${locale}/hive/${n.resourceId}`
     } else if (n.type === 'FRIEND_REQUEST') {
-      window.location.href = `/en/friends?tab=requests`
+      window.location.href = `/${locale}/friends?tab=requests`
     } else if (n.type === 'FRIEND_ACCEPTED') {
-      window.location.href = `/en/friends`
+      window.location.href = `/${locale}/friends`
     } else if (n.type === 'CLUB_JOIN_APPROVED' && n.resourceId) {
       // CLUB_JOIN_APPROVED.resourceId IS the clubId (see book-clubs.actions.ts).
-      window.location.href = `/en/clubs/${n.resourceId}`
+      window.location.href = `/${locale}/clubs/${n.resourceId}`
     } else if (n.type === 'CLUB_INVITE' || n.type === 'CLUB_JOIN_REQUEST') {
       // CLUB_INVITE.resourceId = inviteId; CLUB_JOIN_REQUEST.resourceId =
       // joinRequestId. Neither carries the clubId directly, so route to the
       // clubs index — matches the FRIEND_REQUEST -> /friends precedent.
-      window.location.href = `/en/clubs`
+      window.location.href = `/${locale}/clubs`
     } else if (n.type === 'MENTION') {
-      window.location.href = mentionHref(n)
+      setPendingRowId(n.id)
+      try {
+        const target = await resolveMentionDeepLink(
+          n.resourceType ?? '',
+          n.resourceId ?? '',
+          locale,
+        )
+        window.location.href = target
+      } finally {
+        setPendingRowId(null)
+      }
     }
   }
 
@@ -155,22 +150,38 @@ export function NotificationsBell() {
             <div className="max-h-96 overflow-y-auto">
               {notifications.length === 0 ? (
                 <p className="p-4 text-xs text-muted-foreground text-center">No notifications.</p>
-              ) : notifications.map(n => (
-                <button
-                  key={n.id}
-                  onClick={() => handleNotificationClick(n)}
-                  className={cn('w-full flex gap-3 px-4 py-3 border-b border-border last:border-0 text-left hover:bg-surface-elevated transition-colors', !n.read && 'bg-brand/5')}
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-foreground leading-relaxed">
-                      <strong>{n.actor?.name ?? 'Someone'}</strong>{' '}
-                      {renderLabel(n)}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">{new Date(n.createdAt).toLocaleDateString()}</p>
-                  </div>
-                  {!n.read && <span className="w-2 h-2 rounded-full bg-brand mt-1 shrink-0" />}
-                </button>
-              ))}
+              ) : notifications.map(n => {
+                const isPending = pendingRowId === n.id
+                return (
+                  <button
+                    key={n.id}
+                    onClick={() => handleNotificationClick(n)}
+                    disabled={isPending}
+                    aria-busy={isPending}
+                    className={cn(
+                      'w-full flex gap-3 px-4 py-3 border-b border-border last:border-0 text-left hover:bg-surface-elevated transition-colors',
+                      !n.read && 'bg-brand/5',
+                      isPending && 'opacity-60 cursor-wait',
+                    )}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-foreground leading-relaxed">
+                        <strong>{n.actor?.name ?? 'Someone'}</strong>{' '}
+                        {renderLabel(n)}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{new Date(n.createdAt).toLocaleDateString()}</p>
+                    </div>
+                    {isPending ? (
+                      <span
+                        className="w-3 h-3 rounded-full border-2 border-brand border-t-transparent animate-spin mt-1 shrink-0"
+                        aria-label="Loading"
+                      />
+                    ) : !n.read ? (
+                      <span className="w-2 h-2 rounded-full bg-brand mt-1 shrink-0" />
+                    ) : null}
+                  </button>
+                )
+              })}
             </div>
           </div>
         </>

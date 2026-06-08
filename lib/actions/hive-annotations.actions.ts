@@ -584,3 +584,22 @@ export async function getAnnotationsForHiveAction(
   }
 }
 
+
+// -----------------------------------------------------------------------------
+// C5b T9 — Parent-id lookup action for MENTION notification deep links.
+// -----------------------------------------------------------------------------
+
+export async function getAnnotationParentsAction(
+  annotationId: string,
+): Promise<
+  | { success: true; data: { hiveId: string; chapterId: string } }
+  | { success: false; error: string }
+> {
+  await requireAuth()
+  const row = await db.query.hiveAnnotations.findFirst({
+    where: eq(hiveAnnotations.id, annotationId),
+    columns: { hiveId: true, chapterId: true },
+  })
+  if (!row) return { success: false, error: 'NOT_FOUND' }
+  return { success: true, data: { hiveId: row.hiveId, chapterId: row.chapterId } }
+}

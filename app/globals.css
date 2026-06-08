@@ -678,3 +678,15 @@ body {
 /* Public reader: render as invisible spans (marks ride along on save but don't visually leak to logged-out viewers) */
 .public-reader .hive-annotation,
 .public-reader .hive-suggestion { background: transparent; border-bottom: none; }
+
+/* C5a mentions — clickable @username links in prose + comments. Stay visible on the public reader. */
+.mention {
+  color: var(--canvas-dark-ink-strong);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  transition: color 120ms;
+}
+.mention:hover { color: var(--brand); }

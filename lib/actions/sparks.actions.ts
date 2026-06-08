@@ -30,6 +30,7 @@ import { isBlocked } from '@/lib/social/is-blocked'
 import { extractMentionUsernamesFromText } from '@/lib/mentions/extract-mentions'
 import { resolveMentionedUsers } from '@/lib/mentions/resolve-mentions'
 import { recordMentionNotificationsTx } from '@/lib/mentions/record-mention-notifications'
+import { shouldSkipNotification } from '@/lib/notifications/check-preferences'
 import type { SparkStatus, SparkVisibility } from '@/db/schema/social'
 import type { ActionResult } from './book.actions'
 
@@ -344,12 +345,14 @@ export async function getSparkAction(
             .limit(1)
 
           if (entry) {
-            await tx.insert(notifications).values({
-              userId: entry.userId,
-              type: 'SPARK_WIN',
-              resourceType: 'spark',
-              resourceId: sparkId,
-            })
+            if (!(await shouldSkipNotification(entry.userId, 'SPARK_WIN'))) {
+              await tx.insert(notifications).values({
+                userId: entry.userId,
+                type: 'SPARK_WIN',
+                resourceType: 'spark',
+                resourceId: sparkId,
+              })
+            }
 
             // C2 T8: gate feed event on PUBLIC visibility. FRIENDS/PRIVATE
             // winners stay off the global activity feed because the feed
@@ -913,13 +916,15 @@ export async function setCreatorChoiceAction(
       .limit(1)
 
     if (entry && entry.userId !== userId) {
-      await tx.insert(notifications).values({
-        userId: entry.userId,
-        type: 'SPARK_WIN',
-        actorId: userId,
-        resourceType: 'spark',
-        resourceId: sparkId,
-      })
+      if (!(await shouldSkipNotification(entry.userId, 'SPARK_WIN'))) {
+        await tx.insert(notifications).values({
+          userId: entry.userId,
+          type: 'SPARK_WIN',
+          actorId: userId,
+          resourceType: 'spark',
+          resourceId: sparkId,
+        })
+      }
     }
 
     // C2 T8: actor is the WINNER (entry author), gated on PUBLIC visibility so
@@ -1028,13 +1033,15 @@ export async function addSparkEntryCommentAction(
 
     // Notify the entry author if they are not the commenter
     if (entry.userId !== userId) {
-      await tx.insert(notifications).values({
-        userId: entry.userId,
-        type: 'NEW_COMMENT',
-        actorId: userId,
-        resourceType: 'spark_entry',
-        resourceId: entryId,
-      })
+      if (!(await shouldSkipNotification(entry.userId, 'NEW_COMMENT'))) {
+        await tx.insert(notifications).values({
+          userId: entry.userId,
+          type: 'NEW_COMMENT',
+          actorId: userId,
+          resourceType: 'spark_entry',
+          resourceId: entryId,
+        })
+      }
     }
 
     // Mention notifications

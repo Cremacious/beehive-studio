@@ -7,6 +7,7 @@ import { userProfiles } from '@/db/schema/auth'
 import { and, eq, or } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { isBlocked } from '@/lib/social/is-blocked'
+import { shouldSkipNotification } from '@/lib/notifications/check-preferences'
 import { claimInviteSchema } from '@/lib/validations/social'
 import type { ActionResult } from './book.actions'
 
@@ -93,6 +94,7 @@ export async function claimFriendInviteAction(
     return { success: true, data: { inviterUsername, alreadyFriends: true } }
   }
 
+  const skipAccepted = await shouldSkipNotification(invite.inviterId, 'FRIEND_ACCEPTED')
   await db.transaction(async (tx) => {
     await tx
       .update(friendInvites)
@@ -109,13 +111,15 @@ export async function claimFriendInviteAction(
       })
       .returning({ id: friendships.id })
 
-    await tx.insert(notifications).values({
-      userId: invite.inviterId,
-      type: 'FRIEND_ACCEPTED',
-      actorId: userId,
-      resourceType: 'friendship',
-      resourceId: newFriendship.id,
-    })
+    if (!skipAccepted) {
+      await tx.insert(notifications).values({
+        userId: invite.inviterId,
+        type: 'FRIEND_ACCEPTED',
+        actorId: userId,
+        resourceType: 'friendship',
+        resourceId: newFriendship.id,
+      })
+    }
   })
 
   return { success: true, data: { inviterUsername, alreadyFriends: false } }

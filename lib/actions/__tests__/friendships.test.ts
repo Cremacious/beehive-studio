@@ -165,6 +165,9 @@ vi.mock('@/db', () => {
         userBlocks: {
           findFirst: async () => undefined,
         },
+        notificationPreferences: {
+          findFirst: async () => undefined,
+        },
       },
     },
   }

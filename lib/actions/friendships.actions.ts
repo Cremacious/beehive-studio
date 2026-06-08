@@ -5,6 +5,7 @@ import { friendships, notifications, userBlocks, userProfiles } from '@/db/schem
 import { and, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { isBlocked } from '@/lib/social/is-blocked'
+import { shouldSkipNotification } from '@/lib/notifications/check-preferences'
 import type { ActionResult } from './book.actions'
 import {
   sendFriendRequestSchema,
@@ -75,22 +76,26 @@ export async function sendFriendRequestAction(
       return { success: false, error: 'ALREADY_REQUESTED' }
     }
     // PENDING_INCOMING → auto-accept (fires FRIEND_ACCEPTED to the original requester)
+    const skipAutoAccept = await shouldSkipNotification(existing.requesterId, 'FRIEND_ACCEPTED')
     await db.transaction(async (tx) => {
       await tx
         .update(friendships)
         .set({ status: 'ACCEPTED', acceptedAt: new Date() })
         .where(eq(friendships.id, existing.id))
-      await tx.insert(notifications).values({
-        userId: existing.requesterId,
-        type: 'FRIEND_ACCEPTED',
-        actorId: userId,
-        resourceType: 'friendship',
-        resourceId: existing.id,
-      })
+      if (!skipAutoAccept) {
+        await tx.insert(notifications).values({
+          userId: existing.requesterId,
+          type: 'FRIEND_ACCEPTED',
+          actorId: userId,
+          resourceType: 'friendship',
+          resourceId: existing.id,
+        })
+      }
     })
     return { success: true, data: { autoAccepted: true } }
   }
 
+  const skipRequest = await shouldSkipNotification(recipientId, 'FRIEND_REQUEST')
   await db.transaction(async (tx) => {
     const [inserted] = await tx
       .insert(friendships)
@@ -101,13 +106,15 @@ export async function sendFriendRequestAction(
       })
       .returning({ id: friendships.id })
     if (!inserted) throw new Error('FRIENDSHIP_INSERT_FAILED')
-    await tx.insert(notifications).values({
-      userId: recipientId,
-      type: 'FRIEND_REQUEST',
-      actorId: userId,
-      resourceType: 'friendship',
-      resourceId: inserted.id,
-    })
+    if (!skipRequest) {
+      await tx.insert(notifications).values({
+        userId: recipientId,
+        type: 'FRIEND_REQUEST',
+        actorId: userId,
+        resourceType: 'friendship',
+        resourceId: inserted.id,
+      })
+    }
   })
   return { success: true, data: { autoAccepted: false } }
 }
@@ -128,18 +135,21 @@ export async function acceptFriendRequestAction(
   if (row.recipientId !== userId) return { success: false, error: 'NOT_AUTHORIZED' }
   if (row.status !== 'PENDING') return { success: false, error: 'NOT_PENDING' }
 
+  const skipAccepted = await shouldSkipNotification(row.requesterId, 'FRIEND_ACCEPTED')
   await db.transaction(async (tx) => {
     await tx
       .update(friendships)
       .set({ status: 'ACCEPTED', acceptedAt: new Date() })
       .where(eq(friendships.id, row.id))
-    await tx.insert(notifications).values({
-      userId: row.requesterId,
-      type: 'FRIEND_ACCEPTED',
-      actorId: userId,
-      resourceType: 'friendship',
-      resourceId: row.id,
-    })
+    if (!skipAccepted) {
+      await tx.insert(notifications).values({
+        userId: row.requesterId,
+        type: 'FRIEND_ACCEPTED',
+        actorId: userId,
+        resourceType: 'friendship',
+        resourceId: row.id,
+      })
+    }
   })
   return { success: true, data: null }
 }

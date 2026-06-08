@@ -47,6 +47,7 @@ import * as v from '@/lib/validations/book-club'
 import { extractMentionUsernamesFromText } from '@/lib/mentions/extract-mentions'
 import { resolveMentionedUsers } from '@/lib/mentions/resolve-mentions'
 import { recordMentionNotificationsTx } from '@/lib/mentions/record-mention-notifications'
+import { shouldSkipNotification } from '@/lib/notifications/check-preferences'
 import type { ActionResult } from './book.actions'
 
 const DEFAULT_PAGE_SIZE = 20
@@ -731,16 +732,22 @@ export async function joinClubAction(
       columns: { userId: true },
     })
     if (recipients.length > 0) {
-      await tx.insert(notifications).values(
-        recipients.map((r) => ({
-          id: createId(),
-          userId: r.userId,
-          type: 'CLUB_JOIN_REQUEST' as const,
-          actorId: userId,
-          resourceType: 'book_club_join_request',
-          resourceId: requestId,
-        })),
+      const skipResults = await Promise.all(
+        recipients.map((r) => shouldSkipNotification(r.userId, 'CLUB_JOIN_REQUEST')),
       )
+      const filteredRecipients = recipients.filter((_, i) => !skipResults[i])
+      if (filteredRecipients.length > 0) {
+        await tx.insert(notifications).values(
+          filteredRecipients.map((r) => ({
+            id: createId(),
+            userId: r.userId,
+            type: 'CLUB_JOIN_REQUEST' as const,
+            actorId: userId,
+            resourceType: 'book_club_join_request',
+            resourceId: requestId,
+          })),
+        )
+      }
     }
   })
   return { success: true, data: { joined: false, requested: true } }
@@ -962,6 +969,7 @@ export async function inviteUserToClubAction(
   if (existingInvite) return { success: false, error: 'INVITE_ALREADY_PENDING' }
 
   const inviteId = createId()
+  const skipInvite = await shouldSkipNotification(recipientId, 'CLUB_INVITE')
   await db.transaction(async (tx) => {
     await tx.insert(bookClubInvites).values({
       id: inviteId,
@@ -970,14 +978,16 @@ export async function inviteUserToClubAction(
       recipientId,
       status: 'PENDING',
     })
-    await tx.insert(notifications).values({
-      id: createId(),
-      userId: recipientId,
-      type: 'CLUB_INVITE',
-      actorId: userId,
-      resourceType: 'book_club_invite',
-      resourceId: inviteId,
-    })
+    if (!skipInvite) {
+      await tx.insert(notifications).values({
+        id: createId(),
+        userId: recipientId,
+        type: 'CLUB_INVITE',
+        actorId: userId,
+        resourceType: 'book_club_invite',
+        resourceId: inviteId,
+      })
+    }
   })
   return { success: true, data: { inviteId } }
 }
@@ -1152,6 +1162,7 @@ export async function respondToJoinRequestAction(
   }
 
   // Accept path
+  const skipApproved = await shouldSkipNotification(request.userId, 'CLUB_JOIN_APPROVED')
   await db.transaction(async (tx) => {
     await tx
       .update(bookClubJoinRequests)
@@ -1167,14 +1178,16 @@ export async function respondToJoinRequestAction(
       .update(bookClubs)
       .set({ memberCount: sql`${bookClubs.memberCount} + 1` })
       .where(eq(bookClubs.id, request.clubId))
-    await tx.insert(notifications).values({
-      id: createId(),
-      userId: request.userId,
-      type: 'CLUB_JOIN_APPROVED',
-      actorId: userId,
-      resourceType: 'book_club',
-      resourceId: request.clubId,
-    })
+    if (!skipApproved) {
+      await tx.insert(notifications).values({
+        id: createId(),
+        userId: request.userId,
+        type: 'CLUB_JOIN_APPROVED',
+        actorId: userId,
+        resourceType: 'book_club',
+        resourceId: request.clubId,
+      })
+    }
   })
   return { success: true, data: { accepted: true } }
 }

@@ -11,6 +11,7 @@ import { getBookHive } from '@/lib/hive/get-book-hive'
 import { requireHiveMod } from '@/lib/hive/permissions'
 import { recordHiveActivity } from '@/lib/hive/record-activity'
 import { recordSocialActivityTx } from '@/lib/social/record-activity'
+import { shouldSkipNotification } from '@/lib/notifications/check-preferences'
 import { friendships } from '@/db/schema/social'
 import { createId } from '@paralleldrive/cuid2'
 import type { ActionResult } from './book.actions'
@@ -244,13 +245,15 @@ export async function inviteMemberByUsernameAction(hiveId: string, username: str
   if (existing) return { success: false, error: 'Already invited' }
 
   await db.insert(hiveInvites).values({ hiveId, inviteeId: profile.userId })
-  await db.insert(notifications).values({
-    userId: profile.userId,
-    type: 'HIVE_INVITE',
-    actorId: userId,
-    resourceType: 'hive',
-    resourceId: hiveId,
-  })
+  if (!(await shouldSkipNotification(profile.userId, 'HIVE_INVITE'))) {
+    await db.insert(notifications).values({
+      userId: profile.userId,
+      type: 'HIVE_INVITE',
+      actorId: userId,
+      resourceType: 'hive',
+      resourceId: hiveId,
+    })
+  }
   return { success: true, data: undefined }
 }
 

@@ -11,6 +11,7 @@ import { ensureLikedListAction } from '@/lib/reading-lists/ensure-liked-list'
 import { extractMentionUsernamesFromText } from '@/lib/mentions/extract-mentions'
 import { resolveMentionedUsers } from '@/lib/mentions/resolve-mentions'
 import { recordMentionNotificationsTx } from '@/lib/mentions/record-mention-notifications'
+import { shouldSkipNotification } from '@/lib/notifications/check-preferences'
 import type { ActionResult } from './book.actions'
 import type { BookComment } from './discover.actions'
 
@@ -39,13 +40,15 @@ export async function toggleBookLikeAction(bookId: string): Promise<ActionResult
       .where(eq(books.id, bookId))
       .limit(1)
     if (book && book.userId !== userId) {
-      await tx.insert(notifications).values({
-        userId: book.userId,
-        type: 'NEW_LIKE',
-        actorId: userId,
-        resourceType: 'book',
-        resourceId: bookId,
-      })
+      if (!(await shouldSkipNotification(book.userId, 'NEW_LIKE'))) {
+        await tx.insert(notifications).values({
+          userId: book.userId,
+          type: 'NEW_LIKE',
+          actorId: userId,
+          resourceType: 'book',
+          resourceId: bookId,
+        })
+      }
     }
 
     // C1 T8 hook: book_liked. Fire only on LIKE (insert path). Gate on PUBLIC+discoverable.
@@ -110,13 +113,15 @@ export async function toggleFollowAction(targetUserId: string): Promise<ActionRe
 
   await db.insert(follows).values({ followerId: userId, followeeId: targetUserId })
 
-  await db.insert(notifications).values({
-    userId: targetUserId,
-    type: 'NEW_FOLLOWER',
-    actorId: userId,
-    resourceType: 'user',
-    resourceId: userId,
-  })
+  if (!(await shouldSkipNotification(targetUserId, 'NEW_FOLLOWER'))) {
+    await db.insert(notifications).values({
+      userId: targetUserId,
+      type: 'NEW_FOLLOWER',
+      actorId: userId,
+      resourceType: 'user',
+      resourceId: userId,
+    })
+  }
 
   return { success: true, data: { following: true } }
 }
@@ -155,13 +160,15 @@ export async function addCommentAction(
         .where(eq(books.id, bookId))
         .limit(1)
       if (book && book.userId !== userId) {
-        await tx.insert(notifications).values({
-          userId: book.userId,
-          type: 'NEW_COMMENT',
-          actorId: userId,
-          resourceType: 'book',
-          resourceId: bookId,
-        })
+        if (!(await shouldSkipNotification(book.userId, 'NEW_COMMENT'))) {
+          await tx.insert(notifications).values({
+            userId: book.userId,
+            type: 'NEW_COMMENT',
+            actorId: userId,
+            resourceType: 'book',
+            resourceId: bookId,
+          })
+        }
       }
 
       // C1 T8 hook: book_commented. Gate on PUBLIC+discoverable. Spec §3.4.

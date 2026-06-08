@@ -24,6 +24,7 @@ import { getUserPublicListsAction } from '@/lib/actions/reading-lists.actions'
 import { ListCard } from '@/app/[locale]/(app)/reading-lists/_components/list-card'
 import { RenderMentionsInText } from '@/components/mentions/render-mentions-in-text'
 import { ClubCard } from '@/app/[locale]/(app)/clubs/_components/club-card'
+import { InviteClaimedToast } from '@/components/invite-claimed-toast'
 
 type Props = { params: Promise<{ locale: string; username: string }> }
 
@@ -116,6 +117,7 @@ export default async function AuthorProfilePage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-[#141414]">
+      <InviteClaimedToast copy={`You and @${profile.username} are now friends.`} />
       {/* Profile header */}
       <div className="px-6 pt-7 pb-6 border-b border-[#2a2a2a]">
         <div className="flex gap-5 items-start max-w-3xl">

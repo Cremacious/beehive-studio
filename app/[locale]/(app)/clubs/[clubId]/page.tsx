@@ -8,6 +8,7 @@ import { ClubBooksPanel } from '../_components/club-books-panel'
 import { ClubMembersPanel } from '../_components/club-members-panel'
 import { ClubSchedulePanel } from '../_components/club-schedule-panel'
 import { ClubSettingsPanel } from '../_components/club-settings-panel'
+import { InviteClaimedToast } from '@/components/invite-claimed-toast'
 
 const VALID_TABS = [
   'about',
@@ -54,6 +55,7 @@ export default async function ClubDetailPage({
 
   return (
     <main className="max-w-5xl mx-auto px-4 py-6 sm:px-6">
+      <InviteClaimedToast copy={`Welcome to ${club.name}!`} />
       <ClubHeader
         club={club}
         owner={owner}

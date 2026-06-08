@@ -12,8 +12,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
+import { MentionableTextarea } from '@/components/mentions/mentionable-textarea'
 import { createBuzzPostAction } from '@/lib/actions/hive-buzz.actions'
 import type { BuzzPostType } from '@/lib/validations/hive-buzz'
 
@@ -125,9 +125,9 @@ export function ComposeBuzzModal({ open, onOpenChange, hiveId }: Props) {
 
         {type === 'TEXT' ? (
           <div className="space-y-1">
-            <Textarea
+            <MentionableTextarea
               value={body}
-              onChange={(e) => setBody(e.target.value)}
+              onChange={setBody}
               placeholder="What's the buzz?"
               rows={5}
               maxLength={TEXT_MAX}
@@ -156,9 +156,9 @@ export function ComposeBuzzModal({ open, onOpenChange, hiveId }: Props) {
               )}
             </div>
             <div className="space-y-1">
-              <Textarea
+              <MentionableTextarea
                 value={body}
-                onChange={(e) => setBody(e.target.value)}
+                onChange={setBody}
                 placeholder="Optional caption..."
                 rows={3}
                 maxLength={CAPTION_MAX}

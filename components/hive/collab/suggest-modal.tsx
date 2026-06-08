@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
+import { MentionableTextarea } from '@/components/mentions/mentionable-textarea'
 import { createSuggestionAction } from '@/lib/actions/hive-suggestions.actions'
 
 type Props = {
@@ -130,9 +131,9 @@ export function SuggestModal({
           autoFocus
         />
 
-        <Textarea
+        <MentionableTextarea
           value={body}
-          onChange={(e) => setBody(e.target.value)}
+          onChange={setBody}
           placeholder="Optional: explain your suggestion"
           rows={3}
         />

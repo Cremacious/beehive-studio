@@ -11,6 +11,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { createClubDiscussionAction } from '@/lib/actions/book-clubs.actions'
+import { MentionableTextarea } from '@/components/mentions/mentionable-textarea'
 
 type Props = {
   clubId: string
@@ -98,12 +99,12 @@ export function DiscussionComposer({ clubId, open, onOpenChange }: Props) {
             >
               Content
             </label>
-            <textarea
+            <MentionableTextarea
               id="discussion-content"
               rows={6}
               value={content}
               maxLength={CONTENT_MAX}
-              onChange={(e) => setContent(e.target.value)}
+              onChange={setContent}
               placeholder="Share your thoughts…"
               className="w-full rounded-[var(--r-row)] px-3 py-2 text-sm outline-none resize-none"
               style={{

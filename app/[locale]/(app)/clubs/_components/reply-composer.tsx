@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { replyToClubDiscussionAction } from '@/lib/actions/book-clubs.actions'
+import { MentionableTextarea } from '@/components/mentions/mentionable-textarea'
 
 type Props = {
   discussionId: string
@@ -49,10 +50,10 @@ export function ReplyComposer({ discussionId }: Props) {
       >
         Write a reply
       </label>
-      <textarea
+      <MentionableTextarea
         id="reply-content"
         value={content}
-        onChange={(e) => setContent(e.target.value)}
+        onChange={setContent}
         maxLength={5000}
         rows={3}
         placeholder="Share your thoughts…"

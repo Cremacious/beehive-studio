@@ -15,6 +15,7 @@ import type { SparkVisibility } from '@/db/schema/social'
 import { updateListAction } from '@/lib/actions/reading-lists.actions'
 import type { ListSummary } from '@/lib/actions/reading-lists.actions'
 import { TagInput } from './tag-input'
+import { MentionableTextarea } from '@/components/mentions/mentionable-textarea'
 
 type Visibility = 'PUBLIC' | 'FRIENDS' | 'PRIVATE'
 
@@ -102,9 +103,9 @@ export function EditListMetadataDialog({ initialList, open, onOpenChange }: Prop
             <label className="text-[11px] font-mono uppercase tracking-wider mb-1.5 block text-[var(--canvas-dark-ink-muted)]">
               Description
             </label>
-            <textarea
+            <MentionableTextarea
               value={description}
-              onChange={(e) => setDescription(e.target.value.slice(0, 500))}
+              onChange={(next) => setDescription(next.slice(0, 500))}
               maxLength={500}
               rows={3}
               className="w-full px-3 py-2 rounded-[var(--r-row)] border text-sm text-[var(--canvas-dark-ink)] resize-none outline-none focus:border-[var(--canvas-dark-ink-muted)]"

@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button'
 import { createDiscussionPostAction } from '@/lib/actions/hive-discussions.actions'
 import type { DiscussionTopic } from '@/lib/validations/hive-discussion'
 import { TOPIC_META } from './discussion-row'
+import { MentionableTextarea } from '@/components/mentions/mentionable-textarea'
 
 const TOPICS: DiscussionTopic[] = ['GENERAL', 'WORLDBUILDING', 'FEEDBACK', 'OFF_TOPIC']
 
@@ -129,9 +130,9 @@ export function DiscussionComposeModal({ open, onOpenChange, hiveId }: Props) {
           className="w-full px-3 py-2 font-geist text-sm focus:outline-none placeholder:text-[var(--canvas-dark-ink-muted)]"
         />
 
-        <textarea
+        <MentionableTextarea
           value={body}
-          onChange={(e) => setBody(e.target.value)}
+          onChange={setBody}
           placeholder="What's on your mind?"
           rows={8}
           autoFocus

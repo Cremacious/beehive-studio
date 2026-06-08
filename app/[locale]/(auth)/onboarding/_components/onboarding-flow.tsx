@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import Link from 'next/link'
 import { checkUsernameAvailableAction, completeOnboardingAction } from '@/lib/actions/onboarding.actions'
+import { MentionableTextarea } from '@/components/mentions/mentionable-textarea'
 
 type Step = 1 | 2 | 3
 type UsernameStatus = 'idle' | 'checking' | 'valid' | 'error'
@@ -332,13 +333,13 @@ export function OnboardingFlow({ locale }: { locale: string }) {
                     >
                       Bio
                     </label>
-                    <textarea
+                    <MentionableTextarea
                       id="bio"
                       maxLength={200}
                       rows={4}
                       placeholder="Novelist, night owl, tea enthusiast. Writing my first thriller set in coastal Cornwall."
                       value={bio}
-                      onChange={e => setBio(e.target.value)}
+                      onChange={setBio}
                       className={`${fieldClass} resize-none`}
                       style={inputStyle}
                     />

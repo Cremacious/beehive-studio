@@ -13,6 +13,7 @@ import {
 import { VisibilityPicker } from '@/app/[locale]/(public)/discover/_components/visibility-picker'
 import type { SparkVisibility } from '@/db/schema/social'
 import { createListAction } from '@/lib/actions/reading-lists.actions'
+import { MentionableTextarea } from '@/components/mentions/mentionable-textarea'
 import { TagInput } from './tag-input'
 
 type Visibility = 'PUBLIC' | 'FRIENDS' | 'PRIVATE'
@@ -97,9 +98,9 @@ export function CreateListModal({ locale, open, onOpenChange }: Props) {
             <label className="text-[11px] font-mono uppercase tracking-wider mb-1.5 block text-[var(--canvas-dark-ink-muted)]">
               Description
             </label>
-            <textarea
+            <MentionableTextarea
               value={description}
-              onChange={(e) => setDescription(e.target.value.slice(0, 500))}
+              onChange={(next) => setDescription(next.slice(0, 500))}
               maxLength={500}
               rows={3}
               placeholder="What ties this list together?"

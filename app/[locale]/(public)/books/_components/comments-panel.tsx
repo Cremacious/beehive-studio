@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { addCommentAction } from '@/lib/actions/social.actions'
 import { getBookCommentsAction, type BookComment } from '@/lib/actions/discover.actions'
 import { RenderMentionsInText } from '@/components/mentions/render-mentions-in-text'
+import { MentionableTextarea } from '@/components/mentions/mentionable-textarea'
 
 type Props = {
   bookId: string
@@ -169,9 +170,9 @@ export function CommentsPanel({
             </span>
           )}
           <div className="flex-1">
-            <textarea
+            <MentionableTextarea
               value={draft}
-              onChange={(e) => setDraft(e.target.value)}
+              onChange={setDraft}
               placeholder="Add a comment…"
               aria-label="Add a comment"
               maxLength={1000}

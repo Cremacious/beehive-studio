@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog'
 import { searchBooksAction } from '@/lib/actions/discover.actions'
 import { addBookToListAction } from '@/lib/actions/reading-lists.actions'
+import { MentionableTextarea } from '@/components/mentions/mentionable-textarea'
 
 type Props = {
   listId: string
@@ -483,9 +484,9 @@ export function MetadataBlock({
 
       <label className="flex flex-col gap-1 text-sm">
         <span className="font-medium">Commentary (optional)</span>
-        <textarea
+        <MentionableTextarea
           value={commentary}
-          onChange={(e) => onCommentaryChange(e.target.value)}
+          onChange={onCommentaryChange}
           maxLength={500}
           rows={3}
           placeholder="What did you think?"

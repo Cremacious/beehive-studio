@@ -14,6 +14,7 @@ import { VisibilityPicker } from '@/app/[locale]/(public)/discover/_components/v
 import type { SparkVisibility } from '@/db/schema/social'
 import { createClubAction } from '@/lib/actions/book-clubs.actions'
 import { TagInput } from '@/app/[locale]/(app)/reading-lists/_components/tag-input'
+import { MentionableTextarea } from '@/components/mentions/mentionable-textarea'
 
 type Visibility = 'PUBLIC' | 'FRIENDS' | 'PRIVATE'
 
@@ -103,9 +104,9 @@ export function CreateClubModal({ locale, open, onOpenChange }: Props) {
             <label className="text-[11px] font-mono uppercase tracking-wider mb-1.5 block text-[var(--canvas-dark-ink-muted)]">
               Description
             </label>
-            <textarea
+            <MentionableTextarea
               value={description}
-              onChange={(e) => setDescription(e.target.value.slice(0, 1000))}
+              onChange={(next) => setDescription(next.slice(0, 1000))}
               maxLength={1000}
               rows={3}
               placeholder="What's this club about?"
@@ -120,9 +121,9 @@ export function CreateClubModal({ locale, open, onOpenChange }: Props) {
             <label className="text-[11px] font-mono uppercase tracking-wider mb-1.5 block text-[var(--canvas-dark-ink-muted)]">
               Rules
             </label>
-            <textarea
+            <MentionableTextarea
               value={rules}
-              onChange={(e) => setRules(e.target.value.slice(0, 2000))}
+              onChange={(next) => setRules(next.slice(0, 2000))}
               maxLength={2000}
               rows={4}
               placeholder="House rules, code of conduct, etc."

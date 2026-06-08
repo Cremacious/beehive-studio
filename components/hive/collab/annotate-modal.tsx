@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
+import { MentionableTextarea } from '@/components/mentions/mentionable-textarea'
 import { createAnnotationAction } from '@/lib/actions/hive-annotations.actions'
 import type { AnnotationLayer } from '@/lib/tiptap-extensions/hive-annotation-mark'
 
@@ -201,9 +201,9 @@ export function AnnotateModal({
           })}
         </div>
 
-        <Textarea
+        <MentionableTextarea
           value={body}
-          onChange={(e) => setBody(e.target.value)}
+          onChange={setBody}
           placeholder="Leave your feedback…"
           rows={5}
           autoFocus

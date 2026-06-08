@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Check, CornerDownRight, Loader2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
+import { MentionableTextarea } from '@/components/mentions/mentionable-textarea'
 import {
   canResolveAnnotation,
   type HiveRole,
@@ -257,9 +257,9 @@ export function AnnotationCard({
 
             {replyOpen ? (
               <div className="space-y-1.5">
-                <Textarea
+                <MentionableTextarea
                   value={replyBody}
-                  onChange={(e) => setReplyBody(e.target.value)}
+                  onChange={setReplyBody}
                   placeholder="Reply…"
                   rows={2}
                   className="text-xs"

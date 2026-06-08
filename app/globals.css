@@ -781,6 +781,14 @@ body {
   overflow: hidden;
 }
 .panel-pad { padding: 22px 24px; }
+.set-block + .set-block { margin-top: 18px; }
+.set-block h3 {
+  font-family: var(--font-display); font-weight: 700; font-size: 15px;
+  color: var(--canvas-dark-ink-strong); margin: 0 0 4px;
+}
+.set-block .sd { font-size: 12.5px; color: var(--canvas-dark-ink-muted); margin: 0 0 16px; }
+.set-block.danger { border: 1px solid oklch(from var(--status-error) l c h / 0.4); }
+.set-block.danger h3 { color: var(--status-error); }
 .sec-head {
   display: flex; align-items: center; justify-content: space-between;
   gap: 16px; margin-bottom: 16px;

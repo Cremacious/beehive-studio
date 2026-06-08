@@ -30,16 +30,14 @@ export function ClubSettingsPanel({ club, viewerRole, locale }: Props) {
   // Defense-in-depth: parent page should already gate the Settings tab.
   if (viewerRole !== 'OWNER' && viewerRole !== 'MODERATOR') {
     return (
-      <div
-        className="rounded-[var(--r-row)] p-4 text-[12px] italic"
-        style={{
-          background: 'var(--canvas-dark-100)',
-          color: 'var(--canvas-dark-ink-muted)',
-          boxShadow: 'var(--sh-inset)',
-        }}
-      >
-        Settings are only available to club owners and moderators.
-      </div>
+      <section className="panel panel-pad set-block">
+        <p
+          className="text-[12px] italic m-0"
+          style={{ color: 'var(--canvas-dark-ink-muted)' }}
+        >
+          Settings are only available to club owners and moderators.
+        </p>
+      </section>
     )
   }
 
@@ -57,106 +55,93 @@ export function ClubSettingsPanel({ club, viewerRole, locale }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col">
       {/* Metadata */}
-      <Section title="Club details" subtitle="Name, description, rules, tags, visibility, and join policy.">
+      <section className="panel panel-pad set-block">
+        <h3>Club details</h3>
+        <p className="sd">
+          Name, description, rules, tags, visibility, and join policy.
+        </p>
         <button
           type="button"
           onClick={() => setEditOpen(true)}
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[var(--r-pill)] text-[13px] font-semibold cursor-pointer"
-          style={{ background: 'var(--brand)', color: 'var(--brand-ink)' }}
+          className="btn-brand btn-sm"
         >
-          <Pencil size={14} /> Edit club details
+          <Pencil /> Edit club details
         </button>
         <EditClubMetadataDialog
           initialClub={club}
           open={editOpen}
           onOpenChange={setEditOpen}
         />
-      </Section>
+      </section>
 
-      {/* Invites */}
-      <Section
-        title="Invite members"
-        subtitle="Search by username or share an invite link. Links expire after 14 days."
-      >
+      {/* Invite members */}
+      <section className="panel panel-pad set-block">
+        <h3>Invite members</h3>
+        <p className="sd">
+          Search by username or share an invite link. Links expire after 14 days.
+        </p>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:flex-wrap">
           <InviteByUsernameInput clubId={club.id} />
           <InviteLinkDialog clubId={club.id} locale={locale} />
         </div>
-      </Section>
+      </section>
 
       {/* Pending invites */}
-      <Section
-        title="Pending invites"
-        subtitle="People you've invited who haven't responded yet."
-      >
+      <section className="panel panel-pad set-block">
+        <h3>Pending invites</h3>
+        <p className="sd">
+          People you&apos;ve invited who haven&apos;t responded yet.
+        </p>
         <PendingInvitesPanel clubId={club.id} />
-      </Section>
+      </section>
 
       {/* Join requests */}
-      <Section
-        title="Join requests"
-        subtitle="People asking to join. Approve to add as a member."
-      >
+      <section className="panel panel-pad set-block">
+        <h3>Join requests</h3>
+        <p className="sd">
+          People asking to join. Approve to add as a member.
+        </p>
         <JoinRequestsPanel clubId={club.id} viewerRole={viewerRole} />
-      </Section>
+      </section>
 
       {/* Transfer ownership — OWNER only */}
       {isOwner && (
-        <Section
-          title="Transfer ownership"
-          subtitle="Hand the club off to another member. You become a moderator."
-        >
+        <section className="panel panel-pad set-block">
+          <h3>Transfer ownership</h3>
+          <p className="sd">
+            Hand this club over to another member. You&apos;ll become a moderator.
+          </p>
           <button
             type="button"
             disabled
             title="Coming via T13"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[var(--r-pill)] text-[13px] font-semibold opacity-50 cursor-not-allowed"
-            style={{
-              background: 'var(--canvas-dark-300)',
-              color: 'var(--canvas-dark-ink-strong)',
-            }}
+            className="btn-tile btn-sm opacity-50 cursor-not-allowed"
           >
-            <ArrowRightLeft size={14} /> Transfer ownership
+            <ArrowRightLeft /> Transfer ownership…
           </button>
-        </Section>
+        </section>
       )}
 
       {/* Danger zone — OWNER only */}
       {isOwner && (
-        <section
-          className="rounded-[var(--r-card)] p-5"
-          style={{
-            background: 'var(--canvas-dark-200)',
-            border: '1px solid color-mix(in oklch, var(--status-error) 30%, transparent)',
-            boxShadow: 'var(--sh-card)',
-          }}
-        >
-          <h3
-            className="text-[14px] font-semibold mb-1"
-            style={{ color: 'var(--status-error)' }}
-          >
-            Danger zone
-          </h3>
-          <p
-            className="text-[12px] mb-4"
-            style={{ color: 'var(--canvas-dark-ink-muted)' }}
-          >
-            Deleting the club permanently removes its discussions, schedule,
+        <section className="panel panel-pad set-block danger">
+          <h3>Delete club</h3>
+          <p className="sd">
+            This permanently deletes the club, its discussions, schedule entries,
             book queue, and membership records. This cannot be undone.
           </p>
           <button
             type="button"
             onClick={() => setDeleteOpen(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[var(--r-pill)] text-[13px] font-semibold cursor-pointer"
+            className="btn-ghost btn-sm"
             style={{
-              background: 'transparent',
+              borderColor: 'oklch(from var(--status-error) l c h / 0.5)',
               color: 'var(--status-error)',
-              border: '1px solid var(--status-error)',
             }}
           >
-            <Trash2 size={14} /> Delete club
+            <Trash2 /> Delete this club
           </button>
           <ConfirmDialog
             open={deleteOpen}
@@ -170,35 +155,5 @@ export function ClubSettingsPanel({ club, viewerRole, locale }: Props) {
         </section>
       )}
     </div>
-  )
-}
-
-function Section({
-  title,
-  subtitle,
-  children,
-}: {
-  title: string
-  subtitle: string
-  children: React.ReactNode
-}) {
-  return (
-    <section className="flex flex-col gap-3">
-      <div>
-        <h3
-          className="text-[14px] font-semibold"
-          style={{ color: 'var(--canvas-dark-ink-strong)' }}
-        >
-          {title}
-        </h3>
-        <p
-          className="text-[12px] mt-0.5"
-          style={{ color: 'var(--canvas-dark-ink-muted)' }}
-        >
-          {subtitle}
-        </p>
-      </div>
-      {children}
-    </section>
   )
 }

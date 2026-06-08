@@ -8,6 +8,52 @@ import {
 } from '@/lib/actions/notifications.actions'
 import { cn } from '@/lib/utils'
 
+function mentionSurfaceLabel(rt: string | null): string {
+  switch (rt) {
+    case 'book_club_discussion': return 'a discussion'
+    case 'book_club_discussion_reply': return 'a discussion reply'
+    case 'hive_discussion': return 'a hive discussion'
+    case 'hive_discussion_reply': return 'a hive discussion reply'
+    case 'hive_buzz_post': return 'a buzz post'
+    case 'hive_annotation': return 'an annotation'
+    case 'hive_suggestion': return 'a suggestion'
+    case 'book_comment': return 'a book comment'
+    case 'spark_entry_comment': return 'a spark comment'
+    case 'spark_entry_comment_reply': return 'a spark reply'
+    case 'reading_list_description': return 'a reading list'
+    case 'reading_list_book_commentary': return 'a list commentary'
+    case 'book_club_description': return 'a club description'
+    case 'book_club_rules': return 'club rules'
+    default: return 'a post'
+  }
+}
+
+function mentionHref(n: NotificationRow): string {
+  const rid = n.resourceId ?? ''
+  switch (n.resourceType) {
+    case 'book_comment': return `/en/books/${rid}`
+    case 'spark_entry_comment':
+    case 'spark_entry_comment_reply':
+      return `/en/sparks`
+    case 'book_club_discussion':
+    case 'book_club_discussion_reply':
+      return `/en/clubs`
+    case 'hive_discussion':
+    case 'hive_discussion_reply':
+    case 'hive_buzz_post':
+    case 'hive_annotation':
+    case 'hive_suggestion':
+      return `/en/community`
+    case 'reading_list_description':
+    case 'reading_list_book_commentary':
+      return `/en/reading-lists/${rid}`
+    case 'book_club_description':
+    case 'book_club_rules':
+      return `/en/clubs/${rid}`
+    default: return `/en/community`
+  }
+}
+
 export function NotificationsBell() {
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState<NotificationRow[]>([])
@@ -52,6 +98,8 @@ export function NotificationsBell() {
       // joinRequestId. Neither carries the clubId directly, so route to the
       // clubs index — matches the FRIEND_REQUEST -> /friends precedent.
       window.location.href = `/en/clubs`
+    } else if (n.type === 'MENTION') {
+      window.location.href = mentionHref(n)
     }
   }
 
@@ -71,6 +119,11 @@ export function NotificationsBell() {
     CLUB_INVITE: 'invited you to a book club',
     CLUB_JOIN_REQUEST: 'requested to join your book club',
     CLUB_JOIN_APPROVED: 'approved your request to join their book club',
+  }
+
+  function renderLabel(n: NotificationRow): string {
+    if (n.type === 'MENTION') return `mentioned you in ${mentionSurfaceLabel(n.resourceType)}`
+    return LABELS[n.type] ?? n.type.toLowerCase().replace(/_/g, ' ')
   }
 
   return (
@@ -111,7 +164,7 @@ export function NotificationsBell() {
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-foreground leading-relaxed">
                       <strong>{n.actor?.name ?? 'Someone'}</strong>{' '}
-                      {LABELS[n.type] ?? n.type.toLowerCase().replace(/_/g, ' ')}
+                      {renderLabel(n)}
                     </p>
                     <p className="text-[10px] text-muted-foreground mt-0.5">{new Date(n.createdAt).toLocaleDateString()}</p>
                   </div>

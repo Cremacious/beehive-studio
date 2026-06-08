@@ -10,8 +10,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { VisibilityPicker } from '@/app/[locale]/(public)/discover/_components/visibility-picker'
-import type { SparkVisibility } from '@/db/schema/social'
+import { VisibilityPicker, PUBLIC_FRIENDS_PRIVATE_OPTIONS } from '@/components/visibility-picker'
 import { updateListAction } from '@/lib/actions/reading-lists.actions'
 import type { ListSummary } from '@/lib/actions/reading-lists.actions'
 import { TagInput } from './tag-input'
@@ -126,8 +125,9 @@ export function EditListMetadataDialog({ initialList, open, onOpenChange }: Prop
               Visibility
             </label>
             <VisibilityPicker
-              value={visibility as SparkVisibility}
-              onChange={(v) => setVisibility(v as Visibility)}
+              value={visibility}
+              onChange={setVisibility}
+              options={PUBLIC_FRIENDS_PRIVATE_OPTIONS}
             />
           </div>
           <label className="flex items-center gap-2 text-sm">

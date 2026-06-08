@@ -10,8 +10,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { VisibilityPicker } from '@/app/[locale]/(public)/discover/_components/visibility-picker'
-import type { SparkVisibility } from '@/db/schema/social'
+import { VisibilityPicker, PUBLIC_FRIENDS_PRIVATE_OPTIONS } from '@/components/visibility-picker'
 import { createClubAction } from '@/lib/actions/book-clubs.actions'
 import { TagInput } from '@/app/[locale]/(app)/reading-lists/_components/tag-input'
 import { MentionableTextarea } from '@/components/mentions/mentionable-textarea'
@@ -148,8 +147,9 @@ export function CreateClubModal({ locale, open, onOpenChange }: Props) {
               Visibility
             </label>
             <VisibilityPicker
-              value={visibility as SparkVisibility}
-              onChange={(v) => setVisibility(v as Visibility)}
+              value={visibility}
+              onChange={setVisibility}
+              options={PUBLIC_FRIENDS_PRIVATE_OPTIONS}
             />
           </div>
           <label className="flex items-center gap-2 text-sm">

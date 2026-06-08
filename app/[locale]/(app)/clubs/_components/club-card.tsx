@@ -2,7 +2,6 @@ import Link from 'next/link'
 import { BookOpen } from 'lucide-react'
 import type { ClubSummary } from '@/lib/actions/book-clubs.actions'
 import { VisibilityPill } from '@/app/[locale]/(public)/discover/_components/visibility-pill'
-import type { SparkVisibility } from '@/db/schema/social'
 
 type Props = {
   club: ClubSummary
@@ -38,7 +37,7 @@ export function ClubCard({ club, locale }: Props) {
         </h3>
         {club.visibility !== 'PUBLIC' && (
           <span className="shrink-0">
-            <VisibilityPill visibility={club.visibility as SparkVisibility} />
+            <VisibilityPill visibility={club.visibility} />
           </span>
         )}
       </div>

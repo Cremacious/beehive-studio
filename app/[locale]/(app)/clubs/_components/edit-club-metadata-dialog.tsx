@@ -10,8 +10,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { VisibilityPicker } from '@/app/[locale]/(public)/discover/_components/visibility-picker'
-import type { SparkVisibility } from '@/db/schema/social'
+import { VisibilityPicker, PUBLIC_FRIENDS_PRIVATE_OPTIONS } from '@/components/visibility-picker'
 import {
   updateClubAction,
   type ClubSummary,
@@ -155,8 +154,9 @@ export function EditClubMetadataDialog({
               Visibility
             </label>
             <VisibilityPicker
-              value={visibility as SparkVisibility}
-              onChange={(v) => setVisibility(v as Visibility)}
+              value={visibility}
+              onChange={setVisibility}
+              options={PUBLIC_FRIENDS_PRIVATE_OPTIONS}
             />
           </div>
           <label className="flex items-center gap-2 text-sm">

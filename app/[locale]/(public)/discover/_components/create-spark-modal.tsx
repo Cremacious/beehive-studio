@@ -2,7 +2,7 @@
 import { useState, useEffect, useTransition } from 'react'
 import { createSparkAction } from '@/lib/actions/sparks.actions'
 import { useRouter } from 'next/navigation'
-import { VisibilityPicker } from './visibility-picker'
+import { VisibilityPicker, PUBLIC_FRIENDS_PRIVATE_OPTIONS } from '@/components/visibility-picker'
 import type { SparkVisibility } from '@/db/schema/social'
 
 export function CreateSparkModal({ locale }: { locale: string }) {
@@ -91,7 +91,7 @@ export function CreateSparkModal({ locale }: { locale: string }) {
                 <label className="text-[11px] font-mono uppercase tracking-wider mb-2 block text-[var(--canvas-dark-ink-muted)]">
                   Visibility
                 </label>
-                <VisibilityPicker value={visibility} onChange={setVisibility} />
+                <VisibilityPicker value={visibility} onChange={setVisibility} options={PUBLIC_FRIENDS_PRIVATE_OPTIONS} />
               </div>
               <label className="flex items-center gap-2 text-sm">
                 <input

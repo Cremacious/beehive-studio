@@ -11,7 +11,6 @@ import type {
 } from '@/lib/actions/reading-lists.actions'
 import { deleteListAction } from '@/lib/actions/reading-lists.actions'
 import { VisibilityPill } from '@/app/[locale]/(public)/discover/_components/visibility-pill'
-import type { SparkVisibility } from '@/db/schema/social'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -87,7 +86,7 @@ export function ListDetailHeader({
           </span>
         ) : list.visibility !== 'PUBLIC' ? (
           <span className="shrink-0">
-            <VisibilityPill visibility={list.visibility as SparkVisibility} />
+            <VisibilityPill visibility={list.visibility} />
           </span>
         ) : null}
 

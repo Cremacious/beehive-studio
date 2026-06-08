@@ -1,23 +1,24 @@
 'use client'
 
 import { Globe, Users, Lock } from 'lucide-react'
-import type { SparkVisibility } from '@/db/schema/social'
 
-type Props = {
-  value: SparkVisibility
-  onChange: (next: SparkVisibility) => void
+export type VisibilityOption<T extends string> = {
+  value: T
+  label: string
+  blurb: string
+  icon: typeof Globe
 }
 
-const OPTIONS: Array<{ value: SparkVisibility; label: string; icon: typeof Globe; blurb: string }> = [
-  { value: 'PUBLIC', label: 'Public', icon: Globe, blurb: 'Anyone can see and enter.' },
-  { value: 'FRIENDS', label: 'Friends', icon: Users, blurb: 'Only your friends can see and enter.' },
-  { value: 'PRIVATE', label: 'Private', icon: Lock, blurb: 'Only you can see this spark.' },
-]
+type Props<T extends string> = {
+  value: T
+  onChange: (next: T) => void
+  options: VisibilityOption<T>[]
+}
 
-export function VisibilityPicker({ value, onChange }: Props) {
+export function VisibilityPicker<T extends string>({ value, onChange, options }: Props<T>) {
   return (
     <div className="grid grid-cols-3 gap-2">
-      {OPTIONS.map((opt) => {
+      {options.map((opt) => {
         const Icon = opt.icon
         const active = value === opt.value
         return (
@@ -40,3 +41,13 @@ export function VisibilityPicker({ value, onChange }: Props) {
     </div>
   )
 }
+
+/**
+ * Shared option set for the canonical 3-value `'PUBLIC' | 'FRIENDS' | 'PRIVATE'` enum literal
+ * shared by SparkVisibility, BookVisibility, and book club visibility.
+ */
+export const PUBLIC_FRIENDS_PRIVATE_OPTIONS: VisibilityOption<'PUBLIC' | 'FRIENDS' | 'PRIVATE'>[] = [
+  { value: 'PUBLIC', label: 'Public', icon: Globe, blurb: 'Anyone can see.' },
+  { value: 'FRIENDS', label: 'Friends', icon: Users, blurb: 'Only your friends can see.' },
+  { value: 'PRIVATE', label: 'Private', icon: Lock, blurb: 'Only you can see.' },
+]

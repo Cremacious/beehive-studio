@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { MoreHorizontal, Settings, Trash2, UserPlus } from 'lucide-react'
 import type { ClubSummary, ClubOwner } from '@/lib/actions/book-clubs.actions'
-import type { BookClubMemberRole, SparkVisibility } from '@/db/schema/social'
+import type { BookClubMemberRole } from '@/db/schema/social'
 import { VisibilityPill } from '@/app/[locale]/(public)/discover/_components/visibility-pill'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import {
@@ -110,7 +110,7 @@ export function ClubHeader({
             >
               {club.name}
             </h1>
-            <VisibilityPill visibility={club.visibility as SparkVisibility} />
+            <VisibilityPill visibility={club.visibility} />
             {club.openJoin && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider border border-[var(--br-card)] text-[var(--canvas-dark-ink-muted)]">
                 Open join

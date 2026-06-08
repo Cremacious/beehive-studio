@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { ChevronLeft, Clock } from 'lucide-react'
 import { auth } from '@/lib/auth'
 import { headers } from 'next/headers'
 import { getSparkAction, getSparkEntriesAction, getSparkEntryAction } from '@/lib/actions/sparks.actions'
@@ -8,6 +9,7 @@ import { SparkSubmitPanel } from '../../discover/_components/spark-submit-panel'
 import { StatusPill } from '../../discover/_components/status-pill'
 import { VisibilityPill } from '../../discover/_components/visibility-pill'
 import { Countdown } from '../../discover/_components/countdown'
+import { PageHead } from '@/components/community/page-head'
 
 type Props = { params: Promise<{ locale: string; sparkId: string }> }
 
@@ -53,118 +55,176 @@ export default async function SparkDetailPage({ params }: Props) {
     year: 'numeric',
   })
 
+  const creatorLabel =
+    spark.creatorUsername
+      ? `@${spark.creatorUsername}`
+      : (spark.creatorDisplayName ?? 'Unknown')
+
   return (
-    <div className="min-h-screen bg-[#141414]">
-      {/* Nav */}
-      <div className="bg-[#1a1a1a] border-b border-[#2a2a2a] px-6 py-2.5">
+    <main className="cm-main">
+      <div className="cm-wrap w-3xl">
         <Link
           href={`/${locale}/sparks`}
-          className="text-[#888] text-[13px] hover:text-white transition-colors"
+          className="eyebrow-mono"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            textDecoration: 'none',
+            marginBottom: 18,
+          }}
         >
-          ← Sparks
+          <ChevronLeft size={13} strokeWidth={2.2} /> Sparks
         </Link>
-      </div>
 
-      {/* Hero */}
-      <div className="px-6 py-6 border-b border-[#2a2a2a]">
-        <div className="flex items-center gap-2 mb-3 flex-wrap">
-          <StatusPill status={spark.status} />
-          <VisibilityPill visibility={spark.visibility} />
-          {spark.status === 'VOTING' && spark.votingEndsAt && (
-            <Countdown to={spark.votingEndsAt} prefix="Voting ends in" />
-          )}
-        </div>
-        <p className="text-white text-[20px] font-bold leading-snug max-w-[640px] mb-3">
-          &ldquo;{spark.prompt}&rdquo;
-        </p>
-        <div className="flex items-center gap-2 text-[#666] text-[12px] flex-wrap">
-          <div className="w-5 h-5 rounded-full bg-[#2a2a2a]" />
-          <span>
-            by{' '}
-            <span className="text-[#aaa]">
-              {spark.creatorDisplayName ?? spark.creatorUsername ?? 'Unknown'}
+        <PageHead
+          eyebrow={`Spark · ${creatorLabel}`}
+          title={spark.prompt}
+          subtitle={
+            <span className="flex flex-wrap items-center gap-3">
+              <StatusPill status={spark.status} />
+              <VisibilityPill visibility={spark.visibility} />
+              {spark.status === 'VOTING' && spark.votingEndsAt ? (
+                <span className="deadline">
+                  <Clock size={14} />
+                  <Countdown to={spark.votingEndsAt} prefix="Voting ends in" />
+                </span>
+              ) : null}
+              <span className="meta-mono">{spark.entryCount} entries</span>
+              <span className="meta-mono">closes {deadlineStr}</span>
+              {spark.wordLimit ? (
+                <span className="meta-mono">max {spark.wordLimit} words</span>
+              ) : null}
             </span>
-          </span>
-          <span>·</span>
-          <span>{spark.entryCount} entries</span>
-          <span>·</span>
-          <span>closes {deadlineStr}</span>
-          {spark.wordLimit && (
-            <>
-              <span>·</span>
-              <span>max {spark.wordLimit} words</span>
-            </>
-          )}
-        </div>
-      </div>
+          }
+        />
 
-      {/* CLOSED: Winner banner */}
-      {spark.status === 'CLOSED' && spark.winnerEntryId && (
-        <div className="px-6 py-4 bg-[#1a1500] border-b border-[#3a2a00]">
-          <p className="text-[#FFC300] text-[13px] font-semibold">
-            🏆 Most Voted:{' '}
-            <span className="text-white">
-              {winnerEntry?.authorDisplayName ?? winnerEntry?.authorUsername ?? 'Unknown'}
-            </span>
-          </p>
-          {spark.creatorChoiceEntryId && spark.creatorChoiceEntryId !== spark.winnerEntryId && (
-            <p className="text-[#888] text-[12px] mt-1">
-              ⭐ Creator&apos;s choice:{' '}
-              <span className="text-[#aaa]">
-                {creatorChoiceEntry?.authorDisplayName ??
-                  creatorChoiceEntry?.authorUsername ??
-                  'Unknown'}
+        {/* CLOSED: Winner banner */}
+        {spark.status === 'CLOSED' && spark.winnerEntryId && (
+          <section
+            className="panel panel-pad"
+            style={{ marginBottom: 22, borderColor: 'oklch(from var(--brand) l c h / 0.4)' }}
+          >
+            <p
+              style={{
+                color: 'var(--brand)',
+                fontSize: 13,
+                fontWeight: 600,
+                margin: 0,
+              }}
+            >
+              🏆 Most Voted:{' '}
+              <span style={{ color: 'var(--canvas-dark-ink-strong)' }}>
+                {winnerEntry?.authorDisplayName ?? winnerEntry?.authorUsername ?? 'Unknown'}
               </span>
             </p>
-          )}
-        </div>
-      )}
+            {spark.creatorChoiceEntryId && spark.creatorChoiceEntryId !== spark.winnerEntryId && (
+              <p
+                style={{
+                  color: 'var(--canvas-dark-ink-muted)',
+                  fontSize: 12,
+                  marginTop: 6,
+                  marginBottom: 0,
+                }}
+              >
+                ⭐ Creator&apos;s choice:{' '}
+                <span style={{ color: 'var(--canvas-dark-ink)' }}>
+                  {creatorChoiceEntry?.authorDisplayName ??
+                    creatorChoiceEntry?.authorUsername ??
+                    'Unknown'}
+                </span>
+              </p>
+            )}
+          </section>
+        )}
 
-      {/* Submit panel (OPEN + authenticated + no existing entry) */}
-      {spark.status === 'OPEN' && userId && !hasUserEntry && (
-        <SparkSubmitPanel sparkId={sparkId} wordLimit={spark.wordLimit} />
-      )}
+        {/* Submit panel (OPEN + authenticated + no existing entry) */}
+        {spark.status === 'OPEN' && userId && !hasUserEntry && (
+          <section className="panel" style={{ marginBottom: 22 }}>
+            <SparkSubmitPanel sparkId={sparkId} wordLimit={spark.wordLimit} />
+          </section>
+        )}
 
-      {/* Sign-in prompt for guests during OPEN */}
-      {spark.status === 'OPEN' && !userId && (
-        <div className="px-6 py-4 bg-[#181818] border-b border-[#2a2a2a] text-[#666] text-[13px]">
-          <Link href={`/${locale}/sign-in`} className="text-[#FFC300] hover:underline">
-            Sign in
-          </Link>{' '}
-          to submit an entry
-        </div>
-      )}
+        {/* Sign-in prompt for guests during OPEN */}
+        {spark.status === 'OPEN' && !userId && (
+          <section
+            className="panel panel-pad"
+            style={{ marginBottom: 22, textAlign: 'center' }}
+          >
+            <p className="meta" style={{ margin: 0 }}>
+              <Link
+                href={`/${locale}/sign-in`}
+                style={{ color: 'var(--brand)', textDecoration: 'none' }}
+              >
+                Sign in
+              </Link>{' '}
+              to submit an entry.
+            </p>
+          </section>
+        )}
 
-      {/* Entries */}
-      <div className="px-6 py-4">
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-[#555] text-[11px] uppercase tracking-wider">
-            {spark.entryCount} Entries
-          </p>
-        </div>
-        {entries.length === 0 ? (
-          <p className="text-[#555] text-[13px] py-8 text-center">No entries yet. Be the first!</p>
-        ) : (
-          <div className="flex flex-col gap-2.5">
-            {entries.map((entry) => (
-              <SparkEntryCard
-                key={entry.id}
-                entry={entry}
-                sparkId={sparkId}
-                locale={locale}
-                sparkStatus={spark.status}
-                currentUserId={userId}
-                isSparkCreator={isCreator}
-              />
-            ))}
+        {/* VOTING/CLOSED submissions-closed notice */}
+        {spark.status !== 'OPEN' && (
+          <section
+            className="panel panel-pad"
+            style={{ marginBottom: 22, textAlign: 'center' }}
+          >
+            <div className="eyebrow-mono" style={{ marginBottom: 8 }}>
+              {spark.status === 'VOTING' ? 'Submissions closed' : 'Spark closed'}
+            </div>
+            <p className="meta" style={{ margin: 0 }}>
+              {spark.status === 'VOTING'
+                ? 'Entries are locked while voting is open. Cast your vote by liking your favorites below.'
+                : 'Voting has ended. Browse the final entries below.'}
+            </p>
+          </section>
+        )}
+
+        {/* Entries */}
+        <section className="panel" aria-label="Entries" style={{ marginBottom: 22 }}>
+          <div
+            className="eyebrow-mono"
+            style={{ padding: '14px 18px 8px', borderBottom: '1px solid var(--canvas-dark-300)' }}
+          >
+            {spark.entryCount} {spark.entryCount === 1 ? 'Entry' : 'Entries'}
           </div>
-        )}
-        {entriesHasMore && (
-          <p className="text-[#555] text-[12px] text-center mt-4 cursor-pointer hover:text-white transition-colors">
-            Show more entries
-          </p>
-        )}
+          {entries.length === 0 ? (
+            <p
+              className="meta"
+              style={{ padding: '32px 18px', textAlign: 'center', margin: 0 }}
+            >
+              No entries yet. Be the first!
+            </p>
+          ) : (
+            <div className="flex flex-col gap-2.5" style={{ padding: 14 }}>
+              {entries.map((entry) => (
+                <SparkEntryCard
+                  key={entry.id}
+                  entry={entry}
+                  sparkId={sparkId}
+                  locale={locale}
+                  sparkStatus={spark.status}
+                  currentUserId={userId}
+                  isSparkCreator={isCreator}
+                />
+              ))}
+            </div>
+          )}
+          {entriesHasMore && (
+            <p
+              className="meta"
+              style={{
+                textAlign: 'center',
+                padding: '0 18px 16px',
+                margin: 0,
+                cursor: 'pointer',
+              }}
+            >
+              Show more entries
+            </p>
+          )}
+        </section>
       </div>
-    </div>
+    </main>
   )
 }

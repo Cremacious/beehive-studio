@@ -5,7 +5,7 @@ type Tab = 'books' | 'sparks' | 'hives' | 'lists' | 'clubs'
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'books', label: 'Books' },
-  { id: 'sparks', label: '⚡ Sparks' },
+  { id: 'sparks', label: 'Sparks' },
   { id: 'hives', label: 'Hives' },
   { id: 'lists', label: 'Lists' },
   { id: 'clubs', label: 'Clubs' },
@@ -18,20 +18,18 @@ export function DiscoverTabs({ currentTab }: { currentTab: Tab }) {
   const locale = pathname.split('/')[1]
 
   return (
-    <div className="bg-[#1a1a1a] border-b border-[#2a2a2a] px-6 flex">
+    <nav className="tabstrip" role="tablist" aria-label="Discover sections">
       {TABS.map(tab => (
         <button
           key={tab.id}
+          role="tab"
+          aria-selected={currentTab === tab.id}
           onClick={() => router.push(`/${locale}/discover?tab=${tab.id}`)}
-          className={`px-5 py-3 text-[13px] border-b-2 transition-colors cursor-pointer ${
-            currentTab === tab.id
-              ? 'text-[#FFC300] border-[#FFC300] font-semibold'
-              : 'text-[#666] border-transparent hover:text-white'
-          }`}
+          className={`tab ${currentTab === tab.id ? 'active' : ''}`}
         >
           {tab.label}
         </button>
       ))}
-    </div>
+    </nav>
   )
 }

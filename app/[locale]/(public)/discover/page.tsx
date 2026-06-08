@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { getDiscoverFeedAction, getDiscoverWritersAction } from '@/lib/actions/discover.actions'
 import { getSparksAction } from '@/lib/actions/sparks.actions'
 import { getDiscoverableHivesAction } from '@/lib/actions/hive.actions'
+import { PageHead } from '@/components/community/page-head'
 import { FeedFilters } from './_components/feed-filters'
 import { WritersStrip } from './_components/writers-strip'
 import { LoadMoreFeed } from './_components/load-more-feed'
@@ -28,13 +29,14 @@ export default async function DiscoverPage({ params, searchParams }: Props) {
   const genre = resolved.genre
 
   return (
-    <div className="min-h-screen bg-[#141414]">
-      <div className="px-6 pt-8 pb-0">
-        <h1 className="text-2xl font-semibold text-white mb-1">Discover</h1>
-        <p className="text-[#666] text-[13px]">Explore books and writers from the Hive</p>
-      </div>
+    <main className="cm-wrap w-5xl">
+      <PageHead
+        eyebrow="Find your next read & your next circle"
+        title="Discover"
+        subtitle="Books, sparks, lists, clubs, and hives from across the community."
+      />
 
-      <div className="mt-4">
+      <div className="mb-5">
         <DiscoverTabs currentTab={tab} />
       </div>
 
@@ -43,7 +45,7 @@ export default async function DiscoverPage({ params, searchParams }: Props) {
       {tab === 'hives' && <HivesTab locale={locale} />}
       {tab === 'lists' && <ListsTab locale={locale} />}
       {tab === 'clubs' && <ClubsTab locale={locale} />}
-    </div>
+    </main>
   )
 }
 
@@ -59,15 +61,15 @@ async function BooksTab({ locale, sort, genre }: { locale: string; sort: 'trendi
 
   return (
     <>
-      <div className="mt-4">
-        <Suspense fallback={<div className="h-[88px] border-b border-[#2a2a2a]" />}>
+      <div className="mb-4">
+        <Suspense fallback={<div className="h-[88px] border-b border-[var(--br-card)]" />}>
           <FeedFilters currentSort={sort} currentGenre={genre} />
         </Suspense>
       </div>
 
-      <div className="px-6 py-5">
+      <div>
         {books.length === 0 ? (
-          <div className="text-center py-20 text-[#555]">
+          <div className="text-center py-20 text-[var(--canvas-dark-ink-muted)] text-[13px]">
             No books found for this filter.
           </div>
         ) : (
@@ -99,14 +101,14 @@ async function SparksTab({ locale }: { locale: string }) {
   const closedSparks = closedResult.success ? closedResult.data.sparks : []
 
   return (
-    <div className="px-6 py-6">
+    <div>
       {/* Active Sparks grid */}
       <div className="flex items-center justify-between mb-4">
-        <p className="text-[#555] text-[11px] uppercase tracking-wider">Active Sparks</p>
+        <p className="text-[var(--canvas-dark-ink-muted)] text-[11px] uppercase tracking-wider font-[family-name:var(--font-mono)]">Active Sparks</p>
         <CreateSparkModal locale={locale} />
       </div>
       {activeSparks.length === 0 ? (
-        <p className="text-[#555] text-[13px] py-8 text-center">No active Sparks yet. Create one!</p>
+        <p className="text-[var(--canvas-dark-ink-muted)] text-[13px] py-8 text-center">No active Sparks yet. Create one!</p>
       ) : (
         <div className="grid grid-cols-2 gap-3 mb-8">
           {activeSparks.map(spark => <SparkCard key={spark.id} spark={spark} locale={locale} />)}
@@ -116,15 +118,15 @@ async function SparksTab({ locale }: { locale: string }) {
       {/* Past Sparks */}
       {closedSparks.length > 0 && (
         <>
-          <p className="text-[#555] text-[11px] uppercase tracking-wider mb-3">Past Sparks</p>
+          <p className="text-[var(--canvas-dark-ink-muted)] text-[11px] uppercase tracking-wider font-[family-name:var(--font-mono)] mb-3">Past Sparks</p>
           <div className="flex flex-col gap-2">
             {closedSparks.map(spark => (
-              <Link key={spark.id} href={`/${locale}/sparks/${spark.id}`} className="flex items-center gap-3 py-2.5 border-b border-[#1e1e1e] hover:bg-[#1a1a1a] px-2 rounded transition-colors">
-                <p className="text-[#777] text-[13px] flex-1 truncate">&ldquo;{spark.prompt}&rdquo;</p>
+              <Link key={spark.id} href={`/${locale}/sparks/${spark.id}`} className="flex items-center gap-3 py-2.5 border-b border-[var(--br-card)] hover:bg-[var(--canvas-dark-200)] px-2 rounded transition-colors">
+                <p className="text-[var(--canvas-dark-ink)] text-[13px] flex-1 truncate">&ldquo;{spark.prompt}&rdquo;</p>
                 {spark.winnerUsername && (
-                  <span className="text-[#FFC300] text-[11px] shrink-0">🏆 {spark.winnerUsername}</span>
+                  <span className="text-[var(--brand)] text-[11px] shrink-0">🏆 {spark.winnerUsername}</span>
                 )}
-                <span className="text-[#444] text-[11px] shrink-0">{spark.entryCount} entries</span>
+                <span className="text-[var(--canvas-dark-ink-muted)] text-[11px] shrink-0">{spark.entryCount} entries</span>
               </Link>
             ))}
           </div>
@@ -136,8 +138,8 @@ async function SparksTab({ locale }: { locale: string }) {
 
 async function ListsTab({ locale }: { locale: string }) {
   return (
-    <div className="px-6 py-6">
-      <p className="text-[#555] text-[11px] uppercase tracking-wider mb-4">Discoverable Reading Lists</p>
+    <div>
+      <p className="text-[var(--canvas-dark-ink-muted)] text-[11px] uppercase tracking-wider font-[family-name:var(--font-mono)] mb-4">Discoverable Reading Lists</p>
       <ListsTabContent locale={locale} />
     </div>
   )
@@ -145,8 +147,8 @@ async function ListsTab({ locale }: { locale: string }) {
 
 async function ClubsTab({ locale }: { locale: string }) {
   return (
-    <div className="px-6 py-6">
-      <p className="text-[#555] text-[11px] uppercase tracking-wider mb-4">Discoverable Book Clubs</p>
+    <div>
+      <p className="text-[var(--canvas-dark-ink-muted)] text-[11px] uppercase tracking-wider font-[family-name:var(--font-mono)] mb-4">Discoverable Book Clubs</p>
       <ClubsTabContent locale={locale} />
     </div>
   )
@@ -157,10 +159,10 @@ async function HivesTab({ locale }: { locale: string }) {
   const hives = result.success ? result.data : []
 
   return (
-    <div className="px-6 py-6">
-      <p className="text-[#555] text-[11px] uppercase tracking-wider mb-4">Public Hives</p>
+    <div>
+      <p className="text-[var(--canvas-dark-ink-muted)] text-[11px] uppercase tracking-wider font-[family-name:var(--font-mono)] mb-4">Public Hives</p>
       {hives.length === 0 ? (
-        <p className="text-[#555] text-[13px] py-8 text-center">No public Hives yet.</p>
+        <p className="text-[var(--canvas-dark-ink-muted)] text-[13px] py-8 text-center">No public Hives yet.</p>
       ) : (
         <div className="grid grid-cols-2 gap-3">
           {hives.map(hive => <HiveCard key={hive.id} hive={hive} locale={locale} />)}

@@ -1,0 +1,17 @@
+// lib/mentions/surface-types.ts
+export type SurfaceType =
+  | 'spark_entry_comment'
+  | 'spark_entry_comment_reply'
+  | 'reading_list_description'
+  | 'reading_list_book_commentary'
+  | 'book_club_description'
+  | 'book_club_rules'
+  | 'book_club_discussion'
+  | 'book_club_discussion_reply'
+  | 'hive_discussion'
+  | 'hive_discussion_reply'
+  | 'hive_buzz_post'
+  | 'hive_annotation'
+  | 'hive_suggestion'
+  | 'book_comment'
+  | 'profile_bio'

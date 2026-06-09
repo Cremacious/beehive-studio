@@ -698,7 +698,7 @@ The app ships a **dark, iOS-inspired, soft-rounded** aesthetic. Locked design sp
 - **Pure black is BANNED** from chrome. Darkest legitimate surface = `--canvas-dark-100`.
 - **Cream paper** appears in exactly ONE place: the studio chapter editor's ProseMirror surface. Wiki entries, hive chapter view, submission composer, character/notes/outline panels, and every other prose-adjacent surface uses dark walnut chrome + scoped `[data-slot="X"] .ProseMirror { color: var(--canvas-dark-ink) }` overrides.
 - **shadcn `Dialog` primitive** already carries the chrome — any new modal automatically inherits. Don't re-skin the primitive.
-- **Headings** use Comfortaa (font-bold, brand color). Body uses Geist. Prose uses Newsreader. Labels use JetBrains Mono uppercase tracking-wider muted.
+- **Headings + body UI** both use Comfortaa (headings = font-bold + brand color; body UI = regular weight). Prose uses Newsreader (chapter editor + long-form reading). Labels use JetBrains Mono uppercase tracking-wider muted.
 - **Light mode in the editor surface only**: cream paper with `[data-editor-theme="light"]` scoped overrides in `corkboard-or-editor.tsx`. Light-mode rules must use `!important` to win over inline-style gradients.
 - **Active nav / active row treatment**: gradient + tile shadow only. NO left brand-yellow stripe (per Chris's smoke feedback).
 
@@ -1418,7 +1418,7 @@ Public `/[locale]/pricing` page fetches Stripe prices server-side with `revalida
 - Background: `#141414` (`--background`)
 - Brand yellow: `#FFC300` (`--color-brand`)
 - Border: `#2a2a2a` (`--border`)
-- Font: Comfortaa (headings/brand), Geist (body)
+- Font: Comfortaa (headings + body UI), Newsreader (prose), JetBrains Mono (labels)
 - Dark-only — `<html className="dark">` is set in root layout
 
 ### DB

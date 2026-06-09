@@ -43,6 +43,15 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
+
+  /* Font families — registered with Tailwind so `font-sans`, `font-display`,
+     `font-mono`, etc. utility classes resolve to the project font system.
+     Without this, Tailwind's `font-sans` falls back to system-ui. */
+  --font-sans: var(--font-comfortaa), 'Comfortaa', ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-comfortaa), 'Comfortaa', system-ui, sans-serif;
+  --font-comfortaa: 'Comfortaa', system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), 'JetBrains Mono', ui-monospace, monospace;
+  --font-serif: var(--font-newsreader), 'Source Serif 4', Georgia, serif;
 }
 
 :root {
@@ -331,7 +340,7 @@ html {
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: var(--font-ui);
+  font-family: var(--font-comfortaa), 'Comfortaa', ui-sans-serif, system-ui, sans-serif;
 }
 
 @utility mainFont {
@@ -830,7 +839,173 @@ body {
   margin: 0;
 }
 .sec-head .sec-desc { font-size: 13px; color: var(--canvas-dark-ink-muted); margin: 2px 0 0; }
-.sec-head .count { font-family: var(--font-mono); font-size: 11px; color: var(--canvas-dark-ink-muted); }
+.sec-head .count {
+  font-family: var(--font-mono); font-weight: 700; font-size: 10.5px;
+  letter-spacing: 0.04em;
+  background: var(--brand); color: var(--brand-ink);
+  padding: 2px 9px; border-radius: var(--r-pill);
+  display: inline-flex; align-items: center; line-height: 1;
+}
+
+/* SIDEBAR ROW — VARIANT C (Requests + My Hives)
+   Two-line layout: avatar + name/meta on top, action area or sub-line below.
+   Visible hairline divider between rows; all text white-ish (no muted ink). */
+.rail-row {
+  padding: 14px 18px;
+  border-bottom: 1px solid oklch(1 0 0 / 0.10);
+}
+.rail-row:last-child { border-bottom: 0; }
+.rail-row .top {
+  display: grid; grid-template-columns: 40px 1fr;
+  gap: 12px; align-items: center;
+}
+.rail-row .name {
+  font-family: var(--font-display); font-weight: 700; font-size: 14px;
+  color: rgb(255 255 255); margin: 0;
+}
+.rail-row .sub {
+  font-family: var(--font-mono); font-size: 11px;
+  color: rgb(255 255 255 / 0.9); margin-top: 3px;
+  display: inline-flex; align-items: center; gap: 5px;
+}
+.rail-row .actions {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+  margin-top: 10px;
+}
+.rail-row .actions .btn-pill {
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+  height: 30px; padding: 0 12px;
+  border-radius: var(--r-pill);
+  font-family: var(--font-display); font-weight: 600; font-size: 12px;
+  cursor: pointer; border: 0; white-space: nowrap;
+}
+.rail-row .actions .btn-pill.brand { background: var(--brand); color: var(--brand-ink); }
+.rail-row .actions .btn-pill.brand:hover { background: var(--brand-hover, oklch(0.82 0.18 90)); }
+.rail-row .actions .btn-pill.tile {
+  background: linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300));
+  color: rgb(255 255 255); border-top: var(--br-card); box-shadow: var(--sh-tile);
+}
+.rail-row .actions .btn-pill[disabled] { opacity: 0.5; cursor: wait; }
+
+/* Legacy `.book-cover-default` removed — BookCard V2 inlines the honeycomb
+   styling under `.bcv-cover` (see below). */
+
+/* BOOK LIBRARY GRID — 4-col cap on desktop with smaller scale.
+   Mobile: 2 cols / Tablet: 3 cols / Desktop: 4 cols capped at 880px width
+   so cards stay ~200px wide instead of stretching with the canvas. */
+.library-book-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (min-width: 640px) {
+  .library-book-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (min-width: 1024px) {
+  .library-book-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    max-width: 880px;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   BOOK CARD V2 — clean rewrite from scratch.
+   - Block flow everywhere (no flex, no grid inside the body).
+   - Single-line ellipsis on title + author (no -webkit-box line-clamp).
+   - Genre is always rendered (placeholder fades when null) so card height
+     is fully deterministic.
+   - Fresh class names (`bcv-*`) so nothing inherited from prior iterations
+     can interfere.
+   ════════════════════════════════════════════════════════════════════ */
+.bcv {
+  display: block;
+  position: relative;
+  height: 100%;
+  background: linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200));
+  border-top: var(--br-card);
+  border-radius: var(--r-card);
+  box-shadow: var(--sh-card);
+  overflow: hidden;
+  transition: transform .14s;
+}
+.bcv:hover { transform: translateY(-2px); }
+.bcv-link {
+  display: block;
+  height: 100%;
+  text-decoration: none;
+  color: inherit;
+}
+.bcv-cover {
+  display: block;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  background-color: var(--brand);
+}
+.bcv-cover img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.bcv-cover svg.honeycomb {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+}
+.bcv-body {
+  display: block;
+  padding: 12px 14px 14px;
+  text-align: left;
+}
+.bcv-title {
+  display: block;
+  width: 100%; max-width: 100%;
+  margin: 0 0 4px;
+  padding: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.3;
+  color: rgb(255 255 255);
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bcv-author {
+  display: block;
+  width: 100%; max-width: 100%;
+  margin: 0 0 10px;
+  padding: 0;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  color: rgb(255 255 255 / 0.85);
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bcv-genre {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: var(--r-pill);
+  background: oklch(1 0 0 / 0.06);
+  color: rgb(255 255 255 / 0.85);
+}
+.bcv-genre.bcv-empty { opacity: 0.4; }
+.bcv-kebab {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+}
 
 /* TILES */
 .tile {
@@ -933,7 +1108,8 @@ body {
 
 /* BUTTONS */
 .btn-brand {
-  display: inline-flex; align-items: center; gap: 8px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  white-space: nowrap; line-height: 1;
   padding: 9px 16px; border-radius: var(--r-pill);
   background: var(--brand); color: var(--brand-ink);
   font-family: var(--font-display); font-weight: 700; font-size: 13px;
@@ -943,9 +1119,10 @@ body {
 }
 .btn-brand:hover { background: var(--brand-hover); }
 .btn-brand:active { background: var(--brand-active); }
-.btn-brand svg { width: 15px; height: 15px; }
+.btn-brand svg { width: 15px; height: 15px; flex-shrink: 0; }
 .btn-tile {
-  display: inline-flex; align-items: center; gap: 8px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  white-space: nowrap; line-height: 1;
   padding: 9px 15px; border-radius: var(--r-btn);
   background: linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300));
   color: var(--canvas-dark-ink); box-shadow: var(--sh-tile);
@@ -957,7 +1134,45 @@ body {
   color: var(--canvas-dark-ink-strong); transform: translateY(-1px);
   box-shadow: var(--sh-tile), 0 0 0 1px oklch(from var(--brand) l c h / 0.18);
 }
-.btn-tile svg { width: 15px; height: 15px; }
+.btn-tile svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+/* GLOBAL BUTTON ICON ALIGNMENT
+   Any <button> or <a> whose layout is flex/inline-flex AND contains an SVG
+   gets the icon vertically centered + nowrap + non-shrinking. Belt-and-
+   suspenders for ad-hoc Tailwind buttons that miss `whitespace-nowrap`
+   or `items-center`. Does NOT affect buttons that use grid/block layouts. */
+button:is(.inline-flex, .flex):has(svg),
+a:is(.inline-flex, .flex):has(svg) {
+  align-items: center;
+  white-space: nowrap;
+}
+button:is(.inline-flex, .flex) > svg,
+a:is(.inline-flex, .flex) > svg {
+  flex-shrink: 0;
+}
+
+/* GLOBAL BUTTON TITLE CASE
+   System-wide rule: every <button> + every anchor styled as a button uses
+   Title Case ("Find Friends", not "Find friends"). `text-transform: capitalize`
+   uppercases the first letter of every whitespace-separated word.
+   `!important` wins over Tailwind's preflight + any utility class that might
+   reset text-transform. Rules that intentionally use uppercase (e.g. the mono
+   back-link badge) explicitly use `text-transform: uppercase !important` or
+   are scoped tighter and continue to win. */
+button,
+a.btn-brand,
+a.btn-tile,
+a.btn-ghost,
+a.btn-pill {
+  text-transform: capitalize !important;
+}
+/* Preserve intentional uppercase chrome (mono labels, badges) */
+.page-head .back,
+.section-head .pill,
+.section-head .meta,
+.eyebrow-mono {
+  text-transform: uppercase !important;
+}
 .btn-ghost {
   display: inline-flex; align-items: center; gap: 7px;
   padding: 8px 13px; border-radius: var(--r-btn);
@@ -1049,9 +1264,12 @@ textarea.input { height: auto; min-height: 84px; padding: 12px 14px; resize: ver
   text-decoration: none; transition: color .14s, background .14s;
 }
 .tab:hover { color: var(--canvas-dark-ink-strong); }
+[aria-label="Community sections"] .tab { color: rgb(255 255 255 / 0.9); flex: 1; justify-content: center; }
+[aria-label="Community sections"] .tab .ct { color: rgb(255 255 255 / 0.9); }
 [aria-label="Community sections"] .tab:hover { color: var(--brand); }
+[aria-label="Community sections"] .tab.active,
+[aria-label="Community sections"] .tab.active .ct { /* active state preserved by .tab.active rule above */ }
 [aria-label="Community sections"].tabstrip { gap: 8px; }
-[aria-label="Community sections"] .tab { flex: 1; justify-content: center; }
 .tab.active { color: var(--brand); background: var(--brand-soft); }
 .tab .ct {
   font-family: var(--font-mono); font-size: 10px; font-weight: 500;
@@ -1239,19 +1457,32 @@ textarea.input { height: auto; min-height: 84px; padding: 12px 14px; resize: ver
 }
 .claim-card .actions { display: flex; flex-direction: column; gap: 10px; align-items: center; }
 
-/* FRIEND-EVENT LEFT BORDER */
+/* FRIEND-EVENT MARKER
+   Brand-yellow left stripe removed per design — friend rows distinguish via
+   actor link + verb copy now. Class kept as a no-op so existing markup +
+   future re-additions stay easy. */
 .is-friend-event { position: relative; }
-.is-friend-event::before {
-  content: ''; position: absolute; left: 0; top: 10px; bottom: 10px;
-  width: 3px; border-radius: var(--r-pill); background: var(--brand);
-}
 
 /* ACTIVITY FEED EVENT ROW */
-.feed-event { display: grid; grid-template-columns: 32px 1fr; gap: 12px; padding: 16px 18px; }
+.feed-event {
+  display: grid; grid-template-columns: 32px 1fr; gap: 12px;
+  padding: 18px 18px 18px 16px;
+  transition: background .14s;
+}
 .feed-event .fe-text { font-size: 14.5px; line-height: 1.5; color: var(--canvas-dark-ink); }
 .feed-event .fe-text a { color: var(--canvas-dark-ink-strong); font-weight: 600; text-decoration: none; }
 .feed-event .fe-text a:hover { color: var(--brand); }
-.feed-event .fe-when { font-family: var(--font-mono); font-size: 10.5px; color: var(--canvas-dark-ink-faint); margin-top: 5px; letter-spacing: 0.03em; }
+.feed-event .fe-when { font-family: var(--font-mono); font-size: 10.5px; color: rgb(255 255 255 / 0.9); margin-top: 5px; letter-spacing: 0.03em; }
+
+/* Divider between feed rows — visible against the dark panel background.
+   `--br-card` (0.04 alpha) is too faint here; bump to 0.12 for a clear
+   row-to-row separator without becoming visually loud. */
+[aria-label="Activity feed"] .cstack > li:not(:last-child) .feed-event {
+  border-bottom: 1px solid oklch(1 0 0 / 0.12);
+}
+[aria-label="Activity feed"] .cstack > li:hover .feed-event {
+  background: oklch(1 0 0 / 0.018);
+}
 
 /* LOAD MORE BUTTON */
 .load-more { display: block; width: 100%; margin-top: 14px; text-align: center; padding: 11px; border-radius: var(--r-btn); background: transparent; border: 1px solid var(--canvas-dark-300); color: var(--canvas-dark-ink-muted); font-family: var(--font-ui); font-weight: 600; font-size: 13px; cursor: pointer; transition: color .12s, border-color .12s; }

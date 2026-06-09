@@ -67,6 +67,40 @@ const GROUPS: Group[] = [
     ],
   },
   {
+    title: 'From writers you follow',
+    description: 'New work from the writers in your circle',
+    rows: [
+      {
+        type: 'NEW_CHAPTER',
+        label: 'New chapters',
+        sublabel:
+          'When a writer you follow publishes a new chapter on a public book',
+      },
+    ],
+  },
+  {
+    title: 'Hive collaboration',
+    description: 'Submissions, suggestions, and annotations on your hives',
+    rows: [
+      {
+        type: 'HIVE_SUBMISSION',
+        label: 'Chapter submissions',
+        sublabel:
+          'When a member submits a chapter for review in a hive you own or moderate',
+      },
+      {
+        type: 'HIVE_SUGGESTION',
+        label: 'Suggested edits',
+        sublabel: 'When a member proposes an inline suggested edit on your chapter',
+      },
+      {
+        type: 'HIVE_ANNOTATION',
+        label: 'Annotations',
+        sublabel: 'When a member annotates your chapter',
+      },
+    ],
+  },
+  {
     title: 'Group invites and requests',
     description: 'Hive and book club invites and requests',
     rows: [

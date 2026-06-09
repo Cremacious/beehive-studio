@@ -8,8 +8,11 @@ import {
   books,
   binderItems,
   userProfiles,
+  notifications,
 } from '@/db/schema'
+import { createId } from '@paralleldrive/cuid2'
 import { eq, and, asc, desc, isNull, inArray } from 'drizzle-orm'
+import { shouldSkipNotification } from '@/lib/notifications/check-preferences'
 import { requireAuth } from '@/lib/require-auth'
 import {
   requireHiveMember,
@@ -104,6 +107,13 @@ export async function createAnnotationAction(
   if (!chapter || chapter.bookId !== hive.bookId) {
     return { success: false, error: 'NOT_FOUND' }
   }
+  // Book owner — recipient of the HIVE_ANNOTATION notification (unless they
+  // are the annotator themselves).
+  const book = await db.query.books.findFirst({
+    where: eq(books.id, hive.bookId),
+    columns: { userId: true },
+  })
+  const ownerId = book?.userId ?? null
 
   // Mention extraction + early cap check (before tx)
   const textUsernames = extractMentionUsernamesFromText(body)
@@ -158,6 +168,23 @@ export async function createAnnotationAction(
         excerpt: (selectedText ?? '').slice(0, 80),
       },
     })
+
+    // HIVE_ANNOTATION notification — notify the book owner (skip if owner is
+    // the annotator or opted out). Top-level annotations only; replies use
+    // replyToAnnotationAction which intentionally fires no event/notification.
+    if (ownerId && ownerId !== userId) {
+      const skip = await shouldSkipNotification(ownerId, 'HIVE_ANNOTATION')
+      if (!skip) {
+        await tx.insert(notifications).values({
+          id: createId(),
+          userId: ownerId,
+          type: 'HIVE_ANNOTATION' as const,
+          actorId: userId,
+          resourceType: 'hive_annotation',
+          resourceId: newId,
+        })
+      }
+    }
 
     // Mention notifications
     if (textUsernames.length > 0) {

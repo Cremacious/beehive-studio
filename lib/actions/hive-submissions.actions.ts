@@ -8,6 +8,8 @@ import {
   binderItems,
   chapters,
   userProfiles,
+  hiveMembers,
+  notifications,
 } from '@/db/schema'
 import { eq, and, isNull, asc, desc, gte, sql, inArray } from 'drizzle-orm'
 import { createId } from '@paralleldrive/cuid2'
@@ -19,6 +21,7 @@ import {
   type HiveRole,
 } from '@/lib/hive/permissions'
 import { recordHiveActivityTx, type DrizzleTx } from '@/lib/hive/record-activity'
+import { shouldSkipNotification } from '@/lib/notifications/check-preferences'
 import { extractWordCount } from '@/lib/tiptap-utils'
 import {
   saveSubmissionDraftSchema,
@@ -192,6 +195,37 @@ export async function submitSubmissionAction(
         wordCount: submission.wordCount,
       },
     })
+
+    // HIVE_SUBMISSION notification — fan-out to OWNER + MOD reviewers.
+    // Skips the submitter themselves and any reviewer that opted out.
+    const reviewers = await tx.query.hiveMembers.findMany({
+      where: and(
+        eq(hiveMembers.hiveId, submission.hiveId),
+        inArray(hiveMembers.role, ['OWNER', 'MODERATOR']),
+      ),
+      columns: { userId: true },
+    })
+    const otherReviewers = reviewers.filter((r) => r.userId !== userId)
+    if (otherReviewers.length > 0) {
+      const skipResults = await Promise.all(
+        otherReviewers.map((r) =>
+          shouldSkipNotification(r.userId, 'HIVE_SUBMISSION'),
+        ),
+      )
+      const filteredReviewers = otherReviewers.filter((_, i) => !skipResults[i])
+      if (filteredReviewers.length > 0) {
+        await tx.insert(notifications).values(
+          filteredReviewers.map((r) => ({
+            id: createId(),
+            userId: r.userId,
+            type: 'HIVE_SUBMISSION' as const,
+            actorId: userId,
+            resourceType: 'hive_submission',
+            resourceId: id,
+          })),
+        )
+      }
+    }
   })
 
   return { success: true, data: undefined }

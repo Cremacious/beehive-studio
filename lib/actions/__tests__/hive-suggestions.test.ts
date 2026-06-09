@@ -60,6 +60,9 @@ vi.mock('@/db', () => ({
       chapterSnapshots: {
         findFirst: (a: any) => chapterSnapshotsFindFirst(a),
       },
+      notificationPreferences: {
+        findFirst: async () => undefined,
+      },
     },
     insert: (table: any) => {
       const tName = tableName(table)

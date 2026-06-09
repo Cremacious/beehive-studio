@@ -9,6 +9,13 @@ function pickTone(seed: string): (typeof AVATAR_TONES)[number] {
   return AVATAR_TONES[Math.abs(h) % AVATAR_TONES.length]
 }
 
+const ROLE_LABEL: Record<UserHiveView['viewerRole'], string> = {
+  OWNER: 'Owner',
+  MODERATOR: 'Mod',
+  CONTRIBUTOR: 'Contributor',
+  BETA_READER: 'Reader',
+}
+
 export function MyHivesPanel({
   locale,
   hives,
@@ -21,20 +28,24 @@ export function MyHivesPanel({
 
   if (hives.length === 0) {
     return (
-      <section className="panel rail-card panel-pad" aria-label="My Hives">
-        <div className="sec-head" style={{ marginBottom: 10 }}>
+      <section className="panel rail-card" aria-label="My Hives">
+        <div className="sec-head" style={{ margin: '14px 18px 4px' }}>
           <h2 style={{ fontSize: 15 }}>My Hives</h2>
         </div>
         <p
           style={{
+            margin: '0 18px 12px',
             fontSize: 12,
-            color: 'var(--canvas-dark-ink-muted)',
-            marginBottom: 10,
+            color: 'rgb(255 255 255 / 0.9)',
           }}
         >
           Join or create a Hive to write together.
         </p>
-        <Link className="see-all" href={`/${locale}/discover?tab=hives`}>
+        <Link
+          className="see-all"
+          href={`/${locale}/discover?tab=hives`}
+          style={{ margin: '0 18px 14px' }}
+        >
           Browse Hives
           <ArrowRight />
         </Link>
@@ -43,39 +54,50 @@ export function MyHivesPanel({
   }
 
   return (
-    <section className="panel rail-card panel-pad" aria-label="My Hives">
-      <div className="sec-head" style={{ marginBottom: 10 }}>
+    <section className="panel rail-card" aria-label="My Hives">
+      <div className="sec-head" style={{ margin: '14px 18px 4px' }}>
         <h2 style={{ fontSize: 15 }}>My Hives</h2>
         <span className="count">{hives.length}</span>
       </div>
 
-      {visible.map((h) => {
-        const initial = h.name[0]?.toUpperCase() ?? '?'
-        const tone = pickTone(h.id)
-        return (
-          <Link
-            key={h.id}
-            href={`/${locale}/hive/${h.id}`}
-            className="mini-row"
-            style={{ textDecoration: 'none' }}
-          >
-            <span className={`avatar s24 a-${tone}`}>{initial}</span>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div className="mr-t">{h.name}</div>
-              <div
-                className="mr-s"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
+      <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+        {visible.map((h) => {
+          const initial = h.name[0]?.toUpperCase() ?? '?'
+          const tone = pickTone(h.id)
+          return (
+            <li key={h.id} className="rail-row">
+              <Link
+                href={`/${locale}/hive/${h.id}`}
+                className="top"
+                style={{ textDecoration: 'none' }}
               >
-                <Users size={10} />
-                {h.memberCount}
-              </div>
-            </div>
-          </Link>
-        )
-      })}
+                <span
+                  className={`avatar a-${tone}`}
+                  style={{ width: 40, height: 40, fontSize: 15 }}
+                >
+                  {initial}
+                </span>
+                <div>
+                  <p className="name">{h.name}</p>
+                  <p className="sub">
+                    <Users size={12} />
+                    {h.memberCount} {h.memberCount === 1 ? 'member' : 'members'}
+                    {' · '}
+                    {ROLE_LABEL[h.viewerRole]}
+                  </p>
+                </div>
+              </Link>
+            </li>
+          )
+        })}
+      </ul>
 
       {hasMore ? (
-        <Link className="see-all" href={`/${locale}/studio`}>
+        <Link
+          className="see-all"
+          href={`/${locale}/hives`}
+          style={{ margin: '4px 18px 14px' }}
+        >
           See all {hives.length} hives
           <ArrowRight />
         </Link>

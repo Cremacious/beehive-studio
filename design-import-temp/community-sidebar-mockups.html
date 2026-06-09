@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Community sidebar mockups — Requests / My Hives / Activity Feed</title>
+<style>
+  /* ── Tokens copied from app/globals.css ─────────────────────────────── */
+  :root {
+    --canvas-dark-100: #262728;
+    --canvas-dark-150: oklch(0.215 0.003 256);
+    --canvas-dark-200: oklch(0.255 0.003 256);
+    --canvas-dark-250: oklch(0.290 0.003 256);
+    --canvas-dark-300: oklch(0.330 0.003 256);
+    --canvas-dark-350: oklch(0.360 0.003 256);
+    --canvas-dark-400: oklch(0.405 0.003 256);
+    --canvas-dark-ink: oklch(0.86 0.005 256);
+    --canvas-dark-ink-muted: oklch(0.65 0.005 256);
+    --canvas-dark-ink-strong: oklch(0.96 0.005 256);
+    --canvas-dark-ink-faint: oklch(0.50 0.005 256);
+    --brand: oklch(0.85 0.18 90);
+    --brand-soft: oklch(0.85 0.18 90 / 0.18);
+    --brand-ink: oklch(0.20 0.03 80);
+    --r-card: 20px;
+    --r-row: 14px;
+    --r-btn: 12px;
+    --r-pill: 999px;
+    --sh-card: 0 1px 0 rgba(255,255,255,0.04) inset, 0 12px 32px -8px rgba(0,0,0,0.5);
+    --sh-tile: 0 1px 0 rgba(255,255,255,0.04) inset, 0 1px 4px rgba(0,0,0,0.18);
+    --br-card: 0.5px solid oklch(1 0 0 / 0.04);
+    --status-final: oklch(0.7 0.16 145);
+    --font-display: 'Comfortaa', system-ui, sans-serif;
+    --font-mono: ui-monospace, 'JetBrains Mono', monospace;
+    --font-ui: 'Comfortaa', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 32px;
+    background: var(--canvas-dark-100);
+    color: var(--canvas-dark-ink);
+    font-family: var(--font-ui);
+    min-height: 100vh;
+  }
+  h1 {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: 28px; letter-spacing: -0.02em;
+    color: var(--canvas-dark-ink-strong); margin: 0 0 8px;
+  }
+  .lede {
+    color: var(--canvas-dark-ink-muted); font-size: 14px;
+    max-width: 60ch; margin: 0 0 32px;
+  }
+  h2.section-title {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: 18px; color: var(--brand); margin: 0 0 16px;
+  }
+  .compare-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 48px;
+  }
+  .variant-label {
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--canvas-dark-ink-faint); margin: 0 0 10px 4px;
+  }
+  hr.section-rule {
+    border: 0; height: 1px;
+    background: oklch(1 0 0 / 0.06);
+    margin: 32px 0;
+  }
+  /* ── Panel chrome ────────────────────────────────────────────────────── */
+  .panel {
+    background: var(--canvas-dark-200);
+    border-radius: var(--r-card);
+    border-top: var(--br-card);
+    box-shadow: var(--sh-card);
+    overflow: hidden;
+  }
+  .panel-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 18px 12px;
+  }
+  .panel-head h3 {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: 14px; color: var(--brand); margin: 0;
+  }
+  .panel-head .ct {
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--canvas-dark-ink-faint);
+  }
+  /* ── Shared bits ─────────────────────────────────────────────────────── */
+  .av {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: var(--font-display); font-weight: 700; font-size: 13px;
+    flex-shrink: 0;
+  }
+  .av.lg { width: 40px; height: 40px; font-size: 15px; }
+  .av.violet { background: #8b7ad9; color: white; }
+  .av.tomato { background: #d97560; color: white; }
+  .av.mint { background: #6dc99c; color: white; }
+  .av.sky { background: #6da9d9; color: white; }
+  .av.amber { background: #d9a560; color: white; }
+  .btn-pill {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    height: 28px; padding: 0 12px;
+    border-radius: var(--r-pill);
+    font-family: var(--font-display); font-weight: 600; font-size: 11.5px;
+    cursor: pointer; border: 0;
+    white-space: nowrap;
+  }
+  .btn-brand { background: var(--brand); color: var(--brand-ink); }
+  .btn-tile {
+    background: var(--canvas-dark-300);
+    color: var(--canvas-dark-ink); border-top: var(--br-card);
+    box-shadow: var(--sh-tile);
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--canvas-dark-ink-muted);
+  }
+  .btn-ghost:hover { color: var(--canvas-dark-ink-strong); }
+
+  /* ════════════════════════════════════════════════════════════════════
+     REQUESTS — 3 variants
+     ════════════════════════════════════════════════════════════════════ */
+
+  /* Variant A — Forum-table row with inline buttons */
+  .req-a .row {
+    display: grid;
+    grid-template-columns: 40px 1fr auto;
+    align-items: center; gap: 12px;
+    padding: 12px 18px;
+    border-bottom: 1px solid oklch(1 0 0 / 0.06);
+  }
+  .req-a .row:last-child { border-bottom: 0; }
+  .req-a .row .name {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: 13.5px; color: var(--canvas-dark-ink-strong);
+    margin: 0 0 2px;
+  }
+  .req-a .row .meta {
+    font-family: var(--font-mono); font-size: 10.5px;
+    color: var(--canvas-dark-ink-faint);
+  }
+  .req-a .row .actions { display: flex; gap: 6px; }
+
+  /* Variant B — Stacked tile card per request */
+  .req-b { padding: 0 12px 12px; }
+  .req-b .row {
+    background: linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300));
+    border-radius: var(--r-row);
+    border-top: var(--br-card);
+    box-shadow: var(--sh-tile);
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: 10px;
+    align-items: center;
+  }
+  .req-b .row:last-child { margin-bottom: 0; }
+  .req-b .row .name {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: 13.5px; color: var(--canvas-dark-ink-strong);
+    margin: 0 0 2px;
+  }
+  .req-b .row .meta {
+    font-family: var(--font-mono); font-size: 10.5px;
+    color: var(--canvas-dark-ink-faint);
+  }
+  .req-b .row .actions {
+    grid-column: 1 / -1;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+    margin-top: 6px;
+  }
+  .req-b .row .actions .btn-pill { height: 30px; }
+
+  /* Variant C — Vertical with name on top, buttons full-width below */
+  .req-c .row {
+    padding: 14px 18px;
+    border-bottom: 1px solid oklch(1 0 0 / 0.10);
+  }
+  .req-c .row:last-child { border-bottom: 0; }
+  .req-c .row .top {
+    display: grid; grid-template-columns: 40px 1fr;
+    gap: 12px; align-items: center;
+    margin-bottom: 10px;
+  }
+  .req-c .row .name {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: 13.5px; color: var(--canvas-dark-ink-strong);
+    margin: 0 0 2px;
+  }
+  .req-c .row .meta {
+    font-family: var(--font-mono); font-size: 10.5px;
+    color: var(--canvas-dark-ink-faint);
+  }
+  .req-c .row .actions {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+  }
+
+  /* ════════════════════════════════════════════════════════════════════
+     MY HIVES — 3 variants
+     ════════════════════════════════════════════════════════════════════ */
+
+  /* Variant A — Forum-table with hairline */
+  .hive-a .row {
+    display: grid;
+    grid-template-columns: 32px 1fr auto;
+    align-items: center; gap: 12px;
+    padding: 12px 18px;
+    border-bottom: 1px solid oklch(1 0 0 / 0.06);
+    cursor: pointer;
+    transition: background .14s;
+  }
+  .hive-a .row:last-child { border-bottom: 0; }
+  .hive-a .row:hover { background: oklch(1 0 0 / 0.025); }
+  .hive-a .row .name {
+    font-family: var(--font-display); font-weight: 600;
+    font-size: 13.5px; color: var(--canvas-dark-ink-strong);
+  }
+  .hive-a .row .members {
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--canvas-dark-ink-faint);
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+
+  /* Variant B — Tile cards */
+  .hive-b { padding: 0 12px 12px; }
+  .hive-b .row {
+    background: linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300));
+    border-radius: var(--r-row);
+    border-top: var(--br-card);
+    box-shadow: var(--sh-tile);
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    display: grid;
+    grid-template-columns: 32px 1fr auto;
+    gap: 10px;
+    align-items: center;
+    cursor: pointer;
+  }
+  .hive-b .row:last-child { margin-bottom: 0; }
+  .hive-b .row .name {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: 13.5px; color: var(--canvas-dark-ink-strong);
+  }
+  .hive-b .row .members {
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--canvas-dark-ink-faint);
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .hive-b .row .role-pill {
+    font-family: var(--font-mono); font-size: 9.5px;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    padding: 3px 7px; border-radius: var(--r-pill);
+    background: oklch(from var(--status-final) l c h / 0.18);
+    color: var(--status-final);
+  }
+
+  /* Variant C — Two-line row with bigger hairline */
+  .hive-c .row {
+    padding: 14px 18px;
+    border-bottom: 1px solid oklch(1 0 0 / 0.10);
+    cursor: pointer;
+  }
+  .hive-c .row:last-child { border-bottom: 0; }
+  .hive-c .row .top {
+    display: grid; grid-template-columns: 36px 1fr;
+    gap: 12px; align-items: center;
+  }
+  .hive-c .row .name {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: 14px; color: var(--canvas-dark-ink-strong);
+    margin: 0;
+  }
+  .hive-c .row .sub {
+    font-family: var(--font-mono); font-size: 10.5px;
+    color: var(--canvas-dark-ink-faint);
+    margin-top: 3px;
+  }
+
+  /* ════════════════════════════════════════════════════════════════════
+     ACTIVITY FEED — 3 variants
+     ════════════════════════════════════════════════════════════════════ */
+
+  /* Variant A — Compact divided rows (current style, lighter divider) */
+  .feed-a .row {
+    display: grid;
+    grid-template-columns: 32px 1fr;
+    gap: 12px;
+    padding: 16px 18px;
+    border-bottom: 1px solid oklch(1 0 0 / 0.10);
+  }
+  .feed-a .row:last-child { border-bottom: 0; }
+  .feed-a .row .text {
+    font-size: 14px; line-height: 1.5; color: var(--canvas-dark-ink);
+  }
+  .feed-a .row .text strong { color: var(--canvas-dark-ink-strong); font-weight: 600; }
+  .feed-a .row .when {
+    font-family: var(--font-mono); font-size: 10.5px;
+    color: var(--canvas-dark-ink-faint); margin-top: 5px;
+  }
+
+  /* Variant B — Tile cards stacked */
+  .feed-b { padding: 0 12px 12px; }
+  .feed-b .row {
+    background: linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300));
+    border-radius: var(--r-row);
+    border-top: var(--br-card);
+    box-shadow: var(--sh-tile);
+    padding: 14px 14px;
+    margin-bottom: 8px;
+    display: grid;
+    grid-template-columns: 32px 1fr;
+    gap: 12px;
+  }
+  .feed-b .row:last-child { margin-bottom: 0; }
+  .feed-b .row .text {
+    font-size: 13.5px; line-height: 1.5; color: var(--canvas-dark-ink);
+  }
+  .feed-b .row .text strong { color: var(--canvas-dark-ink-strong); font-weight: 600; }
+  .feed-b .row .when {
+    font-family: var(--font-mono); font-size: 10.5px;
+    color: var(--canvas-dark-ink-faint); margin-top: 5px;
+  }
+
+  /* Variant C — Timeline (vertical thread + dot markers) */
+  .feed-c { padding: 8px 18px 18px; position: relative; }
+  .feed-c::before {
+    content: ''; position: absolute;
+    top: 24px; bottom: 24px; left: 31px;
+    width: 1px; background: oklch(1 0 0 / 0.08);
+  }
+  .feed-c .row {
+    display: grid; grid-template-columns: 32px 1fr;
+    gap: 14px; padding: 12px 0;
+    position: relative;
+  }
+  .feed-c .row .av { position: relative; z-index: 1; }
+  .feed-c .row .text {
+    font-size: 13.5px; line-height: 1.5; color: var(--canvas-dark-ink);
+  }
+  .feed-c .row .text strong { color: var(--canvas-dark-ink-strong); font-weight: 600; }
+  .feed-c .row .when {
+    font-family: var(--font-mono); font-size: 10.5px;
+    color: var(--canvas-dark-ink-faint); margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Community sidebar mockups</h1>
+<p class="lede">
+  Three variants for each card. Pick one (or mix-and-match — e.g. Requests A
+  + Hives B + Feed C). All built on the existing dark-iOS tokens.
+</p>
+
+<!-- ════════════════════════════ REQUESTS ════════════════════════════ -->
+<h2 class="section-title">Requests</h2>
+<div class="compare-grid">
+
+  <div>
+    <p class="variant-label">A · Forum-table inline buttons</p>
+    <div class="panel">
+      <div class="panel-head">
+        <h3>Requests</h3>
+        <span class="ct">1</span>
+      </div>
+      <div class="req-a">
+        <div class="row">
+          <span class="av lg violet">JU</span>
+          <div>
+            <p class="name">June Hale</p>
+            <p class="meta">@june · 2 mutual</p>
+          </div>
+          <div class="actions">
+            <button class="btn-pill btn-brand">Accept</button>
+            <button class="btn-pill btn-ghost">Decline</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <p class="variant-label">B · Tile card per request</p>
+    <div class="panel">
+      <div class="panel-head">
+        <h3>Requests</h3>
+        <span class="ct">2</span>
+      </div>
+      <div class="req-b">
+        <div class="row">
+          <span class="av lg violet">JU</span>
+          <div>
+            <p class="name">June Hale</p>
+            <p class="meta">@june · 2 mutual friends</p>
+          </div>
+          <div class="actions">
+            <button class="btn-pill btn-brand">Accept</button>
+            <button class="btn-pill btn-tile">Decline</button>
+          </div>
+        </div>
+        <div class="row">
+          <span class="av lg amber">AT</span>
+          <div>
+            <p class="name">Atlas Park</p>
+            <p class="meta">@atlas · 0 mutual</p>
+          </div>
+          <div class="actions">
+            <button class="btn-pill btn-brand">Accept</button>
+            <button class="btn-pill btn-tile">Decline</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <p class="variant-label">C · Stacked, full-width buttons</p>
+    <div class="panel">
+      <div class="panel-head">
+        <h3>Requests</h3>
+        <span class="ct">2</span>
+      </div>
+      <div class="req-c">
+        <div class="row">
+          <div class="top">
+            <span class="av lg violet">JU</span>
+            <div>
+              <p class="name">June Hale</p>
+              <p class="meta">@june · 2 mutual friends</p>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn-pill btn-brand">Accept</button>
+            <button class="btn-pill btn-tile">Decline</button>
+          </div>
+        </div>
+        <div class="row">
+          <div class="top">
+            <span class="av lg amber">AT</span>
+            <div>
+              <p class="name">Atlas Park</p>
+              <p class="meta">@atlas · 0 mutual</p>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn-pill btn-brand">Accept</button>
+            <button class="btn-pill btn-tile">Decline</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<hr class="section-rule" />
+
+<!-- ════════════════════════════ MY HIVES ════════════════════════════ -->
+<h2 class="section-title">My Hives</h2>
+<div class="compare-grid">
+
+  <div>
+    <p class="variant-label">A · Forum-table, hairline divider</p>
+    <div class="panel">
+      <div class="panel-head">
+        <h3>My Hives</h3>
+        <span class="ct">2</span>
+      </div>
+      <div class="hive-a">
+        <div class="row">
+          <span class="av violet">G</span>
+          <div>
+            <div class="name">Gothic Sprint Club</div>
+          </div>
+          <span class="members">👥 3</span>
+        </div>
+        <div class="row">
+          <span class="av tomato">T</span>
+          <div>
+            <div class="name">The Honey Workshop</div>
+          </div>
+          <span class="members">👥 4</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <p class="variant-label">B · Tile rows + role pills</p>
+    <div class="panel">
+      <div class="panel-head">
+        <h3>My Hives</h3>
+        <span class="ct">2</span>
+      </div>
+      <div class="hive-b">
+        <div class="row">
+          <span class="av violet">G</span>
+          <div>
+            <div class="name">Gothic Sprint Club</div>
+          </div>
+          <span class="role-pill">Contrib</span>
+        </div>
+        <div class="row">
+          <span class="av tomato">T</span>
+          <div>
+            <div class="name">The Honey Workshop</div>
+          </div>
+          <span class="role-pill">Owner</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <p class="variant-label">C · 2-line row, bigger divider</p>
+    <div class="panel">
+      <div class="panel-head">
+        <h3>My Hives</h3>
+        <span class="ct">2</span>
+      </div>
+      <div class="hive-c">
+        <div class="row">
+          <div class="top">
+            <span class="av violet">G</span>
+            <div>
+              <p class="name">Gothic Sprint Club</p>
+              <p class="sub">3 members · Contributor</p>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="top">
+            <span class="av tomato">T</span>
+            <div>
+              <p class="name">The Honey Workshop</p>
+              <p class="sub">4 members · Owner</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<hr class="section-rule" />
+
+<!-- ════════════════════════════ ACTIVITY FEED ════════════════════════════ -->
+<h2 class="section-title">Activity feed</h2>
+<div class="compare-grid">
+
+  <div>
+    <p class="variant-label">A · Divided rows (current style, brighter rule)</p>
+    <div class="panel">
+      <div class="panel-head">
+        <h3>Activity</h3>
+        <span class="ct">7</span>
+      </div>
+      <div class="feed-a">
+        <div class="row">
+          <span class="av violet">M</span>
+          <div>
+            <p class="text"><strong>Maya Rivera</strong> liked your book <strong>The Honeyed Path</strong>.</p>
+            <p class="when">2h ago</p>
+          </div>
+        </div>
+        <div class="row">
+          <span class="av tomato">D</span>
+          <div>
+            <p class="text"><strong>Dorian Vale</strong> commented on <strong>The Honeyed Path</strong>: "The atmosphere is so warm."</p>
+            <p class="when">5h ago</p>
+          </div>
+        </div>
+        <div class="row">
+          <span class="av mint">V</span>
+          <div>
+            <p class="text"><strong>Vesper Nox</strong> published <strong>Sleep in the Long Shadow</strong>.</p>
+            <p class="when">2d ago</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <p class="variant-label">B · Tile cards stacked</p>
+    <div class="panel">
+      <div class="panel-head">
+        <h3>Activity</h3>
+        <span class="ct">7</span>
+      </div>
+      <div class="feed-b">
+        <div class="row">
+          <span class="av violet">M</span>
+          <div>
+            <p class="text"><strong>Maya Rivera</strong> liked your book <strong>The Honeyed Path</strong>.</p>
+            <p class="when">2h ago</p>
+          </div>
+        </div>
+        <div class="row">
+          <span class="av tomato">D</span>
+          <div>
+            <p class="text"><strong>Dorian Vale</strong> commented on <strong>The Honeyed Path</strong>: "The atmosphere is so warm."</p>
+            <p class="when">5h ago</p>
+          </div>
+        </div>
+        <div class="row">
+          <span class="av mint">V</span>
+          <div>
+            <p class="text"><strong>Vesper Nox</strong> published <strong>Sleep in the Long Shadow</strong>.</p>
+            <p class="when">2d ago</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <p class="variant-label">C · Timeline thread</p>
+    <div class="panel">
+      <div class="panel-head">
+        <h3>Activity</h3>
+        <span class="ct">7</span>
+      </div>
+      <div class="feed-c">
+        <div class="row">
+          <span class="av violet">M</span>
+          <div>
+            <p class="text"><strong>Maya Rivera</strong> liked your book <strong>The Honeyed Path</strong>.</p>
+            <p class="when">2h ago</p>
+          </div>
+        </div>
+        <div class="row">
+          <span class="av tomato">D</span>
+          <div>
+            <p class="text"><strong>Dorian Vale</strong> commented on <strong>The Honeyed Path</strong>: "The atmosphere is so warm."</p>
+            <p class="when">5h ago</p>
+          </div>
+        </div>
+        <div class="row">
+          <span class="av mint">V</span>
+          <div>
+            <p class="text"><strong>Vesper Nox</strong> published <strong>Sleep in the Long Shadow</strong>.</p>
+            <p class="when">2d ago</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

@@ -1,44 +1,116 @@
 import Link from 'next/link'
+import { Plus, Search } from 'lucide-react'
 
 type Props = {
   locale: string
   templates: { id: string; name: string; genre: string | null }[]
 }
 
-function PlaceholderSlot() {
+/**
+ * 3-cell honeycomb cluster.
+ * Center hex is "active" — panel-tile gradient, brand-yellow inner hex glyph
+ * (mirrors the AppNav logo), soft radial brand glow, gentle float animation.
+ * Side hexes are dashed "empty slots" representing future books.
+ */
+function HoneycombCluster() {
+  // Pointy-top hex centered at (cx, cy) with width W and height H = W * 2/√3.
+  const W = 130
+  const H = 150
+  const hex = (cx: number, cy: number) =>
+    [
+      [cx, cy - H / 2],
+      [cx + W / 2, cy - H / 4],
+      [cx + W / 2, cy + H / 4],
+      [cx, cy + H / 2],
+      [cx - W / 2, cy + H / 4],
+      [cx - W / 2, cy - H / 4],
+    ]
+      .map(([x, y]) => `${x},${y}`)
+      .join(' ')
+
+  // Center hex sits slightly higher than the two flanking hexes (classic
+  // honeycomb trio nest pattern).
+  const left = hex(90, 114)
+  const center = hex(230, 94)
+  const right = hex(370, 114)
+
   return (
-    <div
-      style={{
-        width: '160px',
-        height: '240px',
-        border: '1.5px dashed var(--canvas-dark-300)',
-        borderRadius: 'var(--r-lg)',
-        background: 'oklch(0.215 0.003 256)',
-        position: 'relative',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: 'var(--canvas-dark-ink-muted)',
-      }}
-      aria-hidden="true"
-    >
-      <div
-        style={{
-          width: '36px',
-          height: '36px',
-          borderRadius: 'var(--r-full)',
-          background: 'var(--canvas-dark-100)',
-          border: '1px solid var(--canvas-dark-300)',
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
+    <div className="relative" style={{ width: '460px', maxWidth: '100%' }}>
+      <svg
+        width="460"
+        height="220"
+        viewBox="0 0 460 220"
+        style={{ display: 'block', overflow: 'visible' }}
+        aria-hidden="true"
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="5" y="3" width="14" height="18" rx="1.5" />
-          <path d="M5 7h14" />
-        </svg>
-      </div>
+        <defs>
+          <filter id="hc-shadow" x="-30%" y="-30%" width="160%" height="160%">
+            <feDropShadow
+              dx="0"
+              dy="8"
+              stdDeviation="12"
+              floodColor="oklch(0 0 0)"
+              floodOpacity="0.55"
+            />
+          </filter>
+        </defs>
+
+        {/* Side hexes — empty / dashed */}
+        <g style={{ filter: 'url(#hc-shadow)' }}>
+          <polygon
+            points={left}
+            fill="oklch(0.230 0.003 256)"
+            stroke="oklch(1 0 0 / 0.14)"
+            strokeWidth="1.2"
+            strokeDasharray="4 6"
+          />
+          <polygon
+            points={right}
+            fill="oklch(0.230 0.003 256)"
+            stroke="oklch(1 0 0 / 0.14)"
+            strokeWidth="1.2"
+            strokeDasharray="4 6"
+          />
+        </g>
+
+        {/* Side hex glyphs — small muted plus signs */}
+        <g
+          fill="none"
+          stroke="oklch(1 0 0 / 0.22)"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+        >
+          <path d="M82 114 L98 114 M90 106 L90 122" />
+          <path d="M362 114 L378 114 M370 106 L370 122" />
+        </g>
+
+        {/* Center hex — active */}
+        <g style={{ filter: 'url(#hc-shadow)' }}>
+          <polygon
+            points={center}
+            fill="oklch(0.270 0.003 256)"
+            stroke="oklch(1 0 0 / 0.06)"
+            strokeWidth="1"
+          />
+          {/* inner hex glyph — mirrors AppNav logo (outer stroked + inner filled) */}
+          <g transform="translate(200, 64) scale(2.5)" style={{ color: 'oklch(0.85 0.18 90)' }}>
+            <path
+              d="M12 2 L20 6.5 L20 15.5 L12 20 L4 15.5 L4 6.5 Z"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M12 9 L16 11 L16 14.5 L12 16.5 L8 14.5 L8 11 Z"
+              fill="currentColor"
+              fillOpacity="0.55"
+            />
+          </g>
+        </g>
+      </svg>
+
     </div>
   )
 }
@@ -58,162 +130,16 @@ export function StudioEmptyState({ locale, templates: _templates }: Props) {
         className="flex-1 grid place-items-center relative z-[1]"
         style={{ padding: '88px 0 64px' }}
       >
-        <div className="w-[720px] relative flex flex-col items-center max-w-full">
-          {/* Shelf — 2 slots + floating hero book */}
-          <div
-            className="relative w-full grid items-end"
-            style={{
-              height: '280px',
-              gridTemplateColumns: 'repeat(3, 160px)',
-              justifyContent: 'center',
-              gap: '40px',
-              paddingBottom: '4px',
-            }}
-            aria-hidden="true"
-          >
-            <PlaceholderSlot />
-
-            {/* Floating hero book */}
-            <div
-              role="img"
-              aria-label="A blank book waiting to be written"
-              className="relative flex flex-col"
-              style={{
-                width: '208px',
-                height: '296px',
-                background: 'var(--paper-100)',
-                borderRadius: 'var(--r-lg)',
-                padding: '30px 22px 26px',
-                boxShadow:
-                  '0 1px 0 rgba(255,255,255,0.8) inset, -1px 0 0 oklch(0.78 0.020 78 / 0.65) inset, 0 2px 4px rgba(0,0,0,0.25), 0 28px 44px -16px rgba(0,0,0,0.65)',
-                backgroundImage:
-                  'radial-gradient(circle at 1px 1px, rgba(95,60,20,0.05) 1px, transparent 0)',
-                backgroundSize: '22px 22px',
-                transform: 'translateY(-16px)',
-                animation: 'float-gentle 5.5s ease-in-out infinite',
-                zIndex: 2,
-                color: 'var(--paper-ink)',
-              }}
-            >
-              {/* status stripe top accent */}
-              <span
-                aria-hidden="true"
-                style={{
-                  content: '""',
-                  position: 'absolute',
-                  left: '18px',
-                  right: '18px',
-                  top: 0,
-                  height: '3px',
-                  background: 'var(--status-first-draft)',
-                  borderRadius: '0 0 3px 3px',
-                  opacity: 0.6,
-                }}
-              />
-              <div
-                className="text-center uppercase"
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '9px',
-                  letterSpacing: '0.28em',
-                  color: 'var(--paper-ink-muted)',
-                  marginTop: '4px',
-                }}
-              >
-                Untitled · Book One
-              </div>
-              <div
-                className="mx-auto inline-flex items-center justify-center"
-                style={{
-                  margin: '24px auto 16px',
-                  width: '52px',
-                  height: '52px',
-                  borderRadius: 'var(--r-full)',
-                  background: 'var(--paper-200)',
-                  border: '1.5px solid var(--paper-300)',
-                  color: 'var(--paper-ink-strong)',
-                  boxShadow:
-                    '0 1px 0 rgba(255,255,255,0.7) inset, 0 2px 4px rgba(60,40,20,0.12)',
-                }}
-              >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 5v14M5 12h14" />
-                </svg>
-              </div>
-              <div
-                className="text-center"
-                style={{
-                  marginTop: 'auto',
-                  fontFamily: 'var(--font-prose)',
-                  fontSize: '15px',
-                  fontStyle: 'italic',
-                  color: 'var(--paper-ink)',
-                  lineHeight: 1.3,
-                  textWrap: 'balance' as const,
-                }}
-              >
-                The first page<br />is always the hardest.
-              </div>
-              <div
-                className="mx-auto"
-                style={{
-                  width: '28px',
-                  height: '1px',
-                  background: 'var(--paper-ink-strong)',
-                  margin: '12px auto 8px',
-                  opacity: 0.4,
-                }}
-              />
-              <div
-                className="text-center uppercase"
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '8px',
-                  letterSpacing: '0.26em',
-                  color: 'var(--paper-ink-muted)',
-                }}
-              >
-                Press start when ready
-              </div>
-            </div>
-
-            <PlaceholderSlot />
-          </div>
-
-          {/* Shelf rail */}
-          <div
-            className="relative w-full"
-            style={{ height: '28px', marginTop: '-2px' }}
-            aria-hidden="true"
-          >
-            <span
-              style={{
-                position: 'absolute',
-                left: '4%',
-                right: '4%',
-                top: 0,
-                height: '1px',
-                background:
-                  'linear-gradient(90deg, transparent, var(--canvas-dark-300) 8%, var(--canvas-dark-300) 92%, transparent)',
-              }}
-            />
-            <span
-              style={{
-                position: 'absolute',
-                left: '35%',
-                right: '35%',
-                top: '1px',
-                height: '26px',
-                background:
-                  'radial-gradient(ellipse at 50% 0%, oklch(0.85 0.18 90 / 0.12), transparent 70%)',
-              }}
-            />
-          </div>
+        <div className="flex flex-col items-center max-w-full">
+          <HoneycombCluster />
 
           {/* Copy + CTAs */}
-          <div className="text-center" style={{ marginTop: '56px', maxWidth: '540px' }}>
+          <div
+            className="text-center"
+            style={{ marginTop: '64px', maxWidth: '540px' }}
+          >
             <h2
-              className="m-0 mb-3.5"
+              className="m-0 mb-4"
               style={{
                 fontFamily: 'var(--font-display)',
                 fontWeight: 700,
@@ -224,17 +150,17 @@ export function StudioEmptyState({ locale, templates: _templates }: Props) {
                 textWrap: 'balance' as const,
               }}
             >
-              Your stories{' '}
+              Your hive{' '}
               <em
                 style={{
                   fontStyle: 'italic',
                   fontFamily: 'var(--font-prose)',
                   fontWeight: 400,
-                  color: 'var(--canvas-dark-ink)',
+                  color: 'var(--brand)',
                   letterSpacing: '-0.01em',
                 }}
               >
-                start here.
+                starts here.
               </em>
             </h2>
             <p
@@ -247,64 +173,53 @@ export function StudioEmptyState({ locale, templates: _templates }: Props) {
                 textWrap: 'pretty' as const,
               }}
             >
-              Drop a seed of an idea, or open a blank chapter and let the first
-              sentence find you. Your library will fill itself.
+              Every story begins with a single buzz. Drop your first chapter —
+              your library will fill itself.
             </p>
             <div className="flex gap-3 justify-center flex-wrap">
               <Link
                 href={`/${locale}/studio/new`}
-                className="inline-flex items-center gap-2.5 no-underline"
+                className="inline-flex items-center gap-2 no-underline whitespace-nowrap"
                 style={{
-                  padding: '13px 24px',
-                  borderRadius: 'var(--r-full)',
+                  height: '40px',
+                  padding: '0 22px',
+                  borderRadius: 'var(--r-pill)',
                   background: 'var(--brand)',
                   color: 'var(--brand-ink)',
                   fontFamily: 'var(--font-display)',
                   fontWeight: 700,
-                  fontSize: '14px',
+                  fontSize: '13px',
                   border: 0,
                   cursor: 'pointer',
-                  boxShadow: 'var(--el-2)',
                 }}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 5v14M5 12h14" />
-                </svg>
-                Start writing
+                <Plus size={15} />
+                Start Writing
               </Link>
               <Link
                 href={`/${locale}/discover`}
-                className="inline-flex items-center gap-2.5 no-underline"
+                className="inline-flex items-center gap-2 no-underline whitespace-nowrap"
                 style={{
-                  padding: '13px 24px',
-                  borderRadius: 'var(--r-full)',
-                  background: 'var(--canvas-dark-100)',
-                  border: '1px solid var(--canvas-dark-300)',
+                  height: '40px',
+                  padding: '0 22px',
+                  borderRadius: 'var(--r-pill)',
+                  background: 'var(--canvas-dark-300)',
+                  border: 'var(--br-card)',
+                  boxShadow: 'var(--sh-tile)',
                   color: 'var(--canvas-dark-ink-strong)',
                   fontFamily: 'var(--font-display)',
                   fontWeight: 600,
-                  fontSize: '14px',
+                  fontSize: '13px',
                 }}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="11" cy="11" r="7" />
-                  <path d="m20 20-3.5-3.5" />
-                </svg>
+                <Search size={14} />
                 Explore books
               </Link>
             </div>
-
           </div>
         </div>
       </div>
 
-      {/* Local keyframes — scoped to empty state */}
-      <style>{`
-        @keyframes float-gentle {
-          0%, 100% { transform: translateY(-16px); }
-          50%      { transform: translateY(-22px); }
-        }
-      `}</style>
     </main>
   )
 }

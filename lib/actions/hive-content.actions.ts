@@ -10,6 +10,7 @@ import { createTaskSchema, updateTaskSchema } from '@/lib/validations/hive'
 import { requireHiveMember, canEditOutline, type HiveRole } from '@/lib/hive/permissions'
 import { extractWikiExcerpt } from '@/lib/wiki/excerpt'
 import { CATEGORY_TEMPLATES, type WikiCategory } from '@/lib/wiki/category-templates'
+import { shouldSkipNotification } from '@/lib/notifications/check-preferences'
 import type { BinderItemRow } from './binder.actions'
 import type { ChapterStatus } from '@/lib/books/is-chapter-reader-visible'
 import type { ActionResult } from './book.actions'
@@ -619,13 +620,16 @@ export async function createTaskAction(hiveId: string, input: {
     .returning({ id: hiveTasks.id })
 
   if (parsed.data.assigneeId && parsed.data.assigneeId !== userId) {
-    await db.insert(notifications).values({
-      userId: parsed.data.assigneeId,
-      type: 'TASK_ASSIGNED',
-      actorId: userId,
-      resourceType: 'hive_task',
-      resourceId: task.id,
-    })
+    const skip = await shouldSkipNotification(parsed.data.assigneeId, 'TASK_ASSIGNED')
+    if (!skip) {
+      await db.insert(notifications).values({
+        userId: parsed.data.assigneeId,
+        type: 'TASK_ASSIGNED',
+        actorId: userId,
+        resourceType: 'hive_task',
+        resourceId: task.id,
+      })
+    }
   }
 
   return { success: true, data: { taskId: task.id } }
@@ -651,13 +655,16 @@ export async function updateTaskAction(taskId: string, input: {
     .where(eq(hiveTasks.id, taskId))
 
   if (parsed.data.status === 'DONE' && task.creatorId !== userId) {
-    await db.insert(notifications).values({
-      userId: task.creatorId,
-      type: 'TASK_COMPLETED',
-      actorId: userId,
-      resourceType: 'hive_task',
-      resourceId: taskId,
-    })
+    const skip = await shouldSkipNotification(task.creatorId, 'TASK_COMPLETED')
+    if (!skip) {
+      await db.insert(notifications).values({
+        userId: task.creatorId,
+        type: 'TASK_COMPLETED',
+        actorId: userId,
+        resourceType: 'hive_task',
+        resourceId: taskId,
+      })
+    }
   }
 
   return { success: true, data: undefined }

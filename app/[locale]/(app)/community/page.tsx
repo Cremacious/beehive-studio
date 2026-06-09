@@ -95,8 +95,10 @@ export default async function CommunityPage({
             locale={locale}
             count={incomingRequests.length}
             samples={incomingRequests.map((r) => ({
+              friendshipId: r.friendshipId,
               userId: r.userId,
               username: r.username,
+              displayName: r.displayName,
               avatarUrl: r.avatarUrl,
             }))}
           />

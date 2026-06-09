@@ -9,8 +9,11 @@ import {
   binderItems,
   chapterSnapshots,
   userProfiles,
+  notifications,
 } from '@/db/schema'
+import { createId } from '@paralleldrive/cuid2'
 import { eq, and, asc, isNull } from 'drizzle-orm'
+import { shouldSkipNotification } from '@/lib/notifications/check-preferences'
 import { requireAuth } from '@/lib/require-auth'
 import {
   requireHiveMember,
@@ -134,6 +137,13 @@ export async function createSuggestionAction(
   if (!chapter || chapter.bookId !== hive.bookId) {
     return { success: false, error: 'NOT_FOUND' }
   }
+  // Book owner — recipient of the HIVE_SUGGESTION notification (unless they
+  // are the suggester themselves).
+  const book = await db.query.books.findFirst({
+    where: eq(books.id, hive.bookId),
+    columns: { userId: true },
+  })
+  const ownerId = book?.userId ?? null
 
   // Mention extraction + early cap check on the rationale body (before tx).
   // Suggestion `body` is optional; absent rationale yields zero mentions.
@@ -189,6 +199,22 @@ export async function createSuggestionAction(
         suggestedText,
       },
     })
+
+    // HIVE_SUGGESTION notification — notify the book owner (skip if owner is
+    // the suggester or opted out).
+    if (ownerId && ownerId !== userId) {
+      const skip = await shouldSkipNotification(ownerId, 'HIVE_SUGGESTION')
+      if (!skip) {
+        await tx.insert(notifications).values({
+          id: createId(),
+          userId: ownerId,
+          type: 'HIVE_SUGGESTION' as const,
+          actorId: userId,
+          resourceType: 'hive_suggestion',
+          resourceId: newId,
+        })
+      }
+    }
 
     // Mention notifications (rationale body only)
     if (textUsernames.length > 0) {

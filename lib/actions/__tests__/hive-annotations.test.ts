@@ -57,6 +57,9 @@ vi.mock('@/db', () => ({
       userProfiles: {
         findMany: (a: any) => profilesFindMany(a),
       },
+      notificationPreferences: {
+        findFirst: async () => undefined,
+      },
     },
     insert: (table: any) => {
       // top-level (non-tx) insert

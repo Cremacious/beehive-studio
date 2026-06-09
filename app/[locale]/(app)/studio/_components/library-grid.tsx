@@ -36,9 +36,10 @@ type Props = {
   books: BookSummary[]
   hives: UserHiveView[]
   locale: string
+  authorName?: string | null
 }
 
-export function LibraryGrid({ books, hives, locale }: Props) {
+export function LibraryGrid({ books, hives, locale, authorName }: Props) {
   const [tab, setTab] = useState<Tab>('all')
   const [sort, setSort] = useState<Sort>('recent')
   const [query, setQuery] = useState('')
@@ -314,16 +315,10 @@ export function LibraryGrid({ books, hives, locale }: Props) {
 
       {/* ── Grid ── */}
       {visibleItems.length > 0 ? (
-        <div
-          className="grid"
-          style={{
-            gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
-            gap: '14px',
-          }}
-        >
+        <div className="library-book-grid">
           {visibleItems.map((item) =>
             item.kind === 'book' ? (
-              <LibraryBookCard key={item.id} book={item.data} locale={locale} />
+              <LibraryBookCard key={item.id} book={item.data} locale={locale} authorName={authorName} />
             ) : (
               <LibraryHiveCard key={item.id} hive={item.data} />
             ),
@@ -416,18 +411,18 @@ export function LibraryGrid({ books, hives, locale }: Props) {
  * Books and hives use their existing card chrome but with the badge overlay so
  * they're visually distinct at a glance in the unified grid.
  */
-function LibraryBookCard({ book, locale }: { book: BookSummary; locale: string }) {
+function LibraryBookCard({ book, locale, authorName }: { book: BookSummary; locale: string; authorName?: string | null }) {
   return (
-    <div className="relative">
+    <div className="relative h-full">
       <TypeBadge kind="book" />
-      <BookCard book={book} locale={locale} />
+      <BookCard book={book} locale={locale} authorName={authorName} />
     </div>
   )
 }
 
 function LibraryHiveCard({ hive }: { hive: UserHiveView }) {
   return (
-    <div className="relative">
+    <div className="relative h-full">
       <TypeBadge kind="hive" />
       <HiveCard hive={hive} />
     </div>

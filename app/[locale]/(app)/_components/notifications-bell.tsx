@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import {
   AtSign, Heart, UserPlus, Users, Hexagon, MessageSquare,
-  Bell as BellIcon, BookOpen, Sparkles, List,
+  Bell as BellIcon, BookOpen, Sparkles, List, FileText, Edit3, StickyNote,
 } from 'lucide-react'
 import type { NotificationRow } from '@/lib/actions/notifications.actions'
 import {
@@ -12,6 +12,12 @@ import {
   markAllNotificationsReadAction,
 } from '@/lib/actions/notifications.actions'
 import { resolveMentionDeepLink } from '@/lib/notifications/mention-deep-links'
+import {
+  resolveHiveSubmissionLink,
+  resolveHiveSuggestionLink,
+  resolveHiveAnnotationLink,
+  resolveNewChapterLink,
+} from '@/lib/notifications/hive-deep-links'
 import { cn } from '@/lib/utils'
 
 function iconFor(type: string) {
@@ -29,7 +35,11 @@ function iconFor(type: string) {
     case 'CLUB_JOIN_APPROVED': return <Users />
     case 'CHAPTER_EDITED':
     case 'HIVE_COMMENT': return <BookOpen />
+    case 'NEW_CHAPTER': return <BookOpen />
     case 'SPARK_WIN': return <Sparkles />
+    case 'HIVE_SUBMISSION': return <FileText />
+    case 'HIVE_SUGGESTION': return <Edit3 />
+    case 'HIVE_ANNOTATION': return <StickyNote />
     case 'TASK_ASSIGNED':
     case 'TASK_COMPLETED': return <List />
     default: return <BellIcon />
@@ -49,6 +59,10 @@ function iconColor(type: string): string {
     case 'CLUB_JOIN_REQUEST':
     case 'CLUB_JOIN_APPROVED': return 'var(--list-visibility-friends)'
     case 'SPARK_WIN': return 'var(--brand)'
+    case 'NEW_CHAPTER': return 'var(--brand)'
+    case 'HIVE_SUBMISSION':
+    case 'HIVE_SUGGESTION':
+    case 'HIVE_ANNOTATION': return 'var(--brand)'
     default: return 'var(--canvas-dark-ink-muted)'
   }
 }
@@ -138,6 +152,55 @@ export function NotificationsBell() {
       } finally {
         setPendingRowId(null)
       }
+    } else if (n.type === 'NEW_LIKE' && n.resourceId) {
+      // resourceId is the bookId.
+      window.location.href = `/${locale}/books/${n.resourceId}`
+    } else if (n.type === 'NEW_COMMENT' && n.resourceId) {
+      // resourceType branches: 'book' → book reader; 'spark_entry' → entry.
+      if (n.resourceType === 'spark_entry') {
+        // We don't carry the parent sparkId — fall back to /sparks index.
+        window.location.href = `/${locale}/sparks`
+      } else {
+        window.location.href = `/${locale}/books/${n.resourceId}`
+      }
+    } else if (n.type === 'SPARK_WIN' && n.resourceId) {
+      window.location.href = `/${locale}/sparks/${n.resourceId}`
+    } else if (n.type === 'NEW_FOLLOWER') {
+      // No actor.username on the row payload — approximate to /friends like
+      // FRIEND_*. Widen NotificationRow.actor with username for precise routing.
+      window.location.href = `/${locale}/friends`
+    } else if (n.type === 'NEW_CHAPTER' && n.resourceId) {
+      setPendingRowId(n.id)
+      try {
+        const target = await resolveNewChapterLink(n.resourceId, locale)
+        window.location.href = target
+      } finally {
+        setPendingRowId(null)
+      }
+    } else if (n.type === 'HIVE_SUBMISSION' && n.resourceId) {
+      setPendingRowId(n.id)
+      try {
+        const target = await resolveHiveSubmissionLink(n.resourceId, locale)
+        window.location.href = target
+      } finally {
+        setPendingRowId(null)
+      }
+    } else if (n.type === 'HIVE_SUGGESTION' && n.resourceId) {
+      setPendingRowId(n.id)
+      try {
+        const target = await resolveHiveSuggestionLink(n.resourceId, locale)
+        window.location.href = target
+      } finally {
+        setPendingRowId(null)
+      }
+    } else if (n.type === 'HIVE_ANNOTATION' && n.resourceId) {
+      setPendingRowId(n.id)
+      try {
+        const target = await resolveHiveAnnotationLink(n.resourceId, locale)
+        window.location.href = target
+      } finally {
+        setPendingRowId(null)
+      }
     }
   }
 
@@ -157,6 +220,10 @@ export function NotificationsBell() {
     CLUB_INVITE: 'invited you to a book club',
     CLUB_JOIN_REQUEST: 'requested to join your book club',
     CLUB_JOIN_APPROVED: 'approved your request to join their book club',
+    NEW_CHAPTER: 'posted a new chapter',
+    HIVE_SUBMISSION: 'submitted a chapter for review',
+    HIVE_SUGGESTION: 'suggested an edit on your chapter',
+    HIVE_ANNOTATION: 'annotated your chapter',
   }
 
   function renderLabel(n: NotificationRow): string {

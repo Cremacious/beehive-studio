@@ -1,7 +1,8 @@
 'use server'
 
 import { db } from '@/db'
-import { books, chapters, chapterSnapshots, hiveAnnotations, hiveSuggestions } from '@/db/schema'
+import { books, chapters, chapterSnapshots, hiveAnnotations, hiveSuggestions, follows, notifications } from '@/db/schema'
+import { createId } from '@paralleldrive/cuid2'
 import { eq, desc, count, and, isNull } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { getUserPremiumStatus } from '@/lib/premium'
@@ -11,6 +12,7 @@ import { updateChapterNotesSchema, chapterStatusSchema, updateChapterWordGoalSch
 import { logHiveWordDelta } from '@/lib/hive/log-word-delta'
 import { getBookHive } from '@/lib/hive/get-book-hive'
 import { recordSocialActivityTx } from '@/lib/social/record-activity'
+import { shouldSkipNotification } from '@/lib/notifications/check-preferences'
 import type { ActionResult } from './book.actions'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -220,6 +222,37 @@ export async function updateChapterStatusAction(
           subjectId: chapter.binderItemId ?? chapterId,
           payload: { bookId, status: newStatus },
         })
+
+        // NEW_CHAPTER notification — fan-out to all followers of the author.
+        // Skips followers that opted out + the author themselves (defensive,
+        // self-follow shouldn't happen but guard anyway).
+        const followers = await tx
+          .select({ followerId: follows.followerId })
+          .from(follows)
+          .where(eq(follows.followeeId, userId))
+        const otherFollowers = followers.filter((f) => f.followerId !== userId)
+        if (otherFollowers.length > 0) {
+          const skipResults = await Promise.all(
+            otherFollowers.map((f) =>
+              shouldSkipNotification(f.followerId, 'NEW_CHAPTER'),
+            ),
+          )
+          const filteredFollowers = otherFollowers.filter(
+            (_, i) => !skipResults[i],
+          )
+          if (filteredFollowers.length > 0) {
+            await tx.insert(notifications).values(
+              filteredFollowers.map((f) => ({
+                id: createId(),
+                userId: f.followerId,
+                type: 'NEW_CHAPTER' as const,
+                actorId: userId,
+                resourceType: 'chapter',
+                resourceId: chapterId,
+              })),
+            )
+          }
+        }
       }
     }
   })

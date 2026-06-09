@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Book card mockups</title>
+<style>
+  :root {
+    --canvas-dark-100: #262728;
+    --canvas-dark-150: oklch(0.215 0.003 256);
+    --canvas-dark-200: oklch(0.255 0.003 256);
+    --canvas-dark-250: oklch(0.290 0.003 256);
+    --canvas-dark-300: oklch(0.330 0.003 256);
+    --canvas-dark-350: oklch(0.360 0.003 256);
+    --canvas-dark-400: oklch(0.405 0.003 256);
+    --canvas-dark-ink: oklch(0.86 0.005 256);
+    --canvas-dark-ink-muted: oklch(0.65 0.005 256);
+    --canvas-dark-ink-strong: oklch(0.96 0.005 256);
+    --canvas-dark-ink-faint: oklch(0.50 0.005 256);
+    --brand: oklch(0.85 0.18 90);
+    --brand-soft: oklch(0.85 0.18 90 / 0.18);
+    --brand-ink: oklch(0.20 0.03 80);
+    --paper-100: oklch(0.96 0.025 75);
+    --paper-200: oklch(0.92 0.025 75);
+    --r-card: 20px;
+    --r-row: 14px;
+    --r-btn: 12px;
+    --r-pill: 999px;
+    --sh-card: 0 1px 0 rgba(255,255,255,0.04) inset, 0 12px 32px -8px rgba(0,0,0,0.5);
+    --sh-tile: 0 1px 0 rgba(255,255,255,0.04) inset, 0 1px 4px rgba(0,0,0,0.18);
+    --br-card: 0.5px solid oklch(1 0 0 / 0.04);
+    --status-draft: oklch(0.78 0.14 80);
+    --status-revised: oklch(0.72 0.16 215);
+    --status-final: oklch(0.7 0.16 145);
+    --font-display: 'Comfortaa', system-ui, sans-serif;
+    --font-mono: ui-monospace, 'JetBrains Mono', monospace;
+    --font-ui: 'Comfortaa', system-ui, sans-serif;
+    --font-prose: 'Newsreader', 'Source Serif 4', Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 32px;
+    background: var(--canvas-dark-100);
+    color: var(--canvas-dark-ink);
+    font-family: var(--font-ui);
+    min-height: 100vh;
+  }
+  h1 {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: 28px; letter-spacing: -0.02em;
+    color: var(--canvas-dark-ink-strong); margin: 0 0 8px;
+  }
+  .lede {
+    color: rgb(255 255 255 / 0.85); font-size: 14px;
+    max-width: 65ch; margin: 0 0 32px;
+  }
+  h2.section-title {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: 18px; color: var(--brand); margin: 36px 0 6px;
+  }
+  .variant-label {
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: rgb(255 255 255 / 0.55); margin: 0 0 14px 0;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 18px;
+    max-width: 1080px;
+  }
+  .row {
+    display: flex; flex-direction: column; gap: 18px;
+    max-width: 720px;
+  }
+
+  /* ── Default cover (no image) — brand-themed honeycomb hex ──────────── */
+  .default-cover {
+    background: linear-gradient(180deg, var(--canvas-dark-300), var(--canvas-dark-200));
+    color: var(--brand);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .default-cover svg.hex {
+    width: 42%; height: 42%; opacity: 0.55;
+  }
+
+  /* ── Status pill (shared) ───────────────────────────────────────────── */
+  .pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: var(--font-mono); font-size: 9.5px;
+    letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700;
+    padding: 3px 8px; border-radius: var(--r-pill);
+    white-space: nowrap;
+  }
+  .pill .dot { width: 5px; height: 5px; border-radius: 50%; }
+  .pill.draft  { color: var(--status-draft);    background: oklch(from var(--status-draft) l c h / 0.16); }
+  .pill.revised{ color: var(--status-revised);  background: oklch(from var(--status-revised) l c h / 0.16); }
+  .pill.final  { color: var(--status-final);    background: oklch(from var(--status-final) l c h / 0.16); }
+  .pill.draft .dot   { background: var(--status-draft); }
+  .pill.revised .dot { background: var(--status-revised); }
+  .pill.final .dot   { background: var(--status-final); }
+
+  .genre-pill {
+    font-family: var(--font-mono); font-size: 9.5px;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: var(--r-pill);
+    background: oklch(1 0 0 / 0.05);
+    color: rgb(255 255 255 / 0.85);
+  }
+
+  /* ════════════════════════════════════════════════════════════════════
+     VARIANT A — Classic portrait card (cover on top, stacked meta below)
+     ════════════════════════════════════════════════════════════════════ */
+  .card-a {
+    background: linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200));
+    border-radius: var(--r-card);
+    border-top: var(--br-card);
+    box-shadow: var(--sh-card);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform .14s, box-shadow .14s;
+  }
+  .card-a:hover { transform: translateY(-2px); }
+  .card-a .cover, .card-a .default-cover {
+    aspect-ratio: 2/3;
+    width: 100%;
+  }
+  .card-a .cover { object-fit: cover; display: block; }
+  .card-a .body { padding: 14px 14px 16px; }
+  .card-a .title {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: 14px; line-height: 1.25; margin: 0 0 4px;
+    color: rgb(255 255 255);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .card-a .author {
+    font-size: 12px; color: rgb(255 255 255 / 0.9); margin: 0 0 10px;
+  }
+  .card-a .meta-row {
+    display: flex; gap: 6px; flex-wrap: wrap;
+  }
+
+  /* ════════════════════════════════════════════════════════════════════
+     VARIANT B — Horizontal list row (cover left, meta right)
+     ════════════════════════════════════════════════════════════════════ */
+  .card-b {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 14px;
+    background: linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200));
+    border-radius: var(--r-row);
+    border-top: var(--br-card);
+    box-shadow: var(--sh-tile);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform .14s;
+  }
+  .card-b:hover { transform: translateY(-1px); }
+  .card-b .cover, .card-b .default-cover {
+    aspect-ratio: 2/3;
+    width: 80px; height: 120px;
+  }
+  .card-b .cover { object-fit: cover; display: block; }
+  .card-b .body {
+    padding: 12px 14px 12px 0;
+    display: flex; flex-direction: column; gap: 4px;
+    min-width: 0;
+  }
+  .card-b .title {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: 15px; line-height: 1.25; margin: 0;
+    color: rgb(255 255 255);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .card-b .author {
+    font-size: 12.5px; color: rgb(255 255 255 / 0.9); margin: 0;
+  }
+  .card-b .meta-row {
+    display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto;
+  }
+
+  /* ════════════════════════════════════════════════════════════════════
+     VARIANT C — Cover-as-background overlay
+     ════════════════════════════════════════════════════════════════════ */
+  .card-c {
+    background: linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200));
+    border-radius: var(--r-card);
+    border-top: var(--br-card);
+    box-shadow: var(--sh-card);
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+    aspect-ratio: 2/3;
+    transition: transform .14s;
+  }
+  .card-c:hover { transform: translateY(-2px); }
+  .card-c .cover, .card-c .default-cover {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+  .card-c .scrim {
+    position: absolute; inset: 0;
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      transparent 45%,
+      rgba(0,0,0,0.55) 75%,
+      rgba(0,0,0,0.82) 100%
+    );
+  }
+  .card-c .body {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    padding: 14px 16px 16px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .card-c .title {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: 16px; line-height: 1.2; margin: 0;
+    color: rgb(255 255 255);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .card-c .author {
+    font-size: 12px; color: rgb(255 255 255 / 0.9); margin: 0;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.7);
+  }
+  .card-c .meta-row {
+    display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px;
+  }
+  .card-c .top-pill {
+    position: absolute; top: 10px; right: 10px;
+    backdrop-filter: blur(8px);
+  }
+
+  /* ════════════════════════════════════════════════════════════════════
+     VARIANT D — Paper-warm cover (cream library shelf feel)
+     ════════════════════════════════════════════════════════════════════ */
+  .card-d {
+    background: var(--canvas-dark-200);
+    border-radius: var(--r-card);
+    border-top: var(--br-card);
+    box-shadow: var(--sh-card);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform .14s;
+  }
+  .card-d:hover { transform: translateY(-2px); }
+  .card-d .cover-frame {
+    padding: 14px 14px 0;
+  }
+  .card-d .cover, .card-d .default-cover {
+    aspect-ratio: 2/3;
+    width: 100%;
+    border-radius: var(--r-row);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.45);
+  }
+  .card-d .cover { object-fit: cover; display: block; }
+  .card-d .default-cover {
+    background: linear-gradient(180deg, var(--paper-200), var(--paper-100));
+    color: oklch(0.40 0.04 80);
+  }
+  .card-d .default-cover svg.hex { opacity: 0.7; }
+  .card-d .body { padding: 14px; }
+  .card-d .title {
+    font-family: var(--font-prose); font-weight: 700;
+    font-style: italic;
+    font-size: 16px; line-height: 1.2; margin: 0 0 4px;
+    color: rgb(255 255 255);
+  }
+  .card-d .author {
+    font-size: 12px; color: rgb(255 255 255 / 0.9); margin: 0 0 10px;
+  }
+  .card-d .meta-row {
+    display: flex; gap: 6px; flex-wrap: wrap;
+  }
+
+  /* fake cover gradient samples */
+  .fake-cover-1 { background: linear-gradient(135deg, #d97560, #8b3a2b); }
+  .fake-cover-2 { background: linear-gradient(135deg, #6dc99c, #2b6b4f); }
+  .fake-cover-3 { background: linear-gradient(135deg, #8b7ad9, #3a2b6b); }
+</style>
+</head>
+<body>
+
+<h1>Book card mockups</h1>
+<p class="lede">
+  Four variants. Each shows a cover image (or default hex glyph fallback for
+  books without an uploaded cover) + title + author + status pill + genre.
+  Pick one — or mix elements ("D's layout with A's status pill style").
+</p>
+
+<!-- ════════════════════════ A — Portrait card grid ════════════════════════ -->
+<h2 class="section-title">A · Classic portrait (cover on top)</h2>
+<p class="variant-label">Cover image fills the top; title / author / status / genre stacked below. Conventional bookstore-shelf feel.</p>
+<div class="grid">
+
+  <div class="card-a">
+    <div class="cover fake-cover-1" style="aspect-ratio: 2/3;"></div>
+    <div class="body">
+      <p class="title">The Honeyed Path</p>
+      <p class="author">by Chris Smoketest</p>
+      <div class="meta-row">
+        <span class="pill final"><span class="dot"></span>Published</span>
+        <span class="genre-pill">Cozy fantasy</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-a">
+    <div class="default-cover">
+      <svg class="hex" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M12 2 L20 6.5 L20 15.5 L12 20 L4 15.5 L4 6.5 Z" />
+        <path d="M12 9 L16 11 L16 14.5 L12 16.5 L8 14.5 L8 11 Z" fill="currentColor" fill-opacity="0.55" stroke="none" />
+      </svg>
+    </div>
+    <div class="body">
+      <p class="title">Notes from the Backyard Hive</p>
+      <p class="author">by Chris Smoketest</p>
+      <div class="meta-row">
+        <span class="pill draft"><span class="dot"></span>Drafting</span>
+        <span class="genre-pill">Memoir</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-a">
+    <div class="cover fake-cover-2" style="aspect-ratio: 2/3;"></div>
+    <div class="body">
+      <p class="title">The Lantern Garden</p>
+      <p class="author">by Maya Rivera</p>
+      <div class="meta-row">
+        <span class="pill revised"><span class="dot"></span>Revised</span>
+        <span class="genre-pill">Cozy fantasy</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════ B — Horizontal row ════════════════════════ -->
+<h2 class="section-title">B · Horizontal row (cover on left)</h2>
+<p class="variant-label">Compact — fits 1 per row. Best for a list-y "your library" surface where you want to see lots of books at once.</p>
+<div class="row">
+
+  <div class="card-b">
+    <div class="cover fake-cover-1"></div>
+    <div class="body">
+      <p class="title">The Honeyed Path</p>
+      <p class="author">by Chris Smoketest</p>
+      <div class="meta-row">
+        <span class="pill final"><span class="dot"></span>Published</span>
+        <span class="genre-pill">Cozy fantasy</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-b">
+    <div class="default-cover">
+      <svg class="hex" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M12 2 L20 6.5 L20 15.5 L12 20 L4 15.5 L4 6.5 Z" />
+        <path d="M12 9 L16 11 L16 14.5 L12 16.5 L8 14.5 L8 11 Z" fill="currentColor" fill-opacity="0.55" stroke="none" />
+      </svg>
+    </div>
+    <div class="body">
+      <p class="title">Notes from the Backyard Hive</p>
+      <p class="author">by Chris Smoketest</p>
+      <div class="meta-row">
+        <span class="pill draft"><span class="dot"></span>Drafting</span>
+        <span class="genre-pill">Memoir</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-b">
+    <div class="cover fake-cover-2"></div>
+    <div class="body">
+      <p class="title">The Lantern Garden</p>
+      <p class="author">by Maya Rivera</p>
+      <div class="meta-row">
+        <span class="pill revised"><span class="dot"></span>Revised</span>
+        <span class="genre-pill">Cozy fantasy</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════ C — Cover as background overlay ════════════════════════ -->
+<h2 class="section-title">C · Cover-as-background overlay</h2>
+<p class="variant-label">Title + author sit on top of the cover with a dark gradient scrim. Most cinematic. Status pill floats in the corner. Author/title needs a strong cover image to read well.</p>
+<div class="grid">
+
+  <div class="card-c">
+    <div class="cover fake-cover-1"></div>
+    <div class="scrim"></div>
+    <span class="pill final top-pill"><span class="dot"></span>Published</span>
+    <div class="body">
+      <p class="title">The Honeyed Path</p>
+      <p class="author">by Chris Smoketest</p>
+      <div class="meta-row">
+        <span class="genre-pill">Cozy fantasy</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-c">
+    <div class="default-cover">
+      <svg class="hex" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M12 2 L20 6.5 L20 15.5 L12 20 L4 15.5 L4 6.5 Z" />
+        <path d="M12 9 L16 11 L16 14.5 L12 16.5 L8 14.5 L8 11 Z" fill="currentColor" fill-opacity="0.55" stroke="none" />
+      </svg>
+    </div>
+    <div class="scrim"></div>
+    <span class="pill draft top-pill"><span class="dot"></span>Drafting</span>
+    <div class="body">
+      <p class="title">Notes from the Backyard Hive</p>
+      <p class="author">by Chris Smoketest</p>
+      <div class="meta-row">
+        <span class="genre-pill">Memoir</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-c">
+    <div class="cover fake-cover-2"></div>
+    <div class="scrim"></div>
+    <span class="pill revised top-pill"><span class="dot"></span>Revised</span>
+    <div class="body">
+      <p class="title">The Lantern Garden</p>
+      <p class="author">by Maya Rivera</p>
+      <div class="meta-row">
+        <span class="genre-pill">Cozy fantasy</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════ D — Paper-warm cover (library shelf) ════════════════════════ -->
+<h2 class="section-title">D · Paper-warm cover (cream library shelf)</h2>
+<p class="variant-label">The cover sits in a framed inset with a soft shadow — feels like a book on a shelf. Italic serif title. Default cover uses cream paper + the brand hex glyph in warm ink.</p>
+<div class="grid">
+
+  <div class="card-d">
+    <div class="cover-frame">
+      <div class="cover fake-cover-1" style="aspect-ratio: 2/3;"></div>
+    </div>
+    <div class="body">
+      <p class="title">The Honeyed Path</p>
+      <p class="author">by Chris Smoketest</p>
+      <div class="meta-row">
+        <span class="pill final"><span class="dot"></span>Published</span>
+        <span class="genre-pill">Cozy fantasy</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-d">
+    <div class="cover-frame">
+      <div class="default-cover">
+        <svg class="hex" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M12 2 L20 6.5 L20 15.5 L12 20 L4 15.5 L4 6.5 Z" />
+          <path d="M12 9 L16 11 L16 14.5 L12 16.5 L8 14.5 L8 11 Z" fill="currentColor" fill-opacity="0.55" stroke="none" />
+        </svg>
+      </div>
+    </div>
+    <div class="body">
+      <p class="title">Notes from the Backyard Hive</p>
+      <p class="author">by Chris Smoketest</p>
+      <div class="meta-row">
+        <span class="pill draft"><span class="dot"></span>Drafting</span>
+        <span class="genre-pill">Memoir</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-d">
+    <div class="cover-frame">
+      <div class="cover fake-cover-2" style="aspect-ratio: 2/3;"></div>
+    </div>
+    <div class="body">
+      <p class="title">The Lantern Garden</p>
+      <p class="author">by Maya Rivera</p>
+      <div class="meta-row">
+        <span class="pill revised"><span class="dot"></span>Revised</span>
+        <span class="genre-pill">Cozy fantasy</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

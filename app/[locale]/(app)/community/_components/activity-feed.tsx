@@ -45,11 +45,11 @@ export function ActivityFeed({
           <div className="cta-row">
             <Link href={`/${locale}/friends?tab=suggested`} className="btn-brand">
               <Search />
-              Find friends
+              Find Friends
             </Link>
             <Link href={`/${locale}/discover`} className="btn-tile">
               <Hexagon />
-              Discover hives
+              Discover Hives
             </Link>
           </div>
         </div>
@@ -62,7 +62,6 @@ export function ActivityFeed({
       <div className="panel-pad" style={{ paddingBottom: 6 }}>
         <div className="sec-head" style={{ marginBottom: 4 }}>
           <h2>Activity</h2>
-          <span className="meta-mono">Friends first</span>
         </div>
       </div>
       <ul className="cstack" style={{ gap: 0, padding: '0 6px 6px' }}>
@@ -82,7 +81,7 @@ export function ActivityFeed({
           </button>
         ) : (
           <p
-            style={{ color: 'var(--canvas-dark-ink-muted)' }}
+            style={{ color: 'rgb(255 255 255 / 0.9)' }}
             className="py-2 text-center text-xs"
           >
             You&apos;re all caught up.

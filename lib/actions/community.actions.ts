@@ -148,10 +148,19 @@ export async function getCommunityFeedAction(
 
   // 3. Feed query — friend-first sort tuple (isFriend DESC, createdAt DESC, id DESC).
   //    `isFriend` is a per-row boolean computed from the viewer's friend set;
-  //    when friendIds is empty we use NULL = ANY('{}'::text[]) → false, so the
+  //    when friendIds is empty we use ANY(ARRAY[]::text[]) → false, so the
   //    sort becomes equivalent to the prior (createdAt DESC, id DESC).
+  //
+  //    Drizzle's `sql` template literal expands a JS array as a Postgres ROW
+  //    constructor `($1, $2, $3)` — NOT an array literal. `($1, $2)::text[]`
+  //    fails to parse. Build the array explicitly via sql.join so it produces
+  //    `ARRAY[$1, $2, $3]::text[]`.
   const friendIdsArray = Array.from(friendIds)
-  const isFriendExpr = sql<boolean>`(${socialActivity.actorId} = ANY(${friendIdsArray}::text[]))`
+  const friendIdsSql =
+    friendIdsArray.length === 0
+      ? sql`ARRAY[]::text[]`
+      : sql`ARRAY[${sql.join(friendIdsArray.map((id) => sql`${id}`), sql`, `)}]::text[]`
+  const isFriendExpr = sql<boolean>`(${socialActivity.actorId} = ANY(${friendIdsSql}))`
 
   const cursorPredicate =
     cursorDate && cursorId

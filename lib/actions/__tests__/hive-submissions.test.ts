@@ -64,6 +64,9 @@ vi.mock('@/db', () => ({
         findFirst: (a: any) => userProfilesFindFirst(a),
         findMany: (a: any) => userProfilesFindMany(a),
       },
+      notificationPreferences: {
+        findFirst: async () => undefined,
+      },
     },
     insert: (table: any) => {
       const tName = tableName(table)
@@ -75,7 +78,14 @@ vi.mock('@/db', () => ({
     },
     update: (table: any) => txUpdate(table),
     transaction: vi.fn(async (fn: any) => {
-      return await fn({ insert: txInsert, update: txUpdate, select: txSelect })
+      return await fn({
+        insert: txInsert,
+        update: txUpdate,
+        select: txSelect,
+        query: {
+          hiveMembers: { findMany: async () => [] },
+        },
+      })
     }),
     select: vi.fn(),
   },

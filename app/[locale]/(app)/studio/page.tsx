@@ -1,6 +1,8 @@
+import { headers } from 'next/headers'
 import { db } from '@/db'
-import { bookTemplates } from '@/db/schema'
+import { bookTemplates, userProfiles } from '@/db/schema'
 import { eq } from 'drizzle-orm'
+import { auth } from '@/lib/auth'
 import { getUserBooksAction } from '@/lib/actions/book.actions'
 import { getUserHivesView } from '@/lib/actions/hive.actions'
 import { StudioEmptyState } from './_components/studio-empty-state'
@@ -15,7 +17,10 @@ export default async function StudioPage({
 }) {
   const { locale } = await params
 
-  const [templates, booksResult, hivesResult] = await Promise.all([
+  const session = await auth.api.getSession({ headers: await headers() })
+  const viewerId = session?.user?.id ?? null
+
+  const [templates, booksResult, hivesResult, viewerProfile] = await Promise.all([
     db
       .select({ id: bookTemplates.id, name: bookTemplates.name, genre: bookTemplates.genre })
       .from(bookTemplates)
@@ -23,10 +28,21 @@ export default async function StudioPage({
       .orderBy(bookTemplates.name),
     getUserBooksAction(),
     getUserHivesView(),
+    viewerId
+      ? db.query.userProfiles.findFirst({
+          where: eq(userProfiles.userId, viewerId),
+          columns: { displayName: true, username: true },
+        })
+      : Promise.resolve(null),
   ])
 
   const books = booksResult.success ? booksResult.data : []
   const hives = hivesResult.success ? hivesResult.data : []
+  const authorName =
+    viewerProfile?.displayName ??
+    (viewerProfile?.username ? `@${viewerProfile.username}` : null) ??
+    session?.user?.name ??
+    null
 
   if (books.length === 0 && hives.length === 0) {
     return <StudioEmptyState locale={locale} templates={templates} />
@@ -58,7 +74,7 @@ export default async function StudioPage({
       >
         <div>
           {/* Pass hives=[] so the grid renders books only — hives live in the rail */}
-          <LibraryGrid books={books} hives={[]} locale={locale} />
+          <LibraryGrid books={books} hives={[]} locale={locale} authorName={authorName} />
         </div>
 
         <aside>

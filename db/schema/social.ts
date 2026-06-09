@@ -45,7 +45,7 @@ export const notificationTypeEnum = pgEnum('notification_type', [
   'CHAPTER_EDITED', 'HIVE_COMMENT', 'TASK_ASSIGNED', 'TASK_COMPLETED',
   'FRIEND_REQUEST', 'FRIEND_ACCEPTED',
   'CLUB_INVITE', 'CLUB_JOIN_REQUEST', 'CLUB_JOIN_APPROVED',
-  'MENTION',
+  'MENTION', 'HIVE_ANNOTATION',
 ])
 
 export const follows = pgTable('follows', {

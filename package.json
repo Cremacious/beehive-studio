@@ -13,6 +13,7 @@
     "db:studio": "dotenv -e .env.local -- drizzle-kit studio",
     "db:seed": "tsx scripts/seed.ts",
     "db:seed:publishing": "tsx scripts/seed-publishing.ts",
+    "seed:smoketest": "dotenv -e .env.local -- tsx scripts/seed-smoketest.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },

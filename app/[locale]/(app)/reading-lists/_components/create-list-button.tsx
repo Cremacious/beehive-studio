@@ -17,7 +17,7 @@ export function CreateListButton({ locale }: Props) {
         style={{ background: 'var(--brand)', color: 'var(--brand-ink)' }}
       >
         <Plus className="h-4 w-4" />
-        New list
+        New List
       </button>
       <CreateListModal locale={locale} open={open} onOpenChange={setOpen} />
     </>

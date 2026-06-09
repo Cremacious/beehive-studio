@@ -34,6 +34,7 @@ export default async function ReadingListsPage({
       <PageHead
         title="Reading lists"
         subtitle="Curate books worth reading. Follow friends' lists to track what they're loving."
+        back={{ href: `/${locale}/community`, label: 'community' }}
         headerSlot={<CreateListButton locale={locale} />}
       />
 

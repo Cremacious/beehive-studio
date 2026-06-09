@@ -71,10 +71,11 @@ export function InviteLinkDialog({ locale }: Props) {
       <DialogTrigger asChild>
         <button
           type="button"
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[var(--r-pill)] text-[13px] font-semibold cursor-pointer"
+          className="inline-flex items-center justify-center gap-2 whitespace-nowrap h-9 px-6 rounded-[var(--r-pill)] text-[13px] font-semibold cursor-pointer"
           style={{ background: 'var(--brand)', color: 'var(--brand-ink)' }}
         >
-          <Link2 size={14} /> Invite by link
+          <Link2 size={15} />
+          <span>Invite by link</span>
         </button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">

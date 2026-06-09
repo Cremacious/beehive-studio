@@ -22,6 +22,14 @@ export function AppNav({ locale, user, username }: AppNavProps) {
     return pathname.startsWith(`/${locale}/${segment}`)
   }
 
+  const studioActive = isActive('studio') || isActive('hive') || isActive('hives')
+  const communityActive =
+    isActive('community') ||
+    isActive('friends') ||
+    isActive('sparks') ||
+    isActive('reading-lists') ||
+    isActive('clubs')
+
   return (
     <header
       className="sticky top-1.5 z-40 mx-4 mt-1.5 backdrop-blur-md"
@@ -58,11 +66,9 @@ export function AppNav({ locale, user, username }: AppNavProps) {
         {/* CENTER — nav (absolutely positioned) */}
         <nav className="absolute left-1/2 -translate-x-1/2 flex gap-1">
           {[
-            { label: 'Studio', href: `/${locale}/studio`, active: isActive('studio') },
+            { label: 'Studio', href: `/${locale}/studio`, active: studioActive },
+            { label: 'Community', href: `/${locale}/community`, active: communityActive },
             { label: 'Discover', href: `/${locale}/discover`, active: isActive('discover') },
-            { label: 'Community', href: `/${locale}/community`, active: isActive('community') },
-            // /hive is the existing public-hives route; fall back to /community for the Hive crumb
-            { label: 'Hive', href: `/${locale}/hive`, active: isActive('hive') },
           ].map((item) => (
             <Link
               key={item.label}

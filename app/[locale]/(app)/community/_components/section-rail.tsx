@@ -37,8 +37,7 @@ export function SectionRail({
     },
     {
       label: 'Hives',
-      sublabel: 'Your hives',
-      href: `/${locale}/studio`,
+      href: `/${locale}/hives`,
       icon: <Hexagon />,
       count: hivesCount,
     },

@@ -31,6 +31,7 @@ export default async function ClubsPage({
       <PageHead
         title="Book clubs"
         subtitle="Read together with friends. Discuss, schedule, and keep up with the current book."
+        back={{ href: `/${locale}/community`, label: 'community' }}
         headerSlot={<CreateClubButton locale={locale} />}
       />
 

@@ -62,10 +62,11 @@ export default async function FriendsPage({ params, searchParams }: Props) {
 
   return (
     <main className="cm-main">
-      <div className="cm-wrap w-3xl">
+      <div className="cm-wrap w-5xl">
         <PageHead
           title="Friends"
           subtitle="Stay close with the people whose work you love."
+          back={{ href: `/${locale}/community`, label: 'community' }}
           headerSlot={
             <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
               <UserSearch locale={locale} />

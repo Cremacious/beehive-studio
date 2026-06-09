@@ -16,7 +16,7 @@ export function CreateClubButton({ locale }: Props) {
         style={{ background: 'var(--brand)', color: 'var(--brand-ink)' }}
       >
         <Plus className="h-4 w-4" />
-        New club
+        New Club
       </button>
       <CreateClubModal
         locale={locale}

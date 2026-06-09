@@ -70,9 +70,9 @@ export function UserSearch({ locale }: Props) {
           onFocus={() => setOpen(true)}
           placeholder="Search writers…"
           aria-label="Search writers by name or username"
-          className="w-full pl-9 pr-3 py-2 text-[13px] rounded-[var(--r-row)] outline-none"
+          className="w-full h-9 pl-9 pr-3 text-[13px] rounded-[var(--r-row)] outline-none"
           style={{
-            background: 'var(--canvas-dark-100)',
+            background: '#1E1E1E',
             color: 'var(--canvas-dark-ink)',
             boxShadow: 'var(--sh-inset)',
           }}

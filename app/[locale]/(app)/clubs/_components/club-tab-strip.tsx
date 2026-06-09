@@ -1,6 +1,8 @@
 import Link from 'next/link'
 
-const TABS = ['about', 'discussions', 'books', 'members', 'schedule'] as const
+// Q3 IA reorder: About / Books / Discussions / Members / Schedule
+// (Books promoted from 3rd → 2nd).
+const TABS = ['about', 'books', 'discussions', 'members', 'schedule'] as const
 
 type Props = {
   clubId: string
@@ -9,13 +11,9 @@ type Props = {
   locale: string
 }
 
-/**
- * T11 stub. T13 enriches with: tab counts (discussions/books/members),
- * active-tab styling polish.
- */
 export function ClubTabStrip({ clubId, activeTab, isModOrOwner, locale }: Props) {
   return (
-    <nav className="flex items-center gap-4 border-b border-[var(--br-card)] pb-2">
+    <nav className="tabstrip flex items-center gap-4 border-b border-[var(--br-card)] pb-2">
       {TABS.map((tab) => (
         <Link
           key={tab}

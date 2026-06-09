@@ -10,10 +10,11 @@ import { ClubSchedulePanel } from '../_components/club-schedule-panel'
 import { ClubSettingsPanel } from '../_components/club-settings-panel'
 import { InviteClaimedToast } from '@/components/invite-claimed-toast'
 
+// Q3 IA reorder: About / Books / Discussions / Members / Schedule / Settings.
 const VALID_TABS = [
   'about',
-  'discussions',
   'books',
+  'discussions',
   'members',
   'schedule',
   'settings',
@@ -25,11 +26,13 @@ function parseTab(
   isMember: boolean,
   isModOrOwner: boolean,
 ): Tab {
+  void isMember
   if (input && (VALID_TABS as readonly string[]).includes(input)) {
     if (input === 'settings' && !isModOrOwner) return 'about'
     return input as Tab
   }
-  return isMember ? 'discussions' : 'about'
+  // Q3: both member + non-member default to About on the cover-band landing.
+  return 'about'
 }
 
 export default async function ClubDetailPage({
@@ -54,7 +57,7 @@ export default async function ClubDetailPage({
   const activeTab = parseTab(tabParam, isMember, isModOrOwner)
 
   return (
-    <main className="max-w-5xl mx-auto px-4 py-6 sm:px-6">
+    <main className="cm-wrap w-5xl">
       <InviteClaimedToast copy={`Welcome to ${club.name}!`} />
       <ClubHeader
         club={club}

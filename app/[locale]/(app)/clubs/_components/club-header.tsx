@@ -91,71 +91,89 @@ export function ClubHeader({
   }
 
   const isModOrOwner = viewerRole === 'OWNER' || viewerRole === 'MODERATOR'
+  const initials = club.name
+    .split(/\s+/)
+    .map((s) => s[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase()
 
   return (
     <header
-      className="mb-6 p-5 rounded-[var(--r-card)] border border-[var(--br-card)]"
+      className="panel mb-6"
       style={{
-        background:
-          'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
-        boxShadow: 'var(--sh-card)',
+        overflow: 'hidden',
       }}
     >
-      <div className="flex items-start gap-4">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap mb-2">
-            <h1
-              className="text-3xl font-bold text-[var(--brand)]"
-              style={{ fontFamily: 'var(--font-comfortaa)' }}
+      <div
+        className="cover-grad"
+        style={{ height: 100, '--pt': 'var(--brand)' } as React.CSSProperties}
+      />
+      <div className="panel-pad" style={{ paddingTop: 18 }}>
+        <div className="flex items-end justify-between gap-4 -mt-12 flex-wrap">
+          <div className="flex items-end gap-4 min-w-0">
+            <div
+              className="avatar s80 a-blue shrink-0"
+              aria-hidden="true"
+              style={{
+                border: '4px solid var(--canvas-dark-250)',
+                boxShadow: 'var(--sh-card)',
+              }}
             >
-              {club.name}
-            </h1>
-            <VisibilityPill visibility={club.visibility} />
-            {club.openJoin && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider border border-[var(--br-card)] text-[var(--canvas-dark-ink-muted)]">
-                Open join
-              </span>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2 mb-2">
-            {owner.avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={owner.avatarUrl}
-                alt=""
-                className="h-8 w-8 rounded-full object-cover"
-              />
-            ) : (
-              <div
-                className="h-8 w-8 rounded-full"
-                style={{
-                  background:
-                    'linear-gradient(135deg, var(--canvas-dark-300), var(--canvas-dark-200))',
-                }}
-              />
-            )}
-            <span className="text-xs text-[var(--canvas-dark-ink-muted)]">
-              Owned by{' '}
-              {owner.username ? (
-                <Link
-                  href={`/${locale}/u/${owner.username}`}
-                  className="text-[var(--canvas-dark-ink-strong)] hover:text-[var(--brand)] transition-colors"
-                >
-                  @{owner.username}
-                </Link>
-              ) : (
-                <span className="text-[var(--canvas-dark-ink-strong)]">
-                  {owner.displayName ?? 'Unknown'}
+              {initials || 'CL'}
+            </div>
+            <div className="min-w-0">
+              <h1
+                className="font-display font-bold text-3xl text-[var(--brand)] truncate"
+              >
+                {club.name}
+              </h1>
+              <div className="flex items-center gap-2 flex-wrap mt-2">
+                <VisibilityPill visibility={club.visibility} />
+                {club.openJoin && (
+                  <span className="pill open-join">Open join</span>
+                )}
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                {owner.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={owner.avatarUrl}
+                    alt=""
+                    className="h-6 w-6 rounded-full object-cover"
+                  />
+                ) : (
+                  <div
+                    className="h-6 w-6 rounded-full"
+                    style={{
+                      background:
+                        'linear-gradient(135deg, var(--canvas-dark-300), var(--canvas-dark-200))',
+                    }}
+                  />
+                )}
+                <span className="text-xs text-[var(--canvas-dark-ink-muted)]">
+                  Owned by{' '}
+                  {owner.username ? (
+                    <Link
+                      href={`/${locale}/u/${owner.username}`}
+                      className="text-[var(--canvas-dark-ink-strong)] hover:text-[var(--brand)] transition-colors"
+                    >
+                      @{owner.username}
+                    </Link>
+                  ) : (
+                    <span className="text-[var(--canvas-dark-ink-strong)]">
+                      {owner.displayName ?? 'Unknown'}
+                    </span>
+                  )}{' '}
+                  · {memberCount} {memberCount === 1 ? 'member' : 'members'}
                 </span>
-              )}{' '}
-              · {memberCount} {memberCount === 1 ? 'member' : 'members'}
-            </span>
+              </div>
+            </div>
           </div>
-        </div>
 
-        {/* Smart CTA */}
-        <div className="flex items-center gap-2 shrink-0">
+          {/* Smart CTA cluster */}
+          <div className="flex items-center gap-2 shrink-0">
           {viewerRole === null && club.openJoin && (
             <button
               type="button"
@@ -287,6 +305,7 @@ export function ClubHeader({
               )}
             </div>
           )}
+        </div>
         </div>
       </div>
 

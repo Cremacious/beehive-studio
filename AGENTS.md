@@ -12,9 +12,54 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-09 (Community surfaces UX polish round — friends/sparks/lists/clubs back links + iOS modals + section rail + `/hives` index)
+> **Last updated:** 2026-06-09 (Notifications P0 audit + smoke seed + community sidebar polish + studio BookCard rewrite)
 >
-> **Last commit:** [8cde7bd](https://github.com/Cremacious/beehive-studio/commit/8cde7bd) — style(community): polish friends/sparks/lists/clubs surfaces + /hives index.
+> **Last commit:** [48ad478](https://github.com/Cremacious/beehive-studio/commit/48ad478) — feat(community/studio): notifications audit P0 + smoke seed + studio polish.
+>
+> **Current focus:** smoke-test mode unlocked. End-to-end iteration on the community + studio surfaces using a freshly-seeded test account, with the notifications P0 audit completed in the same pass.
+>
+> **What landed this session (one large commit, 27 files, +3129/-584):**
+>
+> 1. **Notifications audit — P0 + P2 wired.** 21 notification types audited. 4 net-new write sites: `HIVE_SUBMISSION` (fan-out to OWNER+MOD on `submitSubmissionAction`), `HIVE_SUGGESTION` (book owner on `createSuggestionAction`), `HIVE_ANNOTATION` (new enum value + book owner on `createAnnotationAction`), `NEW_CHAPTER` (fan-out to followers when chapter status → REVISED/FINAL on PUBLIC+discoverable book). All respect `shouldSkipNotification` + `isBlocked`. P2 skip-gate fixes on `TASK_ASSIGNED` + `TASK_COMPLETED` (previously bypassed prefs). Bell additions: 4 new LABELS + icons + click routes. New `lib/notifications/hive-deep-links.ts` with 4 server-side lookup helpers. Settings page gets 2 new groups ("From writers you follow" + "Hive collaboration"). Migration runner `scripts/migrate-notifications-p0.ts` (idempotent). **634/634 tests, tsc clean.**
+>
+> 2. **Smoke-test seed script.** New `scripts/seed-smoketest.ts` + `npm run seed:smoketest`. 1 primary premium user (`smoketest@beehive.local` / `Test12345!`) + 5 supporting cast. Populates every major surface: 8 books w/ chapters (including the "Hive Chronicles" series), 5 friendships (3 accepted + 2 pending), 8 follow rows, 4 sparks (2 OPEN + 1 VOTING w/ entries + 1 CLOSED w/ winner), 3 reading lists + Liked auto-list + 1 followed list, 2 hives (linked + standalone shadow book) w/ buzz + word goal + PENDING submission + annotation + suggestion, 2 clubs w/ current+queue+past books + 2 discussions w/ replies + schedule milestone, 11 notifications, 7 social_activity events. Wipe-and-reseed scoped to test emails only. Refuses production DB.
+>
+> 3. **Community page sidebar UX + activity feed polish.** RequestsCard converted to client component with real `acceptFriendRequestAction` / `rejectFriendRequestAction` wiring + optimistic remove + sonner toasts; Variant C layout (avatar + name + handle on top, full-width Accept/Decline brand-yellow pills below); type widened with `friendshipId` + `displayName`. MyHivesPanel Variant C (avatar + name + "N members · Role" sub-line, hairline divider, see-all routes to new `/hives`). Activity feed: removed "Friends first" eyebrow; dates + "all caught up" copy bumped to text-white/90; hairline divider brightened to 0.10 alpha. Section rail count badges → brand-yellow pills with brand-ink text (cascades via `.sec-head .count`). Tile labels white/90. New shared `.rail-row` class.
+>
+> 4. **Studio empty state — dark iOS honeycomb cluster.** Pure SVG 3-hex cluster (center active, side empties), brand-yellow inner glyph mirroring the AppNav logo. Solid fills (gradients stripped per Chris). Static (animation removed). New copy: "Your hive _starts here._" / "Every story begins with a single buzz. Drop your first chapter — your library will fill itself."
+>
+> 5. **BookCard v2 — clean rewrite.** Fresh `.bcv-*` class family. Portrait card with brand-yellow honeycomb default cover (inline SVG `<pattern>` tiling — replaced earlier data-URL approach that broke PostCSS). Title + author + genre pill (placeholder fades at 40% opacity when genre is null). Block flow throughout — no flex/grid in body, no `-webkit-box` line-clamp. Title + author single-line ellipsis. Library grid forced to 4-col on desktop with max-width 880px cap, 3 on tablet, 2 on mobile. Author name threaded from session + userProfiles fetch in studio/page.tsx. Status badge intentionally removed per Chris.
+>
+> 6. **Bug fixes:**
+>    - **`getCommunityFeedAction` SQL parse error.** Drizzle's `sql` template literal expands a JS array as a row constructor `($1,$2,$3)` not an array literal. `($1,$2,$3)::text[]` failed in Postgres. Fixed by building `ARRAY[$1,$2,$3]::text[]` explicitly via `sql.join`. Originally surfaced as a `/community` 500 right after the seed added 5+ friends to the test account.
+>    - **"NO GENRE" pill rendering huge.** Generic `.empty` modifier class collided with a global `.empty { display: flex; padding: 72px 28px; align-items: center }` rule used for empty-hero panels. Renamed to `.bcv-empty`.
+>    - **Comfortaa font missing.** Registered in Tailwind `@theme inline` as `--font-sans` + `--font-display` + literal `'Comfortaa'` in body font-family fallback chain. Defeats system-ui fallback on shadcn primitives.
+>
+> 7. **App-wide UX rules.** Global `text-transform: capitalize !important` on every `<button>` + anchor-styled-as-button (system-wide Title Case rule). Global button icon alignment safety: any flex/inline-flex button with an SVG gets `nowrap` + `items-center` + `svg flex-shrink: 0`. AppNav reorder: Studio / Community / Discover (Hive removed); Studio active across `/studio`+`/hive`+`/hives`; Community active across all 5 sub-surfaces. PageHead optional `back` prop renders dark-iOS badge with brand-yellow inner icon chip + mono uppercase white/90 label. Wired on /friends, /sparks, /reading-lists, /clubs, /hives.
+>
+> 8. **Modal iOS refresh (/reading-lists + /clubs).** Both Create modals fully restyled — 560px width, `p-7 gap-6`, recessed `#1E1E1E` inputs with brand-yellow focus rings + mono uppercase labels with brand-yellow required `*`, pill-tile checkboxes with `accent-[var(--brand)]`, footer's muted strip dropped via new `.dialog-ios-footer` class, h-9 pill buttons. Button labels capitalized ("New List", "New Club").
+>
+> **New patterns now load-bearing across the codebase:**
+> 1. **Drizzle `sql` array gotcha** — `${jsArray}::text[]` produces invalid SQL. Always use `sql\`ARRAY[${sql.join(arr.map(v => sql\`${v}\`), sql\`, \`)}]::text[]\``. Documented inline in `getCommunityFeedAction`.
+> 2. **`.bcv-*` BookCard family** — block-flow rewrite; the canonical pattern for any future card with a cover image. Generic class names like `empty`, `meta`, `body`, `title` collide with global rules and cause subtle layout bugs — prefix component-scoped utilities like `.bcv-empty`, `.rail-row`, `.section-head` to sidestep.
+> 3. **Notification fan-out via `tx.query.{table}.findMany` + `Promise.all(map(shouldSkipNotification))` + batch insert** — established by CLUB_JOIN_REQUEST (C4), now applied to HIVE_SUBMISSION + NEW_CHAPTER. Multi-row notification pattern for "notify all admins" / "notify all followers" scenarios.
+> 4. **Server-side bell deep-link resolvers** — `lib/notifications/hive-deep-links.ts` exports 4 lookup actions that take a `resourceId` + locale and return the canonical deep URL with safe fallbacks. Future notification types whose resourceId needs parent-context lookup should add a helper here.
+> 5. **Test mocks must include `notificationPreferences.findFirst`** — any test that touches an action which now writes a notification needs `query: { notificationPreferences: { findFirst: async () => undefined } }` in the db mock. Pattern caught + applied to 3 existing test files this session.
+> 6. **PageHead `back` prop pattern** — canonical back-link affordance for any subpage with a parent hub. Dark-iOS badge with inner squircle brand-yellow icon chip + mono uppercase white/90 label.
+>
+> **Known follow-ups (deferred, non-blocking):**
+> 1. NEW_COMMENT → spark entry routes to `/sparks` index (parent sparkId not in resourceId). Could add a tiny lookup action to deep-link properly.
+> 2. NEW_FOLLOWER routes to `/friends` approximation (actor.username not on NotificationRow projection). Widen projection for precise `/u/{name}` routing.
+> 3. Seed script's `reading_list_created` activity event uses a placeholder subjectId. Easy fix — thread the actual list id back via inner-scope reference.
+> 4. Annotation + suggestion marks aren't patched into chapter content by the seed (just DB rows). Bell + listing pages show them; prose underlines won't.
+> 5. Spark deadlines + VOTING/CLOSED states drift on re-seed since they're computed relative to "now".
+> 6. `Comfortaa` font cache: if cards still show wrong font after `npm run seed:smoketest`, hard-refresh + check `.next/cache/google-fonts/` for staleness.
+>
+> **Next concrete step:** Chris continues smoke-testing surface-by-surface using the seeded `smoketest@beehive.local` account. Each surface gets the same loop as today — flag UI/copy issues, I fix one at a time, no commit until "ship it". After /community + /studio, remaining surfaces to walk: /friends (full tab strip + invite flow), /sparks (detail + entry composer), /reading-lists (detail + AddBookModal), /clubs (detail's 6 panels + InviteByUsername + discussions/thread), /hives/[id] (every sidebar entry — Dashboard, Outline, Wiki, Buzz, Word Goals, Submissions, Annotations, Suggestions, Members, Settings), /u/[username] profile, /discover (5 tabs), /settings/billing, /settings/notifications. Notifications P0 punch-list is closed; P1 + the 2 follow-ups (NEW_COMMENT spark routing + NEW_FOLLOWER username) can come back once UX smoke is done.
+>
+> **Prior — Last updated:** 2026-06-09 (Community surfaces UX polish round — friends/sparks/lists/clubs back links + iOS modals + section rail + `/hives` index)
+>
+> **Last commit (prior session):** [8cde7bd](https://github.com/Cremacious/beehive-studio/commit/8cde7bd) — style(community): polish friends/sparks/lists/clubs surfaces + /hives index.
 >
 > **Current focus:** smoke-and-polish pass on the C5d community surfaces, one issue at a time per Chris's request. 13 micro-issues addressed in this session, shipped in one commit:
 > 1. **Session-redirect false alarm.** Diagnosed via new `scripts/ping-sessions.ts` canary (Neon HTTP query OK; the original `[Better Auth] INTERNAL_SERVER_ERROR` was transient neon-serverless WebSocket flakiness in dev — not a real bug). Script kept for future Neon connectivity triage.

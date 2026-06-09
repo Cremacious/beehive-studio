@@ -35,41 +35,44 @@ export function ReplyComposer({ discussionId }: Props) {
   }
 
   return (
-    <div
-      className="rounded-[var(--r-card)] p-4 mt-6"
-      style={{
-        background:
-          'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
-        boxShadow: 'var(--sh-card)',
-        border: '1px solid var(--br-card)',
-      }}
-    >
-      <label
-        htmlFor="reply-content"
-        className="block text-xs font-mono uppercase tracking-wider text-[var(--canvas-dark-ink-muted)] mb-2"
-      >
-        Write a reply
-      </label>
-      <MentionableTextarea
-        id="reply-content"
-        value={content}
-        onChange={setContent}
-        maxLength={5000}
-        rows={3}
-        placeholder="Share your thoughts…"
-        className="w-full px-3 py-2 rounded-[var(--r-row)] bg-[var(--canvas-dark-100)] text-sm text-[var(--canvas-dark-ink)] placeholder:text-[var(--canvas-dark-ink-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--brand)] resize-y"
-        style={{ boxShadow: 'var(--sh-inset)' }}
-      />
-      <div className="flex justify-end mt-3">
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={isPending || !content.trim()}
-          className="px-4 py-2 rounded-[var(--r-pill)] bg-[var(--brand)] text-[var(--brand-ink)] text-sm font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition"
-        >
-          {isPending ? 'Posting…' : 'Post reply'}
-        </button>
+    <section className="panel panel-pad">
+      <div style={{ display: 'flex', gap: '12px' }}>
+        <span className="avatar s32 brand" aria-hidden="true">
+          ME
+        </span>
+        <div style={{ flex: 1 }}>
+          <MentionableTextarea
+            id="reply-content"
+            value={content}
+            onChange={setContent}
+            maxLength={5000}
+            rows={3}
+            placeholder="Add a reply…"
+            className="input"
+          />
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              marginTop: '10px',
+            }}
+          >
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={isPending || !content.trim()}
+              className="btn-brand btn-sm"
+              style={
+                isPending || !content.trim()
+                  ? { opacity: 0.5, cursor: 'not-allowed' }
+                  : undefined
+              }
+            >
+              {isPending ? 'Posting…' : 'Reply'}
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
+    </section>
   )
 }

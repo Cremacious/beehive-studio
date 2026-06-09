@@ -20,41 +20,32 @@ type Props = {
   locale: string
 }
 
-function AuthorHeader({
+function Avatar({
   author,
-  createdAt,
-  locale,
+  size,
 }: {
   author: ClubDiscussionRow['author']
-  createdAt: Date
-  locale: string
+  size: 's32' | 's40'
 }) {
   const name = author.displayName ?? author.username ?? 'Unknown'
-  return (
-    <div className="flex items-center gap-2 text-xs text-[var(--canvas-dark-ink-muted)]">
-      {author.avatarUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={author.avatarUrl}
-          alt=""
-          className="h-6 w-6 rounded-full object-cover"
-        />
-      ) : (
-        <div className="h-6 w-6 rounded-full bg-[var(--canvas-dark-300)]" />
-      )}
-      <span className="text-[var(--canvas-dark-ink)]">{name}</span>
-      {author.username && (
-        <Link
-          href={`/${locale}/u/${author.username}`}
-          className="font-mono hover:text-[var(--brand)]"
-        >
-          @{author.username}
-        </Link>
-      )}
-      <span>·</span>
-      <span>{relTime(createdAt)}</span>
-    </div>
-  )
+  const initials = name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((s) => s[0] ?? '')
+    .join('')
+    .toUpperCase()
+  if (author.avatarUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={author.avatarUrl}
+        alt=""
+        className={`avatar ${size}`}
+        style={{ objectFit: 'cover' }}
+      />
+    )
+  }
+  return <span className={`avatar ${size} a-slate`}>{initials || '??'}</span>
 }
 
 export function DiscussionDetail({
@@ -64,43 +55,64 @@ export function DiscussionDetail({
   clubId,
   locale,
 }: Props) {
+  void clubId
+  const postAuthorName =
+    discussion.author.displayName ?? discussion.author.username ?? 'Unknown'
+
   return (
-    <div className="space-y-6">
+    <>
       {/* Post */}
-      <article
-        className="rounded-[var(--r-card)] p-6"
-        style={{
-          background:
-            'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
-          boxShadow: 'var(--sh-card)',
-          border: '1px solid var(--br-card)',
-        }}
-      >
-        <div className="flex items-start justify-between gap-4 mb-3">
-          <h1
-            className="text-2xl font-bold text-[var(--brand)] flex-1 min-w-0"
-            style={{ fontFamily: 'var(--font-comfortaa)' }}
-          >
-            {discussion.title}
-          </h1>
+      <article className="panel panel-pad" style={{ marginBottom: '24px' }}>
+        <div className="author-head">
+          <div className="ah-l">
+            <Avatar author={discussion.author} size="s40" />
+            <div>
+              <div className="ah-name">{postAuthorName}</div>
+              <div className="ah-meta">
+                {discussion.author.username ? (
+                  <Link
+                    href={`/${locale}/u/${discussion.author.username}`}
+                    style={{ textDecoration: 'none', color: 'inherit' }}
+                  >
+                    @{discussion.author.username}
+                  </Link>
+                ) : (
+                  'anonymous'
+                )}
+                {' · '}
+                {relTime(discussion.createdAt)}
+              </div>
+            </div>
+          </div>
           <PinToggle
             discussionId={discussion.id}
             initialPinned={discussion.isPinned}
             viewerRole={viewerRole}
           />
         </div>
-        <AuthorHeader
-          author={discussion.author}
-          createdAt={discussion.createdAt}
-          locale={locale}
-        />
         <div
-          className="mt-4 text-sm leading-relaxed text-[var(--canvas-dark-ink)] whitespace-pre-wrap"
-          style={{ fontFamily: 'var(--font-newsreader)' }}
+          className="post-body"
+          style={{
+            fontFamily: 'var(--font-prose)',
+            fontSize: '16px',
+            lineHeight: 1.7,
+            color: 'var(--canvas-dark-ink)',
+            margin: '18px 0',
+            whiteSpace: 'pre-wrap',
+          }}
         >
           <RenderMentionsInText text={discussion.content} />
         </div>
-        <div className="mt-4 pt-3 border-t border-[var(--br-card)] flex items-center gap-4">
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '18px',
+            paddingTop: '16px',
+            borderTop:
+              '1px solid oklch(from var(--canvas-dark-300) l c h / 0.5)',
+          }}
+        >
           <LikeButton
             variant="post"
             targetId={discussion.id}
@@ -110,56 +122,108 @@ export function DiscussionDetail({
         </div>
       </article>
 
-      {/* Replies */}
-      <section>
-        <h2
-          className="text-xs font-mono uppercase tracking-wider text-[var(--canvas-dark-ink-muted)] mb-3"
+      {/* Replies header */}
+      <h2
+        style={{
+          fontFamily: 'var(--font-display, var(--font-comfortaa))',
+          fontWeight: 700,
+          fontSize: '17px',
+          color: 'var(--canvas-dark-ink-strong)',
+          margin: '0 0 16px',
+        }}
+      >
+        {replies.length} {replies.length === 1 ? 'reply' : 'replies'}
+      </h2>
+
+      {/* Replies list */}
+      {replies.length === 0 ? (
+        <section
+          className="panel panel-pad"
+          style={{ marginBottom: '20px' }}
         >
-          Replies ({replies.length})
-        </h2>
-        {replies.length === 0 ? (
-          <p className="italic text-[var(--canvas-dark-ink-muted)] text-sm py-4">
+          <p
+            className="italic"
+            style={{
+              color: 'var(--canvas-dark-ink-muted)',
+              fontSize: '14px',
+              margin: 0,
+            }}
+          >
             No replies yet.
           </p>
-        ) : (
-          <ul className="space-y-3">
-            {replies.map((r) => (
-              <li
-                key={r.id}
-                className="rounded-[var(--r-card)] p-4"
-                style={{
-                  background:
-                    'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
-                  boxShadow: 'var(--sh-card)',
-                  border: '1px solid var(--br-card)',
-                }}
-              >
-                <AuthorHeader
-                  author={r.author}
-                  createdAt={r.createdAt}
-                  locale={locale}
-                />
-                <div
-                  className="mt-2 text-sm leading-relaxed text-[var(--canvas-dark-ink)] whitespace-pre-wrap"
-                  style={{ fontFamily: 'var(--font-newsreader)' }}
+        </section>
+      ) : (
+        <section
+          className="panel panel-pad"
+          style={{ marginBottom: '20px' }}
+        >
+          <ul className="cstack" style={{ gap: '20px' }}>
+            {replies.map((r) => {
+              const replyName =
+                r.author.displayName ?? r.author.username ?? 'Unknown'
+              return (
+                <li
+                  key={r.id}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '32px 1fr',
+                    gap: '12px',
+                  }}
                 >
-                  <RenderMentionsInText text={r.content} />
-                </div>
-                <div className="mt-3 pt-2 border-t border-[var(--br-card)]">
-                  <LikeButton
-                    variant="reply"
-                    targetId={r.id}
-                    initialLiked={r.viewerLiked}
-                    initialCount={r.likeCount}
-                  />
-                </div>
-              </li>
-            ))}
+                  <Avatar author={r.author} size="s32" />
+                  <div>
+                    <span
+                      style={{
+                        fontFamily:
+                          'var(--font-display, var(--font-comfortaa))',
+                        fontWeight: 600,
+                        fontSize: '13px',
+                        color: 'var(--canvas-dark-ink-strong)',
+                      }}
+                    >
+                      {r.author.username ? (
+                        <Link
+                          href={`/${locale}/u/${r.author.username}`}
+                          style={{
+                            textDecoration: 'none',
+                            color: 'inherit',
+                          }}
+                        >
+                          @{r.author.username}
+                        </Link>
+                      ) : (
+                        replyName
+                      )}
+                    </span>{' '}
+                    <span className="meta-mono">{relTime(r.createdAt)}</span>
+                    <p
+                      style={{
+                        fontSize: '14px',
+                        color: 'var(--canvas-dark-ink)',
+                        lineHeight: 1.55,
+                        margin: '5px 0 0',
+                        whiteSpace: 'pre-wrap',
+                      }}
+                    >
+                      <RenderMentionsInText text={r.content} />
+                    </p>
+                    <div style={{ marginTop: '8px' }}>
+                      <LikeButton
+                        variant="reply"
+                        targetId={r.id}
+                        initialLiked={r.viewerLiked}
+                        initialCount={r.likeCount}
+                      />
+                    </div>
+                  </div>
+                </li>
+              )
+            })}
           </ul>
-        )}
-      </section>
+        </section>
+      )}
 
       {viewerRole !== null && <ReplyComposer discussionId={discussion.id} />}
-    </div>
+    </>
   )
 }

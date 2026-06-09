@@ -1,115 +1,109 @@
 import Link from 'next/link'
-import { Lock, Users, AlertCircle } from 'lucide-react'
+import { Lock, Users, AlertCircle, UserPlus, Clock, Check, UserX } from 'lucide-react'
 
 type Props =
   | { kind: 'error'; code: string; locale: string }
   | { kind: 'success'; success: 'already_friends' | 'accepted'; locale: string }
 
-const ERROR_COPY: Record<string, { title: string; body: string }> = {
+type Tone = 'error' | 'warning' | 'muted' | 'success'
+
+const ERROR_COPY: Record<
+  string,
+  { title: string; body: string; tone: Tone; Icon: typeof AlertCircle }
+> = {
   TOKEN_NOT_FOUND: {
     title: 'Invite not found',
-    body: "This invite link doesn't exist.",
+    body: "This invite link isn't valid. Double-check it or ask for a new one.",
+    tone: 'error',
+    Icon: AlertCircle,
   },
   TOKEN_EXPIRED: {
-    title: 'Invite expired',
-    body: 'This invite link expired.',
+    title: 'This invite expired',
+    body: 'Invite links last 14 days. Ask your friend to send a fresh one.',
+    tone: 'warning',
+    Icon: Clock,
   },
   TOKEN_ALREADY_CLAIMED: {
-    title: 'Invite already used',
-    body: 'This invite link has already been used.',
+    title: 'Already claimed',
+    body: "This invite has already been used and can't be claimed again.",
+    tone: 'muted',
+    Icon: Check,
   },
   SELF_INVITE: {
-    title: "That's your invite",
-    body: "You can't claim your own invite.",
+    title: "That's your own invite",
+    body: "You can't accept an invite you created. Share it with a friend instead.",
+    tone: 'warning',
+    Icon: UserX,
   },
   BLOCKED: {
-    title: 'Cannot accept',
-    body: "This invite can't be accepted right now.",
+    // BLOCKED masquerades as TOKEN_NOT_FOUND visually so block existence isn't revealed.
+    title: 'Invite not found',
+    body: "This invite link isn't valid. Double-check it or ask for a new one.",
+    tone: 'error',
+    Icon: AlertCircle,
   },
   INVALID_INPUT: {
     title: 'Malformed link',
     body: 'This invite link is malformed.',
+    tone: 'error',
+    Icon: AlertCircle,
   },
-}
-
-function PanelShell({ children }: { children: React.ReactNode }) {
-  return (
-    <main
-      style={{ background: '#262728' }}
-      className="min-h-screen flex items-center justify-center p-4"
-    >
-      <div
-        style={{
-          background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
-          borderRadius: 'var(--r-card)',
-          boxShadow: 'var(--sh-card)',
-          border: 'var(--br-card)',
-        }}
-        className="max-w-md w-full p-8 text-center"
-      >
-        {children}
-      </div>
-    </main>
-  )
 }
 
 export function InviteResult(props: Props) {
   const { kind, locale } = props
 
   if (kind === 'error') {
-    const copy = ERROR_COPY[props.code] ?? {
-      title: 'Something went wrong',
-      body: "We couldn't process this invite. Please try again.",
-    }
-    const Icon = props.code === 'TOKEN_NOT_FOUND' || props.code === 'INVALID_INPUT' ? AlertCircle : Lock
+    const copy =
+      ERROR_COPY[props.code] ?? {
+        title: 'Something went wrong',
+        body: "We couldn't process this invite. Please try again.",
+        tone: 'error' as Tone,
+        Icon: AlertCircle,
+      }
+    const { Icon } = copy
     return (
-      <PanelShell>
-        <Icon className="w-10 h-10 mx-auto mb-4 text-[var(--destructive)]" />
-        <h1 style={{ color: 'var(--destructive)' }} className="font-comfortaa font-bold text-xl mb-2">
-          {copy.title}
-        </h1>
-        <p className="text-sm text-[var(--canvas-dark-ink-muted)] mb-6">{copy.body}</p>
-        <Link
-          href={`/${locale}/discover`}
-          style={{
-            background: 'var(--brand)',
-            color: 'var(--brand-ink)',
-            borderRadius: 'var(--r-pill)',
-            boxShadow: 'var(--sh-tile)',
-          }}
-          className="inline-block font-geist font-semibold text-sm px-5 py-2.5"
-        >
-          Back to Discover
-        </Link>
-      </PanelShell>
+      <div className="claim-stage">
+        <div className="claim-card">
+          <div className={`icon-wrap tone-${copy.tone}`}>
+            <Icon />
+          </div>
+          <h1>{copy.title}</h1>
+          <p>{copy.body}</p>
+          <div className="actions">
+            <Link className="btn-brand" href={`/${locale}/discover`}>
+              Back to Discover
+            </Link>
+          </div>
+        </div>
+      </div>
     )
   }
 
-  const title = props.success === 'already_friends' ? "You're already friends!" : 'Friend request accepted.'
-  const body =
-    props.success === 'already_friends'
-      ? 'You can find this writer on Discover or in your friends list.'
-      : "You're connected. Find new writers on Discover."
+  const isAlready = props.success === 'already_friends'
+  const title = isAlready ? 'Already friends' : 'Friend request accepted'
+  const body = isAlready
+    ? 'You and this person are already connected. Nothing to do here!'
+    : "You're connected. Find new writers on Discover."
+  const Icon = isAlready ? Users : UserPlus
 
   return (
-    <PanelShell>
-      <Users className="w-10 h-10 mx-auto mb-4" style={{ color: 'var(--brand)' }} />
-      <h1 style={{ color: 'var(--brand)' }} className="font-comfortaa font-bold text-xl mb-2">
-        {title}
-      </h1>
-      <p className="text-sm text-[var(--canvas-dark-ink-muted)] mb-6">{body}</p>
-      <Link
-        href={`/${locale}/discover`}
-        style={{
-          background: 'var(--brand)',
-          color: 'var(--brand-ink)',
-          borderRadius: 'var(--r-pill)',
-          boxShadow: 'var(--sh-tile)',
-        }}
-        className="inline-block font-geist font-semibold text-sm px-5 py-2.5"
-      >
-        Discover writers
-      </Link>
-    </PanelShell>
+    <div className="claim-stage">
+      <div className="claim-card">
+        <div className="icon-wrap tone-success">
+          <Icon />
+        </div>
+        <h1>{title}</h1>
+        <p>{body}</p>
+        <div className="actions">
+          <Link className="btn-brand" href={`/${locale}/discover`}>
+            Discover writers
+          </Link>
+        </div>
+      </div>
+    </div>
   )
 }
+
+// Keep Lock import referenced for potential future tone-muted lock state.
+void Lock

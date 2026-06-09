@@ -51,14 +51,24 @@ function subjectHref(row: FeedRow, locale: string): string | null {
   }
 }
 
+// Deterministic avatar tone picker from a string so each actor gets a stable
+// color across renders. Bundle palette: blue / mint / lilac / coral / slate.
+const AVATAR_TONES = ['blue', 'mint', 'lilac', 'coral', 'slate'] as const
+function pickTone(seed: string): (typeof AVATAR_TONES)[number] {
+  let h = 0
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) | 0
+  return AVATAR_TONES[Math.abs(h) % AVATAR_TONES.length]
+}
+
 export function ActivityEventRow({ row, locale }: { row: FeedRow; locale: string }) {
-  const handle = row.actor.username ? `@${row.actor.username}` : row.actor.displayName ?? 'Someone'
+  const handle = row.actor.username
+    ? `@${row.actor.username}`
+    : row.actor.displayName ?? 'Someone'
   const initial = (row.actor.username ?? row.actor.displayName ?? '?')[0]?.toUpperCase() ?? '?'
   const href = subjectHref(row, locale)
   const italicizeSubject = row.subject?.type === 'book' || row.subject?.type === 'chapter'
+  const isFriendEvent = Boolean(row.isFriend)
 
-  // books_added_batch renders count-aware copy with payload.listTitle preferred
-  // over subject.title. Bold list title, link if href resolvable.
   let verb: string
   let subjectTitle: string | null
   if (row.type === 'books_added_batch') {
@@ -70,23 +80,19 @@ export function ActivityEventRow({ row, locale }: { row: FeedRow; locale: string
     verb = `added ${count} ${count === 1 ? 'book' : 'books'} to`
     subjectTitle = payloadTitle ?? row.subject?.title ?? null
   } else if (row.type === 'book_club_created') {
-    // payload: { name }; subject hydrated to club name. Prefer subject (live),
-    // fall back to payload snapshot.
     const payload = row.payload ?? {}
     const rawName = (payload as { name?: unknown }).name
     const payloadName = typeof rawName === 'string' && rawName.length > 0 ? rawName : null
     verb = 'started a book club'
     subjectTitle = row.subject?.title ?? payloadName
   } else if (row.type === 'book_club_current_book_changed') {
-    // payload: { clubName, fromBookTitle, toBookTitle }. The meaningful subject
-    // here is the NEW book the club is reading. Use the club name (subject) in
-    // the verb so the bold subjectTitle is the book.
     const payload = row.payload ?? {}
     const rawClub = (payload as { clubName?: unknown }).clubName
     const rawTo = (payload as { toBookTitle?: unknown }).toBookTitle
-    const clubName = typeof rawClub === 'string' && rawClub.length > 0
-      ? rawClub
-      : row.subject?.title ?? null
+    const clubName =
+      typeof rawClub === 'string' && rawClub.length > 0
+        ? rawClub
+        : row.subject?.title ?? null
     const toBookTitle = typeof rawTo === 'string' && rawTo.length > 0 ? rawTo : null
     verb = clubName ? `'s club ${clubName} is now reading` : 'is now reading'
     subjectTitle = toBookTitle
@@ -95,8 +101,6 @@ export function ActivityEventRow({ row, locale }: { row: FeedRow; locale: string
     subjectTitle = row.subject?.title ?? null
   }
 
-  // For reading_list_created + books_added_batch + book_club_* we want bold
-  // subject title (not italic). Other types keep the italic-book-title treatment.
   const boldSubject =
     row.type === 'reading_list_created' ||
     row.type === 'books_added_batch' ||
@@ -105,7 +109,7 @@ export function ActivityEventRow({ row, locale }: { row: FeedRow; locale: string
 
   const subjectNode = (() => {
     if (!subjectTitle) {
-      return <span style={{ color: 'var(--canvas-dark-ink-muted)' }}>[subject]</span>
+      return <span className="meta-mono">[subject]</span>
     }
     const inner = boldSubject ? (
       <strong>{subjectTitle}</strong>
@@ -115,69 +119,38 @@ export function ActivityEventRow({ row, locale }: { row: FeedRow; locale: string
       <span>{subjectTitle}</span>
     )
     if (href) {
-      return (
-        <Link
-          href={href}
-          style={{ color: 'var(--canvas-dark-ink-strong)' }}
-          className="hover:underline"
-        >
-          {inner}
-        </Link>
-      )
+      return <Link href={href}>{inner}</Link>
     }
-    return <span style={{ color: 'var(--canvas-dark-ink-strong)' }}>{inner}</span>
+    return <span>{inner}</span>
   })()
 
-  return (
-    <article
-      style={{
-        background:
-          'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
-        borderRadius: 'var(--r-card)',
-        boxShadow: 'var(--sh-card)',
-        border: 'var(--br-card)',
-        borderLeft: row.isFriend ? '2px solid var(--brand)' : undefined,
-      }}
-      className="flex gap-3 p-4"
-    >
-      {row.actor.username ? (
-        <Link href={`/${locale}/u/${row.actor.username}`} className="shrink-0">
-          {row.actor.avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={row.actor.avatarUrl}
-              alt=""
-              className="h-9 w-9 rounded-full object-cover"
-            />
-          ) : (
-            <span
-              style={{
-                background: 'oklch(from var(--brand) l c h / 0.18)',
-                border: '1px solid oklch(from var(--brand) l c h / 0.3)',
-                color: 'var(--brand)',
-              }}
-              className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold"
-            >
-              {initial}
-            </span>
-          )}
-        </Link>
-      ) : (
-        <span
-          style={{
-            background: 'oklch(from var(--brand) l c h / 0.18)',
-            border: '1px solid oklch(from var(--brand) l c h / 0.3)',
-            color: 'var(--brand)',
-          }}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold"
-        >
-          {initial}
-        </span>
-      )}
+  const avatarTone = pickTone(row.actor.username ?? row.actor.displayName ?? row.id)
 
-      <div className="flex min-w-0 flex-1 flex-col gap-2">
-        <div className="flex items-start justify-between gap-2">
-          <p style={{ color: 'var(--canvas-dark-ink)' }} className="text-sm leading-snug">
+  return (
+    <li className={`tile tile-pad ${isFriendEvent ? 'is-friend-event' : ''}`}>
+      <div
+        className="grid items-start gap-3"
+        style={{ gridTemplateColumns: 'auto 1fr auto' }}
+      >
+        {row.actor.username ? (
+          <Link href={`/${locale}/u/${row.actor.username}`} className="shrink-0">
+            {row.actor.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={row.actor.avatarUrl}
+                alt=""
+                className="h-10 w-10 rounded-full object-cover"
+              />
+            ) : (
+              <span className={`avatar s40 a-${avatarTone}`}>{initial}</span>
+            )}
+          </Link>
+        ) : (
+          <span className={`avatar s40 a-${avatarTone}`}>{initial}</span>
+        )}
+
+        <div className="min-w-0">
+          <div className="text-sm leading-snug">
             {row.actor.username ? (
               <Link
                 href={`/${locale}/u/${row.actor.username}`}
@@ -187,37 +160,21 @@ export function ActivityEventRow({ row, locale }: { row: FeedRow; locale: string
                 {handle}
               </Link>
             ) : (
-              <span style={{ color: 'var(--canvas-dark-ink-strong)' }} className="font-semibold">
+              <span
+                style={{ color: 'var(--canvas-dark-ink-strong)' }}
+                className="font-semibold"
+              >
                 {handle}
               </span>
             )}{' '}
             <span style={{ color: 'var(--canvas-dark-ink-muted)' }}>{verb}</span>{' '}
             {subjectNode}
-          </p>
-          <span
-            style={{ color: 'var(--canvas-dark-ink-muted)' }}
-            className="shrink-0 font-mono text-[10px] uppercase tracking-wider"
-          >
-            {relTime(row.createdAt)}
-          </span>
+          </div>
+          <div className="meta-mono mt-1">{relTime(row.createdAt)}</div>
         </div>
 
-        {row.subject?.coverUrl &&
-        (row.subject.type === 'book' || row.subject.type === 'chapter') ? (
-          <div className="flex">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={row.subject.coverUrl}
-              alt=""
-              style={{
-                borderRadius: 'var(--r-row)',
-                boxShadow: 'var(--sh-tile)',
-              }}
-              className="h-16 w-12 object-cover"
-            />
-          </div>
-        ) : null}
+        {isFriendEvent ? <span className="pill brand-solid">FRIEND</span> : null}
       </div>
-    </article>
+    </li>
   )
 }

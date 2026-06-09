@@ -1,12 +1,23 @@
 import Link from 'next/link'
-import { Zap } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import type { ActiveSparkEntry } from '@/lib/types/community'
 
 const STATUS_LABEL: Record<ActiveSparkEntry['status'], string> = {
   submitted: 'Submitted',
-  voting: 'Voting open',
+  voting: 'Voting',
   awaiting_winner: 'Awaiting winner',
-  won: 'Won!',
+  won: 'Won',
+}
+
+// Bundle pill tones — map our status union to bundle's spark-{state} pill class.
+// Bundle defines .pill.spark-open / .spark-voting / .spark-closed; we map
+// submitted → open, voting → voting, awaiting_winner → closed, won → voting
+// (won has its own brand-soft styling at the .pill level if available).
+const STATUS_PILL: Record<ActiveSparkEntry['status'], string> = {
+  submitted: 'spark-open',
+  voting: 'spark-voting',
+  awaiting_winner: 'spark-closed',
+  won: 'spark-voting',
 }
 
 export function ActiveSparksPanel({
@@ -16,43 +27,67 @@ export function ActiveSparksPanel({
   locale: string
   entries: ActiveSparkEntry[]
 }) {
-  return (
-    <section className="bg-card border border-border rounded-lg p-4 flex flex-col gap-3">
-      <header className="flex items-center gap-2">
-        <Zap size={14} className="text-brand" />
-        <h3 className="text-sm font-semibold text-foreground">Your Sparks</h3>
-      </header>
+  const visible = entries.slice(0, 5)
+  const hasMore = entries.length > 5
 
-      {entries.length === 0 ? (
-        <div className="text-center py-2">
-          <Link
-            href={`/${locale}/discover?tab=sparks`}
-            className="text-xs px-3 py-1.5 rounded bg-brand/10 text-brand border border-brand/20 hover:bg-brand/20 transition-colors inline-block"
-          >
-            Try a Spark
-          </Link>
+  if (entries.length === 0) {
+    return (
+      <section className="panel rail-card panel-pad" aria-label="Your sparks">
+        <div className="sec-head" style={{ marginBottom: 10 }}>
+          <h2 style={{ fontSize: 15 }}>Your Sparks</h2>
         </div>
-      ) : (
-        <ul className="flex flex-col gap-2">
-          {entries.slice(0, 3).map(e => (
-            <li key={e.entryId}>
-              <Link
-                href={`/${locale}/sparks/${e.sparkId}`}
-                className="flex flex-col gap-1 text-xs hover:text-brand transition-colors group"
-              >
-                <span className="text-foreground truncate group-hover:text-brand">{e.sparkPrompt}</span>
-                <span className={`text-[10px] inline-block w-fit px-1.5 py-0.5 rounded border ${
-                  e.status === 'won'
-                    ? 'bg-brand/20 text-brand border-brand/40'
-                    : 'text-muted-foreground border-border'
-                }`}>
-                  {STATUS_LABEL[e.status]}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+        <p
+          style={{
+            fontSize: 12,
+            color: 'var(--canvas-dark-ink-muted)',
+            marginBottom: 10,
+          }}
+        >
+          No sparks yet — try one and get the page glowing.
+        </p>
+        <Link className="see-all" href={`/${locale}/sparks`}>
+          Try a Spark
+          <ArrowRight />
+        </Link>
+      </section>
+    )
+  }
+
+  return (
+    <section className="panel rail-card panel-pad" aria-label="Your sparks">
+      <div className="sec-head" style={{ marginBottom: 10 }}>
+        <h2 style={{ fontSize: 15 }}>Your Sparks</h2>
+        <span className="count">{entries.length}</span>
+      </div>
+
+      {visible.map((e) => (
+        <Link
+          key={e.entryId}
+          href={`/${locale}/sparks/${e.sparkId}`}
+          className="mini-row"
+          style={{ textDecoration: 'none' }}
+        >
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="mr-t" style={{ fontSize: 12.5 }}>
+              {e.sparkPrompt}
+            </div>
+            <span
+              className={`pill ${STATUS_PILL[e.status]}`}
+              style={{ marginTop: 6 }}
+            >
+              <span className="dot" />
+              {STATUS_LABEL[e.status]}
+            </span>
+          </div>
+        </Link>
+      ))}
+
+      {hasMore ? (
+        <Link className="see-all" href={`/${locale}/sparks`}>
+          See all {entries.length} sparks
+          <ArrowRight />
+        </Link>
+      ) : null}
     </section>
   )
 }

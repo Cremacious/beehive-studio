@@ -39,8 +39,8 @@ export function ActivityFeed({
           </span>
           <h2>Your feed is quiet for now</h2>
           <p>
-            Follow some writers and join a hive — once you&apos;ve got friends, their new
-            chapters, sparks, and lists will show up right here.
+            Follow some writers and join a hive — once you&apos;ve got friends, their
+            new chapters, sparks, and lists will show up right here.
           </p>
           <div className="cta-row">
             <Link href={`/${locale}/friends?tab=suggested`} className="btn-brand">
@@ -58,34 +58,37 @@ export function ActivityFeed({
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      {rows.map((row) => (
-        <ActivityEventRow key={row.id} row={row} locale={locale} />
-      ))}
-      {cursor ? (
-        <button
-          type="button"
-          onClick={loadOlder}
-          disabled={pending}
-          style={{
-            background:
-              'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-            boxShadow: 'var(--sh-tile)',
-            borderRadius: 'var(--r-pill)',
-            color: 'var(--canvas-dark-ink-strong)',
-          }}
-          className="self-center px-4 py-2 text-xs font-semibold disabled:opacity-50"
-        >
-          {pending ? 'Loading…' : 'Load older'}
-        </button>
-      ) : (
-        <p
-          style={{ color: 'var(--canvas-dark-ink-muted)' }}
-          className="py-2 text-center text-xs"
-        >
-          You&apos;re all caught up.
-        </p>
-      )}
-    </div>
+    <section className="panel" aria-label="Activity feed">
+      <div className="panel-pad" style={{ paddingBottom: 6 }}>
+        <div className="sec-head" style={{ marginBottom: 4 }}>
+          <h2>Activity</h2>
+          <span className="meta-mono">Friends first</span>
+        </div>
+      </div>
+      <ul className="cstack" style={{ gap: 0, padding: '0 6px 6px' }}>
+        {rows.map((row) => (
+          <ActivityEventRow key={row.id} row={row} locale={locale} />
+        ))}
+      </ul>
+      <div className="panel-pad" style={{ paddingTop: 0 }}>
+        {cursor ? (
+          <button
+            type="button"
+            onClick={loadOlder}
+            disabled={pending}
+            className="load-more"
+          >
+            {pending ? 'Loading…' : 'Load more'}
+          </button>
+        ) : (
+          <p
+            style={{ color: 'var(--canvas-dark-ink-muted)' }}
+            className="py-2 text-center text-xs"
+          >
+            You&apos;re all caught up.
+          </p>
+        )}
+      </div>
+    </section>
   )
 }

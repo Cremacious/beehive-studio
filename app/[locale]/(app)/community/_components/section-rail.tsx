@@ -1,11 +1,13 @@
 import Link from 'next/link'
-import { Users, Hexagon, Zap, BookMarked, BookOpen, type LucideIcon } from 'lucide-react'
+import { Users, Hexagon, Zap, BookMarked, BookOpen } from 'lucide-react'
+import type { ReactNode } from 'react'
 
 type Tile = {
   label: string
+  sublabel?: string
   href: string
-  icon: LucideIcon
-  count: number
+  icon: ReactNode
+  count?: number
 }
 
 export function SectionRail({
@@ -13,67 +15,65 @@ export function SectionRail({
   friendsCount,
   hivesCount,
   sparksCount,
+  listsCount,
+  clubsCount,
 }: {
   locale: string
   friendsCount: number
   hivesCount: number
   sparksCount: number
+  listsCount?: number
+  clubsCount?: number
 }) {
+  // Order locked per Q3: Friends / Hives / Sparks / Lists / Clubs.
+  // Q4 lock: Hives tile routes to /studio with "Your hives" sublabel
+  // (no /hives index yet).
   const tiles: Tile[] = [
-    { label: 'Friends', href: `/${locale}/friends`, icon: Users, count: friendsCount },
-    { label: 'Hives', href: `/${locale}/studio`, icon: Hexagon, count: hivesCount },
-    { label: 'Sparks', href: `/${locale}/sparks`, icon: Zap, count: sparksCount },
-    { label: 'Reading Lists', href: `/${locale}/reading-lists`, icon: BookMarked, count: 0 },
-    { label: 'Book Clubs', href: `/${locale}/clubs`, icon: BookOpen, count: 0 },
+    {
+      label: 'Friends',
+      href: `/${locale}/friends`,
+      icon: <Users />,
+      count: friendsCount,
+    },
+    {
+      label: 'Hives',
+      sublabel: 'Your hives',
+      href: `/${locale}/studio`,
+      icon: <Hexagon />,
+      count: hivesCount,
+    },
+    {
+      label: 'Sparks',
+      href: `/${locale}/sparks`,
+      icon: <Zap />,
+      count: sparksCount,
+    },
+    {
+      label: 'Lists',
+      href: `/${locale}/reading-lists`,
+      icon: <BookMarked />,
+      count: listsCount,
+    },
+    {
+      label: 'Clubs',
+      href: `/${locale}/clubs`,
+      icon: <BookOpen />,
+      count: clubsCount,
+    },
   ]
 
   return (
-    <nav aria-label="Community sections" className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-      {tiles.map((tile) => {
-        const Icon = tile.icon
-        return (
-          <Link
-            key={tile.label}
-            href={tile.href}
-            style={{
-              background:
-                'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
-              borderRadius: 'var(--r-card)',
-              boxShadow: 'var(--sh-card)',
-              border: 'var(--br-card)',
-            }}
-            className="group flex items-center gap-3 p-4 transition-transform hover:-translate-y-0.5"
-          >
-            <span
-              style={{
-                background:
-                  'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-                borderRadius: 'var(--r-btn)',
-                boxShadow: 'var(--sh-tile)',
-              }}
-              className="flex h-10 w-10 shrink-0 items-center justify-center"
-            >
-              <Icon size={18} style={{ color: 'var(--brand)' }} />
-            </span>
-            <span className="flex min-w-0 flex-col">
-              <span
-                style={{ color: 'var(--canvas-dark-ink-strong)' }}
-                className="text-sm font-semibold truncate"
-              >
-                {tile.label}
-              </span>
-              {tile.count > 0 ? (
-                <span
-                  style={{ color: 'var(--canvas-dark-ink-muted)' }}
-                  className="text-[11px] font-mono uppercase tracking-wider"
-                >
-                  {tile.count}
-                </span>
-              ) : null}
-            </span>
-          </Link>
-        )
-      })}
+    <nav className="tabstrip mb-6" aria-label="Community sections">
+      {tiles.map((tile) => (
+        <Link key={tile.label} className="tab" href={tile.href}>
+          {tile.icon}
+          <span>{tile.label}</span>
+          {tile.sublabel ? (
+            <span className="meta-mono">{tile.sublabel}</span>
+          ) : null}
+          {tile.count != null ? <span className="ct">{tile.count}</span> : null}
+        </Link>
+      ))}
     </nav>
   )
 }

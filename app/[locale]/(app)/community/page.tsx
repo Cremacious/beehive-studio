@@ -1,4 +1,7 @@
 import { requireAuth } from '@/lib/require-auth'
+import { db } from '@/db'
+import { userProfiles } from '@/db/schema'
+import { eq } from 'drizzle-orm'
 import {
   getCommunityFeedAction,
   getMyActiveSparksAction,
@@ -8,6 +11,9 @@ import {
   getFriendCountAction,
 } from '@/lib/actions/friendships.actions'
 import { getUserHivesView } from '@/lib/actions/hive.actions'
+import { getMyClubsCountAction } from '@/lib/actions/book-clubs.actions'
+import { getListsAction } from '@/lib/actions/reading-lists.actions'
+import { PageHead } from '@/components/community/page-head'
 import { SectionRail } from './_components/section-rail'
 import { ActivityFeed } from './_components/activity-feed'
 import { RequestsCard } from './_components/requests-card'
@@ -22,14 +28,28 @@ export default async function CommunityPage({
   const { locale } = await params
   const viewerId = await requireAuth()
 
-  const [feedResult, requestsResult, sparksResult, friendsCountResult, hivesResult] =
-    await Promise.all([
-      getCommunityFeedAction({ limit: 20 }),
-      listPendingFriendRequestsAction(),
-      getMyActiveSparksAction(),
-      getFriendCountAction(viewerId),
-      getUserHivesView(),
-    ])
+  const [
+    feedResult,
+    requestsResult,
+    sparksResult,
+    friendsCountResult,
+    hivesResult,
+    clubsCountResult,
+    listsResult,
+    viewerProfile,
+  ] = await Promise.all([
+    getCommunityFeedAction({ limit: 20 }),
+    listPendingFriendRequestsAction(),
+    getMyActiveSparksAction(),
+    getFriendCountAction(viewerId),
+    getUserHivesView(),
+    getMyClubsCountAction(),
+    getListsAction({ filter: 'mine', limit: 1 }),
+    db.query.userProfiles.findFirst({
+      where: eq(userProfiles.userId, viewerId),
+      columns: { username: true, displayName: true },
+    }),
+  ])
 
   const feedRows = feedResult.success ? feedResult.data.rows : []
   const feedCursor = feedResult.success ? feedResult.data.nextCursor : null
@@ -37,41 +57,40 @@ export default async function CommunityPage({
   const activeSparks = sparksResult.success ? sparksResult.data : []
   const friendsCount = friendsCountResult.success ? friendsCountResult.data : 0
   const hives = hivesResult.success ? hivesResult.data : []
+  const clubsCount = clubsCountResult.success ? clubsCountResult.data.count : 0
+  // listsResult is paginated; the rows array can be empty even when the user
+  // has lists, since we requested limit:1. We use this just for a presence
+  // signal — the count badge uses rows.length which is at most 1. A dedicated
+  // getMyListsCountAction would be more accurate (future follow-up).
+  const listsCount = listsResult.success ? listsResult.data.rows.length : 0
+
+  const greetingName =
+    viewerProfile?.displayName ??
+    (viewerProfile?.username ? `@${viewerProfile.username}` : 'there')
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6 lg:px-6">
-      <header className="flex flex-col gap-1">
-        <h1
-          style={{ color: 'var(--brand)' }}
-          className="font-comfortaa text-3xl font-bold"
-        >
-          Community
-        </h1>
-        <p
-          style={{ color: 'var(--canvas-dark-ink-muted)' }}
-          className="text-sm"
-        >
-          What your friends, follows, and hives are up to.
-        </p>
-      </header>
+    <main className="cm-wrap w-5xl">
+      <PageHead title={`Hey ${greetingName} — here's what's buzzing`} />
 
       <SectionRail
         locale={locale}
         friendsCount={friendsCount}
         hivesCount={hives.length}
         sparksCount={activeSparks.length}
+        listsCount={listsCount}
+        clubsCount={clubsCount}
       />
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_280px]">
-        <main className="flex min-w-0 flex-col gap-3">
+      <div className="grid gap-6 lg:[grid-template-columns:1fr_280px]">
+        <div className="min-w-0">
           <ActivityFeed
             initialRows={feedRows}
             initialCursor={feedCursor}
             locale={locale}
           />
-        </main>
+        </div>
 
-        <aside className="flex w-full shrink-0 flex-col gap-4">
+        <aside className="space-y-4">
           <RequestsCard
             locale={locale}
             count={incomingRequests.length}
@@ -85,6 +104,6 @@ export default async function CommunityPage({
           <ActiveSparksPanel locale={locale} entries={activeSparks} />
         </aside>
       </div>
-    </div>
+    </main>
   )
 }

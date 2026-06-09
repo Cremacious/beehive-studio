@@ -7,6 +7,14 @@ export type RequestsSample = {
   avatarUrl: string | null
 }
 
+// Deterministic avatar tone picker matching the activity-event-row palette.
+const AVATAR_TONES = ['blue', 'mint', 'lilac', 'coral', 'slate'] as const
+function pickTone(seed: string): (typeof AVATAR_TONES)[number] {
+  let h = 0
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) | 0
+  return AVATAR_TONES[Math.abs(h) % AVATAR_TONES.length]
+}
+
 export function RequestsCard({
   locale,
   count,
@@ -18,73 +26,64 @@ export function RequestsCard({
 }) {
   if (count === 0) return null
 
-  const visible = samples.slice(0, 3)
-  const label = count === 1 ? '1 pending request' : `${count} pending requests`
+  // Show up to 5 samples inline per bundle spec; "See all" footer when > 5.
+  const visible = samples.slice(0, 5)
+  const hasMore = count > visible.length
 
   return (
-    <section
-      style={{
-        background:
-          'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
-        borderRadius: 'var(--r-card)',
-        boxShadow: 'var(--sh-card)',
-        border: 'var(--br-card)',
-      }}
-      className="flex flex-col gap-3 p-4"
-    >
-      <header className="flex items-center justify-between">
-        <h3
-          style={{ color: 'var(--brand)' }}
-          className="font-comfortaa text-sm font-bold"
-        >
-          Friend requests
-        </h3>
-      </header>
-
-      <div className="flex items-center gap-3">
-        {visible.length > 0 ? (
-          <div className="flex -space-x-2">
-            {visible.map((s) => {
-              const initial = (s.username ?? '?')[0]?.toUpperCase() ?? '?'
-              return s.avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  key={s.userId}
-                  src={s.avatarUrl}
-                  alt=""
-                  style={{ border: '2px solid var(--canvas-dark-200)' }}
-                  className="h-8 w-8 rounded-full object-cover"
-                />
-              ) : (
-                <span
-                  key={s.userId}
-                  style={{
-                    background: 'oklch(from var(--brand) l c h / 0.18)',
-                    border: '2px solid var(--canvas-dark-200)',
-                    color: 'var(--brand)',
-                  }}
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold"
-                >
-                  {initial}
-                </span>
-              )
-            })}
-          </div>
-        ) : null}
-        <span
-          style={{ color: 'var(--canvas-dark-ink)' }}
-          className="text-xs"
-        >
-          {label}
-        </span>
+    <section className="panel rail-card panel-pad" aria-label="Friend requests">
+      <div className="sec-head" style={{ marginBottom: 14 }}>
+        <h2 style={{ fontSize: 15 }}>Requests</h2>
+        <span className="count">{count}</span>
       </div>
 
-      <Link
-        href={`/${locale}/friends?tab=requests`}
-        style={{ color: 'var(--brand)' }}
-        className="inline-flex items-center gap-1 text-xs font-semibold hover:underline"
-      >
-        Manage <ArrowRight size={12} />
+      <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+        {visible.map((s, i) => {
+          const initial = (s.username ?? '?')[0]?.toUpperCase() ?? '?'
+          const tone = pickTone(s.userId)
+          const display = s.username ? `@${s.username}` : 'Someone'
+          return (
+            <li
+              key={s.userId}
+              className="req-item"
+              style={i > 0 ? { marginTop: 14 } : undefined}
+            >
+              {s.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={s.avatarUrl}
+                  alt=""
+                  className={`avatar s32`}
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                  }}
+                />
+              ) : (
+                <span className={`avatar s32 a-${tone}`}>{initial}</span>
+              )}
+              <div>
+                <div
+                  style={{
+                    fontFamily: 'var(--font-display)',
+                    fontWeight: 600,
+                    fontSize: 13,
+                    color: 'var(--canvas-dark-ink-strong)',
+                  }}
+                >
+                  {display}
+                </div>
+              </div>
+            </li>
+          )
+        })}
+      </ul>
+
+      <Link className="see-all" href={`/${locale}/friends?tab=pending&seg=received`}>
+        {hasMore ? `See all ${count} requests` : 'Manage requests'}
+        <ArrowRight />
       </Link>
     </section>
   )

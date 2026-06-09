@@ -12,11 +12,38 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-09 (Notifications P0 audit + smoke seed + community sidebar polish + studio BookCard rewrite)
+> **Last updated:** 2026-06-09 (Hives modal + spark detail iOS + global ink brightness + UI audit delivered)
 >
-> **Last commit:** [48ad478](https://github.com/Cremacious/beehive-studio/commit/48ad478) — feat(community/studio): notifications audit P0 + smoke seed + studio polish.
+> **Last commit:** [d4ba0a4](https://github.com/Cremacious/beehive-studio/commit/d4ba0a4) — fix(ui): hives modal wiring + spark detail iOS refresh + global ink brightness.
 >
-> **Current focus:** smoke-test mode unlocked. End-to-end iteration on the community + studio surfaces using a freshly-seeded test account, with the notifications P0 audit completed in the same pass.
+> **Current focus:** mid-smoke-test polish loop using the seeded `smoketest@beehive.local` account. Each surface gets the same loop — Chris flags a UI/copy issue, I fix it, no commit until "ship it". Three quick fixes shipped at d4ba0a4 (1. /community greeting line removed; 2. /hives: New Hive button H capitalized + opens CreateHiveModal inline instead of routing to /studio + new HiveIndexCard for the no-image grid; 3. /sparks/[id] back link uses canonical PageHead `back` badge + SparkSubmitPanel got the iOS refresh — it was using pre-design-system hex `#181818/#141414/#2a2a2a/#555/#ccc/#FFC300`). Plus app-wide ink brightness bump (single 4-line token edit — faint .500→.750, muted .680→.850, ink .880→.950, strong .965→1.000) — fixes the global "text too dim" complaint while preserving the 4-tier hierarchy.
+>
+> **UI audit delivered (read-only).** 28 findings across 5 severity tiers, captured in conversation. Pickable next-steps:
+> - **🔴 P0 — pre-design-system rot.** 23 files still use hardcoded hex colors (`bg-[#1a1a1a]`, `text-[#666]`, etc.) that don't pick up the new tokens. Biggest cluster: `/discover/_components/*` (book-card, hive-card, spark-card, spark-entry-card, spark-entry-comments-panel, spark-vote-button, feed-filters, writers-strip, create-spark-modal, load-more-feed). Also `book-details-form.tsx` (829 LOC), legal pages, error/not-found, CreateSparkModal.
+> - **🟡 P1 — inconsistency.** Detail pages (`/clubs/[id]`, `/reading-lists/[id]`, `/u/[username]`, hive sub-routes) missing PageHead back-links. Three empty-state patterns drift. Modal iOS recipe applied to only 2/many modals. Section-head class fragmentation. Card-grid layout inconsistencies. Mixed `text-white/X` literals vs ink-token usage (now redundant post-brightness-bump).
+> - **🟢 P2 — polish.** No mobile breakpoints on AppNav. /discover hero vs /community section rail mismatch. Auth + settings + studio editor + Stripe pages haven't been smoke-tested against the new brightness.
+> - **🟢 P3 — code hygiene.** Two `create-hive-modal.tsx` files (one stub). `design-import-temp/` accumulating mockups. Class-name collisions risk (`empty`, `body`, `meta`, etc.) — prefer prefixed `.bcv-*` / `.hic-*` / `.rail-row` going forward.
+> - **🟢 P4 — a11y.** Many icon-only buttons missing `aria-label`. Some forms use `<p>` instead of `<label htmlFor>`. Focus-ring application uneven.
+>
+> **Patterns now load-bearing across the codebase (this session):**
+> 1. **iOS modal recipe (4 components so far)** — `sm:max-w-[560px] p-7 gap-6 dialog-ios` outer, `#1E1E1E` recessed inputs with `var(--sh-inset)` + brand-yellow `focus:ring-2 ring-[oklch(from_var(--brand)_l_c_h_/_0.35)]`, mono uppercase `text-[10px] tracking-[0.14em]` labels with brand-yellow required `*`, pill-tile checkboxes with `accent-[var(--brand)]`, footer via `dialog-ios-footer` (strips shadcn's muted strip + border-top), h-9 brand pill buttons. Applied to CreateListModal + CreateClubModal + SparkSubmitPanel (without dialog chrome since it lives in a panel). CreateSparkModal + CreateHiveModal + edit dialogs still need this recipe.
+> 2. **`.bcv-*` BookCard family + `.hic-*` HiveIndexCard family** — prefixed component-scoped utility patterns. Generic class names (`.empty`, `.meta`, `.body`, `.title`) silently collide with global rules; prefixed names sidestep. Document this convention before adding any new component CSS family.
+> 3. **`<NewHiveButton>` render-prop pattern** — `children?: (onTrigger: () => void) => ReactNode` for sharing a confirm/action/redirect flow across multiple visual triggers (header CTA + empty-state CTA). Mirrors the `<DeleteBookButton>` pattern. Reusable for any "trigger that mounts a modal" scenario.
+> 4. **PageHead `back` prop** — canonical back-link affordance for any subpage. Dark-iOS badge with inner squircle brand-yellow icon chip + mono uppercase white/90 label. Detail pages should adopt.
+> 5. **Ink-token brightness bump pattern** — single 4-line edit in `@theme` cascades app-wide. Lesson: prefer tokens over literal `rgb(255 255 255 / 0.x)` for surfaces that should adapt to future tokens.
+>
+> **Known follow-ups (deferred, non-blocking):**
+> 1. `<HiveCard>` (studio rail) vs `<HiveIndexCard>` (/hives grid) — two components with overlapping responsibility now. Either deliberately separate (different contexts) or consolidate.
+> 2. `scripts/ping-sessions.ts` — Neon connectivity canary kept for future triage. Worth a one-line header comment reminding why.
+> 3. `text-white/X` literals scattered across this session need migration to `var(--canvas-dark-ink-muted)` etc. now that the tokens are brighter — single-source-of-truth for future brightness edits.
+>
+> **Next concrete step:** Chris picks an audit finding to tackle. The biggest single-feature win is **🔴 P0 #1 — `/discover/_components/*` token migration** (10 files, all pre-DS hex). Second priority: **🟡 P1 #7 — wire PageHead back-links on `/clubs/[id]`, `/reading-lists/[id]`, `/u/[username]`, hive sub-routes** (small but instantly visible). Each tackled one-by-one with smoke-and-fix loops.
+>
+> **Prior — Last updated:** 2026-06-09 (Notifications P0 audit + smoke seed + community sidebar polish + studio BookCard rewrite)
+>
+> **Last commit (prior session):** [48ad478](https://github.com/Cremacious/beehive-studio/commit/48ad478) — feat(community/studio): notifications audit P0 + smoke seed + studio polish.
+>
+> **Current focus (prior):** smoke-test mode unlocked. End-to-end iteration on the community + studio surfaces using a freshly-seeded test account, with the notifications P0 audit completed in the same pass.
 >
 > **What landed this session (one large commit, 27 files, +3129/-584):**
 >

@@ -47,7 +47,12 @@ export function LoadMoreFeed({ initialBooks, initialHasMore, sort, genre, locale
           <button
             onClick={loadMore}
             disabled={isPending}
-            className="px-8 py-2.5 bg-transparent border border-[#2a2a2a] text-[#888] rounded-md text-[13px] hover:border-[#3a3a3a] hover:text-white transition-colors disabled:opacity-50 cursor-pointer"
+            className="inline-flex items-center justify-center gap-2 h-9 px-6 rounded-[var(--r-pill)] text-[13px] font-semibold cursor-pointer disabled:opacity-50 transition-colors text-[var(--canvas-dark-ink-strong)] hover:bg-[var(--canvas-dark-300)]"
+            style={{
+              background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+              boxShadow: 'var(--sh-tile)',
+              borderTop: 'var(--br-card)',
+            }}
           >
             {isPending ? 'Loading…' : 'Load more books'}
           </button>

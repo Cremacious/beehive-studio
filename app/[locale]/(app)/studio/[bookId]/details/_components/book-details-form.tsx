@@ -94,10 +94,17 @@ function isClean(a: FormState, b: FormState): boolean {
 
 const cloudinaryConfigured = !!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
 
-// ─── Shared field styles ──────────────────────────────────────────────────────
+// ─── Shared field styles (iOS modal recipe — matches CreateListModal etc.) ──
 
-const fieldClass = 'w-full bg-[#1c1c1c] border border-border rounded-xl px-4 py-3 text-[14px] text-white placeholder:text-white/25 focus:outline-none focus:border-brand/50 focus:ring-2 focus:ring-brand/10 transition-all'
-const labelClass = 'block text-[12px] font-medium text-white/60 mb-1.5'
+const fieldClass =
+  'w-full rounded-[var(--r-row)] px-3.5 py-2.5 text-[14px] outline-none focus:ring-2 focus:ring-[oklch(from_var(--brand)_l_c_h_/_0.35)] transition-shadow'
+const fieldStyle = {
+  background: '#1E1E1E',
+  boxShadow: 'var(--sh-inset)',
+  color: 'var(--canvas-dark-ink)',
+} as const
+const labelClass =
+  'block text-[10px] font-mono uppercase tracking-[0.14em] mb-2 text-[var(--canvas-dark-ink-muted)]'
 const selectClass = `${fieldClass} appearance-none cursor-pointer`
 
 // ─── Section shell ────────────────────────────────────────────────────────────
@@ -202,10 +209,10 @@ function Chip({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`px-3 py-1 rounded-full text-[12px] border transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+      className={`inline-flex items-center px-3 h-7 rounded-[var(--r-pill)] text-[12px] font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
         active
-          ? 'bg-brand/15 border-brand/40 text-brand'
-          : 'bg-[#1c1c1c] border-border text-white/50 hover:border-white/20 hover:text-white/70'
+          ? 'bg-[var(--brand)] text-[var(--brand-ink)]'
+          : 'bg-[var(--canvas-dark-300)] text-[var(--canvas-dark-ink-muted)] hover:text-[var(--canvas-dark-ink-strong)]'
       }`}
     >
       {label}
@@ -379,7 +386,8 @@ export function BookDetailsForm({ locale, bookId, initial, isPremium }: Props) {
           type="button"
           onClick={handleSave}
           disabled={!dirty || saving}
-          className="bg-brand text-[#0a0a0a] font-bold font-comfortaa rounded-full px-5 py-2 text-[13px] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-brand-hover transition-all"
+          className="inline-flex items-center justify-center h-9 px-5 rounded-[var(--r-pill)] text-[13px] font-bold font-comfortaa disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          style={{ background: 'var(--brand)', color: 'var(--brand-ink)' }}
         >
           {saving ? 'Saving…' : 'Save changes'}
         </button>
@@ -411,7 +419,8 @@ export function BookDetailsForm({ locale, bookId, initial, isPremium }: Props) {
                   type="text"
                   value={form.title}
                   onChange={e => update({ title: e.target.value })}
-                  className={`${fieldClass} ${titleError ? 'border-red-400/50 focus:border-red-400/50' : ''}`}
+                  className={`${fieldClass} ${titleError ? 'ring-2 ring-red-400/50' : ''}`}
+                  style={fieldStyle}
                 />
                 {titleError && <p className="text-[12px] text-red-400 mt-1">{titleError}</p>}
               </div>
@@ -426,6 +435,7 @@ export function BookDetailsForm({ locale, bookId, initial, isPremium }: Props) {
                   onChange={e => update({ subtitle: e.target.value })}
                   placeholder="A subtitle or tagline"
                   className={fieldClass}
+                  style={fieldStyle}
                 />
               </div>
 
@@ -439,6 +449,7 @@ export function BookDetailsForm({ locale, bookId, initial, isPremium }: Props) {
                   rows={5}
                   maxLength={2000}
                   className={`${fieldClass} resize-none`}
+                  style={fieldStyle}
                   placeholder="Back-cover blurb or a brief summary…"
                 />
                 <p className="text-[11px] text-white/25 mt-1 text-right">{form.synopsis.length}/2000</p>
@@ -498,6 +509,7 @@ export function BookDetailsForm({ locale, bookId, initial, isPremium }: Props) {
                     value={form.genre}
                     onChange={e => update({ genre: e.target.value, subgenre: '' })}
                     className={selectClass}
+                    style={fieldStyle}
                   >
                     <option value="">Select genre…</option>
                     {GENRE_NAMES.map(g => <option key={g} value={g}>{g}</option>)}
@@ -510,6 +522,7 @@ export function BookDetailsForm({ locale, bookId, initial, isPremium }: Props) {
                     onChange={e => update({ subgenre: e.target.value })}
                     disabled={!form.genre || subgenres.length === 0}
                     className={`${selectClass} disabled:opacity-40 disabled:cursor-not-allowed`}
+                    style={fieldStyle}
                   >
                     <option value="">Select subgenre…</option>
                     {subgenres.map(s => <option key={s} value={s}>{s}</option>)}
@@ -573,12 +586,17 @@ export function BookDetailsForm({ locale, bookId, initial, isPremium }: Props) {
                         }
                       }}
                       placeholder="Add custom tag…"
-                      className="flex-1 bg-[#1c1c1c] border border-border rounded-lg px-3 py-2 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-brand/40 transition-all"
+                      className="flex-1 rounded-[var(--r-row)] px-3 py-2 text-[13px] outline-none focus:ring-2 focus:ring-[oklch(from_var(--brand)_l_c_h_/_0.35)] transition-shadow"
+                      style={fieldStyle}
                     />
                     <button
                       type="button"
                       onClick={() => addCustomTag(tagInput)}
-                      className="text-[12px] text-brand border border-brand/30 rounded-lg px-3 py-2 hover:bg-brand/10 transition-colors"
+                      className="inline-flex items-center text-[12px] font-semibold h-9 px-3 rounded-[var(--r-pill)] transition-colors"
+                      style={{
+                        background: 'var(--brand-soft)',
+                        color: 'var(--brand)',
+                      }}
                     >
                       Add
                     </button>
@@ -612,7 +630,8 @@ export function BookDetailsForm({ locale, bookId, initial, isPremium }: Props) {
                         placeholder="Readers who liked…"
                         value={t}
                         onChange={e => handleCompTitle(i, e.target.value)}
-                        className="flex-1 bg-[#1c1c1c] border border-border rounded-xl px-4 py-2.5 text-[14px] text-white placeholder:text-white/25 focus:outline-none focus:border-brand/50 transition-all"
+                        className="flex-1 rounded-[var(--r-row)] px-3.5 py-2.5 text-[14px] outline-none focus:ring-2 focus:ring-[oklch(from_var(--brand)_l_c_h_/_0.35)] transition-shadow"
+                        style={fieldStyle}
                       />
                       {form.compTitles.length > 1 && (
                         <button
@@ -643,6 +662,7 @@ export function BookDetailsForm({ locale, bookId, initial, isPremium }: Props) {
                   value={form.language}
                   onChange={e => update({ language: e.target.value })}
                   className={selectClass}
+                  style={fieldStyle}
                 >
                   <option value="">Select language…</option>
                   {LANGUAGES.map(l => <option key={l} value={l}>{l}</option>)}
@@ -667,8 +687,8 @@ export function BookDetailsForm({ locale, bookId, initial, isPremium }: Props) {
                   onClick={() => update({ isSeriesBook: opt === 'Series' })}
                   className={`flex-1 py-2.5 rounded-xl border text-[13px] font-medium transition-colors
                     ${(opt === 'Series') === form.isSeriesBook
-                      ? 'border-brand/50 bg-brand/10 text-brand'
-                      : 'border-border bg-[#1c1c1c] text-white/50 hover:border-white/20'
+                      ? 'border-[oklch(from_var(--brand)_l_c_h_/_0.35)] bg-[var(--brand-soft)] text-[var(--brand)]'
+                      : 'border-transparent bg-[var(--canvas-dark-300)] text-[var(--canvas-dark-ink-muted)] hover:text-[var(--canvas-dark-ink-strong)]'
                     }`}
                 >
                   {opt}
@@ -826,7 +846,12 @@ function ReadonlyField({
     <div>
       <div className={labelClass}>{label}</div>
       <div
-        className={`bg-[#1c1c1c] border border-border rounded-xl px-4 py-3 text-[14px] text-white/60 ${multiline ? 'min-h-[80px] whitespace-pre-wrap' : ''}`}
+        className={`rounded-[var(--r-row)] px-3.5 py-2.5 text-[14px] ${multiline ? 'min-h-[80px] whitespace-pre-wrap' : ''}`}
+        style={{
+          background: '#1E1E1E',
+          boxShadow: 'var(--sh-inset)',
+          color: 'var(--canvas-dark-ink-muted)',
+        }}
       >
         {value || <span className="text-white/25 italic">Not set</span>}
       </div>

@@ -16,7 +16,14 @@ type Props = {
   isSparkCreator: boolean
 }
 
-export function SparkEntryCard({ entry, sparkId, locale, sparkStatus, currentUserId, isSparkCreator }: Props) {
+export function SparkEntryCard({
+  entry,
+  sparkId,
+  locale,
+  sparkStatus,
+  currentUserId,
+  isSparkCreator,
+}: Props) {
   const isOwnEntry = currentUserId === entry.authorUserId
   const [isPendingChoice, startChoiceTransition] = useTransition()
 
@@ -29,16 +36,52 @@ export function SparkEntryCard({ entry, sparkId, locale, sparkStatus, currentUse
   const displayTitle = deriveTitle(entry.title, entry.contentPreview)
 
   return (
-    <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-3.5">
+    <div
+      className="p-4"
+      style={{
+        background:
+          'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+        boxShadow: 'var(--sh-tile)',
+        borderTop: 'var(--br-card)',
+        borderRadius: 'var(--r-row)',
+      }}
+    >
       <div className="flex items-center gap-2 mb-2">
-        <div className="w-5 h-5 rounded-full bg-[#2a2a2a] shrink-0" />
-        <span className="text-[#aaa] text-[12px] font-semibold">{entry.authorDisplayName ?? entry.authorUsername ?? 'Anonymous'}</span>
-        <span className="text-[#444] text-[11px]">· {entry.wordCount} words</span>
+        <div
+          className="w-5 h-5 rounded-full shrink-0"
+          style={{ background: 'var(--canvas-dark-200)' }}
+        />
+        <span
+          className="text-[12px] font-semibold"
+          style={{
+            color: 'var(--canvas-dark-ink-strong)',
+            fontFamily: 'var(--font-display)',
+          }}
+        >
+          {entry.authorDisplayName ?? entry.authorUsername ?? 'Anonymous'}
+        </span>
+        <span
+          className="text-[11px]"
+          style={{ color: 'var(--canvas-dark-ink-faint)' }}
+        >
+          · {entry.wordCount} words
+        </span>
       </div>
-      <h3 className="font-bold text-[var(--canvas-dark-ink-strong)] text-base mb-1.5" style={{ fontFamily: 'var(--font-comfortaa)' }}>
+      <h3
+        className="font-bold text-base mb-2"
+        style={{
+          color: 'var(--canvas-dark-ink-strong)',
+          fontFamily: 'var(--font-display)',
+        }}
+      >
         {displayTitle}
       </h3>
-      <p className="text-[#888] text-[13px] leading-relaxed mb-3 line-clamp-3">{entry.contentPreview}</p>
+      <p
+        className="text-[13px] leading-relaxed mb-3 line-clamp-3"
+        style={{ color: 'var(--canvas-dark-ink)' }}
+      >
+        {entry.contentPreview}
+      </p>
       <div className="flex items-center gap-2">
         <SparkVoteButton
           entryId={entry.id}
@@ -50,17 +93,29 @@ export function SparkEntryCard({ entry, sparkId, locale, sparkStatus, currentUse
         />
         {isSparkCreator && sparkStatus !== 'OPEN' && !isOwnEntry && (
           <button
+            type="button"
             onClick={handleCreatorChoice}
             disabled={isPendingChoice}
-            className="text-[11px] text-[#666] hover:text-[#FFC300] transition-colors cursor-pointer ml-1 disabled:opacity-40"
+            className="text-[11px] transition-colors cursor-pointer ml-1 disabled:opacity-40"
+            style={{ color: 'var(--canvas-dark-ink-muted)' }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = 'var(--brand)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = 'var(--canvas-dark-ink-muted)'
+            }}
           >
-            ★ Creator's choice
+            ★ Creator&apos;s choice
           </button>
         )}
         <div className="flex-1" />
         <Link
           href={`/${locale}/sparks/${sparkId}/entry/${entry.id}`}
-          className="text-[11px] text-[#666] border border-[#2a2a2a] px-3 py-1 rounded hover:text-white hover:border-[#3a3a3a] transition-colors"
+          className="inline-flex items-center text-[11px] h-7 px-3 rounded-[var(--r-pill)] transition-colors"
+          style={{
+            background: 'var(--canvas-dark-200)',
+            color: 'var(--canvas-dark-ink-muted)',
+          }}
         >
           View full entry →
         </Link>

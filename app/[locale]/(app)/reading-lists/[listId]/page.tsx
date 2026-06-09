@@ -4,6 +4,7 @@ import { getOptionalUserId } from '@/lib/require-auth'
 import { ListDetailHeader } from '../_components/list-detail-header'
 import { BookList } from '../_components/book-list'
 import { AddBookCTA } from '../_components/add-book-cta'
+import { BackLinkBadge } from '@/components/community/back-link-badge'
 
 export default async function ListDetailPage({
   params,
@@ -22,6 +23,7 @@ export default async function ListDetailPage({
 
   return (
     <main className="cm-wrap w-5xl">
+      <BackLinkBadge href={`/${locale}/reading-lists`} label="reading lists" />
       <ListDetailHeader
         list={list}
         owner={owner}

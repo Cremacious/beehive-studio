@@ -28,6 +28,33 @@ function timeAgo(date: Date): string {
   return `${Math.floor(seconds / 86400)}d ago`
 }
 
+const inputStyle = {
+  background: '#1E1E1E',
+  boxShadow: 'var(--sh-inset)',
+  color: 'var(--canvas-dark-ink)',
+} as const
+
+function Avatar({ url, size = 28 }: { url?: string | null; size?: number }) {
+  return (
+    <div
+      className="rounded-full shrink-0 overflow-hidden flex items-center justify-center text-[11px]"
+      style={{
+        width: size,
+        height: size,
+        background: 'var(--canvas-dark-300)',
+        color: 'var(--canvas-dark-ink-muted)',
+      }}
+    >
+      {url ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={url} alt="" className="w-full h-full object-cover" />
+      ) : (
+        '✍'
+      )}
+    </div>
+  )
+}
+
 function CommentRow({
   comment,
   isReply,
@@ -41,27 +68,43 @@ function CommentRow({
 }) {
   return (
     <div className="flex gap-2.5">
-      <div className="w-7 h-7 rounded-full bg-[#2a2a2a] shrink-0 overflow-hidden flex items-center justify-center text-[11px]">
-        {comment.authorAvatarUrl ? (
-          <img src={comment.authorAvatarUrl} alt="" className="w-full h-full object-cover" />
-        ) : (
-          '✍'
-        )}
-      </div>
+      <Avatar url={comment.authorAvatarUrl} />
       <div className="flex-1 min-w-0">
         <p className="text-[12px] mb-0.5">
-          <strong className="text-[#aaa]">
+          <strong
+            className="font-semibold"
+            style={{
+              color: 'var(--canvas-dark-ink-strong)',
+              fontFamily: 'var(--font-display)',
+            }}
+          >
             {comment.authorDisplayName ?? comment.authorUsername}
           </strong>{' '}
-          <span className="text-[#555] text-[11px]">{timeAgo(comment.createdAt)}</span>
+          <span
+            className="text-[11px]"
+            style={{ color: 'var(--canvas-dark-ink-faint)' }}
+          >
+            {timeAgo(comment.createdAt)}
+          </span>
         </p>
-        <p className="text-[#777] text-[12px] leading-relaxed whitespace-pre-wrap">
+        <p
+          className="text-[13px] leading-relaxed whitespace-pre-wrap"
+          style={{ color: 'var(--canvas-dark-ink)' }}
+        >
           <RenderMentionsInText text={comment.content} />
         </p>
         {!isReply && onReplyClick && (
           <button
+            type="button"
             onClick={onReplyClick}
-            className="mt-1 text-[#555] text-[11px] hover:text-[#FFC300] cursor-pointer"
+            className="mt-1 text-[11px] cursor-pointer transition-colors"
+            style={{ color: 'var(--canvas-dark-ink-muted)' }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = 'var(--brand)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = 'var(--canvas-dark-ink-muted)'
+            }}
           >
             {replyOpen ? 'Cancel' : 'Reply'}
           </button>
@@ -91,7 +134,7 @@ function ReplyComposer({
 
   return (
     <div className="flex gap-2.5 mt-2">
-      <div className="w-7 h-7 rounded-full bg-[#2a2a2a] shrink-0" />
+      <Avatar />
       <div className="flex-1">
         <MentionableTextarea
           value={draft}
@@ -99,20 +142,25 @@ function ReplyComposer({
           placeholder="Write a reply…"
           rows={2}
           maxLength={1000}
-          className="w-full bg-[#1e1e1e] border border-[#2a2a2a] rounded-md px-2.5 py-1.5 text-[#aaa] text-[12px] resize-none focus:outline-none focus:border-[#3a3a3a]"
+          className="w-full px-3 py-2 text-[13px] resize-none outline-none focus:ring-2 focus:ring-[oklch(from_var(--brand)_l_c_h_/_0.35)]"
+          style={{ ...inputStyle, borderRadius: 'var(--r-row)' }}
         />
-        <div className="flex gap-2 mt-1.5">
+        <div className="flex gap-2 mt-2">
           <button
+            type="button"
             onClick={submit}
             disabled={isPending || !draft.trim()}
-            className="px-3 py-1 bg-[#FFC300] text-black text-[11px] font-semibold rounded disabled:opacity-40 cursor-pointer"
+            className="inline-flex items-center justify-center h-8 px-4 rounded-[var(--r-pill)] text-[12px] font-semibold disabled:opacity-40 cursor-pointer"
+            style={{ background: 'var(--brand)', color: 'var(--brand-ink)' }}
           >
             Reply
           </button>
           <button
+            type="button"
             onClick={onCancel}
             disabled={isPending}
-            className="px-3 py-1 bg-transparent border border-[#2a2a2a] text-[#888] text-[11px] rounded hover:text-[#aaa] cursor-pointer"
+            className="inline-flex items-center justify-center h-8 px-3 rounded-[var(--r-pill)] text-[12px] cursor-pointer"
+            style={{ color: 'var(--canvas-dark-ink-muted)' }}
           >
             Cancel
           </button>
@@ -188,13 +236,16 @@ export function SparkEntryCommentsPanel({
 
   return (
     <div>
-      <p className="text-[#666] text-[11px] uppercase tracking-widest mb-3">
+      <p
+        className="text-[10px] font-mono uppercase tracking-[0.14em] mb-4"
+        style={{ color: 'var(--canvas-dark-ink-muted)' }}
+      >
         Comments · {comments.length}
       </p>
 
       {isAuthenticated ? (
-        <div className="flex gap-2.5 mb-4">
-          <div className="w-7 h-7 rounded-full bg-[#2a2a2a] shrink-0" />
+        <div className="flex gap-2.5 mb-5">
+          <Avatar />
           <div className="flex-1">
             <MentionableTextarea
               value={draft}
@@ -202,21 +253,38 @@ export function SparkEntryCommentsPanel({
               placeholder="Add a comment…"
               rows={2}
               maxLength={1000}
-              className="w-full bg-[#1e1e1e] border border-[#2a2a2a] rounded-md px-2.5 py-1.5 text-[#aaa] text-[12px] resize-none focus:outline-none focus:border-[#3a3a3a]"
+              className="w-full px-3 py-2 text-[13px] resize-none outline-none focus:ring-2 focus:ring-[oklch(from_var(--brand)_l_c_h_/_0.35)]"
+              style={{ ...inputStyle, borderRadius: 'var(--r-row)' }}
             />
-            {error && <p className="text-red-400 text-[11px] mt-1">{error}</p>}
+            {error && (
+              <p
+                className="text-[11px] mt-1"
+                style={{ color: 'var(--status-error)' }}
+              >
+                {error}
+              </p>
+            )}
             <button
+              type="button"
               onClick={submit}
               disabled={isPending || !draft.trim()}
-              className="mt-1.5 px-3 py-1 bg-[#FFC300] text-black text-[11px] font-semibold rounded disabled:opacity-40 cursor-pointer"
+              className="mt-2 inline-flex items-center justify-center h-8 px-4 rounded-[var(--r-pill)] text-[12px] font-semibold disabled:opacity-40 cursor-pointer"
+              style={{ background: 'var(--brand)', color: 'var(--brand-ink)' }}
             >
               Post
             </button>
           </div>
         </div>
       ) : (
-        <p className="text-[#555] text-[12px] mb-4">
-          <Link href={`/${locale}/sign-in`} className="text-[#FFC300] hover:underline">
+        <p
+          className="text-[13px] mb-5"
+          style={{ color: 'var(--canvas-dark-ink-muted)' }}
+        >
+          <Link
+            href={`/${locale}/sign-in`}
+            className="hover:underline"
+            style={{ color: 'var(--brand)' }}
+          >
             Sign in
           </Link>{' '}
           to leave a comment.
@@ -230,7 +298,13 @@ export function SparkEntryCommentsPanel({
           return (
             <div
               key={c.id}
-              className="border-b border-[#2a2a2a] pb-3 last:border-b-0 last:pb-0"
+              className="pb-4 last:pb-0"
+              style={{
+                borderBottom:
+                  topLevel.indexOf(c) < topLevel.length - 1
+                    ? '1px solid oklch(1 0 0 / 0.08)'
+                    : undefined,
+              }}
             >
               <CommentRow
                 comment={c}
@@ -244,7 +318,10 @@ export function SparkEntryCommentsPanel({
               />
 
               {replies.length > 0 && (
-                <div className="ml-8 border-l border-[#2a2a2a] pl-4 mt-3 space-y-3">
+                <div
+                  className="ml-9 pl-4 mt-3 space-y-3"
+                  style={{ borderLeft: '1px solid oklch(1 0 0 / 0.08)' }}
+                >
                   {replies.map((r) => (
                     <CommentRow key={r.id} comment={r} isReply={true} />
                   ))}
@@ -252,7 +329,7 @@ export function SparkEntryCommentsPanel({
               )}
 
               {isReplyOpen && isAuthenticated && (
-                <div className="ml-8 pl-4">
+                <div className="ml-9 pl-4">
                   <ReplyComposer
                     onSubmit={(content) => submitReply(c.id, content)}
                     onCancel={() => setReplyingTo(null)}
@@ -264,7 +341,10 @@ export function SparkEntryCommentsPanel({
           )
         })}
         {hasMore && (
-          <p className="text-[#555] text-[12px] text-center pt-1 cursor-pointer hover:text-[#888]">
+          <p
+            className="text-[12px] text-center pt-1 cursor-pointer transition-colors"
+            style={{ color: 'var(--canvas-dark-ink-muted)' }}
+          >
             Show more comments
           </p>
         )}

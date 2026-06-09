@@ -9,6 +9,7 @@ import { ClubMembersPanel } from '../_components/club-members-panel'
 import { ClubSchedulePanel } from '../_components/club-schedule-panel'
 import { ClubSettingsPanel } from '../_components/club-settings-panel'
 import { InviteClaimedToast } from '@/components/invite-claimed-toast'
+import { BackLinkBadge } from '@/components/community/back-link-badge'
 
 // Q3 IA reorder: About / Books / Discussions / Members / Schedule / Settings.
 const VALID_TABS = [
@@ -58,6 +59,7 @@ export default async function ClubDetailPage({
 
   return (
     <main className="cm-wrap w-5xl">
+      <BackLinkBadge href={`/${locale}/clubs`} label="clubs" />
       <InviteClaimedToast copy={`Welcome to ${club.name}!`} />
       <ClubHeader
         club={club}

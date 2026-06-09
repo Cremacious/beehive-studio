@@ -18,14 +18,14 @@ type Props = {
   defaultBookId?: string | null
 }
 
-const labelClass = 'text-[11px] font-mono uppercase tracking-[0.10em] font-semibold'
-const labelStyle = { color: 'var(--brand)' } as const
+const labelClass = 'text-[10px] font-mono uppercase tracking-[0.14em]'
+const labelStyle = { color: 'var(--canvas-dark-ink-muted)' } as const
 
 const recessedInputStyle: React.CSSProperties = {
-  background: 'var(--canvas-dark-100)',
+  background: '#1E1E1E',
   boxShadow: 'var(--sh-inset)',
   borderRadius: 'var(--r-row)',
-  color: 'var(--canvas-dark-ink-strong)',
+  color: 'var(--canvas-dark-ink)',
 }
 
 export function CreateHiveModal({
@@ -87,8 +87,8 @@ export function CreateHiveModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md p-0 overflow-hidden">
-        <div className="p-5">
+      <DialogContent className="sm:max-w-[560px] p-0 overflow-hidden dialog-ios">
+        <div className="p-7">
           {step === 'pick' && (
             <PathPicker
               onPick={(p) => {
@@ -336,7 +336,7 @@ function DetailsForm({
           value={form.name}
           onChange={(e) => setForm({ ...form, name: e.target.value })}
           placeholder="Give your hive a name"
-          className="w-full px-3 py-2 text-sm outline-none placeholder:italic"
+          className="w-full px-3 py-2 text-sm outline-none placeholder:italic focus:ring-2 focus:ring-[oklch(from_var(--brand)_l_c_h_/_0.35)]"
           style={recessedInputStyle}
         />
       </div>
@@ -349,11 +349,8 @@ function DetailsForm({
           value={form.description}
           onChange={(e) => setForm({ ...form, description: e.target.value })}
           placeholder="Optional — what's the hive about?"
-          className="w-full px-3 py-2 text-sm outline-none resize-none placeholder:italic"
-          style={{
-            ...recessedInputStyle,
-            background: 'oklch(0.245 0.003 256)',
-          }}
+          className="w-full px-3 py-2 text-sm outline-none resize-none placeholder:italic focus:ring-2 focus:ring-[oklch(from_var(--brand)_l_c_h_/_0.35)]"
+          style={recessedInputStyle}
         />
       </div>
 
@@ -484,15 +481,14 @@ function DetailsForm({
         <button
           type="submit"
           disabled={pending || (path === 'link' && !bookId)}
-          className="px-4 py-2 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="inline-flex items-center justify-center h-9 px-5 rounded-[var(--r-pill)] text-[13px] font-semibold transition-opacity hover:opacity-90 disabled:opacity-40"
           style={{
             background: 'var(--brand)',
             color: 'var(--brand-ink)',
-            borderRadius: 'var(--r-btn)',
             fontFamily: 'var(--font-display)',
           }}
         >
-          {pending ? 'Creating…' : 'Create hive'}
+          {pending ? 'Creating…' : 'Create Hive'}
         </button>
       </div>
     </form>

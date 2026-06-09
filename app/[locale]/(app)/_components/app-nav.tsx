@@ -41,7 +41,7 @@ export function AppNav({ locale, user, username }: AppNavProps) {
         height: '56px',
       }}
     >
-      <div className="max-w-[1280px] mx-auto px-6 h-full flex items-center justify-between relative">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 h-full flex items-center justify-between gap-3 relative">
         {/* LEFT — brand mark + crumb */}
         <Link href={`/${locale}/studio`} className="flex items-center gap-2.5 shrink-0 no-underline">
           <span
@@ -59,12 +59,12 @@ export function AppNav({ locale, user, username }: AppNavProps) {
             </svg>
           </span>
           <div className="flex items-baseline gap-2.5" style={{ fontFamily: 'var(--font-display)', fontWeight: 700, letterSpacing: '-0.01em' }}>
-            <span className="text-[15px]" style={{ color: 'var(--canvas-dark-ink-strong)' }}>Beehive Studio</span>
+            <span className="text-[15px] hidden sm:inline" style={{ color: 'var(--canvas-dark-ink-strong)' }}>Beehive Studio</span>
           </div>
         </Link>
 
-        {/* CENTER — nav (absolutely positioned) */}
-        <nav className="absolute left-1/2 -translate-x-1/2 flex gap-1">
+        {/* CENTER — nav (absolutely positioned on desktop, inline-flex on mobile) */}
+        <nav className="sm:absolute sm:left-1/2 sm:-translate-x-1/2 flex gap-1">
           {[
             { label: 'Studio', href: `/${locale}/studio`, active: studioActive },
             { label: 'Community', href: `/${locale}/community`, active: communityActive },
@@ -73,7 +73,7 @@ export function AppNav({ locale, user, username }: AppNavProps) {
             <Link
               key={item.label}
               href={item.href}
-              className="px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-colors no-underline"
+              className="px-2.5 sm:px-3.5 py-1.5 rounded-full text-[12px] sm:text-[13px] font-medium transition-colors no-underline whitespace-nowrap"
               style={
                 item.active
                   ? { color: 'var(--brand)' }

@@ -41,13 +41,14 @@ export function HivePageShell({
   return (
     <div className={`mx-auto w-full ${WIDTH_CLASS[width]} p-6 flex flex-col min-h-screen`}>
       {back && (
-        <Link
-          href={back.href}
-          className="mb-4 inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-[var(--canvas-dark-ink-muted)] hover:text-[var(--canvas-dark-ink-strong)] transition-colors"
-        >
-          <ArrowLeft className="h-3 w-3" />
-          Back to {back.label}
-        </Link>
+        <div className="page-head" style={{ marginBottom: 18 }}>
+          <Link href={back.href} className="back">
+            <span className="icn">
+              <ArrowLeft />
+            </span>
+            <span>Back to {back.label}</span>
+          </Link>
+        </div>
       )}
 
       <section

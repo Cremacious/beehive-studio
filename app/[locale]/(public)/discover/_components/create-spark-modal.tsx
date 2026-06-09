@@ -1,8 +1,19 @@
 'use client'
 import { useState, useEffect, useTransition } from 'react'
+import { Plus } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
 import { createSparkAction } from '@/lib/actions/sparks.actions'
 import { useRouter } from 'next/navigation'
-import { VisibilityPicker, PUBLIC_FRIENDS_PRIVATE_OPTIONS } from '@/components/visibility-picker'
+import {
+  VisibilityPicker,
+  PUBLIC_FRIENDS_PRIVATE_OPTIONS,
+} from '@/components/visibility-picker'
 import type { SparkVisibility } from '@/db/schema/social'
 
 export function CreateSparkModal({ locale }: { locale: string }) {
@@ -16,6 +27,19 @@ export function CreateSparkModal({ locale }: { locale: string }) {
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
+
+  // Reset form when closed.
+  useEffect(() => {
+    if (!open) {
+      setPrompt('')
+      setDeadline('')
+      setWordLimit('')
+      setVisibility('PUBLIC')
+      setDiscoverable(true)
+      setVotingDurationHours(48)
+      setError(null)
+    }
+  }, [open])
 
   // Force-clear discoverable when visibility leaves PUBLIC (3-layer defense)
   useEffect(() => {
@@ -37,111 +61,211 @@ export function CreateSparkModal({ locale }: { locale: string }) {
         setOpen(false)
         router.push(`/${locale}/sparks/${result.data.sparkId}`)
       } else {
-        setError(result.error === 'FREE_LIMIT_REACHED'
-          ? 'You already have an active Spark. Upgrade to premium for unlimited Sparks.'
-          : 'Failed to create Spark. Check your inputs and try again.')
+        setError(
+          result.error === 'FREE_LIMIT_REACHED'
+            ? 'You already have an active Spark. Upgrade to premium for unlimited Sparks.'
+            : 'Failed to create Spark. Check your inputs and try again.',
+        )
       }
     })
   }
 
+  const inputStyle = {
+    background: '#1E1E1E',
+    boxShadow: 'var(--sh-inset)',
+    color: 'var(--canvas-dark-ink)',
+  } as const
+
+  const labelClass = 'text-[10px] font-mono uppercase tracking-[0.14em]'
+  const labelStyle = { color: 'var(--canvas-dark-ink-muted)' } as const
+
   return (
     <>
       <button
+        type="button"
         onClick={() => setOpen(true)}
-        className="px-3 py-1.5 bg-[#FFC300] text-black font-bold text-[12px] rounded-md cursor-pointer"
+        className="inline-flex items-center justify-center gap-2 whitespace-nowrap h-9 px-6 rounded-[var(--r-pill)] text-[13px] font-semibold cursor-pointer"
+        style={{ background: 'var(--brand)', color: 'var(--brand-ink)' }}
       >
-        + Create Spark
+        <Plus size={15} />
+        <span>New Spark</span>
       </button>
 
-      {open && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={e => { if (e.target === e.currentTarget) setOpen(false) }}>
-          <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <h2 className="text-white text-[18px] font-semibold mb-4">New Spark</h2>
-            <div className="flex flex-col gap-3">
-              <div>
-                <label className="text-[#666] text-[11px] uppercase tracking-wide block mb-1">Prompt *</label>
-                <textarea
-                  value={prompt}
-                  onChange={e => setPrompt(e.target.value)}
-                  placeholder="Write a prompt that sparks creativity…"
-                  rows={3}
-                  className="w-full bg-[#141414] border border-[#2a2a2a] rounded-md px-3 py-2 text-[#ccc] text-[13px] resize-none focus:outline-none focus:border-[#3a3a3a]"
-                />
-              </div>
-              <div>
-                <label className="text-[#666] text-[11px] uppercase tracking-wide block mb-1">Deadline *</label>
-                <input
-                  type="datetime-local"
-                  value={deadline}
-                  onChange={e => setDeadline(e.target.value)}
-                  className="w-full bg-[#141414] border border-[#2a2a2a] rounded-md px-3 py-2 text-[#ccc] text-[13px] focus:outline-none focus:border-[#3a3a3a]"
-                />
-              </div>
-              <div>
-                <label className="text-[#666] text-[11px] uppercase tracking-wide block mb-1">Word limit (optional)</label>
-                <input
-                  type="number"
-                  value={wordLimit}
-                  onChange={e => setWordLimit(e.target.value)}
-                  placeholder="Leave blank for no limit"
-                  className="w-full bg-[#141414] border border-[#2a2a2a] rounded-md px-3 py-2 text-[#ccc] text-[13px] focus:outline-none focus:border-[#3a3a3a]"
-                />
-              </div>
-              <div>
-                <label className="text-[11px] font-mono uppercase tracking-wider mb-2 block text-[var(--canvas-dark-ink-muted)]">
-                  Visibility
-                </label>
-                <VisibilityPicker value={visibility} onChange={setVisibility} options={PUBLIC_FRIENDS_PRIVATE_OPTIONS} />
-              </div>
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={discoverable}
-                  disabled={visibility !== 'PUBLIC'}
-                  onChange={(e) => setDiscoverable(e.target.checked)}
-                  className="rounded"
-                />
-                <span>Show in Discover</span>
-                {visibility !== 'PUBLIC' && (
-                  <span className="text-xs text-[var(--canvas-dark-ink-muted)]">(only PUBLIC sparks can be discoverable)</span>
-                )}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-[560px] p-7 gap-6 dialog-ios">
+          <DialogHeader>
+            <DialogTitle
+              className="font-display"
+              style={{
+                fontSize: '20px',
+                fontWeight: 700,
+                letterSpacing: '-0.01em',
+                color: 'var(--canvas-dark-ink-strong)',
+              }}
+            >
+              New Spark
+            </DialogTitle>
+            <p
+              className="text-[13px] mt-1"
+              style={{ color: 'var(--canvas-dark-ink-muted)' }}
+            >
+              A quick prompt with a real deadline. You can change these later.
+            </p>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-5 max-h-[62vh] overflow-y-auto pr-1 -mr-1">
+            <div className="flex flex-col gap-2">
+              <label htmlFor="sk-prompt" className={labelClass} style={labelStyle}>
+                Prompt <span style={{ color: 'var(--brand)' }}>*</span>
               </label>
-              <div>
-                <label className="text-[11px] font-mono uppercase tracking-wider mb-2 block text-[var(--canvas-dark-ink-muted)]">
-                  Voting window
-                </label>
-                <div className="grid grid-cols-4 gap-2">
-                  {[24, 48, 72, 168].map((h) => (
+              <textarea
+                id="sk-prompt"
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="Write a prompt that sparks creativity…"
+                rows={3}
+                className="w-full px-3.5 py-2.5 rounded-[var(--r-row)] text-[14px] resize-none outline-none focus:ring-2 focus:ring-[oklch(from_var(--brand)_l_c_h_/_0.35)]"
+                style={inputStyle}
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label htmlFor="sk-deadline" className={labelClass} style={labelStyle}>
+                Deadline <span style={{ color: 'var(--brand)' }}>*</span>
+              </label>
+              <input
+                id="sk-deadline"
+                type="datetime-local"
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
+                className="w-full h-10 px-3.5 rounded-[var(--r-row)] text-[14px] outline-none focus:ring-2 focus:ring-[oklch(from_var(--brand)_l_c_h_/_0.35)]"
+                style={inputStyle}
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label htmlFor="sk-wlimit" className={labelClass} style={labelStyle}>
+                Word limit
+                <span
+                  className="ml-2 normal-case tracking-normal"
+                  style={{ color: 'var(--canvas-dark-ink-faint)' }}
+                >
+                  optional
+                </span>
+              </label>
+              <input
+                id="sk-wlimit"
+                type="number"
+                value={wordLimit}
+                onChange={(e) => setWordLimit(e.target.value)}
+                placeholder="Leave blank for no limit"
+                className="w-full h-10 px-3.5 rounded-[var(--r-row)] text-[14px] outline-none focus:ring-2 focus:ring-[oklch(from_var(--brand)_l_c_h_/_0.35)]"
+                style={inputStyle}
+              />
+            </div>
+
+            <div className="flex flex-col gap-2.5">
+              <label className={labelClass} style={labelStyle}>
+                Visibility
+              </label>
+              <VisibilityPicker
+                value={visibility}
+                onChange={setVisibility}
+                options={PUBLIC_FRIENDS_PRIVATE_OPTIONS}
+              />
+            </div>
+
+            <label
+              className="flex items-center gap-2.5 text-[13px] py-2 px-3 rounded-[var(--r-row)] cursor-pointer select-none"
+              style={{
+                background: 'oklch(1 0 0 / 0.025)',
+                border: 'var(--br-card)',
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={discoverable}
+                disabled={visibility !== 'PUBLIC'}
+                onChange={(e) => setDiscoverable(e.target.checked)}
+                className="h-4 w-4 accent-[var(--brand)] disabled:opacity-40"
+              />
+              <span style={{ color: 'var(--canvas-dark-ink)' }}>
+                Show in Discover
+              </span>
+              {visibility !== 'PUBLIC' && (
+                <span
+                  className="text-[11px] ml-auto"
+                  style={{ color: 'var(--canvas-dark-ink-faint)' }}
+                >
+                  public sparks only
+                </span>
+              )}
+            </label>
+
+            <div className="flex flex-col gap-2">
+              <label className={labelClass} style={labelStyle}>
+                Voting window
+              </label>
+              <div className="grid grid-cols-4 gap-2">
+                {[24, 48, 72, 168].map((h) => {
+                  const isActive = votingDurationHours === h
+                  return (
                     <button
                       key={h}
                       type="button"
                       onClick={() => setVotingDurationHours(h as 24 | 48 | 72 | 168)}
-                      className={`text-sm py-2 rounded-[var(--r-row)] border transition-colors ${
-                        votingDurationHours === h
-                          ? 'border-[var(--brand)] bg-[color-mix(in_oklch,var(--brand)_8%,transparent)]'
-                          : 'border-[var(--br-card)] hover:border-[var(--canvas-dark-ink-muted)]'
-                      }`}
+                      className="text-[13px] font-semibold h-10 rounded-[var(--r-row)] transition-colors"
+                      style={{
+                        background: isActive
+                          ? 'oklch(from var(--brand) l c h / 0.16)'
+                          : '#1E1E1E',
+                        color: isActive
+                          ? 'var(--brand)'
+                          : 'var(--canvas-dark-ink-muted)',
+                        border: isActive
+                          ? '1px solid oklch(from var(--brand) l c h / 0.35)'
+                          : '1px solid transparent',
+                        boxShadow: isActive ? undefined : 'var(--sh-inset)',
+                      }}
                     >
                       {h === 168 ? '1 week' : `${h}h`}
                     </button>
-                  ))}
-                </div>
-              </div>
-              {error && <p className="text-red-400 text-[12px]">{error}</p>}
-              <div className="flex justify-end gap-2 pt-2">
-                <button onClick={() => setOpen(false)} className="px-4 py-2 text-[#888] text-[13px] cursor-pointer hover:text-white transition-colors">Cancel</button>
-                <button
-                  onClick={submit}
-                  disabled={isPending || !prompt.trim() || !deadline}
-                  className="px-5 py-2 bg-[#FFC300] text-black font-bold text-[13px] rounded-md disabled:opacity-40 cursor-pointer"
-                >
-                  {isPending ? 'Creating…' : 'Create Spark'}
-                </button>
+                  )
+                })}
               </div>
             </div>
+
+            {error && (
+              <p
+                className="text-[12px]"
+                style={{ color: 'var(--status-error)' }}
+              >
+                {error}
+              </p>
+            )}
           </div>
-        </div>
-      )}
+
+          <DialogFooter className="dialog-ios-footer">
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="h-9 px-4 rounded-[var(--r-pill)] text-[13px] font-medium transition-colors"
+              style={{ color: 'var(--canvas-dark-ink-muted)' }}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={submit}
+              disabled={isPending || !prompt.trim() || !deadline}
+              className="h-9 px-5 rounded-[var(--r-pill)] text-[13px] font-semibold disabled:opacity-40"
+              style={{ background: 'var(--brand)', color: 'var(--brand-ink)' }}
+            >
+              {isPending ? 'Creating…' : 'Create Spark'}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

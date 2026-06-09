@@ -18,7 +18,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
       {error?.digest && (
         <p className="text-[10px] text-white/30">digest: {error.digest}</p>
       )}
-      <button onClick={reset} className="text-[#FFC300] hover:underline text-sm">
+      <button onClick={reset} className="text-[var(--brand)] hover:underline text-sm">
         Try again
       </button>
     </div>

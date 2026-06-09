@@ -895,6 +895,15 @@ body {
 /* Legacy `.book-cover-default` removed — BookCard V2 inlines the honeycomb
    styling under `.bcv-cover` (see below). */
 
+/* LEGAL PAGE BODY (cookies / privacy / terms / dmca shared chrome).
+   Scoped styles so strong / a / ul inside .legal-body all read correctly. */
+.legal-body strong { color: var(--canvas-dark-ink-strong); font-weight: 600; }
+.legal-body a { color: var(--brand); text-underline-offset: 4px; }
+.legal-body a:hover { text-decoration: underline; }
+.legal-body ul { list-style: disc; padding-left: 22px; margin: 8px 0; }
+.legal-body ul li { margin-bottom: 4px; }
+.legal-body p + p { margin-top: 8px; }
+
 /* BOOK LIBRARY GRID — 4-col cap on desktop with smaller scale.
    Mobile: 2 cols / Tablet: 3 cols / Desktop: 4 cols capped at 880px width
    so cards stay ~200px wide instead of stretching with the canvas. */

@@ -17,17 +17,18 @@ export function SparkVoteButton({ entryId, initialVoted, initialCount, status, i
   const [count, setCount] = useState(initialCount)
   const [isPending, startTransition] = useTransition()
 
+  const muted = 'text-[11px] text-[var(--canvas-dark-ink-muted)]'
   if (status === 'OPEN') {
-    return <span className="text-[#555] text-[11px]">▲ voting opens after deadline</span>
+    return <span className={muted}>▲ voting opens after deadline</span>
   }
   if (status === 'CLOSED') {
-    return <span className="text-[#555] text-[11px]">▲ {count} votes</span>
+    return <span className={muted}>▲ {count} votes</span>
   }
   if (!isAuthenticated) {
-    return <span className="text-[#555] text-[11px] cursor-not-allowed">Sign in to vote</span>
+    return <span className={`${muted} cursor-not-allowed`}>Sign in to vote</span>
   }
   if (isOwnEntry) {
-    return <span className="text-[#555] text-[11px]">▲ {count} votes (your entry)</span>
+    return <span className={muted}>▲ {count} votes (your entry)</span>
   }
 
   const handleVote = () => {
@@ -44,8 +45,10 @@ export function SparkVoteButton({ entryId, initialVoted, initialCount, status, i
     <button
       onClick={handleVote}
       disabled={isPending}
-      className={`text-[11px] px-3 py-1 rounded transition-colors cursor-pointer ${
-        voted ? 'bg-[#FFC300] text-black font-semibold' : 'bg-[#2a2a2a] text-[#888] hover:text-white'
+      className={`inline-flex items-center gap-1.5 text-[12px] font-semibold h-7 px-3 rounded-[var(--r-pill)] transition-colors cursor-pointer disabled:opacity-50 ${
+        voted
+          ? 'bg-[var(--brand)] text-[var(--brand-ink)]'
+          : 'bg-[var(--canvas-dark-300)] text-[var(--canvas-dark-ink-muted)] hover:text-[var(--canvas-dark-ink-strong)]'
       }`}
     >
       ▲ {count} {voted ? 'Voted' : 'Vote'}

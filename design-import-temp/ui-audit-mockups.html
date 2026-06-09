@@ -1,0 +1,824 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>UI Audit — Before / After mockups</title>
+<style>
+  :root {
+    --canvas-dark-100: #262728;
+    --canvas-dark-150: oklch(0.215 0.003 256);
+    --canvas-dark-200: oklch(0.255 0.003 256);
+    --canvas-dark-250: oklch(0.290 0.003 256);
+    --canvas-dark-300: oklch(0.330 0.003 256);
+    --canvas-dark-350: oklch(0.360 0.003 256);
+    --canvas-dark-400: oklch(0.405 0.003 256);
+    --canvas-dark-ink-faint:  oklch(0.750 0.003 256);
+    --canvas-dark-ink-muted:  oklch(0.850 0.003 256);
+    --canvas-dark-ink:        oklch(0.950 0.003 256);
+    --canvas-dark-ink-strong: oklch(1.000 0.000 0);
+    --brand: oklch(0.85 0.18 90);
+    --brand-soft: oklch(0.85 0.18 90 / 0.18);
+    --brand-ink: oklch(0.20 0.03 80);
+    --status-draft: oklch(0.78 0.14 80);
+    --status-revised: oklch(0.72 0.16 215);
+    --status-final: oklch(0.7 0.16 145);
+    --r-card: 20px;
+    --r-row: 14px;
+    --r-btn: 12px;
+    --r-pill: 999px;
+    --sh-card: 0 1px 0 rgba(255,255,255,0.04) inset, 0 12px 32px -8px rgba(0,0,0,0.5);
+    --sh-tile: 0 1px 0 rgba(255,255,255,0.04) inset, 0 1px 4px rgba(0,0,0,0.18);
+    --sh-inset: inset 0 1px 3px rgba(0,0,0,0.5);
+    --br-card: 0.5px solid oklch(1 0 0 / 0.06);
+    --font-display: 'Comfortaa', system-ui, sans-serif;
+    --font-mono: ui-monospace, 'JetBrains Mono', monospace;
+    --font-ui: 'Comfortaa', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 32px;
+    background: var(--canvas-dark-100);
+    color: var(--canvas-dark-ink);
+    font-family: var(--font-ui);
+  }
+  h1 {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: 30px; margin: 0 0 8px;
+    color: var(--canvas-dark-ink-strong);
+  }
+  .lede {
+    color: var(--canvas-dark-ink-muted); font-size: 14px;
+    max-width: 65ch; margin: 0 0 40px;
+  }
+  .issue {
+    margin-bottom: 56px;
+    padding-bottom: 40px;
+    border-bottom: 1px solid oklch(1 0 0 / 0.08);
+  }
+  .issue:last-child { border-bottom: 0; }
+  .issue-head {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 8px;
+  }
+  .issue-num {
+    font-family: var(--font-mono); font-weight: 700;
+    font-size: 11px; letter-spacing: 0.12em;
+    padding: 4px 8px; border-radius: var(--r-pill);
+    color: var(--brand-ink); background: var(--brand);
+  }
+  .sev {
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: var(--r-pill);
+  }
+  .sev.p0 { background: oklch(0.66 0.18 25 / 0.18); color: oklch(0.78 0.18 25); }
+  .sev.p1 { background: oklch(0.80 0.14 80 / 0.18); color: oklch(0.85 0.14 80); }
+  .sev.p2 { background: oklch(0.72 0.13 152 / 0.18); color: oklch(0.78 0.13 152); }
+  .issue h2 {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: 18px; margin: 0;
+    color: var(--canvas-dark-ink-strong);
+  }
+  .issue p.desc {
+    color: var(--canvas-dark-ink-muted); font-size: 13px;
+    line-height: 1.55; margin: 0 0 18px; max-width: 80ch;
+  }
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  .col h3 {
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    margin: 0 0 10px; color: var(--canvas-dark-ink-faint);
+  }
+  .col.before h3::before { content: 'BEFORE — '; color: oklch(0.66 0.18 25); }
+  .col.after h3::before { content: 'AFTER — '; color: oklch(0.72 0.13 152); }
+  .swatch {
+    padding: 24px;
+    border-radius: var(--r-card);
+    background: var(--canvas-dark-100);
+    min-height: 140px;
+  }
+  .swatch.elevated {
+    background: linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200));
+    box-shadow: var(--sh-card);
+    border-top: var(--br-card);
+  }
+  code.tok {
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--brand); background: oklch(1 0 0 / 0.04);
+    padding: 2px 6px; border-radius: 4px;
+  }
+
+  /* ─────────────────────────────────────────────────────
+     ISSUE 1 — Discover BookCard
+     ───────────────────────────────────────────────────── */
+  .ds-card-before {
+    background: #1a1a1a; border: 1px solid #2a2a2a;
+    border-radius: 6px; overflow: hidden;
+    width: 220px;
+  }
+  .ds-card-before .cov { aspect-ratio: 2/3; background: linear-gradient(135deg, #2a2a2a, #1a1a1a); }
+  .ds-card-before .body { padding: 12px; }
+  .ds-card-before .genre { color: #666; font-size: 11px; margin-bottom: 4px; }
+  .ds-card-before .title { color: white; font-weight: 700; font-size: 14px; margin: 0 0 4px; }
+  .ds-card-before .author { color: #777; font-size: 12px; margin: 0 0 8px; }
+  .ds-card-before .stats { color: #555; font-size: 11px; }
+
+  .ds-card-after {
+    background: linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200));
+    border-top: var(--br-card); border-radius: var(--r-card);
+    box-shadow: var(--sh-card); overflow: hidden;
+    width: 220px;
+  }
+  .ds-card-after .cov { aspect-ratio: 2/3; background: linear-gradient(135deg, var(--canvas-dark-300), var(--canvas-dark-200)); }
+  .ds-card-after .body { padding: 14px 16px 16px; }
+  .ds-card-after .genre {
+    display: inline-block;
+    font-family: var(--font-mono); font-size: 9px;
+    text-transform: uppercase; letter-spacing: 0.10em;
+    padding: 3px 8px; border-radius: var(--r-pill);
+    background: oklch(1 0 0 / 0.06); color: var(--canvas-dark-ink-muted);
+    margin-bottom: 8px;
+  }
+  .ds-card-after .title { color: white; font-weight: 700; font-size: 14px; margin: 0 0 4px; font-family: var(--font-display); }
+  .ds-card-after .author { color: var(--canvas-dark-ink-muted); font-size: 12px; margin: 0 0 10px; }
+  .ds-card-after .stats {
+    color: var(--canvas-dark-ink-muted); font-size: 11px;
+    font-family: var(--font-mono);
+  }
+
+  /* ─────────────────────────────────────────────────────
+     ISSUE 2 — Book details form input
+     ───────────────────────────────────────────────────── */
+  .form-before {
+    background: #141414;
+    padding: 18px; border-radius: 12px;
+  }
+  .form-before label {
+    display: block; color: #888; font-size: 11px;
+    text-transform: uppercase; margin-bottom: 6px;
+  }
+  .form-before input {
+    width: 100%; background: #1c1c1c; border: 1px solid #2a2a2a;
+    color: white; padding: 10px 12px; border-radius: 8px;
+    font-size: 14px; outline: none;
+  }
+  .form-before .save {
+    background: var(--brand); color: #0a0a0a;
+    padding: 8px 18px; border-radius: 999px;
+    font-weight: 700; font-size: 13px; margin-top: 12px;
+    border: 0; cursor: pointer;
+  }
+
+  .form-after {
+    padding: 20px; border-radius: var(--r-card);
+    background: linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200));
+    box-shadow: var(--sh-card); border-top: var(--br-card);
+  }
+  .form-after label {
+    display: block; font-family: var(--font-mono);
+    font-size: 10px; letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--canvas-dark-ink-muted);
+    margin-bottom: 8px;
+  }
+  .form-after input {
+    width: 100%; background: #1E1E1E;
+    color: var(--canvas-dark-ink);
+    padding: 10px 14px; border-radius: var(--r-row);
+    font-size: 14px; outline: none; border: 0;
+    box-shadow: var(--sh-inset);
+  }
+  .form-after .save {
+    background: var(--brand); color: var(--brand-ink);
+    padding: 0 22px; height: 36px; border-radius: var(--r-pill);
+    font-weight: 700; font-size: 13px; margin-top: 14px;
+    border: 0; cursor: pointer;
+  }
+
+  /* ─────────────────────────────────────────────────────
+     ISSUE 3 — Legal page wrapper
+     ───────────────────────────────────────────────────── */
+  .legal-before {
+    background: #141414;
+    padding: 32px; border-radius: 8px;
+    color: white;
+  }
+  .legal-before h2 { margin: 0 0 12px; font-size: 22px; }
+  .legal-before p { color: #aaa; font-size: 13px; line-height: 1.6; margin: 0; }
+
+  .legal-after {
+    background: var(--canvas-dark-100);
+    padding: 40px; border-radius: var(--r-card);
+    color: var(--canvas-dark-ink);
+  }
+  .legal-after h2 {
+    margin: 0 0 14px; font-size: 24px;
+    color: var(--canvas-dark-ink-strong);
+    font-family: var(--font-display); font-weight: 700;
+  }
+  .legal-after p {
+    color: var(--canvas-dark-ink-muted);
+    font-size: 14px; line-height: 1.65; margin: 0;
+  }
+  .legal-after p + p { margin-top: 14px; }
+
+  /* ─────────────────────────────────────────────────────
+     ISSUE 4 — CreateSparkModal iOS refresh
+     ───────────────────────────────────────────────────── */
+  .modal-shell {
+    background: linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200));
+    border-radius: var(--r-card);
+    box-shadow: var(--sh-card); border-top: var(--br-card);
+    max-width: 360px;
+  }
+  .modal-before {
+    background: #1a1a1a; border: 1px solid #2a2a2a;
+    border-radius: 8px; padding: 24px;
+    max-width: 360px;
+  }
+  .modal-before h2 { color: white; margin: 0 0 12px; font-size: 16px; }
+  .modal-before label { color: #666; font-size: 11px; text-transform: uppercase; display: block; margin-bottom: 4px; }
+  .modal-before textarea {
+    width: 100%; background: #141414; border: 1px solid #2a2a2a;
+    color: #ccc; padding: 8px; border-radius: 6px;
+    font-size: 13px; margin-bottom: 12px; min-height: 70px;
+    outline: none;
+  }
+  .modal-before button {
+    background: var(--brand); color: #000;
+    padding: 8px 16px; border: 0; border-radius: 6px;
+    font-weight: 700; font-size: 13px; cursor: pointer;
+  }
+
+  .modal-after { padding: 24px; }
+  .modal-after h2 {
+    color: var(--canvas-dark-ink-strong);
+    font-family: var(--font-display);
+    font-size: 18px; font-weight: 700;
+    margin: 0 0 6px;
+  }
+  .modal-after .sub {
+    color: var(--canvas-dark-ink-muted);
+    font-size: 13px; margin: 0 0 18px;
+  }
+  .modal-after label {
+    color: var(--canvas-dark-ink-muted);
+    font-family: var(--font-mono);
+    font-size: 10px; text-transform: uppercase;
+    letter-spacing: 0.14em;
+    display: block; margin-bottom: 8px;
+  }
+  .modal-after label .req { color: var(--brand); margin-left: 2px; }
+  .modal-after textarea {
+    width: 100%; background: #1E1E1E;
+    color: var(--canvas-dark-ink);
+    padding: 10px 14px; border-radius: var(--r-row);
+    font-size: 14px; min-height: 70px;
+    outline: none; border: 0;
+    box-shadow: var(--sh-inset);
+    margin-bottom: 16px;
+  }
+  .modal-after .footer { display: flex; justify-content: flex-end; gap: 8px; }
+  .modal-after .btn-cancel {
+    background: transparent; color: var(--canvas-dark-ink-muted);
+    padding: 0 14px; height: 36px; border-radius: var(--r-pill);
+    border: 0; font-size: 13px; font-weight: 500; cursor: pointer;
+  }
+  .modal-after .btn-submit {
+    background: var(--brand); color: var(--brand-ink);
+    padding: 0 18px; height: 36px; border-radius: var(--r-pill);
+    border: 0; font-size: 13px; font-weight: 700; cursor: pointer;
+  }
+
+  /* ─────────────────────────────────────────────────────
+     ISSUE 5 — PageHead back-link on detail pages
+     ───────────────────────────────────────────────────── */
+  .head-before, .head-after {
+    padding: 20px; border-radius: var(--r-card);
+  }
+  .head-before h1, .head-after h1 {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: 26px; color: var(--canvas-dark-ink-strong);
+    margin: 0 0 6px;
+  }
+  .head-before p, .head-after p {
+    color: var(--canvas-dark-ink-muted); font-size: 13px;
+    margin: 0;
+  }
+  .head-after .back {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300));
+    border-radius: var(--r-btn);
+    border-top: var(--br-card); box-shadow: var(--sh-tile);
+    padding: 6px 10px 6px 6px;
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: rgb(255 255 255 / 0.9);
+    margin-bottom: 14px; text-decoration: none;
+  }
+  .head-after .back .icn {
+    width: 22px; height: 22px; border-radius: 6px;
+    background: linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200));
+    color: var(--brand);
+    display: inline-flex; align-items: center; justify-content: center;
+    box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.05);
+  }
+
+  /* ─────────────────────────────────────────────────────
+     ISSUE 6 — Empty state pattern drift
+     ───────────────────────────────────────────────────── */
+  .es-card {
+    padding: 32px 20px; border-radius: var(--r-card);
+    background: linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200));
+    box-shadow: var(--sh-card); border-top: var(--br-card);
+    text-align: center;
+  }
+  .es-card .glyph {
+    width: 56px; height: 56px; border-radius: 16px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200));
+    color: var(--brand); margin-bottom: 16px;
+    box-shadow: var(--sh-card);
+  }
+  .es-card h3 {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: 17px; margin: 0 0 8px;
+    color: var(--canvas-dark-ink-strong);
+  }
+  .es-card p {
+    color: var(--canvas-dark-ink-muted); font-size: 13px;
+    line-height: 1.5; margin: 0 0 16px; max-width: 42ch;
+    margin-left: auto; margin-right: auto;
+  }
+  .es-card .btn {
+    background: var(--brand); color: var(--brand-ink);
+    padding: 0 18px; height: 36px; border-radius: var(--r-pill);
+    border: 0; font-size: 13px; font-weight: 700;
+    display: inline-flex; align-items: center; cursor: pointer;
+  }
+
+  /* ─────────────────────────────────────────────────────
+     ISSUE 7 — Section-head pattern
+     ───────────────────────────────────────────────────── */
+  .sh-current-a, .sh-current-b, .sh-current-c {
+    padding: 14px 0 8px;
+    border-bottom: 1px solid oklch(1 0 0 / 0.10);
+    margin-bottom: 12px;
+  }
+  .sh-current-a h3, .sh-current-b h3, .sh-current-c h3 { margin: 0; }
+  .sh-current-a h3 {
+    color: var(--brand); font-family: var(--font-display);
+    font-size: 18px; font-weight: 700;
+  }
+  .sh-current-b { display: flex; align-items: baseline; gap: 12px; }
+  .sh-current-b h3 { color: var(--canvas-dark-ink-strong); font-size: 16px; }
+  .sh-current-b .ct { font-family: var(--font-mono); font-size: 11px; color: var(--canvas-dark-ink-muted); }
+  .sh-current-c {
+    background: var(--canvas-dark-200);
+    padding: 12px 16px; border-radius: 8px;
+  }
+  .sh-current-c h3 { font-size: 14px; color: white; }
+
+  .sh-unified {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 4px 10px;
+    margin-bottom: 10px;
+    border-bottom: var(--br-card);
+  }
+  .sh-unified .ico {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 8px;
+    background: linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200));
+    color: var(--brand);
+    box-shadow: var(--sh-tile);
+  }
+  .sh-unified h3 {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: 15px; color: var(--canvas-dark-ink-strong);
+    margin: 0;
+  }
+  .sh-unified .pill {
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.10em; text-transform: uppercase;
+    padding: 3px 9px; border-radius: var(--r-pill);
+    background: oklch(1 0 0 / 0.05); color: var(--canvas-dark-ink-muted);
+  }
+
+  /* ─────────────────────────────────────────────────────
+     ISSUE 8 — Card-grid layout cap
+     ───────────────────────────────────────────────────── */
+  .grid-demo {
+    display: grid; gap: 8px;
+    border: 1px dashed oklch(1 0 0 / 0.12);
+    padding: 8px; border-radius: 6px;
+  }
+  .grid-demo.unbounded { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); }
+  .grid-demo.capped { grid-template-columns: repeat(4, minmax(0, 1fr)); max-width: 340px; }
+  .grid-demo .card {
+    background: var(--canvas-dark-300);
+    aspect-ratio: 2/3; border-radius: 4px;
+  }
+  .grid-demo + .label { font-size: 10px; color: var(--canvas-dark-ink-faint); margin-top: 6px; font-family: var(--font-mono); }
+
+  /* ─────────────────────────────────────────────────────
+     Non-visual section
+     ───────────────────────────────────────────────────── */
+  .non-visual {
+    background: linear-gradient(180deg, var(--canvas-dark-200), var(--canvas-dark-150));
+    border-radius: var(--r-card); padding: 24px;
+    margin-top: 40px;
+  }
+  .non-visual h2 {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: 18px; margin: 0 0 4px;
+    color: var(--canvas-dark-ink-strong);
+  }
+  .non-visual ul { padding-left: 22px; margin: 12px 0 0; }
+  .non-visual li {
+    color: var(--canvas-dark-ink-muted); font-size: 13px;
+    margin-bottom: 8px; line-height: 1.5;
+  }
+  .non-visual li code {
+    font-family: var(--font-mono); font-size: 11px;
+    background: oklch(1 0 0 / 0.06);
+    padding: 1px 5px; border-radius: 3px;
+    color: var(--brand);
+  }
+</style>
+</head>
+<body>
+
+<h1>UI Audit — Before / After</h1>
+<p class="lede">
+  Visual mockups for the 8 most actionable findings. Open this file beside the
+  live app to compare. Non-visual findings (code hygiene, a11y) listed at the
+  bottom with one-line descriptions — no mockup adds value to those.
+</p>
+
+<!-- ════════════════════════════════════════════════════════════
+     ISSUE 1 — Discover bundle (P0)
+     ════════════════════════════════════════════════════════════ -->
+<div class="issue">
+  <div class="issue-head">
+    <span class="issue-num">01</span>
+    <span class="sev p0">P0</span>
+    <h2>/discover — entire feature uses pre-design-system hex colors</h2>
+  </div>
+  <p class="desc">
+    10 files in <code class="tok">/discover/_components/*</code> use hardcoded
+    grays (<code class="tok">#1a1a1a</code>, <code class="tok">#2a2a2a</code>,
+    <code class="tok">#666</code>, <code class="tok">#777</code>) and the literal
+    brand hex <code class="tok">#FFC300</code>. Doesn't pick up the ink-brightness
+    bump, modal iOS refresh, or future token edits. Single biggest visual debt.
+  </p>
+  <div class="compare">
+    <div class="col before">
+      <h3>Current</h3>
+      <div class="swatch">
+        <div class="ds-card-before">
+          <div class="cov"></div>
+          <div class="body">
+            <p class="genre">COZY FANTASY</p>
+            <p class="title">The Honeyed Path</p>
+            <p class="author">by Chris</p>
+            <p class="stats">12k words · 5 chapters</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col after">
+      <h3>Token-aligned</h3>
+      <div class="swatch">
+        <div class="ds-card-after">
+          <div class="cov"></div>
+          <div class="body">
+            <span class="genre">Cozy fantasy</span>
+            <p class="title">The Honeyed Path</p>
+            <p class="author">by Chris</p>
+            <p class="stats">12k words · 5 chapters</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     ISSUE 2 — Book details form input (P0)
+     ════════════════════════════════════════════════════════════ -->
+<div class="issue">
+  <div class="issue-head">
+    <span class="issue-num">02</span>
+    <span class="sev p0">P0</span>
+    <h2>book-details-form — 829 LOC of pre-DS input chrome</h2>
+  </div>
+  <p class="desc">
+    <code class="tok">bg-[#1c1c1c]</code>, <code class="tok">border-border</code>,
+    <code class="tok">text-[#0a0a0a]</code> brand-ink hardcode on the save button.
+    Most-used form in the app. Inputs should match the iOS modal recipe.
+  </p>
+  <div class="compare">
+    <div class="col before">
+      <h3>Current input + save</h3>
+      <div class="swatch">
+        <div class="form-before">
+          <label>Book title</label>
+          <input value="The Honeyed Path" />
+          <button class="save">Save Changes</button>
+        </div>
+      </div>
+    </div>
+    <div class="col after">
+      <h3>Token-aligned + iOS recipe</h3>
+      <div class="swatch">
+        <div class="form-after">
+          <label>Book Title</label>
+          <input value="The Honeyed Path" />
+          <button class="save">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     ISSUE 3 — Legal pages (P0)
+     ════════════════════════════════════════════════════════════ -->
+<div class="issue">
+  <div class="issue-head">
+    <span class="issue-num">03</span>
+    <span class="sev p0">P0</span>
+    <h2>Legal pages — cookies / privacy / terms / dmca on <code class="tok">#141414</code></h2>
+  </div>
+  <p class="desc">
+    4 pages render long-form text on hardcoded <code class="tok">bg-[#141414]</code>
+    (darker than the app's <code class="tok">--canvas-dark-100</code> page bg →
+    visually a different "plane"). Default text color is too dim post-brightness-bump.
+  </p>
+  <div class="compare">
+    <div class="col before">
+      <h3>Current</h3>
+      <div class="swatch">
+        <div class="legal-before">
+          <h2>Cookies policy</h2>
+          <p>We use cookies to remember your session and improve your reading experience…</p>
+        </div>
+      </div>
+    </div>
+    <div class="col after">
+      <h3>Token-aligned</h3>
+      <div class="swatch">
+        <div class="legal-after">
+          <h2>Cookies Policy</h2>
+          <p>We use cookies to remember your session and improve your reading experience.</p>
+          <p>You can opt out at any time via your browser settings.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     ISSUE 4 — CreateSparkModal (P0)
+     ════════════════════════════════════════════════════════════ -->
+<div class="issue">
+  <div class="issue-head">
+    <span class="issue-num">04</span>
+    <span class="sev p0">P0</span>
+    <h2>CreateSparkModal — needs the iOS modal recipe</h2>
+  </div>
+  <p class="desc">
+    Custom-built dialog with <code class="tok">bg-[#1a1a1a]</code> shell,
+    <code class="tok">border-[#2a2a2a]</code> hairlines, hardcoded brand color.
+    Same recipe already shipped to CreateListModal + CreateClubModal — just
+    needs the swap.
+  </p>
+  <div class="compare">
+    <div class="col before">
+      <h3>Current</h3>
+      <div class="swatch">
+        <div class="modal-before">
+          <h2>New Spark</h2>
+          <label>PROMPT *</label>
+          <textarea>Write a 150-word scene about a key that opens nothing.</textarea>
+          <button>Create</button>
+        </div>
+      </div>
+    </div>
+    <div class="col after">
+      <h3>iOS modal recipe</h3>
+      <div class="swatch">
+        <div class="modal-shell">
+          <div class="modal-after">
+            <h2>New Spark</h2>
+            <p class="sub">Quick prompts, real deadlines.</p>
+            <label>Prompt<span class="req">*</span></label>
+            <textarea>Write a 150-word scene about a key that opens nothing.</textarea>
+            <div class="footer">
+              <button class="btn-cancel">Cancel</button>
+              <button class="btn-submit">Create Spark</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     ISSUE 5 — Detail page back-links (P1)
+     ════════════════════════════════════════════════════════════ -->
+<div class="issue">
+  <div class="issue-head">
+    <span class="issue-num">05</span>
+    <span class="sev p1">P1</span>
+    <h2>Detail pages missing PageHead back-link</h2>
+  </div>
+  <p class="desc">
+    Wired so far: /friends, /sparks (index + detail), /reading-lists,
+    /clubs (index), /hives, /clubs/[id]/discussions/[id].
+    <strong>Missing:</strong> /clubs/[clubId], /reading-lists/[listId],
+    /u/[username], every /hive/[hiveId]/* subroute. Each needs the canonical
+    dark-iOS back badge.
+  </p>
+  <div class="compare">
+    <div class="col before">
+      <h3>Current — no back link</h3>
+      <div class="swatch elevated">
+        <div class="head-before">
+          <h1>The Honeyed Path</h1>
+          <p>by Chris · Cozy fantasy · 12,000 words</p>
+        </div>
+      </div>
+    </div>
+    <div class="col after">
+      <h3>With dark-iOS back badge</h3>
+      <div class="swatch elevated">
+        <div class="head-after">
+          <a class="back">
+            <span class="icn">←</span>
+            <span>Back to Reading Lists</span>
+          </a>
+          <h1>Cozy reads for rainy days</h1>
+          <p>2 books · 1 follower</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     ISSUE 6 — Empty state pattern drift (P1)
+     ════════════════════════════════════════════════════════════ -->
+<div class="issue">
+  <div class="issue-head">
+    <span class="issue-num">06</span>
+    <span class="sev p1">P1</span>
+    <h2>Empty state pattern drift — 3 styles, should consolidate to 1</h2>
+  </div>
+  <p class="desc">
+    Currently three separate empty-state styles across the app:
+    <code class="tok">.empty.empty-inline</code> (/sparks),
+    inline-styled hero card (/hives), full-page honeycomb-cluster (/studio).
+    Below: the unified "inline panel empty state" — works in card sections,
+    sidebar slots, and as a stretched full-page hero.
+  </p>
+  <div class="compare">
+    <div class="col before">
+      <h3>Three patterns today</h3>
+      <div class="swatch">
+        <div style="font-size:12px; color: var(--canvas-dark-ink-faint); margin-bottom: 8px;">/sparks empty-section panel + /hives inline hero + /studio honeycomb-cluster. Each invented separately.</div>
+        <em style="color: var(--canvas-dark-ink-muted);">No active sparks. Be the first to start one.</em>
+      </div>
+    </div>
+    <div class="col after">
+      <h3>Unified `&lt;EmptyState&gt;` component</h3>
+      <div class="swatch">
+        <div class="es-card">
+          <span class="glyph">⚡</span>
+          <h3>No active sparks</h3>
+          <p>Sparks are short writing prompts with real deadlines. Start one and see who shows up.</p>
+          <button class="btn">+ Start a Spark</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     ISSUE 7 — Section-head pattern (P1)
+     ════════════════════════════════════════════════════════════ -->
+<div class="issue">
+  <div class="issue-head">
+    <span class="issue-num">07</span>
+    <span class="sev p1">P1</span>
+    <h2>Section-head — 3 fragmenting classes, should be 1</h2>
+  </div>
+  <p class="desc">
+    <code class="tok">.section-head</code> on /sparks,
+    <code class="tok">.sec-head</code> on /community,
+    different shapes on /reading-lists + /clubs. Same conceptual element rendered
+    three ways. Recommend keeping <code class="tok">.section-head</code> as the
+    canonical (icon chip + display title + count pill).
+  </p>
+  <div class="compare">
+    <div class="col before">
+      <h3>Three variants in the wild</h3>
+      <div class="swatch">
+        <div class="sh-current-a"><h3>Reading lists</h3></div>
+        <div class="sh-current-b"><h3>Active sparks</h3><span class="ct">3 OPEN</span></div>
+        <div class="sh-current-c"><h3>Your hives</h3></div>
+      </div>
+    </div>
+    <div class="col after">
+      <h3>Unified `.section-head`</h3>
+      <div class="swatch">
+        <div class="sh-unified">
+          <span class="ico">📚</span>
+          <h3>Reading lists</h3>
+          <span class="pill">3 lists</span>
+        </div>
+        <div class="sh-unified">
+          <span class="ico">⚡</span>
+          <h3>Active sparks</h3>
+          <span class="pill">3 open</span>
+        </div>
+        <div class="sh-unified">
+          <span class="ico">🐝</span>
+          <h3>Your hives</h3>
+          <span class="pill">2 active</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     ISSUE 8 — Card-grid layout (P1)
+     ════════════════════════════════════════════════════════════ -->
+<div class="issue">
+  <div class="issue-head">
+    <span class="issue-num">08</span>
+    <span class="sev p1">P1</span>
+    <h2>Card-grid layout inconsistency — auto-fill vs fixed 4-col cap</h2>
+  </div>
+  <p class="desc">
+    <strong>/studio:</strong> <code class="tok">repeat(4, ...) max-width: 880px</code>
+    (compact tiles, content-bounded). <strong>/hives, /reading-lists, /clubs,
+    /discover:</strong> <code class="tok">repeat(auto-fill, minmax(280px, 1fr))</code>
+    (stretches across full viewport). Two patterns for "list of similar cards."
+    Pick one or document when to use each.
+  </p>
+  <div class="compare">
+    <div class="col before">
+      <h3>Auto-fill (most surfaces) — wide</h3>
+      <div class="swatch">
+        <div class="grid-demo unbounded">
+          <div class="card"></div><div class="card"></div><div class="card"></div><div class="card"></div><div class="card"></div>
+        </div>
+        <div class="label">Cards stretch with viewport.</div>
+      </div>
+    </div>
+    <div class="col after">
+      <h3>4-col capped (/studio) — bounded</h3>
+      <div class="swatch">
+        <div class="grid-demo capped">
+          <div class="card"></div><div class="card"></div><div class="card"></div><div class="card"></div>
+        </div>
+        <div class="label">Cards stay compact; whitespace right of grid.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     Non-visual findings
+     ════════════════════════════════════════════════════════════ -->
+<div class="non-visual">
+  <h2>Non-visual findings — no mockup needed</h2>
+
+  <ul>
+    <li><strong>P0:</strong> <code>error.tsx</code> + <code>not-found.tsx</code> use <code>text-[#FFC300]</code> instead of <code>text-[var(--brand)]</code>. Trivial swap.</li>
+    <li><strong>P2 — AppNav no mobile breakpoint:</strong> center nav absolute-positioned, will overlap brand + avatar below ~700px viewport. Need a media query or flex restructure.</li>
+    <li><strong>P2 — /discover hero pattern vs /community section rail:</strong> two "browse multiple content types" surfaces use different UX shapes. Worth deciding which is canonical.</li>
+    <li><strong>P2 — Auth + /settings/billing + /welcome + /pricing</strong> haven't been smoke-tested against the brightness bump. Walk-through pass needed.</li>
+    <li><strong>P2 — /studio editor surfaces</strong> (binder, metadata panel, status bar, toolbar) pre-date the design refresh. Brightness bump may affect ink legibility against the cream-paper canvas.</li>
+    <li><strong>P3 — Two <code>create-hive-modal.tsx</code> files:</strong> studio/[bookId]/_components/ (stub) and studio/_components/ (real). Delete the stub.</li>
+    <li><strong>P3 — <code>ping-sessions.ts</code>:</strong> add header comment explaining it's the Neon connectivity canary so future-me doesn't delete it.</li>
+    <li><strong>P3 — <code>design-import-temp/</code>:</strong> 4 mockup HTMLs + a tarball accumulating. <code>.gitignore</code> or archive after ports ship.</li>
+    <li><strong>P3 — <code>&lt;HiveCard&gt;</code> (studio rail) vs <code>&lt;HiveIndexCard&gt;</code> (/hives):</strong> two hive cards with overlapping responsibility. Consolidate or document the deliberate split.</li>
+    <li><strong>P3 — Class name collision risk:</strong> grep for any remaining single-word component classes (<code>empty</code>, <code>body</code>, <code>meta</code>, <code>title</code>) — prefer prefixed (<code>.bcv-*</code>, <code>.hic-*</code>).</li>
+    <li><strong>P4 — <code>aria-label</code> on icon-only buttons:</strong> notifications bell, kebab menus, sort dropdowns. Audit sweep needed.</li>
+    <li><strong>P4 — Form labels:</strong> some pages use <code>&lt;p&gt;</code> + <code>style</code> instead of <code>&lt;label htmlFor&gt;</code>. Tab-order + screen-reader navigation impact.</li>
+    <li><strong>P4 — Focus states:</strong> brand-yellow <code>focus:ring-2</code> on modal inputs only; uneven across the app.</li>
+  </ul>
+</div>
+
+</body>
+</html>

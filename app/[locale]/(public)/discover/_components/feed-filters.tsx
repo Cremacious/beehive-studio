@@ -38,55 +38,111 @@ export function FeedFilters({ currentSort, currentGenre }: Props) {
 
   const sortInfo = SORT_LABELS[currentSort] ?? SORT_LABELS.trending
 
+  const segActive = {
+    background: 'var(--brand)',
+    color: 'var(--brand-ink)',
+  } as const
+  const segIdle = {
+    background: 'transparent',
+    color: 'var(--canvas-dark-ink-muted)',
+  } as const
+
   return (
     <div>
-      <div className="px-6 py-4 flex items-center gap-3 flex-wrap border-b border-[#2a2a2a]">
-        <div className="flex bg-[#1e1e1e] border border-[#2a2a2a] rounded-md overflow-hidden shrink-0">
+      <div
+        className="px-6 py-4 flex items-center gap-3 flex-wrap"
+        style={{ borderBottom: 'var(--br-card)' }}
+      >
+        <div
+          className="flex overflow-hidden shrink-0"
+          style={{
+            background: 'var(--canvas-dark-200)',
+            borderRadius: 'var(--r-pill)',
+            border: 'var(--br-card)',
+            padding: '3px',
+          }}
+        >
           {Object.entries(SORT_LABELS).map(([key, { label }]) => (
             <button
               key={key}
+              type="button"
               onClick={() => setParam('sort', key)}
-              className={`px-4 py-1.5 text-xs font-medium border-l border-[#2a2a2a] first:border-l-0 transition-colors cursor-pointer ${
-                currentSort === key
-                  ? 'bg-[#FFC300] text-black font-semibold'
-                  : 'bg-transparent text-[#888] hover:text-white'
-              }`}
+              className="inline-flex items-center px-4 h-7 text-[12px] font-semibold transition-colors cursor-pointer"
+              style={{
+                ...(currentSort === key ? segActive : segIdle),
+                borderRadius: 'var(--r-pill)',
+              }}
             >
               {label}
             </button>
           ))}
         </div>
 
-        <div className="w-px h-6 bg-[#2a2a2a] shrink-0" />
+        <div
+          className="w-px h-6 shrink-0"
+          style={{ background: 'oklch(1 0 0 / 0.08)' }}
+        />
 
         <div className="flex gap-2 flex-wrap">
           <button
+            type="button"
             onClick={() => setParam('genre', null)}
-            className={`px-3 py-1 rounded-full text-xs transition-colors cursor-pointer ${
-              !currentGenre ? 'bg-[#FFC300] text-black font-semibold' : 'bg-[#2a2a2a] text-[#aaa] hover:text-white'
-            }`}
+            className="inline-flex items-center px-3 h-7 text-[11px] font-semibold transition-colors cursor-pointer"
+            style={{
+              ...(currentGenre ? segIdle : segActive),
+              borderRadius: 'var(--r-pill)',
+              background: currentGenre
+                ? 'var(--canvas-dark-300)'
+                : 'var(--brand)',
+            }}
           >
             All Genres
           </button>
-          {GENRES.map(genre => (
-            <button
-              key={genre}
-              onClick={() => setParam('genre', genre.toLowerCase())}
-              className={`px-3 py-1 rounded-full text-xs transition-colors cursor-pointer ${
-                currentGenre === genre.toLowerCase()
-                  ? 'bg-[#FFC300] text-black font-semibold'
-                  : 'bg-[#2a2a2a] text-[#aaa] hover:text-white'
-              }`}
-            >
-              {currentGenre === genre.toLowerCase() ? `${genre} ✕` : genre}
-            </button>
-          ))}
+          {GENRES.map((genre) => {
+            const isActive = currentGenre === genre.toLowerCase()
+            return (
+              <button
+                key={genre}
+                type="button"
+                onClick={() => setParam('genre', genre.toLowerCase())}
+                className="inline-flex items-center px-3 h-7 text-[11px] font-semibold transition-colors cursor-pointer"
+                style={{
+                  background: isActive
+                    ? 'var(--brand)'
+                    : 'var(--canvas-dark-300)',
+                  color: isActive
+                    ? 'var(--brand-ink)'
+                    : 'var(--canvas-dark-ink-muted)',
+                  borderRadius: 'var(--r-pill)',
+                }}
+              >
+                {isActive ? `${genre} ✕` : genre}
+              </button>
+            )
+          })}
         </div>
       </div>
 
-      <div className="px-6 py-2.5 bg-[#181818] border-b border-[#2a2a2a]">
-        <p className="text-xs text-[#888]">
-          <span className="text-[#aaa] font-medium">{sortInfo.label}</span> — {sortInfo.description}
+      <div
+        className="px-6 py-2.5"
+        style={{
+          background: 'var(--canvas-dark-150)',
+          borderBottom: 'var(--br-card)',
+        }}
+      >
+        <p
+          className="text-[12px]"
+          style={{ color: 'var(--canvas-dark-ink-muted)' }}
+        >
+          <span
+            style={{
+              color: 'var(--canvas-dark-ink-strong)',
+              fontWeight: 600,
+            }}
+          >
+            {sortInfo.label}
+          </span>{' '}
+          — {sortInfo.description}
         </p>
       </div>
     </div>

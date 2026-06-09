@@ -1154,6 +1154,18 @@ textarea.input { height: auto; min-height: 84px; padding: 12px 14px; resize: ver
   width: 3px; border-radius: var(--r-pill); background: var(--brand);
 }
 
+/* ACTIVITY FEED EVENT ROW */
+.feed-event { display: grid; grid-template-columns: 32px 1fr; gap: 12px; padding: 16px 18px; }
+.feed-event .fe-text { font-size: 14.5px; line-height: 1.5; color: var(--canvas-dark-ink); }
+.feed-event .fe-text a { color: var(--canvas-dark-ink-strong); font-weight: 600; text-decoration: none; }
+.feed-event .fe-text a:hover { color: var(--brand); }
+.feed-event .fe-when { font-family: var(--font-mono); font-size: 10.5px; color: var(--canvas-dark-ink-faint); margin-top: 5px; letter-spacing: 0.03em; }
+
+/* LOAD MORE BUTTON */
+.load-more { display: block; width: 100%; margin-top: 14px; text-align: center; padding: 11px; border-radius: var(--r-btn); background: transparent; border: 1px solid var(--canvas-dark-300); color: var(--canvas-dark-ink-muted); font-family: var(--font-ui); font-weight: 600; font-size: 13px; cursor: pointer; transition: color .12s, border-color .12s; }
+.load-more:hover { color: var(--canvas-dark-ink-strong); border-color: var(--canvas-dark-400); }
+.load-more:disabled { opacity: 0.6; cursor: wait; }
+
 /* SHARED CARDS (SparkCard / ListCard / ClubCard) */
 .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }

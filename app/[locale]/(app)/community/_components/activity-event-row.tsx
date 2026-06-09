@@ -8,27 +8,28 @@ function relTime(d: Date | string): string {
   const seconds = Math.floor((Date.now() - date.getTime()) / 1000)
   if (seconds < 60) return 'just now'
   const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return `${minutes}m ago`
+  if (minutes < 60) return `${minutes} min ago`
   const hours = Math.floor(minutes / 60)
   if (hours < 24) return `${hours}h ago`
   const days = Math.floor(hours / 24)
+  if (days === 1) return 'Yesterday'
   if (days < 7) return `${days}d ago`
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
 
 const VERB: Record<FeedRow['type'], string> = {
   book_published: 'published',
-  chapter_posted: 'posted a new chapter',
+  chapter_posted: 'published a new chapter of',
   book_liked: 'liked',
   book_commented: 'commented on',
-  spark_entry_submitted: 'entered the Spark',
+  spark_entry_submitted: 'submitted an entry to the spark',
   spark_won_community: 'won the community vote for the Spark',
   spark_won_creator_choice: "was picked as the creator's choice for the Spark",
   hive_created: 'started a new hive',
   hive_joined: 'joined the hive',
   reading_list_created: 'created a list',
-  books_added_batch: 'added books to a reading list',
-  book_club_created: 'started a book club',
+  books_added_batch: 'added books to',
+  book_club_created: 'started a new book club,',
   book_club_current_book_changed: 'is now reading',
 }
 
@@ -64,9 +65,16 @@ export function ActivityEventRow({ row, locale }: { row: FeedRow; locale: string
   const handle = row.actor.username
     ? `@${row.actor.username}`
     : row.actor.displayName ?? 'Someone'
-  const initial = (row.actor.username ?? row.actor.displayName ?? '?')[0]?.toUpperCase() ?? '?'
+  const initials = (() => {
+    const src = row.actor.username ?? row.actor.displayName ?? '?'
+    // Use up to 2 chars for 32px avatar legibility, matching bundle (DR, VN, EM…).
+    const stripped = src.replace(/^@/, '')
+    if (stripped.length >= 2) {
+      return (stripped[0] + stripped[1]).toUpperCase()
+    }
+    return stripped[0]?.toUpperCase() ?? '?'
+  })()
   const href = subjectHref(row, locale)
-  const italicizeSubject = row.subject?.type === 'book' || row.subject?.type === 'chapter'
   const isFriendEvent = Boolean(row.isFriend)
 
   let verb: string
@@ -83,7 +91,7 @@ export function ActivityEventRow({ row, locale }: { row: FeedRow; locale: string
     const payload = row.payload ?? {}
     const rawName = (payload as { name?: unknown }).name
     const payloadName = typeof rawName === 'string' && rawName.length > 0 ? rawName : null
-    verb = 'started a book club'
+    verb = 'started a new book club,'
     subjectTitle = row.subject?.title ?? payloadName
   } else if (row.type === 'book_club_current_book_changed') {
     const payload = row.payload ?? {}
@@ -101,37 +109,25 @@ export function ActivityEventRow({ row, locale }: { row: FeedRow; locale: string
     subjectTitle = row.subject?.title ?? null
   }
 
-  const boldSubject =
-    row.type === 'reading_list_created' ||
-    row.type === 'books_added_batch' ||
-    row.type === 'book_club_created' ||
-    row.type === 'book_club_current_book_changed'
-
+  // Subject always renders as bold link per bundle (no italics, no <em>).
   const subjectNode = (() => {
     if (!subjectTitle) {
-      return <span className="meta-mono">[subject]</span>
+      return <span style={{ color: 'var(--canvas-dark-ink-muted)' }}>[subject]</span>
     }
-    const inner = boldSubject ? (
-      <strong>{subjectTitle}</strong>
-    ) : italicizeSubject ? (
-      <em>{subjectTitle}</em>
-    ) : (
-      <span>{subjectTitle}</span>
-    )
     if (href) {
-      return <Link href={href}>{inner}</Link>
+      return <Link href={href}>{subjectTitle}</Link>
     }
-    return <span>{inner}</span>
+    return <strong>{subjectTitle}</strong>
   })()
 
   const avatarTone = pickTone(row.actor.username ?? row.actor.displayName ?? row.id)
 
   return (
-    <li className={`tile tile-pad ${isFriendEvent ? 'is-friend-event' : ''}`}>
-      <div
-        className="grid items-start gap-3"
-        style={{ gridTemplateColumns: 'auto 1fr auto' }}
-      >
+    <li
+      className={isFriendEvent ? 'is-friend-event' : undefined}
+      style={{ borderRadius: 'var(--r-row)' }}
+    >
+      <div className="feed-event">
         {row.actor.username ? (
           <Link href={`/${locale}/u/${row.actor.username}`} className="shrink-0">
             {row.actor.avatarUrl ? (
@@ -139,41 +135,27 @@ export function ActivityEventRow({ row, locale }: { row: FeedRow; locale: string
               <img
                 src={row.actor.avatarUrl}
                 alt=""
-                className="h-10 w-10 rounded-full object-cover"
+                className="h-8 w-8 rounded-full object-cover"
               />
             ) : (
-              <span className={`avatar s40 a-${avatarTone}`}>{initial}</span>
+              <span className={`avatar s32 a-${avatarTone}`}>{initials}</span>
             )}
           </Link>
         ) : (
-          <span className={`avatar s40 a-${avatarTone}`}>{initial}</span>
+          <span className={`avatar s32 a-${avatarTone}`}>{initials}</span>
         )}
 
         <div className="min-w-0">
-          <div className="text-sm leading-snug">
+          <div className="fe-text">
             {row.actor.username ? (
-              <Link
-                href={`/${locale}/u/${row.actor.username}`}
-                style={{ color: 'var(--canvas-dark-ink-strong)' }}
-                className="font-semibold hover:underline"
-              >
-                {handle}
-              </Link>
+              <Link href={`/${locale}/u/${row.actor.username}`}>{handle}</Link>
             ) : (
-              <span
-                style={{ color: 'var(--canvas-dark-ink-strong)' }}
-                className="font-semibold"
-              >
-                {handle}
-              </span>
+              <strong>{handle}</strong>
             )}{' '}
-            <span style={{ color: 'var(--canvas-dark-ink-muted)' }}>{verb}</span>{' '}
-            {subjectNode}
+            {verb} {subjectNode}
           </div>
-          <div className="meta-mono mt-1">{relTime(row.createdAt)}</div>
+          <div className="fe-when">{relTime(row.createdAt)}</div>
         </div>
-
-        {isFriendEvent ? <span className="pill brand-solid">FRIEND</span> : null}
       </div>
     </li>
   )

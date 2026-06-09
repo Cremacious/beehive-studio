@@ -22,30 +22,47 @@ type Props = {
   locale: string
 }
 
-const ROLE_PILL: Record<BookClubMemberRole, { label: string; cls: string }> = {
-  OWNER: {
-    label: 'Owner',
-    cls: 'bg-[var(--brand)] text-[var(--brand-ink)]',
-  },
-  MODERATOR: {
-    label: 'Mod',
-    cls: 'bg-[oklch(0.55_0.12_240_/_0.18)] text-[oklch(0.78_0.12_240)] border border-[oklch(0.55_0.12_240_/_0.3)]',
-  },
-  MEMBER: {
-    label: 'Member',
-    cls: 'border border-[var(--br-card)] text-[var(--canvas-dark-ink-muted)]',
-  },
+// Forum-table grid: Member / Role / Joined / kebab
+const MROW_COLS = '1fr 120px 110px 40px'
+
+const AVATAR_TONES = ['lilac', 'coral', 'mint', 'blue', 'slate'] as const
+
+function avatarTone(member: ClubMemberListItem): (typeof AVATAR_TONES)[number] {
+  // Deterministic hash → tone (matches bundle mockup's per-row avatar variety)
+  const key = member.userId
+  let hash = 0
+  for (let i = 0; i < key.length; i++) {
+    hash = (hash * 31 + key.charCodeAt(i)) | 0
+  }
+  return AVATAR_TONES[Math.abs(hash) % AVATAR_TONES.length]
 }
 
-function relTime(d: Date | string): string {
+function initials(member: ClubMemberListItem): string {
+  const source = member.displayName ?? member.username ?? '??'
+  const parts = source.trim().split(/\s+/).slice(0, 2)
+  return parts
+    .map((p) => p[0] ?? '')
+    .join('')
+    .toUpperCase() || '??'
+}
+
+function joinedLabel(d: Date | string): string {
   const date = typeof d === 'string' ? new Date(d) : d
-  const diffMs = Date.now() - date.getTime()
-  const days = Math.floor(diffMs / 86_400_000)
-  if (days < 1) return 'today'
-  if (days < 7) return `${days}d ago`
-  if (days < 30) return `${Math.floor(days / 7)}w ago`
-  if (days < 365) return `${Math.floor(days / 30)}mo ago`
-  return `${Math.floor(days / 365)}y ago`
+  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+}
+
+const ROLE_PILL_CLASS: Record<BookClubMemberRole, string> = {
+  // .pill.role-owner reads var(--brand) — 13th sanctioned brand-yellow surface
+  // (cascade: .pill { background: oklch(from var(--pt) l c h / 0.14); color: var(--pt); ... })
+  OWNER: 'pill role-owner',
+  MODERATOR: 'pill role-mod',
+  MEMBER: 'pill role-member',
+}
+
+const ROLE_LABEL: Record<BookClubMemberRole, string> = {
+  OWNER: 'Owner',
+  MODERATOR: 'Mod',
+  MEMBER: 'Member',
 }
 
 export function ClubMembersPanel({ clubId, viewerRole, locale }: Props) {
@@ -142,8 +159,8 @@ export function ClubMembersPanel({ clubId, viewerRole, locale }: Props) {
   }
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between mb-2">
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
         <h2 className="text-[11px] font-mono uppercase tracking-wider text-[var(--canvas-dark-ink-muted)]">
           Members ({members.length})
         </h2>
@@ -158,147 +175,152 @@ export function ClubMembersPanel({ clubId, viewerRole, locale }: Props) {
         )}
       </div>
 
-      <ul
-        className="divide-y divide-[var(--br-card)] rounded-[var(--r-card)] border border-[var(--br-card)] overflow-hidden"
-        style={{
-          background:
-            'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
-        }}
-      >
-        {members.map((member) => {
-          const rolePill = ROLE_PILL[member.role]
-          const canChangeThisMember =
-            isOwner && member.role !== 'OWNER'
-          const canRemoveThisMember =
-            (isOwner && member.role !== 'OWNER') ||
-            (isMod && member.role === 'MEMBER')
-          const canTransferToThisMember =
-            isOwner && member.role !== 'OWNER'
-          const hasKebabAction =
-            canChangeThisMember || canRemoveThisMember || canTransferToThisMember
+      <section className="panel ftable" aria-label="Members">
+        <div className="strip">
+          <ul style={{ gridTemplateColumns: MROW_COLS }}>
+            <li>Member</li>
+            <li>Role</li>
+            <li className="ralign">Joined</li>
+            <li></li>
+          </ul>
+        </div>
+        <ul className="rows">
+          {members.map((member) => {
+            const canChangeThisMember = isOwner && member.role !== 'OWNER'
+            const canRemoveThisMember =
+              (isOwner && member.role !== 'OWNER') ||
+              (isMod && member.role === 'MEMBER')
+            const canTransferToThisMember = isOwner && member.role !== 'OWNER'
+            const hasKebabAction =
+              canChangeThisMember || canRemoveThisMember || canTransferToThisMember
+            const tone = avatarTone(member)
+            const displayName = member.displayName ?? member.username ?? 'Unknown'
 
-          return (
-            <li
-              key={member.id}
-              className="flex items-center gap-3 px-4 py-3"
-            >
-              {member.avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={member.avatarUrl}
-                  alt=""
-                  className="h-8 w-8 rounded-full object-cover"
-                />
-              ) : (
-                <div
-                  className="h-8 w-8 rounded-full"
-                  style={{
-                    background:
-                      'linear-gradient(135deg, var(--canvas-dark-300), var(--canvas-dark-200))',
-                  }}
-                />
-              )}
-              <div className="flex-1 min-w-0">
-                {member.username ? (
-                  <Link
-                    href={`/${locale}/u/${member.username}`}
-                    className="text-sm font-semibold text-[var(--canvas-dark-ink-strong)] hover:text-[var(--brand)] truncate block"
-                  >
-                    @{member.username}
-                  </Link>
-                ) : (
-                  <span className="text-sm font-semibold text-[var(--canvas-dark-ink-strong)] truncate block">
-                    {member.displayName ?? 'Unknown'}
-                  </span>
-                )}
-                <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--canvas-dark-ink-muted)]">
-                  Joined {relTime(member.joinedAt)}
-                </span>
-              </div>
-              <span
-                className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider ${rolePill.cls}`}
+            return (
+              <li
+                key={member.id}
+                style={{ gridTemplateColumns: MROW_COLS }}
               >
-                {rolePill.label}
-              </span>
-              {isModOrOwner && hasKebabAction && (
-                <div className="relative shrink-0">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setOpenKebabId((id) => (id === member.id ? null : member.id))
-                    }
-                    aria-label="Member actions"
-                    aria-haspopup="menu"
-                    aria-expanded={openKebabId === member.id}
-                    className="p-1.5 rounded-[var(--r-btn)] text-[var(--canvas-dark-ink-muted)] hover:bg-[var(--canvas-dark-300)] hover:text-[var(--canvas-dark-ink-strong)]"
-                  >
-                    <MoreHorizontal className="h-4 w-4" />
-                  </button>
-                  {openKebabId === member.id && (
-                    <>
+                <div className="flex items-center gap-3 min-w-0">
+                  {member.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={member.avatarUrl}
+                      alt=""
+                      className="avatar s40 object-cover"
+                    />
+                  ) : (
+                    <span className={`avatar s40 a-${tone}`}>
+                      {initials(member)}
+                    </span>
+                  )}
+                  <div className="min-w-0">
+                    <div className="font-display font-semibold text-[var(--canvas-dark-ink-strong)] truncate">
+                      {displayName}
+                    </div>
+                    {member.username && (
+                      <Link
+                        href={`/${locale}/u/${member.username}`}
+                        className="meta-mono hover:text-[var(--canvas-dark-ink-strong)] truncate block"
+                      >
+                        @{member.username}
+                      </Link>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <span className={ROLE_PILL_CLASS[member.role]}>
+                    <span className="dot"></span>
+                    {ROLE_LABEL[member.role]}
+                  </span>
+                </div>
+                <div className="ralign meta-mono">
+                  {joinedLabel(member.joinedAt)}
+                </div>
+                <div className="ralign">
+                  {isModOrOwner && hasKebabAction && (
+                    <div className="relative inline-block">
                       <button
                         type="button"
-                        onClick={() => setOpenKebabId(null)}
-                        aria-hidden="true"
-                        tabIndex={-1}
-                        className="fixed inset-0 z-10 cursor-default"
-                      />
-                      <div
-                        role="menu"
-                        className="absolute right-0 top-full mt-1 z-20 min-w-[180px] rounded-[var(--r-card)] border border-[var(--br-card)] py-1"
-                        style={{
-                          background: 'var(--canvas-dark-250)',
-                          boxShadow: 'var(--sh-card)',
-                        }}
+                        onClick={() =>
+                          setOpenKebabId((id) =>
+                            id === member.id ? null : member.id,
+                          )
+                        }
+                        aria-label="Member actions"
+                        aria-haspopup="menu"
+                        aria-expanded={openKebabId === member.id}
+                        className="kebab"
                       >
-                        {canChangeThisMember && (
+                        <MoreHorizontal />
+                      </button>
+                      {openKebabId === member.id && (
+                        <>
                           <button
                             type="button"
-                            onClick={() => {
-                              setOpenKebabId(null)
-                              setRoleTarget(member)
+                            onClick={() => setOpenKebabId(null)}
+                            aria-hidden="true"
+                            tabIndex={-1}
+                            className="fixed inset-0 z-10 cursor-default"
+                          />
+                          <div
+                            role="menu"
+                            className="absolute right-0 top-full mt-1 z-20 min-w-[180px] rounded-[var(--r-card)] border border-[var(--br-card)] py-1"
+                            style={{
+                              background: 'var(--canvas-dark-250)',
+                              boxShadow: 'var(--sh-card)',
                             }}
-                            className="block w-full text-left px-3 py-2 text-sm text-[var(--canvas-dark-ink)] hover:bg-[var(--canvas-dark-300)]"
-                            role="menuitem"
                           >
-                            Change role
-                          </button>
-                        )}
-                        {canTransferToThisMember && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setOpenKebabId(null)
-                              setTransferTarget(member)
-                            }}
-                            className="block w-full text-left px-3 py-2 text-sm text-[var(--canvas-dark-ink)] hover:bg-[var(--canvas-dark-300)]"
-                            role="menuitem"
-                          >
-                            Transfer ownership
-                          </button>
-                        )}
-                        {canRemoveThisMember && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setOpenKebabId(null)
-                              setRemoveTarget(member)
-                            }}
-                            className="block w-full text-left px-3 py-2 text-sm text-destructive hover:bg-[var(--canvas-dark-300)]"
-                            role="menuitem"
-                          >
-                            Remove from club
-                          </button>
-                        )}
-                      </div>
-                    </>
+                            {canChangeThisMember && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setOpenKebabId(null)
+                                  setRoleTarget(member)
+                                }}
+                                className="block w-full text-left px-3 py-2 text-sm text-[var(--canvas-dark-ink)] hover:bg-[var(--canvas-dark-300)]"
+                                role="menuitem"
+                              >
+                                Change role
+                              </button>
+                            )}
+                            {canTransferToThisMember && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setOpenKebabId(null)
+                                  setTransferTarget(member)
+                                }}
+                                className="block w-full text-left px-3 py-2 text-sm text-[var(--canvas-dark-ink)] hover:bg-[var(--canvas-dark-300)]"
+                                role="menuitem"
+                              >
+                                Transfer ownership
+                              </button>
+                            )}
+                            {canRemoveThisMember && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setOpenKebabId(null)
+                                  setRemoveTarget(member)
+                                }}
+                                className="block w-full text-left px-3 py-2 text-sm text-destructive hover:bg-[var(--canvas-dark-300)]"
+                                role="menuitem"
+                              >
+                                Remove from club
+                              </button>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </div>
                   )}
                 </div>
-              )}
-            </li>
-          )
-        })}
-      </ul>
+              </li>
+            )
+          })}
+        </ul>
+      </section>
 
       {removeTarget && (
         <ConfirmDialog

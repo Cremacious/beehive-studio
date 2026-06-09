@@ -34,40 +34,93 @@ export function SparkSubmitPanel({ sparkId, wordLimit }: Props) {
     })
   }
 
+  const inputStyle = {
+    background: '#1E1E1E',
+    boxShadow: 'var(--sh-inset)',
+    color: 'var(--canvas-dark-ink)',
+  } as const
+
+  const labelStyle = { color: 'var(--canvas-dark-ink-muted)' } as const
+
   return (
-    <div className="px-6 py-4 bg-[#181818] border-b border-[#2a2a2a]">
-      <p className="text-[#555] text-[11px] uppercase tracking-wider mb-2">Your Entry</p>
-      <div className="mb-2">
-        <label className="text-[11px] font-mono uppercase tracking-wider mb-1.5 block text-[var(--canvas-dark-ink-muted)]">
-          Title <span className="lowercase normal-case">(optional)</span>
+    <div style={{ padding: '20px 22px' }}>
+      <p
+        className="text-[10px] font-mono uppercase tracking-[0.14em]"
+        style={{ ...labelStyle, marginBottom: 14 }}
+      >
+        Your Entry
+      </p>
+
+      <div className="flex flex-col gap-2 mb-4">
+        <label
+          htmlFor="spark-title"
+          className="text-[10px] font-mono uppercase tracking-[0.14em]"
+          style={labelStyle}
+        >
+          Title
+          <span
+            className="ml-2 normal-case tracking-normal"
+            style={{ color: 'var(--canvas-dark-ink-faint)' }}
+          >
+            optional
+          </span>
         </label>
         <input
+          id="spark-title"
           type="text"
           value={title}
-          onChange={e => setTitle(e.target.value)}
+          onChange={(e) => setTitle(e.target.value)}
           maxLength={120}
           placeholder="Leave blank to derive from your first line."
-          className="w-full bg-[#141414] border border-[#2a2a2a] rounded-md px-3 py-2 text-[#ccc] text-[13px] focus:outline-none focus:border-[#3a3a3a]"
-          style={{ boxShadow: 'var(--sh-inset)' }}
+          className="w-full h-10 px-3.5 rounded-[var(--r-row)] text-[14px] outline-none focus:ring-2 focus:ring-[oklch(from_var(--brand)_l_c_h_/_0.35)]"
+          style={inputStyle}
         />
       </div>
-      <textarea
-        value={content}
-        onChange={e => setContent(e.target.value)}
-        placeholder="Write your response…"
-        rows={4}
-        className="w-full bg-[#141414] border border-[#2a2a2a] rounded-md px-3 py-2 text-[#ccc] text-[13px] leading-relaxed resize-vertical focus:outline-none focus:border-[#3a3a3a]"
-      />
-      <div className="flex items-center justify-between mt-1.5">
-        <span className={`text-[11px] ${overLimit ? 'text-red-400' : 'text-[#555]'}`}>
+
+      <div className="flex flex-col gap-2">
+        <label
+          htmlFor="spark-content"
+          className="text-[10px] font-mono uppercase tracking-[0.14em]"
+          style={labelStyle}
+        >
+          Response <span style={{ color: 'var(--brand)' }}>*</span>
+        </label>
+        <textarea
+          id="spark-content"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="Write your response…"
+          rows={5}
+          className="w-full px-3.5 py-2.5 rounded-[var(--r-row)] text-[14px] resize-y outline-none focus:ring-2 focus:ring-[oklch(from_var(--brand)_l_c_h_/_0.35)]"
+          style={{ ...inputStyle, lineHeight: 1.5, minHeight: '120px' }}
+        />
+      </div>
+
+      <div className="flex items-center justify-between mt-3">
+        <span
+          className="text-[11px]"
+          style={{
+            color: overLimit ? 'var(--status-error)' : 'rgb(255 255 255 / 0.65)',
+            fontFamily: 'var(--font-mono)',
+          }}
+        >
           {wordCount} words{wordLimit ? ` / ${wordLimit} limit` : ''}
         </span>
         <div className="flex items-center gap-2">
-          {error && <span className="text-red-400 text-[11px]">{error}</span>}
+          {error && (
+            <span
+              className="text-[11px]"
+              style={{ color: 'var(--status-error)' }}
+            >
+              {error}
+            </span>
+          )}
           <button
+            type="button"
             onClick={submit}
             disabled={isPending || !content.trim() || overLimit}
-            className="px-4 py-1.5 bg-[#FFC300] text-black font-bold text-[12px] rounded-md disabled:opacity-40 cursor-pointer"
+            className="inline-flex items-center justify-center h-9 px-5 rounded-[var(--r-pill)] text-[13px] font-semibold disabled:opacity-40 cursor-pointer"
+            style={{ background: 'var(--brand)', color: 'var(--brand-ink)' }}
           >
             {isPending ? 'Submitting…' : 'Submit Entry'}
           </button>

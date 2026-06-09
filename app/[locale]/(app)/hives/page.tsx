@@ -1,8 +1,8 @@
-import Link from 'next/link'
 import { Plus } from 'lucide-react'
 import { getUserHivesView } from '@/lib/actions/hive.actions'
 import { PageHead } from '@/components/community/page-head'
-import { HiveCard } from '@/app/[locale]/(app)/studio/_components/hive-card'
+import { NewHiveButton } from './_components/new-hive-button'
+import { HiveIndexCard } from './_components/hive-index-card'
 
 export default async function HivesIndexPage({
   params,
@@ -20,16 +20,7 @@ export default async function HivesIndexPage({
           title="Hives"
           subtitle="Your collaborative writing groups — outlines, wikis, and chapters shared across members."
           back={{ href: `/${locale}/community`, label: 'community' }}
-          headerSlot={
-            <Link
-              href={`/${locale}/studio`}
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap h-9 px-6 rounded-[var(--r-pill)] text-[13px] font-semibold cursor-pointer"
-              style={{ background: 'var(--brand)', color: 'var(--brand-ink)' }}
-            >
-              <Plus size={15} />
-              <span>New hive</span>
-            </Link>
-          }
+          headerSlot={<NewHiveButton />}
         />
 
         {hives.length === 0 ? (
@@ -54,7 +45,7 @@ export default async function HivesIndexPage({
                 margin: '0 0 8px',
               }}
             >
-              You're not in any hives yet
+              You&apos;re not in any hives yet
             </h2>
             <p
               style={{
@@ -69,13 +60,18 @@ export default async function HivesIndexPage({
               Hives let you collaborate on a book with other writers — shared
               outlines, wikis, and chapter submissions.
             </p>
-            <Link
-              href={`/${locale}/studio`}
-              className="inline-flex items-center gap-2 px-5 h-9 rounded-[var(--r-pill)] text-[13px] font-semibold"
-              style={{ background: 'var(--brand)', color: 'var(--brand-ink)' }}
-            >
-              <Plus size={15} /> Create your first hive
-            </Link>
+            <NewHiveButton>
+              {(onTrigger) => (
+                <button
+                  type="button"
+                  onClick={onTrigger}
+                  className="inline-flex items-center gap-2 px-5 h-9 rounded-[var(--r-pill)] text-[13px] font-semibold"
+                  style={{ background: 'var(--brand)', color: 'var(--brand-ink)' }}
+                >
+                  <Plus size={15} /> Create Your First Hive
+                </button>
+              )}
+            </NewHiveButton>
           </div>
         ) : (
           <div
@@ -83,7 +79,7 @@ export default async function HivesIndexPage({
             style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
           >
             {hives.map((hive) => (
-              <HiveCard key={hive.id} hive={hive} />
+              <HiveIndexCard key={hive.id} hive={hive} />
             ))}
           </div>
         )}

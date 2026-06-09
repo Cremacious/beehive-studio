@@ -1,7 +1,4 @@
 import { requireAuth } from '@/lib/require-auth'
-import { db } from '@/db'
-import { userProfiles } from '@/db/schema'
-import { eq } from 'drizzle-orm'
 import {
   getCommunityFeedAction,
   getMyActiveSparksAction,
@@ -13,7 +10,6 @@ import {
 import { getUserHivesView } from '@/lib/actions/hive.actions'
 import { getMyClubsCountAction } from '@/lib/actions/book-clubs.actions'
 import { getListsAction } from '@/lib/actions/reading-lists.actions'
-import { PageHead } from '@/components/community/page-head'
 import { SectionRail } from './_components/section-rail'
 import { ActivityFeed } from './_components/activity-feed'
 import { RequestsCard } from './_components/requests-card'
@@ -36,7 +32,6 @@ export default async function CommunityPage({
     hivesResult,
     clubsCountResult,
     listsResult,
-    viewerProfile,
   ] = await Promise.all([
     getCommunityFeedAction({ limit: 20 }),
     listPendingFriendRequestsAction(),
@@ -45,10 +40,6 @@ export default async function CommunityPage({
     getUserHivesView(),
     getMyClubsCountAction(),
     getListsAction({ filter: 'mine', limit: 1 }),
-    db.query.userProfiles.findFirst({
-      where: eq(userProfiles.userId, viewerId),
-      columns: { username: true, displayName: true },
-    }),
   ])
 
   const feedRows = feedResult.success ? feedResult.data.rows : []
@@ -64,14 +55,8 @@ export default async function CommunityPage({
   // getMyListsCountAction would be more accurate (future follow-up).
   const listsCount = listsResult.success ? listsResult.data.rows.length : 0
 
-  const greetingName =
-    viewerProfile?.displayName ??
-    (viewerProfile?.username ? `@${viewerProfile.username}` : 'there')
-
   return (
     <main className="cm-wrap w-5xl">
-      <PageHead title={`Hey ${greetingName} — here's what's buzzing`} />
-
       <SectionRail
         locale={locale}
         friendsCount={friendsCount}

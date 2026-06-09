@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronLeft, Clock } from 'lucide-react'
+import { Clock } from 'lucide-react'
 import { auth } from '@/lib/auth'
 import { headers } from 'next/headers'
 import { getSparkAction, getSparkEntriesAction, getSparkEntryAction } from '@/lib/actions/sparks.actions'
@@ -63,21 +63,8 @@ export default async function SparkDetailPage({ params }: Props) {
   return (
     <main className="cm-main">
       <div className="cm-wrap w-3xl">
-        <Link
-          href={`/${locale}/sparks`}
-          className="eyebrow-mono"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            textDecoration: 'none',
-            marginBottom: 18,
-          }}
-        >
-          <ChevronLeft size={13} strokeWidth={2.2} /> Sparks
-        </Link>
-
         <PageHead
+          back={{ href: `/${locale}/sparks`, label: 'sparks' }}
           eyebrow={`Spark · ${creatorLabel}`}
           title={spark.prompt}
           subtitle={

@@ -18,15 +18,17 @@ export default async function ListDetailPage({
   const { list, owner, isFollowing, books } = result.data
   const isOwner = viewerId === list.userId
   const canMutate = isOwner && list.kind === 'CUSTOM'
+  const readCount = books.filter((b) => b.isRead).length
 
   return (
-    <main className="max-w-3xl mx-auto px-4 py-6 sm:px-6">
+    <main className="cm-wrap w-5xl">
       <ListDetailHeader
         list={list}
         owner={owner}
         isFollowing={isFollowing}
         isOwner={isOwner}
         locale={locale}
+        readCount={readCount}
       />
       {canMutate && <AddBookCTA listId={list.id} />}
       <BookList

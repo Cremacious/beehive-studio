@@ -121,9 +121,13 @@ function SortableBookList({ books, listId, isOwner, locale }: Props) {
       >
         <ul className="space-y-3 mt-4">
           {order.map((book) => (
-            <SortableItem key={book.id} id={book.id}>
-              <BookRow book={book} isOwner={isOwner} locale={locale} />
-            </SortableItem>
+            <SortableItem
+              key={book.id}
+              id={book.id}
+              book={book}
+              isOwner={isOwner}
+              locale={locale}
+            />
           ))}
         </ul>
       </SortableContext>
@@ -133,10 +137,14 @@ function SortableBookList({ books, listId, isOwner, locale }: Props) {
 
 function SortableItem({
   id,
-  children,
+  book,
+  isOwner,
+  locale,
 }: {
   id: string
-  children: React.ReactNode
+  book: AnyBook
+  isOwner: boolean
+  locale: string
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id })
@@ -145,19 +153,26 @@ function SortableItem({
     transition,
     opacity: isDragging ? 0.6 : 1,
   }
+  const handle = (
+    <button
+      type="button"
+      {...attributes}
+      {...listeners}
+      aria-label="Drag to reorder"
+      className="br-handle cursor-grab active:cursor-grabbing touch-none inline-flex items-center justify-center bg-transparent border-0 p-0"
+      style={{ touchAction: 'none', color: 'inherit' }}
+    >
+      <GripVertical style={{ width: 14, height: 14 }} aria-hidden />
+    </button>
+  )
   return (
-    <li ref={setNodeRef} style={style} className="flex items-stretch gap-2">
-      <button
-        type="button"
-        {...attributes}
-        {...listeners}
-        aria-label="Drag to reorder"
-        className="shrink-0 flex items-center justify-center px-1 rounded-md text-[var(--canvas-dark-ink-muted)] hover:text-[var(--canvas-dark-ink-strong)] cursor-grab active:cursor-grabbing touch-none"
-        style={{ touchAction: 'none' }}
-      >
-        <GripVertical className="h-4 w-4" aria-hidden />
-      </button>
-      <div className="flex-1 min-w-0">{children}</div>
+    <li ref={setNodeRef} style={style}>
+      <BookRow
+        book={book}
+        isOwner={isOwner}
+        locale={locale}
+        handleSlot={handle}
+      />
     </li>
   )
 }

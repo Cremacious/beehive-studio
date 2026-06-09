@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState, useTransition } from 'react'
+import { useState, useTransition, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Star, BookOpen, MoreHorizontal } from 'lucide-react'
@@ -25,6 +25,8 @@ type Props = {
   book: ListBookRow | DerivedBookRow
   isOwner: boolean
   locale: string
+  /** Slot for an externally-rendered drag handle (CUSTOM-list owner only). */
+  handleSlot?: ReactNode
 }
 
 /**
@@ -34,7 +36,7 @@ type Props = {
  * kebab (Edit Metadata / Remove) for CUSTOM-list owners. Liked-derived
  * rows are immutable so kebab + checkbox are hidden on them.
  */
-export function BookRow({ book, isOwner, locale }: Props) {
+export function BookRow({ book, isOwner, locale, handleSlot }: Props) {
   const router = useRouter()
   const [isRead, setIsRead] = useState(book.isRead)
   const [pendingRead, startReadTransition] = useTransition()
@@ -48,12 +50,6 @@ export function BookRow({ book, isOwner, locale }: Props) {
   // use the synthetic-id prefix instead.
   const isDerived = book.id.startsWith('liked-')
   const canEdit = isOwner && !isDerived
-
-  const innerStyle = {
-    background:
-      'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-    boxShadow: 'var(--sh-tile)',
-  } as const
 
   const rating = book.rating ?? 0
   const commentary = book.commentary?.trim() ?? ''
@@ -90,114 +86,104 @@ export function BookRow({ book, isOwner, locale }: Props) {
     })
   }
 
-  const content = (
-    <div className="flex gap-3">
-      {/* Thumbnail */}
-      <div
-        className="shrink-0 w-[96px] rounded-[var(--r-row)] overflow-hidden"
-        style={{ aspectRatio: '2 / 3' }}
-      >
-        {book.coverUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={book.coverUrl}
-            alt=""
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div
-            className="w-full h-full flex items-center justify-center"
-            style={{
-              background:
-                'linear-gradient(135deg, var(--canvas-dark-300), var(--canvas-dark-200))',
-            }}
-          >
-            <BookOpen
-              className="h-6 w-6 text-[var(--canvas-dark-ink-muted)]"
-              aria-hidden
-            />
-          </div>
-        )}
-      </div>
+  const thumb = book.coverUrl ? (
+    /* eslint-disable-next-line @next/next/no-img-element */
+    <img
+      src={book.coverUrl}
+      alt=""
+      className="br-thumb object-cover"
+      style={{ width: 64, height: 96 }}
+    />
+  ) : (
+    <span
+      className="br-thumb cover-paper flex items-center justify-center"
+      aria-hidden
+    >
+      <BookOpen
+        className="h-6 w-6"
+        style={{ color: 'var(--canvas-dark-ink-muted)' }}
+        aria-hidden
+      />
+    </span>
+  )
 
-      {/* Body */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-start gap-2">
-          {canEdit && (
-            <button
-              type="button"
-              onClick={toggleRead}
-              disabled={pendingRead}
-              aria-pressed={isRead}
-              aria-label={isRead ? 'Mark unread' : 'Mark read'}
-              className="mt-1 h-4 w-4 shrink-0 rounded border flex items-center justify-center disabled:opacity-60"
-              style={{
-                borderColor: isRead ? 'var(--brand)' : 'var(--br-card)',
-                background: isRead ? 'var(--brand)' : 'transparent',
-                color: isRead ? 'var(--brand-ink)' : 'transparent',
-              }}
-            >
-              {isRead && (
-                <span className="text-[10px] leading-none" aria-hidden>
-                  ✓
-                </span>
-              )}
-            </button>
-          )}
-
-          <div className="flex-1 min-w-0">
-            <h4 className="font-semibold text-sm text-[var(--canvas-dark-ink-strong)] truncate">
-              {book.title}
-            </h4>
-            <p className="text-xs text-[var(--canvas-dark-ink-muted)] truncate">
-              by {book.author}
-            </p>
-          </div>
-
-          {canEdit && (
-            <div onClick={(e) => e.stopPropagation()}>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    className="h-6 w-6 inline-flex items-center justify-center rounded-md text-[var(--canvas-dark-ink-muted)] hover:bg-[var(--canvas-dark-300)]"
-                    aria-label="Book actions"
-                    onClick={(e) => e.preventDefault()}
-                  >
-                    <MoreHorizontal className="h-4 w-4" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    onSelect={(e) => {
-                      e.preventDefault()
-                      setEditOpen(true)
-                    }}
-                  >
-                    Edit metadata
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={(e) => {
-                      e.preventDefault()
-                      setConfirmRemoveOpen(true)
-                    }}
-                    className="text-destructive"
-                  >
-                    Remove
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          )}
-
-          {!canEdit && isRead && (
-            <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--brand)] shrink-0">
-              Read
+  const actions = (
+    <div className="flex items-center gap-1 self-start">
+      {canEdit && (
+        <button
+          type="button"
+          onClick={toggleRead}
+          disabled={pendingRead}
+          aria-pressed={isRead}
+          aria-label={isRead ? 'Mark unread' : 'Mark read'}
+          className="h-5 w-5 shrink-0 rounded border flex items-center justify-center disabled:opacity-60"
+          style={{
+            borderColor: isRead ? 'var(--brand)' : 'var(--br-card)',
+            background: isRead ? 'var(--brand)' : 'transparent',
+            color: isRead ? 'var(--brand-ink)' : 'transparent',
+          }}
+        >
+          {isRead && (
+            <span className="text-[10px] leading-none" aria-hidden>
+              ✓
             </span>
           )}
+        </button>
+      )}
+      {!canEdit && isRead && (
+        <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--brand)] shrink-0">
+          Read
+        </span>
+      )}
+      {canEdit && (
+        <div onClick={(e) => e.stopPropagation()}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="h-6 w-6 inline-flex items-center justify-center rounded-md text-[var(--canvas-dark-ink-muted)] hover:bg-[var(--canvas-dark-300)]"
+                aria-label="Book actions"
+                onClick={(e) => e.preventDefault()}
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault()
+                  setEditOpen(true)
+                }}
+              >
+                Edit metadata
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault()
+                  setConfirmRemoveOpen(true)
+                }}
+                className="text-destructive"
+              >
+                Remove
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
+      )}
+    </div>
+  )
 
-        {/* Rating */}
+  const content = (
+    <div className="book-row">
+      {/* Col 1: drag handle (sortable) or empty spacer */}
+      <div className="br-handle">{handleSlot ?? null}</div>
+      {/* Col 2: thumbnail */}
+      {thumb}
+      {/* Col 3: title + author + rating + commentary */}
+      <div className="min-w-0">
+        <h3 className="br-title truncate">{book.title}</h3>
+        <p className="br-author truncate">by {book.author}</p>
+
         {(rating > 0 || canEdit) && (
           <div
             className="flex items-center gap-0.5 mt-1.5"
@@ -234,11 +220,10 @@ export function BookRow({ book, isOwner, locale }: Props) {
           </div>
         )}
 
-        {/* Commentary */}
         {hasCommentary && (
           <div className="mt-2">
             <p
-              className={`text-xs text-[var(--canvas-dark-ink)] whitespace-pre-wrap ${
+              className={`br-commentary whitespace-pre-wrap ${
                 expanded ? '' : 'line-clamp-2'
               }`}
             >
@@ -260,24 +245,20 @@ export function BookRow({ book, isOwner, locale }: Props) {
           </div>
         )}
       </div>
+      {/* Col 4: actions (read toggle + kebab) */}
+      {actions}
     </div>
   )
 
   const wrapper = book.bookId ? (
     <Link
       href={`/${locale}/books/${book.bookId}`}
-      className="block p-3 rounded-[var(--r-row)] border border-[var(--br-card)] hover:border-[var(--canvas-dark-ink-muted)] transition-colors"
-      style={innerStyle}
+      className="tile tile-pad block transition-colors hover:opacity-95"
     >
       {content}
     </Link>
   ) : (
-    <div
-      className="block p-3 rounded-[var(--r-row)] border border-[var(--br-card)]"
-      style={innerStyle}
-    >
-      {content}
-    </div>
+    <div className="tile tile-pad">{content}</div>
   )
 
   return (

@@ -12,7 +12,40 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-08 (C5d-port ✅ CODE-COMPLETE — 24 commits across 4 phases shipped — 634/634 tests — awaiting Chris's smoke pass on D1)
+> **Last updated:** 2026-06-09 (Community surfaces UX polish round — friends/sparks/lists/clubs back links + iOS modals + section rail + `/hives` index)
+>
+> **Last commit:** [8cde7bd](https://github.com/Cremacious/beehive-studio/commit/8cde7bd) — style(community): polish friends/sparks/lists/clubs surfaces + /hives index.
+>
+> **Current focus:** smoke-and-polish pass on the C5d community surfaces, one issue at a time per Chris's request. 13 micro-issues addressed in this session, shipped in one commit:
+> 1. **Session-redirect false alarm.** Diagnosed via new `scripts/ping-sessions.ts` canary (Neon HTTP query OK; the original `[Better Auth] INTERNAL_SERVER_ERROR` was transient neon-serverless WebSocket flakiness in dev — not a real bug). Script kept for future Neon connectivity triage.
+> 2. **Back-link badge.** Shared `<PageHead>` gained optional `back={ href, label }` → renders a dark-iOS badge (panel-tile gradient + `--r-btn` corners + brand-yellow inner squircle icon chip + mono uppercase label + `text-white/90`). Wired on `/friends`, `/sparks`, `/reading-lists`, `/clubs`. Skipped `/studio` — Hives now lives at its own `/hives` route.
+> 3. **`/hives` index route landed.** New `app/[locale]/(app)/hives/page.tsx` lists `getUserHivesView()` results via the existing `HiveCard`, with empty hero ("You're not in any hives yet" → "Create your first hive" → routes to `/studio` for the existing modal). Section rail Hives tile now points here, not `/studio`.
+> 4. **AppNav rework.** Order Studio / Community / Discover. Hive entry removed. `studioActive` predicate widened: `/studio` ∪ `/hive` ∪ `/hives`. `communityActive` widened: `/community` ∪ `/friends` ∪ `/sparks` ∪ `/reading-lists` ∪ `/clubs`.
+> 5. **PageHead head-row restructure.** When both subtitle + headerSlot exist, subtitle now sits inline with the CTA on a second row beneath the h1 (was stacked below title). `.head-row .sub` gets `flex: 1; nowrap; ellipsis`. Cascades to all 4 consumers.
+> 6. **/friends width fix.** Bumped from `w-3xl` (768px) → `w-5xl` (1024px) so the subtitle "Stay close..." fits on the head row without truncating. Matches /sparks, /reading-lists, /clubs.
+> 7. **/friends search + invite chrome.** Search input bg `#1E1E1E` + `--sh-inset` + brand-yellow focus ring; invite-by-link button matches input `h-9` with text + icon on one line via `whitespace-nowrap` + `leading-none` cleanup.
+> 8. **Community section rail spacing.** Scoped `[aria-label="Community sections"] .tab { flex: 1 }` → 5 tiles share rail width evenly. "Your hives" sublabel dropped. Hover color flips brand-yellow (also scoped — friends/sparks tab strips unaffected).
+> 9. **/sparks single-line section heads.** New shared `.section-head` (icon chip + display title + mono count pill, no meta hints). Section copy: "Live now" / "Pick your favorites" / "Wrapped up". Empty Live section gets a proper panel-card (`.empty.empty-inline`) with Sparkles glyph + dual CTAs instead of a lone italic gray line. Sections breathe via `.sec-block { margin-bottom: 40px; :last-child { 0 } }`. Latent CSS bug fixed: `border-bottom: 1px solid var(--br-card)` expanded to invalid CSS (the token is itself a `0.5px solid color` shorthand) — now `border-bottom: var(--br-card)`.
+> 10. **/reading-lists button + modal.** Label "New list" → "New List". Full iOS modal refresh: 560px width, `p-7 gap-6`, subtitle hint under title, recessed `#1E1E1E` inputs with brand-yellow focus rings + mono uppercase labels with brand-yellow required `*`, discoverable checkbox in subtle pill-tile with `accent-[var(--brand)]`, footer's ugly muted strip dropped via new `.dialog-ios-footer` class (transparent bg, no border-top, h-9 pill buttons).
+> 11. **/clubs button + modal.** Label "New club" → "New Club". Same iOS modal refresh applied; both Discoverable + Open join checkboxes live in pill-tiles; body region keeps `max-h-[62vh] overflow-y-auto pr-1 -mr-1` so the longer form stays scrollable on short screens without scrollbar crowding.
+> 12. **Active-nav cascade.** Community navbar entry shows brand-yellow active state across all 5 sub-surfaces (community + friends + sparks + reading-lists + clubs).
+>
+> **Patterns now load-bearing (carry-forward to future community surfaces):**
+> 1. **`<PageHead>` `back` prop** is the canonical back-link affordance for any subpage that has a clear parent hub. Renders dark-iOS badge with inner squircle icon chip. CSS in `.page-head .back` + `.page-head .back .icn`.
+> 2. **`.section-head`** is the canonical single-line section header for surfaces that render cards underneath (sparks, future surfaces). Pattern: icon chip + display title + mono count pill + hairline below. Sibling rhythm via `.sec-block { margin-bottom: 40px }`.
+> 3. **Modal iOS refresh recipe** (applied to CreateListModal + CreateClubModal):
+>    - `<DialogContent className="sm:max-w-[560px] p-7 gap-6 dialog-ios">` for outer padding.
+>    - Inputs: `#1E1E1E` bg + `--sh-inset` boxShadow + `focus:ring-2 focus:ring-[oklch(from_var(--brand)_l_c_h_/_0.35)]`; `h-10` for single-line, `py-2.5` for textareas.
+>    - Labels: `text-[10px] font-mono uppercase tracking-[0.14em]` with `--canvas-dark-ink-muted` color; brand-yellow `*` accent on required; normal-case "optional" / "up to 5" hints inline.
+>    - Checkboxes: live in pill-tiles (`background: oklch(1 0 0 / 0.025); border: var(--br-card)`); use `accent-[var(--brand)]`.
+>    - Footer: `<DialogFooter className="dialog-ios-footer">` strips shadcn's muted strip + border-top; h-9 pill buttons.
+>    - Any future create/edit modal should follow this exact recipe.
+> 4. **Active-route predicates** in AppNav are name-set unions, not single-segment matches. Add new sub-surfaces to the appropriate `Xactive` union — never inline the call in the `active:` field.
+> 5. **CSS rule:** `--br-card` is a `0.5px solid color` SHORTHAND. Use `border-bottom: var(--br-card)` directly — never wrap it inside another `border-bottom: 1px solid var(--br-card)` declaration (expands to invalid CSS).
+>
+> **Next concrete step:** Chris continues the smoke-and-polish loop one issue at a time. Known follow-ups not yet addressed: (a) `New hive` CTA on `/hives` still routes to `/studio` (CreateHiveModal isn't mounted directly on `/hives` yet — minor); (b) /studio has not had the back-link badge applied (intentional — Studio is a top-nav root, but flag if it should match for consistency). Earlier C5d-port narrative preserved verbatim below for historical context.
+>
+> **Prior — Last updated:** 2026-06-08 (C5d-port ✅ CODE-COMPLETE — 24 commits across 4 phases shipped — 634/634 tests — awaiting Chris's smoke pass on D1)
 >
 > **C5d-port ✅ CODE-COMPLETE.** 24 commits shipped end-to-end across 4 phases via subagent-driven execution. 634/634 tests green throughout, tsc clean throughout. The full Community phase visual refresh ships: 8 new categorical accent tokens + 13th sanctioned brand-yellow on Owner pill; 499 lines of community.css ported into globals.css with 32 pill family modifiers; shared `<PageHead>` + `<StatStrip>` server components consumed everywhere; 14 surfaces visually refreshed; 7 structural changes including section rail pill-rail, friends 3-tab consolidation with 307 redirects, list/club book drag-handle column, club tab Q3 reorder + cover-band header + 2-col About, members forum-table locking the 13th brand-yellow, profile Q3 section reorder + 4-stat strip + Sparks+Activity merge + pre-design-system hex sweep, activity feed event row polish. AppNav preserved end-to-end (mockups deliberately omitted top navbar per Chris).
 >

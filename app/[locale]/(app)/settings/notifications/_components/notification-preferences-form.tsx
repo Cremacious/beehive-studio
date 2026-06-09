@@ -123,68 +123,68 @@ export function NotificationPreferencesForm({
   }
 
   return (
-    <div className="space-y-6">
+    <>
+      <style>{`
+        .np-panel { margin-bottom: 16px; }
+        .np-panel:last-child { margin-bottom: 0; }
+        .np-panel h2 {
+          font-family: var(--font-comfortaa);
+          font-weight: 700;
+          font-size: 17px;
+          color: var(--brand);
+          margin: 0 0 4px;
+        }
+        .np-panel .pd {
+          font-size: 13px;
+          color: var(--canvas-dark-ink-muted);
+          margin: 0 0 14px;
+        }
+        .np-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          padding: 13px 0;
+          border-top: 1px solid oklch(from var(--canvas-dark-300) l c h / 0.45);
+        }
+        .np-row .nl {
+          font-family: var(--font-geist-sans, var(--font-ui));
+          font-weight: 600;
+          font-size: 14px;
+          color: var(--canvas-dark-ink-strong);
+        }
+        .np-row .ns {
+          font-size: 12px;
+          color: var(--canvas-dark-ink-muted);
+          margin-top: 3px;
+          max-width: 52ch;
+        }
+      `}</style>
       {GROUPS.map((group) => (
-        <section
-          key={group.title}
-          className="rounded-[var(--r-card)] border"
-          style={{
-            background:
-              'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
-            boxShadow: 'var(--sh-card)',
-            borderColor: 'var(--br-card)',
-          }}
-        >
-          <header
-            className="p-4 border-b"
-            style={{ borderColor: 'var(--br-card)' }}
-          >
-            <h2
-              className="text-lg font-bold"
-              style={{
-                color: 'var(--brand)',
-                fontFamily: 'var(--font-comfortaa)',
-              }}
-            >
-              {group.title}
-            </h2>
-            <p className="text-xs text-[var(--canvas-dark-ink-muted)] mt-1">
-              {group.description}
-            </p>
-          </header>
-          <ul
-            className="divide-y"
-            style={{ borderColor: 'var(--br-card)' }}
-          >
-            {group.rows.map((row) => {
-              const isOptedOut = optedOut.has(row.type)
-              return (
-                <li
-                  key={row.type}
-                  className="flex items-center justify-between gap-4 p-4"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-[var(--canvas-dark-ink)]">
-                      {row.label}
-                    </p>
-                    <p className="text-xs text-[var(--canvas-dark-ink-muted)] mt-0.5">
-                      {row.sublabel}
-                    </p>
-                  </div>
-                  <Switch
-                    checked={!isOptedOut}
-                    onCheckedChange={(checked) =>
-                      handleToggle(row.type, checked)
-                    }
-                    disabled={pending}
-                    aria-label={`Toggle ${row.label}`}
-                  />
-                </li>
-              )
-            })}
-          </ul>
+        <section key={group.title} className="panel panel-pad np-panel">
+          <h2>{group.title}</h2>
+          <p className="pd">{group.description}</p>
+          {group.rows.map((row) => {
+            const isOptedOut = optedOut.has(row.type)
+            return (
+              <div key={row.type} className="np-row">
+                <div className="min-w-0 flex-1">
+                  <div className="nl">{row.label}</div>
+                  <div className="ns">{row.sublabel}</div>
+                </div>
+                <Switch
+                  checked={!isOptedOut}
+                  onCheckedChange={(checked) =>
+                    handleToggle(row.type, checked)
+                  }
+                  disabled={pending}
+                  aria-label={`Toggle ${row.label}`}
+                />
+              </div>
+            )
+          })}
         </section>
       ))}
-    </div>
+    </>
   )
 }

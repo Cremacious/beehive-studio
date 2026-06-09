@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Discover — Beehive Studio</title>
+<link rel="stylesheet" href="community.css" />
+<style>
+  .disc-search { margin-bottom: 18px; }
+  .disc-tabs { margin-bottom: 22px; }
+  .book-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+  .bk {
+    display: flex; flex-direction: column; border-radius: var(--r-card); overflow: hidden;
+    background: linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200));
+    box-shadow: var(--sh-card); border-top: var(--br-card); text-decoration: none; color: inherit;
+    cursor: pointer; transition: transform .16s, box-shadow .16s;
+  }
+  .bk:hover { transform: translateY(-3px); box-shadow: var(--sh-card), 0 0 0 1px oklch(from var(--brand) l c h / 0.18); }
+  .bk .bk-cover { aspect-ratio: 5/7; position: relative; display: flex; align-items: center; justify-content: center; padding: 18px; text-align: center; }
+  .bk .bk-cover .bk-ct { font-family: var(--font-display); font-weight: 700; font-size: 16px; line-height: 1.1; }
+  .bk .bk-cover .bk-by { font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.22em; text-transform: uppercase; margin-top: 10px; }
+  .bk .bk-info { padding: 12px 14px 14px; border-top: var(--br-card); }
+  .bk .bk-info .t { font-family: var(--font-display); font-weight: 700; font-size: 14px; color: var(--canvas-dark-ink-strong); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bk .bk-info .m { display: flex; align-items: center; gap: 7px; margin-top: 5px; font-size: 12px; color: var(--canvas-dark-ink-muted); }
+</style>
+</head>
+<body>
+<main class="cm-main">
+<div class="cm-wrap w-5xl" data-screen-label="Discover">
+  <div class="route-tag"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>/discover</div>
+
+  <div class="page-head"><div class="eyebrow">Find your next read &amp; your next circle</div><h1>Discover</h1></div>
+
+  <div class="disc-search search">
+    <svg class="lead" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    <input class="input" type="text" placeholder="Search books, sparks, hives, lists, and clubs…" />
+  </div>
+
+  <div class="disc-tabs">
+    <div class="tabstrip" role="tablist">
+      <button class="tab active" role="tab">Books</button>
+      <button class="tab" role="tab">Sparks</button>
+      <button class="tab" role="tab">Hives</button>
+      <button class="tab" role="tab">Lists</button>
+      <button class="tab" role="tab">Clubs</button>
+    </div>
+  </div>
+
+  <section class="book-grid" aria-label="Discover books">
+    <a class="bk" href="#"><div class="bk-cover cover-paper"><div><div class="bk-ct">The Hollow King</div><div class="bk-by">Jules Marlowe</div></div></div><div class="bk-info"><div class="t">The Hollow King</div><div class="m"><span class="pill final"><span class="dot"></span>Final</span><span class="dot-sep"></span>Fantasy</div></div></a>
+    <a class="bk" href="#"><div class="bk-cover cover-paper" style="background-color:oklch(0.985 0.012 88)"><div><div class="bk-ct" style="font-family:var(--font-prose);font-style:italic;">Saltwater Hours</div><div class="bk-by">June Hale</div></div></div><div class="bk-info"><div class="t">Saltwater Hours</div><div class="m"><span class="pill revised"><span class="dot"></span>Revised</span><span class="dot-sep"></span>Literary</div></div></a>
+    <a class="bk" href="#"><div class="bk-cover cover-grad" style="--pt:var(--status-outline)"><div><div class="bk-ct" style="color:var(--canvas-dark-ink-strong)">The Midnight Chapter</div><div class="bk-by" style="color:var(--canvas-dark-ink-muted)">Emery Soto</div></div></div><div class="bk-info"><div class="t">The Midnight Chapter</div><div class="m"><span class="pill first-draft"><span class="dot"></span>Draft</span><span class="dot-sep"></span>Mystery</div></div></a>
+    <a class="bk" href="#"><div class="bk-cover cover-paper" style="background-color:oklch(0.935 0.022 82)"><div><div class="bk-ct">Last Train Home</div><div class="bk-by">T. Kerr</div></div></div><div class="bk-info"><div class="t">Last Train Home</div><div class="m"><span class="pill first-draft"><span class="dot"></span>Draft</span><span class="dot-sep"></span>Memoir</div></div></a>
+    <a class="bk" href="#"><div class="bk-cover cover-grad" style="--pt:var(--status-final)"><div><div class="bk-ct" style="color:var(--canvas-dark-ink-strong)">Ashfall County</div><div class="bk-by" style="color:var(--canvas-dark-ink-muted)">V. Nox</div></div></div><div class="bk-info"><div class="t">Ashfall County</div><div class="m"><span class="pill final"><span class="dot"></span>Final</span><span class="dot-sep"></span>Horror</div></div></a>
+    <a class="bk" href="#"><div class="bk-cover cover-paper"><div><div class="bk-ct">The Apiary</div><div class="bk-by">Jules Marlowe</div></div></div><div class="bk-info"><div class="t">The Apiary</div><div class="m"><span class="pill first-draft"><span class="dot"></span>Draft</span><span class="dot-sep"></span>Stories</div></div></a>
+    <a class="bk" href="#"><div class="bk-cover cover-grad" style="--pt:var(--status-revised)"><div><div class="bk-ct" style="color:var(--canvas-dark-ink-strong)">Glasswing</div><div class="bk-by" style="color:var(--canvas-dark-ink-muted)">R. Avery</div></div></div><div class="bk-info"><div class="t">Glasswing</div><div class="m"><span class="pill revised"><span class="dot"></span>Revised</span><span class="dot-sep"></span>YA</div></div></a>
+    <a class="bk" href="#"><div class="bk-cover cover-paper" style="background-color:oklch(0.92 0.018 78)"><div><div class="bk-ct" style="font-family:var(--font-prose);font-style:italic;">A Quiet Inheritance</div><div class="bk-by">M. Penn</div></div></div><div class="bk-info"><div class="t">A Quiet Inheritance</div><div class="m"><span class="pill outline"><span class="dot"></span>Outlined</span><span class="dot-sep"></span>Literary</div></div></a>
+  </section>
+</div>
+</main>
+</body>
+</html>

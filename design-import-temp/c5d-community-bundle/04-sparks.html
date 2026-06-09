@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sparks — Beehive Studio</title>
+<link rel="stylesheet" href="community.css" />
+<style>
+  .sec-block { margin-bottom: 30px; }
+  .sec-label { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .sec-label h2 { font-family: var(--font-display); font-weight: 700; font-size: 16px; color: var(--canvas-dark-ink-strong); margin: 0; }
+  .sec-label .count { font-family: var(--font-mono); font-size: 11px; color: var(--canvas-dark-ink-muted); }
+  .vote-row { display: grid; grid-template-columns: auto 1fr auto auto; gap: 16px; align-items: center; }
+  .vote-row .vr-title { font-family: var(--font-display); font-weight: 700; font-size: 15px; color: var(--canvas-dark-ink-strong); }
+  .vote-row .vr-prompt { font-family: var(--font-prose); font-size: 13px; color: var(--canvas-dark-ink-muted); margin-top: 3px; }
+</style>
+</head>
+<body>
+<main class="cm-main">
+<div class="cm-wrap w-5xl" data-screen-label="Sparks index">
+  <div class="route-tag"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg>/sparks</div>
+
+  <div class="page-head"><div class="head-row">
+    <div><h1>Sparks</h1><p class="sub">Quick prompts, real deadlines. Write, share, and vote on the best entries.</p></div>
+    <button class="btn-brand" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M12 5v14"/></svg>New Spark</button>
+  </div></div>
+
+  <!-- ACTIVE (OPEN) — 3-col grid -->
+  <div class="sec-block">
+    <div class="sec-label"><h2>Accepting entries</h2><span class="count">5 open</span></div>
+    <div class="grid-3">
+      <a class="ccard" href="#">
+        <div class="cc-cover cover-grad" style="--pt:var(--spark-status-open)"><div class="cc-pills"><span class="pill spark-open"><span class="dot"></span>Open</span><span class="pill vis-public"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 4 10 15 15 0 0 1-4 10 15 15 0 0 1-4-10 15 15 0 0 1 4-10z"/></svg>Public</span></div></div>
+        <div class="cc-body"><h3 class="cc-title">Six-word stories</h3><p class="cc-desc">Tell a complete story in exactly six words. Bonus points for a twist.</p>
+          <div class="cc-foot"><span class="deadline" style="padding:4px 11px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><b>6d</b> left</span><div class="cc-stats"><span class="cc-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>4</span></div></div>
+        </div>
+      </a>
+      <a class="ccard" href="#">
+        <div class="cc-cover cover-grad" style="--pt:var(--spark-status-open)"><div class="cc-pills"><span class="pill spark-open"><span class="dot"></span>Open</span><span class="pill vis-friends"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg>Friends</span></div></div>
+        <div class="cc-body"><h3 class="cc-title">A door that shouldn't open</h3><p class="cc-desc">Under 500 words. Somewhere in your story, a door opens that never should have.</p>
+          <div class="cc-foot"><span class="deadline" style="padding:4px 11px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><b>2d</b> left</span><div class="cc-stats"><span class="cc-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>9</span></div></div>
+        </div>
+      </a>
+      <a class="ccard" href="#">
+        <div class="cc-cover cover-grad" style="--pt:var(--spark-status-open)"><div class="cc-pills"><span class="pill spark-open"><span class="dot"></span>Open</span><span class="pill vis-public"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 4 10 15 15 0 0 1-4 10 15 15 0 0 1-4-10 15 15 0 0 1 4-10z"/></svg>Public</span></div></div>
+        <div class="cc-body"><h3 class="cc-title">Dialogue only</h3><p class="cc-desc">A whole scene with nothing but dialogue. No tags, no description.</p>
+          <div class="cc-foot"><span class="deadline" style="padding:4px 11px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><b>9d</b> left</span><div class="cc-stats"><span class="cc-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>2</span></div></div>
+        </div>
+      </a>
+    </div>
+    <!-- See all: shown only when openSparks.length > 3 -->
+    <a class="see-all" href="#">See all 5 open sparks
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </a>
+  </div>
+
+  <!-- VOTING — stacked list -->
+  <div class="sec-block">
+    <div class="sec-label"><h2>Voting now</h2><span class="count">4 in voting</span></div>
+    <section class="panel"><ul class="rows ftable" style="list-style:none;margin:0;padding:0;">
+      <li style="display:block;padding:16px 22px;">
+        <div class="vote-row">
+          <span class="pill spark-voting"><span class="dot"></span>Voting</span>
+          <div><div class="vr-title">Write the last letter</div><div class="vr-prompt">The final letter a character never sent. Make us feel the weight of it.</div></div>
+          <span class="deadline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Voting ends in <b>2d</b></span>
+          <span class="cc-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>12 entries</span>
+        </div>
+      </li>
+      <li style="display:block;padding:16px 22px;">
+        <div class="vote-row">
+          <span class="pill spark-voting"><span class="dot"></span>Voting</span>
+          <div><div class="vr-title">An object that outlived its owner</div><div class="vr-prompt">Tell the story of a thing left behind, and the person it remembers.</div></div>
+          <span class="deadline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Voting ends in <b>3d</b></span>
+          <span class="cc-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>8 entries</span>
+        </div>
+      </li>
+      <li style="display:block;padding:16px 22px;">
+        <div class="vote-row">
+          <span class="pill spark-voting"><span class="dot"></span>Voting</span>
+          <div><div class="vr-title">The worst possible first line</div><div class="vr-prompt">Open a story so badly we have to keep reading. Comedy encouraged.</div></div>
+          <span class="deadline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Voting ends in <b>5d</b></span>
+          <span class="cc-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>21 entries</span>
+        </div>
+      </li>
+    </ul></section>
+    <!-- See all: shown only when votingSparks.length > 3 -->
+    <a class="see-all" href="#">See all 4 sparks in voting
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </a>
+  </div>
+
+  <!-- PAST (CLOSED) — 2-col grid -->
+  <div class="sec-block" style="margin-bottom:0;">
+    <div class="sec-label"><h2>Past sparks</h2><span class="count">6 closed</span></div>
+    <div class="grid-2">
+      <a class="ccard" href="#">
+        <div class="cc-cover cover-grad" style="--pt:var(--spark-status-closed);height:88px;"><div class="cc-pills"><span class="pill spark-closed"><span class="dot"></span>Closed</span></div></div>
+        <div class="cc-body"><h3 class="cc-title">An unreliable narrator</h3>
+          <div class="cc-foot"><span class="meta">Won by <b style="color:var(--canvas-dark-ink);font-family:var(--font-display);">@vesper.nox</b></span><div class="cc-stats"><span class="cc-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>88</span><span class="cc-stat">18 entries</span></div></div>
+        </div>
+      </a>
+      <a class="ccard" href="#">
+        <div class="cc-cover cover-grad" style="--pt:var(--spark-status-closed);height:88px;"><div class="cc-pills"><span class="pill spark-closed"><span class="dot"></span>Closed</span></div></div>
+        <div class="cc-body"><h3 class="cc-title">The first line of a novel</h3>
+          <div class="cc-foot"><span class="meta">Won by <b style="color:var(--canvas-dark-ink);font-family:var(--font-display);">@june.writes</b></span><div class="cc-stats"><span class="cc-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>64</span><span class="cc-stat">23 entries</span></div></div>
+        </div>
+      </a>
+      <a class="ccard" href="#">
+        <div class="cc-cover cover-grad" style="--pt:var(--spark-status-closed);height:88px;"><div class="cc-pills"><span class="pill spark-closed"><span class="dot"></span>Closed</span></div></div>
+        <div class="cc-body"><h3 class="cc-title">Six words, no more</h3>
+          <div class="cc-foot"><span class="meta">Won by <b style="color:var(--canvas-dark-ink);font-family:var(--font-display);">@dorian.reads</b></span><div class="cc-stats"><span class="cc-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>51</span><span class="cc-stat">34 entries</span></div></div>
+        </div>
+      </a>
+      <a class="ccard" href="#">
+        <div class="cc-cover cover-grad" style="--pt:var(--spark-status-closed);height:88px;"><div class="cc-pills"><span class="pill spark-closed"><span class="dot"></span>Closed</span></div></div>
+        <div class="cc-body"><h3 class="cc-title">A letter to your younger self</h3>
+          <div class="cc-foot"><span class="meta">Won by <b style="color:var(--canvas-dark-ink);font-family:var(--font-display);">@mara.penn</b></span><div class="cc-stats"><span class="cc-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>47</span><span class="cc-stat">29 entries</span></div></div>
+        </div>
+      </a>
+    </div>
+    <!-- See all: shown only when pastSparks.length > 4 -->
+    <a class="see-all" href="#">See all 6 past sparks
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </a>
+  </div>
+</div>
+</main>
+</body>
+</html>

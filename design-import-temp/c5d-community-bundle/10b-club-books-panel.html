@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The Midnight Chapter · Books — Beehive Studio</title>
+<link rel="stylesheet" href="community.css" />
+<style>
+  .club-mini { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .club-mini .cm-av { width: 38px; height: 38px; border-radius: 11px; }
+  .club-mini h1 { font-family: var(--font-display); font-weight: 700; font-size: 19px; color: var(--brand); margin: 0; }
+  .sec-block { margin-bottom: 26px; }
+  .sec-label { display:flex;align-items:center;justify-content:space-between;margin-bottom:12px; }
+  .sec-label h2 { font-family: var(--font-display); font-weight: 700; font-size: 15px; color: var(--canvas-dark-ink-strong); margin: 0; }
+  .reading-now { display: grid; grid-template-columns: 64px 1fr auto; gap: 16px; align-items: center; }
+  .reading-now .rn-thumb { width: 64px; height: 96px; border-radius: 6px; box-shadow: var(--sh-tile); }
+  .reading-now h3 { font-family: var(--font-display); font-weight: 700; font-size: 16px; color: var(--canvas-dark-ink-strong); margin: 0; }
+  .queue-row { display: grid; grid-template-columns: 18px 24px 44px 1fr auto; gap: 14px; align-items: center; }
+  .queue-row .qn { font-family: var(--font-display); font-weight: 700; color: var(--canvas-dark-ink-faint); text-align: center; }
+  .queue-row .q-thumb { width: 44px; height: 64px; border-radius: 5px; box-shadow: var(--sh-tile); }
+  details.past { border-radius: var(--r-row); overflow: hidden; }
+  details.past summary { list-style: none; cursor: pointer; padding: 14px 16px; display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 600; font-size: 13.5px; color: var(--canvas-dark-ink); }
+  details.past summary::-webkit-details-marker { display: none; }
+  details.past summary .chev { transition: transform .15s; color: var(--canvas-dark-ink-faint); }
+  details.past[open] summary .chev { transform: rotate(90deg); }
+  .past-item { display: flex; align-items: center; gap: 12px; padding: 11px 16px; border-top: 1px solid oklch(from var(--canvas-dark-300) l c h / 0.4); }
+</style>
+</head>
+<body>
+<main class="cm-main">
+<div class="cm-wrap w-5xl" data-screen-label="Club — Books panel">
+  <a href="10-club-detail.html" class="eyebrow-mono" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;margin-bottom:14px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg> Clubs</a>
+  <div class="club-mini"><span class="cm-av cover-grad" style="--pt:var(--status-outline)"></span><h1>The Midnight Chapter</h1></div>
+  <div style="margin-bottom:18px;"><div class="tabstrip" role="tablist">
+    <a class="tab" href="10-club-detail.html">About</a><a class="tab active" href="10b-club-books-panel.html">Books</a><a class="tab" href="10c-club-discussions-panel.html">Discussions <span class="ct">12</span></a><a class="tab" href="10d-club-members-panel.html">Members <span class="ct">14</span></a><a class="tab" href="10e-club-schedule-panel.html">Schedule</a><a class="tab" href="10f-club-settings-panel.html">Settings</a>
+  </div></div>
+
+  <!-- Currently reading -->
+  <div class="sec-block">
+    <div class="sec-label"><h2>Currently reading</h2></div>
+    <section class="panel panel-pad">
+      <div class="reading-now">
+        <span class="rn-thumb cover-paper"></span>
+        <div><h3>The Hollow King</h3><div class="meta" style="margin-top:3px;">Jules Marlowe · Fantasy</div>
+          <div style="margin-top:10px;display:flex;align-items:center;gap:10px;"><div style="flex:1;max-width:240px;height:6px;border-radius:999px;background:var(--canvas-dark-100);box-shadow:var(--sh-inset);overflow:hidden;"><div style="width:33%;height:100%;background:var(--status-first-draft);border-radius:999px;"></div></div><span class="meta-mono">Ch. 8 / 24</span></div>
+        </div>
+        <span class="pill first-draft"><span class="dot"></span>In progress</span>
+      </div>
+    </section>
+  </div>
+
+  <!-- Up next queue -->
+  <div class="sec-block">
+    <div class="sec-label"><h2>Up next</h2><button class="btn-tile btn-sm" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M12 5v14"/></svg>Add Book</button></div>
+    <section class="panel panel-pad"><ul class="cstack" style="gap:10px;">
+      <li class="tile tile-pad"><div class="queue-row">
+        <span class="drag-handle" style="color:var(--canvas-dark-ink-faint);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></svg></span>
+        <span class="qn">1</span><span class="q-thumb cover-paper" style="background-color:oklch(0.92 0.018 78)"></span>
+        <div><div style="font-family:var(--font-display);font-weight:700;font-size:14px;color:var(--canvas-dark-ink-strong);">Ashfall County</div><div class="meta" style="margin-top:2px;">V. Nox · Horror</div></div>
+        <button class="kebab" aria-label="More"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></button>
+      </div></li>
+      <li class="tile tile-pad"><div class="queue-row">
+        <span class="drag-handle" style="color:var(--canvas-dark-ink-faint);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></svg></span>
+        <span class="qn">2</span><span class="q-thumb cover-paper" style="background-color:oklch(0.985 0.012 88)"></span>
+        <div><div style="font-family:var(--font-display);font-weight:700;font-size:14px;color:var(--canvas-dark-ink-strong);">A Quiet Inheritance</div><div class="meta" style="margin-top:2px;">M. Penn · Literary</div></div>
+        <button class="kebab" aria-label="More"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></button>
+      </div></li>
+    </ul></section>
+  </div>
+
+  <!-- Past reads accordion -->
+  <div class="sec-block" style="margin-bottom:0;">
+    <div class="sec-label"><h2>Past reads</h2><span class="count meta-mono">5 books</span></div>
+    <section class="panel"><details class="past">
+      <summary><svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>Show 5 finished books</summary>
+      <div class="past-item"><span class="q-thumb cover-paper" style="width:36px;height:52px;"></span><div style="flex:1;"><div style="font-family:var(--font-display);font-weight:600;font-size:13px;color:var(--canvas-dark-ink-strong);">Glasswing</div><div class="meta-mono">Finished Mar 2026</div></div><span class="stars" style="font-size:11px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg> 4.2</span></div>
+      <div class="past-item"><span class="q-thumb cover-paper" style="width:36px;height:52px;background-color:oklch(0.92 0.018 78);"></span><div style="flex:1;"><div style="font-family:var(--font-display);font-weight:600;font-size:13px;color:var(--canvas-dark-ink-strong);">The Lantern Men</div><div class="meta-mono">Finished Feb 2026</div></div><span class="stars" style="font-size:11px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg> 3.8</span></div>
+    </details></section>
+  </div>
+</div>
+</main>
+</body>
+</html>

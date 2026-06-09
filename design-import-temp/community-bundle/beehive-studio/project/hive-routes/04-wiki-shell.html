@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Wiki — The Apiary Collective · Beehive Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="hive.css">
+</head>
+<body>
+
+<div class="app-shell">
+  <aside class="hive-sidebar">
+    <div class="sb-head"><h2>The Apiary Collective</h2></div>
+    <nav>
+      <a class="nav-item" href="01-dashboard.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+        <span>Dashboard</span>
+      </a>
+      <a class="nav-item" href="02-outline-index.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><line x1="10" x2="21" y1="6" y2="6"/><line x1="10" x2="21" y1="12" y2="12"/><line x1="10" x2="21" y1="18" y2="18"/><path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/></svg>
+        <span>Outline</span>
+      </a>
+      <a class="nav-item" href="06-chapters-index.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        <span>Chapters</span>
+      </a>
+      <a class="nav-item active" href="04-wiki-shell.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        <span>Wiki</span>
+      </a>
+      <a class="nav-item" href="08-discussions-list.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9a2 2 0 0 1-2 2H6l-4 4V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2z"/><path d="M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1"/></svg>
+        <span>Discussions</span>
+      </a>
+      <a class="nav-item" href="10-submissions-list.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+        <span>Submit Chapter</span>
+      </a>
+      <a class="nav-item" href="14-suggestions.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 22H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8l6 6v3"/><path d="M14 2v6h6"/><path d="M21.4 13.6a2 2 0 0 0-2.8 0l-4.6 4.6L13 22l3.8-1 4.6-4.6a2 2 0 0 0 0-2.8z"/></svg>
+        <span>Edit Suggestions</span>
+      </a>
+      <a class="nav-item" href="15-word-goals.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+        <span>Word Goals</span>
+      </a>
+        <div class="nav-badge"><span style="width:58%"></span></div>
+      <a class="nav-item" href="16-buzz.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
+        <span>Buzz Board</span>
+      </a>
+      <a class="nav-item" href="17-members.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Members</span>
+      </a>
+      <a class="nav-item" href="18-settings.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>Settings</span>
+      </a>
+    </nav>
+  </aside>
+
+  <main class="app-main">
+    <div class="shell-wrap wide" data-screen-label="Wiki">
+      <section class="panel">
+        <header class="panel-head">
+          <div class="ph-text">
+            <h1>Wiki</h1>
+          <p class="subtitle">4 entries across your story bible</p>
+          </div>
+        <div class="head-slot"><a class="btn-brand" href="05-wiki-entry-editor.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5v14"/></svg> New Entry</a></div>
+        </header>
+        <section class="section first">
+          <div class="search-field"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input placeholder="Search 4 entries…"></div>
+        </section>
+        <section class="section" style="padding-bottom:24px;">
+          <p class="sec-label">Categories</p>
+          <div class="cat-grid">
+            <a class="cat-card" href="04-wiki-category.html" style="--pill-accent: var(--wiki-character)">
+              <span class="stripe"></span><span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/></svg></span>
+              <span style="min-width:0;"><span class="cat-name">Character <span class="cat-count">2</span></span><span class="cat-desc" style="display:block;">A person — protagonist, antagonist, or supporting.</span></span>
+            </a>
+            <a class="cat-card" href="04-wiki-category.html" style="--pill-accent: var(--wiki-location)">
+              <span class="stripe"></span><span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></span>
+              <span style="min-width:0;"><span class="cat-name">Location <span class="cat-count zero">0</span></span><span class="cat-desc" style="display:block;">A place — city, region, dungeon, planet.</span></span>
+            </a>
+            <a class="cat-card" href="04-wiki-category.html" style="--pill-accent: var(--wiki-lore)">
+              <span class="stripe"></span><span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>
+              <span style="min-width:0;"><span class="cat-name">Lore <span class="cat-count zero">0</span></span><span class="cat-desc" style="display:block;">A myth, legend, or historical event.</span></span>
+            </a>
+            <a class="cat-card" href="04-wiki-category.html" style="--pill-accent: var(--wiki-plot)">
+              <span class="stripe"></span><span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.3"/><circle cx="6" cy="18" r="2.3"/><circle cx="18" cy="9" r="2.3"/><path d="M6 8.3v7.4M8.3 6h4.4a3 3 0 0 1 3 3v.5"/></svg></span>
+              <span style="min-width:0;"><span class="cat-name">Plot thread <span class="cat-count zero">0</span></span><span class="cat-desc" style="display:block;">A storyline or arc you are tracking.</span></span>
+            </a>
+            <a class="cat-card" href="04-wiki-category.html" style="--pill-accent: var(--wiki-artifact)">
+              <span class="stripe"></span><span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 22 12 12 22 2 12Z"/></svg></span>
+              <span style="min-width:0;"><span class="cat-name">Artifact <span class="cat-count">1</span></span><span class="cat-desc" style="display:block;">An object — weapon, relic, technology.</span></span>
+            </a>
+            <a class="cat-card" href="04-wiki-category.html" style="--pill-accent: var(--wiki-faction)">
+              <span class="stripe"></span><span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+              <span style="min-width:0;"><span class="cat-name">Faction <span class="cat-count">1</span></span><span class="cat-desc" style="display:block;">A group, guild, nation, or organization.</span></span>
+            </a>
+            <a class="cat-card" href="04-wiki-category.html" style="--pill-accent: var(--wiki-culture)">
+              <span class="stripe"></span><span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M4 21V9l8-5 8 5v12M10 21v-6h4v6"/></svg></span>
+              <span style="min-width:0;"><span class="cat-name">Culture <span class="cat-count zero">0</span></span><span class="cat-desc" style="display:block;">A people or society — customs, beliefs, daily life.</span></span>
+            </a>
+            <a class="cat-card" href="04-wiki-category.html" style="--pill-accent: var(--wiki-language)">
+              <span class="stripe"></span><span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v10H9l-4 4V5z"/><path d="M8 9h8M8 12h5"/></svg></span>
+              <span style="min-width:0;"><span class="cat-name">Language <span class="cat-count zero">0</span></span><span class="cat-desc" style="display:block;">A tongue, dialect, or constructed lexicon.</span></span>
+            </a>
+            <a class="cat-card" href="04-wiki-category.html" style="--pill-accent: var(--wiki-biology)">
+              <span class="stripe"></span><span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 4 13c0-6 6-9 13-9 0 7-3 13-9 13Z"/><path d="M4 13c4-1 7-4 8-8"/></svg></span>
+              <span style="min-width:0;"><span class="cat-name">Biology / species <span class="cat-count zero">0</span></span><span class="cat-desc" style="display:block;">A creature, race, or organism.</span></span>
+            </a>
+            <a class="cat-card" href="04-wiki-category.html" style="--pill-accent: var(--wiki-theme)">
+              <span class="stripe"></span><span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.5 5.4L20 9l-4 3.9 1 6-5-3-5 3 1-6L4 9l5.5-.6z"/></svg></span>
+              <span style="min-width:0;"><span class="cat-name">Theme <span class="cat-count zero">0</span></span><span class="cat-desc" style="display:block;">A motif or thematic question your book asks.</span></span>
+            </a>
+            <a class="cat-card" href="04-wiki-category.html" style="--pill-accent: var(--wiki-economy)">
+              <span class="stripe"></span><span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M14.5 9a2.5 2.5 0 0 0-5 .3c0 2.6 5 1.3 5 4a2.5 2.5 0 0 1-5 .2M12 7v1.4M12 15.6V17"/></svg></span>
+              <span style="min-width:0;"><span class="cat-name">Economy <span class="cat-count zero">0</span></span><span class="cat-desc" style="display:block;">Trade, currency, resources, scarcity.</span></span>
+            </a>
+            <a class="cat-card" href="04-wiki-category.html" style="--pill-accent: var(--wiki-terminology)">
+              <span class="stripe"></span><span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2M9 20h6M12 4v16"/></svg></span>
+              <span style="min-width:0;"><span class="cat-name">Terminology <span class="cat-count zero">0</span></span><span class="cat-desc" style="display:block;">A glossary entry — slang, jargon, in-world term.</span></span>
+            </a>
+            <a class="cat-card" href="04-wiki-category.html" style="--pill-accent: var(--wiki-timeline)">
+              <span class="stripe"></span><span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18"/><circle cx="6" cy="12" r="2.3"/><circle cx="18" cy="12" r="2.3"/></svg></span>
+              <span style="min-width:0;"><span class="cat-name">Timeline <span class="cat-count zero">0</span></span><span class="cat-desc" style="display:block;">A chronology — eras, decades, or beats.</span></span>
+            </a>
+            <a class="cat-card" href="04-wiki-category.html" style="--pill-accent: var(--wiki-other)">
+              <span class="stripe"></span><span class="cat-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.6 9a2.4 2.4 0 0 1 4.6 1c0 1.7-2.3 2-2.3 3.4M12 17h.01"/></svg></span>
+              <span style="min-width:0;"><span class="cat-name">Other <span class="cat-count zero">0</span></span><span class="cat-desc" style="display:block;">Doesn't fit a category — that's fine.</span></span>
+            </a>
+          </div>
+        </section>
+      </section>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

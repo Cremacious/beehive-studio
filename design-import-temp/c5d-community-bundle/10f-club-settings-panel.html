@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The Midnight Chapter · Settings — Beehive Studio</title>
+<link rel="stylesheet" href="community.css" />
+<style>
+  .club-mini { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .club-mini .cm-av { width: 38px; height: 38px; border-radius: 11px; }
+  .club-mini h1 { font-family: var(--font-display); font-weight: 700; font-size: 19px; color: var(--brand); margin: 0; }
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--canvas-dark-ink-muted); margin-bottom: 7px; }
+  .set-block + .set-block { margin-top: 18px; }
+  .set-block h3 { font-family: var(--font-display); font-weight: 700; font-size: 15px; color: var(--canvas-dark-ink-strong); margin: 0 0 4px; }
+  .set-block .sd { font-size: 12.5px; color: var(--canvas-dark-ink-muted); margin: 0 0 16px; }
+  .pend-row { display: grid; grid-template-columns: 32px 1fr auto; gap: 12px; align-items: center; padding: 11px 0; }
+  .pend-row + .pend-row { border-top: 1px solid oklch(from var(--canvas-dark-300) l c h / 0.4); }
+  .pend-row .pn { font-family: var(--font-display); font-weight: 600; font-size: 13px; color: var(--canvas-dark-ink-strong); }
+  .pend-row .pm { font-size: 11px; color: var(--canvas-dark-ink-muted); }
+  .danger { border: 1px solid oklch(from var(--status-error) l c h / 0.4) !important; }
+  .danger h3 { color: var(--status-error); }
+  .link-field { display: flex; gap: 10px; }
+  .link-field .lf { flex: 1; display: flex; align-items: center; padding: 0 14px; height: 42px; border-radius: var(--r-row); background: var(--canvas-dark-100); box-shadow: var(--sh-inset); font-family: var(--font-mono); font-size: 12.5px; color: var(--canvas-dark-ink); overflow: hidden; }
+</style>
+</head>
+<body>
+<main class="cm-main">
+<div class="cm-wrap w-3xl" data-screen-label="Club — Settings panel">
+  <a href="10-club-detail.html" class="eyebrow-mono" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;margin-bottom:14px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg> Clubs</a>
+  <div class="club-mini"><span class="cm-av cover-grad" style="--pt:var(--status-outline)"></span><h1>The Midnight Chapter</h1></div>
+  <div style="margin-bottom:18px;"><div class="tabstrip" role="tablist">
+    <a class="tab" href="10-club-detail.html">About</a><a class="tab" href="10b-club-books-panel.html">Books</a><a class="tab" href="10c-club-discussions-panel.html">Discussions <span class="ct">12</span></a><a class="tab" href="10d-club-members-panel.html">Members <span class="ct">14</span></a><a class="tab" href="10e-club-schedule-panel.html">Schedule</a><a class="tab active" href="10f-club-settings-panel.html">Settings</a>
+  </div></div>
+
+  <div style="display:flex;flex-direction:column;gap:0;">
+    <!-- Metadata -->
+    <section class="panel panel-pad set-block">
+      <h3>Club details</h3><p class="sd">Update how your club appears across Beehive.</p>
+      <div class="field"><label>Name</label><input class="input" type="text" value="The Midnight Chapter" /></div>
+      <div class="field"><label>Description</label><textarea class="input">We read one mystery or thriller a month and meet in the discussions to untangle it together.</textarea></div>
+      <div class="field" style="margin-bottom:0;"><label>Tags</label><div class="tag-row"><span class="tag">Mystery</span><span class="tag">Thriller</span><span class="tag">Monthly</span><button class="tag" style="cursor:pointer;border-style:dashed;">+ Add</button></div></div>
+    </section>
+
+    <!-- Join requests -->
+    <section class="panel panel-pad set-block">
+      <h3>Join requests <span class="count" style="color:var(--canvas-dark-ink-muted);font-weight:500;">· 2</span></h3><p class="sd">People waiting to join this club.</p>
+      <div class="pend-row"><span class="avatar s32 a-slate">RS</span><div><div class="pn">Rune Avery</div><div class="pm">@rune.sketch · 2 mutual</div></div><div style="display:flex;gap:7px;"><button class="btn-brand btn-sm" type="button">Approve</button><button class="btn-ghost btn-sm" type="button">Deny</button></div></div>
+      <div class="pend-row"><span class="avatar s32 a-mint">LF</span><div><div class="pn">Lena Frost</div><div class="pm">@lena.frost · 1 mutual</div></div><div style="display:flex;gap:7px;"><button class="btn-brand btn-sm" type="button">Approve</button><button class="btn-ghost btn-sm" type="button">Deny</button></div></div>
+    </section>
+
+    <!-- Pending invites -->
+    <section class="panel panel-pad set-block">
+      <h3>Pending invites <span class="count" style="color:var(--canvas-dark-ink-muted);font-weight:500;">· 1</span></h3><p class="sd">Invites you've sent that haven't been accepted.</p>
+      <div class="pend-row"><span class="avatar s32 a-coral">PB</span><div><div class="pn">@pip.binds</div><div class="pm">Invited 3d ago by @emery.makes</div></div><button class="btn-ghost btn-sm" type="button">Revoke</button></div>
+    </section>
+
+    <!-- Invite by link -->
+    <section class="panel panel-pad set-block">
+      <h3>Invite by link</h3><p class="sd">Anyone with this link can request to join.</p>
+      <div class="link-field"><span class="lf">beehive.studio/clubs/midnight-chapter/invite/8fa2c1</span><button class="btn-brand" type="button">Copy</button></div>
+    </section>
+
+    <!-- Transfer ownership -->
+    <section class="panel panel-pad set-block">
+      <h3>Transfer ownership</h3><p class="sd">Hand this club over to another member. You'll become a moderator.</p>
+      <button class="btn-tile btn-sm" type="button">Transfer ownership…</button>
+    </section>
+
+    <!-- Danger zone -->
+    <section class="panel panel-pad set-block danger">
+      <h3>Delete club</h3><p class="sd">This permanently deletes the club, its discussions, and its schedule. This cannot be undone.</p>
+      <button class="btn-ghost btn-sm" type="button" style="border-color:oklch(from var(--status-error) l c h / 0.5);color:var(--status-error);">Delete this club</button>
+    </section>
+  </div>
+</div>
+</main>
+</body>
+</html>

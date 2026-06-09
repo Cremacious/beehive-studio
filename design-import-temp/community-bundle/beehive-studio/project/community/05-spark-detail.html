@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Write the last letter — Spark — Beehive Studio</title>
+<link rel="stylesheet" href="community.css" />
+<style>
+  .spark-hero { margin-bottom: 22px; }
+  .spark-hero .pills-row { display: flex; gap: 8px; margin-bottom: 14px; }
+  .spark-hero h1 { font-family: var(--font-display); font-weight: 700; font-size: 30px; letter-spacing: -0.02em; color: var(--canvas-dark-ink-strong); margin: 0 0 12px; }
+  .spark-hero .prompt { font-family: var(--font-prose); font-size: 17px; line-height: 1.55; color: var(--canvas-dark-ink); margin: 0 0 18px; max-width: 60ch; }
+  .spark-hero .meta-bar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .entry-row { display: grid; grid-template-columns: 28px 1fr auto; gap: 14px; align-items: center; }
+  .entry-row .rank { font-family: var(--font-display); font-weight: 700; font-size: 14px; color: var(--canvas-dark-ink-faint); text-align: center; }
+  .entry-row .et { font-family: var(--font-display); font-weight: 700; font-size: 15px; color: var(--canvas-dark-ink-strong); }
+  .entry-row .et:hover { color: var(--brand); }
+  .entry-row .em { display: flex; align-items: center; gap: 8px; margin-top: 5px; }
+  .comment { display: grid; grid-template-columns: 36px 1fr; gap: 12px; }
+  .comment .cu { font-family: var(--font-display); font-weight: 600; font-size: 13px; color: var(--canvas-dark-ink-strong); }
+  .comment .ct { font-size: 13.5px; color: var(--canvas-dark-ink); line-height: 1.55; margin: 5px 0 0; }
+  .comment .cactions { display: flex; align-items: center; gap: 16px; margin-top: 9px; }
+  /* comment composer */
+  .composer { display: grid; grid-template-columns: 36px 1fr; gap: 12px; align-items: start; }
+  .composer textarea { min-height: 80px; }
+  .composer .crow { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+  .composer .chint { font-family: var(--font-mono); font-size: 11px; color: var(--canvas-dark-ink-faint); }
+  .disc-divider { height: 1px; background: oklch(from var(--canvas-dark-300) l c h / 0.5); border: 0; margin: 20px 0; }
+</style>
+</head>
+<body>
+<main class="cm-main">
+<div class="cm-wrap w-3xl" data-screen-label="Spark detail (voting)">
+  <a href="#" class="eyebrow-mono" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;margin-bottom:18px;">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg> Sparks
+  </a>
+
+  <header class="spark-hero">
+    <div class="pills-row">
+      <span class="pill spark-voting"><span class="dot"></span>Voting</span>
+      <span class="pill vis-public"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 4 10 15 15 0 0 1-4 10 15 15 0 0 1-4-10 15 15 0 0 1 4-10z"/></svg>Public</span>
+    </div>
+    <h1>Write the last letter</h1>
+    <p class="prompt">The final letter a character never sent. Make us feel the weight of what goes unsaid — under 800 words.</p>
+    <div class="meta-bar">
+      <span class="deadline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Voting ends in <b>2d 4h</b></span>
+      <span class="owner-card"><span class="avatar s24 a-lilac">EM</span><span class="oc-handle">Started by @emery.makes</span></span>
+      <span class="meta">12 entries</span>
+    </div>
+  </header>
+
+  <!-- entries forum-table (VOTING: sorted by likes) -->
+  <section class="panel ftable" aria-label="Entries" style="margin-bottom:22px;">
+    <div class="strip"><ul style="grid-template-columns: 28px 1fr 90px;"><li>#</li><li>Entry</li><li class="ralign">Likes</li></ul></div>
+    <ul class="rows">
+      <li style="grid-template-columns: 28px 1fr 90px;">
+        <div class="rank">1</div>
+        <div class="entry-row" style="grid-template-columns:1fr;"><div><a href="#" class="et" style="text-decoration:none;">To the lighthouse keeper</a><div class="em"><span class="avatar s24 a-mint">VN</span><span class="meta-mono">@vesper.nox · 2d ago</span></div></div></div>
+        <div class="ralign"><button class="act-btn liked"><svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg> 41</button></div>
+      </li>
+      <li style="grid-template-columns: 28px 1fr 90px;">
+        <div class="rank">2</div>
+        <div class="entry-row" style="grid-template-columns:1fr;"><div><a href="#" class="et" style="text-decoration:none;">What I meant in March</a><div class="em"><span class="avatar s24 a-coral">JW</span><span class="meta-mono">@june.writes · 3d ago</span></div></div></div>
+        <div class="ralign"><button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg> 33</button></div>
+      </li>
+      <li style="grid-template-columns: 28px 1fr 90px;">
+        <div class="rank">3</div>
+        <div class="entry-row" style="grid-template-columns:1fr;"><div><a href="#" class="et" style="text-decoration:none;">Dear no one in particular</a><div class="em"><span class="avatar s24 a-blue">DR</span><span class="meta-mono">@dorian.reads · 4d ago</span></div></div></div>
+        <div class="ralign"><button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg> 27</button></div>
+      </li>
+      <li style="grid-template-columns: 28px 1fr 90px;">
+        <div class="rank">4</div>
+        <div class="entry-row" style="grid-template-columns:1fr;"><div><a href="#" class="et" style="text-decoration:none;">The version I burned</a><div class="em"><span class="avatar s24 a-slate">TK</span><span class="meta-mono">@theo.k · 4d ago</span></div></div></div>
+        <div class="ralign"><button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg> 19</button></div>
+      </li>
+    </ul>
+    <!-- See all: shown only when entries.length > 10 -->
+    <a class="see-all" href="#" style="margin:0 16px 16px;">See all 12 entries
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </a>
+  </section>
+
+  <!-- SparkSubmitPanel — gated: voting closed for new entries -->
+  <section class="panel panel-pad" style="margin-bottom:22px;text-align:center;">
+    <div class="eyebrow-mono" style="margin-bottom:8px;">Submissions closed</div>
+    <p class="meta" style="margin:0;">Entries are locked while voting is open. Cast your vote by liking your favorites above.</p>
+  </section>
+
+  <!-- comments / discussion -->
+  <h2 style="font-family:var(--font-display);font-weight:700;font-size:18px;color:var(--canvas-dark-ink-strong);margin:0 0 16px;">Discussion <span class="ink-muted" style="font-weight:500;">· 6</span></h2>
+  <section class="panel panel-pad">
+    <!-- composer -->
+    <div class="composer">
+      <span class="avatar s32 brand">JM</span>
+      <div>
+        <textarea class="input" placeholder="Add to the discussion… use @ to mention someone"></textarea>
+        <div class="crow">
+          <span class="chint">Be kind — these writers are still in voting.</span>
+          <button class="btn-brand btn-sm" type="button">Post comment</button>
+        </div>
+      </div>
+    </div>
+
+    <hr class="disc-divider" />
+
+    <ul class="cstack" style="gap:22px;">
+      <li class="comment"><span class="avatar s32 a-coral">MP</span><div><span class="cu">@mara.penn</span> <span class="meta-mono">5h ago</span><p class="ct">The lighthouse one wrecked me. That last paragraph is doing so much with so little.</p>
+        <div class="cactions"><button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg> 6</button><button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Reply</button></div></div></li>
+      <li class="comment"><span class="avatar s32 a-mint">VN</span><div><span class="cu">@vesper.nox</span> <span class="meta-mono">4h ago</span><p class="ct">Thank you — the prompt did half the work — "the letter never sent" is such a gift.</p>
+        <div class="cactions"><button class="act-btn liked"><svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg> 11</button><button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Reply</button></div></div></li>
+      <li class="comment"><span class="avatar s32 a-blue">DR</span><div><span class="cu">@dorian.reads</span> <span class="meta-mono">2h ago</span><p class="ct">Tough field this round. Voted, but honestly the top four could swap places any day.</p>
+        <div class="cactions"><button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg> 3</button><button class="act-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Reply</button></div></div></li>
+    </ul>
+    <a class="see-all" href="#" style="margin-top:20px;">See all 6 comments
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </a>
+  </section>
+</div>
+</main>
+</body>
+</html>

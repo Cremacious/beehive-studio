@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hive Routes — Beehive Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="hive.css">
+<style>
+  .hub { max-width: 1080px; margin: 0 auto; padding: 48px 28px 96px; }
+  .hub-hero { margin-bottom: 36px; }
+  .hub-hero .eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--canvas-dark-ink-muted); }
+  .hub-hero h1 { font-family: var(--font-display); font-weight: 700; font-size: 40px; letter-spacing: -0.02em; color: var(--brand); margin: 10px 0 8px; }
+  .hub-hero p { font-size: 15px; color: var(--canvas-dark-ink-muted); max-width: 60ch; margin: 0; }
+  .grp { margin-top: 32px; }
+  .grp > .glabel { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--canvas-dark-ink-muted); margin-bottom: 14px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+  .route { display: flex; gap: 14px; align-items: flex-start; padding: 16px 18px; border-radius: var(--r-row);
+    background: linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300)); box-shadow: var(--sh-tile);
+    text-decoration: none; color: inherit; transition: transform .14s; }
+  .route:hover { transform: translateY(-2px); }
+  .route .rnum { font-family: var(--font-mono); font-size: 12px; color: var(--brand); flex-shrink: 0; width: 22px; padding-top: 1px; }
+  .route .rt { font-family: var(--font-display); font-weight: 600; font-size: 15px; color: var(--canvas-dark-ink-strong); }
+  .route .rd { font-size: 12.5px; color: var(--canvas-dark-ink-muted); margin-top: 3px; }
+</style>
+</head>
+<body>
+
+<div class="hub" style="background: linear-gradient(180deg, var(--canvas-dark-150), var(--canvas-dark-100)); min-height: 100vh;">
+  <div class="hub-hero">
+    <div class="eyebrow">Beehive Studio · Hive collaboration surfaces</div>
+    <h1>Hive Routes</h1>
+    <p>The 18 collaboration surfaces of a hive — outlines, wiki, chapters, discussions, submissions and momentum feeds — as a single coherent dark-mode app. Cool-gray stacked-depth chrome, restrained brand yellow, unified pill convention.</p>
+  </div>
+
+  <div class="grp">
+    <div class="glabel">Home</div>
+    <div class="grid">
+      <a class="route" href="01-dashboard.html"><span class="rnum">01</span><span><span class="rt">Dashboard</span><span class="rd" style="display:block;">Welcome panel · members, last active, linked book</span></span></a>
+    </div>
+  </div>
+
+  <div class="grp">
+    <div class="glabel">Story bible</div>
+    <div class="grid">
+      <a class="route" href="02-outline-index.html"><span class="rnum">02</span><span><span class="rt">Outlines</span><span class="rd" style="display:block;">Forum-table of outlines with beat-color dots</span></span></a>
+      <a class="route" href="03-outline-detail.html"><span class="rnum">03</span><span><span class="rt">Outline Detail</span><span class="rd" style="display:block;">Sortable beat sheet by act</span></span></a>
+      <a class="route" href="04-wiki-shell.html"><span class="rnum">04</span><span><span class="rt">Wiki</span><span class="rd" style="display:block;">Category index of the story bible</span></span></a>
+      <a class="route" href="04-wiki-category.html"><span class="rnum">04</span><span><span class="rt">Wiki Category</span><span class="rd" style="display:block;">Entries within one category</span></span></a>
+      <a class="route" href="05-wiki-entry-editor.html"><span class="rnum">05</span><span><span class="rt">Wiki Entry Editor</span><span class="rd" style="display:block;">Multi-section entry with prose cards</span></span></a>
+    </div>
+  </div>
+
+  <div class="grp">
+    <div class="glabel">Manuscript</div>
+    <div class="grid">
+      <a class="route" href="06-chapters-index.html"><span class="rnum">06</span><span><span class="rt">Chapters</span><span class="rd" style="display:block;">Chapter list with activity badges</span></span></a>
+      <a class="route" href="07-chapter-view.html"><span class="rnum">07</span><span><span class="rt">Chapter View</span><span class="rd" style="display:block;">Status, scene planner, read-only prose</span></span></a>
+    </div>
+  </div>
+
+  <div class="grp">
+    <div class="glabel">Discussion</div>
+    <div class="grid">
+      <a class="route" href="08-discussions-list.html"><span class="rnum">08</span><span><span class="rt">Discussions</span><span class="rd" style="display:block;">Topic-filtered thread table</span></span></a>
+      <a class="route" href="09-discussion-thread.html"><span class="rnum">09</span><span><span class="rt">Discussion Thread</span><span class="rd" style="display:block;">Original post, replies, composer</span></span></a>
+    </div>
+  </div>
+
+  <div class="grp">
+    <div class="glabel">Submissions</div>
+    <div class="grid">
+      <a class="route" href="10-submissions-list.html"><span class="rnum">10</span><span><span class="rt">Submissions</span><span class="rd" style="display:block;">Drafts, mine, all-in-hive tables</span></span></a>
+      <a class="route" href="11-submission-composer.html"><span class="rnum">11</span><span><span class="rt">Submission Composer</span><span class="rd" style="display:block;">Auto-saving draft editor</span></span></a>
+      <a class="route" href="12-submission-review.html"><span class="rnum">12</span><span><span class="rt">Submission Review</span><span class="rd" style="display:block;">Approve / reject a pending draft</span></span></a>
+      <a class="route" href="13-submission-read.html"><span class="rnum">13</span><span><span class="rt">Submission Read</span><span class="rd" style="display:block;">Resolved submission + review note</span></span></a>
+    </div>
+  </div>
+
+  <div class="grp">
+    <div class="glabel">Momentum</div>
+    <div class="grid">
+      <a class="route" href="14-suggestions.html"><span class="rnum">14</span><span><span class="rt">Edit Suggestions</span><span class="rd" style="display:block;">Per-chapter inline-diff cards</span></span></a>
+      <a class="route" href="15-word-goals.html"><span class="rnum">15</span><span><span class="rt">Word Goals</span><span class="rd" style="display:block;">Shared targets, contributors, history</span></span></a>
+      <a class="route" href="16-buzz.html"><span class="rnum">16</span><span><span class="rt">Buzz Board</span><span class="rd" style="display:block;">Inspiration & link feed with likes</span></span></a>
+    </div>
+  </div>
+
+  <div class="grp">
+    <div class="glabel">Admin</div>
+    <div class="grid">
+      <a class="route" href="17-members.html"><span class="rnum">17</span><span><span class="rt">Members</span><span class="rd" style="display:block;">Invites, roles, member table</span></span></a>
+      <a class="route" href="18-settings.html"><span class="rnum">18</span><span><span class="rt">Settings</span><span class="rd" style="display:block;">Basics, visibility, danger zone</span></span></a>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

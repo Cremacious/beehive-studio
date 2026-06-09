@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The Midnight Chapter — Club — Beehive Studio</title>
+<link rel="stylesheet" href="community.css" />
+<style>
+  .club-header { margin-bottom: 18px; overflow: hidden; }
+  .club-banner { height: 132px; position: relative; }
+  .club-banner::after { content:''; position:absolute; inset:0; background: linear-gradient(180deg, transparent, oklch(from var(--canvas-dark-200) l c h / 0.85)); }
+  .club-head-body { padding: 0 24px 22px; margin-top: -28px; position: relative; z-index: 2; }
+  .club-head-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; }
+  .club-head-top h1 { font-family: var(--font-display); font-weight: 700; font-size: 28px; letter-spacing: -0.02em; color: var(--brand); margin: 10px 0 0; }
+  .club-pills { display: flex; gap: 8px; margin-bottom: 2px; }
+  .club-meta { display: flex; align-items: center; gap: 14px; margin-top: 12px; }
+  .club-cta { display: flex; gap: 8px; align-items: center; }
+  .about-grid { display: grid; grid-template-columns: 1fr 280px; gap: 18px; align-items: start; }
+  .about-grid h3 { font-family: var(--font-display); font-weight: 700; font-size: 15px; color: var(--canvas-dark-ink-strong); margin: 0 0 10px; }
+  .rules { font-family: var(--font-mono); font-size: 12.5px; line-height: 1.7; color: var(--canvas-dark-ink); white-space: pre-wrap; margin: 0; }
+  .about-desc { font-family: var(--font-prose); font-size: 15px; line-height: 1.6; color: var(--canvas-dark-ink); margin: 0 0 18px; }
+  .current-book { display: flex; gap: 14px; align-items: center; }
+  .current-book .cb-thumb { width: 56px; height: 84px; border-radius: 6px; box-shadow: var(--sh-tile); flex-shrink: 0; }
+  .info-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; font-size: 13px; }
+  .info-row + .info-row { border-top: 1px solid oklch(from var(--canvas-dark-300) l c h / 0.4); }
+  .info-row .k { color: var(--canvas-dark-ink-muted); }
+  .info-row .v { color: var(--canvas-dark-ink-strong); font-weight: 600; }
+</style>
+</head>
+<body>
+<main class="cm-main">
+<div class="cm-wrap w-5xl" data-screen-label="Club detail — About">
+  <a href="#" class="eyebrow-mono" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;margin-bottom:16px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg> Clubs</a>
+
+  <!-- ClubHeader -->
+  <header class="panel club-header">
+    <div class="club-banner cover-grad" style="--pt:var(--status-outline)"></div>
+    <div class="club-head-body">
+      <div class="club-head-top">
+        <div>
+          <div class="club-pills"><span class="pill vis-public"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 4 10 15 15 0 0 1-4 10 15 15 0 0 1-4-10 15 15 0 0 1 4-10z"/></svg>Public</span><span class="pill open-join"><span class="dot"></span>Open to join</span></div>
+          <h1>The Midnight Chapter</h1>
+          <div class="club-meta">
+            <span class="owner-card"><span class="avatar s24 a-lilac">EM</span><span class="oc-handle">Hosted by @emery.makes</span></span>
+            <span class="dot-sep"></span>
+            <span class="meta"><b style="color:var(--canvas-dark-ink);font-family:var(--font-display);">14</b> members</span>
+          </div>
+        </div>
+        <div class="club-cta">
+          <button class="btn-tile btn-sm" type="button">Leave</button>
+          <button class="btn-brand btn-sm" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>Invite</button>
+          <button class="kebab" aria-label="More"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Tab strip -->
+  <div style="margin-bottom:18px;"><div class="tabstrip" role="tablist">
+    <a class="tab active" href="10-club-detail.html">About</a>
+    <a class="tab" href="10b-club-books-panel.html">Books</a>
+    <a class="tab" href="10c-club-discussions-panel.html">Discussions <span class="ct">12</span></a>
+    <a class="tab" href="10d-club-members-panel.html">Members <span class="ct">14</span></a>
+    <a class="tab" href="10e-club-schedule-panel.html">Schedule</a>
+    <a class="tab" href="10f-club-settings-panel.html">Settings</a>
+  </div></div>
+
+  <!-- About panel (10a) -->
+  <div class="about-grid">
+    <div style="display:flex;flex-direction:column;gap:18px;">
+      <section class="panel panel-pad">
+        <h3>About this club</h3>
+        <p class="about-desc">We read one mystery or thriller a month and meet in the discussions to untangle it together. Spoiler-tagged threads, no gatekeeping, and a soft spot for an unreliable narrator. New members always welcome.</p>
+        <div class="tag-row"><span class="tag">Mystery</span><span class="tag">Thriller</span><span class="tag">Monthly</span><span class="tag">Spoiler-safe</span></div>
+      </section>
+      <section class="panel panel-pad">
+        <h3>House rules</h3>
+        <pre class="rules">1. Tag spoilers past the current chapter.
+2. One discussion thread per chapter — keep it tidy.
+3. Disagree with the book, never the reader.
+4. Finished early? The queue is open for suggestions.</pre>
+      </section>
+    </div>
+
+    <aside style="display:flex;flex-direction:column;gap:18px;">
+      <section class="panel panel-pad">
+        <h3>Currently reading</h3>
+        <div class="current-book">
+          <span class="cb-thumb cover-paper"></span>
+          <div><div style="font-family:var(--font-display);font-weight:700;font-size:14px;color:var(--canvas-dark-ink-strong);">The Hollow King</div><div class="meta" style="margin-top:3px;">Jules Marlowe</div><div class="meta-mono" style="margin-top:6px;">Ch. 8 of 24 by Apr 2</div></div>
+        </div>
+      </section>
+      <section class="panel panel-pad">
+        <div class="info-row"><span class="k">Founded</span><span class="v">Jan 2026</span></div>
+        <div class="info-row"><span class="k">Members</span><span class="v">14</span></div>
+        <div class="info-row"><span class="k">Books read</span><span class="v">5</span></div>
+        <div class="info-row"><span class="k">Visibility</span><span class="v">Public</span></div>
+      </section>
+    </aside>
+  </div>
+</div>
+</main>
+</body>
+</html>

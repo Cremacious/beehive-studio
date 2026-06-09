@@ -1,0 +1,147 @@
+/* ─────────────────────────────────────────────────────────────────────
+   Beehive Studio — Design tokens (Prompt 1: Studio Shell)
+   Author: Claude Design · 2026-05-26
+   These tokens are the source of truth for Prompts 2 + 3.
+   ───────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* ── Chrome (the dark walnut "desk" the paper sits on) ─────────────── */
+  --chrome-950: oklch(0.165 0.010 60);   /* deepest seams, app bg */
+  --chrome-900: oklch(0.205 0.012 58);   /* binder + metadata bg */
+  --chrome-850: oklch(0.230 0.013 57);   /* toolbar + status bar */
+  --chrome-800: oklch(0.255 0.013 56);   /* hover row, popover */
+  --chrome-750: oklch(0.290 0.014 55);   /* elevated, dropdown bg */
+  --chrome-700: oklch(0.340 0.012 55);   /* button borders */
+  --chrome-600: oklch(0.410 0.010 55);   /* subtle dividers */
+  --chrome-500: oklch(0.520 0.010 55);   /* muted icon */
+  --chrome-400: oklch(0.640 0.012 60);   /* secondary text */
+  --chrome-300: oklch(0.760 0.014 65);   /* primary text on chrome */
+  --chrome-200: oklch(0.880 0.012 75);   /* high-contrast text */
+  --chrome-100: oklch(0.950 0.010 80);   /* almost-ivory headings */
+
+  /* ── Paper (light editor canvas — cream, warm, sub-saturation) ─────── */
+  --paper-50:  oklch(0.985 0.012 88);    /* page edge highlight */
+  --paper-100: oklch(0.965 0.018 85);    /* prose page surface */
+  --paper-200: oklch(0.935 0.022 82);    /* selection / mark */
+  --paper-300: oklch(0.880 0.020 80);    /* rule, divider */
+  --paper-400: oklch(0.760 0.022 78);    /* meta on paper */
+  --paper-ink-muted: oklch(0.520 0.022 60);
+  --paper-ink:       oklch(0.265 0.020 55);  /* prose body color */
+  --paper-ink-strong:oklch(0.180 0.022 50);  /* headings on paper */
+
+  /* ── Dark editor canvas (warm coffee — NOT slate) ──────────────────── */
+  --canvas-dark-100: oklch(0.255 0.018 55);  /* page surface */
+  --canvas-dark-200: oklch(0.290 0.018 55);  /* lifted card on dark */
+  --canvas-dark-300: oklch(0.350 0.018 55);  /* rule on dark */
+  --canvas-dark-ink-muted: oklch(0.680 0.014 65);
+  --canvas-dark-ink:       oklch(0.880 0.012 80);
+  --canvas-dark-ink-strong:oklch(0.965 0.010 85);
+
+  /* ── Brand & accent ────────────────────────────────────────────────── */
+  --brand:        #FFC300;
+  --brand-hover:  #FFD040;
+  --brand-active: #E0AC01;
+  --brand-soft:   oklch(0.85 0.18 90 / 0.18);     /* tints / wash */
+  --brand-ink:    oklch(0.20 0.05 75);            /* text on yellow */
+
+  /* ── Chapter status (5) — harmonised at C≈0.07, L≈0.72 ────────────── */
+  --status-idea:        oklch(0.74 0.045 245);   /* soft cloud blue */
+  --status-outline:     oklch(0.74 0.070 295);   /* dusty plum */
+  --status-first-draft: oklch(0.80 0.140 88);    /* brand-adjacent warm */
+  --status-revised:     oklch(0.74 0.080 155);   /* sage */
+  --status-final:       oklch(0.68 0.130 35);    /* terracotta */
+
+  /* ── Binder item types (6) — distinct hues, equal weight ──────────── */
+  --type-chapter:      var(--brand);             /* the workhorse */
+  --type-front-matter: oklch(0.74 0.065 290);    /* plum */
+  --type-back-matter:  oklch(0.70 0.075 330);    /* rose */
+  --type-outline:      oklch(0.74 0.080 205);    /* teal */
+  --type-research:     oklch(0.74 0.080 155);    /* sage */
+  --type-character:    oklch(0.72 0.110 35);     /* terracotta */
+
+  /* ── Validation ────────────────────────────────────────────────────── */
+  --success: oklch(0.72 0.130 152);
+  --warning: oklch(0.80 0.140 80);
+  --error:   oklch(0.66 0.180 25);
+
+  /* ── Type ──────────────────────────────────────────────────────────── */
+  --font-display: 'Comfortaa', system-ui, sans-serif;     /* brand, headings */
+  --font-ui:      'Geist', ui-sans-serif, system-ui, sans-serif;
+  --font-prose:   'Newsreader', 'Source Serif 4', Georgia, serif; /* book body */
+  --font-mono:    'JetBrains Mono', ui-monospace, monospace;
+
+  /* Type scale (rem, 16px base) */
+  --t-2xs: 11px;   /* meta labels, counters */
+  --t-xs:  12px;   /* nav meta, tooltip */
+  --t-sm:  13px;   /* binder row, toolbar */
+  --t-md:  14px;   /* UI body */
+  --t-lg:  16px;   /* metadata field */
+  --t-xl:  18px;   /* section heading */
+  --t-2xl: 22px;
+  --t-3xl: 28px;
+
+  /* Editor prose scale — driven by --editor-font-size (user pref) */
+  --editor-font-size: 18px;   /* default; user can override 12..24 */
+  --editor-line-height: 1.78;
+
+  /* ── Spacing scale (cozy but not bloated) ─────────────────────────── */
+  --s-1:  4px;
+  --s-2:  8px;
+  --s-3:  12px;
+  --s-4:  16px;
+  --s-5:  20px;
+  --s-6:  24px;
+  --s-8:  32px;
+  --s-10: 40px;
+  --s-14: 56px;
+  --s-18: 72px;
+
+  /* ── Radii — soft, never sharp ─────────────────────────────────────── */
+  --r-xs: 4px;     /* inputs, pills */
+  --r-sm: 6px;     /* small buttons */
+  --r-md: 10px;    /* toolbar buttons, rows */
+  --r-lg: 14px;    /* cards, popovers */
+  --r-xl: 18px;    /* large cards, modal */
+  --r-2xl: 22px;
+  --r-full: 9999px;
+
+  /* ── Elevation (the "stacked paper" depth scale) ──────────────────── */
+  /* Every shadow includes a hair of inset top-highlight for that
+     "edge-of-a-page" feel, and a sharp dark bottom edge for weight. */
+  --el-0: 0 1px 0 rgba(255,255,255,0.04) inset;
+  --el-1:
+      0 1px 0 rgba(255,255,255,0.05) inset,
+      0 1px 0 rgba(0,0,0,0.40);
+  --el-2:
+      0 1px 0 rgba(255,255,255,0.05) inset,
+      0 2px 0 rgba(0,0,0,0.32),
+      0 6px 16px -8px rgba(0,0,0,0.45);
+  --el-3:
+      0 1px 0 rgba(255,255,255,0.06) inset,
+      0 3px 0 rgba(0,0,0,0.30),
+      0 16px 40px -16px rgba(0,0,0,0.55);
+  --el-4:
+      0 1px 0 rgba(255,255,255,0.06) inset,
+      0 4px 0 rgba(0,0,0,0.30),
+      0 32px 64px -24px rgba(0,0,0,0.65);
+
+  /* Paper-on-paper shadow (for use over light cream surfaces) */
+  --el-paper:
+      0 1px 0 rgba(255,255,255,0.8) inset,
+      0 1px 2px rgba(60,40,20,0.06),
+      0 8px 24px -10px rgba(60,40,20,0.16);
+
+  /* Focus ring (WCAG AA, on both light + dark) */
+  --ring: 0 0 0 2px var(--chrome-900), 0 0 0 4px var(--brand);
+  --ring-paper: 0 0 0 2px var(--paper-100), 0 0 0 4px var(--brand);
+
+  /* ── Component sizing ─────────────────────────────────────────────── */
+  --binder-w: 264px;
+  --metadata-w: 288px;
+  --topnav-h: 56px;
+  --toolbar-h: 48px;
+  --statusbar-h: 36px;
+  --row-h: 36px;          /* binder row height */
+  --toolbar-btn: 30px;    /* toolbar icon button */
+  --prose-max: 720px;     /* prose line length cap */
+}

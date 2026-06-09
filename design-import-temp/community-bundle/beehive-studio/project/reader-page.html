@@ -1,0 +1,1222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The Lost Hive Chronicles — Beehive Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ─────────────────────────────────────────────────────────────────────
+   Public Book Reader Page — Beehive Studio
+   iOS-inspired stacked-depth dark surface. Tokens map 1:1 to
+   app/globals.css :root. Brand yellow is reserved for 7 roles only.
+   ───────────────────────────────────────────────────────────────────── */
+:root {
+  /* chrome scale — light to dark */
+  --canvas-dark-100: #262728;
+  --canvas-dark-150: oklch(0.275 0.003 256);
+  --canvas-dark-200: oklch(0.295 0.003 256);
+  --canvas-dark-250: oklch(0.325 0.003 256);
+  --canvas-dark-300: oklch(0.360 0.003 256);
+  --canvas-dark-350: oklch(0.400 0.003 256);
+  --canvas-dark-400: oklch(0.450 0.003 256);
+
+  /* ink scale — most muted to brightest */
+  --canvas-dark-ink-faint:  oklch(0.500 0.003 256);
+  --canvas-dark-ink-muted:  oklch(0.680 0.003 256);
+  --canvas-dark-ink:        oklch(0.880 0.003 256);
+  --canvas-dark-ink-strong: oklch(0.965 0.003 256);
+
+  /* brand */
+  --brand:        #FFC300;
+  --brand-hover:  #FFD040;
+  --brand-active: #E0AC01;
+  --brand-ink:    oklch(0.20 0.05 75);
+  --brand-soft:   oklch(0.85 0.18 90 / 0.16);
+
+  /* radius */
+  --r-card: 20px;
+  --r-row:  14px;
+  --r-btn:  12px;
+  --r-pill: 999px;
+
+  /* depth */
+  --sh-card:  0 1px 0 0 oklch(1 0 0 / 0.04) inset, 0 20px 40px -20px oklch(0 0 0 / 0.5), 0 4px 8px -4px oklch(0 0 0 / 0.3);
+  --sh-tile:  0 1px 0 0 oklch(1 0 0 / 0.05) inset, 0 8px 16px -8px oklch(0 0 0 / 0.4);
+  --sh-inset: inset 0 1px 2px 0 oklch(0 0 0 / 0.4);
+  --br-card:  0.5px solid oklch(1 0 0 / 0.04);
+
+  /* fonts */
+  --font-display: 'Comfortaa', system-ui, sans-serif;
+  --font-ui:      'Geist', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--canvas-dark-100);
+  color: var(--canvas-dark-ink);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  min-height: 100vh;
+}
+
+/* faint room-light grain */
+body::before {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image: radial-gradient(circle at 1px 1px, oklch(1 0 0 / 0.012) 1px, transparent 0);
+  background-size: 26px 26px;
+}
+
+/* ── reusable chrome recipes ───────────────────────────────────────── */
+.panel {
+  background: linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200));
+  border-radius: var(--r-card);
+  box-shadow: var(--sh-card);
+  border-top: 1px solid oklch(1 0 0 / 0.04);
+}
+.tile {
+  background: linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300));
+  border-radius: var(--r-row);
+  box-shadow: var(--sh-tile);
+}
+.recessed {
+  background: var(--canvas-dark-100);
+  border-radius: var(--r-row);
+  box-shadow: var(--sh-inset);
+}
+
+.label-mono {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--canvas-dark-ink-muted);
+}
+
+/* section heading — Comfortaa brand-yellow */
+.section-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 16px; margin-bottom: 22px;
+}
+.section-head h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: -0.01em;
+  color: var(--brand);            /* [BRAND] section heading */
+  margin: 0;
+}
+.section-head .sub {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--canvas-dark-ink-muted);
+  white-space: nowrap;
+}
+.section-head .sub b {
+  color: var(--canvas-dark-ink-strong);
+  font-weight: 500;
+}
+
+/* ── page shell ────────────────────────────────────────────────────── */
+main {
+  position: relative; z-index: 1;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 40px 28px 120px;
+  display: flex; flex-direction: column;
+  gap: 28px;
+}
+
+/* ════════════════════════════ HERO ════════════════════════════════ */
+.book-hero {
+  position: relative;
+  padding: 34px;
+  overflow: hidden;
+}
+.hero-grid {
+  position: relative; z-index: 1;
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 34px;
+  align-items: start;
+}
+
+/* cover — 200×300, 2:3 */
+.book-cover {
+  width: 200px; height: 300px;
+  border-radius: var(--r-row);
+  overflow: hidden;
+  position: relative;
+  box-shadow:
+    0 1px 0 0 oklch(1 0 0 / 0.10) inset,
+    0 24px 48px -16px oklch(0 0 0 / 0.6),
+    0 8px 16px -8px oklch(0 0 0 / 0.4);
+  /* placeholder cover artwork (book covers are user imagery) */
+  background:
+    radial-gradient(120% 80% at 50% -10%, oklch(0.42 0.10 250), transparent 60%),
+    linear-gradient(165deg, oklch(0.34 0.08 255), oklch(0.22 0.06 268));
+  flex-shrink: 0;
+}
+.book-cover .cover-art {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  justify-content: space-between;
+  padding: 22px 18px;
+}
+.book-cover .cover-hex {
+  position: absolute; inset: 0; opacity: 0.5;
+  background-image:
+    radial-gradient(circle at 1.5px 1.5px, oklch(0.85 0.16 88 / 0.18) 1.5px, transparent 0);
+  background-size: 20px 18px;
+}
+.book-cover .cover-eyebrow {
+  position: relative;
+  font-family: var(--font-mono);
+  font-size: 8.5px; letter-spacing: 0.3em; text-transform: uppercase;
+  color: oklch(0.85 0.12 88 / 0.85);
+  text-align: center;
+}
+.book-cover .cover-glyph {
+  position: relative; margin: auto;
+  color: oklch(0.86 0.15 88);
+}
+.book-cover .cover-title {
+  position: relative; text-align: center;
+}
+.book-cover .cover-title .t {
+  font-family: var(--font-display);
+  font-weight: 700; font-size: 19px; line-height: 1.05;
+  letter-spacing: -0.01em;
+  color: oklch(0.97 0.01 90);
+  text-wrap: balance;
+}
+.book-cover .cover-title .rule {
+  width: 26px; height: 1px; margin: 9px auto;
+  background: oklch(0.85 0.15 88 / 0.7);
+}
+.book-cover .cover-title .by {
+  font-family: var(--font-mono);
+  font-size: 8px; letter-spacing: 0.24em; text-transform: uppercase;
+  color: oklch(0.88 0.04 90 / 0.75);
+}
+
+/* hero content column */
+.hero-main { min-width: 0; }
+
+/* pill row above title (privacy + series) */
+.hero-toprow {
+  display: flex; align-items: center; flex-wrap: wrap;
+  gap: 12px; margin-bottom: 14px;
+}
+.privacy-pill {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 5px 11px 5px 9px;
+  border-radius: var(--r-pill);
+  background: var(--canvas-dark-100);
+  box-shadow: var(--sh-inset);
+  font-family: var(--font-mono);
+  font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--canvas-dark-ink);
+}
+.privacy-pill svg { color: var(--canvas-dark-ink-muted); }
+.series-line {
+  font-family: var(--font-mono);
+  font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--canvas-dark-ink-muted);
+}
+.series-line b { color: var(--canvas-dark-ink); font-weight: 500; }
+.premium-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px 4px 8px;
+  border-radius: var(--r-pill);
+  background: var(--brand-soft);              /* [BRAND] premium badge */
+  color: var(--brand);
+  font-family: var(--font-display);
+  font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+}
+
+.book-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 40px;
+  line-height: 1.02;
+  letter-spacing: -0.025em;
+  color: var(--brand);                        /* [BRAND] title */
+  margin: 0 0 14px;
+  text-wrap: balance;
+}
+
+/* author row */
+.author-row {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 18px;
+}
+.author-row .avatar {
+  width: 24px; height: 24px; border-radius: var(--r-pill);
+  background: linear-gradient(150deg, oklch(0.6 0.13 250), oklch(0.46 0.1 280));
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-weight: 700; font-size: 10px;
+  color: oklch(0.97 0.01 250);
+  flex-shrink: 0;
+}
+.author-row .by {
+  font-size: 14px; color: var(--canvas-dark-ink-muted);
+}
+.author-row .by a {
+  color: var(--canvas-dark-ink-strong);
+  font-weight: 500; text-decoration: none;
+}
+.author-row .by a:hover { text-decoration: underline; text-underline-offset: 2px; }
+
+/* tag pills */
+.tag-row {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-bottom: 22px;
+}
+.genre-pill, .tag-pill {
+  display: inline-flex; align-items: center;
+  padding: 5px 12px;
+  border-radius: var(--r-pill);
+  font-size: 12px;
+}
+.genre-pill {
+  background: var(--canvas-dark-350);
+  color: var(--canvas-dark-ink-strong);
+  font-weight: 600;
+  box-shadow: 0 1px 0 0 oklch(1 0 0 / 0.05) inset;
+}
+.tag-pill {
+  background: var(--canvas-dark-100);
+  box-shadow: var(--sh-inset);
+  color: var(--canvas-dark-ink-muted);
+}
+.tag-pill::before { content: '#'; opacity: 0.5; margin-right: 2px; }
+
+/* 4-stat strip */
+.stat-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 22px;
+}
+.stat-cell {
+  padding: 13px 15px;
+  display: flex; flex-direction: column; gap: 5px;
+  align-items: center; text-align: center;
+}
+.stat-cell .stat-label {
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--brand);            /* [BRAND] stat card label */
+}
+.stat-cell .stat-label svg { color: var(--brand); opacity: 0.7; }
+.stat-cell .stat-value {
+  font-family: var(--font-display);
+  font-weight: 700; font-size: 22px; letter-spacing: -0.02em;
+  color: var(--canvas-dark-ink-strong);
+  line-height: 1;
+}
+.stat-cell .stat-value .slash { color: var(--canvas-dark-ink-faint); font-weight: 500; }
+.stat-cell .stat-value .frac-done { color: var(--brand); }   /* [BRAND] X/Y read mark */
+
+/* meta line */
+.meta-line {
+  font-family: var(--font-mono);
+  font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--canvas-dark-ink-muted);
+  margin-bottom: 16px;
+}
+.meta-line .dot { margin: 0 8px; color: var(--canvas-dark-300); }
+
+/* synopsis */
+.synopsis {
+  font-size: 15px; line-height: 1.6;
+  color: var(--canvas-dark-ink);
+  margin: 0 0 26px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-width: 60ch;
+}
+
+/* CTA row */
+.cta-row {
+  display: flex; align-items: center; gap: 12px;
+  flex-wrap: wrap;
+}
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 12px 22px;
+  border-radius: var(--r-pill);
+  background: var(--brand);                    /* [BRAND] primary CTA */
+  color: var(--brand-ink);
+  font-family: var(--font-display); font-weight: 700;
+  font-size: 15px; letter-spacing: 0.005em;
+  border: 0; cursor: pointer; text-decoration: none;
+  box-shadow: 0 1px 0 0 oklch(1 0 0 / 0.2) inset, 0 4px 10px -6px oklch(0 0 0 / 0.4);
+  transition: background .14s, transform .14s;
+}
+.btn-primary:hover { background: var(--brand-hover); transform: translateY(-1px); }
+.btn-primary:active { background: var(--brand-active); transform: translateY(0); }
+
+.btn-icon {
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 44px; padding: 0 16px;
+  border-radius: var(--r-btn);
+  background: linear-gradient(180deg, var(--canvas-dark-300), var(--canvas-dark-250));
+  box-shadow: 0 1px 0 0 oklch(1 0 0 / 0.05) inset, 0 4px 10px -6px oklch(0 0 0 / 0.5);
+  color: var(--canvas-dark-ink);
+  font-family: var(--font-ui); font-size: 14px; font-weight: 500;
+  border: 0; cursor: pointer;
+  transition: background .14s, color .14s;
+}
+.btn-icon:hover { background: linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300)); color: var(--canvas-dark-ink-strong); }
+.btn-icon svg { transition: transform .15s; }
+.btn-icon .count { font-family: var(--font-mono); font-size: 13px; color: var(--canvas-dark-ink-muted); }
+.btn-icon.icon-only { width: 44px; padding: 0; justify-content: center; }
+
+/* active fav / bookmark — brand fill */
+.btn-icon.on svg { fill: var(--brand); stroke: var(--brand); }   /* [BRAND] active toggle */
+.btn-icon.on .count { color: var(--brand); }
+
+/* ════════════════════════════ CHAPTERS ═════════════════════════════ */
+.chapters-card { padding: 30px 32px 32px; }
+
+/* segmented progress rail */
+.progress-wrap { margin-bottom: 26px; }
+.progress-rail {
+  display: flex; gap: 4px;
+  padding: 6px;
+  border-radius: var(--r-pill);
+}
+.progress-seg {
+  flex: 1; height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--canvas-dark-300);
+  transition: background .2s;
+}
+.progress-seg.filled {
+  background: var(--brand);                    /* [BRAND] progress fill */
+  box-shadow: 0 0 8px -2px oklch(0.8 0.16 88 / 0.6);
+}
+
+/* chapter list */
+.chapter-list {
+  display: flex; flex-direction: column;
+  gap: 8px;
+}
+.chapter-row {
+  display: flex; align-items: center; gap: 16px;
+  padding: 14px 18px;
+  border-radius: var(--r-row);
+  background: linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300));
+  box-shadow: var(--sh-tile);
+  text-decoration: none; color: inherit;
+  transition: transform .14s, box-shadow .14s;
+}
+.chapter-row:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 1px 0 0 oklch(1 0 0 / 0.07) inset, 0 12px 22px -10px oklch(0 0 0 / 0.5);
+}
+/* read/unread toggle */
+.chapter-check {
+  flex-shrink: 0;
+  width: 26px; height: 26px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 0; padding: 0; background: transparent; cursor: pointer;
+  color: var(--canvas-dark-ink-faint);
+}
+.chapter-check:hover { color: var(--canvas-dark-ink); }
+.chapter-row.read .chapter-check { color: var(--brand); }   /* [BRAND] mark-as-read */
+.chapter-num {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--canvas-dark-ink-muted);
+  width: 22px; text-align: center;
+}
+.chapter-title {
+  flex: 1; min-width: 0;
+  font-family: var(--font-ui);
+  font-size: 15px; font-weight: 500;
+  color: var(--canvas-dark-ink-strong);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.chapter-row.read .chapter-title { color: var(--canvas-dark-ink); }
+.chapter-date {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 11px; letter-spacing: 0.04em;
+  color: var(--canvas-dark-ink-muted);
+}
+
+/* locked / draft chapter */
+.chapter-row.locked {
+  background: var(--canvas-dark-150);
+  box-shadow: none;
+  border: 1px dashed var(--canvas-dark-300);
+}
+.chapter-row.locked:hover { transform: none; box-shadow: none; }
+.chapter-row.locked .chapter-lock {
+  flex-shrink: 0; width: 26px; display: inline-flex; align-items: center; justify-content: center;
+  color: var(--canvas-dark-ink-faint);
+}
+.chapter-row.locked .chapter-title {
+  font-style: italic; font-weight: 400;
+  color: var(--canvas-dark-ink-muted);
+}
+.chapter-row.locked .chapter-date {
+  font-style: normal; color: var(--canvas-dark-ink-faint);
+}
+
+/* empty state */
+.empty-note {
+  font-style: italic;
+  color: var(--canvas-dark-ink-muted);
+  padding: 32px 0; text-align: center;
+}
+
+/* ════════════════════════════ COMMENTS ═════════════════════════════ */
+.comments-card { padding: 30px 32px 32px; }
+
+/* composer */
+.composer {
+  display: flex; gap: 12px;
+  margin-bottom: 26px;
+}
+.composer .avatar {
+  width: 36px; height: 36px; flex-shrink: 0;
+  border-radius: var(--r-pill);
+  background: linear-gradient(150deg, var(--brand), var(--brand-active));
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-weight: 700; font-size: 13px;
+  color: var(--brand-ink);
+}
+.composer .composer-body { flex: 1; }
+.composer textarea {
+  width: 100%;
+  min-height: 76px;
+  resize: vertical;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: var(--r-row);
+  background: var(--canvas-dark-100);
+  box-shadow: var(--sh-inset);
+  color: var(--canvas-dark-ink-strong);
+  font-family: var(--font-ui); font-size: 14px; line-height: 1.5;
+  outline: none;
+}
+.composer textarea::placeholder { color: var(--canvas-dark-ink-muted); }
+.composer textarea:focus { box-shadow: var(--sh-inset), 0 0 0 1px oklch(0.85 0.18 90 / 0.4); }
+.composer-actions {
+  display: flex; justify-content: flex-end; margin-top: 10px;
+}
+.btn-post {
+  padding: 9px 20px;
+  border-radius: var(--r-pill);
+  background: var(--brand);                    /* [BRAND] post (primary action) */
+  color: var(--brand-ink);
+  font-family: var(--font-display); font-weight: 700; font-size: 14px;
+  border: 0; cursor: pointer;
+  box-shadow: 0 1px 0 0 oklch(1 0 0 / 0.2) inset;
+  transition: background .14s;
+}
+.btn-post:hover { background: var(--brand-hover); }
+
+/* guest fallback (hidden in member view) */
+.guest-fallback {
+  display: none;
+  padding: 16px 18px;
+  border-radius: var(--r-row);
+  background: var(--canvas-dark-100);
+  box-shadow: var(--sh-inset);
+  color: var(--canvas-dark-ink-muted);
+  font-size: 14px;
+  margin-bottom: 26px;
+}
+.guest-fallback a {
+  color: var(--brand); text-decoration: none; font-weight: 600;
+}
+.guest-fallback a:hover { text-decoration: underline; text-underline-offset: 2px; }
+
+/* comment rows */
+.comment-list {
+  display: flex; flex-direction: column;
+  gap: 4px;
+}
+.comment-row {
+  display: flex; gap: 12px;
+  padding: 16px 0;
+  border-top: 1px solid var(--canvas-dark-300);
+}
+.comment-row:first-child { border-top: 0; }
+.comment-row .avatar {
+  width: 36px; height: 36px; flex-shrink: 0;
+  border-radius: var(--r-pill);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-weight: 700; font-size: 13px;
+  color: oklch(0.97 0.01 250);
+}
+.comment-row .comment-body { flex: 1; min-width: 0; }
+.comment-head {
+  display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px;
+}
+.comment-head .uname {
+  font-weight: 600; font-size: 14px;
+  color: var(--canvas-dark-ink-strong);
+  text-decoration: none;
+}
+.comment-head .uname:hover { text-decoration: underline; text-underline-offset: 2px; }
+.comment-head .when {
+  font-family: var(--font-mono);
+  font-size: 11px; letter-spacing: 0.04em;
+  color: var(--canvas-dark-ink-muted);
+}
+.comment-text {
+  font-size: 14px; line-height: 1.55;
+  color: var(--canvas-dark-ink);
+  white-space: pre-line;
+  margin: 0;
+}
+
+/* load more */
+.load-more {
+  width: 100%;
+  margin-top: 18px;
+  padding: 13px;
+  border-radius: var(--r-row);
+  background: linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300));
+  box-shadow: var(--sh-tile);
+  color: var(--canvas-dark-ink);
+  font-family: var(--font-ui); font-weight: 500; font-size: 14px;
+  border: 0; cursor: pointer;
+  transition: color .14s;
+}
+.load-more:hover { color: var(--canvas-dark-ink-strong); }
+
+/* ════════════════════════════ SERIES FOOTER ════════════════════════ */
+.series-footer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 16px;
+}
+.series-link {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 18px;
+  border-radius: var(--r-row);
+  background: linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300));
+  box-shadow: var(--sh-tile);
+  text-decoration: none; color: inherit;
+  transition: transform .14s;
+}
+.series-link:hover { transform: translateY(-1px); }
+.series-link.next { flex-direction: row-reverse; text-align: right; }
+.series-link .arrow {
+  flex-shrink: 0;
+  width: 34px; height: 34px; border-radius: var(--r-pill);
+  background: var(--canvas-dark-100);
+  box-shadow: var(--sh-inset);
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--canvas-dark-ink-muted);
+}
+.series-link .meta { min-width: 0; }
+.series-link .meta .dir {
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--canvas-dark-ink-muted);
+}
+.series-link .meta .name {
+  font-family: var(--font-display); font-weight: 600; font-size: 14px;
+  color: var(--canvas-dark-ink-strong);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ════════════════════════════ SHARE DIALOG ═════════════════════════ */
+.dialog-backdrop {
+  position: fixed; inset: 0; z-index: 50;
+  display: none;
+  align-items: center; justify-content: center;
+  padding: 24px;
+  background: oklch(0.12 0.003 256 / 0.62);
+  backdrop-filter: blur(6px);
+}
+.dialog-backdrop.open { display: flex; }
+.share-dialog {
+  width: 100%; max-width: 440px;
+  padding: 28px;
+  animation: dialog-in .22s cubic-bezier(.2,.8,.3,1);
+}
+@keyframes dialog-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+.share-dialog .dialog-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px;
+}
+.share-dialog h3 {
+  font-family: var(--font-display); font-weight: 700; font-size: 20px;
+  color: var(--brand);                         /* [BRAND] dialog heading */
+  margin: 0;
+}
+.share-dialog .dialog-close {
+  width: 32px; height: 32px; border-radius: var(--r-pill);
+  background: var(--canvas-dark-100); box-shadow: var(--sh-inset);
+  border: 0; cursor: pointer; color: var(--canvas-dark-ink-muted);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.share-dialog .dialog-close:hover { color: var(--canvas-dark-ink-strong); }
+.share-url-row {
+  display: flex; gap: 10px;
+}
+.share-url-field {
+  flex: 1; min-width: 0;
+  display: flex; align-items: center;
+  padding: 0 14px; height: 44px;
+  border-radius: var(--r-row);
+  background: var(--canvas-dark-100);
+  box-shadow: var(--sh-inset);
+  font-family: var(--font-mono); font-size: 13px;
+  color: var(--canvas-dark-ink);
+  overflow: hidden;
+}
+.share-url-field span {
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.btn-copy {
+  flex-shrink: 0;
+  padding: 0 20px; height: 44px;
+  border-radius: var(--r-btn);
+  background: var(--brand);                    /* [BRAND] copy */
+  color: var(--brand-ink);
+  font-family: var(--font-display); font-weight: 700; font-size: 14px;
+  border: 0; cursor: pointer;
+  box-shadow: 0 1px 0 0 oklch(1 0 0 / 0.2) inset;
+  transition: background .14s;
+}
+.btn-copy:hover { background: var(--brand-hover); }
+.privacy-note {
+  display: flex; align-items: center; gap: 9px;
+  margin-top: 16px;
+  font-size: 12.5px;
+  color: var(--canvas-dark-ink-muted);
+}
+.privacy-note svg { flex-shrink: 0; color: var(--canvas-dark-ink-faint); }
+
+/* ════════════════════════════ DEMO TOGGLE ══════════════════════════ */
+/* Demo-only affordance — lives outside semantic regions, ports away. */
+.viewer-toggle {
+  position: fixed; right: 20px; bottom: 20px; z-index: 60;
+  display: flex; align-items: center; gap: 4px;
+  padding: 5px;
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, var(--canvas-dark-300), var(--canvas-dark-200));
+  box-shadow: var(--sh-card);
+  border-top: 1px solid oklch(1 0 0 / 0.06);
+}
+.viewer-toggle .vt-label {
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--canvas-dark-ink-faint);
+  padding: 0 8px;
+}
+.viewer-toggle button {
+  padding: 6px 13px; border-radius: var(--r-pill);
+  background: transparent; border: 0; cursor: pointer;
+  font-family: var(--font-ui); font-size: 12px; font-weight: 600;
+  color: var(--canvas-dark-ink-muted);
+}
+.viewer-toggle button.active {
+  background: var(--canvas-dark-100); box-shadow: var(--sh-inset);
+  color: var(--canvas-dark-ink-strong);
+}
+
+/* ════════════════════════════ RESPONSIVE ═══════════════════════════ */
+@media (max-width: 768px) {
+  main { padding: 28px 16px 100px; gap: 20px; }
+  .book-hero { padding: 24px; }
+  .hero-grid { grid-template-columns: 1fr; gap: 24px; justify-items: center; }
+  .hero-main { width: 100%; }
+  .book-title { font-size: 32px; }
+  .stat-strip { grid-template-columns: repeat(2, 1fr); }
+  .cta-row .btn-primary { width: 100%; justify-content: center; }
+  .chapters-card, .comments-card { padding: 24px 20px; }
+  .series-footer { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<main>
+
+  <!-- ════════════════════ HERO ════════════════════ -->
+  <section class="book-hero panel" aria-label="Book overview">
+    <div class="hero-grid">
+
+      <!-- cover -->
+      <div class="book-cover" role="img" aria-label="Cover of The Lost Hive Chronicles">
+        <div class="cover-hex" aria-hidden="true"></div>
+        <div class="cover-art">
+          <div class="cover-eyebrow">Book One</div>
+          <div class="cover-glyph" aria-hidden="true">
+            <svg width="46" height="46" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round">
+              <path d="M32 6 L52 17.5 L52 40.5 L32 52 L12 40.5 L12 17.5 Z" fill="currentColor" fill-opacity="0.12"/>
+              <path d="M32 20 L42 26 L42 38 L32 44 L22 38 L22 26 Z" fill="currentColor" fill-opacity="0.28"/>
+            </svg>
+          </div>
+          <div class="cover-title">
+            <div class="t">The Lost Hive Chronicles</div>
+            <div class="rule"></div>
+            <div class="by">Alex Rowan</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- main content -->
+      <div class="hero-main">
+
+        <div class="hero-toprow">
+          <span class="privacy-pill">
+            <!-- Globe -->
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18"/>
+            </svg>
+            Public
+          </span>
+          <span class="series-line">Book <b>1</b> of <b>The Apiary Saga</b></span>
+        </div>
+
+        <h1 class="book-title">The Lost Hive Chronicles</h1>
+
+        <div class="author-row">
+          <span class="by">Written by @alex.writes</span>
+        </div>
+
+        <div class="tag-row">
+          <span class="genre-pill">Fantasy</span>
+          <span class="tag-pill">slow-burn</span>
+          <span class="tag-pill">found-family</span>
+          <span class="tag-pill">political-intrigue</span>
+          <span class="tag-pill">beekeeping</span>
+          <span class="tag-pill">magic-system</span>
+        </div>
+
+        <!-- 4-stat strip -->
+        <div class="stat-strip">
+          <div class="stat-cell tile">
+            <span class="stat-label">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              Chapters
+            </span>
+            <span class="stat-value" data-authed-frac>
+              <span class="frac-done">7</span><span class="slash"> / </span>12 read
+            </span>
+          </div>
+          <div class="stat-cell tile">
+            <span class="stat-label">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
+              Words
+            </span>
+            <span class="stat-value">48k</span>
+          </div>
+          <div class="stat-cell tile">
+            <span class="stat-label">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/></svg>
+              Likes
+            </span>
+            <span class="stat-value" data-like-stat>142</span>
+          </div>
+          <div class="stat-cell tile">
+            <span class="stat-label">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              Comments
+            </span>
+            <span class="stat-value">23</span>
+          </div>
+        </div>
+
+        <p class="meta-line">
+          Published Mar 14, 2026 <span class="dot">·</span> Updated Apr 2, 2026
+        </p>
+
+        <p class="synopsis">
+          When the last great hive falls silent and the queens begin to vanish one by one,
+          a disgraced apiarist named Sable must descend into the wax cathedrals beneath the
+          city to uncover who — or what — is unmaking the swarm. Part political thriller, part
+          coming-of-age, The Lost Hive Chronicles follows a found family of keepers, smugglers,
+          and exiled royals as they race to restore the song that holds their world together
+          before the silence spreads beyond the comb.
+        </p>
+
+        <!-- CTA row -->
+        <div class="cta-row">
+          <a href="#" class="btn-primary" data-cta-label>
+            Continue Reading
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+
+          <button class="btn-icon on" type="button" id="favBtn" aria-pressed="true" aria-label="Favorite">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/></svg>
+            <span class="count" id="favCount">142</span>
+          </button>
+
+          <button class="btn-icon" type="button" id="shareBtn" aria-label="Share">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
+            Share
+          </button>
+
+          <button class="btn-icon icon-only" type="button" id="bookmarkBtn" aria-pressed="false" aria-label="Bookmark">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════ CHAPTERS ════════════════════ -->
+  <section class="chapters-card panel" aria-label="Chapters">
+    <div class="section-head">
+      <h2>Chapters</h2>
+      <span class="sub" data-chapter-sub><b>7</b> / 12 read</span>
+    </div>
+
+    <!-- segmented progress -->
+    <div class="progress-wrap">
+      <div class="progress-rail recessed" role="progressbar" aria-valuenow="7" aria-valuemin="0" aria-valuemax="12" aria-label="Reading progress">
+        <span class="progress-seg filled"></span>
+        <span class="progress-seg filled"></span>
+        <span class="progress-seg filled"></span>
+        <span class="progress-seg filled"></span>
+        <span class="progress-seg filled"></span>
+        <span class="progress-seg filled"></span>
+        <span class="progress-seg filled"></span>
+        <span class="progress-seg"></span>
+        <span class="progress-seg"></span>
+        <span class="progress-seg"></span>
+        <span class="progress-seg"></span>
+        <span class="progress-seg"></span>
+      </div>
+    </div>
+
+    <div class="chapter-list">
+      <!-- read chapters -->
+      <a href="#" class="chapter-row read">
+        <button class="chapter-check" type="button" aria-label="Mark as unread" aria-pressed="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <span class="chapter-num">01</span>
+        <span class="chapter-title">The Drone's Lament</span>
+        <span class="chapter-date">Updated Mar 14</span>
+      </a>
+      <a href="#" class="chapter-row read">
+        <button class="chapter-check" type="button" aria-label="Mark as unread" aria-pressed="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <span class="chapter-num">02</span>
+        <span class="chapter-title">Honeyed Words</span>
+        <span class="chapter-date">Updated Mar 16</span>
+      </a>
+      <a href="#" class="chapter-row read">
+        <button class="chapter-check" type="button" aria-label="Mark as unread" aria-pressed="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <span class="chapter-num">03</span>
+        <span class="chapter-title">The Queen's Gambit</span>
+        <span class="chapter-date">Updated Mar 19</span>
+      </a>
+      <a href="#" class="chapter-row read">
+        <button class="chapter-check" type="button" aria-label="Mark as unread" aria-pressed="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <span class="chapter-num">04</span>
+        <span class="chapter-title">Wax and Wane</span>
+        <span class="chapter-date">Updated Mar 22</span>
+      </a>
+      <a href="#" class="chapter-row read">
+        <button class="chapter-check" type="button" aria-label="Mark as unread" aria-pressed="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <span class="chapter-num">05</span>
+        <span class="chapter-title">Swarm Season</span>
+        <span class="chapter-date">Updated Mar 24</span>
+      </a>
+      <a href="#" class="chapter-row read">
+        <button class="chapter-check" type="button" aria-label="Mark as unread" aria-pressed="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <span class="chapter-num">06</span>
+        <span class="chapter-title">The Comb Cathedral</span>
+        <span class="chapter-date">Updated Mar 27</span>
+      </a>
+      <a href="#" class="chapter-row read">
+        <button class="chapter-check" type="button" aria-label="Mark as unread" aria-pressed="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <span class="chapter-num">07</span>
+        <span class="chapter-title">Smoke on the Hive</span>
+        <span class="chapter-date">Updated Mar 30</span>
+      </a>
+      <!-- unread chapters -->
+      <a href="#" class="chapter-row">
+        <button class="chapter-check" type="button" aria-label="Mark as read" aria-pressed="false">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"/></svg>
+        </button>
+        <span class="chapter-num">08</span>
+        <span class="chapter-title">The Drifting Apiary</span>
+        <span class="chapter-date">Updated Apr 1</span>
+      </a>
+      <a href="#" class="chapter-row">
+        <button class="chapter-check" type="button" aria-label="Mark as read" aria-pressed="false">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"/></svg>
+        </button>
+        <span class="chapter-num">09</span>
+        <span class="chapter-title">A Sting in the Tale</span>
+        <span class="chapter-date">Updated Apr 2</span>
+      </a>
+      <a href="#" class="chapter-row">
+        <button class="chapter-check" type="button" aria-label="Mark as read" aria-pressed="false">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"/></svg>
+        </button>
+        <span class="chapter-num">10</span>
+        <span class="chapter-title">The Royal Jelly Heist</span>
+        <span class="chapter-date">Updated Apr 2</span>
+      </a>
+      <!-- locked / draft chapters -->
+      <div class="chapter-row locked">
+        <span class="chapter-lock" aria-hidden="true">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        </span>
+        <span class="chapter-num">11</span>
+        <span class="chapter-title">Winter Cluster</span>
+        <span class="chapter-date">Draft — coming soon</span>
+      </div>
+      <div class="chapter-row locked">
+        <span class="chapter-lock" aria-hidden="true">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        </span>
+        <span class="chapter-num">12</span>
+        <span class="chapter-title">The Last Forager</span>
+        <span class="chapter-date">Draft — coming soon</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════ COMMENTS ════════════════════ -->
+  <section class="comments-card panel" aria-label="Comments">
+    <div class="section-head">
+      <h2>Comments</h2>
+      <span class="sub"><b>23</b> comments</span>
+    </div>
+
+    <!-- composer (member view) -->
+    <form class="composer" id="composer">
+      <span class="avatar">YOU</span>
+      <div class="composer-body">
+        <textarea placeholder="Add a comment…" aria-label="Add a comment"></textarea>
+        <div class="composer-actions">
+          <button class="btn-post" type="button">Post</button>
+        </div>
+      </div>
+    </form>
+
+    <!-- guest fallback (guest view) -->
+    <div class="guest-fallback" id="guestFallback">
+      <a href="#">Sign in</a> to join the conversation and leave a comment.
+    </div>
+
+    <!-- comment thread -->
+    <div class="comment-list">
+      <article class="comment-row">
+        <span class="avatar" style="background:linear-gradient(150deg, oklch(0.62 0.13 20), oklch(0.48 0.1 12));">MR</span>
+        <div class="comment-body">
+          <div class="comment-head">
+            <a href="#" class="uname">@mira.reads</a>
+            <span class="when">2h ago</span>
+          </div>
+          <p class="comment-text">Chapter 6 absolutely wrecked me. The way the comb cathedral collapses right as Sable finds the queen — I had to put my phone down and walk around the room. No notes.</p>
+        </div>
+      </article>
+
+      <article class="comment-row">
+        <span class="avatar" style="background:linear-gradient(150deg, oklch(0.6 0.12 155), oklch(0.46 0.1 165));">TK</span>
+        <div class="comment-body">
+          <div class="comment-head">
+            <a href="#" class="uname">@tom_keeps_bees</a>
+            <span class="when">1d ago</span>
+          </div>
+          <p class="comment-text">As an actual beekeeper I came in ready to nitpick the apiary details.
+
+Instead I'm three chapters past where I meant to stop. The smoker scene is so accurate it's eerie. Subscribed.</p>
+        </div>
+      </article>
+
+      <article class="comment-row">
+        <span class="avatar" style="background:linear-gradient(150deg, oklch(0.6 0.12 290), oklch(0.46 0.1 300));">LU</span>
+        <div class="comment-body">
+          <div class="comment-head">
+            <a href="#" class="uname">@lune</a>
+            <span class="when">3d ago</span>
+          </div>
+          <p class="comment-text">the found-family tag is doing a LOT of heavy lifting and I am here for every second of it 🐝</p>
+        </div>
+      </article>
+    </div>
+
+    <button class="load-more" type="button">Load more comments</button>
+  </section>
+
+  <!-- ════════════════════ SERIES FOOTER ════════════════════ -->
+  <nav class="series-footer panel" aria-label="Series navigation">
+    <a href="#" class="series-link prev">
+      <span class="arrow" aria-hidden="true">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+      </span>
+      <span class="meta">
+        <span class="dir">Previous in series</span>
+        <span class="name">— first book —</span>
+      </span>
+    </a>
+    <a href="#" class="series-link next">
+      <span class="arrow" aria-hidden="true">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </span>
+      <span class="meta">
+        <span class="dir">Next in series</span>
+        <span class="name">The Drowned Comb</span>
+      </span>
+    </a>
+  </nav>
+
+</main>
+
+<!-- ════════════════════ SHARE DIALOG (PUBLIC variant) ════════════════════ -->
+<div class="dialog-backdrop" id="shareDialog" role="dialog" aria-modal="true" aria-labelledby="shareTitle">
+  <div class="share-dialog panel">
+    <div class="dialog-head">
+      <h3 id="shareTitle">Share this book</h3>
+      <button class="dialog-close" type="button" id="dialogClose" aria-label="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="share-url-row">
+      <div class="share-url-field"><span>beehive.studio/book/the-lost-hive-chronicles</span></div>
+      <button class="btn-copy" type="button" id="copyBtn">Copy</button>
+    </div>
+    <!-- Public book → no privacy note. (See share-dialog.html for the PRIVATE variant.) -->
+  </div>
+</div>
+
+<!-- ════════════════════ DEMO TOGGLE (non-production) ════════════════════ -->
+<div class="viewer-toggle" role="group" aria-label="Demo: viewer state">
+  <span class="vt-label">Viewing as</span>
+  <button type="button" id="viewMember" class="active">Member</button>
+  <button type="button" id="viewGuest">Guest</button>
+</div>
+
+<script>
+(function () {
+  // ─── favorite toggle ───
+  var favBtn = document.getElementById('favBtn');
+  var favCount = document.getElementById('favCount');
+  var likeStat = document.querySelector('[data-like-stat]');
+  favBtn.addEventListener('click', function () {
+    var on = favBtn.classList.toggle('on');
+    favBtn.setAttribute('aria-pressed', String(on));
+    var n = on ? 142 : 141;
+    favCount.textContent = n;
+    if (likeStat) likeStat.textContent = n;
+  });
+
+  // ─── bookmark toggle ───
+  var bookmarkBtn = document.getElementById('bookmarkBtn');
+  bookmarkBtn.addEventListener('click', function () {
+    var on = bookmarkBtn.classList.toggle('on');
+    bookmarkBtn.setAttribute('aria-pressed', String(on));
+  });
+
+  // ─── chapter read toggles + progress ───
+  var rows = Array.prototype.slice.call(document.querySelectorAll('.chapter-row:not(.locked)'));
+  var segs = document.querySelectorAll('.progress-seg');
+  var chapterSub = document.querySelector('[data-chapter-sub]');
+  var heroFrac = document.querySelector('[data-authed-frac] .frac-done');
+  function refresh() {
+    var read = document.querySelectorAll('.chapter-row.read').length;
+    segs.forEach(function (s, i) { s.classList.toggle('filled', i < read); });
+    if (chapterSub) chapterSub.innerHTML = '<b>' + read + '</b> / 12 read';
+    if (heroFrac) heroFrac.textContent = read;
+  }
+  rows.forEach(function (row) {
+    var btn = row.querySelector('.chapter-check');
+    btn.addEventListener('click', function (e) {
+      e.preventDefault();
+      var read = row.classList.toggle('read');
+      btn.setAttribute('aria-pressed', String(read));
+      var svg = btn.querySelector('svg');
+      svg.innerHTML = read
+        ? '<circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5" stroke-linecap="round" stroke-linejoin="round"/>'
+        : '<circle cx="12" cy="12" r="9"/>';
+      refresh();
+    });
+  });
+  // prevent chapter link nav in demo
+  document.querySelectorAll('.chapter-row[href]').forEach(function (a) {
+    a.addEventListener('click', function (e) { e.preventDefault(); });
+  });
+
+  // ─── share dialog ───
+  var dialog = document.getElementById('shareDialog');
+  var shareBtn = document.getElementById('shareBtn');
+  var dialogClose = document.getElementById('dialogClose');
+  var copyBtn = document.getElementById('copyBtn');
+  function open() { dialog.classList.add('open'); }
+  function close() { dialog.classList.remove('open'); }
+  shareBtn.addEventListener('click', open);
+  dialogClose.addEventListener('click', close);
+  dialog.addEventListener('click', function (e) { if (e.target === dialog) close(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  copyBtn.addEventListener('click', function () {
+    copyBtn.textContent = 'Copied ✓';
+    setTimeout(function () { copyBtn.textContent = 'Copy'; }, 2000);
+  });
+
+  // ─── demo viewer toggle (member / guest) ───
+  var viewMember = document.getElementById('viewMember');
+  var viewGuest = document.getElementById('viewGuest');
+  var composer = document.getElementById('composer');
+  var guestFallback = document.getElementById('guestFallback');
+  var ctaLabel = document.querySelector('[data-cta-label]');
+  var authedFrac = document.querySelector('[data-authed-frac]');
+  function setGuest(isGuest) {
+    composer.style.display = isGuest ? 'none' : 'flex';
+    guestFallback.style.display = isGuest ? 'block' : 'none';
+    viewGuest.classList.toggle('active', isGuest);
+    viewMember.classList.toggle('active', !isGuest);
+    // guest CTA = Start Reading; member = Continue Reading
+    ctaLabel.childNodes[0].nodeValue = isGuest ? 'Start Reading ' : 'Continue Reading ';
+    // X / Y read is only meaningful when authed → show plain total for guests
+    if (isGuest) {
+      authedFrac.innerHTML = '12 chapters';
+    } else {
+      var read = document.querySelectorAll('.chapter-row.read').length;
+      authedFrac.innerHTML = '<span class="frac-done">' + read + '</span><span class="slash"> / </span>12 read';
+    }
+  }
+  viewMember.addEventListener('click', function () { setGuest(false); });
+  viewGuest.addEventListener('click', function () { setGuest(true); });
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Shared components — Community C5d</title>
+<link rel="stylesheet" href="community.css" />
+<style>
+  .gallery { max-width: 1100px; margin: 0 auto; padding: 36px 28px 96px; }
+  .gallery > header { margin-bottom: 36px; }
+  .gallery > header h1 { font-family: var(--font-display); font-weight: 700; font-size: 30px; letter-spacing: -0.02em; color: var(--canvas-dark-ink-strong); margin: 0 0 8px; }
+  .gallery > header p { color: var(--canvas-dark-ink-muted); margin: 0; max-width: 64ch; line-height: 1.55; }
+  .comp { margin-bottom: 40px; }
+  .comp-label { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid oklch(from var(--canvas-dark-300) l c h / 0.5); }
+  .comp-label h2 { font-family: var(--font-display); font-weight: 700; font-size: 16px; color: var(--canvas-dark-ink-strong); margin: 0; }
+  .comp-label code { font-family: var(--font-mono); font-size: 11px; color: var(--brand); }
+  .comp-label .desc { font-size: 12px; color: var(--canvas-dark-ink-muted); margin-left: auto; }
+  .demo { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+  .w340 { width: 340px; } .w300 { width: 300px; }
+  /* visibility picker */
+  .vis-picker { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; max-width: 520px; }
+  .vis-opt { padding: 16px 14px; border-radius: var(--r-row); background: var(--canvas-dark-100); box-shadow: var(--sh-inset); text-align: center; cursor: pointer; border: 2px solid transparent; }
+  .vis-opt.sel { border-color: var(--brand); background: oklch(from var(--brand) l c h / 0.06); }
+  .vis-opt .vi { width: 38px; height: 38px; border-radius: 12px; margin: 0 auto 10px; display: inline-flex; align-items: center; justify-content: center; background: var(--canvas-dark-200); }
+  .vis-opt.sel .vi { background: oklch(from var(--brand) l c h / 0.2); color: var(--brand); }
+  .vis-opt .vt { font-family: var(--font-display); font-weight: 700; font-size: 13px; color: var(--canvas-dark-ink-strong); }
+  .vis-opt .vd { font-size: 11px; color: var(--canvas-dark-ink-muted); margin-top: 4px; line-height: 1.4; }
+  /* toast */
+  .toast { display: inline-flex; align-items: center; gap: 11px; padding: 13px 18px; border-radius: var(--r-pill); background: var(--brand); color: var(--brand-ink); font-family: var(--font-display); font-weight: 700; font-size: 13.5px; box-shadow: 0 12px 28px -12px oklch(0 0 0 / 0.6); }
+  .toast .tc { width: 22px; height: 22px; border-radius: 50%; background: var(--brand-ink); color: var(--brand); display: inline-flex; align-items: center; justify-content: center; }
+  .rail-mini { width: 260px; }
+  .req-item { display: grid; grid-template-columns: 32px 1fr; gap: 10px; align-items: center; }
+  .req-actions { grid-column: 2; display: flex; gap: 7px; margin-top: 8px; }
+  .mini-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+  .mini-row + .mini-row { border-top: 1px solid oklch(from var(--canvas-dark-300) l c h / 0.4); }
+  .mini-row .mr-t { font-family: var(--font-display); font-weight: 600; font-size: 13px; color: var(--canvas-dark-ink-strong); }
+  .mini-row .mr-s { font-size: 11px; color: var(--canvas-dark-ink-muted); }
+  .event-demo { display: grid; grid-template-columns: 32px 1fr auto; gap: 12px; padding: 14px 16px; }
+</style>
+</head>
+<body>
+<div class="gallery" data-screen-label="Shared components gallery">
+  <header>
+    <div class="eyebrow-mono" style="margin-bottom:10px;">Community · C5d</div>
+    <h1>Shared components</h1>
+    <p>One canonical render of each reusable component, side-by-side. Every surface mockup composes these — change here, change everywhere on the port.</p>
+  </header>
+
+  <!-- SparkCard -->
+  <section class="comp"><div class="comp-label"><h2>SparkCard</h2><code>&lt;SparkCard&gt;</code><span class="desc">/sparks · /discover</span></div>
+    <div class="demo">
+      <a class="ccard w340" href="#"><div class="cc-cover cover-grad" style="--pt:var(--spark-status-open)"><div class="cc-pills"><span class="pill spark-open"><span class="dot"></span>Open</span><span class="pill vis-public"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 4 10 15 15 0 0 1-4 10 15 15 0 0 1-4-10 15 15 0 0 1 4-10z"/></svg>Public</span></div></div><div class="cc-body"><h3 class="cc-title">Six-word stories</h3><p class="cc-desc">Tell a complete story in exactly six words. Bonus points for a twist.</p><div class="cc-foot"><span class="deadline" style="padding:4px 11px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><b>6d</b> left</span><div class="cc-stats"><span class="cc-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>4</span></div></div></div></a>
+    </div>
+  </section>
+
+  <!-- ListCard -->
+  <section class="comp"><div class="comp-label"><h2>ListCard</h2><code>&lt;ListCard&gt;</code><span class="desc">incl. Liked auto-variant</span></div>
+    <div class="demo">
+      <a class="ccard w340" href="#"><div class="cc-cover cover-grad" style="--pt:var(--list-visibility-public)"><div class="cc-pills"><span class="pill vis-public"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 4 10 15 15 0 0 1-4 10 15 15 0 0 1-4-10 15 15 0 0 1 4-10z"/></svg>Public</span></div></div><div class="cc-body"><h3 class="cc-title">Cozy Mysteries to Reread</h3><div class="tag-row"><span class="tag">Cozy</span><span class="tag">Mystery</span><span class="tag">+2</span></div><p class="cc-reading"><b>Reading:</b> <i>The Thursday Tea Society</i></p><div class="cc-foot"><span class="owner-card"><span class="avatar s24 brand">JM</span><span class="oc-handle">@jules.m</span></span><div class="cc-stats"><span class="cc-stat">9</span><span class="cc-stat">31</span></div></div></div></a>
+      <a class="ccard w340" href="#"><div class="cc-cover cover-grad" style="--pt:var(--status-error)"><div class="cc-pills"><span class="pill auto"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>Auto</span><span class="pill vis-private"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Private</span></div></div><div class="cc-body"><h3 class="cc-title">Liked</h3><p class="cc-desc">Books you've liked across Beehive — kept up to date automatically.</p><div class="cc-foot"><span class="cc-stat">17 books</span></div></div></a>
+    </div>
+  </section>
+
+  <!-- ClubCard -->
+  <section class="comp"><div class="comp-label"><h2>ClubCard</h2><code>&lt;ClubCard&gt;</code><span class="desc">/clubs · profile · /discover</span></div>
+    <div class="demo">
+      <a class="ccard w340" href="#"><div class="cc-cover cover-grad" style="--pt:var(--status-outline)"><div class="cc-pills"><span class="pill vis-public"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 4 10 15 15 0 0 1-4 10 15 15 0 0 1-4-10 15 15 0 0 1 4-10z"/></svg>Public</span><span class="pill open-join"><span class="dot"></span>Open</span></div></div><div class="cc-body"><h3 class="cc-title">The Midnight Chapter</h3><div class="tag-row"><span class="tag">Mystery</span><span class="tag">Thriller</span></div><p class="cc-reading">📖 Reading <i>The Hollow King</i></p><div class="cc-foot"><span class="owner-card"><span class="avatar s24 a-lilac">EM</span><span class="oc-handle">@emery.makes</span></span><div class="cc-stats"><span class="cc-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>14</span></div></div></div></a>
+    </div>
+  </section>
+
+  <!-- DiscussionCard + BookRow -->
+  <section class="comp"><div class="comp-label"><h2>DiscussionCard &amp; BookRow</h2><code>&lt;DiscussionCard&gt; &lt;BookRow&gt;</code></div>
+    <div class="demo" style="flex-direction:column;">
+      <div class="tile tile-pad w340" style="width:520px;"><div class="disc-card"><div><h3 class="dc-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V5a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>Start here — how this month works</h3><div class="dc-meta"><span class="owner-card"><span class="avatar s24 a-lilac">EM</span><span class="oc-handle">@emery.makes</span></span><span class="dot-sep"></span><span class="meta-mono">Pinned · 6d ago</span></div></div><div class="dc-stats"><span class="cc-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>21</span></div></div></div>
+      <div class="panel panel-pad" style="width:520px;"><div class="book-row"><span class="br-thumb cover-paper"></span><div><h3 class="br-title">The Thursday Tea Society</h3><p class="br-author">by Marlowe Finch</p><span class="stars"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg></span><p class="br-commentary">Reread this every autumn — the village is the real draw.</p></div><span class="read-toggle" style="display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--canvas-dark-ink-muted);"><span class="switch" role="switch" aria-checked="true"></span>Read</span></div></div>
+    </div>
+  </section>
+
+  <!-- ActivityEventRow -->
+  <section class="comp"><div class="comp-label"><h2>ActivityEventRow</h2><code>&lt;ActivityEventRow&gt;</code><span class="desc">friend event gets brand left-border</span></div>
+    <div class="demo" style="flex-direction:column;">
+      <div class="tile is-friend-event" style="width:560px;border-radius:var(--r-row);"><div class="event-demo"><span class="avatar s32 a-blue">DR</span><div><div style="font-size:13.5px;color:var(--canvas-dark-ink);"><b style="color:var(--canvas-dark-ink-strong)">@dorian.reads</b> added a book to <b style="color:var(--canvas-dark-ink-strong)">Slow-Burn Fantasy</b></div><div class="meta-mono" style="margin-top:5px;">18 min ago</div></div><span class="pill first-draft" style="align-self:center;">Friend</span></div></div>
+      <div class="tile" style="width:560px;border-radius:var(--r-row);"><div class="event-demo"><span class="avatar s32 a-slate">TK</span><div><div style="font-size:13.5px;color:var(--canvas-dark-ink);"><b style="color:var(--canvas-dark-ink-strong)">@theo.k</b> followed your list <b style="color:var(--canvas-dark-ink-strong)">Cozy Mysteries</b></div><div class="meta-mono" style="margin-top:5px;">Yesterday</div></div></div></div>
+    </div>
+  </section>
+
+  <!-- Right-rail panels -->
+  <section class="comp"><div class="comp-label"><h2>RequestsCard · MyHivesPanel · ActiveSparksPanel</h2><span class="desc">/community right rail</span></div>
+    <div class="demo">
+      <section class="panel panel-pad rail-mini"><div class="sec-head" style="margin-bottom:14px;"><h2 style="font-size:15px;">Requests</h2><span class="count">2</span></div><div class="req-item"><span class="avatar s32 a-coral">MP</span><div><div style="font-family:var(--font-display);font-weight:600;font-size:13px;color:var(--canvas-dark-ink-strong);">@mara.penn</div><div style="font-size:11px;color:var(--canvas-dark-ink-muted);">5 mutual</div></div><div class="req-actions"><button class="btn-brand btn-sm" type="button">Accept</button><button class="btn-ghost btn-sm" type="button">Decline</button></div></div></section>
+      <section class="panel panel-pad rail-mini"><div class="sec-head" style="margin-bottom:10px;"><h2 style="font-size:15px;">My hives</h2></div><div class="mini-row"><span class="avatar s24 a-mint">QH</span><div style="flex:1;"><div class="mr-t">The Quiet Hours</div><div class="mr-s">3 new suggestions</div></div></div><div class="mini-row"><span class="avatar s24 a-lilac">IW</span><div style="flex:1;"><div class="mr-t">Ink &amp; Whisper</div><div class="mr-s">Active now</div></div></div></section>
+      <section class="panel panel-pad rail-mini"><div class="sec-head" style="margin-bottom:10px;"><h2 style="font-size:15px;">Your sparks</h2></div><div class="mini-row"><span class="pill spark-voting"><span class="dot"></span>Voting</span><div style="flex:1;"><div class="mr-t" style="font-size:12.5px;">Write the last letter</div><div class="mr-s">12 entries · ends 2d</div></div></div></section>
+    </div>
+  </section>
+
+  <!-- FollowListButton + VisibilityPicker -->
+  <section class="comp"><div class="comp-label"><h2>FollowListButton &amp; VisibilityPicker</h2><code>&lt;FollowListButton&gt; &lt;VisibilityPicker&gt;</code></div>
+    <div class="demo" style="align-items:center;gap:28px;">
+      <div style="display:flex;gap:12px;align-items:center;"><button class="btn-brand" type="button">Follow</button><button class="btn-tile" type="button">Following</button></div>
+      <div class="vis-picker">
+        <div class="vis-opt sel"><span class="vi" style="color:var(--list-visibility-public)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 4 10 15 15 0 0 1-4 10 15 15 0 0 1-4-10 15 15 0 0 1 4-10z"/></svg></span><div class="vt">Public</div><div class="vd">Anyone can find it</div></div>
+        <div class="vis-opt"><span class="vi" style="color:var(--list-visibility-friends)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg></span><div class="vt">Friends</div><div class="vd">Only your friends</div></div>
+        <div class="vis-opt"><span class="vi" style="color:var(--list-visibility-private)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span><div class="vt">Private</div><div class="vd">Just you</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- InviteClaimedToast + NotificationBell -->
+  <section class="comp" style="margin-bottom:0;"><div class="comp-label"><h2>InviteClaimedToast &amp; NotificationBell</h2><code>&lt;InviteClaimedToast&gt; &lt;NotificationBell&gt;</code></div>
+    <div class="demo" style="align-items:center;gap:28px;">
+      <div class="toast"><span class="tc"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>You and @dorian.reads are now friends.</div>
+      <div class="toast"><span class="tc"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Welcome to The Midnight Chapter!</div>
+      <span style="position:relative;width:42px;height:42px;border-radius:12px;background:var(--canvas-dark-200);display:inline-flex;align-items:center;justify-content:center;color:var(--brand);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span style="position:absolute;top:-3px;right:-3px;min-width:18px;height:18px;padding:0 4px;border-radius:999px;background:var(--brand);color:var(--brand-ink);font-family:var(--font-display);font-weight:700;font-size:10px;display:inline-flex;align-items:center;justify-content:center;border:2px solid var(--canvas-dark-100);">5</span></span>
+    </div>
+  </section>
+</div>
+</body>
+</html>

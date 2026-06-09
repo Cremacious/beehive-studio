@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Notification preferences — Beehive Studio</title>
+<link rel="stylesheet" href="community.css" />
+<style>
+  .np-panel { margin-bottom: 16px; }
+  .np-panel h2 { font-family: var(--font-display); font-weight: 700; font-size: 17px; color: var(--brand); margin: 0 0 4px; }
+  .np-panel .pd { font-size: 13px; color: var(--canvas-dark-ink-muted); margin: 0 0 14px; }
+  .np-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 13px 0; border-top: 1px solid oklch(from var(--canvas-dark-300) l c h / 0.45); }
+  .np-row .nl { font-family: var(--font-ui); font-weight: 600; font-size: 14px; color: var(--canvas-dark-ink-strong); }
+  .np-row .ns { font-size: 12px; color: var(--canvas-dark-ink-muted); margin-top: 3px; max-width: 52ch; }
+</style>
+</head>
+<body>
+<main class="cm-main">
+<div class="cm-wrap w-3xl" data-screen-label="Notification preferences">
+  <div class="route-tag"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>/settings/notifications</div>
+
+  <div class="page-head"><h1>Notification preferences</h1><p class="sub">Choose what reaches you. Toggles save the moment you flip them — on means you're receiving.</p></div>
+
+  <section class="panel panel-pad np-panel">
+    <h2>Friends</h2><p class="pd">Requests, accepts, and people you know joining Beehive.</p>
+    <div class="np-row"><div><div class="nl">Friend requests</div><div class="ns">When someone sends you a friend request.</div></div><span class="switch" role="switch" aria-checked="true"></span></div>
+    <div class="np-row"><div><div class="nl">Request accepted</div><div class="ns">When someone accepts your friend request.</div></div><span class="switch" role="switch" aria-checked="true"></span></div>
+    <div class="np-row"><div><div class="nl">A friend joined</div><div class="ns">When someone from your contacts joins Beehive.</div></div><span class="switch" role="switch" aria-checked="false"></span></div>
+  </section>
+
+  <section class="panel panel-pad np-panel">
+    <h2>Mentions</h2><p class="pd">When you're @-mentioned across comments, discussions, and entries.</p>
+    <div class="np-row"><div><div class="nl">Mentions in discussions</div><div class="ns">Club and hive discussion threads.</div></div><span class="switch" role="switch" aria-checked="true"></span></div>
+    <div class="np-row"><div><div class="nl">Mentions in comments</div><div class="ns">Comments on chapters, sparks, and entries.</div></div><span class="switch" role="switch" aria-checked="true"></span></div>
+    <div class="np-row"><div><div class="nl">Mentions in spark entries</div><div class="ns">When your handle appears in a submitted entry.</div></div><span class="switch" role="switch" aria-checked="true"></span></div>
+  </section>
+
+  <section class="panel panel-pad np-panel">
+    <h2>Activity on your work</h2><p class="pd">Likes, comments, follows, and votes on things you've made.</p>
+    <div class="np-row"><div><div class="nl">Likes</div><div class="ns">On your chapters, entries, lists, and comments.</div></div><span class="switch" role="switch" aria-checked="false"></span></div>
+    <div class="np-row"><div><div class="nl">Comments &amp; replies</div><div class="ns">When someone responds to your work.</div></div><span class="switch" role="switch" aria-checked="true"></span></div>
+    <div class="np-row"><div><div class="nl">New list followers</div><div class="ns">When someone follows one of your reading lists.</div></div><span class="switch" role="switch" aria-checked="true"></span></div>
+    <div class="np-row"><div><div class="nl">Spark results</div><div class="ns">When a spark you entered finishes voting.</div></div><span class="switch" role="switch" aria-checked="true"></span></div>
+  </section>
+
+  <section class="panel panel-pad np-panel" style="margin-bottom:0;">
+    <h2>Group invites &amp; requests</h2><p class="pd">Hives and clubs you're invited to or that need your action.</p>
+    <div class="np-row"><div><div class="nl">Club &amp; hive invites</div><div class="ns">When you're invited to join a group.</div></div><span class="switch" role="switch" aria-checked="true"></span></div>
+    <div class="np-row"><div><div class="nl">Join requests</div><div class="ns">When someone asks to join a group you own or moderate.</div></div><span class="switch" role="switch" aria-checked="true"></span></div>
+    <div class="np-row"><div><div class="nl">Schedule reminders</div><div class="ns">Upcoming reading milestones in your clubs.</div></div><span class="switch" role="switch" aria-checked="false"></span></div>
+  </section>
+</div>
+</main>
+</body>
+</html>

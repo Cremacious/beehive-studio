@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Share dialog — Beehive Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ─────────────────────────────────────────────────────────────────────
+   Share dialog — PRIVATE variant, centered on a dimmed page backdrop.
+   Tokens map 1:1 to app/globals.css :root. Same chrome recipes as the
+   reader page so the port is mechanical.
+   ───────────────────────────────────────────────────────────────────── */
+:root {
+  --canvas-dark-100: #262728;
+  --canvas-dark-150: oklch(0.275 0.003 256);
+  --canvas-dark-200: oklch(0.295 0.003 256);
+  --canvas-dark-250: oklch(0.325 0.003 256);
+  --canvas-dark-300: oklch(0.360 0.003 256);
+  --canvas-dark-350: oklch(0.400 0.003 256);
+  --canvas-dark-400: oklch(0.450 0.003 256);
+
+  --canvas-dark-ink-faint:  oklch(0.500 0.003 256);
+  --canvas-dark-ink-muted:  oklch(0.680 0.003 256);
+  --canvas-dark-ink:        oklch(0.880 0.003 256);
+  --canvas-dark-ink-strong: oklch(0.965 0.003 256);
+
+  --brand:        #FFC300;
+  --brand-hover:  #FFD040;
+  --brand-active: #E0AC01;
+  --brand-ink:    oklch(0.20 0.05 75);
+
+  --r-card: 20px;
+  --r-row:  14px;
+  --r-btn:  12px;
+  --r-pill: 999px;
+
+  --sh-card:  0 1px 0 0 oklch(1 0 0 / 0.04) inset, 0 20px 40px -20px oklch(0 0 0 / 0.5), 0 4px 8px -4px oklch(0 0 0 / 0.3);
+  --sh-tile:  0 1px 0 0 oklch(1 0 0 / 0.05) inset, 0 8px 16px -8px oklch(0 0 0 / 0.4);
+  --sh-inset: inset 0 1px 2px 0 oklch(0 0 0 / 0.4);
+
+  --font-display: 'Comfortaa', system-ui, sans-serif;
+  --font-ui:      'Geist', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  min-height: 100vh;
+  background: var(--canvas-dark-100);
+  color: var(--canvas-dark-ink);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* dimmed page underneath — a faint ghost of the reader page behind the blur */
+.page-ghost {
+  position: fixed; inset: 0; z-index: 0;
+  padding: 48px;
+  display: flex; flex-direction: column; gap: 20px;
+  opacity: 0.5;
+}
+.ghost-bar {
+  border-radius: var(--r-card);
+  background: linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200));
+  box-shadow: var(--sh-card);
+}
+.ghost-bar.hero { height: 260px; }
+.ghost-bar.chapters { height: 200px; }
+
+/* backdrop */
+.dialog-backdrop {
+  position: fixed; inset: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+  background: oklch(0.12 0.003 256 / 0.62);
+  backdrop-filter: blur(6px);
+}
+
+/* dialog panel */
+.share-dialog {
+  position: relative;
+  width: 100%; max-width: 440px;
+  padding: 28px;
+  background: linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200));
+  border-radius: var(--r-card);
+  box-shadow: var(--sh-card);
+  border-top: 1px solid oklch(1 0 0 / 0.04);
+  animation: dialog-in .24s cubic-bezier(.2,.8,.3,1);
+}
+@keyframes dialog-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+.dialog-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px;
+}
+.share-dialog h3 {
+  font-family: var(--font-display); font-weight: 700; font-size: 20px;
+  color: var(--brand);
+  margin: 0;
+}
+.dialog-close {
+  width: 32px; height: 32px; border-radius: var(--r-pill);
+  background: var(--canvas-dark-100); box-shadow: var(--sh-inset);
+  border: 0; cursor: pointer; color: var(--canvas-dark-ink-muted);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.dialog-close:hover { color: var(--canvas-dark-ink-strong); }
+
+.share-url-row { display: flex; gap: 10px; }
+.share-url-field {
+  flex: 1; min-width: 0;
+  display: flex; align-items: center;
+  padding: 0 14px; height: 44px;
+  border-radius: var(--r-row);
+  background: var(--canvas-dark-100);
+  box-shadow: var(--sh-inset);
+  font-family: var(--font-mono); font-size: 13px;
+  color: var(--canvas-dark-ink);
+  overflow: hidden;
+}
+.share-url-field span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.btn-copy {
+  flex-shrink: 0;
+  padding: 0 20px; height: 44px;
+  border-radius: var(--r-btn);
+  background: var(--brand);
+  color: var(--brand-ink);
+  font-family: var(--font-display); font-weight: 700; font-size: 14px;
+  border: 0; cursor: pointer;
+  box-shadow: 0 1px 0 0 oklch(1 0 0 / 0.2) inset;
+  transition: background .14s;
+}
+.btn-copy:hover { background: var(--brand-hover); }
+
+/* PRIVATE privacy note */
+.privacy-note {
+  display: flex; align-items: center; gap: 9px;
+  margin-top: 16px;
+  font-size: 12.5px; line-height: 1.45;
+  color: var(--canvas-dark-ink-muted);
+}
+.privacy-note svg { flex-shrink: 0; color: var(--canvas-dark-ink-faint); }
+</style>
+</head>
+<body>
+
+<!-- ghost of the page behind the modal -->
+<div class="page-ghost" aria-hidden="true">
+  <div class="ghost-bar hero"></div>
+  <div class="ghost-bar chapters"></div>
+</div>
+
+<!-- ════════════════════ SHARE DIALOG (PRIVATE variant) ════════════════════ -->
+<div class="dialog-backdrop" role="dialog" aria-modal="true" aria-labelledby="shareTitle">
+  <div class="share-dialog">
+    <div class="dialog-head">
+      <h3 id="shareTitle">Share this book</h3>
+      <button class="dialog-close" type="button" aria-label="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="share-url-row">
+      <div class="share-url-field"><span>beehive.studio/book/the-lost-hive-chronicles</span></div>
+      <button class="btn-copy" type="button" id="copyBtn">Copy</button>
+    </div>
+
+    <!-- PRIVATE privacy note -->
+    <p class="privacy-note">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+      This book is private — only you can open this link. Make it public or share with friends to let others read.
+    </p>
+  </div>
+</div>
+
+<script>
+(function () {
+  var copyBtn = document.getElementById('copyBtn');
+  copyBtn.addEventListener('click', function () {
+    copyBtn.textContent = 'Copied ✓';
+    setTimeout(function () { copyBtn.textContent = 'Copy'; }, 2000);
+  });
+})();
+</script>
+
+</body>
+</html>

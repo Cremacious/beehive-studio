@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Community — Beehive Studio</title>
+<link rel="stylesheet" href="community.css" />
+<style>
+  .hub-rail {
+    display: flex; align-items: stretch; gap: 0;
+    margin-bottom: 26px; padding: 7px;
+    background: linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200));
+    box-shadow: var(--sh-card); border-top: var(--br-card);
+    border-radius: var(--r-pill);
+  }
+  .rail-btn {
+    flex: 1; position: relative;
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 18px; border-radius: var(--r-pill);
+    text-decoration: none; cursor: pointer;
+    transition: background .14s;
+  }
+  .rail-btn + .rail-btn::before {
+    content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+    height: 28px; width: 1px; background: oklch(1 0 0 / 0.07);
+  }
+  .rail-btn:hover { background: oklch(1 0 0 / 0.04); }
+  .rail-btn:hover::before, .rail-btn:hover + .rail-btn::before { opacity: 0; }
+  .rail-btn.active { background: var(--brand-soft); }
+  .rail-btn.active::before, .rail-btn.active + .rail-btn::before { opacity: 0; }
+  .rail-btn .ri { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; color: var(--canvas-dark-ink-muted); }
+  .rail-btn.active .ri { color: var(--brand); }
+  .rail-btn .ri svg { width: 30px; height: 30px; }
+  .rail-btn .rt { display: flex; flex-direction: column; min-width: 0; line-height: 1.1; }
+  .rail-btn .rl { font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: -0.01em; color: var(--canvas-dark-ink-strong); }
+  .rail-btn.active .rl { color: var(--brand); }
+  .rail-btn .rc { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.01em; color: var(--canvas-dark-ink-muted); margin-top: 3px; white-space: nowrap; }
+  .rail-btn .rbadge { margin-left: auto; flex-shrink: 0; min-width: 20px; height: 20px; padding: 0 6px; border-radius: var(--r-pill); background: var(--brand); color: var(--brand-ink); font-family: var(--font-display); font-weight: 700; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; }
+
+  .hub-grid { display: grid; grid-template-columns: 1fr 280px; gap: 22px; align-items: start; }
+
+  .feed-event { display: grid; grid-template-columns: 32px 1fr; gap: 12px; padding: 16px 18px; }
+  .feed-event .fe-text { font-size: 14.5px; line-height: 1.5; color: var(--canvas-dark-ink); }
+  .feed-event .fe-text a { color: var(--canvas-dark-ink-strong); font-weight: 600; text-decoration: none; }
+  .feed-event .fe-text a:hover { color: var(--brand); }
+  .feed-event .fe-when { font-family: var(--font-mono); font-size: 10.5px; color: var(--canvas-dark-ink-faint); margin-top: 5px; letter-spacing: 0.03em; }
+  .subject-card {
+    display: flex; align-items: center; gap: 10px; align-self: center;
+    padding: 7px 12px 7px 8px; border-radius: var(--r-btn); min-width: 168px;
+    background: var(--canvas-dark-100); box-shadow: var(--sh-inset);
+  }
+  .subject-card .sc-thumb { width: 30px; height: 40px; border-radius: 5px; flex-shrink: 0; }
+  .subject-card .sc-meta { min-width: 0; }
+  .subject-card .sc-t { display: block; font-family: var(--font-display); font-weight: 600; font-size: 12px; color: var(--canvas-dark-ink-strong); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .subject-card .sc-s { display: block; font-size: 11px; color: var(--canvas-dark-ink-muted); white-space: nowrap; margin-top: 1px; }
+
+  .rail-card + .rail-card { margin-top: 18px; }
+  .req-item { display: grid; grid-template-columns: 32px 1fr; gap: 10px; align-items: center; }
+  .req-item + .req-item { margin-top: 14px; }
+  .req-item .ru { font-family: var(--font-display); font-weight: 600; font-size: 13px; color: var(--canvas-dark-ink-strong); }
+  .req-item .rm { font-size: 11px; color: var(--canvas-dark-ink-muted); }
+  .req-actions { grid-column: 2; display: flex; gap: 7px; margin-top: 8px; }
+  .see-all { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 16px; padding-top: 14px; border-top: 1px solid oklch(from var(--canvas-dark-300) l c h / 0.5); font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.03em; color: var(--brand); text-decoration: none; }
+  .see-all svg { width: 13px; height: 13px; }
+  .see-all:hover { color: var(--brand-hover); }
+  .mini-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+  .mini-row + .mini-row { border-top: 1px solid oklch(from var(--canvas-dark-300) l c h / 0.4); }
+  .mini-row .mr-t { font-family: var(--font-display); font-weight: 600; font-size: 13px; color: var(--canvas-dark-ink-strong); }
+  .mini-row .mr-s { font-size: 11px; color: var(--canvas-dark-ink-muted); }
+  .load-more { display: block; width: 100%; margin-top: 14px; text-align: center; padding: 11px; border-radius: var(--r-btn); background: transparent; border: 1px solid var(--canvas-dark-300); color: var(--canvas-dark-ink-muted); font-family: var(--font-ui); font-weight: 600; font-size: 13px; cursor: pointer; }
+  .load-more:hover { color: var(--canvas-dark-ink-strong); border-color: var(--canvas-dark-400); }
+</style>
+</head>
+<body>
+<main class="cm-main">
+<div class="cm-wrap w-5xl" data-screen-label="Community hub">
+
+  <div class="route-tag">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    /community
+  </div>
+
+  <div class="page-head">
+    <h1>Hey, Jules — here's what's buzzing</h1>
+  </div>
+
+  <!-- Section rail -->
+  <nav class="hub-rail" aria-label="Community sections">
+    <a class="rail-btn active" href="#">
+      <span class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg></span>
+      <span class="rt"><span class="rl">Friends</span><span class="rc">38 friends</span></span>
+      <span class="rbadge">7</span>
+    </a>
+    <a class="rail-btn" href="#">
+      <span class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2 L20 6.5 L20 15.5 L12 20 L4 15.5 L4 6.5 Z"/></svg></span>
+      <span class="rt"><span class="rl">Hives</span><span class="rc">6 joined</span></span>
+    </a>
+    <a class="rail-btn" href="#">
+      <span class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg></span>
+      <span class="rt"><span class="rl">Sparks</span><span class="rc">3 active</span></span>
+    </a>
+    <a class="rail-btn" href="#">
+      <span class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></span>
+      <span class="rt"><span class="rl">Lists</span><span class="rc">7 · 3 followed</span></span>
+    </a>
+    <a class="rail-btn" href="#">
+      <span class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg></span>
+      <span class="rt"><span class="rl">Clubs</span><span class="rc">2 joined</span></span>
+    </a>
+  </nav>
+
+  <div class="hub-grid">
+    <!-- Center: activity feed -->
+    <section class="panel" aria-label="Activity feed">
+      <div class="panel-pad" style="padding-bottom: 6px;">
+        <div class="sec-head" style="margin-bottom: 4px;">
+          <h2>Activity</h2>
+          <span class="meta-mono">Friends first</span>
+        </div>
+      </div>
+      <ul class="cstack" style="gap: 0; padding: 0 6px 6px;">
+        <li style="border-radius: var(--r-row);">
+          <div class="feed-event">
+            <span class="avatar s32 a-blue">DR</span>
+            <div>
+              <div class="fe-text"><a href="#">@dorian.reads</a> added a book to <a href="#">Slow-Burn Fantasy</a></div>
+              <div class="fe-when">18 min ago</div>
+            </div>
+          </div>
+        </li>
+        <li style="border-radius: var(--r-row);">
+          <div class="feed-event">
+            <span class="avatar s32 a-mint">VN</span>
+            <div>
+              <div class="fe-text"><a href="#">@vesper.nox</a> submitted an entry to the spark <a href="#">"Write the last letter"</a></div>
+              <div class="fe-when">1h ago</div>
+            </div>
+          </div>
+        </li>
+        <li style="border-radius: var(--r-row);">
+          <div class="feed-event">
+            <span class="avatar s32 a-lilac">EM</span>
+            <div>
+              <div class="fe-text"><a href="#">@emery.makes</a> started a new book club, <a href="#">The Midnight Chapter</a></div>
+              <div class="fe-when">3h ago</div>
+            </div>
+          </div>
+        </li>
+        <li style="border-radius: var(--r-row);">
+          <div class="feed-event">
+            <span class="avatar s32 a-coral">JW</span>
+            <div>
+              <div class="fe-text"><a href="#">@june.writes</a> published a new chapter of <a href="#">Saltwater Hours</a></div>
+              <div class="fe-when">5h ago</div>
+            </div>
+          </div>
+        </li>
+        <li style="border-radius: var(--r-row);">
+          <div class="feed-event">
+            <span class="avatar s32 a-slate">TK</span>
+            <div>
+              <div class="fe-text"><a href="#">@theo.k</a> followed your list <a href="#">Cozy Mysteries to Reread</a></div>
+              <div class="fe-when">Yesterday</div>
+            </div>
+          </div>
+        </li>
+      </ul>
+      <div class="panel-pad" style="padding-top: 0;">
+        <button class="load-more" type="button">Load more</button>
+      </div>
+    </section>
+
+    <!-- Right rail -->
+    <aside>
+      <!-- RequestsCard: render ONLY when pendingRequests.length > 0 (whole <section> is omitted at 0).
+           Show up to 5 inline; when length > 5, render the "See all" footer that opens /friends?tab=pending. -->
+      <section class="panel rail-card panel-pad" aria-label="Friend requests">
+        <div class="sec-head" style="margin-bottom: 14px;"><h2 style="font-size: 15px;">Requests</h2><span class="count">7</span></div>
+        <div class="req-item">
+          <span class="avatar s32 a-coral">MP</span>
+          <div><div class="ru">@mara.penn</div><div class="rm">5 mutual friends</div></div>
+          <div class="req-actions">
+            <button class="btn-brand btn-sm" type="button">Accept</button>
+            <button class="btn-ghost btn-sm" type="button">Decline</button>
+          </div>
+        </div>
+        <div class="req-item" style="margin-top: 18px;">
+          <span class="avatar s32 a-slate">RS</span>
+          <div><div class="ru">@rune.sketch</div><div class="rm">2 mutual friends</div></div>
+          <div class="req-actions">
+            <button class="btn-brand btn-sm" type="button">Accept</button>
+            <button class="btn-ghost btn-sm" type="button">Decline</button>
+          </div>
+        </div>
+        <div class="req-item" style="margin-top: 18px;">
+          <span class="avatar s32 a-mint">LF</span>
+          <div><div class="ru">@lena.frost</div><div class="rm">1 mutual friend</div></div>
+          <div class="req-actions">
+            <button class="btn-brand btn-sm" type="button">Accept</button>
+            <button class="btn-ghost btn-sm" type="button">Decline</button>
+          </div>
+        </div>
+        <!-- See all: shown only when pendingRequests.length > 5 -->
+        <a class="see-all" href="#">See all 7 requests
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+      </section>
+
+      <!-- MyHivesPanel: teaser shows top hives; "See all" footer renders only when joinedHives.length > 5. -->
+      <section class="panel rail-card panel-pad" aria-label="My Hives">
+        <div class="sec-head" style="margin-bottom: 10px;"><h2 style="font-size: 15px;">My Hives</h2><span class="count">6</span></div>
+        <div class="mini-row"><span class="avatar s24 a-mint">QH</span><div style="flex:1;min-width:0;"><div class="mr-t">The Quiet Hours</div><div class="mr-s">3 new suggestions</div></div></div>
+        <div class="mini-row"><span class="avatar s24 a-lilac">IW</span><div style="flex:1;min-width:0;"><div class="mr-t">Ink &amp; Whisper</div><div class="mr-s">Active now</div></div></div>
+        <div class="mini-row"><span class="avatar s24 a-blue">DC</span><div style="flex:1;min-width:0;"><div class="mr-t">Draft Circle</div><div class="mr-s">2d ago</div></div></div>
+        <!-- See all: shown only when joinedHives.length > 5 -->
+        <a class="see-all" href="#">See all 6 hives
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+      </section>
+
+      <!-- ActiveSparksPanel: teaser of your sparks; "See all" footer renders only when yourSparks.length > 5. -->
+      <section class="panel rail-card panel-pad" aria-label="Your sparks">
+        <div class="sec-head" style="margin-bottom: 10px;"><h2 style="font-size: 15px;">Your Sparks</h2><span class="count">6</span></div>
+        <div class="mini-row">
+          <div style="flex:1;min-width:0;"><div class="mr-t" style="font-size:12.5px;">Write the last letter</div><div class="mr-s">12 entries · ends in 2d</div><span class="pill spark-voting" style="margin-top:8px;display:flex;justify-content:center;padding:3px 0;"><span class="dot"></span>Voting</span></div>
+        </div>
+        <div class="mini-row">
+          <div style="flex:1;min-width:0;"><div class="mr-t" style="font-size:12.5px;">Six-word stories</div><div class="mr-s">4 entries · 6d left</div><span class="pill spark-open" style="margin-top:8px;display:flex;justify-content:center;padding:3px 0;"><span class="dot"></span>Open</span></div>
+        </div>
+        <!-- See all: shown only when yourSparks.length > 5 -->
+        <a class="see-all" href="#">See all 6 sparks
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+      </section>
+    </aside>
+  </div>
+
+</div>
+</main>
+</body>
+</html>

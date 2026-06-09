@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>@jules.m — Beehive Studio</title>
+<link rel="stylesheet" href="community.css" />
+<style>
+  .prof-header { overflow: hidden; margin-bottom: 26px; }
+  .prof-banner { height: 150px; position: relative; }
+  .prof-body { padding: 0 28px 22px; }
+  .prof-top { display: flex; align-items: flex-end; gap: 18px; margin-top: -36px; position: relative; z-index: 2; }
+  .prof-av { width: 92px; height: 92px; border-radius: 26px; border: 3px solid var(--canvas-dark-200); font-size: 30px; }
+  .prof-id { flex: 1; padding-bottom: 4px; }
+  .prof-id h1 { font-family: var(--font-display); font-weight: 700; font-size: 26px; letter-spacing: -0.02em; color: var(--canvas-dark-ink-strong); margin: 0; }
+  .prof-id .handle { font-family: var(--font-mono); font-size: 12px; color: var(--canvas-dark-ink-muted); margin-top: 3px; }
+  .prof-bio { font-family: var(--font-prose); font-size: 15px; line-height: 1.55; color: var(--canvas-dark-ink-faint); font-style: italic; margin: 16px 0 0; }
+  .sec { margin-bottom: 26px; }
+  .sec h2 { font-family: var(--font-display); font-weight: 700; font-size: 16px; color: var(--canvas-dark-ink-strong); margin: 0 0 12px; }
+  .empty-card { padding: 26px; text-align: center; }
+  .empty-card .el { font-size: 13px; color: var(--canvas-dark-ink-faint); font-style: italic; margin: 0 0 14px; }
+</style>
+</head>
+<body>
+<main class="cm-main">
+<div class="cm-wrap w-5xl" data-screen-label="Empty — own fresh profile">
+  <header class="panel prof-header">
+    <div class="prof-banner cover-grad" style="--pt:var(--canvas-dark-350)"></div>
+    <div class="prof-body">
+      <div class="prof-top">
+        <span class="avatar prof-av brand">JM</span>
+        <div class="prof-id"><h1>Jules Marlowe</h1><div class="handle">@jules.m</div></div>
+        <button class="btn-tile btn-sm" type="button">Edit profile</button>
+      </div>
+      <p class="prof-bio">Add a bio to tell people what you write and read.</p>
+      <div class="stat-strip" style="margin-top:18px;border-top:1px solid oklch(from var(--canvas-dark-300) l c h / 0.5);">
+        <div class="ss"><div class="v">0</div><div class="l">Followers</div></div>
+        <div class="ss"><div class="v">0</div><div class="l">Following</div></div>
+        <div class="ss"><div class="v">0</div><div class="l">Books</div></div>
+        <div class="ss"><div class="v">0</div><div class="l">Lists</div></div>
+        <div class="ss"><div class="v">0</div><div class="l">Clubs</div></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="sec">
+    <h2>Lists</h2>
+    <section class="panel empty-card"><p class="el">You haven't made any reading lists yet.</p><button class="btn-brand btn-sm" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M12 5v14"/></svg>New list</button></section>
+  </div>
+  <div class="sec">
+    <h2>Clubs</h2>
+    <section class="panel empty-card"><p class="el">You're not in any book clubs yet.</p><button class="btn-tile btn-sm" type="button">Discover clubs</button></section>
+  </div>
+  <div class="sec">
+    <h2>Published books</h2>
+    <section class="panel empty-card"><p class="el">Nothing published yet — books you make public will appear here.</p><button class="btn-tile btn-sm" type="button">Go to Studio</button></section>
+  </div>
+  <div class="sec" style="margin-bottom:0;">
+    <h2>Sparks &amp; activity</h2>
+    <section class="panel empty-card"><p class="el" style="margin-bottom:0;">No activity yet. Enter a spark or follow some writers to get started.</p></section>
+  </div>
+</div>
+</main>
+</body>
+</html>

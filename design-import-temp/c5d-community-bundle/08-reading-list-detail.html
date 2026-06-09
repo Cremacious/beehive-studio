@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cozy Mysteries to Reread — Beehive Studio</title>
+<link rel="stylesheet" href="community.css" />
+<style>
+  .ldh { display: grid; grid-template-columns: 1fr auto; gap: 22px; align-items: start; margin-bottom: 18px; }
+  .ldh h1 { font-family: var(--font-display); font-weight: 700; font-size: 30px; letter-spacing: -0.02em; color: var(--canvas-dark-ink-strong); margin: 0 0 12px; }
+  .ldh .pills-row { display: flex; gap: 8px; margin-bottom: 12px; }
+  .ldh .desc { font-family: var(--font-prose); font-size: 15px; line-height: 1.55; color: var(--canvas-dark-ink); margin: 0 0 14px; max-width: 60ch; }
+  .ldh .owner-line { display: flex; align-items: center; gap: 12px; }
+  .ldh .actions { display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
+  .booklist { display: flex; flex-direction: column; }
+  .booklist .blrow { padding: 18px 0; border-bottom: 1px solid oklch(from var(--canvas-dark-300) l c h / 0.5); }
+  .booklist .blrow:last-child { border-bottom: 0; }
+  .drag-handle { color: var(--canvas-dark-ink-faint); cursor: grab; display:flex;align-items:center; }
+  .br-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+  .read-toggle { display: inline-flex; align-items: center; gap: 7px; font-family: var(--font-ui); font-size: 12px; font-weight: 500; color: var(--canvas-dark-ink-muted); }
+</style>
+</head>
+<body>
+<main class="cm-main">
+<div class="cm-wrap w-5xl" data-screen-label="Reading list detail">
+  <a href="#" class="eyebrow-mono" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;margin-bottom:18px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg> Reading lists</a>
+
+  <!-- ListDetailHeader -->
+  <header class="panel panel-pad" style="margin-bottom:18px;">
+    <div class="ldh">
+      <div>
+        <div class="pills-row">
+          <span class="pill vis-public"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 4 10 15 15 0 0 1-4 10 15 15 0 0 1-4-10 15 15 0 0 1 4-10z"/></svg>Public</span>
+          <span class="tag">Cozy</span><span class="tag">Mystery</span><span class="tag">Comfort</span><span class="tag">+2</span>
+        </div>
+        <h1>Cozy Mysteries to Reread</h1>
+        <p class="desc">Small-town sleuths, low stakes, high comfort. The kind of book you read with tea and a blanket when the world is too loud.</p>
+        <div class="owner-line"><span class="owner-card"><span class="avatar s32 brand">JM</span><span><span class="oc-name">Jules Marlowe</span> <span class="oc-handle">@jules.m</span></span></span></div>
+      </div>
+      <div class="actions">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="btn-tile btn-sm" type="button">Following</button>
+          <button class="kebab" aria-label="More"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></button>
+        </div>
+      </div>
+    </div>
+    <div class="stat-strip" style="border-top:1px solid oklch(from var(--canvas-dark-300) l c h / 0.5);margin-top:4px;">
+      <div class="ss"><div class="v">9</div><div class="l">Books</div></div>
+      <div class="ss"><div class="v">31</div><div class="l">Followers</div></div>
+      <div class="ss"><div class="v">4</div><div class="l">Read</div></div>
+      <div class="ss"><div class="v">Mar 2026</div><div class="l">Created</div></div>
+    </div>
+  </header>
+
+  <!-- BookList -->
+  <section class="panel panel-pad">
+    <div class="sec-head"><h2 style="color:var(--canvas-dark-ink-strong);">Books</h2><button class="btn-tile btn-sm" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M12 5v14"/></svg>Add Book</button></div>
+    <div class="booklist">
+      <div class="blrow"><div class="book-row" style="grid-template-columns:18px 64px 1fr auto;">
+        <span class="drag-handle"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></svg></span>
+        <span class="br-thumb cover-paper"></span>
+        <div><h3 class="br-title">The Thursday Tea Society</h3><p class="br-author">by Marlowe Finch</p>
+          <span class="stars" aria-label="5 of 5"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg></span>
+          <p class="br-commentary">Reread this every autumn. The mystery is almost beside the point — it's the village I keep coming back for.</p>
+        </div>
+        <div class="br-actions"><span class="read-toggle"><span class="switch" role="switch" aria-checked="true"></span>Read</span><button class="kebab" aria-label="More"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></button></div>
+      </div></div>
+
+      <div class="blrow"><div class="book-row" style="grid-template-columns:18px 64px 1fr auto;">
+        <span class="drag-handle"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></svg></span>
+        <span class="br-thumb cover-paper" style="background-color:oklch(0.92 0.018 78)"></span>
+        <div><h3 class="br-title">Murder at Pemberwick Lighthouse</h3><p class="br-author">by Ada Quill</p>
+          <span class="stars" aria-label="4 of 5"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg><svg class="empty" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg></span>
+          <p class="br-commentary">The lighthouse setting does a lot of heavy lifting. Cozy with just enough atmosphere. <a href="#" style="color:var(--brand);text-decoration:none;">Show more</a></p>
+        </div>
+        <div class="br-actions"><span class="read-toggle"><span class="switch" role="switch" aria-checked="true"></span>Read</span><button class="kebab" aria-label="More"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></button></div>
+      </div></div>
+
+      <div class="blrow"><div class="book-row" style="grid-template-columns:18px 64px 1fr auto;">
+        <span class="drag-handle"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></svg></span>
+        <span class="br-thumb cover-paper" style="background-color:oklch(0.985 0.012 88)"></span>
+        <div><h3 class="br-title">The Cat Who Knew Too Much</h3><p class="br-author">by Penelope Vane</p>
+          <span class="stars" aria-label="not rated" style="color:var(--canvas-dark-400)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.9 21l1.2-6.8-5-4.9 6.9-1z"/></svg></span>
+          <p class="br-commentary" style="color:var(--canvas-dark-ink-faint);font-style:italic;">No commentary yet</p>
+        </div>
+        <div class="br-actions"><span class="read-toggle"><span class="switch" role="switch" aria-checked="false"></span>Unread</span><button class="kebab" aria-label="More"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></button></div>
+      </div></div>
+    </div>
+  </section>
+</div>
+</main>
+</body>
+</html>

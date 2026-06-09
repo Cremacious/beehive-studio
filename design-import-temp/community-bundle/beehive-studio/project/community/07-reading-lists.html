@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Reading lists — Beehive Studio</title>
+<link rel="stylesheet" href="community.css" />
+<style>
+  .sec-block { margin-bottom: 32px; }
+  .sec-label { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; }
+  .sec-label h2 { font-family: var(--font-display); font-weight: 700; font-size: 16px; color: var(--canvas-dark-ink-strong); margin: 0; }
+  .sec-label a { font-family: var(--font-mono); font-size: 11px; color: var(--brand); text-decoration: none; }
+  .lc-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+</style>
+</head>
+<body>
+<main class="cm-main">
+<div class="cm-wrap w-5xl" data-screen-label="Reading lists index">
+  <div class="route-tag"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>/reading-lists</div>
+
+  <div class="page-head"><div class="head-row">
+    <div><h1>Reading lists</h1></div>
+    <button class="btn-brand" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14M12 5v14"/></svg>New List</button>
+  </div></div>
+
+  <!-- My lists -->
+  <div class="sec-block">
+    <div class="sec-label"><h2>My lists</h2><span class="count meta-mono">4 lists</span></div>
+    <div class="grid-3">
+      <!-- Liked auto-list -->
+      <a class="ccard" href="#">
+        <div class="cc-cover cover-grad" style="--pt:var(--status-error)"><div class="cc-pills"><span class="pill auto"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>Auto</span><span class="pill vis-private"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Private</span></div></div>
+        <div class="cc-body"><h3 class="cc-title">Liked</h3><p class="cc-desc">Books you've liked across Beehive — kept up to date automatically.</p>
+          <div class="cc-foot"><span class="cc-stat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>17 books</span></div></div>
+      </a>
+      <a class="ccard" href="#">
+        <div class="cc-cover cover-grad" style="--pt:var(--list-visibility-public)"><div class="cc-pills"><span class="pill vis-public"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 4 10 15 15 0 0 1-4 10 15 15 0 0 1-4-10 15 15 0 0 1 4-10z"/></svg>Public</span></div></div>
+        <div class="cc-body"><h3 class="cc-title">Cozy Mysteries to Reread</h3>
+          <div class="lc-tags"><span class="tag">Cozy</span><span class="tag">Mystery</span><span class="tag">Comfort</span><span class="tag">+2</span></div>
+          <div class="cc-foot"><span class="owner-card"><span class="avatar s24 brand">JM</span><span class="oc-handle">@jules.m</span></span><div class="cc-stats"><span class="cc-stat">9 books</span><span class="cc-stat">31 followers</span></div></div></div>
+      </a>
+      <a class="ccard" href="#">
+        <div class="cc-cover cover-grad" style="--pt:var(--list-visibility-friends)"><div class="cc-pills"><span class="pill vis-friends"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg>Friends</span></div></div>
+        <div class="cc-body"><h3 class="cc-title">Slow-Burn Fantasy</h3>
+          <div class="lc-tags"><span class="tag">Fantasy</span><span class="tag">Epic</span><span class="tag">Romance</span></div>
+          <div class="cc-foot"><span class="owner-card"><span class="avatar s24 brand">JM</span><span class="oc-handle">@jules.m</span></span><div class="cc-stats"><span class="cc-stat">14 books</span><span class="cc-stat">8 followers</span></div></div></div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Lists I follow -->
+  <div class="sec-block">
+    <div class="sec-label"><h2>Lists I follow</h2><span class="count meta-mono">3 lists</span></div>
+    <div class="grid-3">
+      <a class="ccard" href="#">
+        <div class="cc-cover cover-grad" style="--pt:var(--status-outline)"><div class="cc-pills"><span class="pill vis-public"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 4 10 15 15 0 0 1-4 10 15 15 0 0 1-4-10 15 15 0 0 1 4-10z"/></svg>Public</span></div></div>
+        <div class="cc-body"><h3 class="cc-title">Books That Broke Me</h3>
+          <p class="cc-reading"><b>Reading:</b> <i>The Hollow King</i></p>
+          <div class="cc-foot"><span class="owner-card"><span class="avatar s24 a-mint">VN</span><span class="oc-handle">@vesper.nox</span></span><div class="cc-stats"><span class="cc-stat">22 books</span><span class="cc-stat">140 followers</span></div></div></div>
+      </a>
+      <a class="ccard" href="#">
+        <div class="cc-cover cover-grad" style="--pt:var(--status-revised)"><div class="cc-pills"><span class="pill vis-public"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 4 10 15 15 0 0 1-4 10 15 15 0 0 1-4-10 15 15 0 0 1 4-10z"/></svg>Public</span></div></div>
+        <div class="cc-body"><h3 class="cc-title">Short &amp; Strange</h3>
+          <div class="lc-tags"><span class="tag">Stories</span><span class="tag">Surreal</span></div>
+          <div class="cc-foot"><span class="owner-card"><span class="avatar s24 a-coral">JW</span><span class="oc-handle">@june.writes</span></span><div class="cc-stats"><span class="cc-stat">11 books</span><span class="cc-stat">56 followers</span></div></div></div>
+      </a>
+      <a class="ccard" href="#">
+        <div class="cc-cover cover-grad" style="--pt:var(--status-final)"><div class="cc-pills"><span class="pill vis-public"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 4 10 15 15 0 0 1-4 10 15 15 0 0 1-4-10 15 15 0 0 1 4-10z"/></svg>Public</span></div></div>
+        <div class="cc-body"><h3 class="cc-title">Indie Horror Gems</h3>
+          <div class="lc-tags"><span class="tag">Horror</span><span class="tag">Indie</span><span class="tag">Gothic</span></div>
+          <div class="cc-foot"><span class="owner-card"><span class="avatar s24 a-slate">TK</span><span class="oc-handle">@theo.k</span></span><div class="cc-stats"><span class="cc-stat">18 books</span><span class="cc-stat">92 followers</span></div></div></div>
+      </a>
+    </div>
+    <div style="text-align:center;margin-top:18px;"><a href="#" style="font-family:var(--font-mono);font-size:12px;color:var(--brand);text-decoration:none;">Discover more lists →</a></div>
+  </div>
+</div>
+</main>
+</body>
+</html>

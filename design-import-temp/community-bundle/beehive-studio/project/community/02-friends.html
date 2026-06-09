@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Friends — Beehive Studio</title>
+<link rel="stylesheet" href="community.css" />
+<style>
+  .friends-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+  .tabwrap { margin-bottom: 20px; }
+  .pending-sub { display: flex; justify-content: flex-end; padding: 14px 24px 0; }
+  .sug-item { display: grid; grid-template-columns: 40px 1fr auto; gap: 13px; align-items: center; }
+  .sug-name { font-family: var(--font-display); font-weight: 700; font-size: 14px; color: var(--canvas-dark-ink-strong); }
+  .sug-handle { font-family: var(--font-mono); font-size: 11px; color: var(--canvas-dark-ink-muted); }
+  .sug-mutual { display: flex; align-items: center; gap: 9px; margin-top: 7px; }
+  .sug-mutual .mtxt { font-size: 11.5px; color: var(--canvas-dark-ink-muted); }
+</style>
+</head>
+<body>
+<main class="cm-main">
+<div class="cm-wrap w-3xl" data-screen-label="Friends">
+  <div class="route-tag">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+    /friends
+  </div>
+
+  <div class="friends-head">
+    <div class="page-head" style="margin-bottom: 0;">
+      <h1>Friends</h1>
+    </div>
+    <button class="btn-brand" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+      Invite by link
+    </button>
+  </div>
+
+  <div class="tabwrap">
+    <div class="tabstrip" role="tablist">
+      <button class="tab active" role="tab">Friends <span class="ct">38</span></button>
+      <button class="tab" role="tab">Pending <span class="ct">2</span></button>
+      <button class="tab" role="tab">Suggested <span class="ct">9</span></button>
+    </div>
+  </div>
+
+  <!-- FRIENDS tab — forum-table -->
+  <section class="panel ftable" aria-label="Friends list">
+    <div class="strip"><ul style="grid-template-columns: 1fr 120px 40px;"><li>Friend</li><li class="ralign">Mutual</li><li></li></ul></div>
+    <ul class="rows">
+      <li style="grid-template-columns: 1fr 120px 40px;">
+        <div style="display:flex;align-items:center;gap:12px;"><span class="avatar s40 a-blue">DR</span><div><div style="font-family:var(--font-display);font-weight:700;color:var(--canvas-dark-ink-strong);">Dorian Vale</div><div class="meta-mono">@dorian.reads</div></div></div>
+        <div class="ralign meta num">12 mutual</div>
+        <div class="ralign"><button class="kebab" aria-label="More"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></button></div>
+      </li>
+      <li style="grid-template-columns: 1fr 120px 40px;">
+        <div style="display:flex;align-items:center;gap:12px;"><span class="avatar s40 a-mint">VN</span><div><div style="font-family:var(--font-display);font-weight:700;color:var(--canvas-dark-ink-strong);">Vesper Nox</div><div class="meta-mono">@vesper.nox</div></div></div>
+        <div class="ralign meta num">8 mutual</div>
+        <div class="ralign"><button class="kebab" aria-label="More"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></button></div>
+      </li>
+      <li style="grid-template-columns: 1fr 120px 40px;">
+        <div style="display:flex;align-items:center;gap:12px;"><span class="avatar s40 a-coral">JW</span><div><div style="font-family:var(--font-display);font-weight:700;color:var(--canvas-dark-ink-strong);">June Hale</div><div class="meta-mono">@june.writes</div></div></div>
+        <div class="ralign meta num">21 mutual</div>
+        <div class="ralign"><button class="kebab" aria-label="More"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></button></div>
+      </li>
+      <li style="grid-template-columns: 1fr 120px 40px;">
+        <div style="display:flex;align-items:center;gap:12px;"><span class="avatar s40 a-lilac">EM</span><div><div style="font-family:var(--font-display);font-weight:700;color:var(--canvas-dark-ink-strong);">Emery Soto</div><div class="meta-mono">@emery.makes</div></div></div>
+        <div class="ralign meta num">3 mutual</div>
+        <div class="ralign"><button class="kebab" aria-label="More"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></button></div>
+      </li>
+      <li style="grid-template-columns: 1fr 120px 40px;">
+        <div style="display:flex;align-items:center;gap:12px;"><span class="avatar s40 a-slate">TK</span><div><div style="font-family:var(--font-display);font-weight:700;color:var(--canvas-dark-ink-strong);">Theo Kerr</div><div class="meta-mono">@theo.k</div></div></div>
+        <div class="ralign meta num">5 mutual</div>
+        <div class="ralign"><button class="kebab" aria-label="More"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></button></div>
+      </li>
+    </ul>
+  </section>
+
+  <!-- (reference: Suggested tab content — card-stack) -->
+  <div style="margin: 26px 0 12px;" class="eyebrow-mono">Suggested tab · card-stack</div>
+  <section class="panel panel-pad" aria-label="Suggested">
+    <ul class="cstack">
+      <li class="tile tile-pad is-interactive">
+        <div class="sug-item">
+          <span class="avatar s40 a-coral">MP</span>
+          <div>
+            <span class="sug-name">Mara Penn</span> <span class="sug-handle">@mara.penn</span>
+            <div class="sug-mutual">
+              <span class="cluster"><span class="avatar s24 a-blue">D</span><span class="avatar s24 a-mint">V</span><span class="avatar s24 a-slate">T</span></span>
+              <span class="mtxt">Dorian, Vesper +3 mutual</span>
+            </div>
+          </div>
+          <button class="btn-brand btn-sm" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>Add</button>
+        </div>
+      </li>
+      <li class="tile tile-pad is-interactive">
+        <div class="sug-item">
+          <span class="avatar s40 a-lilac">RS</span>
+          <div>
+            <span class="sug-name">Rune Avery</span> <span class="sug-handle">@rune.sketch</span>
+            <div class="sug-mutual">
+              <span class="cluster"><span class="avatar s24 a-coral">J</span><span class="avatar s24 a-lilac">E</span></span>
+              <span class="mtxt">June, Emery mutual</span>
+            </div>
+          </div>
+          <button class="btn-brand btn-sm" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>Add</button>
+        </div>
+      </li>
+    </ul>
+  </section>
+</div>
+</main>
+</body>
+</html>

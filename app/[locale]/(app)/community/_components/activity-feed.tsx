@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useState, useTransition } from 'react'
+import { Users, Hexagon, Search } from 'lucide-react'
 import { getCommunityFeedAction, type FeedRow } from '@/lib/actions/community.actions'
 import { ActivityEventRow } from './activity-event-row'
 
@@ -31,51 +32,26 @@ export function ActivityFeed({
 
   if (rows.length === 0) {
     return (
-      <section
-        style={{
-          background:
-            'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
-          borderRadius: 'var(--r-card)',
-          boxShadow: 'var(--sh-card)',
-          border: 'var(--br-card)',
-        }}
-        className="flex flex-col items-center gap-3 p-8 text-center"
-      >
-        <p
-          style={{ color: 'var(--canvas-dark-ink-strong)' }}
-          className="text-sm font-semibold"
-        >
-          Your feed is quiet right now
-        </p>
-        <p
-          style={{ color: 'var(--canvas-dark-ink-muted)' }}
-          className="max-w-md text-xs"
-        >
-          Add friends or follow writers to fill your feed.
-        </p>
-        <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
-          <Link
-            href={`/${locale}/friends`}
-            style={{
-              background: 'var(--brand)',
-              color: 'var(--brand-ink)',
-              borderRadius: 'var(--r-pill)',
-            }}
-            className="px-4 py-2 text-xs font-semibold"
-          >
-            Find friends
-          </Link>
-          <Link
-            href={`/${locale}/discover`}
-            style={{
-              background: 'var(--brand)',
-              color: 'var(--brand-ink)',
-              borderRadius: 'var(--r-pill)',
-            }}
-            className="px-4 py-2 text-xs font-semibold"
-          >
-            Discover writers
-          </Link>
+      <section className="panel">
+        <div className="empty">
+          <span className="glyph">
+            <Users />
+          </span>
+          <h2>Your feed is quiet for now</h2>
+          <p>
+            Follow some writers and join a hive — once you&apos;ve got friends, their new
+            chapters, sparks, and lists will show up right here.
+          </p>
+          <div className="cta-row">
+            <Link href={`/${locale}/friends?tab=suggested`} className="btn-brand">
+              <Search />
+              Find friends
+            </Link>
+            <Link href={`/${locale}/discover`} className="btn-tile">
+              <Hexagon />
+              Discover hives
+            </Link>
+          </div>
         </div>
       </section>
     )

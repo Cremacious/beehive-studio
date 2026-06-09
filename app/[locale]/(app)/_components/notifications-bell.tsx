@@ -2,6 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
+import {
+  AtSign, Heart, UserPlus, Users, Hexagon, MessageSquare,
+  Bell as BellIcon, BookOpen, Sparkles, List,
+} from 'lucide-react'
 import type { NotificationRow } from '@/lib/actions/notifications.actions'
 import {
   getNotificationsAction, markNotificationReadAction,
@@ -9,6 +13,45 @@ import {
 } from '@/lib/actions/notifications.actions'
 import { resolveMentionDeepLink } from '@/lib/notifications/mention-deep-links'
 import { cn } from '@/lib/utils'
+
+function iconFor(type: string) {
+  switch (type) {
+    case 'MENTION': return <AtSign />
+    case 'NEW_LIKE': return <Heart />
+    case 'NEW_FOLLOWER': return <UserPlus />
+    case 'NEW_COMMENT': return <MessageSquare />
+    case 'FRIEND_REQUEST':
+    case 'FRIEND_ACCEPTED': return <UserPlus />
+    case 'HIVE_INVITE':
+    case 'HIVE_MEMBER_JOINED': return <Hexagon />
+    case 'CLUB_INVITE':
+    case 'CLUB_JOIN_REQUEST':
+    case 'CLUB_JOIN_APPROVED': return <Users />
+    case 'CHAPTER_EDITED':
+    case 'HIVE_COMMENT': return <BookOpen />
+    case 'SPARK_WIN': return <Sparkles />
+    case 'TASK_ASSIGNED':
+    case 'TASK_COMPLETED': return <List />
+    default: return <BellIcon />
+  }
+}
+
+function iconColor(type: string): string {
+  switch (type) {
+    case 'MENTION': return 'var(--brand)'
+    case 'NEW_LIKE': return 'var(--status-error)'
+    case 'NEW_FOLLOWER':
+    case 'FRIEND_REQUEST':
+    case 'FRIEND_ACCEPTED': return 'var(--list-visibility-public)'
+    case 'HIVE_INVITE':
+    case 'HIVE_MEMBER_JOINED': return 'var(--brand)'
+    case 'CLUB_INVITE':
+    case 'CLUB_JOIN_REQUEST':
+    case 'CLUB_JOIN_APPROVED': return 'var(--list-visibility-friends)'
+    case 'SPARK_WIN': return 'var(--brand)'
+    default: return 'var(--canvas-dark-ink-muted)'
+  }
+}
 
 function mentionSurfaceLabel(rt: string | null): string {
   switch (rt) {
@@ -125,15 +168,38 @@ export function NotificationsBell() {
     <div className="relative">
       <button
         onClick={handleOpen}
-        className="w-10 h-10 rounded-xl inline-flex items-center justify-center text-white/55 hover:text-white hover:bg-white/[0.06] transition-colors relative"
         aria-label="Notifications"
+        className="relative inline-flex items-center justify-center"
+        style={{
+          width: 38,
+          height: 38,
+          borderRadius: 12,
+          background: 'var(--canvas-dark-200)',
+          color: 'var(--brand)',
+        }}
       >
-        <svg viewBox="0 0 24 24" className="w-[18px] h-[18px]" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
           <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
         </svg>
         {unreadCount > 0 && (
-          <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-brand border-2 border-[#141414] flex items-center justify-center text-[9px] font-bold text-black">
+          <span
+            className="absolute inline-flex items-center justify-center"
+            style={{
+              top: -3,
+              right: -3,
+              minWidth: 17,
+              height: 17,
+              padding: '0 4px',
+              borderRadius: 999,
+              background: 'var(--brand)',
+              color: 'var(--brand-ink)',
+              fontFamily: 'var(--font-display)',
+              fontWeight: 700,
+              fontSize: 10,
+              border: '2px solid var(--canvas-dark-100)',
+            }}
+          >
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -142,47 +208,147 @@ export function NotificationsBell() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-12 z-50 w-80 bg-card border border-border rounded-lg shadow-xl overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-              <span className="text-sm font-medium text-foreground">Notifications</span>
-              <button onClick={handleMarkAllRead} className="text-xs text-muted-foreground hover:text-foreground transition-colors">Mark all read</button>
+          <div
+            className="absolute right-0 z-50 overflow-hidden"
+            style={{
+              top: 56,
+              width: 380,
+              borderRadius: 'var(--r-card)',
+              background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+              boxShadow: 'var(--sh-card)',
+              borderTop: 'var(--br-card)',
+            }}
+          >
+            <div
+              className="flex items-center justify-between"
+              style={{
+                padding: '15px 18px',
+                borderBottom: '1px solid oklch(from var(--canvas-dark-300) l c h / 0.5)',
+              }}
+            >
+              <h3
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 700,
+                  fontSize: 15,
+                  color: 'var(--canvas-dark-ink-strong)',
+                  margin: 0,
+                }}
+              >
+                Notifications
+              </h3>
+              {unreadCount > 0 ? (
+                <button
+                  onClick={handleMarkAllRead}
+                  className="meta-mono"
+                  style={{ fontSize: 11, color: 'var(--canvas-dark-ink-muted)' }}
+                >
+                  Mark all read
+                </button>
+              ) : (
+                <span className="meta-mono" style={{ fontSize: 11, color: 'var(--canvas-dark-ink-faint)' }}>
+                  0 new
+                </span>
+              )}
             </div>
-            <div className="max-h-96 overflow-y-auto">
+            <ul
+              className="m-0 p-0 overflow-y-auto"
+              style={{ listStyle: 'none', maxHeight: 420 }}
+            >
               {notifications.length === 0 ? (
-                <p className="p-4 text-xs text-muted-foreground text-center">No notifications.</p>
+                <li>
+                  <p className="text-center" style={{ padding: 18, fontSize: 12, color: 'var(--canvas-dark-ink-muted)' }}>
+                    No notifications.
+                  </p>
+                </li>
               ) : notifications.map(n => {
                 const isPending = pendingRowId === n.id
+                const isUnread = !n.read
                 return (
-                  <button
+                  <li
                     key={n.id}
-                    onClick={() => handleNotificationClick(n)}
-                    disabled={isPending}
+                    onClick={() => !isPending && handleNotificationClick(n)}
                     aria-busy={isPending}
-                    className={cn(
-                      'w-full flex gap-3 px-4 py-3 border-b border-border last:border-0 text-left hover:bg-surface-elevated transition-colors',
-                      !n.read && 'bg-brand/5',
-                      isPending && 'opacity-60 cursor-wait',
-                    )}
+                    className={cn('grid items-start cursor-pointer transition-colors', isPending && 'opacity-60')}
+                    style={{
+                      gridTemplateColumns: '34px 1fr auto',
+                      gap: 12,
+                      padding: '13px 18px',
+                      background: isUnread ? 'oklch(from var(--brand) l c h / 0.05)' : undefined,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = isUnread
+                        ? 'oklch(from var(--brand) l c h / 0.08)'
+                        : 'var(--canvas-dark-300)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = isUnread
+                        ? 'oklch(from var(--brand) l c h / 0.05)'
+                        : ''
+                    }}
                   >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-foreground leading-relaxed">
-                        <strong>{n.actor?.name ?? 'Someone'}</strong>{' '}
+                    <span
+                      className="inline-flex items-center justify-center"
+                      style={{
+                        width: 34,
+                        height: 34,
+                        borderRadius: 10,
+                        background: 'var(--canvas-dark-100)',
+                        boxShadow: 'var(--sh-inset)',
+                        color: iconColor(n.type),
+                      }}
+                    >
+                      <span style={{ width: 16, height: 16, display: 'inline-flex' }}>
+                        {iconFor(n.type)}
+                      </span>
+                    </span>
+                    <div>
+                      <div style={{ fontSize: 13, lineHeight: 1.45, color: 'var(--canvas-dark-ink)' }}>
+                        <b style={{ color: 'var(--canvas-dark-ink-strong)', fontWeight: 600 }}>
+                          {n.actor?.name ?? 'Someone'}
+                        </b>{' '}
                         {renderLabel(n)}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">{new Date(n.createdAt).toLocaleDateString()}</p>
+                      </div>
+                      <div
+                        className="meta-mono"
+                        style={{
+                          fontSize: 10,
+                          color: 'var(--canvas-dark-ink-faint)',
+                          marginTop: 4,
+                          letterSpacing: '0.03em',
+                        }}
+                      >
+                        {isPending ? 'Opening…' : new Date(n.createdAt).toLocaleDateString()}
+                      </div>
                     </div>
                     {isPending ? (
                       <span
-                        className="w-3 h-3 rounded-full border-2 border-brand border-t-transparent animate-spin mt-1 shrink-0"
-                        aria-label="Loading"
+                        aria-label="Resolving link"
+                        className="animate-spin"
+                        style={{
+                          width: 15,
+                          height: 15,
+                          borderRadius: '50%',
+                          border: '2px solid oklch(from var(--brand) l c h / 0.25)',
+                          borderTopColor: 'var(--brand)',
+                          marginTop: 4,
+                        }}
                       />
-                    ) : !n.read ? (
-                      <span className="w-2 h-2 rounded-full bg-brand mt-1 shrink-0" />
+                    ) : isUnread ? (
+                      <span
+                        style={{
+                          width: 7,
+                          height: 7,
+                          borderRadius: '50%',
+                          background: 'var(--brand)',
+                          marginTop: 6,
+                        }}
+                      />
                     ) : null}
-                  </button>
+                  </li>
                 )
               })}
-            </div>
+            </ul>
           </div>
         </>
       )}

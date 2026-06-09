@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Plus } from 'lucide-react'
+import { Plus, Sparkles, Search } from 'lucide-react'
 import { getSparksAction } from '@/lib/actions/sparks.actions'
 import { PageHead } from '@/components/community/page-head'
 import { SparkCard } from '../discover/_components/spark-card'
@@ -27,6 +27,7 @@ export default async function SparksIndexPage({ params }: Props) {
   const active = activeAndVoting.filter((s) => s.status === 'OPEN')
   const voting = activeAndVoting.filter((s) => s.status === 'VOTING')
   const closed = closedResult.data.sparks
+  const allEmpty = active.length === 0 && voting.length === 0 && closed.length === 0
 
   return (
     <main className="cm-main">
@@ -42,25 +43,50 @@ export default async function SparksIndexPage({ params }: Props) {
           }
         />
 
-        <div className="sec-block">
-          <div className="sec-label">
-            <h2>Accepting entries</h2>
-            <span className="count">
-              {active.length} open
-            </span>
-          </div>
-          {active.length === 0 ? (
-            <p className="text-[var(--canvas-dark-ink-muted)] italic text-sm">
-              No active sparks. Be the first to start one.
-            </p>
-          ) : (
-            <div className="grid-3">
-              {active.map((s) => (
-                <SparkCard key={s.id} spark={s} locale={locale} />
-              ))}
+        {allEmpty ? (
+          <section className="panel">
+            <div className="empty">
+              <span className="glyph">
+                <Sparkles />
+              </span>
+              <h2>No active sparks</h2>
+              <p>
+                Sparks are short writing prompts with real deadlines. Start one and see who
+                shows up — or browse past sparks for inspiration.
+              </p>
+              <div className="cta-row">
+                <Link href={`/${locale}/sparks/new`} className="btn-brand">
+                  <Plus />
+                  New Spark
+                </Link>
+                <Link href={`/${locale}/discover?tab=sparks`} className="btn-tile">
+                  <Search />
+                  Browse closed
+                </Link>
+              </div>
             </div>
-          )}
-        </div>
+          </section>
+        ) : (
+          <div className="sec-block">
+            <div className="sec-label">
+              <h2>Accepting entries</h2>
+              <span className="count">
+                {active.length} open
+              </span>
+            </div>
+            {active.length === 0 ? (
+              <p className="empty-line">
+                No active sparks. Be the first to start one.
+              </p>
+            ) : (
+              <div className="grid-3">
+                {active.map((s) => (
+                  <SparkCard key={s.id} spark={s} locale={locale} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {voting.length > 0 && (
           <div className="sec-block">

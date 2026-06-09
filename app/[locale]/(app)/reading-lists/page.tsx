@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { BookOpen, Search } from 'lucide-react'
 import { getListsAction } from '@/lib/actions/reading-lists.actions'
 import { PageHead } from '@/components/community/page-head'
 import { ListCard } from './_components/list-card'
@@ -37,76 +38,94 @@ export default async function ReadingListsPage({
       />
 
       {bothEmpty ? (
-        <div className="sec-block">
-          <p className="text-[var(--canvas-dark-ink-muted)] italic">
-            Create your first reading list to get started.
-          </p>
-        </div>
+        <section className="panel">
+          <div className="empty">
+            <span className="glyph">
+              <BookOpen />
+            </span>
+            <h2>No reading lists yet</h2>
+            <p>
+              Curate a list of books worth recommending — or follow a friend&apos;s list to
+              track what they&apos;re loving.
+            </p>
+            <div className="cta-row">
+              <CreateListButton locale={locale} />
+              <Link href={`/${locale}/discover?tab=lists`} className="btn-tile">
+                <Search />
+                Discover lists
+              </Link>
+            </div>
+          </div>
+        </section>
       ) : null}
 
-      <div className="sec-block">
-        <div className="sec-label">
-          <h2>My lists</h2>
-          <span className="count meta-mono">
-            {mine.length} {mine.length === 1 ? 'list' : 'lists'}
-          </span>
-        </div>
-        {mine.length === 0 ? (
-          <p className="text-[var(--canvas-dark-ink-muted)] italic">
-            Create your first reading list.
-          </p>
-        ) : (
-          <div className="grid-3">
-            {mine.map((list) => (
-              <ListCard
-                key={list.id}
-                list={list}
-                locale={locale}
-                viewerIsOwner
-              />
-            ))}
+      {!bothEmpty && (
+        <div className="sec-block">
+          <div className="sec-label">
+            <h2>My lists</h2>
+            <span className="count meta-mono">
+              {mine.length} {mine.length === 1 ? 'list' : 'lists'}
+            </span>
           </div>
-        )}
-      </div>
-
-      <div className="sec-block">
-        <div className="sec-label">
-          <h2>Lists I follow</h2>
-          <span className="count meta-mono">
-            {following.length} {following.length === 1 ? 'list' : 'lists'}
-          </span>
+          {mine.length === 0 ? (
+            <p className="empty-line">
+              You haven&apos;t made any reading lists yet.
+            </p>
+          ) : (
+            <div className="grid-3">
+              {mine.map((list) => (
+                <ListCard
+                  key={list.id}
+                  list={list}
+                  locale={locale}
+                  viewerIsOwner
+                />
+              ))}
+            </div>
+          )}
         </div>
-        {following.length === 0 ? (
-          <p className="text-[var(--canvas-dark-ink-muted)] italic">
-            Lists you follow appear here.
-          </p>
-        ) : (
-          <div className="grid-3">
-            {following.map((list) => (
-              <ListCard
-                key={list.id}
-                list={list}
-                locale={locale}
-                isFollowing
-              />
-            ))}
-          </div>
-        )}
-      </div>
+      )}
 
-      <div style={{ textAlign: 'center', marginTop: '18px' }}>
-        <Link
-          href={`/${locale}/discover?tab=lists`}
-          style={{
-            fontFamily: 'var(--font-mono)',
-            fontSize: '12px',
-            color: 'var(--brand)',
-            textDecoration: 'none',
-          }}
-        >
-          Discover more lists →
-        </Link>
-      </div>
+      {!bothEmpty && (
+        <div className="sec-block">
+          <div className="sec-label">
+            <h2>Lists I follow</h2>
+            <span className="count meta-mono">
+              {following.length} {following.length === 1 ? 'list' : 'lists'}
+            </span>
+          </div>
+          {following.length === 0 ? (
+            <p className="empty-line">Lists you follow appear here.</p>
+          ) : (
+            <div className="grid-3">
+              {following.map((list) => (
+                <ListCard
+                  key={list.id}
+                  list={list}
+                  locale={locale}
+                  isFollowing
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {!bothEmpty && (
+        <div style={{ textAlign: 'center', marginTop: '18px' }}>
+          <Link
+            href={`/${locale}/discover?tab=lists`}
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '12px',
+              color: 'var(--brand)',
+              textDecoration: 'none',
+            }}
+          >
+            Discover more lists →
+          </Link>
+        </div>
+      )}
     </main>
   )
 }

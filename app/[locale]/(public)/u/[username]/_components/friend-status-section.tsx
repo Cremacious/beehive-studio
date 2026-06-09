@@ -34,34 +34,13 @@ type Props = {
 
 function StatusPill({ status }: { status: FriendshipStatus }) {
   if (status === 'ACCEPTED') {
-    return (
-      <span
-        className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider"
-        style={{ background: 'var(--brand)', color: 'var(--brand-ink)' }}
-      >
-        Friends
-      </span>
-    )
+    return <span className="pill role-owner"><span className="dot" />Friends</span>
   }
   if (status === 'PENDING_OUTGOING') {
-    return (
-      <span className="inline-flex items-center rounded-full border border-[var(--canvas-dark-300)] px-2.5 py-0.5 text-[10px] font-mono uppercase tracking-wider text-[var(--canvas-dark-ink-muted)]">
-        Request sent
-      </span>
-    )
+    return <span className="pill role-reader"><span className="dot" />Request sent</span>
   }
   if (status === 'PENDING_INCOMING') {
-    return (
-      <span
-        className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider"
-        style={{
-          background: 'oklch(from var(--brand) l c h / 0.18)',
-          color: 'var(--brand)',
-        }}
-      >
-        Request received
-      </span>
-    )
+    return <span className="pill role-contributor"><span className="dot" />Request received</span>
   }
   return null
 }
@@ -78,31 +57,28 @@ function MutualFriendsRow({
   const overflow = mutuals.total - shown.length
   return (
     <div className="flex items-center gap-3">
-      <span className="text-[12px] text-[var(--canvas-dark-ink-muted)]">
-        <strong className="text-[var(--canvas-dark-ink-strong)]">{mutuals.total}</strong> mutual ·
+      <span className="meta-mono">
+        <strong style={{ color: 'var(--canvas-dark-ink-strong)' }}>{mutuals.total}</strong> mutual
       </span>
-      <div className="flex -space-x-2">
+      <span className="cluster">
         {shown.map((m) => (
           <Link
             key={m.userId}
             href={m.username ? `/${locale}/u/${m.username}` : '#'}
             title={m.displayName ?? m.username ?? 'Unknown'}
-            className="h-7 w-7 overflow-hidden rounded-full border border-[var(--canvas-dark-200)] bg-[var(--canvas-dark-300)]"
+            className="avatar s24 a-slate"
+            style={{ overflow: 'hidden' }}
           >
             {m.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={m.avatarUrl} alt="" className="h-full w-full object-cover" />
             ) : (
-              <span className="flex h-full w-full items-center justify-center text-[10px] text-[var(--canvas-dark-ink-muted)]">
-                {(m.displayName ?? m.username ?? '?').charAt(0).toUpperCase()}
-              </span>
+              (m.displayName ?? m.username ?? '?').charAt(0).toUpperCase()
             )}
           </Link>
         ))}
-      </div>
-      {overflow > 0 && (
-        <span className="text-[11px] text-[var(--canvas-dark-ink-muted)]">+{overflow} more</span>
-      )}
+      </span>
+      {overflow > 0 && <span className="meta-mono">+{overflow} more</span>}
     </div>
   )
 }
@@ -126,7 +102,7 @@ export function FriendStatusSection({
   if (viewerIsSelf || !isAuthenticated) {
     if (mutuals.total === 0) return null
     return (
-      <section className="mb-6">
+      <section>
         <MutualFriendsRow mutuals={mutuals} locale={locale} />
       </section>
     )
@@ -173,15 +149,16 @@ export function FriendStatusSection({
   if (!showPill && mutuals.total === 0 && !showKebab) return null
 
   return (
-    <section className="mb-6 flex flex-wrap items-center gap-4">
+    <section className="flex flex-wrap items-center gap-4">
       {showPill && <StatusPill status={status} />}
 
       {showKebab && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
-              className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[var(--canvas-dark-300)] text-[var(--canvas-dark-ink-muted)] hover:text-[var(--canvas-dark-ink-strong)]"
+              className="btn-tile btn-sm"
               aria-label="More actions"
+              style={{ width: 32, padding: 0, justifyContent: 'center' }}
             >
               <MoreHorizontal size={14} />
             </button>

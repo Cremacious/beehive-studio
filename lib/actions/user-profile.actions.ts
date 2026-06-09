@@ -37,6 +37,7 @@ export type PublicProfile = {
   wordCount: number
   bookCount: number
   sparkCount: number
+  clubCount: number
   isFollowing: boolean
 }
 
@@ -103,6 +104,7 @@ export async function getPublicProfileAction(
     wordCountResult,
     bookCountResult,
     sparkCountResult,
+    clubCountResult,
   ] = await Promise.all([
     db
       .select({ total: count() })
@@ -127,6 +129,10 @@ export async function getPublicProfileAction(
       .select({ total: count() })
       .from(sparks)
       .where(eq(sparks.creatorId, userId)),
+    db
+      .select({ total: count() })
+      .from(bookClubMembers)
+      .where(eq(bookClubMembers.userId, userId)),
   ])
 
   let isFollowing = false
@@ -155,6 +161,7 @@ export async function getPublicProfileAction(
       wordCount: Number(wordCountResult[0]?.total ?? 0),
       bookCount: Number(bookCountResult[0]?.total ?? 0),
       sparkCount: Number(sparkCountResult[0]?.total ?? 0),
+      clubCount: Number(clubCountResult[0]?.total ?? 0),
       isFollowing,
     },
   }

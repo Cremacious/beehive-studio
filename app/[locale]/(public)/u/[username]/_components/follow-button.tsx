@@ -16,7 +16,7 @@ export function FollowButton({ targetUserId, locale, initialFollowing, isAuthent
 
   if (!isAuthenticated) {
     return (
-      <Link href={`/${locale}/sign-in`} className="px-4 py-1.5 border border-[#2a2a2a] text-[#888] rounded-md text-[12px] hover:text-white transition-colors">
+      <Link href={`/${locale}/sign-in`} className="btn-tile btn-sm">
         Sign in to follow
       </Link>
     )
@@ -33,13 +33,10 @@ export function FollowButton({ targetUserId, locale, initialFollowing, isAuthent
 
   return (
     <button
+      type="button"
       onClick={handle}
       disabled={isPending}
-      className={`px-4 py-1.5 rounded-md text-[12px] transition-colors cursor-pointer ${
-        following
-          ? 'bg-[#2a2a2a] text-[#aaa] hover:text-white'
-          : 'border border-[#2a2a2a] text-[#888] hover:text-white'
-      }`}
+      className={following ? 'btn-tile btn-sm' : 'btn-brand btn-sm'}
     >
       {following ? '✓ Following' : '+ Follow'}
     </button>

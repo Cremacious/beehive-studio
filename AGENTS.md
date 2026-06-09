@@ -12,9 +12,62 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-09 (Hives modal + spark detail iOS + global ink brightness + UI audit delivered)
+> **Last updated:** 2026-06-09 (Full UI audit execution — 28 findings worked end-to-end across 5 phases)
 >
-> **Last commit:** [d4ba0a4](https://github.com/Cremacious/beehive-studio/commit/d4ba0a4) — fix(ui): hives modal wiring + spark detail iOS refresh + global ink brightness.
+> **Last commit:** [f14a575](https://github.com/Cremacious/beehive-studio/commit/f14a575) — feat(ui-audit): token migration + iOS recipe + back-links + mobile nav.
+>
+> **Current focus:** UI audit shipped end-to-end. The 28-finding audit Chris approved en masse this session is now in main across 31 files. 634/634 tests green throughout, tsc clean throughout. Surface-by-surface smoke loop remains the next-step posture, but the major design debt is cleared.
+>
+> **What landed this session** (one large commit, 31 files, +1500+/-800):
+>
+> 1. **P0 — Discover bundle fully token-migrated** (9 files: book-card, hive-card, spark-card, spark-entry-card, spark-entry-comments-panel, spark-vote-button, feed-filters, writers-strip, load-more-feed, create-spark-modal). All hardcoded hex grays + `#FFC300` swapped for design tokens. Panel chrome, iOS focus rings, mono uppercase labels, brand pill buttons. CreateSparkModal got the full iOS modal recipe (`sm:max-w-[560px] p-7 dialog-ios`).
+>
+> 2. **P0 — book-details-form rewrite** (835 LOC). Shared `fieldClass` + `selectClass` + `Chip` rebuilt against the iOS modal recipe. `fieldStyle` const threaded to 8 input/select/textarea sites. Save button restyled to canonical brand pill via tokens (was hardcoded `text-[#0a0a0a]`). Title-error state swapped from border-red to ring-red matching the new no-border + ring focus pattern.
+>
+> 3. **P0 — Legal pages cleanup.** New shared `<LegalPage>` + `<LegalSection>` components. Privacy page lost its duplicate custom nav + footer (219 → 144 LOC — was rolling its OWN AppNav clone). All 4 pages (cookies / privacy / terms / dmca) now use the public layout's bg instead of forcing `#141414`. New `.legal-body` scoped CSS for prose styling (`strong` / `a` / `ul` / `p + p`).
+>
+> 4. **P0 — Error pages.** `error.tsx` + `not-found.tsx` (locale + root) text-`[#FFC300]` → `text-[var(--brand)]`.
+>
+> 5. **P1 — Detail page back-links.** New shared `<BackLinkBadge>` component for pages that don't use `<PageHead>`. Wired on `/clubs/[clubId]` (back to clubs), `/reading-lists/[listId]` (back to reading lists). `<HivePageShell>` back link rewrote to use the same `.page-head .back` dark-iOS chrome → cascades to every hive surface using `back` prop. Wired on the hive dashboard (back to /hives). Hive sub-routes deliberately skipped (persistent left sidebar handles navigation).
+>
+> 6. **P1 — CreateHiveModal iOS refresh.** Recessed bg `var(--canvas-dark-100)` → `#1E1E1E` (matches the rest of the iOS recipe family). Labels swapped to mono uppercase 10px muted. Dialog content gets `sm:max-w-[560px] p-7 dialog-ios`. Submit button → `h-9 px-5 rounded-[var(--r-pill)]` brand pill with "Create Hive" capitalized. Brand-yellow focus rings on name + description inputs.
+>
+> 7. **P1 — Shared `<EmptyState>` component.** New canonical empty-state with `variant: 'inline' | 'hero'`. Single source for future empty-section panels. Existing surfaces unchanged; new consumers should use this.
+>
+> 8. **P2 — AppNav mobile breakpoint.** "Beehive Studio" brand text `hidden sm:inline` (icon-only on mobile). Center nav drops `absolute left-1/2 -translate-x-1/2` below `sm:` → inline-flex so pills don't overlap brand/avatar. Nav pills get `px-2.5/text-[12px]` on mobile, `px-3.5/text-[13px]` on `sm+`, with `whitespace-nowrap`. Container `gap-3` between brand/center/right.
+>
+> 9. **P3 — Code hygiene.** Deleted dead `studio/[bookId]/_components/create-hive-modal.tsx` + `create-hive-button.tsx` stubs (zero callers). Added "do not delete" header comment to `scripts/ping-sessions.ts` (Neon connectivity canary). Documented HiveCard / HiveIndexCard as deliberately different patterns (studio rail = book covers; /hives grid = hex glyph).
+>
+> 10. **Design mockup file** `design-import-temp/ui-audit-mockups.html` — self-contained before/after for the 8 visual issues + 13 non-visual findings listed. Reference doc, not user-facing.
+>
+> **New shared components added (3):**
+> - `components/community/back-link-badge.tsx` — standalone back chrome for detail pages without PageHead.
+> - `components/community/empty-state.tsx` — canonical empty-state with inline / hero variants.
+> - `app/[locale]/(public)/_components/legal-page.tsx` — shared LegalPage + LegalSection wrappers for the 4 legal pages.
+>
+> **Patterns now load-bearing across the codebase (added this session):**
+> 1. **iOS modal recipe propagation** — now applied to **5** modals: CreateListModal + CreateClubModal + SparkSubmitPanel + CreateSparkModal + CreateHiveModal. Recipe: `sm:max-w-[560px] p-7 gap-6 dialog-ios` outer, `#1E1E1E` recessed inputs with `var(--sh-inset)` + brand-yellow `focus:ring-2 ring-[oklch(from_var(--brand)_l_c_h_/_0.35)]`, mono uppercase labels with brand-yellow required `*`, pill-tile checkboxes, footer via `dialog-ios-footer`, h-9 brand pill buttons. Document this recipe in any new modal.
+> 2. **`<BackLinkBadge>` standalone** for detail pages that don't have PageHead. Pairs with PageHead's `back` prop — both render identical chrome via `.page-head .back` CSS.
+> 3. **`<EmptyState>` shared component** — canonical pattern for empty surfaces. `variant: 'inline'` for in-panel use, `'hero'` for full-page heroes. Stop hand-rolling empty states.
+> 4. **`<LegalPage>` + `<LegalSection>`** for any future long-form prose page (TOS updates, content policies). `.legal-body` CSS handles strong / a / ul / p+p automatically.
+> 5. **Brand `text-[var(--brand)]` always — never `text-[#FFC300]`.** Audit any remaining literal hex brand refs.
+> 6. **Token migration check before touching any /discover or pre-DS file:** swap `bg-[#1c1c1c]` → `#1E1E1E` + `var(--sh-inset)`, `border-border` → drop, `text-[#0a0a0a]` → `var(--brand-ink)`, `text-white/X` literals → ink tokens.
+>
+> **Known follow-ups (deferred from the audit, non-blocking):**
+> 1. **P2 — Auth + /settings/billing + /welcome + /pricing** haven't been smoke-tested against the brightness bump.
+> 2. **P2 — Studio editor surfaces** (binder, metadata panel, status bar, toolbar) — pre-DS era; brightness bump may affect ink legibility on cream paper. Worth a walk-through.
+> 3. **P2 — /discover hero vs /community section rail pattern decision** — two "browse multiple content types" shapes; pick one as canonical.
+> 4. **P3 — `design-import-temp/`** still accumulating mockups (5 HTML files + a tarball). Worth `.gitignore` or archive.
+> 5. **P3 — Class name collision audit** — grep for any remaining single-word component CSS classes (`empty`, `body`, `meta`, `title`) and prefix-rename as needed.
+> 6. **P4 — `aria-label` sweep** for icon-only buttons (notifications bell, kebab menus, sort dropdowns).
+> 7. **P4 — Form labels** — some pages use `<p>` + `style` instead of `<label htmlFor>`. Tab-order + screen-reader navigation impact.
+> 8. **P4 — Focus state consistency** — brand-yellow `focus:ring-2` only on modal inputs; uneven across the app.
+>
+> **Next concrete step:** Chris does the cross-surface smoke pass against the seeded `smoketest@beehive.local` account. Suggested order: /community → /discover (all 5 tabs) → /sparks (index + detail + entry) → /reading-lists (index + detail) → /clubs (index + detail) → /hives (index + dashboard) → legal pages (/cookies, /privacy, /terms, /dmca) → resize to mobile to test AppNav. Flag any new issues + I fix one at a time. The deferred follow-ups (auth pages / studio editor brightness / aria-label sweep) come next.
+>
+> **Prior — Last updated:** 2026-06-09 (Hives modal + spark detail iOS + global ink brightness + UI audit delivered)
+>
+> **Last commit (prior session):** [d4ba0a4](https://github.com/Cremacious/beehive-studio/commit/d4ba0a4) — fix(ui): hives modal wiring + spark detail iOS refresh + global ink brightness.
 >
 > **Current focus:** mid-smoke-test polish loop using the seeded `smoketest@beehive.local` account. Each surface gets the same loop — Chris flags a UI/copy issue, I fix it, no commit until "ship it". Three quick fixes shipped at d4ba0a4 (1. /community greeting line removed; 2. /hives: New Hive button H capitalized + opens CreateHiveModal inline instead of routing to /studio + new HiveIndexCard for the no-image grid; 3. /sparks/[id] back link uses canonical PageHead `back` badge + SparkSubmitPanel got the iOS refresh — it was using pre-design-system hex `#181818/#141414/#2a2a2a/#555/#ccc/#FFC300`). Plus app-wide ink brightness bump (single 4-line token edit — faint .500→.750, muted .680→.850, ink .880→.950, strong .965→1.000) — fixes the global "text too dim" complaint while preserving the 4-tier hierarchy.
 >

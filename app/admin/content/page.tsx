@@ -10,7 +10,8 @@ export const dynamic = 'force-dynamic'
 const TABS: { id: ContentKind; label: string }[] = [
   { id: 'book', label: 'Books' },
   { id: 'spark', label: 'Sparks' },
-  { id: 'book_comment', label: 'Comments' },
+  { id: 'book_comment', label: 'Book comments' },
+  { id: 'chapter_comment', label: 'Chapter comments' },
   { id: 'buzz_post', label: 'Buzz posts' },
   { id: 'club_discussion', label: 'Club discussions' },
 ]
@@ -76,6 +77,25 @@ async function fetchByKind(kind: ContentKind): Promise<ContentRow[]> {
           p.username AS "authorUsername"
         FROM book_comments c
         LEFT JOIN books b ON b.id = c.book_id
+        LEFT JOIN users u ON u.id = c.user_id
+        LEFT JOIN user_profiles p ON p.user_id = c.user_id
+        ORDER BY c.created_at DESC
+        LIMIT 100
+      `)
+    }
+    case 'chapter_comment': {
+      return exec(sql`
+        SELECT
+          c.id,
+          coalesce(bi.title || ' in ' || b.title, 'on (deleted chapter)') AS title,
+          c.created_at AS "createdAt",
+          left(c.content, 200) AS excerpt,
+          u.email AS "authorEmail",
+          p.username AS "authorUsername"
+        FROM chapter_comments c
+        LEFT JOIN chapters ch ON ch.id = c.chapter_id
+        LEFT JOIN binder_items bi ON bi.id = ch.binder_item_id
+        LEFT JOIN books b ON b.id = ch.book_id
         LEFT JOIN users u ON u.id = c.user_id
         LEFT JOIN user_profiles p ON p.user_id = c.user_id
         ORDER BY c.created_at DESC

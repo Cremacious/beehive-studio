@@ -19,6 +19,7 @@ type ContributionByline = {
 type ChapterNeighbor = {
   href: string
   title: string
+  collectionName?: string | null
 }
 
 type Props = {
@@ -32,6 +33,7 @@ type Props = {
   prev: ChapterNeighbor | null
   next: ChapterNeighbor | null
   contributionByline: ContributionByline | null
+  commentsSlot?: React.ReactNode
 }
 
 const THEME_TILES: ReadonlyArray<{
@@ -55,6 +57,7 @@ export function ReaderSurface({
   backHref,
   prev,
   next,
+  commentsSlot,
   contributionByline,
 }: Props) {
   const [theme, setTheme] = useReaderTheme()
@@ -320,6 +323,15 @@ export function ReaderSurface({
           </div>
         </article>
 
+        {commentsSlot && (
+          <div
+            className="mx-auto"
+            style={{ maxWidth: '900px', padding: '32px 24px 16px' }}
+          >
+            {commentsSlot}
+          </div>
+        )}
+
         {/* ③ NAV ROW — dark chrome */}
         <nav
           aria-label="Chapter navigation"
@@ -332,7 +344,12 @@ export function ReaderSurface({
           >
             {/* PREV */}
             {prev ? (
-              <NavCard href={prev.href} dir="prev" title={prev.title} />
+              <NavCard
+                href={prev.href}
+                dir="prev"
+                title={prev.title}
+                collectionName={prev.collectionName ?? null}
+              />
             ) : (
               <span />
             )}
@@ -342,7 +359,12 @@ export function ReaderSurface({
 
             {/* NEXT */}
             {next ? (
-              <NavCard href={next.href} dir="next" title={next.title} />
+              <NavCard
+                href={next.href}
+                dir="next"
+                title={next.title}
+                collectionName={next.collectionName ?? null}
+              />
             ) : (
               <span />
             )}
@@ -400,10 +422,12 @@ function NavCard({
   href,
   dir,
   title,
+  collectionName,
 }: {
   href: string
   dir: 'prev' | 'next'
   title: string
+  collectionName: string | null
 }) {
   const isPrev = dir === 'prev'
   return (
@@ -435,13 +459,13 @@ function NavCard({
     >
       {isPrev ? (
         <ChevronLeft
-          className="shrink-0 transition-colors group-hover:text-[var(--brand)]"
-          style={{ width: '20px', height: '20px', color: 'var(--brand-soft)' }}
+          className="shrink-0"
+          style={{ width: '20px', height: '20px', color: 'var(--brand)' }}
         />
       ) : (
         <ChevronRight
-          className="shrink-0 transition-colors group-hover:text-[var(--brand)]"
-          style={{ width: '20px', height: '20px', color: 'var(--brand-soft)' }}
+          className="shrink-0"
+          style={{ width: '20px', height: '20px', color: 'var(--brand)' }}
         />
       )}
       <span className="min-w-0 flex-1">
@@ -456,6 +480,20 @@ function NavCard({
         >
           {isPrev ? 'Previous' : 'Next'}
         </span>
+        {collectionName && (
+          <span
+            className="mt-1 block truncate"
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '11px',
+              letterSpacing: '0.04em',
+              color: 'var(--brand)',
+            }}
+            title={collectionName}
+          >
+            {collectionName}
+          </span>
+        )}
         <span
           className="mt-1 block overflow-hidden"
           style={{
@@ -509,8 +547,8 @@ function NavBackCard({
       }}
     >
       <BookOpen
-        className="transition-colors group-hover:text-[var(--brand)]"
-        style={{ width: '20px', height: '20px', color: 'var(--brand-soft)' }}
+        className="shrink-0"
+        style={{ width: '20px', height: '20px', color: 'var(--brand)' }}
       />
       <span
         className="overflow-hidden transition-colors group-hover:text-[var(--brand)]"

@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import Link from 'next/link'
-import { Circle, CheckCircle2, Lock } from 'lucide-react'
+import { Circle, CheckCircle2, ChevronDown, Lock } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   markChapterReadAction,
@@ -12,20 +12,27 @@ import {
   isChapterReaderVisible,
   type ChapterStatus,
 } from '@/lib/books/is-chapter-reader-visible'
+import type { ReadingChapter, ReadingNode } from '@/lib/books/build-reading-order'
 
 type ChapterItem = {
   binderItemId: string
   chapterId: string
   title: string
-  order: number
   status: ChapterStatus
   updatedAt: Date | string
+  collectionId: string | null
 }
 
 type Props = {
   bookId: string
   readerBasePath: string
+  // Flat reading-order list of all chapters in the book. Used for read
+  // tracking, progress bar segments, and totals.
   chapters: ChapterItem[]
+  // Structured tree of top-level nodes. Collections render as collapsible
+  // cards with their children indented inside. Chapter nodes render as
+  // regular rows.
+  tree: ReadingNode[]
   initialReadSet: string[]
   isAuthor: boolean
   isAuthenticated: boolean
@@ -45,6 +52,7 @@ export function ChaptersPanel({
   bookId,
   readerBasePath,
   chapters,
+  tree,
   initialReadSet,
   isAuthor,
   isAuthenticated,
@@ -88,6 +96,194 @@ export function ChaptersPanel({
         toast.error(wasRead ? "Couldn't unmark" : "Couldn't mark as read")
       }
     })
+  }
+
+  // Walk the visible reading order once and assign a running 1-based index
+  // to every reader-visible chapter. The number rendered next to each row
+  // is this index, so numbering stays continuous across collections.
+  const displayIndexByChapterId = new Map<string, number>()
+  let runningIndex = 0
+  for (const ch of visibleChapters) {
+    const isReaderVisible = isAuthor || isChapterReaderVisible(ch.status)
+    if (isReaderVisible) {
+      runningIndex += 1
+      displayIndexByChapterId.set(ch.chapterId, runningIndex)
+    }
+  }
+
+  // Filter the tree's collections: a collection with zero visible chapters
+  // (e.g. non-author viewer + all drafts) is hidden so the reader doesn't
+  // see an empty section header.
+  const visibleTree: ReadingNode[] = []
+  for (const node of tree) {
+    if (node.kind === 'chapter') {
+      if (isAuthor || isChapterReaderVisible(node.chapter.status)) {
+        visibleTree.push(node)
+      }
+      continue
+    }
+    const visibleKids = node.children.filter((c) =>
+      isAuthor ? true : isChapterReaderVisible(c.status),
+    )
+    if (visibleKids.length === 0) continue
+    visibleTree.push({ ...node, children: visibleKids })
+  }
+
+  const renderRow = (ch: ReadingChapter, displayIndex: number) => {
+    const isRead = readSet.has(ch.binderItemId)
+    const isReaderVisible = isAuthor || isChapterReaderVisible(ch.status)
+
+    if (!isReaderVisible) {
+      return (
+        <li
+          key={ch.chapterId}
+          className="flex items-center"
+          style={{
+            gap: '16px',
+            padding: '14px 18px',
+            borderRadius: 'var(--r-row)',
+            background: 'var(--canvas-dark-150)',
+            border: '1px dashed var(--canvas-dark-300)',
+          }}
+        >
+          <span
+            aria-hidden
+            className="inline-flex flex-shrink-0 items-center justify-center"
+            style={{ width: '26px', color: 'var(--canvas-dark-ink-faint)' }}
+          >
+            <Lock size={17} strokeWidth={1.9} />
+          </span>
+          <span
+            style={{
+              flexShrink: 0,
+              fontFamily: 'var(--font-mono)',
+              fontSize: '12px',
+              color: 'var(--canvas-dark-ink-muted)',
+              width: '22px',
+              textAlign: 'center',
+            }}
+          >
+            {pad2(displayIndex)}
+          </span>
+          <span
+            className="flex-1 truncate"
+            style={{
+              fontStyle: 'italic',
+              fontWeight: 400,
+              color: 'var(--canvas-dark-ink-muted)',
+              fontSize: '15px',
+            }}
+          >
+            {ch.title}
+          </span>
+          <span
+            style={{
+              flexShrink: 0,
+              fontSize: '13px',
+              color: 'var(--canvas-dark-ink-faint)',
+            }}
+          >
+            Draft, coming soon
+          </span>
+        </li>
+      )
+    }
+
+    return (
+      <li key={ch.chapterId}>
+        <Link
+          href={`${readerBasePath}/read/${ch.chapterId}`}
+          className="group flex items-center no-underline"
+          style={{
+            gap: '16px',
+            padding: '14px 18px',
+            borderRadius: 'var(--r-row)',
+            background:
+              'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+            boxShadow: 'var(--sh-tile)',
+            color: 'inherit',
+            transition: 'transform .14s, box-shadow .14s',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-1px)'
+            e.currentTarget.style.boxShadow =
+              '0 1px 0 0 oklch(1 0 0 / 0.07) inset, 0 12px 22px -10px oklch(0 0 0 / 0.5)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = ''
+            e.currentTarget.style.boxShadow = 'var(--sh-tile)'
+          }}
+        >
+          {isAuthenticated ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                toggle(ch.binderItemId)
+              }}
+              aria-pressed={isRead}
+              aria-label={`Mark "${ch.title}" as ${isRead ? 'unread' : 'read'}`}
+              className="inline-flex items-center justify-center"
+              style={{
+                flexShrink: 0,
+                width: '26px',
+                height: '26px',
+                border: 0,
+                padding: 0,
+                background: 'transparent',
+                cursor: 'pointer',
+                color: isRead ? 'var(--brand)' : 'var(--canvas-dark-ink-faint)',
+              }}
+            >
+              {isRead ? (
+                <CheckCircle2 size={22} strokeWidth={1.9} />
+              ) : (
+                <Circle size={22} strokeWidth={1.9} />
+              )}
+            </button>
+          ) : (
+            <span style={{ width: '26px', height: '26px', flexShrink: 0 }} />
+          )}
+          <span
+            style={{
+              flexShrink: 0,
+              fontFamily: 'var(--font-mono)',
+              fontSize: '12px',
+              color: 'var(--canvas-dark-ink-muted)',
+              width: '22px',
+              textAlign: 'center',
+            }}
+          >
+            {pad2(displayIndex)}
+          </span>
+          <span
+            className="flex-1 truncate"
+            style={{
+              fontFamily: 'var(--font-ui)',
+              fontSize: '15px',
+              fontWeight: 500,
+              color: isRead
+                ? 'var(--canvas-dark-ink)'
+                : 'var(--canvas-dark-ink-strong)',
+            }}
+          >
+            {ch.title}
+          </span>
+          <span
+            style={{
+              flexShrink: 0,
+              fontFamily: 'var(--font-mono)',
+              fontSize: '11px',
+              letterSpacing: '0.04em',
+              color: 'var(--canvas-dark-ink-muted)',
+            }}
+          >
+            Updated {formatUpdatedLabel(ch.updatedAt)}
+          </span>
+        </Link>
+      </li>
+    )
   }
 
   return (
@@ -172,7 +368,7 @@ export function ChaptersPanel({
         </div>
       )}
 
-      {visibleChapters.length === 0 ? (
+      {totalCount === 0 ? (
         <p
           className="text-center italic"
           style={{
@@ -185,169 +381,150 @@ export function ChaptersPanel({
         </p>
       ) : (
         <ul className="flex flex-col" style={{ gap: '8px' }}>
-          {visibleChapters.map((ch, i) => {
-            const isRead = readSet.has(ch.binderItemId)
-            const isReaderVisible = isAuthor || isChapterReaderVisible(ch.status)
-
-            if (!isReaderVisible) {
-              return (
-                <li
-                  key={ch.chapterId}
-                  className="flex items-center"
-                  style={{
-                    gap: '16px',
-                    padding: '14px 18px',
-                    borderRadius: 'var(--r-row)',
-                    background: 'var(--canvas-dark-150)',
-                    border: '1px dashed var(--canvas-dark-300)',
-                  }}
-                >
-                  <span
-                    aria-hidden
-                    className="inline-flex flex-shrink-0 items-center justify-center"
-                    style={{
-                      width: '26px',
-                      color: 'var(--canvas-dark-ink-faint)',
-                    }}
-                  >
-                    <Lock size={17} strokeWidth={1.9} />
-                  </span>
-                  <span
-                    style={{
-                      flexShrink: 0,
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '12px',
-                      color: 'var(--canvas-dark-ink-muted)',
-                      width: '22px',
-                      textAlign: 'center',
-                    }}
-                  >
-                    {pad2(i + 1)}
-                  </span>
-                  <span
-                    className="flex-1 truncate"
-                    style={{
-                      fontStyle: 'italic',
-                      fontWeight: 400,
-                      color: 'var(--canvas-dark-ink-muted)',
-                      fontSize: '15px',
-                    }}
-                  >
-                    {ch.title}
-                  </span>
-                  <span
-                    style={{
-                      flexShrink: 0,
-                      fontSize: '13px',
-                      color: 'var(--canvas-dark-ink-faint)',
-                    }}
-                  >
-                    Draft, coming soon
-                  </span>
-                </li>
-              )
+          {visibleTree.map((node) => {
+            if (node.kind === 'chapter') {
+              const idx = displayIndexByChapterId.get(node.chapter.chapterId) ?? 0
+              return renderRow(node.chapter, idx)
             }
-
             return (
-              <li key={ch.chapterId}>
-                <Link
-                  href={`${readerBasePath}/read/${ch.chapterId}`}
-                  className="group flex items-center no-underline"
-                  style={{
-                    gap: '16px',
-                    padding: '14px 18px',
-                    borderRadius: 'var(--r-row)',
-                    background:
-                      'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-                    boxShadow: 'var(--sh-tile)',
-                    color: 'inherit',
-                    transition: 'transform .14s, box-shadow .14s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-1px)'
-                    e.currentTarget.style.boxShadow =
-                      '0 1px 0 0 oklch(1 0 0 / 0.07) inset, 0 12px 22px -10px oklch(0 0 0 / 0.5)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = ''
-                    e.currentTarget.style.boxShadow = 'var(--sh-tile)'
-                  }}
-                >
-                  {isAuthenticated ? (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        toggle(ch.binderItemId)
-                      }}
-                      aria-pressed={isRead}
-                      aria-label={`Mark "${ch.title}" as ${isRead ? 'unread' : 'read'}`}
-                      className="inline-flex items-center justify-center"
-                      style={{
-                        flexShrink: 0,
-                        width: '26px',
-                        height: '26px',
-                        border: 0,
-                        padding: 0,
-                        background: 'transparent',
-                        cursor: 'pointer',
-                        color: isRead
-                          ? 'var(--brand)'
-                          : 'var(--canvas-dark-ink-faint)',
-                      }}
-                    >
-                      {isRead ? (
-                        <CheckCircle2 size={22} strokeWidth={1.9} />
-                      ) : (
-                        <Circle size={22} strokeWidth={1.9} />
-                      )}
-                    </button>
-                  ) : (
-                    <span style={{ width: '26px', height: '26px', flexShrink: 0 }} />
-                  )}
-                  <span
-                    style={{
-                      flexShrink: 0,
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '12px',
-                      color: 'var(--canvas-dark-ink-muted)',
-                      width: '22px',
-                      textAlign: 'center',
-                    }}
-                  >
-                    {pad2(i + 1)}
-                  </span>
-                  <span
-                    className="flex-1 truncate"
-                    style={{
-                      fontFamily: 'var(--font-ui)',
-                      fontSize: '15px',
-                      fontWeight: 500,
-                      color: isRead
-                        ? 'var(--canvas-dark-ink)'
-                        : 'var(--canvas-dark-ink-strong)',
-                    }}
-                  >
-                    {ch.title}
-                  </span>
-                  <span
-                    style={{
-                      flexShrink: 0,
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '11px',
-                      letterSpacing: '0.04em',
-                      color: 'var(--canvas-dark-ink-muted)',
-                    }}
-                  >
-                    Updated {formatUpdatedLabel(ch.updatedAt)}
-                  </span>
-                </Link>
-              </li>
+              <CollectionRow
+                key={node.binderItemId}
+                bookId={bookId}
+                collectionId={node.binderItemId}
+                title={node.title}
+                childCount={node.children.length}
+              >
+                {node.children.map((c) => {
+                  const idx = displayIndexByChapterId.get(c.chapterId) ?? 0
+                  return renderRow(c, idx)
+                })}
+              </CollectionRow>
             )
           })}
         </ul>
       )}
     </section>
+  )
+}
+
+function CollectionRow({
+  bookId,
+  collectionId,
+  title,
+  childCount,
+  children,
+}: {
+  bookId: string
+  collectionId: string
+  title: string
+  childCount: number
+  children: React.ReactNode
+}) {
+  const storageKey = `book:${bookId}:collections-closed`
+  const [open, setOpen] = useState<boolean>(true)
+  const [hydrated, setHydrated] = useState(false)
+
+  // On mount, read localStorage. Persist CLOSED ids (default open), so
+  // unknown collections stay open by default.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(storageKey)
+      const closed: string[] = raw ? JSON.parse(raw) : []
+      if (Array.isArray(closed) && closed.includes(collectionId)) {
+        setOpen(false)
+      }
+    } catch {
+      // ignore
+    }
+    setHydrated(true)
+  }, [storageKey, collectionId])
+
+  useEffect(() => {
+    if (!hydrated) return
+    try {
+      const raw = localStorage.getItem(storageKey)
+      const closed: string[] = raw ? JSON.parse(raw) : []
+      const next = open
+        ? closed.filter((id) => id !== collectionId)
+        : Array.from(new Set([...closed, collectionId]))
+      localStorage.setItem(storageKey, JSON.stringify(next))
+    } catch {
+      // ignore
+    }
+  }, [open, hydrated, storageKey, collectionId])
+
+  return (
+    <li>
+      <div
+        style={{
+          borderRadius: 'var(--r-row)',
+          background:
+            'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+          border: '1px solid var(--canvas-dark-300)',
+          overflow: 'hidden',
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          aria-label={`${open ? 'Collapse' : 'Expand'} ${title}`}
+          className="flex w-full items-center text-left"
+          style={{
+            gap: '12px',
+            padding: '14px 18px',
+            background: 'transparent',
+            border: 0,
+            cursor: 'pointer',
+            color: 'inherit',
+          }}
+        >
+          <ChevronDown
+            size={16}
+            strokeWidth={2}
+            style={{
+              flexShrink: 0,
+              color: 'var(--brand)',
+              transform: open ? 'rotate(0deg)' : 'rotate(-90deg)',
+              transition: 'transform .18s',
+            }}
+          />
+          <span
+            className="flex-1 truncate"
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontWeight: 700,
+              fontSize: '15px',
+              color: 'var(--canvas-dark-ink-strong)',
+              letterSpacing: '-0.005em',
+            }}
+          >
+            {title}
+          </span>
+          <span
+            style={{
+              flexShrink: 0,
+              fontFamily: 'var(--font-mono)',
+              fontSize: '11px',
+              letterSpacing: '0.04em',
+              color: 'var(--canvas-dark-ink-muted)',
+            }}
+          >
+            {childCount} {childCount === 1 ? 'chapter' : 'chapters'}
+          </span>
+        </button>
+        {open && (
+          <ul
+            className="flex flex-col"
+            style={{
+              gap: '6px',
+              padding: '4px 12px 14px 28px',
+            }}
+          >
+            {children}
+          </ul>
+        )}
+      </div>
+    </li>
   )
 }

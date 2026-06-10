@@ -6,6 +6,7 @@ import {
   books,
   sparks,
   bookComments,
+  chapterComments,
   hiveBuzzPosts,
   bookClubDiscussions,
 } from '@/db/schema'
@@ -13,7 +14,13 @@ import { eq } from 'drizzle-orm'
 import { requireAdmin } from '@/lib/admin/require-admin'
 import { logAdminAction } from '@/lib/admin/log-action'
 
-export type ContentKind = 'book' | 'spark' | 'book_comment' | 'buzz_post' | 'club_discussion'
+export type ContentKind =
+  | 'book'
+  | 'spark'
+  | 'book_comment'
+  | 'chapter_comment'
+  | 'buzz_post'
+  | 'club_discussion'
 
 export async function deleteContentAction(
   kind: ContentKind,
@@ -31,6 +38,9 @@ export async function deleteContentAction(
       break
     case 'book_comment':
       await db.delete(bookComments).where(eq(bookComments.id, id))
+      break
+    case 'chapter_comment':
+      await db.delete(chapterComments).where(eq(chapterComments.id, id))
       break
     case 'buzz_post':
       await db.delete(hiveBuzzPosts).where(eq(hiveBuzzPosts.id, id))

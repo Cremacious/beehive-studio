@@ -2,7 +2,8 @@ import { notFound } from 'next/navigation'
 import { headers } from 'next/headers'
 import { db } from '@/db'
 import { books, binderItems, chapters, bookComments, userProfiles } from '@/db/schema'
-import { and, eq, asc, count } from 'drizzle-orm'
+import { and, eq, asc, count, inArray } from 'drizzle-orm'
+import { buildReadingOrder } from '@/lib/books/build-reading-order'
 import { auth } from '@/lib/auth'
 import { canReadBook } from '@/lib/books/can-read'
 import { getSeriesNeighbors } from '@/lib/books/get-series-neighbors'
@@ -55,19 +56,43 @@ export default async function BookReaderPage({ params }: Props) {
     .where(eq(bookComments.bookId, bookId))
   const commentCount = commentCountRow?.total ?? 0
 
-  const chapterRows = await db
+  // Pull all chapter and collection (part) binder items for this book in one
+  // query, then walk the tree to build the global reading order. binder
+  // order is parent-scoped, so a flat ORDER BY misses nested chapters.
+  const binderRows = await db
     .select({
-      binderItemId: binderItems.id,
-      chapterId: chapters.id,
-      title: binderItems.title,
+      id: binderItems.id,
+      parentId: binderItems.parentId,
+      type: binderItems.type,
       order: binderItems.order,
+      title: binderItems.title,
+      chapterId: chapters.id,
       status: chapters.status,
       updatedAt: chapters.updatedAt,
     })
     .from(binderItems)
-    .innerJoin(chapters, eq(chapters.binderItemId, binderItems.id))
-    .where(and(eq(binderItems.bookId, bookId), eq(binderItems.type, 'chapter')))
+    .leftJoin(chapters, eq(chapters.binderItemId, binderItems.id))
+    .where(
+      and(
+        eq(binderItems.bookId, bookId),
+        inArray(binderItems.type, ['chapter', 'part']),
+      ),
+    )
     .orderBy(asc(binderItems.order))
+
+  const readingOrder = buildReadingOrder(
+    binderRows.map((r) => ({
+      id: r.id,
+      parentId: r.parentId,
+      type: r.type as 'chapter' | 'part',
+      order: r.order,
+      title: r.title,
+      chapterId: r.chapterId,
+      status: r.status,
+      updatedAt: r.updatedAt,
+    })),
+  )
+  const chapterRows = readingOrder.flat
 
   const [
     commentsResult,
@@ -160,6 +185,7 @@ export default async function BookReaderPage({ params }: Props) {
               bookId,
               readerBasePath,
               chapters: chapterRows,
+              tree: readingOrder.tree,
               initialReadSet: progress?.readChapterBinderItemIds ?? [],
               isAuthor,
               isAuthenticated: !!userId,

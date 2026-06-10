@@ -70,6 +70,16 @@ export const bookComments = pgTable('book_comments', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (t) => [index('book_comments_book_id_idx').on(t.bookId)])
 
+export const chapterComments = pgTable('chapter_comments', {
+  id: text('id').primaryKey().$defaultFn(() => createId()),
+  chapterId: text('chapter_id').notNull().references(() => chapters.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  content: text('content').notNull(),
+  parentId: text('parent_id').references((): AnyPgColumn => chapterComments.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (t) => [index('chapter_comments_chapter_id_idx').on(t.chapterId)])
+
 export const bookmarks = pgTable('bookmarks', {
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   bookId: text('book_id').notNull().references(() => books.id, { onDelete: 'cascade' }),

@@ -14,4 +14,5 @@ export type SurfaceType =
   | 'hive_annotation'
   | 'hive_suggestion'
   | 'book_comment'
+  | 'chapter_comment'
   | 'profile_bio'

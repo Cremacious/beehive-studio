@@ -24,6 +24,7 @@ const APP_TABLES = [
   // Books + writing
   'chapter_snapshots',
   'chapter_reads',
+  'chapter_comments',
   'reading_progress',
   'bookmarks',
   'book_likes',

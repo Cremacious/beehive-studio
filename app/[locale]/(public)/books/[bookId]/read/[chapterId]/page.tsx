@@ -2,7 +2,8 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { db } from '@/db'
 import { chapters, binderItems, books, userProfiles } from '@/db/schema'
-import { and, eq, asc } from 'drizzle-orm'
+import { and, eq, asc, inArray } from 'drizzle-orm'
+import { buildReadingOrder } from '@/lib/books/build-reading-order'
 import { tiptapToHtml } from '@/lib/export/tiptap-to-html'
 import { markChapterReadAction } from '@/lib/actions/reading.actions'
 import { auth } from '@/lib/auth'
@@ -12,6 +13,11 @@ import { isChapterReaderVisible } from '@/lib/books/is-chapter-reader-visible'
 import { AccessDenied } from '../../../_components/access-denied'
 import { Clock } from 'lucide-react'
 import { ReaderSurface } from './_components/reader-surface'
+import { ChapterCommentsPanel } from './_components/chapter-comments-panel'
+import {
+  getChapterCommentsAction,
+  getChapterCommentsCountAction,
+} from '@/lib/actions/chapter-comments.actions'
 
 type Props = { params: Promise<{ locale: string; bookId: string; chapterId: string }> }
 
@@ -43,18 +49,42 @@ export default async function ChapterReaderPage({ params }: Props) {
 
   if (!book) notFound()
 
-  // Fetch all chapter binder items for navigation
-  const allChapters = await db
+  // Fetch all chapter + collection binder items and resolve the global
+  // reading order so Prev/Next walk nested chapters in true sequence.
+  // (binder_items.order is parent-scoped, not global.)
+  const binderRows = await db
     .select({
-      binderItemId: binderItems.id,
-      chapterId: chapters.id,
-      title: binderItems.title,
+      id: binderItems.id,
+      parentId: binderItems.parentId,
+      type: binderItems.type,
       order: binderItems.order,
+      title: binderItems.title,
+      chapterId: chapters.id,
+      status: chapters.status,
+      updatedAt: chapters.updatedAt,
     })
     .from(binderItems)
-    .innerJoin(chapters, eq(chapters.binderItemId, binderItems.id))
-    .where(and(eq(binderItems.bookId, bookId), eq(binderItems.type, 'chapter')))
+    .leftJoin(chapters, eq(chapters.binderItemId, binderItems.id))
+    .where(
+      and(
+        eq(binderItems.bookId, bookId),
+        inArray(binderItems.type, ['chapter', 'part']),
+      ),
+    )
     .orderBy(asc(binderItems.order))
+
+  const { flat: allChapters } = buildReadingOrder(
+    binderRows.map((r) => ({
+      id: r.id,
+      parentId: r.parentId,
+      type: r.type as 'chapter' | 'part',
+      order: r.order,
+      title: r.title,
+      chapterId: r.chapterId,
+      status: r.status,
+      updatedAt: r.updatedAt,
+    })),
+  )
 
   const currentIndex = allChapters.findIndex(ch => ch.chapterId === chapterId)
   if (currentIndex === -1) notFound()
@@ -83,6 +113,20 @@ export default async function ChapterReaderPage({ params }: Props) {
 
   const prevChapter = currentIndex > 0 ? allChapters[currentIndex - 1] : null
   const nextChapter = currentIndex < allChapters.length - 1 ? allChapters[currentIndex + 1] : null
+
+  // Map collection (part) ids to their titles so the prev/next nav cards
+  // can show "Knights of Varrock" above "Part Two" when navigating into a
+  // chapter that lives inside a collection.
+  const collectionTitleById = new Map<string, string>()
+  for (const r of binderRows) {
+    if (r.type === 'part') collectionTitleById.set(r.id, r.title)
+  }
+  const prevCollectionName = prevChapter?.collectionId
+    ? collectionTitleById.get(prevChapter.collectionId) ?? null
+    : null
+  const nextCollectionName = nextChapter?.collectionId
+    ? collectionTitleById.get(nextChapter.collectionId) ?? null
+    : null
   const current = allChapters[currentIndex]
   const chapterNumber = currentIndex + 1
   const totalChapters = allChapters.length
@@ -91,6 +135,25 @@ export default async function ChapterReaderPage({ params }: Props) {
   if (userId) {
     await markChapterReadAction(bookId, current.binderItemId)
   }
+
+  // Pre-fetch chapter comments (page 1) + total + viewer avatar in parallel.
+  const [commentsResult, commentsCount, viewerProfileRow] = await Promise.all([
+    getChapterCommentsAction(chapterId, 1),
+    getChapterCommentsCountAction(chapterId),
+    userId
+      ? db
+          .select({ avatarUrl: userProfiles.avatarUrl })
+          .from(userProfiles)
+          .where(eq(userProfiles.userId, userId))
+          .limit(1)
+      : Promise.resolve([]),
+  ])
+  const initialComments = commentsResult.success ? commentsResult.data.comments : []
+  const initialHasMore = commentsResult.success ? commentsResult.data.hasMore : false
+  const viewerAvatarUrl =
+    Array.isArray(viewerProfileRow) && viewerProfileRow[0]?.avatarUrl
+      ? viewerProfileRow[0].avatarUrl
+      : null
 
   const htmlContent = chapter.content ? tiptapToHtml(chapter.content) : ''
 
@@ -111,6 +174,7 @@ export default async function ChapterReaderPage({ params }: Props) {
           ? {
               href: `/${locale}/books/${bookId}/read/${prevChapter.chapterId}`,
               title: prevChapter.title,
+              collectionName: prevCollectionName,
             }
           : null
       }
@@ -119,6 +183,7 @@ export default async function ChapterReaderPage({ params }: Props) {
           ? {
               href: `/${locale}/books/${bookId}/read/${nextChapter.chapterId}`,
               title: nextChapter.title,
+              collectionName: nextCollectionName,
             }
           : null
       }
@@ -137,6 +202,17 @@ export default async function ChapterReaderPage({ params }: Props) {
               locale,
             }
           : null
+      }
+      commentsSlot={
+        <ChapterCommentsPanel
+          chapterId={chapterId}
+          locale={locale}
+          initialComments={initialComments}
+          initialHasMore={initialHasMore}
+          initialCount={commentsCount}
+          isAuthenticated={!!userId}
+          viewerAvatarUrl={viewerAvatarUrl}
+        />
       }
     />
   )

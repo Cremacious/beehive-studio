@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type ReactNode } from 'react'
+import { useState, useEffect, type ReactNode } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Check, X } from 'lucide-react'
@@ -74,6 +74,14 @@ export function BookCreationForm({ locale, templates }: Props) {
   const withHive = searchParams.get('withHive') === '1'
   const [step, setStep] = useState<Step>(1)
   const [direction, setDirection] = useState<'forward' | 'back'>('forward')
+
+  // Scroll back to the top of the page on every step change so the user
+  // doesn't land mid-page when the new step renders. Smooth scroll respects
+  // prefers-reduced-motion automatically in modern browsers.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [step])
   const [form, setForm] = useState<FormData>(initial)
   const [titleError, setTitleError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)

@@ -36,7 +36,7 @@ export function HiveChapterIndex({ hiveId, locale, chapters }: Props) {
             No chapters yet
           </p>
           <p className="text-xs text-[var(--canvas-dark-ink-muted)] mt-1">
-            This is a standalone hive — link a book to get a manuscript.
+            This is a standalone hive. Link a book to get a manuscript.
           </p>
         </div>
       </div>

@@ -39,7 +39,7 @@ export function ActivityFeed({
           </span>
           <h2>Your feed is quiet for now</h2>
           <p>
-            Follow some writers and join a hive — once you&apos;ve got friends, their
+            Follow some writers and join a hive. Once you&apos;ve got friends, their
             new chapters, sparks, and lists will show up right here.
           </p>
           <div className="cta-row">

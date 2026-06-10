@@ -348,7 +348,7 @@ function DetailsForm({
           rows={2}
           value={form.description}
           onChange={(e) => setForm({ ...form, description: e.target.value })}
-          placeholder="Optional — what's the hive about?"
+          placeholder="Optional. What's the hive about?"
           className="w-full px-3 py-2 text-sm outline-none resize-none placeholder:italic focus:ring-2 focus:ring-[oklch(from_var(--brand)_l_c_h_/_0.35)]"
           style={recessedInputStyle}
         />

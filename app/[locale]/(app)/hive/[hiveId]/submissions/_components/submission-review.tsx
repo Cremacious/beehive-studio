@@ -61,7 +61,7 @@ export function SubmissionReview({ submission, submitter, book, hiveId, locale }
     try {
       const r = await approveSubmissionAction({ id: submission.id })
       if (r.success) {
-        toast.success('Approved — chapter added to the book')
+        toast.success('Approved. Chapter added to the book.')
         router.push(`/${locale}/studio/${book.id}`)
         router.refresh()
       } else {

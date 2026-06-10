@@ -417,7 +417,7 @@ function HiveWikiEntryEditorInner({
 
         {readOnly && (
           <p className="wiki-ink-muted text-center text-xs">
-            Read-only — your role is Beta Reader.
+            Read-only. Your role is Beta Reader.
           </p>
         )}
       </div>

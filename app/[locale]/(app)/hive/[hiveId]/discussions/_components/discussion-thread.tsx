@@ -140,7 +140,7 @@ export function DiscussionThread({
             }}
             className="px-3 py-6 text-center text-sm font-mono text-[var(--canvas-dark-ink-muted)] italic"
           >
-            No replies yet — be the first to chime in.
+            No replies yet. Be the first to chime in.
           </div>
         ) : (
           <div className="flex flex-col">

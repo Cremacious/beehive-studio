@@ -1,6 +1,6 @@
 import { LegalPage, LegalSection } from '../_components/legal-page'
 
-export const metadata = { title: 'Privacy Policy — Beehive Studio' }
+export const metadata = { title: 'Privacy Policy · Beehive Studio' }
 
 export default function PrivacyPage() {
   return (
@@ -28,17 +28,17 @@ export default function PrivacyPage() {
           <strong>Information you provide:</strong>
         </p>
         <ul>
-          <li>Account details — name, email address, username, and profile photo</li>
-          <li>Content — manuscripts, chapters, notes, comments, and other writing you create or upload</li>
-          <li>Communications — messages you send to other users through Hive collaboration or support requests</li>
-          <li>Payment information — billing details processed by our third-party payment provider (we do not store full card numbers)</li>
+          <li>Account details: name, email address, username, and profile photo</li>
+          <li>Content: manuscripts, chapters, notes, comments, and other writing you create or upload</li>
+          <li>Communications: messages you send to other users through Hive collaboration or support requests</li>
+          <li>Payment information: billing details processed by our third-party payment provider (we do not store full card numbers)</li>
         </ul>
         <p>
           <strong>Information collected automatically:</strong>
         </p>
         <ul>
           <li>Device and browser type, operating system, and IP address</li>
-          <li>Usage data — pages viewed, features used, session duration, and interaction patterns</li>
+          <li>Usage data: pages viewed, features used, session duration, and interaction patterns</li>
           <li>Cookies and similar technologies for authentication, preferences, and analytics</li>
         </ul>
       </LegalSection>
@@ -62,10 +62,10 @@ export default function PrivacyPage() {
           in the following circumstances:
         </p>
         <ul>
-          <li><strong>With your consent</strong> — when you choose to publish content on Discover or share manuscripts through Hive</li>
-          <li><strong>Service providers</strong> — trusted third parties who assist us in operating the Service (hosting, analytics, payment processing), bound by confidentiality obligations</li>
-          <li><strong>Legal requirements</strong> — when required by law, regulation, or legal process</li>
-          <li><strong>Business transfers</strong> — in connection with a merger, acquisition, or sale of assets, with prior notice to you</li>
+          <li><strong>With your consent:</strong> when you choose to publish content on Discover or share manuscripts through Hive</li>
+          <li><strong>Service providers:</strong> trusted third parties who assist us in operating the Service (hosting, analytics, payment processing), bound by confidentiality obligations</li>
+          <li><strong>Legal requirements:</strong> when required by law, regulation, or legal process</li>
+          <li><strong>Business transfers:</strong> in connection with a merger, acquisition, or sale of assets, with prior notice to you</li>
         </ul>
       </LegalSection>
 
@@ -118,11 +118,11 @@ export default function PrivacyPage() {
       <LegalSection heading="9. Your rights">
         <p>Depending on your location, you may have the following rights:</p>
         <ul>
-          <li><strong>Access</strong> — request a copy of the personal data we hold about you</li>
-          <li><strong>Correction</strong> — request that we correct inaccurate or incomplete data</li>
-          <li><strong>Deletion</strong> — request that we delete your personal data</li>
-          <li><strong>Portability</strong> — request your data in a structured, machine-readable format</li>
-          <li><strong>Objection</strong> — object to processing based on legitimate interests</li>
+          <li><strong>Access:</strong> request a copy of the personal data we hold about you</li>
+          <li><strong>Correction:</strong> request that we correct inaccurate or incomplete data</li>
+          <li><strong>Deletion:</strong> request that we delete your personal data</li>
+          <li><strong>Portability:</strong> request your data in a structured, machine-readable format</li>
+          <li><strong>Objection:</strong> object to processing based on legitimate interests</li>
         </ul>
         <p>
           To exercise any of these rights, contact us at{' '}

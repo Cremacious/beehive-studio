@@ -499,7 +499,7 @@ export function BookDetailsForm({ locale, bookId, initial, isPremium }: Props) {
           {/* ── DISCOVERY ── */}
           <Section
             title="Discovery"
-            subtitle="How readers find your book — genre, audience, tags, comp titles."
+            subtitle="How readers find your book: genre, audience, tags, comp titles."
           >
             <div className="space-y-5">
               <div className="grid grid-cols-2 gap-3">
@@ -677,7 +677,7 @@ export function BookDetailsForm({ locale, bookId, initial, isPremium }: Props) {
             subtitle="Standalone or part of a series."
           >
             <p className="text-[12px] text-muted-foreground leading-relaxed mb-3">
-              Is this book part of a series? If so, the series name and number will appear on your book&apos;s reader page, library card, and any discoverable surface — and readers will be able to jump between books in the series.
+              Is this book part of a series? If so, the series name and number will appear on your book&apos;s reader page, library card, and any discoverable surface, and readers will be able to jump between books in the series.
             </p>
             <div className="flex gap-2 mb-3">
               {(['Standalone', 'Series'] as const).map(opt => (
@@ -722,7 +722,7 @@ export function BookDetailsForm({ locale, bookId, initial, isPremium }: Props) {
               </div>
             )}
             <p className="text-[11px] text-white/30 mt-4">
-              The template you picked at creation seeded your binder once — it isn’t a current
+              The template you picked at creation seeded your binder once. It isn’t a current
               setting to change. Reorganize chapters directly from the binder instead.
             </p>
           </Section>
@@ -730,7 +730,7 @@ export function BookDetailsForm({ locale, bookId, initial, isPremium }: Props) {
           {/* ── PUBLISHING ── */}
           <Section
             title="Publishing"
-            subtitle="Imprint, trim size, ISBN, dedication — appears in your front/back matter."
+            subtitle="Imprint, trim size, ISBN, dedication. Appears in your front/back matter."
             premium
           >
             {!isPremium && (

@@ -16,7 +16,7 @@ export default async function Page({
     <main className="cm-wrap w-3xl">
       <PageHead
         title="Notification preferences"
-        subtitle="Choose what reaches you. Toggles save the moment you flip them — on means you're receiving."
+        subtitle="Choose what reaches you. Toggles save the moment you flip them. On means you're receiving."
       />
       <NotificationPreferencesForm
         initialOptedOutTypes={result.data.optedOutTypes}

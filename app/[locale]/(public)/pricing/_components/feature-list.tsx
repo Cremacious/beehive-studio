@@ -7,11 +7,11 @@ const PREMIUM_FEATURES = [
   },
   {
     title: 'Publish your book to the world',
-    body: 'Polished publishing details — ISBN, subtitle, dedication, and more.',
+    body: 'Polished publishing details: ISBN, subtitle, dedication, and more.',
   },
   {
     title: 'Build your library',
-    body: 'Unlimited books — write as many as you can dream up.',
+    body: 'Unlimited books. Write as many as you can dream up.',
   },
   {
     title: 'Grow your circle',

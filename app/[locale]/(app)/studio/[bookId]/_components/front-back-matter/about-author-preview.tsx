@@ -26,7 +26,7 @@ type Props = {
 
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean)
-  if (parts.length === 0) return '—'
+  if (parts.length === 0) return '–'
   if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase()
   return (parts[0]![0]! + parts[parts.length - 1]![0]!).toUpperCase()
 }
@@ -73,7 +73,7 @@ export function AboutAuthorPreview({ itemId, initialFields }: Props) {
           strike: false,
         }),
         Placeholder.configure({
-          placeholder: 'Write a short author bio — who you are, what you write, and anything readers should know.',
+          placeholder: 'Write a short author bio: who you are, what you write, and anything readers should know.',
         }),
       ],
       content: (initialFields.bio ?? null) as Parameters<typeof useEditor>[0]['content'],

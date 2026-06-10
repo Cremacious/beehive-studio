@@ -272,7 +272,7 @@ export function StepThree({ templateId, isSeriesBook, seriesName, seriesNumber, 
             color: 'var(--canvas-dark-ink-muted)',
           }}
         >
-          <span>Publisher info — optional</span>
+          <span>Publisher info (optional)</span>
           <span
             aria-hidden
             className="transition-transform group-open:rotate-90"

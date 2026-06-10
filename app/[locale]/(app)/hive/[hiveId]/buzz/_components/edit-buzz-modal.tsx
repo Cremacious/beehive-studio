@@ -88,7 +88,7 @@ export function EditBuzzModal({ open, onOpenChange, post }: Props) {
         <DialogHeader>
           <DialogTitle>Edit buzz</DialogTitle>
           <DialogDescription>
-            Update your post. The type can't be changed — delete and recreate to
+            Update your post. The type can't be changed. Delete and recreate to
             switch between text and link.
           </DialogDescription>
         </DialogHeader>

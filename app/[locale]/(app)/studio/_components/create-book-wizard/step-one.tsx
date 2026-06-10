@@ -32,7 +32,7 @@ export function StepOne({ title, subtitle, synopsis, coverUrl, onUpdate, onNext,
         <div className="flex flex-col gap-[18px]">
           <WizardField label="Title" required>
             <HelperText id="title-help">
-              What&apos;s this book called? A working title is fine — you can change it any time.
+              What&apos;s this book called? A working title is fine. You can change it any time.
               It&apos;ll appear on your bookshelf and at the top of every chapter.
             </HelperText>
             <input
@@ -60,7 +60,7 @@ export function StepOne({ title, subtitle, synopsis, coverUrl, onUpdate, onNext,
 
           <WizardField label="Subtitle" optionalMarker="optional">
             <HelperText id="subtitle-help">
-              Sometimes a subtitle tells the reader exactly what they&apos;re picking up —{' '}
+              Sometimes a subtitle tells the reader exactly what they&apos;re picking up:{' '}
               <strong>&apos;A Novel of the Saltwater Coast&apos;</strong>,{' '}
               <strong>&apos;Book One of the Lantern Cycle&apos;</strong>. Skip if not sure.
             </HelperText>
@@ -77,7 +77,7 @@ export function StepOne({ title, subtitle, synopsis, coverUrl, onUpdate, onNext,
 
           <WizardField label="Synopsis" optionalMarker="optional · up to 500 words">
             <HelperText id="synopsis-help">
-              Two or three sentences — the back-of-the-book pitch. Even rough notes work;
+              Two or three sentences. The back-of-the-book pitch. Even rough notes work;
               this is for you, and you can edit it later.
             </HelperText>
             <textarea

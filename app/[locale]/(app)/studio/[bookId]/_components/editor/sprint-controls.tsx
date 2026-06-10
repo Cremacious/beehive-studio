@@ -185,7 +185,7 @@ export function SprintControls({ currentWordCount }: Props) {
             className="mb-3"
             style={{ fontSize: 11, color: 'var(--chrome-400)' }}
           >
-            Pick a focused writing block — pause anytime.
+            Pick a focused writing block. Pause anytime.
           </p>
           <div className="grid grid-cols-3 gap-1.5">
             {DEFAULT_DURATIONS.map(m => (

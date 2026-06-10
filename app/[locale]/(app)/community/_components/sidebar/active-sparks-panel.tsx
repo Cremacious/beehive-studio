@@ -43,7 +43,7 @@ export function ActiveSparksPanel({
             marginBottom: 10,
           }}
         >
-          No sparks yet — try one and get the page glowing.
+          No sparks yet. Try one and get the page glowing.
         </p>
         <Link className="see-all" href={`/${locale}/sparks`}>
           Try a Spark

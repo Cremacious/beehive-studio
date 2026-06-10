@@ -46,7 +46,7 @@ export default async function ReadingListsPage({
             </span>
             <h2>No reading lists yet</h2>
             <p>
-              Curate a list of books worth recommending — or follow a friend&apos;s list to
+              Curate a list of books worth recommending, or follow a friend&apos;s list to
               track what they&apos;re loving.
             </p>
             <div className="cta-row">

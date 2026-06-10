@@ -148,7 +148,7 @@ export function StepTwo({ genre, subgenre, tags, targetAudience, contentWarnings
       <div className="grid grid-cols-2 gap-3">
         <WizardField label="Genre" optionalMarker="optional">
           <HelperText>
-            Pick the one closest to your story — even if it&apos;s not a perfect fit. We use this to group your book on /discover.
+            Pick the one closest to your story, even if it&apos;s not a perfect fit. We use this to group your book on /discover.
           </HelperText>
           <SelectField
             value={genre}
@@ -160,7 +160,7 @@ export function StepTwo({ genre, subgenre, tags, targetAudience, contentWarnings
         </WizardField>
         <WizardField label="Subgenre" optionalMarker="optional">
           <HelperText>
-            Narrow it down if you can — readers browsing your genre can filter by subgenre to find exactly the kind of story they&apos;re after.
+            Narrow it down if you can. Readers browsing your genre can filter by subgenre to find exactly the kind of story they&apos;re after.
           </HelperText>
           <SelectField
             value={subgenre}
@@ -190,7 +190,7 @@ export function StepTwo({ genre, subgenre, tags, targetAudience, contentWarnings
       {/* Tags */}
       <WizardField label="Tags" optionalMarker={`optional · ${tags.length}/10`}>
         <HelperText>
-          Short labels readers can search for — <strong>&apos;cozy&apos;</strong>, <strong>&apos;second-world fantasy&apos;</strong>, <strong>&apos;time loop&apos;</strong>. Add 1-10.
+          Short labels readers can search for: <strong>&apos;cozy&apos;</strong>, <strong>&apos;second-world fantasy&apos;</strong>, <strong>&apos;time loop&apos;</strong>. Add 1-10.
         </HelperText>
         <div className="flex flex-wrap gap-1.5">
           {PREDEFINED_TAGS.map(t => (
@@ -271,7 +271,7 @@ export function StepTwo({ genre, subgenre, tags, targetAudience, contentWarnings
       {/* Comp Titles */}
       <WizardField label="Comparable titles" optionalMarker="optional · up to 5">
         <HelperText>
-          Books that share a vibe with yours. &apos;My book is <em>Howl&apos;s Moving Castle</em> meets <em>Gormenghast</em>&apos; — readers love these. You can add up to 5.
+          Books that share a vibe with yours. &apos;My book is <em>Howl&apos;s Moving Castle</em> meets <em>Gormenghast</em>&apos;. Readers love these. You can add up to 5.
         </HelperText>
         <div className="flex flex-col gap-2">
           {compTitles.map((t, i) => (

@@ -72,7 +72,7 @@ export function CoverPicker({ coverUrl, onChange }: Props) {
       </div>
 
       <HelperText id="cover-help">
-        Drop a file or paste a URL. Don&apos;t worry if you don&apos;t have one — we&apos;ll generate
+        Drop a file or paste a URL. Don&apos;t worry if you don&apos;t have one. We&apos;ll generate
         a paper-tone placeholder you can swap later.
       </HelperText>
 
@@ -148,7 +148,7 @@ export function CoverPicker({ coverUrl, onChange }: Props) {
             </p>
             {!CLOUDINARY_CONFIGURED && (
               <p style={{ fontSize: 10, color: 'var(--canvas-dark-ink-muted)', margin: 0, fontStyle: 'italic' }}>
-                (Cloudinary not configured — upload disabled)
+                (Cloudinary not configured, upload disabled)
               </p>
             )}
           </div>

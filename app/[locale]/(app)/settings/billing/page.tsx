@@ -85,7 +85,7 @@ export default async function BillingPage({ params }: Props) {
             Payment failed
           </h2>
           <p className="text-sm text-foreground mt-1 leading-relaxed">
-            Your last payment didn&apos;t go through. Stripe is retrying — update your card in the next few weeks to keep premium access.
+            Your last payment didn&apos;t go through. Stripe is retrying. Update your card in the next few weeks to keep premium access.
           </p>
           <ManageButton locale={locale} className="mt-6" />
         </section>

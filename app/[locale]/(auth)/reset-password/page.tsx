@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { ResetPasswordForm } from './_components/reset-password-form'
 
-export const metadata = { title: 'Set new password — Beehive Studio' }
+export const metadata = { title: 'Set new password · Beehive Studio' }
 
 const panelStyle: React.CSSProperties = {
   background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',

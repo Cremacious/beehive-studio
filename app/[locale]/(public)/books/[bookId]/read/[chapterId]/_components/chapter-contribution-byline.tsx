@@ -51,7 +51,7 @@ export function ChapterContributionByline({
   return (
     <p className="text-sm text-muted-foreground italic mb-6">
       Written by {chapterAuthorEl}
-      {' '}— chapter contribution to{' '}
+      {', a chapter contribution to '}
       <span className="not-italic">{bookTitle}</span>{' '}
       by {bookAuthorEl}
     </p>

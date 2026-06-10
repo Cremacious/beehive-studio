@@ -60,7 +60,7 @@ export function SuggestionCard({
         return
       }
       if (res.data.orphan) {
-        toast.message("Suggestion was orphaned — chapter wasn't updated")
+        toast.message("Suggestion was orphaned. Chapter wasn't updated.")
       } else {
         toast.success('Suggestion accepted')
       }

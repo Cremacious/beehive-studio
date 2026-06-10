@@ -90,7 +90,7 @@ export function HiveRail({ hives, locale }: Props) {
             lineHeight: 1.4,
           }}
         >
-          No hives yet — start one to collaborate.
+          No hives yet. Start one to collaborate.
         </div>
       ) : (
         <ul

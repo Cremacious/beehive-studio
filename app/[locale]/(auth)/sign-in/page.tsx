@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { SignInForm } from './_components/sign-in-form'
 
-export const metadata = { title: 'Sign in — Beehive Studio' }
+export const metadata = { title: 'Sign in · Beehive Studio' }
 
 export default async function SignInPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params

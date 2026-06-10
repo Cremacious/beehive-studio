@@ -127,8 +127,8 @@ function ChapterMetadata() {
         <p className="text-[11px] text-muted-foreground leading-relaxed">
           Set how far along this chapter is. Readers can only see chapters marked{' '}
           <span className="text-foreground/85 font-medium">Revised</span> or{' '}
-          <span className="text-foreground/85 font-medium">Final</span> — earlier
-          statuses show as a &quot;Draft — coming soon&quot; teaser instead.
+          <span className="text-foreground/85 font-medium">Final</span>. Earlier
+          statuses show as a &quot;Draft, coming soon&quot; teaser instead.
         </p>
         {(() => {
           const currentStatus = activeChapter?.status ?? 'FIRST_DRAFT'
@@ -258,7 +258,7 @@ function ChapterMetadata() {
           key={activeItemId}
           className={cn(fieldClass, "flex-1 min-h-24 p-3")}
           style={fieldStyle}
-          placeholder="Private notes — only you can see these."
+          placeholder="Private notes. Only you can see these."
           defaultValue={activeChapter?.notes ?? ''}
           onChange={handleNotesChange}
         />

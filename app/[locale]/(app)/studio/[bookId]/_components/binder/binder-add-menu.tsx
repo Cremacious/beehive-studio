@@ -44,12 +44,12 @@ const MANUSCRIPT_OPTIONS: AddOption[] = [
 ]
 
 const WORLDBUILDING_OPTIONS: AddOption[] = [
-  { type: 'wiki_entry',  label: 'Wiki Entry ▸',  defaultTitle: '',                   subtitle: '14 categories — pick one to start.',          Icon: NotebookPen, tint: 'var(--wiki-other)', special: 'wiki-picker' },
+  { type: 'wiki_entry',  label: 'Wiki Entry ▸',  defaultTitle: '',                   subtitle: '14 categories. Pick one to start.',          Icon: NotebookPen, tint: 'var(--wiki-other)', special: 'wiki-picker' },
   { type: 'wiki_folder', label: 'Wiki Folder',   defaultTitle: 'Untitled Folder',    subtitle: 'A container for wiki entries.',               Icon: FolderTree,  tint: 'var(--wiki-other)' },
 ]
 
 const PLANNING_OPTIONS: AddOption[] = [
-  { type: 'outline',         label: 'Outline',         defaultTitle: 'Untitled Outline', subtitle: 'Beat sheet — optional acts.', Icon: LayoutIcon, tint: 'var(--type-outline)' },
+  { type: 'outline',         label: 'Outline',         defaultTitle: 'Untitled Outline', subtitle: 'Beat sheet with optional acts.', Icon: LayoutIcon, tint: 'var(--type-outline)' },
   { type: 'research_note',   label: 'Research note',   defaultTitle: 'Untitled note',    subtitle: 'Freeform notes.',             Icon: StickyNote, tint: 'var(--type-research)' },
   { type: 'research_folder', label: 'Research folder', defaultTitle: 'Research',         subtitle: 'Container for notes.',        Icon: Folder,     tint: 'var(--type-research)' },
 ]

@@ -64,7 +64,7 @@ export async function ClubBooksPanel({
           ) : (
             <p className="text-[var(--canvas-dark-ink-muted)] italic">
               {canManage
-                ? 'No current book — pick one from the queue or add a new one.'
+                ? 'No current book. Pick one from the queue or add a new one.'
                 : 'No current book yet.'}
             </p>
           )}

@@ -198,7 +198,7 @@ export function AddScheduleItemModal({
               value={label}
               onChange={(e) => setLabel(e.target.value.slice(0, 80))}
               maxLength={80}
-              placeholder='e.g. "Week 1 — Act One"'
+              placeholder='e.g. "Week 1: Act One"'
               className="w-full px-3 py-2 rounded-[var(--r-row)] border text-sm text-[var(--canvas-dark-ink)] outline-none focus:border-[var(--canvas-dark-ink-muted)]"
               style={{
                 background: 'var(--canvas-dark-100)',
@@ -206,7 +206,7 @@ export function AddScheduleItemModal({
               }}
             />
             <p className="mt-1 text-xs text-[var(--canvas-dark-ink-muted)]">
-              Optional — up to 80 characters.
+              Optional, up to 80 characters.
             </p>
           </div>
         </div>

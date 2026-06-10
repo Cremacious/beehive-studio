@@ -193,7 +193,7 @@ export function ContinueWritingHero({ book, locale }: Props) {
               bookSubtitle(book)
             ) : (
               <span style={{ color: 'var(--canvas-dark-ink-muted)', fontStyle: 'italic' }}>
-                No chapters yet — open the book to add your first.
+                No chapters yet. Open the book to add your first.
               </span>
             )}
           </p>

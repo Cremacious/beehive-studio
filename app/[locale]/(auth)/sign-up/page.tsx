@@ -5,7 +5,7 @@ import { auth } from '@/lib/auth'
 import { safeNextPath } from '@/lib/utils'
 import { SignUpForm } from './_components/sign-up-form'
 
-export const metadata = { title: 'Join the hive — Beehive Studio' }
+export const metadata = { title: 'Join the hive · Beehive Studio' }
 
 type Props = {
   params: Promise<{ locale: string }>

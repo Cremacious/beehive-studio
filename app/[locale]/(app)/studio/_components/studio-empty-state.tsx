@@ -173,8 +173,8 @@ export function StudioEmptyState({ locale, templates: _templates }: Props) {
                 textWrap: 'pretty' as const,
               }}
             >
-              Every story begins with a single buzz. Drop your first chapter —
-              your library will fill itself.
+              Every story begins with a single buzz. Drop your first chapter.
+              Your library will fill itself.
             </p>
             <div className="flex gap-3 justify-center flex-wrap">
               <Link

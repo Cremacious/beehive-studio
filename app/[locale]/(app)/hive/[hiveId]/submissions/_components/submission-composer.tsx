@@ -239,7 +239,7 @@ export function SubmissionComposer({
                   className="text-xs italic"
                   style={{ color: 'var(--canvas-dark-ink-muted)' }}
                 >
-                  This submission is locked — already submitted.
+                  This submission is locked. Already submitted.
                 </span>
               )}
               <span

@@ -159,7 +159,7 @@ export function BookHero({
       Icon: BookOpen,
       node:
         totalChapters === 0 ? (
-          <>—</>
+          <>–</>
         ) : isAuthenticated ? (
           <>
             <span style={{ color: 'var(--brand)' }}>{readCount}</span>

@@ -546,7 +546,7 @@ function HiveOutlineSurfaceInner({
               }}
               className="mt-6 px-3 py-2 text-xs text-center"
             >
-              Read-only — your role is Beta Reader
+              Read-only. Your role is Beta Reader.
             </p>
           )}
         </div>
@@ -675,7 +675,7 @@ function HiveChapterLinkPopover({
               }}
               className="mx-1 mb-1 px-3 py-2 text-xs"
             >
-              Standalone hive — no chapters available to link.
+              Standalone hive. No chapters available to link.
             </p>
           ) : (
             <p

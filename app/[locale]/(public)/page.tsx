@@ -64,7 +64,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           <div className="lg:col-span-6">
             <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1 text-xs text-white/70 mb-7">
               <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse"/>
-              Now in open beta — Hive 1.0 just shipped
+              Now in open beta. Hive 1.0 just shipped
             </div>
 
             <h1 className="mainFont font-bold text-[44px] sm:text-[56px] lg:text-[64px] leading-[1.04] tracking-tight text-balance">
@@ -73,7 +73,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             </h1>
 
             <p className="mt-6 text-[17px] lg:text-[18px] leading-relaxed text-white/70 max-w-xl text-pretty">
-              The professional writing studio where authors write, collaborate, and publish to a community of readers. Drafting, planning, and feedback — all in one warm, focused workspace.
+              The professional writing studio where authors write, collaborate, and publish to a community of readers. Drafting, planning, and feedback, all in one warm, focused workspace.
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -139,7 +139,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                     <div className="space-y-0.5">
                       <div className="flex items-center gap-2 px-2 py-1.5 rounded text-white/70">
                         <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6"/></svg>
-                        <span>Part I — Salt</span>
+                        <span>Part I: Salt</span>
                       </div>
                       <div className="ml-4 space-y-0.5">
                         <div className="flex items-center gap-2 px-2 py-1.5 rounded text-white/60 hover:bg-white/5">
@@ -161,7 +161,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                       </div>
                       <div className="flex items-center gap-2 px-2 py-1.5 rounded text-white/70 mt-2">
                         <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="m9 6 6 6-6 6"/></svg>
-                        <span>Part II — Compass</span>
+                        <span>Part II: Compass</span>
                       </div>
                       <div className="flex items-center gap-2 px-2 py-1.5 rounded text-white/70">
                         <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="m9 6 6 6-6 6"/></svg>
@@ -185,7 +185,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                     </div>
 
                     <div className="font-[family-name:var(--font-fraunces)] text-white/88 text-[14px] lg:text-[15px] leading-[1.75] space-y-3">
-                      <p>She mapped the harbour the way other people kept a diary — in tide marks, in the slant of mast shadows, in the small inaccuracies the sea forgave each morning.</p>
+                      <p>She mapped the harbour the way other people kept a diary: in tide marks, in the slant of mast shadows, in the small inaccuracies the sea forgave each morning.</p>
                       <p>The lighthouse was not where the charts said it was. It had not been there for forty years, but she still drew it in, faintly, in pencil that she could erase if anyone <span className="bg-brand/15 text-white px-0.5 rounded-sm">official</span> ever asked.</p>
                       <p>By Tuesday the fog had a name and a temperament. By Thursday it had moved in.<span className="caret"/></p>
                     </div>
@@ -198,7 +198,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                           <span className="font-semibold text-white">Rin</span>
                           <span className="text-white/40 text-[10px]">2m</span>
                         </div>
-                        <p className="text-white/80 leading-snug">Love this opening — feels like the harbour is a character. Keep &quot;forgave&quot;?</p>
+                        <p className="text-white/80 leading-snug">Love this opening. Feels like the harbour is a character. Keep &quot;forgave&quot;?</p>
                       </div>
                     </div>
 
@@ -233,7 +233,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             Nothing they don&apos;t.
           </h2>
           <p className="mt-5 text-white/65 text-[16px] leading-relaxed max-w-xl">
-            Beehive is built around how books actually get written — heads-down drafting, the occasional second pair of eyes, and a reader at the end of the tunnel.
+            Beehive is built around how books actually get written: heads-down drafting, the occasional second pair of eyes, and a reader at the end of the tunnel.
           </p>
         </div>
 
@@ -246,11 +246,11 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                   <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 7h7"/><path d="M9 11h5"/>
                 </svg>
               </span>
-              <span className="text-[10px] uppercase tracking-wider text-white/40 font-semibold tabular-nums">01 — Write</span>
+              <span className="text-[10px] uppercase tracking-wider text-white/40 font-semibold tabular-nums">01 · Write</span>
             </div>
             <h3 className="mainFont font-bold text-[24px] mb-2">Studio</h3>
             <p className="text-white/65 text-[14.5px] leading-relaxed mb-6">
-              A Scrivener-style workspace for long-form. Chapters, scenes, collections, research — drafted in a calm, distraction-free editor that auto-saves every keystroke.
+              A Scrivener-style workspace for long-form. Chapters, scenes, collections, research, all drafted in a calm, distraction-free editor that auto-saves every keystroke.
             </p>
             <div className="bg-[#171717] rounded-xl border border-border p-3 mb-5">
               <div className="space-y-1.5 text-[11px]">
@@ -284,11 +284,11 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                   <path d="M12 7 L16 9.5 L16 13.5 L12 16 L8 13.5 L8 9.5 Z"/>
                 </svg>
               </span>
-              <span className="text-[10px] uppercase tracking-wider text-white/40 font-semibold tabular-nums">02 — Together</span>
+              <span className="text-[10px] uppercase tracking-wider text-white/40 font-semibold tabular-nums">02 · Together</span>
             </div>
             <h3 className="mainFont font-bold text-[24px] mb-2">Hive</h3>
             <p className="text-white/65 text-[14.5px] leading-relaxed mb-6">
-              Async collaboration that respects the draft. Invite trusted readers and co-writers, share outlines and chapters, and gather inline edits and comments — on your schedule.
+              Async collaboration that respects the draft. Invite trusted readers and co-writers, share outlines and chapters, and gather inline edits and comments on your schedule.
             </p>
             <div className="bg-[#171717] rounded-xl border border-border p-3 mb-5 space-y-2">
               <div className="flex items-center gap-2 text-[11px]">
@@ -322,11 +322,11 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
                   <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
                 </svg>
               </span>
-              <span className="text-[10px] uppercase tracking-wider text-white/40 font-semibold tabular-nums">03 — Readers</span>
+              <span className="text-[10px] uppercase tracking-wider text-white/40 font-semibold tabular-nums">03 · Readers</span>
             </div>
             <h3 className="mainFont font-bold text-[24px] mb-2">Discover</h3>
             <p className="text-white/65 text-[14.5px] leading-relaxed mb-6">
-              Publish chapters to a real audience of readers, not an algorithm. Build a following through reading lists, sparks, and clubs — curated by people who actually finish books.
+              Publish chapters to a real audience of readers, not an algorithm. Build a following through reading lists, sparks, and clubs curated by people who actually finish books.
             </p>
             <div className="bg-[#171717] rounded-xl border border-border p-3 mb-5">
               <div className="grid grid-cols-4 gap-1.5">

@@ -124,7 +124,7 @@ export function DiscussionComposeModal({ open, onOpenChange, hiveId }: Props) {
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Title (optional — first 80 chars of body if blank)"
+          placeholder="Title (optional, first 80 chars of body if blank)"
           maxLength={80}
           style={recessedInputStyle}
           className="w-full px-3 py-2 font-geist text-sm focus:outline-none placeholder:text-[var(--canvas-dark-ink-muted)]"

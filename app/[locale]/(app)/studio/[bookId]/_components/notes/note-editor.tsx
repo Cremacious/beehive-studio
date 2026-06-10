@@ -34,7 +34,7 @@ export function NoteEditor({ item }: Props) {
       autofocus: 'end',
       extensions: [
         StarterKit,
-        Placeholder.configure({ placeholder: 'Note to self — jot anything down here…' }),
+        Placeholder.configure({ placeholder: 'Note to self. Jot anything down here…' }),
       ],
       content: initial.text as Parameters<typeof useEditor>[0]['content'],
       onUpdate: ({ editor }) => {

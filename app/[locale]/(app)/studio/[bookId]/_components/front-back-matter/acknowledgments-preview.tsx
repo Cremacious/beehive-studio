@@ -57,7 +57,7 @@ export function AcknowledgmentsPreview({ itemId, initialFields }: Props) {
           strike: false,
         }),
         Placeholder.configure({
-          placeholder: 'Write your acknowledgments here — thank the people, places, and presses that helped along the way.',
+          placeholder: 'Write your acknowledgments here. Thank the people, places, and presses that helped along the way.',
         }),
       ],
       content: (initialFields.text ?? null) as Parameters<typeof useEditor>[0]['content'],

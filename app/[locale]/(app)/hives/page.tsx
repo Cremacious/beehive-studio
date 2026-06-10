@@ -18,7 +18,7 @@ export default async function HivesIndexPage({
       <div className="cm-wrap w-5xl">
         <PageHead
           title="Hives"
-          subtitle="Your collaborative writing groups — outlines, wikis, and chapters shared across members."
+          subtitle="Your collaborative writing groups. Outlines, wikis, and chapters shared across members."
           back={{ href: `/${locale}/community`, label: 'community' }}
           headerSlot={<NewHiveButton />}
         />
@@ -57,7 +57,7 @@ export default async function HivesIndexPage({
                 marginRight: 'auto',
               }}
             >
-              Hives let you collaborate on a book with other writers — shared
+              Hives let you collaborate on a book with other writers. Shared
               outlines, wikis, and chapter submissions.
             </p>
             <NewHiveButton>

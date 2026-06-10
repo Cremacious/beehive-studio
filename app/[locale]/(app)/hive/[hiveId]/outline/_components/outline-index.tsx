@@ -15,7 +15,7 @@ type OutlineSummary = {
 type SortKey = 'recent' | 'alpha' | 'beats'
 
 function relTime(d: Date | null): string {
-  if (!d) return '—'
+  if (!d) return '–'
   const seconds = Math.floor((Date.now() - new Date(d).getTime()) / 1000)
   if (seconds < 60) return 'just now'
   const minutes = Math.floor(seconds / 60)

@@ -67,7 +67,7 @@ export function SubmissionRow({
         className="text-[11px] font-mono tracking-wider text-right"
         style={{ color: 'var(--canvas-dark-ink-muted)' }}
       >
-        {row.draftStatus === 'DRAFT' ? '—' : relTime(row.updatedAt)}
+        {row.draftStatus === 'DRAFT' ? '–' : relTime(row.updatedAt)}
       </p>
     </Link>
   )

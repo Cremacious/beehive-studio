@@ -1,6 +1,6 @@
 import { LegalPage, LegalSection } from '../_components/legal-page'
 
-export const metadata = { title: 'Terms of Service — Beehive Studio' }
+export const metadata = { title: 'Terms of Service · Beehive Studio' }
 
 export default function TermsPage() {
   return (
@@ -32,7 +32,7 @@ export default function TermsPage() {
       <LegalSection heading="Premium Subscriptions">
         <p>
           Premium subscriptions are billed monthly or annually. You may cancel
-          at any time. Refunds are handled on a case-by-case basis — contact
+          at any time. Refunds are handled on a case-by-case basis. Contact
           support@beehive-studio.app.
         </p>
       </LegalSection>

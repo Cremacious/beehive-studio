@@ -864,6 +864,31 @@ The detailed shipping history is in two "What Has Been Built" entries: **Studio 
 
 ---
 
+## ✍️ Copy & Voice rule (load-bearing for ANY user-facing string)
+
+**No em-dashes (`—`, U+2014) anywhere users can read.** This is a project-wide style rule decreed by Chris (2026-06-10). It applies to:
+
+- JSX text children
+- `placeholder`, `title`, `aria-label`, `alt`, `label`, `description` props
+- Toast messages, error messages surfaced in UI, confirmation prompts
+- Page `<title>` and `<meta description>` content, email subjects/bodies
+- Anything else a user can read (including screen-reader-only labels)
+
+**Rewrite patterns** — preserve meaning, never use em-dash:
+- `"Foo — bar"` (parenthetical aside) → split into two sentences, use commas, or parens
+- `"Foo — bar, baz"` (list intro) → colon (`"Foo: bar, baz"`)
+- `"Optional — edit later."` → period or comma (`"Optional. Edit later."`)
+- `"Field — required"` → parens (`"Field (required)"`)
+- `"X — Y"` (attribution) → comma or `by` (`"Quote, by Author"`)
+
+**En-dash (`–`, U+2013) is fine for number ranges** (`"3–24 characters"`, `"Mon–Fri"`). Only U+2014 is banned. Hyphens (`-`) are fine everywhere.
+
+**Internal scope NOT affected** by this rule: code comments, `console.log/warn/error`, AGENTS.md, docs/, specs, plans, dev-only scripts, migration narratives, design mockup HTML. Em-dashes there are dev-facing and stylistically free.
+
+When writing new UI copy, just don't reach for `—`. When editing existing UI strings that contain one, rewrite as part of the same change.
+
+---
+
 ## What This Is
 
 Beehive Studio is a solo-developer writing platform: rich-text book editor, Hive collaboration groups, and a community discovery feed. Dark-only, bee-themed. Built with Next.js 16 App Router, React 19, TypeScript, Tailwind v4, shadcn/ui (New York style), Drizzle ORM on Neon Postgres.

@@ -38,8 +38,8 @@ export function OutlineHelpBanner({
     >
       <span aria-hidden style={{ fontSize: 14 }}>ℹ️</span>
       <span style={{ flex: 1, minWidth: 0 }}>
-        <strong style={{ color: 'var(--outline-ink-strong)' }}>Outline basics</strong>
-        {' — '}
+        <strong style={{ color: 'var(--outline-ink-strong)' }}>Outline basics:</strong>
+        {' '}
         Beats are scenes. Acts group beats. Drag the{' '}
         <span style={{ fontFamily: 'monospace' }}>⋮⋮</span> handle to reorder
         beats or move them between acts. Click <strong>?</strong> in the

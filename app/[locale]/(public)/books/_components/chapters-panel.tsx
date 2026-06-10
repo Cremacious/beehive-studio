@@ -242,7 +242,7 @@ export function ChaptersPanel({
                       color: 'var(--canvas-dark-ink-faint)',
                     }}
                   >
-                    Draft — coming soon
+                    Draft, coming soon
                   </span>
                 </li>
               )

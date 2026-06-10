@@ -33,7 +33,7 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Beehive Studio — Craft your story. Grow your hive.',
+  title: 'Beehive Studio · Craft your story. Grow your hive.',
   description: 'The professional writing studio where authors write, collaborate, and publish to a community of readers.',
 }
 

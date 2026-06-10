@@ -58,7 +58,7 @@ const STEP_LEDES: ReactNode[] = [
   <>A few quick details so we can set up your book. <strong style={REASSURE}>You can change any of this later.</strong></>,
   <>Tags and comp titles help readers discover your book on /discover. You can come back to any of this whenever.</>,
   <>We&apos;ll create the binder for you. <strong style={REASSURE}>You can rearrange or rename anything later.</strong></>,
-  <>Most writers start private and switch later — pick what feels right today.</>,
+  <>Most writers start private and switch later. Pick what feels right today.</>,
 ]
 
 const TOTAL_STEPS = 4

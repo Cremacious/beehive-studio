@@ -52,12 +52,12 @@ function template(
 }
 
 export const CATEGORY_TEMPLATES: CategoryTemplate[] = [
-  template('CHARACTER',   'Character',         'A person — protagonist, antagonist, or supporting.', User,         '--wiki-character', [
+  template('CHARACTER',   'Character',         'A person: protagonist, antagonist, or supporting.', User,         '--wiki-character', [
     { label: 'Appearance',   hint: 'Physical description and notable features.' },
     { label: 'Personality',  hint: 'Temperament, beliefs, fears.' },
     { label: 'Role in story', hint: 'What they want, what stands in their way.' },
   ]),
-  template('LOCATION',    'Location',          'A place — city, region, dungeon, planet.', MapPin,         '--wiki-location', [
+  template('LOCATION',    'Location',          'A place: city, region, dungeon, planet.', MapPin,         '--wiki-location', [
     { label: 'Geography',         hint: 'Where it sits in the world.' },
     { label: 'Notable features',  hint: 'What makes it visually or culturally distinct.' },
     { label: 'Inhabitants',       hint: 'Who lives here and why it matters.' },
@@ -72,7 +72,7 @@ export const CATEGORY_TEMPLATES: CategoryTemplate[] = [
     { label: 'Stakes', hint: 'What the protagonist stands to gain or lose.' },
     { label: 'Payoff', hint: 'Where this thread resolves (or refuses to).' },
   ]),
-  template('ARTIFACT',    'Artifact',          'An object — weapon, relic, technology.', Sword,         '--wiki-artifact', [
+  template('ARTIFACT',    'Artifact',          'An object: weapon, relic, technology.', Sword,         '--wiki-artifact', [
     { label: 'Description',       hint: 'Form, material, sensory presence.' },
     { label: 'Powers / function', hint: 'What it does.' },
     { label: 'History',           hint: 'Where it came from and who has held it.' },
@@ -82,7 +82,7 @@ export const CATEGORY_TEMPLATES: CategoryTemplate[] = [
     { label: 'Structure',        hint: 'How they are organized; key figures.' },
     { label: 'Allies & enemies', hint: 'Who they work with and against.' },
   ]),
-  template('CULTURE',     'Culture',           'A people or society — customs, beliefs, daily life.', Globe,         '--wiki-culture', [
+  template('CULTURE',     'Culture',           'A people or society: customs, beliefs, daily life.', Globe,         '--wiki-culture', [
     { label: 'Values',   hint: 'What this culture holds sacred.' },
     { label: 'Customs',  hint: 'Daily rituals and milestones.' },
     { label: 'Tensions', hint: 'Internal frictions or external pressures.' },
@@ -107,16 +107,16 @@ export const CATEGORY_TEMPLATES: CategoryTemplate[] = [
     { label: 'Major trade', hint: 'Who produces what, who needs what.' },
     { label: 'Friction',    hint: 'Scarcities, monopolies, criminal economies.' },
   ]),
-  template('TERMINOLOGY', 'Terminology',       'A glossary entry — slang, jargon, in-world term.', BookA,         '--wiki-terminology', [
+  template('TERMINOLOGY', 'Terminology',       'A glossary entry: slang, jargon, in-world term.', BookA,         '--wiki-terminology', [
     { label: 'Definition',     hint: 'Plain-English meaning.' },
     { label: 'In-world usage', hint: 'Who uses it; example sentence.' },
   ]),
-  template('TIMELINE',    'Timeline',          'A chronology — eras, decades, or beats.', Clock,         '--wiki-timeline', [
+  template('TIMELINE',    'Timeline',          'A chronology: eras, decades, or beats.', Clock,         '--wiki-timeline', [
     { label: 'Era',                  hint: 'Name and scope of this chunk of time.' },
     { label: 'Key events',           hint: 'Bulleted list of what happened.' },
     { label: 'How it shapes today',  hint: 'Why this matters to the present narrative.' },
   ]),
-  template('OTHER',       'Other',             "Doesn't fit a category — that's fine.", FileQuestion,  '--wiki-other', [
+  template('OTHER',       'Other',             "Doesn't fit a category? That's fine.", FileQuestion,  '--wiki-other', [
     { label: 'Notes', hint: 'Anything you need to remember.' },
   ]),
 ]

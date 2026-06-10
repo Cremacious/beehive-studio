@@ -104,7 +104,7 @@ function SuggestionCard({
         return
       }
       if (r.data.orphan) {
-        toast.warning("Suggestion was orphaned — chapter wasn't updated")
+        toast.warning("Suggestion was orphaned. Chapter wasn't updated.")
       } else {
         toast.success('Suggestion accepted')
       }

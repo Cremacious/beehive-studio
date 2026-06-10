@@ -53,7 +53,7 @@ export default async function SparksIndexPage({ params }: Props) {
               <h2>No active sparks</h2>
               <p>
                 Sparks are short writing prompts with real deadlines. Start one and see who
-                shows up — or browse past sparks for inspiration.
+                shows up, or browse past sparks for inspiration.
               </p>
               <div className="cta-row">
                 <Link href={`/${locale}/sparks/new`} className="btn-brand">

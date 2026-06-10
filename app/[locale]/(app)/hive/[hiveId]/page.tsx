@@ -53,7 +53,7 @@ export default async function HiveDashboardPage({ params }: { params: Promise<{ 
             {members.length} {members.length === 1 ? 'member' : 'members'}
           </span>
           <span>·</span>
-          <span>Last active {lastActive ? relTime(lastActive) : '—'}</span>
+          <span>Last active {lastActive ? relTime(lastActive) : '–'}</span>
         </div>
       </HiveSectionDivider>
 

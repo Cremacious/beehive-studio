@@ -57,9 +57,9 @@ function getStrength(pw: string): 0 | 1 | 2 | 3 {
 }
 
 const strengthMeta = {
-  0: { hint: '8+ chars, an uppercase letter, and a number', label: '—', color: 'var(--canvas-dark-ink-muted)' },
-  1: { hint: 'Too weak — add length or a number', label: 'Weak', color: 'oklch(0.72 0.16 25)' },
-  2: { hint: 'Getting there — try adding a symbol', label: 'Fair', color: 'var(--brand)' },
+  0: { hint: '8+ chars, an uppercase letter, and a number', label: '–', color: 'var(--canvas-dark-ink-muted)' },
+  1: { hint: 'Too weak. Add length or a number.', label: 'Weak', color: 'oklch(0.72 0.16 25)' },
+  2: { hint: 'Getting there. Try adding a symbol.', label: 'Fair', color: 'var(--brand)' },
   3: { hint: 'Nice. Solid password.', label: 'Strong', color: 'oklch(0.72 0.16 145)' },
 } as const
 

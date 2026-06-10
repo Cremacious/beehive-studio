@@ -76,9 +76,9 @@ export function OutlineHelpPanel({
 
         <Section title="Concepts">
           <ul style={ulStyle}>
-            <li><strong>Beat</strong> — a single scene or moment (&quot;Hero meets mentor&quot;)</li>
-            <li><strong>Act</strong> — a group of beats (Setup, Confrontation, Resolution)</li>
-            <li><strong>Linked chapter</strong> — jump from a beat to the chapter you&apos;re drafting it in</li>
+            <li><strong>Beat:</strong> a single scene or moment (&quot;Hero meets mentor&quot;)</li>
+            <li><strong>Act:</strong> a group of beats (Setup, Confrontation, Resolution)</li>
+            <li><strong>Linked chapter:</strong> jump from a beat to the chapter you&apos;re drafting it in</li>
           </ul>
         </Section>
 

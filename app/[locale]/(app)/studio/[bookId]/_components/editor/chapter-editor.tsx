@@ -100,7 +100,7 @@ function EmptyStartChapter() {
       <EmptyState
         icon={<BookOpen size={20} />}
         title="Start your first chapter"
-        body="Your binder is empty. Create a chapter — you can rename it anytime."
+        body="Your binder is empty. Create a chapter. You can rename it anytime."
         cta={{
           label: creating ? 'Creating…' : '+ Start your first chapter',
           onClick: createFirstChapter,

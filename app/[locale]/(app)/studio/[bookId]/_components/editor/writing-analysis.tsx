@@ -261,12 +261,12 @@ export function WritingAnalysis({ editorText, isOpen, onClose }: Props) {
                 How this works
               </h4>
               <p className="mb-3" style={{ color: 'var(--chrome-200)' }}>
-                Quick heuristic metrics — not linguistic analysis. Use as nudges, not rules.
+                Quick heuristic metrics, not linguistic analysis. Use as nudges, not rules.
               </p>
               <dl className="flex flex-col gap-2.5">
                 <div>
                   <dt className="font-semibold" style={{ color: 'var(--chrome-100)' }}>Readability</dt>
-                  <dd style={{ color: 'var(--chrome-200)' }}>Flesch-Kincaid grade level — higher = more complex sentences/words. 60-70 is &quot;plain English.&quot;</dd>
+                  <dd style={{ color: 'var(--chrome-200)' }}>Flesch-Kincaid grade level. Higher = more complex sentences/words. 60-70 is &quot;plain English.&quot;</dd>
                 </div>
                 <div>
                   <dt className="font-semibold" style={{ color: 'var(--chrome-100)' }}>Sentence length</dt>
@@ -274,7 +274,7 @@ export function WritingAnalysis({ editorText, isOpen, onClose }: Props) {
                 </div>
                 <div>
                   <dt className="font-semibold" style={{ color: 'var(--chrome-100)' }}>Adverbs (-ly)</dt>
-                  <dd style={{ color: 'var(--chrome-200)' }}>Words ending in -ly. Catches false positives like <em>family</em>, <em>holy</em> — about ~5-10% noise.</dd>
+                  <dd style={{ color: 'var(--chrome-200)' }}>Words ending in -ly. Catches false positives like <em>family</em>, <em>holy</em> (about ~5-10% noise).</dd>
                 </div>
                 <div>
                   <dt className="font-semibold" style={{ color: 'var(--chrome-100)' }}>Passive voice</dt>
@@ -451,7 +451,7 @@ export function WritingAnalysis({ editorText, isOpen, onClose }: Props) {
             </DialogTitle>
           </DialogHeader>
           <p className="text-xs text-muted-foreground mb-2">
-            The app checks your prose against these {CLICHES.length} phrases (case-insensitive substring match). The list is curated, not exhaustive — meant as a nudge, not a rule.
+            The app checks your prose against these {CLICHES.length} phrases (case-insensitive substring match). The list is curated, not exhaustive. Meant as a nudge, not a rule.
           </p>
           <ul className="flex flex-col gap-1 overflow-y-auto pr-2 flex-1">
             {[...CLICHES].sort().map((c, i) => (

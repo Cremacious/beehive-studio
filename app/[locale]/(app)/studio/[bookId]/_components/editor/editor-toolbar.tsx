@@ -606,7 +606,7 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
               </button>
             </TooltipTrigger>
             <TooltipContent>
-              {focusMode ? 'Exit focus mode' : 'Focus mode — hide sidebars'}
+              {focusMode ? 'Exit focus mode' : 'Focus mode (hide sidebars)'}
             </TooltipContent>
           </Tooltip>
         </div>

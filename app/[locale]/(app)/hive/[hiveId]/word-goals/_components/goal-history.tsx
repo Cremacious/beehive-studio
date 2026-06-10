@@ -39,7 +39,7 @@ export function GoalHistory({ archived }: Props) {
                 month: 'short',
                 day: 'numeric',
               })
-            : '—'
+            : '–'
         }`
         return (
           <div

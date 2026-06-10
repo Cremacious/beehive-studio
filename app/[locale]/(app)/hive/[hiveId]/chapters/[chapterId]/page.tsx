@@ -37,7 +37,7 @@ export default async function HiveChapterPage({
     ? ` by @${data.book.ownerUsername}`
     : ''
   const byline = isContribution
-    ? `Written by @${data.author?.username ?? 'unknown'} — chapter contribution to ${data.book.title}${ownerSuffix}`
+    ? `Written by @${data.author?.username ?? 'unknown'}, a chapter contribution to ${data.book.title}${ownerSuffix}`
     : `Chapter from ${data.book.title}${ownerSuffix}`
 
   return (

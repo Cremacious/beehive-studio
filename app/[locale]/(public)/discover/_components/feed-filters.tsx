@@ -8,7 +8,7 @@ const GENRES = ['Fantasy', 'Sci-Fi', 'Romance', 'Thriller', 'Horror', 'Mystery',
 const SORT_LABELS: Record<string, { label: string; description: string }> = {
   trending: { label: '🔥 Trending', description: 'Books gaining the most likes and readers this week' },
   popular: { label: '⭐ Popular', description: 'All-time community favorites' },
-  new: { label: '✨ New', description: 'Freshest uploads — straight from the hive' },
+  new: { label: '✨ New', description: 'Freshest uploads, straight from the hive' },
 }
 
 type Props = {
@@ -142,7 +142,7 @@ export function FeedFilters({ currentSort, currentGenre }: Props) {
           >
             {sortInfo.label}
           </span>{' '}
-          — {sortInfo.description}
+          · {sortInfo.description}
         </p>
       </div>
     </div>

@@ -140,7 +140,7 @@ export function EditClubMetadataDialog({
               }}
             />
             <p className="mt-1 text-xs text-[var(--canvas-dark-ink-muted)]">
-              Optional — house rules, code of conduct, etc.
+              Optional. House rules, code of conduct, etc.
             </p>
           </div>
           <div>

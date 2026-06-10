@@ -309,7 +309,7 @@ export function HiveDashboardActivitySection({
             className="text-sm max-w-sm"
             style={{ color: 'var(--canvas-dark-ink-muted)' }}
           >
-            No activity yet — invite members or post something on the Buzz Board to
+            No activity yet. Invite members or post something on the Buzz Board to
             get started.
           </p>
         </div>

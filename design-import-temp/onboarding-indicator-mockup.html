@@ -1,0 +1,780 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Onboarding indicator — options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --canvas-dark-100: #262728;
+    --canvas-dark-200: #2c2d2e;
+    --canvas-dark-250: #303132;
+    --canvas-dark-300: #34353b;
+    --canvas-dark-350: #3a3b40;
+    --canvas-dark-400: #404148;
+    --canvas-dark-ink: oklch(0.95 0.005 256);
+    --canvas-dark-ink-muted: oklch(0.85 0.005 256);
+    --canvas-dark-ink-faint: oklch(0.6 0.005 256);
+    --canvas-dark-ink-strong: oklch(1 0 0);
+    --brand: #FFC300;
+    --brand-ink: #1a1a1a;
+    --r-card: 20px;
+    --r-row: 14px;
+    --r-btn: 12px;
+    --r-pill: 999px;
+    --sh-card: 0 1px 0 rgba(255,255,255,0.04) inset, 0 6px 24px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.3);
+    --sh-tile: 0 1px 0 rgba(255,255,255,0.06) inset, 0 1px 2px rgba(0,0,0,0.3);
+    --sh-inset: inset 0 1px 2px rgba(0,0,0,0.3);
+    --br-card: 1px solid rgba(255,255,255,0.06);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: #1f2021;
+    color: var(--canvas-dark-ink);
+    font-family: 'Comfortaa', system-ui, sans-serif;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+  .page {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+  .page-header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  .page-header h1 {
+    font-size: 28px;
+    color: var(--brand);
+    margin: 0 0 8px;
+    font-weight: 700;
+  }
+  .page-header p {
+    color: var(--canvas-dark-ink-muted);
+    margin: 0;
+    font-size: 14px;
+  }
+
+  /* ───────── section chrome ───────── */
+  .section {
+    margin-top: 36px;
+  }
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--canvas-dark-ink-muted);
+    margin: 0 0 14px;
+  }
+  .section h2 {
+    color: var(--brand);
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 4px;
+  }
+  .section .sub {
+    color: var(--canvas-dark-ink-muted);
+    font-size: 13px;
+    margin: 0 0 16px;
+  }
+
+  /* ───────── card (mimics onboarding panel) ───────── */
+  .card {
+    background: linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200));
+    border-radius: var(--r-card);
+    box-shadow: var(--sh-card);
+    border-top: var(--br-card);
+    padding: 28px 28px 32px;
+  }
+  .card-title {
+    color: var(--brand);
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0;
+  }
+  .card-sub {
+    color: var(--canvas-dark-ink-muted);
+    font-size: 14px;
+    margin: 6px 0 0;
+  }
+
+  /* ───────── two-column grid ───────── */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+  }
+  @media (max-width: 900px) {
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+
+  /* ───────── matrix grid (3 rows of state) ───────── */
+  .state-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .state-row {
+    background: var(--canvas-dark-100);
+    border-radius: var(--r-row);
+    padding: 18px 20px;
+    box-shadow: var(--sh-inset);
+  }
+  .state-row .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--canvas-dark-ink-faint);
+    margin-bottom: 14px;
+  }
+
+  /* ============================================================
+     STYLE A — track + dots + labels underneath
+     ============================================================ */
+  .indicator-A {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    position: relative;
+    padding: 0 6px;
+  }
+  .indicator-A .node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 0 0 auto;
+    position: relative;
+    z-index: 2;
+    background: transparent;
+    cursor: default;
+  }
+  .indicator-A .node.clickable { cursor: pointer; }
+  .indicator-A .node.clickable:hover .dot {
+    box-shadow: 0 0 0 4px oklch(from var(--brand) l c h / 0.18), var(--sh-tile);
+  }
+  .indicator-A .dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300));
+    box-shadow: var(--sh-tile);
+    color: var(--canvas-dark-ink-faint);
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 160ms;
+  }
+  .indicator-A .label {
+    font-size: 11px;
+    margin-top: 8px;
+    color: var(--canvas-dark-ink-faint);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  /* active */
+  .indicator-A .node.active .dot {
+    background: var(--brand);
+    color: var(--brand-ink);
+    box-shadow: 0 0 0 4px oklch(from var(--brand) l c h / 0.22), var(--sh-tile);
+    transform: scale(1.05);
+  }
+  .indicator-A .node.active .label {
+    color: var(--brand);
+    font-weight: 700;
+  }
+  /* done */
+  .indicator-A .node.done .dot {
+    background: linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300));
+    color: var(--brand);
+    box-shadow: inset 0 0 0 1.5px var(--brand), var(--sh-tile);
+  }
+  .indicator-A .node.done .label {
+    color: var(--canvas-dark-ink-muted);
+  }
+  /* track */
+  .indicator-A .track {
+    position: absolute;
+    top: 14px;
+    left: 20px;
+    right: 20px;
+    height: 2px;
+    background: var(--canvas-dark-300);
+    z-index: 1;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .indicator-A .track-fill {
+    height: 100%;
+    background: var(--brand);
+    transition: width 240ms ease;
+  }
+
+  /* ============================================================
+     STYLE B — pill chips with connectors
+     ============================================================ */
+  .indicator-B {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-wrap: nowrap;
+  }
+  .indicator-B .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 13px 7px 9px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300));
+    box-shadow: var(--sh-tile);
+    color: var(--canvas-dark-ink-muted);
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 160ms;
+    white-space: nowrap;
+  }
+  .indicator-B .chip.clickable { cursor: pointer; }
+  .indicator-B .chip.clickable:hover {
+    box-shadow: var(--sh-tile), 0 0 0 2px oklch(from var(--brand) l c h / 0.2);
+  }
+  .indicator-B .chip .num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 999px;
+    background: var(--canvas-dark-100);
+    color: var(--canvas-dark-ink-faint);
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .indicator-B .connector {
+    flex: 1 1 auto;
+    height: 1.5px;
+    background: var(--canvas-dark-300);
+    margin: 0 4px;
+    border-radius: 999px;
+    min-width: 16px;
+  }
+  .indicator-B .connector.done {
+    background: var(--brand);
+  }
+  /* active */
+  .indicator-B .chip.active {
+    background: var(--brand);
+    color: var(--brand-ink);
+    box-shadow: 0 0 0 3px oklch(from var(--brand) l c h / 0.22), var(--sh-tile);
+    font-weight: 700;
+  }
+  .indicator-B .chip.active .num {
+    background: var(--brand-ink);
+    color: var(--brand);
+  }
+  /* done */
+  .indicator-B .chip.done {
+    background: linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300));
+    color: var(--canvas-dark-ink);
+  }
+  .indicator-B .chip.done .num {
+    background: oklch(from var(--brand) l c h / 0.18);
+    color: var(--brand);
+  }
+
+  /* check icon */
+  .check-icon { width: 11px; height: 11px; }
+
+  /* ───────── form fields (for context shots) ───────── */
+  .field-label {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--canvas-dark-ink-muted);
+    margin-bottom: 8px;
+  }
+  .field-input,
+  .field-textarea {
+    width: 100%;
+    background: #1E1E1E;
+    box-shadow: var(--sh-inset);
+    border: 0;
+    border-radius: var(--r-row);
+    padding: 11px 14px;
+    color: var(--canvas-dark-ink-strong);
+    font-family: 'Comfortaa', sans-serif;
+    font-size: 14px;
+    outline: none;
+  }
+  .field-textarea {
+    min-height: 88px;
+    resize: vertical;
+    line-height: 1.5;
+  }
+  .field-counter {
+    text-align: right;
+    font-size: 11px;
+    color: var(--canvas-dark-ink-muted);
+    margin-top: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ───────── CTA buttons ───────── */
+  .btn-primary {
+    background: var(--brand);
+    color: var(--brand-ink);
+    border: 0;
+    border-radius: var(--r-pill);
+    padding: 12px 22px;
+    font-family: 'Comfortaa', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-text {
+    background: transparent;
+    border: 0;
+    color: var(--canvas-dark-ink-muted);
+    font-family: 'Comfortaa', sans-serif;
+    font-size: 13.5px;
+    padding: 12px 14px;
+    border-radius: var(--r-pill);
+    cursor: pointer;
+  }
+  .btn-text:hover { color: var(--canvas-dark-ink); }
+  .btn-back {
+    background: transparent;
+    border: 0;
+    color: var(--canvas-dark-ink-muted);
+    font-family: 'Comfortaa', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 0;
+  }
+  .btn-back:hover { color: var(--brand); }
+
+  /* ───────── inline kbd ───────── */
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--canvas-dark-100);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: var(--brand);
+  }
+
+  /* ───────── caption (under each variant) ───────── */
+  .caption {
+    color: var(--canvas-dark-ink-muted);
+    font-size: 12px;
+    margin-top: 10px;
+    line-height: 1.55;
+  }
+  .caption strong { color: var(--canvas-dark-ink); font-weight: 600; }
+
+  /* ───────── pros/cons list ───────── */
+  .vs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 14px;
+  }
+  .vs > div {
+    background: var(--canvas-dark-100);
+    border-radius: var(--r-row);
+    padding: 12px 14px;
+    box-shadow: var(--sh-inset);
+  }
+  .vs h4 {
+    margin: 0 0 6px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .vs .pros h4 { color: oklch(0.75 0.15 145); }
+  .vs .cons h4 { color: oklch(0.72 0.18 25); }
+  .vs ul {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 12.5px;
+    color: var(--canvas-dark-ink);
+    line-height: 1.6;
+  }
+
+  /* ───────── checkbox row for Back affordance choices ───────── */
+  .back-choice {
+    background: var(--canvas-dark-100);
+    border-radius: var(--r-row);
+    padding: 18px 20px;
+    box-shadow: var(--sh-inset);
+    margin-bottom: 14px;
+  }
+  .back-choice .head {
+    font-weight: 600;
+    color: var(--canvas-dark-ink-strong);
+    margin-bottom: 8px;
+  }
+  .back-choice .desc {
+    color: var(--canvas-dark-ink-muted);
+    font-size: 12.5px;
+    margin: 0 0 12px;
+  }
+
+  /* ───────── recap ───────── */
+  .recap {
+    margin-top: 48px;
+    background: var(--canvas-dark-100);
+    border-radius: var(--r-card);
+    padding: 24px 28px;
+    box-shadow: var(--sh-inset);
+  }
+  .recap h2 {
+    color: var(--brand);
+    margin: 0 0 12px;
+    font-size: 16px;
+  }
+  .recap ol {
+    margin: 0;
+    padding-left: 18px;
+    color: var(--canvas-dark-ink);
+    font-size: 14px;
+    line-height: 1.7;
+  }
+  .recap ol li { margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="page-header">
+    <h1>Onboarding indicator — pick a direction</h1>
+    <p>Two styles, three states each. Plus Back affordance options below. Open in a wide window.</p>
+  </div>
+
+  <!-- ============================================
+       SECTION 1: TWO STYLES SIDE BY SIDE
+       ============================================ -->
+  <div class="section">
+    <div class="section-label">Question 1 of 3</div>
+    <h2>Indicator style</h2>
+    <p class="sub">Each card shows the same indicator across all three step states.</p>
+
+    <div class="grid-2">
+
+      <!-- STYLE A -->
+      <div class="card">
+        <p class="card-title">Style A — Dots + track + labels</p>
+        <p class="card-sub">Numbered nodes connected by a brand-fill progress track. Labels sit underneath, low-key. Active node enlarges + glows.</p>
+
+        <div class="state-stack" style="margin-top: 18px;">
+          <!-- step 1 active -->
+          <div class="state-row">
+            <div class="tag">Step 1 active</div>
+            <div class="indicator-A">
+              <div class="track"><div class="track-fill" style="width: 0%"></div></div>
+              <div class="node active">
+                <div class="dot">1</div>
+                <div class="label">Username</div>
+              </div>
+              <div class="node">
+                <div class="dot">2</div>
+                <div class="label">Profile</div>
+              </div>
+              <div class="node">
+                <div class="dot">3</div>
+                <div class="label">Photo</div>
+              </div>
+            </div>
+          </div>
+          <!-- step 2 active -->
+          <div class="state-row">
+            <div class="tag">Step 2 active</div>
+            <div class="indicator-A">
+              <div class="track"><div class="track-fill" style="width: 50%"></div></div>
+              <div class="node done clickable" title="Click to revisit">
+                <div class="dot">
+                  <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+                <div class="label">Username</div>
+              </div>
+              <div class="node active">
+                <div class="dot">2</div>
+                <div class="label">Profile</div>
+              </div>
+              <div class="node">
+                <div class="dot">3</div>
+                <div class="label">Photo</div>
+              </div>
+            </div>
+          </div>
+          <!-- step 3 active -->
+          <div class="state-row">
+            <div class="tag">Step 3 active</div>
+            <div class="indicator-A">
+              <div class="track"><div class="track-fill" style="width: 100%"></div></div>
+              <div class="node done clickable" title="Click to revisit">
+                <div class="dot">
+                  <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+                <div class="label">Username</div>
+              </div>
+              <div class="node done clickable" title="Click to revisit">
+                <div class="dot">
+                  <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+                <div class="label">Profile</div>
+              </div>
+              <div class="node active">
+                <div class="dot">3</div>
+                <div class="label">Photo</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="vs">
+          <div class="pros">
+            <h4>Pros</h4>
+            <ul>
+              <li>Reads as a journey, not three chips</li>
+              <li>Track fill gives clear progress</li>
+              <li>Labels can be longer without crowding the chip itself</li>
+            </ul>
+          </div>
+          <div class="cons">
+            <h4>Cons</h4>
+            <ul>
+              <li>Taller — adds ~24px vertical</li>
+              <li>Hit target for clicking is smaller (28px dot)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- STYLE B -->
+      <div class="card">
+        <p class="card-title">Style B — Chips with connectors</p>
+        <p class="card-sub">Keeps the current pill shape language but adds connector lines between chips and tightens the active-vs-done distinction.</p>
+
+        <div class="state-stack" style="margin-top: 18px;">
+          <!-- step 1 active -->
+          <div class="state-row">
+            <div class="tag">Step 1 active</div>
+            <div class="indicator-B">
+              <div class="chip active">
+                <span class="num">1</span><span>Username</span>
+              </div>
+              <div class="connector"></div>
+              <div class="chip">
+                <span class="num">2</span><span>Profile</span>
+              </div>
+              <div class="connector"></div>
+              <div class="chip">
+                <span class="num">3</span><span>Photo</span>
+              </div>
+            </div>
+          </div>
+          <!-- step 2 active -->
+          <div class="state-row">
+            <div class="tag">Step 2 active</div>
+            <div class="indicator-B">
+              <div class="chip done clickable" title="Click to revisit">
+                <span class="num">
+                  <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </span>
+                <span>Username</span>
+              </div>
+              <div class="connector done"></div>
+              <div class="chip active">
+                <span class="num">2</span><span>Profile</span>
+              </div>
+              <div class="connector"></div>
+              <div class="chip">
+                <span class="num">3</span><span>Photo</span>
+              </div>
+            </div>
+          </div>
+          <!-- step 3 active -->
+          <div class="state-row">
+            <div class="tag">Step 3 active</div>
+            <div class="indicator-B">
+              <div class="chip done clickable" title="Click to revisit">
+                <span class="num">
+                  <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </span>
+                <span>Username</span>
+              </div>
+              <div class="connector done"></div>
+              <div class="chip done clickable" title="Click to revisit">
+                <span class="num">
+                  <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </span>
+                <span>Profile</span>
+              </div>
+              <div class="connector done"></div>
+              <div class="chip active">
+                <span class="num">3</span><span>Photo</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="vs">
+          <div class="pros">
+            <h4>Pros</h4>
+            <ul>
+              <li>Smaller vertical footprint</li>
+              <li>Familiar shape — same family as nav pills</li>
+              <li>Bigger hit target for clicking</li>
+            </ul>
+          </div>
+          <div class="cons">
+            <h4>Cons</h4>
+            <ul>
+              <li>On narrow viewports the connectors squish</li>
+              <li>Long labels (like "Preferences") inflate chip width</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ============================================
+       SECTION 2: STEP 3 LABEL — PHOTO vs PREFERENCES
+       ============================================ -->
+  <div class="section">
+    <div class="section-label">Question 2 of 3</div>
+    <h2>Step 3 label</h2>
+    <p class="sub">Right now the code says "Photo" when on step 3 but "Preferences" as the future-label on steps 1 + 2. Pick one and use it everywhere.</p>
+
+    <div class="grid-2">
+      <div class="card">
+        <p class="card-title">Option: "Photo"</p>
+        <p class="card-sub">Honest about what the step collects today. Drop "Preferences" entirely.</p>
+        <div style="margin-top: 18px;">
+          <div class="indicator-B" style="margin-bottom: 8px;">
+            <div class="chip done"><span class="num"><svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg></span><span>Username</span></div>
+            <div class="connector done"></div>
+            <div class="chip done"><span class="num"><svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg></span><span>Profile</span></div>
+            <div class="connector done"></div>
+            <div class="chip active"><span class="num">3</span><span>Photo</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <p class="card-title">Option: "Preferences"</p>
+        <p class="card-sub">Only pick this if you plan to collect a real preference here later (theme? newsletter opt-in? interests?). Otherwise it's lying.</p>
+        <div style="margin-top: 18px;">
+          <div class="indicator-B" style="margin-bottom: 8px;">
+            <div class="chip done"><span class="num"><svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg></span><span>Username</span></div>
+            <div class="connector done"></div>
+            <div class="chip done"><span class="num"><svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg></span><span>Profile</span></div>
+            <div class="connector done"></div>
+            <div class="chip active"><span class="num">3</span><span>Preferences</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================
+       SECTION 3: BACK AFFORDANCE
+       ============================================ -->
+  <div class="section">
+    <div class="section-label">Question 3 of 3</div>
+    <h2>Going back to change earlier steps</h2>
+    <p class="sub">Two ways to let people go back. They're not mutually exclusive — using both is the most discoverable option.</p>
+
+    <div class="card">
+      <p class="card-title">Live preview — Profile step with both Back affordances</p>
+      <p class="card-sub">Reached pills are clickable (try hovering them). A "← Back" text link sits left of the primary CTA.</p>
+
+      <div style="margin-top: 22px;">
+        <!-- indicator (Style B so it's compact for this preview; swap to A if you pick A) -->
+        <div class="indicator-B" style="margin-bottom: 28px;">
+          <div class="chip done clickable" title="Click to revisit"><span class="num"><svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg></span><span>Username</span></div>
+          <div class="connector done"></div>
+          <div class="chip active"><span class="num">2</span><span>Profile</span></div>
+          <div class="connector"></div>
+          <div class="chip"><span class="num">3</span><span>Photo</span></div>
+        </div>
+
+        <h3 style="color: var(--brand); font-size: 22px; margin: 0 0 6px; font-weight: 700;">Tell us about yourself</h3>
+        <p style="color: var(--canvas-dark-ink-muted); font-size: 14px; margin: 0 0 24px;">Optional — you can always edit this later.</p>
+
+        <div style="margin-bottom: 22px;">
+          <label class="field-label">Bio</label>
+          <textarea class="field-textarea" placeholder="Novelist, night owl, tea enthusiast.">Novelist, night owl, tea enthusiast.</textarea>
+          <div class="field-counter">37 / 200</div>
+        </div>
+
+        <!-- footer row with Back + Continue -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px;">
+          <button class="btn-back">← Back</button>
+          <button class="btn-primary">Continue
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </button>
+        </div>
+
+        <p class="caption" style="margin-top: 18px;">
+          Notice: no more "Skip" button — the bio is already optional and "Continue" handles the empty case. Same treatment on step 3 ("Finish setup" replaces both buttons there).
+        </p>
+      </div>
+    </div>
+
+    <div style="margin-top: 22px;">
+      <div class="back-choice">
+        <div class="head">Option A — Clickable indicator pills only</div>
+        <p class="desc">Reached pills (done state) become clickable. No explicit Back button in the footer. <strong>Risk:</strong> some users don't know pills are interactive — it's discoverable, not obvious.</p>
+      </div>
+      <div class="back-choice">
+        <div class="head">Option B — "← Back" text button only</div>
+        <p class="desc">A small text link in the footer row, left of the primary CTA. Always linear — Back goes to immediately-previous step. <strong>Risk:</strong> from step 3 you'd click Back twice to reach step 1.</p>
+      </div>
+      <div class="back-choice">
+        <div class="head">Option C — Both (recommended)</div>
+        <p class="desc">"← Back" for one-step-back muscle memory. Clickable pills for jumping directly to any reached step (e.g. step 3 → step 1 in one click). Costs ~30 lines of code total; covers both interaction styles.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================
+       RECAP — what you'd hand back
+       ============================================ -->
+  <div class="recap">
+    <h2>What I need from you to ship this</h2>
+    <ol>
+      <li><strong>Indicator style:</strong> <code>A</code> (dots+track+labels) or <code>B</code> (chips+connectors)</li>
+      <li><strong>Step 3 label:</strong> <code>Photo</code> or <code>Preferences</code> (and if Preferences, what does the step collect?)</li>
+      <li><strong>Back affordance:</strong> <code>A</code> pills only, <code>B</code> back button only, or <code>C</code> both</li>
+    </ol>
+    <p style="margin-top: 16px; color: var(--canvas-dark-ink-muted); font-size: 13px;">
+      Plus the locked changes regardless of picks: drop "Step X of 3" header line, remove Step 2 "Skip" button, remove Step 3 "Skip for now" button, rename the duplicated `step3Label` variable.
+    </p>
+  </div>
+
+</div>
+</body>
+</html>

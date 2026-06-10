@@ -59,52 +59,118 @@ function SpinnerIcon() {
   )
 }
 
-function ProgressBar({ step }: { step: Step }) {
-  const step3Label = step === 3 ? 'Photo' : 'Preferences'
-
-  function Pill({ n, label }: { n: number; label: string }) {
+function ProgressBar({
+  step,
+  maxReached,
+  onJump,
+}: {
+  step: Step
+  maxReached: Step
+  onJump: (n: Step) => void
+}) {
+  function Chip({ n, label }: { n: Step; label: string }) {
     const isActive = n === step
     const isDone = n < step
-    const isReached = isActive || isDone
+    const clickable = !isActive && n <= maxReached
 
-    const pillStyle: React.CSSProperties = isReached
-      ? { background: 'var(--brand)', color: 'var(--brand-ink)' }
+    const chipStyle: React.CSSProperties = isActive
+      ? {
+          background: 'var(--brand)',
+          color: 'var(--brand-ink)',
+          boxShadow:
+            '0 0 0 3px oklch(from var(--brand) l c h / 0.22), var(--sh-tile)',
+        }
       : {
-          background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-          color: 'var(--canvas-dark-ink-muted)',
+          background:
+            'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+          color: isDone || clickable
+            ? 'var(--canvas-dark-ink)'
+            : 'var(--canvas-dark-ink-muted)',
+          boxShadow: 'var(--sh-tile)',
         }
 
+    const numStyle: React.CSSProperties = isActive
+      ? { background: 'var(--brand-ink)', color: 'var(--brand)' }
+      : isDone || clickable
+        ? {
+            background: 'oklch(from var(--brand) l c h / 0.18)',
+            color: 'var(--brand)',
+          }
+        : { background: 'var(--canvas-dark-100)', color: 'var(--canvas-dark-ink-muted)' }
+
     return (
-      <div
-        className="flex items-center gap-2 px-3 py-1.5 text-[12px] font-medium mainFont"
-        style={{ ...pillStyle, borderRadius: 'var(--r-pill)' }}
+      <button
+        type="button"
+        onClick={clickable ? () => onJump(n) : undefined}
+        disabled={!clickable}
         aria-current={isActive ? 'step' : undefined}
+        aria-label={
+          isActive
+            ? `${label} (current step)`
+            : clickable
+              ? `Go back to ${label}`
+              : label
+        }
+        className={[
+          'inline-flex items-center gap-2 px-3 py-1.5 text-[12px] mainFont whitespace-nowrap transition-all',
+          isActive ? 'font-bold' : isDone ? 'font-semibold' : 'font-medium',
+          clickable ? 'cursor-pointer hover:brightness-110' : 'cursor-default',
+          'disabled:cursor-default focus:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(from_var(--brand)_l_c_h_/_0.6)]',
+        ].join(' ')}
+        style={{ ...chipStyle, borderRadius: 'var(--r-pill)' }}
       >
         <span
           className="inline-flex items-center justify-center w-5 h-5 rounded-full text-[11px] font-bold"
-          style={{
-            background: isReached ? 'var(--brand-ink)' : 'var(--canvas-dark-100)',
-            color: isReached ? 'var(--brand)' : 'var(--canvas-dark-ink-muted)',
-          }}
+          style={numStyle}
         >
           {isDone ? <CheckIcon className="w-3 h-3" /> : n}
         </span>
         <span>{label}</span>
-      </div>
+      </button>
+    )
+  }
+
+  function Connector({ done }: { done: boolean }) {
+    return (
+      <div
+        aria-hidden="true"
+        className="flex-1 h-[1.5px] rounded-full mx-1.5 min-w-2 transition-colors"
+        style={{
+          background: done ? 'var(--brand)' : 'var(--canvas-dark-300)',
+        }}
+      />
     )
   }
 
   return (
-    <div className="flex items-center gap-2 mb-6 flex-wrap">
-      <Pill n={1} label="Username" />
-      <Pill n={2} label="Profile" />
-      <Pill n={3} label={step3Label} />
-    </div>
+    <nav
+      aria-label="Onboarding steps"
+      className="flex items-center mb-6"
+    >
+      <Chip n={1} label="Username" />
+      <Connector done={step > 1} />
+      <Chip n={2} label="Profile" />
+      <Connector done={step > 2} />
+      <Chip n={3} label="Photo" />
+    </nav>
   )
 }
 
 export function OnboardingFlow({ locale }: { locale: string }) {
   const [step, setStep] = useState<Step>(1)
+  // Tracks the highest step the user has advanced THROUGH (so done-pills stay
+  // clickable after the user jumps back to an earlier step).
+  const [maxReached, setMaxReached] = useState<Step>(1)
+
+  function goToStep(target: Step) {
+    setStep(target)
+    setMaxReached((prev) => (target > prev ? target : prev) as Step)
+  }
+
+  function goBack() {
+    if (step === 2) setStep(1)
+    else if (step === 3) setStep(2)
+  }
 
   // Step 1
   const [username, setUsername] = useState('')
@@ -209,7 +275,7 @@ export function OnboardingFlow({ locale }: { locale: string }) {
     >
       {/* Header */}
       <header className="relative z-10">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 h-16 flex items-center">
           <Link href={`/${locale}`} className="flex items-center gap-2.5">
             <span
               className="mainFont font-bold text-[17px] tracking-tight"
@@ -218,16 +284,13 @@ export function OnboardingFlow({ locale }: { locale: string }) {
               Beehive Studio
             </span>
           </Link>
-          <span className="text-sm" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
-            Step {step} of 3
-          </span>
         </div>
       </header>
 
       {/* Main */}
       <main className="relative z-10 flex-1 flex items-center justify-center px-6 py-10">
         <div className="w-full max-w-[440px]">
-          <ProgressBar step={step} />
+          <ProgressBar step={step} maxReached={maxReached} onJump={(n) => setStep(n)} />
 
           <div className="p-8 sm:p-10" style={panelStyle}>
 
@@ -243,7 +306,7 @@ export function OnboardingFlow({ locale }: { locale: string }) {
                   </p>
                 </div>
 
-                <form onSubmit={e => { e.preventDefault(); setStep(2) }} className="space-y-4">
+                <form onSubmit={e => { e.preventDefault(); goToStep(2) }} className="space-y-4">
                   <div>
                     <label
                       htmlFor="username"
@@ -320,7 +383,7 @@ export function OnboardingFlow({ locale }: { locale: string }) {
                     Tell us about yourself
                   </h1>
                   <p className="text-[14.5px] mt-2.5 leading-relaxed" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
-                    Optional — you can always add this later.
+                    Optional. You can always add this later.
                   </p>
                 </div>
 
@@ -353,25 +416,29 @@ export function OnboardingFlow({ locale }: { locale: string }) {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 mt-2">
+                  <div className="flex items-center justify-between mt-2">
                     <button
                       type="button"
-                      onClick={() => setStep(3)}
-                      className="mainFont font-bold flex-1 px-5 py-3.5 text-[15px] inline-flex items-center justify-center gap-2 hover:-translate-y-px transition-all"
+                      onClick={goBack}
+                      className="mainFont inline-flex items-center gap-1.5 px-2 py-2 text-[13.5px] font-medium hover:text-[var(--brand)] transition-colors"
+                      style={{ color: 'var(--canvas-dark-ink-muted)' }}
+                      aria-label="Back to username"
+                    >
+                      <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>
+                      </svg>
+                      Back
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => goToStep(3)}
+                      className="mainFont font-bold px-6 py-3.5 text-[15px] inline-flex items-center justify-center gap-2 hover:-translate-y-px transition-all"
                       style={ctaStyle}
                     >
                       Continue
                       <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
                       </svg>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setStep(3)}
-                      className="mainFont px-5 py-3.5 text-[15px] font-medium hover:opacity-80 transition-all"
-                      style={{ color: 'var(--canvas-dark-ink-muted)', borderRadius: 'var(--r-pill)' }}
-                    >
-                      Skip
                     </button>
                   </div>
                 </div>
@@ -466,27 +533,32 @@ export function OnboardingFlow({ locale }: { locale: string }) {
                   </p>
                 )}
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={goBack}
+                    disabled={submitting}
+                    className="mainFont inline-flex items-center gap-1.5 px-2 py-2 text-[13.5px] font-medium hover:text-[var(--brand)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    style={{ color: 'var(--canvas-dark-ink-muted)' }}
+                    aria-label="Back to profile"
+                  >
+                    <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>
+                    </svg>
+                    Back
+                  </button>
                   <button
                     type="button"
                     onClick={handleFinish}
-                    disabled={submitting}
-                    className="mainFont font-bold flex-1 px-5 py-3.5 text-[15px] inline-flex items-center justify-center gap-2 hover:-translate-y-px disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none transition-all"
+                    disabled={submitting || usernameStatus !== 'valid'}
+                    title={usernameStatus !== 'valid' ? 'Pick a valid username on step 1 first' : undefined}
+                    className="mainFont font-bold px-6 py-3.5 text-[15px] inline-flex items-center justify-center gap-2 hover:-translate-y-px disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none transition-all"
                     style={ctaStyle}
                   >
                     {submitting ? 'Setting up…' : 'Finish setup'}
                     {!submitting && (
                       <CheckIcon className="w-4 h-4" />
                     )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleFinish}
-                    disabled={submitting}
-                    className="mainFont px-5 py-3.5 text-[15px] font-medium hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                    style={{ color: 'var(--canvas-dark-ink-muted)', borderRadius: 'var(--r-pill)' }}
-                  >
-                    Skip for now
                   </button>
                 </div>
               </div>

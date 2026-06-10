@@ -43,10 +43,18 @@ export async function getUserPremiumStatus(userId: string): Promise<boolean> {
 
   const billing = await db.query.userBilling.findFirst({
     where: eq(userBilling.userId, userId),
-    columns: { subscriptionStatus: true },
+    columns: { subscriptionStatus: true, compEntitlementUntil: true },
   })
 
-  return billing?.subscriptionStatus ? PREMIUM_STATUSES.has(billing.subscriptionStatus) : false
+  if (!billing) return false
+
+  // Admin-granted comp entitlement (promo codes, manual grants) is honored
+  // before checking the Stripe subscription status.
+  if (billing.compEntitlementUntil && billing.compEntitlementUntil.getTime() > Date.now()) {
+    return true
+  }
+
+  return billing.subscriptionStatus ? PREMIUM_STATUSES.has(billing.subscriptionStatus) : false
 }
 
 /**

@@ -46,6 +46,9 @@ export const userBilling = pgTable('user_billing', {
   stripeSubscriptionId: text('stripe_subscription_id'),
   subscriptionStatus: subscriptionStatusEnum('subscription_status'),
   currentPeriodEnd: timestamp('current_period_end'),
+  // Admin-granted comp entitlement (promo codes, manual grants). NULL = no comp.
+  // A far-future timestamp (e.g. year 9999) represents lifetime.
+  compEntitlementUntil: timestamp('comp_entitlement_until'),
 })
 
 export const sessions = pgTable('sessions', {

@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import createMiddleware from 'next-intl/middleware'
 import { defaultLocale, locales } from './i18n/config'
+import { ADMIN_COOKIE_NAME, verifySessionCookie } from './lib/admin/session'
 
 const localePattern = new RegExp(`^/(${locales.join('|')})(\/|$)`)
 
@@ -38,6 +39,20 @@ export async function middleware(request: NextRequest) {
 
   if (BLOCKED_UA.test(ua)) {
     return new NextResponse('Forbidden', { status: 403 })
+  }
+
+  // /admin is locale-free and gated by a separate session cookie.
+  if (pathname.startsWith('/admin')) {
+    // /admin/login is the only unauthenticated admin path.
+    if (pathname === '/admin/login' || pathname.startsWith('/admin/login/')) {
+      return NextResponse.next()
+    }
+    const adminCookie = request.cookies.get(ADMIN_COOKIE_NAME)?.value
+    const session = await verifySessionCookie(adminCookie)
+    if (!session) {
+      return NextResponse.redirect(new URL('/admin/login', request.url))
+    }
+    return NextResponse.next()
   }
 
   const intlResponse = intlMiddleware(request)

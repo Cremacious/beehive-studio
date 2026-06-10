@@ -3,8 +3,23 @@ import Link from 'next/link'
 import { db } from '@/db'
 import { chapters, binderItems, books, userProfiles } from '@/db/schema'
 import { and, eq, asc, inArray } from 'drizzle-orm'
-import { buildReadingOrder } from '@/lib/books/build-reading-order'
+import { buildBookSequence } from '@/lib/books/build-book-sequence'
 import { tiptapToHtml } from '@/lib/export/tiptap-to-html'
+import {
+  TitlePageDisplay,
+  CopyrightDisplay,
+  DedicationDisplay,
+  AcknowledgmentsDisplay,
+  AboutAuthorDisplay,
+  fbmSubtypeLabel,
+} from '../../../_components/front-back-matter-display'
+import type {
+  TitlePageFields,
+  CopyrightFields,
+  DedicationFields,
+  AcknowledgmentsFields,
+  AboutAuthorFields,
+} from '@/lib/front-back-matter/types'
 import { markChapterReadAction } from '@/lib/actions/reading.actions'
 import { auth } from '@/lib/auth'
 import { headers } from 'next/headers'
@@ -49,9 +64,9 @@ export default async function ChapterReaderPage({ params }: Props) {
 
   if (!book) notFound()
 
-  // Fetch all chapter + collection binder items and resolve the global
-  // reading order so Prev/Next walk nested chapters in true sequence.
-  // (binder_items.order is parent-scoped, not global.)
+  // Fetch every binder item that contributes to the reading sequence:
+  // chapters + collections + front/back matter. FBM items carry their data
+  // on binder_items.content; chapters on chapters.content.
   const binderRows = await db
     .select({
       id: binderItems.id,
@@ -59,7 +74,9 @@ export default async function ChapterReaderPage({ params }: Props) {
       type: binderItems.type,
       order: binderItems.order,
       title: binderItems.title,
+      binderContent: binderItems.content,
       chapterId: chapters.id,
+      chapterContent: chapters.content,
       status: chapters.status,
       updatedAt: chapters.updatedAt,
     })
@@ -68,26 +85,35 @@ export default async function ChapterReaderPage({ params }: Props) {
     .where(
       and(
         eq(binderItems.bookId, bookId),
-        inArray(binderItems.type, ['chapter', 'part']),
+        inArray(binderItems.type, ['chapter', 'part', 'front_matter', 'back_matter']),
       ),
     )
     .orderBy(asc(binderItems.order))
 
-  const { flat: allChapters } = buildReadingOrder(
+  const sequence = buildBookSequence(
     binderRows.map((r) => ({
       id: r.id,
       parentId: r.parentId,
-      type: r.type as 'chapter' | 'part',
+      type: r.type as 'chapter' | 'part' | 'front_matter' | 'back_matter',
       order: r.order,
       title: r.title,
       chapterId: r.chapterId,
       status: r.status,
       updatedAt: r.updatedAt,
+      binderContent: r.binderContent,
+      chapterContent: r.chapterContent,
     })),
   )
+  const allChapters = sequence.chapters
+  const allInOrder = sequence.allInOrder
 
-  const currentIndex = allChapters.findIndex(ch => ch.chapterId === chapterId)
-  if (currentIndex === -1) notFound()
+  // Resolve which entry in the full sequence we're rendering.
+  const sequenceIndex = allInOrder.findIndex((e) =>
+    e.kind === 'chapter' ? e.chapter.chapterId === chapterId : e.entry.chapterId === chapterId,
+  )
+  if (sequenceIndex === -1) notFound()
+  const currentEntry = allInOrder[sequenceIndex]
+  const isFbm = currentEntry.kind === 'fbm'
 
   // Fetch chapter content + contributing-author profile (if set)
   const [chapter] = await db
@@ -107,83 +133,163 @@ export default async function ChapterReaderPage({ params }: Props) {
   if (!chapter) notFound()
 
   const isAuthor = userId === book.userId
-  if (!isAuthor && !isChapterReaderVisible(chapter.status)) {
+  // Chapter visibility gate only applies to chapter-kind entries. FBM items
+  // bypass the FIRST_DRAFT / REVISED / FINAL ladder — they're metadata
+  // pages, always visible when present.
+  if (!isFbm && !isAuthor && !isChapterReaderVisible(chapter.status)) {
     return <LockedChapterPlaceholder bookId={bookId} locale={locale} />
   }
 
-  const prevChapter = currentIndex > 0 ? allChapters[currentIndex - 1] : null
-  const nextChapter = currentIndex < allChapters.length - 1 ? allChapters[currentIndex + 1] : null
+  // Resolve a binderItemId for the current entry (chapter rows have one via
+  // their reading-order entry; FBM rows have one via their FbmEntry).
+  const currentBinderItemId =
+    currentEntry.kind === 'chapter'
+      ? currentEntry.chapter.binderItemId
+      : currentEntry.entry.binderItemId
 
-  // Map collection (part) ids to their titles so the prev/next nav cards
-  // can show "Knights of Varrock" above "Part Two" when navigating into a
-  // chapter that lives inside a collection.
+  // Prev/Next walk the FULL sequence (FM -> chapters -> BM), so an FBM page's
+  // Next can lead into the first chapter and the last chapter's Next can
+  // lead into the acknowledgments.
+  type NeighborInfo = {
+    chapterId: string
+    title: string
+    collectionName: string | null
+  } | null
+
   const collectionTitleById = new Map<string, string>()
   for (const r of binderRows) {
     if (r.type === 'part') collectionTitleById.set(r.id, r.title)
   }
-  const prevCollectionName = prevChapter?.collectionId
-    ? collectionTitleById.get(prevChapter.collectionId) ?? null
-    : null
-  const nextCollectionName = nextChapter?.collectionId
-    ? collectionTitleById.get(nextChapter.collectionId) ?? null
-    : null
-  const current = allChapters[currentIndex]
-  const chapterNumber = currentIndex + 1
+  function neighborFor(index: number): NeighborInfo {
+    if (index < 0 || index >= allInOrder.length) return null
+    const e = allInOrder[index]
+    if (e.kind === 'chapter') {
+      const c = e.chapter
+      const collectionName = c.collectionId
+        ? collectionTitleById.get(c.collectionId) ?? null
+        : null
+      return { chapterId: c.chapterId, title: c.title, collectionName }
+    }
+    return { chapterId: e.entry.chapterId, title: e.entry.title, collectionName: null }
+  }
+  const prevInfo = neighborFor(sequenceIndex - 1)
+  const nextInfo = neighborFor(sequenceIndex + 1)
+
+  // For the chapter "number" label, only count chapter-kind entries (FBM
+  // items shouldn't push Introduction from "Chapter 1" to "Chapter 2").
+  const chapterReadingIndex =
+    currentEntry.kind === 'chapter'
+      ? allChapters.findIndex((c) => c.chapterId === chapterId)
+      : -1
+  const chapterNumber = chapterReadingIndex >= 0 ? chapterReadingIndex + 1 : 0
   const totalChapters = allChapters.length
 
-  // Mark chapter as read for authenticated users
-  if (userId) {
-    await markChapterReadAction(bookId, current.binderItemId)
+  // Mark as read — chapter-kind only. FBM doesn't move the progress bar.
+  if (userId && currentEntry.kind === 'chapter') {
+    await markChapterReadAction(bookId, currentBinderItemId)
   }
 
-  // Pre-fetch chapter comments (page 1) + total + viewer avatar in parallel.
-  const [commentsResult, commentsCount, viewerProfileRow] = await Promise.all([
-    getChapterCommentsAction(chapterId, 1),
-    getChapterCommentsCountAction(chapterId),
-    userId
-      ? db
-          .select({ avatarUrl: userProfiles.avatarUrl })
-          .from(userProfiles)
-          .where(eq(userProfiles.userId, userId))
-          .limit(1)
-      : Promise.resolve([]),
-  ])
-  const initialComments = commentsResult.success ? commentsResult.data.comments : []
-  const initialHasMore = commentsResult.success ? commentsResult.data.hasMore : false
+  // Comments are CHAPTER ONLY — FBM pages (title page, copyright, etc.) skip
+  // the fetch entirely + render no comments panel. Keeps the pre-fetch off
+  // the FBM path and avoids spurious "Be the first to comment" UI on what
+  // are effectively metadata pages.
+  const wantsComments = currentEntry.kind === 'chapter'
+  const [commentsResult, commentsCount, viewerProfileRow] = wantsComments
+    ? await Promise.all([
+        getChapterCommentsAction(chapterId, 1),
+        getChapterCommentsCountAction(chapterId),
+        userId
+          ? db
+              .select({ avatarUrl: userProfiles.avatarUrl })
+              .from(userProfiles)
+              .where(eq(userProfiles.userId, userId))
+              .limit(1)
+          : Promise.resolve([]),
+      ])
+    : [{ success: false } as const, 0, [] as { avatarUrl: string | null }[]]
+  const initialComments =
+    commentsResult.success ? commentsResult.data.comments : []
+  const initialHasMore =
+    commentsResult.success ? commentsResult.data.hasMore : false
   const viewerAvatarUrl =
     Array.isArray(viewerProfileRow) && viewerProfileRow[0]?.avatarUrl
       ? viewerProfileRow[0].avatarUrl
       : null
 
-  const htmlContent = chapter.content ? tiptapToHtml(chapter.content) : ''
+  // Chapter prose → htmlContent (TipTap → HTML, fed through the page's
+  // dangerouslySetInnerHTML path). FBM → React node passed via
+  // bodyOverride so the components render in-tree (Next 16 forbids
+  // react-dom/server in app pages).
+  let htmlContent = ''
+  let bodyOverride: React.ReactNode = null
+  if (currentEntry.kind === 'chapter') {
+    htmlContent = chapter.content ? tiptapToHtml(chapter.content) : ''
+  } else {
+    const e = currentEntry.entry
+    switch (e.subtype) {
+      case 'title_page':
+        bodyOverride = <TitlePageDisplay f={e.fields as Partial<TitlePageFields>} />
+        break
+      case 'copyright':
+        bodyOverride = <CopyrightDisplay f={e.fields as Partial<CopyrightFields>} />
+        break
+      case 'dedication':
+        bodyOverride = <DedicationDisplay f={e.fields as Partial<DedicationFields>} />
+        break
+      case 'acknowledgments':
+        bodyOverride = (
+          <AcknowledgmentsDisplay f={e.fields as Partial<AcknowledgmentsFields>} />
+        )
+        break
+      case 'about_author':
+        bodyOverride = <AboutAuthorDisplay f={e.fields as Partial<AboutAuthorFields>} />
+        break
+      default:
+        // custom + legacy: render the chapters.content TipTap doc as prose
+        htmlContent = e.content ? tiptapToHtml(e.content) : ''
+    }
+  }
 
   const showContributionByline =
-    chapter.authorUserId !== null && chapter.authorUserId !== book.userId
+    !isFbm && chapter.authorUserId !== null && chapter.authorUserId !== book.userId
+
+  const renderTitle =
+    currentEntry.kind === 'chapter'
+      ? currentEntry.chapter.title
+      : currentEntry.entry.title
+  // For FBM, the "Chapter N of M" header becomes the subtype label
+  // ("Title page", "Copyright", etc.). For chapters, pass the real index.
+  const fbmSubtypeLabelStr =
+    currentEntry.kind === 'fbm'
+      ? fbmSubtypeLabel(currentEntry.entry.subtype, currentEntry.entry.type)
+      : null
 
   return (
     <ReaderSurface
       htmlContent={htmlContent}
-      chapterTitle={current.title}
+      bodyOverride={bodyOverride}
+      chapterTitle={renderTitle}
       chapterNumber={chapterNumber}
       totalChapters={totalChapters}
-      wordCount={chapter.wordCount ?? 0}
+      wordCount={!isFbm ? chapter.wordCount ?? 0 : 0}
       bookTitle={book.title}
       backHref={`/${locale}/books/${bookId}`}
+      headerSubtitleOverride={fbmSubtypeLabelStr}
       prev={
-        prevChapter
+        prevInfo
           ? {
-              href: `/${locale}/books/${bookId}/read/${prevChapter.chapterId}`,
-              title: prevChapter.title,
-              collectionName: prevCollectionName,
+              href: `/${locale}/books/${bookId}/read/${prevInfo.chapterId}`,
+              title: prevInfo.title,
+              collectionName: prevInfo.collectionName,
             }
           : null
       }
       next={
-        nextChapter
+        nextInfo
           ? {
-              href: `/${locale}/books/${bookId}/read/${nextChapter.chapterId}`,
-              title: nextChapter.title,
-              collectionName: nextCollectionName,
+              href: `/${locale}/books/${bookId}/read/${nextInfo.chapterId}`,
+              title: nextInfo.title,
+              collectionName: nextInfo.collectionName,
             }
           : null
       }
@@ -204,15 +310,17 @@ export default async function ChapterReaderPage({ params }: Props) {
           : null
       }
       commentsSlot={
-        <ChapterCommentsPanel
-          chapterId={chapterId}
-          locale={locale}
-          initialComments={initialComments}
-          initialHasMore={initialHasMore}
-          initialCount={commentsCount}
-          isAuthenticated={!!userId}
-          viewerAvatarUrl={viewerAvatarUrl}
-        />
+        wantsComments ? (
+          <ChapterCommentsPanel
+            chapterId={chapterId}
+            locale={locale}
+            initialComments={initialComments}
+            initialHasMore={initialHasMore}
+            initialCount={commentsCount}
+            isAuthenticated={!!userId}
+            viewerAvatarUrl={viewerAvatarUrl}
+          />
+        ) : null
       }
     />
   )

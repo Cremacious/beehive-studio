@@ -3,7 +3,7 @@ import { headers } from 'next/headers'
 import { db } from '@/db'
 import { books, binderItems, chapters, bookComments, userProfiles } from '@/db/schema'
 import { and, eq, asc, count, inArray } from 'drizzle-orm'
-import { buildReadingOrder } from '@/lib/books/build-reading-order'
+import { buildBookSequence, isFbmEntryEmpty } from '@/lib/books/build-book-sequence'
 import { auth } from '@/lib/auth'
 import { canReadBook } from '@/lib/books/can-read'
 import { getSeriesNeighbors } from '@/lib/books/get-series-neighbors'
@@ -56,9 +56,11 @@ export default async function BookReaderPage({ params }: Props) {
     .where(eq(bookComments.bookId, bookId))
   const commentCount = commentCountRow?.total ?? 0
 
-  // Pull all chapter and collection (part) binder items for this book in one
-  // query, then walk the tree to build the global reading order. binder
-  // order is parent-scoped, so a flat ORDER BY misses nested chapters.
+  // Pull all chapter / collection / front_matter / back_matter binder items
+  // for this book in one query, then walk the tree to build the full reading
+  // sequence (front matter -> chapters in collection-aware reading order ->
+  // back matter). FBM items carry their content on binder_items.content
+  // (subtype + structured fields).
   const binderRows = await db
     .select({
       id: binderItems.id,
@@ -66,7 +68,9 @@ export default async function BookReaderPage({ params }: Props) {
       type: binderItems.type,
       order: binderItems.order,
       title: binderItems.title,
+      binderContent: binderItems.content,
       chapterId: chapters.id,
+      chapterContent: chapters.content,
       status: chapters.status,
       updatedAt: chapters.updatedAt,
     })
@@ -75,24 +79,35 @@ export default async function BookReaderPage({ params }: Props) {
     .where(
       and(
         eq(binderItems.bookId, bookId),
-        inArray(binderItems.type, ['chapter', 'part']),
+        inArray(binderItems.type, ['chapter', 'part', 'front_matter', 'back_matter']),
       ),
     )
     .orderBy(asc(binderItems.order))
 
-  const readingOrder = buildReadingOrder(
+  const sequence = buildBookSequence(
     binderRows.map((r) => ({
       id: r.id,
       parentId: r.parentId,
-      type: r.type as 'chapter' | 'part',
+      type: r.type as 'chapter' | 'part' | 'front_matter' | 'back_matter',
       order: r.order,
       title: r.title,
       chapterId: r.chapterId,
       status: r.status,
       updatedAt: r.updatedAt,
+      binderContent: r.binderContent,
+      chapterContent: r.chapterContent,
     })),
   )
-  const chapterRows = readingOrder.flat
+  const chapterRows = sequence.chapters
+
+  // Filter FBM lists for non-authors: skip items with no content so the
+  // reader doesn't see empty links. (Authors always see their own items.)
+  const visibleFrontMatter = isAuthor
+    ? sequence.frontMatter
+    : sequence.frontMatter.filter((e) => !isFbmEntryEmpty(e, e.content))
+  const visibleBackMatter = isAuthor
+    ? sequence.backMatter
+    : sequence.backMatter.filter((e) => !isFbmEntryEmpty(e, e.content))
 
   const [
     commentsResult,
@@ -185,7 +200,17 @@ export default async function BookReaderPage({ params }: Props) {
               bookId,
               readerBasePath,
               chapters: chapterRows,
-              tree: readingOrder.tree,
+              tree: sequence.chaptersTree,
+              frontMatter: visibleFrontMatter.map((e) => ({
+                chapterId: e.chapterId,
+                title: e.title,
+                subtype: e.subtype,
+              })),
+              backMatter: visibleBackMatter.map((e) => ({
+                chapterId: e.chapterId,
+                title: e.title,
+                subtype: e.subtype,
+              })),
               initialReadSet: progress?.readChapterBinderItemIds ?? [],
               isAuthor,
               isAuthenticated: !!userId,

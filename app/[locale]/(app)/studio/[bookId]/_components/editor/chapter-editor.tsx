@@ -13,6 +13,7 @@ import CharacterCount from '@tiptap/extension-character-count'
 import TextAlign from '@tiptap/extension-text-align'
 import { HiveAnnotationMark } from '@/lib/tiptap-extensions/hive-annotation-mark'
 import { HiveSuggestionMark } from '@/lib/tiptap-extensions/hive-suggestion-mark'
+import { FontSizeMark } from '@/lib/tiptap-extensions/font-size'
 import { SelectionPopover } from '@/components/hive/collab/selection-popover'
 import { CollaborationGutter } from '@/components/hive/collab/collaboration-gutter'
 import { useBookEditor } from '../book-editor-provider'
@@ -163,13 +164,15 @@ export function ChapterEditor() {
         Typography,
         CharacterCount,
         TextAlign.configure({ types: ['heading', 'paragraph'] }),
+        FontSizeMark,
         HiveAnnotationMark,
         HiveSuggestionMark,
       ],
       content: activeChapter?.content ?? null,
       onUpdate: ({ editor }) => {
-        updateChapterContent(editor.getJSON())
-        setEditorText(extractPlainText(editor.getJSON()))
+        const json = editor.getJSON()
+        updateChapterContent(json)
+        setEditorText(extractPlainText(json))
         const cc = editor.storage.characterCount as { words?: () => number } | undefined
         if (cc?.words) setLiveWordCount(cc.words())
       },

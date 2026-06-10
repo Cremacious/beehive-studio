@@ -155,20 +155,23 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
 
   const [showExport, setShowExport] = useState(false)
 
-  const [fontSize, setFontSizeState] = useState(() => {
-    if (typeof window === 'undefined') return 16
-    return parseInt(localStorage.getItem('editor-font-size') ?? '16', 10)
-  })
+  // Read the active font size from the current selection. Returns null when
+  // the selection has no fontSize mark (default body size) and the string
+  // size (e.g. "18px") when the fontSize mark sets one. The dropdown label
+  // reflects this so the user can see what the cursor is sitting on.
+  const activeFontSize: string | null = (() => {
+    const attrs = editor.getAttributes('fontSize') as { size?: string | null }
+    return attrs?.size ?? null
+  })()
+  const activeFontSizeNum = activeFontSize ? parseInt(activeFontSize, 10) : null
 
-  function setFontSize(size: number) {
-    setFontSizeState(size)
-    localStorage.setItem('editor-font-size', String(size))
-    document.documentElement.style.setProperty('--editor-font-size', `${size}px`)
+  function applyFontSize(size: number) {
+    editor.chain().focus().setFontSize(`${size}px`).run()
   }
 
-  useEffect(() => {
-    document.documentElement.style.setProperty('--editor-font-size', `${fontSize}px`)
-  }, [fontSize])
+  function clearFontSize() {
+    editor.chain().focus().unsetFontSize().run()
+  }
 
   function handleLinkClick() {
     if (editor.isActive('link')) {
@@ -443,19 +446,25 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
                     onMouseEnter={e => tbtnHoverEnter(e, false)}
                     onMouseLeave={e => tbtnHoverLeave(e, false)}
                   >
-                    <span>Font Size {fontSize}</span>
+                    <span>Size {activeFontSizeNum ?? '—'}</span>
                     <ChevronDown size={12} />
                   </button>
                 </DropdownMenuTrigger>
               </TooltipTrigger>
-              <TooltipContent>Font size</TooltipContent>
+              <TooltipContent>Font size (applies to selection)</TooltipContent>
             </Tooltip>
             <DropdownMenuContent align="end" onCloseAutoFocus={e => e.preventDefault()} style={dropdownPanelStyle}>
-              {[12, 14, 16, 18, 20, 24].map(s => (
+              <DropdownMenuItem
+                onSelect={clearFontSize}
+                className={cn(activeFontSizeNum === null && 'bg-brand/15 text-foreground')}
+              >
+                Default
+              </DropdownMenuItem>
+              {[10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48].map(s => (
                 <DropdownMenuItem
                   key={s}
-                  onSelect={() => setFontSize(s)}
-                  className={cn(fontSize === s && 'bg-brand/15 text-foreground')}
+                  onSelect={() => applyFontSize(s)}
+                  className={cn(activeFontSizeNum === s && 'bg-brand/15 text-foreground')}
                 >
                   {s}px
                 </DropdownMenuItem>

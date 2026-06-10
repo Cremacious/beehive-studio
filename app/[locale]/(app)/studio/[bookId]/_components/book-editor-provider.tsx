@@ -231,7 +231,13 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
 
     setSaveStatus('saving')
 
-    const result = await saveChapterAction(cachedChapter.id, content)
+    // Next.js's RSC Flight serializer chokes on ProseMirror's mark attrs
+    // objects (they're created with a non-standard prototype that the
+    // serializer doesn't preserve member properties of). Deep-clone via JSON
+    // round-trip so we ship plain prototype-less objects across the
+    // server-action boundary.
+    const plainContent = JSON.parse(JSON.stringify(content)) as unknown
+    const result = await saveChapterAction(cachedChapter.id, plainContent)
     if (result.success) {
       setSaveStatus('saved')
       setWordCount(result.data.wordCount)

@@ -24,12 +24,20 @@ type ChapterNeighbor = {
 
 type Props = {
   htmlContent: string
+  // Optional: render this React node as the page body INSTEAD of
+  // dangerouslySetInnerHTML(htmlContent). Used by front/back matter pages,
+  // which need React components rather than a TipTap-derived HTML string.
+  bodyOverride?: React.ReactNode
   chapterTitle: string
   chapterNumber: number
   totalChapters: number
   wordCount: number
   bookTitle: string
   backHref: string
+  // When set (e.g. for front/back matter), replaces the "Chapter N of M"
+  // header subtitle. The wordCount + chapter index logic still passes 0
+  // for FBM but the chrome shows this label instead.
+  headerSubtitleOverride?: string | null
   prev: ChapterNeighbor | null
   next: ChapterNeighbor | null
   contributionByline: ContributionByline | null
@@ -52,6 +60,8 @@ export function ReaderSurface({
   chapterTitle,
   chapterNumber,
   totalChapters,
+  headerSubtitleOverride,
+  bodyOverride,
   wordCount,
   bookTitle,
   backHref,
@@ -244,83 +254,103 @@ export function ReaderSurface({
             transition: 'background .22s ease, color .22s ease, border-color .22s ease',
           }}
         >
-          {/* Chapter header */}
-          <p
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: '10px',
-              letterSpacing: '0.16em',
-              textTransform: 'uppercase',
-              color: 'var(--prose-ink-muted)',
-              margin: 0,
-            }}
-          >
-            Chapter {chapterNumber} of {totalChapters}
-          </p>
-          <h1
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontWeight: 700,
-              fontSize: '32px',
-              lineHeight: 1.1,
-              letterSpacing: '-0.02em',
-              color: 'var(--prose-ink-strong)',
-              margin: '8px 0 0',
-              textWrap: 'balance' as never,
-            }}
-          >
-            {chapterTitle}
-          </h1>
-          <p
-            style={{
-              fontFamily: 'var(--font-ui)',
-              fontSize: '12px',
-              letterSpacing: '0.02em',
-              color: 'var(--prose-ink-muted)',
-              margin: '12px 0 0',
-            }}
-          >
-            {wordCount.toLocaleString()} words
-          </p>
-          <hr
-            style={{
-              border: 0,
-              borderTop: '1px solid var(--prose-rule)',
-              marginBlock: '32px',
-            }}
-          />
+          {/* Chapter header — suppressed entirely for front/back matter
+              (bodyOverride is set). The FBM display components carry their
+              own title + styling, so the chapter chrome (eyebrow, h1, word
+              count, divider) would just duplicate or contradict the body. */}
+          {!bodyOverride && (
+            <>
+              <p
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '10px',
+                  letterSpacing: '0.16em',
+                  textTransform: 'uppercase',
+                  color: 'var(--prose-ink-muted)',
+                  margin: 0,
+                }}
+              >
+                {headerSubtitleOverride ?? `Chapter ${chapterNumber} of ${totalChapters}`}
+              </p>
+              <h1
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 700,
+                  fontSize: '32px',
+                  lineHeight: 1.1,
+                  letterSpacing: '-0.02em',
+                  color: 'var(--prose-ink-strong)',
+                  margin: '8px 0 0',
+                  textWrap: 'balance' as never,
+                }}
+              >
+                {chapterTitle}
+              </h1>
+              <p
+                style={{
+                  fontFamily: 'var(--font-ui)',
+                  fontSize: '12px',
+                  letterSpacing: '0.02em',
+                  color: 'var(--prose-ink-muted)',
+                  margin: '12px 0 0',
+                }}
+              >
+                {wordCount.toLocaleString()} words
+              </p>
+              <hr
+                style={{
+                  border: 0,
+                  borderTop: '1px solid var(--prose-rule)',
+                  marginBlock: '32px',
+                }}
+              />
+            </>
+          )}
 
           {/* Chapter body — flips via CSS custom props on .prose-chapter.
               font-size is reader-controlled via the A- / A+ stepper above
-              (headings inside .prose-chapter use em units so they scale). */}
-          <div
-            className="prose-chapter"
-            style={{ fontSize: size }}
-            dangerouslySetInnerHTML={{ __html: htmlContent }}
-          />
+              (headings inside .prose-chapter use em units so they scale).
+              When bodyOverride is set (front/back matter pages), render the
+              React node directly; chapters stay on the dangerouslySetInnerHTML
+              path because TipTap content is already HTML. */}
+          {bodyOverride ? (
+            <div className="prose-chapter" style={{ fontSize: size }}>
+              {bodyOverride}
+            </div>
+          ) : (
+            <div
+              className="prose-chapter"
+              style={{ fontSize: size }}
+              dangerouslySetInnerHTML={{ __html: htmlContent }}
+            />
+          )}
 
-          {/* End-of-chapter divider */}
-          <div
-            className="flex items-center"
-            style={{
-              gap: '16px',
-              marginTop: '40px',
-              fontFamily: 'var(--font-ui)',
-              fontSize: '12px',
-              letterSpacing: '0.04em',
-              color: 'var(--prose-ink-muted)',
-            }}
-          >
-            <span
-              aria-hidden="true"
-              style={{ flex: 1, height: '1px', background: 'var(--prose-rule)' }}
-            />
-            End of chapter
-            <span
-              aria-hidden="true"
-              style={{ flex: 1, height: '1px', background: 'var(--prose-rule)' }}
-            />
-          </div>
+          {/* End-of-chapter divider — chapter-only. FBM pages skip it
+              (a "title page" or "copyright" doesn't conceptually end a
+              "chapter"). */}
+          {!bodyOverride && (
+            <div
+              className="flex items-center"
+              style={{
+                gap: '16px',
+                marginTop: '40px',
+                fontFamily: 'var(--font-ui)',
+                fontSize: '12px',
+                letterSpacing: '0.04em',
+                color: 'var(--prose-ink-muted)',
+              }}
+            >
+              <span
+                aria-hidden="true"
+                style={{ flex: 1, height: '1px', background: 'var(--prose-rule)' }}
+              />
+              End of chapter
+              <span
+                aria-hidden="true"
+                style={{ flex: 1, height: '1px', background: 'var(--prose-rule)' }}
+              />
+            </div>
+          )}
         </article>
 
         {commentsSlot && (

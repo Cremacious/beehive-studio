@@ -13,6 +13,7 @@ import {
   type ChapterStatus,
 } from '@/lib/books/is-chapter-reader-visible'
 import type { ReadingChapter, ReadingNode } from '@/lib/books/build-reading-order'
+import { fbmSubtypeLabel } from './front-back-matter-display'
 
 type ChapterItem = {
   binderItemId: string
@@ -21,6 +22,12 @@ type ChapterItem = {
   status: ChapterStatus
   updatedAt: Date | string
   collectionId: string | null
+}
+
+export type FbmListItem = {
+  chapterId: string
+  title: string
+  subtype: string | null
 }
 
 type Props = {
@@ -33,6 +40,11 @@ type Props = {
   // cards with their children indented inside. Chapter nodes render as
   // regular rows.
   tree: ReadingNode[]
+  // Front + back matter items (already visibility-filtered by the page).
+  // Rendered as small linked rows in their own sections above and below
+  // the chapter list, not counted toward progress.
+  frontMatter: FbmListItem[]
+  backMatter: FbmListItem[]
   initialReadSet: string[]
   isAuthor: boolean
   isAuthenticated: boolean
@@ -53,6 +65,8 @@ export function ChaptersPanel({
   readerBasePath,
   chapters,
   tree,
+  frontMatter,
+  backMatter,
   initialReadSet,
   isAuthor,
   isAuthenticated,
@@ -368,6 +382,14 @@ export function ChaptersPanel({
         </div>
       )}
 
+      {frontMatter.length > 0 && (
+        <FbmList
+          label="Front matter"
+          items={frontMatter}
+          readerBasePath={readerBasePath}
+        />
+      )}
+
       {totalCount === 0 ? (
         <p
           className="text-center italic"
@@ -403,7 +425,99 @@ export function ChaptersPanel({
           })}
         </ul>
       )}
+
+      {backMatter.length > 0 && (
+        <FbmList
+          label="Back matter"
+          items={backMatter}
+          readerBasePath={readerBasePath}
+        />
+      )}
     </section>
+  )
+}
+
+function FbmList({
+  label,
+  items,
+  readerBasePath,
+}: {
+  label: string
+  items: FbmListItem[]
+  readerBasePath: string
+}) {
+  return (
+    <div style={{ margin: label === 'Front matter' ? '0 0 22px' : '22px 0 0' }}>
+      <h3
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 10,
+          letterSpacing: '0.14em',
+          textTransform: 'uppercase',
+          color: 'var(--canvas-dark-ink-muted)',
+          margin: '0 0 10px',
+        }}
+      >
+        {label}
+      </h3>
+      <ul className="flex flex-col" style={{ gap: '4px' }}>
+        {items.map((item) => {
+          const sublabel = fbmSubtypeLabel(
+            item.subtype,
+            label === 'Front matter' ? 'front_matter' : 'back_matter',
+          )
+          return (
+            <li key={item.chapterId}>
+              <Link
+                href={`${readerBasePath}/read/${item.chapterId}`}
+                className="group flex items-center no-underline"
+                style={{
+                  gap: '12px',
+                  padding: '10px 16px',
+                  borderRadius: 'var(--r-row)',
+                  background: 'var(--canvas-dark-150)',
+                  color: 'inherit',
+                  transition: 'transform .14s, background .14s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-1px)'
+                  e.currentTarget.style.background =
+                    'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = ''
+                  e.currentTarget.style.background = 'var(--canvas-dark-150)'
+                }}
+              >
+                <span
+                  className="flex-1 truncate"
+                  style={{
+                    fontFamily: 'var(--font-ui)',
+                    fontSize: 14,
+                    fontWeight: 500,
+                    color: 'var(--canvas-dark-ink-strong)',
+                  }}
+                >
+                  {item.title}
+                </span>
+                <span
+                  style={{
+                    flexShrink: 0,
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: 10,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    color: 'var(--canvas-dark-ink-muted)',
+                  }}
+                >
+                  {sublabel}
+                </span>
+              </Link>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
   )
 }
 

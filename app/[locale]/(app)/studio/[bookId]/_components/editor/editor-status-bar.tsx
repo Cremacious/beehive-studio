@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { Pencil, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useBookEditor } from '../book-editor-provider'
 import { updateChapterWordGoalAction } from '@/lib/actions/chapter.actions'
@@ -45,6 +46,15 @@ export function EditorStatusBar() {
     const previous = wordGoal
     setWordGoal(next)
     const result = await updateChapterWordGoalAction(activeChapter.id, next)
+    if (!result.success) setWordGoal(previous)
+  }
+
+  async function clearGoal() {
+    if (!activeChapter || wordGoal === 0) return
+    const previous = wordGoal
+    setWordGoal(0)
+    setEditing(false)
+    const result = await updateChapterWordGoalAction(activeChapter.id, 0)
     if (!result.success) setWordGoal(previous)
   }
 
@@ -116,13 +126,14 @@ export function EditorStatusBar() {
             No chapter selected
           </span>
         ) : editing ? (
-          <div className="inline-flex items-center gap-2">
+          <div className="inline-flex items-center gap-2 flex-wrap">
             <input
               ref={inputRef}
               type="number"
               min={0}
               max={1_000_000}
               defaultValue={wordGoal}
+              placeholder="Words"
               style={{
                 color: 'var(--canvas-dark-ink-strong)',
                 background: 'var(--canvas-dark-100)',
@@ -149,20 +160,52 @@ export function EditorStatusBar() {
             >
               Cancel
             </button>
+            {wordGoal > 0 && (
+              <button
+                onClick={clearGoal}
+                style={{ color: 'oklch(0.72 0.2 25)' }}
+                className="text-[11px] font-mono hover:opacity-80"
+                title="Remove word goal"
+              >
+                Remove
+              </button>
+            )}
           </div>
         ) : wordGoal > 0 ? (
           <>
-            <button
-              onClick={() => setEditing(true)}
-              className="text-left text-[12px] font-mono hover:opacity-80"
-              style={{ color: 'var(--canvas-dark-ink-strong)' }}
-              title="Edit word goal"
-            >
-              <span style={{ color: 'var(--brand)' }}>{percent}%</span>{' '}
-              <span style={{ color: 'var(--canvas-dark-ink-muted)' }}>
-                of {wordGoal.toLocaleString()}
+            <div className="flex items-center justify-between gap-2">
+              <span
+                className="text-[12px] font-mono"
+                style={{ color: 'var(--canvas-dark-ink-strong)' }}
+              >
+                <span style={{ color: 'var(--brand)' }}>{percent}%</span>{' '}
+                <span style={{ color: 'var(--canvas-dark-ink-muted)' }}>
+                  of {wordGoal.toLocaleString()}
+                </span>
               </span>
-            </button>
+              <span className="inline-flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setEditing(true)}
+                  className="inline-flex items-center justify-center w-6 h-6 rounded-md hover:bg-[var(--canvas-dark-300)] transition-colors"
+                  style={{ color: 'var(--canvas-dark-ink-muted)' }}
+                  title="Change word goal"
+                  aria-label="Change word goal"
+                >
+                  <Pencil size={12} />
+                </button>
+                <button
+                  type="button"
+                  onClick={clearGoal}
+                  className="inline-flex items-center justify-center w-6 h-6 rounded-md hover:bg-[var(--canvas-dark-300)] transition-colors"
+                  style={{ color: 'var(--canvas-dark-ink-muted)' }}
+                  title="Remove word goal"
+                  aria-label="Remove word goal"
+                >
+                  <X size={12} />
+                </button>
+              </span>
+            </div>
             {/* Progress track */}
             <div
               className="h-1 rounded-full overflow-hidden"

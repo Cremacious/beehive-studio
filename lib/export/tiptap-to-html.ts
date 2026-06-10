@@ -38,6 +38,24 @@ function renderNode(node: TiptapNode): string {
           case 'underline': html = `<u>${html}</u>`; break
           case 'strike':    html = `<s>${html}</s>`; break
           case 'highlight': html = `<mark>${html}</mark>`; break
+          case 'fontSize': {
+            const size = mark.attrs?.size
+            if (typeof size === 'string' && size.length > 0) {
+              html = `<span style="font-size: ${escapeHtml(size)}">${html}</span>`
+            }
+            break
+          }
+          case 'textStyle': {
+            // Legacy: earlier sessions saved bare `textStyle` marks (or with
+            // a `fontSize` attr) before we switched to a standalone mark.
+            // Preserve any fontSize attr if present; otherwise render as a
+            // plain pass-through (no wrapping span).
+            const legacySize = mark.attrs?.fontSize
+            if (typeof legacySize === 'string' && legacySize.length > 0) {
+              html = `<span style="font-size: ${escapeHtml(legacySize)}">${html}</span>`
+            }
+            break
+          }
           case 'hiveAnnotation': {
             const id = mark.attrs?.annotationId
             const layer = mark.attrs?.layer

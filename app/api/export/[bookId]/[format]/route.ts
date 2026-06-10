@@ -13,6 +13,7 @@ import {
   renderAboutAuthor,
 } from '@/lib/export/front-back-matter-templates'
 import { scopedBooksForUser } from '@/lib/books/scoped'
+import { buildReadingOrder } from '@/lib/books/build-reading-order'
 
 type ExportRow = {
   id: string
@@ -23,25 +24,72 @@ type ExportRow = {
   binderContent: unknown
 }
 
+// Walk a TipTap doc; return true if it contains no non-whitespace text.
+function isTiptapEmpty(value: unknown): boolean {
+  if (value == null) return true
+  if (typeof value === 'string') return value.trim().length === 0
+  if (typeof value !== 'object') return true
+  const stack: unknown[] = [value]
+  const seen = new Set<unknown>()
+  while (stack.length > 0) {
+    const n = stack.pop()
+    if (!n || typeof n !== 'object' || seen.has(n)) continue
+    seen.add(n)
+    const node = n as { text?: string; content?: unknown[] }
+    if (typeof node.text === 'string' && node.text.trim().length > 0) return false
+    if (Array.isArray(node.content)) for (const c of node.content) stack.push(c)
+  }
+  return true
+}
+
+function isStr(v: unknown): boolean {
+  return typeof v === 'string' && v.trim().length > 0
+}
+
 function fbmRowToInput(row: ExportRow): ChapterInput | null {
   const c = row.binderContent as
     | { subtype?: string | null; fields?: Record<string, unknown> }
     | null
 
-  // Legacy item (content === null) — use TipTap chapter content
+  // Legacy item (content === null) — use TipTap chapter content. Skip if
+  // there's no prose to emit (would render as a blank docx/epub page).
   if (c === null || c === undefined) {
+    if (isTiptapEmpty(row.chapterContent)) return null
     return { title: row.title ?? '', content: row.chapterContent }
   }
 
-  // Custom subtype (or no subtype) — use TipTap chapter content with the
-  // title heading (consistent with regular chapter items).
+  // Custom subtype (or no subtype) — use TipTap chapter content. Same
+  // emptiness check.
   if (c.subtype === 'custom' || !c.subtype) {
+    if (isTiptapEmpty(row.chapterContent)) return null
     return { title: row.title ?? '', content: row.chapterContent }
+  }
+
+  // Specialized subtype — emit only if at least one required field is set.
+  // Templates render whatever fields are present (and gracefully omit ones
+  // that aren't), but a totally empty fields object would still consume a
+  // page header in the docx and add a phantom nav item in the epub.
+  const fields = (c.fields ?? {}) as Record<string, unknown>
+  switch (c.subtype) {
+    case 'title_page':
+      if (!isStr(fields.bookTitle) && !isStr(fields.authorName)) return null
+      break
+    case 'copyright':
+      if (!fields.copyrightYear && !isStr(fields.copyrightHolder)) return null
+      break
+    case 'dedication':
+      if (!isStr(fields.text)) return null
+      break
+    case 'acknowledgments':
+      if (isTiptapEmpty(fields.text)) return null
+      break
+    case 'about_author':
+      if (isTiptapEmpty(fields.bio) && !isStr(fields.photoUrl)) return null
+      break
   }
 
   // Specialized subtype — render via template, suppress title heading.
   // We keep row.title on the input so the epub nav still has a label.
-  const fields = (c.fields ?? {}) as Record<string, unknown>
   const title = row.title ?? ''
   switch (c.subtype) {
     case 'title_page':
@@ -120,10 +168,14 @@ export async function GET(
   const rows = await db
     .select({
       id: binderItems.id,
+      parentId: binderItems.parentId,
       type: binderItems.type,
       title: binderItems.title,
       order: binderItems.order,
+      chapterId: chapters.id,
       chapterContent: chapters.content,
+      chapterStatus: chapters.status,
+      chapterUpdatedAt: chapters.updatedAt,
       binderContent: binderItems.content,
     })
     .from(binderItems)
@@ -136,9 +188,31 @@ export async function GET(
     .map(r => fbmRowToInput(r as ExportRow))
     .filter((x): x is ChapterInput => x !== null)
 
-  const chapterInputs = rows
-    .filter(r => r.type === 'chapter')
-    .map(r => ({ title: r.title ?? 'Untitled', content: r.chapterContent }))
+  // Chapter rows need to be sorted by GLOBAL reading order, not parent-scoped
+  // binder order — otherwise chapters nested inside a collection (`part`)
+  // come out in the wrong sequence in the export.
+  const chapterOrder = buildReadingOrder(
+    rows
+      .filter((r) => r.type === 'chapter' || r.type === 'part')
+      .map((r) => ({
+        id: r.id,
+        parentId: r.parentId,
+        type: r.type as 'chapter' | 'part',
+        order: r.order,
+        title: r.title ?? '',
+        chapterId: r.chapterId,
+        status: r.chapterStatus,
+        updatedAt: r.chapterUpdatedAt,
+      })),
+  )
+  const rowsByChapterId = new Map(
+    rows.filter((r) => r.chapterId).map((r) => [r.chapterId as string, r]),
+  )
+  const chapterInputs = chapterOrder.flat
+    .map((c) => rowsByChapterId.get(c.chapterId))
+    .filter((r): r is typeof rows[number] => r != null)
+    .map((r) => ({ title: r.title ?? 'Untitled', content: r.chapterContent }))
+    .filter((x) => !isTiptapEmpty(x.content))
 
   const backInputs = rows
     .filter(r => r.type === 'back_matter')

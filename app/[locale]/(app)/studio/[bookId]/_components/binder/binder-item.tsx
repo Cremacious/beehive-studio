@@ -2,11 +2,10 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
-import { useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { cn } from '@/lib/utils'
 import { useBookEditor } from '../book-editor-provider'
-import { useBinderTree, type TreeNode } from './binder-tree'
+import { useBinderTree, renderTreeWithSlots, type TreeNode } from './binder-tree'
 import { BinderItemMenu } from './binder-item-menu'
 import { updateBinderItemAction } from '@/lib/actions/binder.actions'
 import type { BinderItemRow } from '@/lib/actions/binder.actions'
@@ -103,8 +102,12 @@ type Props = {
 
 export function BinderItem({ node, depth }: Props) {
   const { activeItemId, setActiveItemId, updateBinderItem, pendingRenameId, setPendingRenameId } = useBookEditor()
-  const { collapsed, toggleCollapsed, dropZone } = useBinderTree()
-  const dropZoneForThisRow = dropZone?.overId === node.id ? dropZone.zone : null
+  const { collapsed, toggleCollapsed, dropZone, draggingItemId, visibleSlotIds } =
+    useBinderTree()
+  // Slot model (2026-06-10 v2): rows themselves only get one visual state —
+  // nest target (folder being hovered for nest). Insertion is handled by
+  // Slot droppables between rows, NOT by lines drawn on the row.
+  const isNestTarget = dropZone?.kind === 'nest' && dropZone.folderId === node.id
 
   const [isRenaming, setIsRenaming] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -117,17 +120,6 @@ export function BinderItem({ node, depth }: Props) {
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: node.id })
 
-  // Folder rows expose a SEPARATE droppable overlay covering only the middle
-  // band (top:6 to bottom:6). It is NOT in SortableContext, so it doesn't
-  // participate in verticalListSortingStrategy's reorder choreography — the
-  // folder row stops shifting when the user hovers its middle, and the over
-  // resolves to this overlay's id (`${node.id}:nest`). Top/bottom 6px fall
-  // through to the sortable below for normal reorder-before / reorder-after.
-  const isFolderType = node.type === 'part' || node.type === 'research_folder' || node.type === 'wiki_folder'
-  const { setNodeRef: setNestRef } = useDroppable({
-    id: `${node.id}:nest`,
-    disabled: !isFolderType,
-  })
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -186,9 +178,6 @@ export function BinderItem({ node, depth }: Props) {
   // the folder itself. Layout wrapper (for children) stays outside ref scope.
   return (
     <div>
-      {dropZoneForThisRow === 'before' && (
-        <div className="h-0.5 bg-brand rounded-full mx-2" aria-hidden />
-      )}
       <div
         ref={setNodeRef}
         style={{
@@ -198,13 +187,12 @@ export function BinderItem({ node, depth }: Props) {
           background: isActive
             ? 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))'
             : undefined,
-          // Drag-middle ring overrides --sh-tile depth on active.
-          boxShadow:
-            dropZoneForThisRow === 'middle'
-              ? '0 0 0 4px oklch(from var(--brand) l c h / 0.25)'
-              : isActive
-                ? 'var(--sh-tile)'
-                : undefined,
+          // Nest target highlight: solid brand ring + tinted halo.
+          boxShadow: isNestTarget
+            ? '0 0 0 2px var(--brand), 0 0 0 6px oklch(from var(--brand) l c h / 0.22)'
+            : isActive
+              ? 'var(--sh-tile)'
+              : undefined,
         }}
         {...dragAttributes}
         {...dragListeners}
@@ -214,7 +202,7 @@ export function BinderItem({ node, depth }: Props) {
           !isActive && 'hover:bg-[linear-gradient(180deg,var(--canvas-dark-250),var(--canvas-dark-200))]',
           isRenaming ? 'cursor-text' : 'cursor-grab',
           isRenaming && !isActive && 'bg-[linear-gradient(180deg,var(--canvas-dark-250),var(--canvas-dark-200))]',
-          dropZoneForThisRow === 'middle' && 'ring-2 ring-brand bg-brand/20',
+          isNestTarget && 'bg-brand/15',
         )}
         onClick={() => setActiveItemId(node.id)}
         aria-label={isRenaming ? undefined : 'Drag to reorder'}
@@ -312,28 +300,19 @@ export function BinderItem({ node, depth }: Props) {
 
         <BinderItemMenu node={node} onRenameStart={() => setIsRenaming(true)} />
 
-        {/* Nest-target overlay — folder rows only. Covers ~87% of the row
-            (top:3, bottom:3) so the user doesn't need to land precisely in
-            the middle to nest. Reorder before/after still works in the
-            narrow 3px edges. pointerWithin resolves `over` to this droppable
-            (not the sortable) when the pointer is inside the overlay.
-            pointer-events-none so it doesn't intercept clicks or drag. */}
-        {isFolderType && (
-          <div
-            ref={setNestRef}
-            className="absolute inset-x-0 pointer-events-none"
-            style={{ top: 3, bottom: 3 }}
-            aria-hidden
-          />
-        )}
       </div>
-      {dropZoneForThisRow === 'after' && (
-        <div className="h-0.5 bg-brand rounded-full mx-2" aria-hidden />
-      )}
 
-      {isCollapsible && !isCollapsed && node.children.map(child => (
-        <BinderItem key={child.id} node={child} depth={depth + 1} />
-      ))}
+      {isCollapsible && !isCollapsed && (
+        <>
+          {renderTreeWithSlots(
+            node.children,
+            node.id,
+            depth + 1,
+            draggingItemId,
+            visibleSlotIds,
+          )}
+        </>
+      )}
     </div>
   )
 }

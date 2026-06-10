@@ -98,4 +98,21 @@ describe('classifyDropZone', () => {
   it('non-folder row: bottom half → after', () => {
     expect(classifyDropZone(124, rect(100, 32), false)).toBe('after')
   })
+  // Pointer outside the row rect — collisionDetection falls back to the
+  // closest row when no row contains the pointer (e.g. user drags into the
+  // gap above the first item). The classifier must then treat above-the-row
+  // as 'before' and below-the-row as 'after' so the drop lands at index 0
+  // or at the end of the list, not into the void.
+  it('non-folder row: pointer above top edge → before', () => {
+    expect(classifyDropZone(60, rect(100, 32), false)).toBe('before')
+  })
+  it('non-folder row: pointer below bottom edge → after', () => {
+    expect(classifyDropZone(200, rect(100, 32), false)).toBe('after')
+  })
+  it('folder row: pointer above top edge → before', () => {
+    expect(classifyDropZone(60, rect(100, 32), true)).toBe('before')
+  })
+  it('folder row: pointer below bottom edge → after', () => {
+    expect(classifyDropZone(200, rect(100, 32), true)).toBe('after')
+  })
 })

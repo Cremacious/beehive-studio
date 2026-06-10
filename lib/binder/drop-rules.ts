@@ -85,7 +85,15 @@ export function classifyDropZone(
 ): 'before' | 'middle' | 'after' | null {
   const { top, height } = rowRect
   const bottom = top + height
-  if (pointerY < top || pointerY > bottom) return null
+
+  // Pointer ABOVE the row's top edge — caller asked to classify against this
+  // row anyway (typically because it's the closest row to a pointer that fell
+  // into the gap above the binder list). Treat as "drop before this row" so
+  // users can land on the first position without precisely hitting the row's
+  // 3px top band.
+  if (pointerY < top) return 'before'
+  // Pointer BELOW the row's bottom edge — symmetric: "drop after this row".
+  if (pointerY > bottom) return 'after'
 
   const EDGE = 3
   if (isFolder) {

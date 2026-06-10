@@ -3,21 +3,26 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import {
   DndContext,
-  pointerWithin,
-  rectIntersection,
   PointerSensor,
+  pointerWithin,
   useSensor,
   useSensors,
   type CollisionDetection,
   type DragEndEvent,
   type DragOverEvent,
+  type DragStartEvent,
 } from '@dnd-kit/core'
 import { SortableContext } from '@dnd-kit/sortable'
 import { cn } from '@/lib/utils'
-import { canNest, classifyDropZone, type BinderItemLite } from '@/lib/binder/drop-rules'
+import {
+  canNest,
+  getAcceptedChildTypes,
+  type BinderItemLite,
+} from '@/lib/binder/drop-rules'
 import { useBookEditor } from '../book-editor-provider'
 import { BinderAddMenu } from './binder-add-menu'
 import { BinderItem } from './binder-item'
+import { BinderSlot } from './binder-slot'
 import { BinderHiveFooter } from './binder-hive-footer'
 import { reorderBinderItemsAction } from '@/lib/actions/binder.actions'
 import { updateBookAction } from '@/lib/actions/book.actions'
@@ -30,16 +35,33 @@ import { Settings } from 'lucide-react'
 
 export type TreeNode = BinderItemRow & { children: TreeNode[] }
 
-type DropZoneState = {
-  overId: string
-  zone: 'before' | 'middle' | 'after'
-} | null
+// Drop hint state. Slot model (2026-06-10 v2): the dragged item resolves
+// to ONE of two outcomes, never both:
+//
+//  - INSERT into a SLOT: a dashed rectangle between two siblings. Slot id
+//    encodes parent + insert index. The hovered slot lights up yellow,
+//    other slots stay dashed-gray, and release drops the item exactly
+//    where the highlight was.
+//
+//  - NEST: a folder row gets a brand-yellow ring + tinted bg. Release
+//    appends the dragged item as the folder's last child. To reorder a
+//    folder's siblings, drop on the slot above/below the folder (not on
+//    the folder row).
+export type DropZoneState =
+  | { kind: 'insert'; parentId: string | null; index: number }
+  | { kind: 'nest'; folderId: string }
+  | null
 
 type BinderTreeContextValue = {
   tree: TreeNode[]
   collapsed: Set<string>
   toggleCollapsed: (id: string) => void
   dropZone: DropZoneState
+  // Slot model state: the id of the item being dragged + which slots are
+  // visible. Slots only mount during a drag, and only at parent containers
+  // whose acceptance + cycle rules allow the active item.
+  draggingItemId: string | null
+  visibleSlotIds: Set<string>
 }
 
 // ─── Local context ────────────────────────────────────────────────────────────
@@ -95,6 +117,38 @@ function flattenVisible(nodes: TreeNode[], collapsed: Set<string>): string[] {
   return ids
 }
 
+// Render the tree with interleaved Slot droppables. Slots only render when
+// draggingItemId is set (i.e., during a drag) AND the slot id is in the
+// `visibleSlotIds` set (i.e., the dragged item is allowed to land here and
+// the position isn't a no-op).
+//
+// Format of slot id: `slot:<parentId|ROOT>:<index>`. Index is the position
+// within the parent's children (0 = before first child, N = after last child).
+export function renderTreeWithSlots(
+  nodes: TreeNode[],
+  parentId: string | null,
+  depth: number,
+  draggingItemId: string | null,
+  visibleSlotIds: Set<string>,
+): React.ReactNode[] {
+  const out: React.ReactNode[] = []
+  const parentSlotKey = parentId ?? 'ROOT'
+
+  const renderSlot = (index: number) => {
+    if (!draggingItemId) return null
+    const id = `slot:${parentSlotKey}:${index}`
+    if (!visibleSlotIds.has(id)) return null
+    return <BinderSlot key={id} id={id} depth={depth} />
+  }
+
+  out.push(renderSlot(0))
+  nodes.forEach((node, i) => {
+    out.push(<BinderItem key={node.id} node={node} depth={depth} />)
+    out.push(renderSlot(i + 1))
+  })
+  return out
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function BinderTree() {
@@ -103,6 +157,7 @@ export function BinderTree() {
   const locale = params?.locale ?? 'en'
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
   const [dropZone, setDropZone] = useState<DropZoneState>(null)
+  const [draggingItemId, setDraggingItemId] = useState<string | null>(null)
   const autoExpandTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const autoExpandTargetRef = useRef<string | null>(null)
 
@@ -181,164 +236,315 @@ export function BinderTree() {
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   )
 
-  // Pointer-first collision detection. closestCenter compares the dragged
-  // GHOST's center to candidate centers — but the ghost is offset from the
-  // user's pointer by however far they clicked from the row's top, so the
-  // ghost's center often lines up with a neighboring row's center instead of
-  // the folder the user is actually hovering. pointerWithin uses the real
-  // pointer position; rectIntersection covers gaps between rows where the
-  // pointer might briefly fall between droppables during fast drag.
-  //
-  // When the pointer is in a folder row's middle band, both the sortable row
-  // AND the `:nest` overlay match. Prefer `:nest` so verticalListSortingStrategy
-  // (which only knows sortable items) doesn't think we're reordering the
-  // folder out of the way.
-  const collisionDetection = useCallback<CollisionDetection>((args) => {
-    const pointerCollisions = pointerWithin(args)
-    const nestCollisions = pointerCollisions.filter(c => String(c.id).endsWith(':nest'))
-    if (nestCollisions.length > 0) return nestCollisions
-    if (pointerCollisions.length > 0) return pointerCollisions
-    return rectIntersection(args)
+  // Folder-row predicate. Used in collision detection + drop classification.
+  const isFolderType = (t: BinderItemRow['type']): boolean =>
+    t === 'part' || t === 'research_folder' || t === 'wiki_folder'
+
+  // Quick guard: can `active` be inserted as a sibling under `parentId`?
+  // Root accepts every top-level item type; folders accept only what the
+  // ACCEPT_TABLE allows; cycles (dropping a folder into its own descendant)
+  // are blocked.
+  const canInsertInto = useCallback(
+    (
+      active: BinderItemLite,
+      parentId: string | null,
+      allItems: BinderItemLite[],
+    ): boolean => {
+      if (parentId === null) return true
+      const byId = new Map(allItems.map((i) => [i.id, i]))
+      const parent = byId.get(parentId)
+      if (!parent) return false
+      if (parent.id === active.id) return false
+      if (!getAcceptedChildTypes(parent.type).includes(active.type)) return false
+      let cursor: BinderItemLite | undefined = parent
+      const seen = new Set<string>()
+      while (cursor) {
+        if (cursor.id === active.id) return false
+        if (seen.has(cursor.id)) break
+        seen.add(cursor.id)
+        cursor = cursor.parentId ? byId.get(cursor.parentId) : undefined
+      }
+      return true
+    },
+    [],
+  )
+
+  // Slot ids encode "drop into <parent> at <index>". ROOT sentinel handles
+  // the null-parent case (top-level container).
+  const slotId = (parentId: string | null, index: number) =>
+    `slot:${parentId ?? 'ROOT'}:${index}`
+
+  // Compute the set of valid slot ids for the current dragged item. A slot
+  // is omitted when:
+  //  - Its parent doesn't accept the dragged item's type (or would cycle).
+  //  - It would be a no-op for the dragged item (same parent, index equal
+  //    to dragged's current index or current + 1, since both produce no
+  //    movement).
+  const visibleSlotIds = useMemo<Set<string>>(() => {
+    const set = new Set<string>()
+    if (!draggingItemId) return set
+    const active = binderItems.find((i) => i.id === draggingItemId)
+    if (!active) return set
+    const allLite: BinderItemLite[] = binderItems.map((i) => ({
+      id: i.id,
+      type: i.type,
+      parentId: i.parentId,
+    }))
+    const activeLite: BinderItemLite = {
+      id: active.id,
+      type: active.type,
+      parentId: active.parentId,
+    }
+
+    // Group all binder items by parent and sort each group by display order
+    // (pinned first, then `order`). Matches buildTree exactly so slot indices
+    // line up with what the user sees.
+    const byParent = new Map<string | null, BinderItemRow[]>()
+    for (const item of binderItems) {
+      const arr = byParent.get(item.parentId) ?? []
+      arr.push(item)
+      byParent.set(item.parentId, arr)
+    }
+    for (const arr of byParent.values()) {
+      arr.sort((a, b) => {
+        const aPin = isItemPinned(a) ? 1 : 0
+        const bPin = isItemPinned(b) ? 1 : 0
+        if (aPin !== bPin) return bPin - aPin
+        return a.order - b.order
+      })
+    }
+
+    // The set of parent ids that should expose slots. Always include root
+    // (null parent). For folders, only include those whose subtree doesn't
+    // contain the active item (cycle guard) AND the folder is currently
+    // visible (not inside a collapsed ancestor) — but expansion state is
+    // handled at render time. Here, we just enumerate every potential parent.
+    const candidateParents: (string | null)[] = [null]
+    for (const item of binderItems) {
+      if (isFolderType(item.type)) candidateParents.push(item.id)
+    }
+
+    for (const parentId of candidateParents) {
+      if (!canInsertInto(activeLite, parentId, allLite)) continue
+      const children = byParent.get(parentId) ?? []
+      const draggedIndex = children.findIndex((c) => c.id === draggingItemId)
+      const slotCount = children.length + 1
+      for (let i = 0; i < slotCount; i++) {
+        // Same-parent no-op slots: the slot immediately before the dragged
+        // item, AND the slot immediately after it (both leave the item in
+        // its current position). Hide them.
+        if (draggedIndex !== -1 && (i === draggedIndex || i === draggedIndex + 1)) {
+          continue
+        }
+        set.add(slotId(parentId, i))
+      }
+    }
+    return set
+  }, [draggingItemId, binderItems, canInsertInto])
+
+  // Parse a slot id back into its components. Returns null for non-slot ids.
+  const parseSlotId = (
+    id: string,
+  ): { parentId: string | null; index: number } | null => {
+    if (!id.startsWith('slot:')) return null
+    const parts = id.split(':')
+    if (parts.length !== 3) return null
+    const [, parentRaw, indexRaw] = parts
+    const idx = Number(indexRaw)
+    if (!Number.isFinite(idx)) return null
+    return { parentId: parentRaw === 'ROOT' ? null : parentRaw, index: idx }
+  }
+
+  // Collision detection: slot droppables take priority. If the pointer is
+  // inside a slot, we use it. Otherwise we fall back to row droppables
+  // (which carry the nest-on-folder semantics).
+  const collisionDetection = useCallback<CollisionDetection>(
+    (args) => {
+      const hits = pointerWithin(args)
+      // Prefer slot hits when any.
+      const slotHits = hits.filter((h) => String(h.id).startsWith('slot:'))
+      if (slotHits.length > 0) return slotHits
+      if (hits.length > 0) return hits
+
+      // No pointer-inside hit — fall back to the row whose vertical center
+      // is closest to the pointer (so dragging into the gap above row 0
+      // still finds a target). Skip slot droppables here since they're not
+      // currently under the pointer; we want a nearby row for the nest
+      // affordance only.
+      const pointerY = pointerYRef.current
+      let closest: { id: string | number; dist: number } | null = null
+      for (const container of args.droppableContainers) {
+        const id = container.id
+        if (String(id).startsWith('slot:')) continue
+        const rect = args.droppableRects.get(id)
+        if (!rect) continue
+        const centerY = rect.top + rect.height / 2
+        const dist = Math.abs(centerY - pointerY)
+        if (!closest || dist < closest.dist) closest = { id, dist }
+      }
+      if (!closest) return []
+      return [{ id: closest.id, data: { value: closest.dist } }]
+    },
+    [],
+  )
+
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    setDraggingItemId(event.active.id as string)
   }, [])
 
-  const handleDragOver = useCallback((event: DragOverEvent) => {
-    const { active, over } = event
-    if (!over) {
-      setDropZone(null)
-      cancelAutoExpand()
-      return
-    }
-
-    // `over.id` is either a sortable row id (the item itself) or a `:nest`
-    // overlay id (folder-middle drop target). Strip the suffix to get the
-    // logical row id either way.
-    const overIdStr = String(over.id)
-    const isNestTarget = overIdStr.endsWith(':nest')
-    const overId = isNestTarget ? overIdStr.slice(0, -':nest'.length) : overIdStr
-
-    if (active.id === overId) {
-      setDropZone(null)
-      cancelAutoExpand()
-      return
-    }
-
-    const activeId = active.id as string
-    const activeItem = binderItems.find(i => i.id === activeId)
-    const overItem = binderItems.find(i => i.id === overId)
-    if (!activeItem || !overItem) {
-      setDropZone(null)
-      cancelAutoExpand()
-      return
-    }
-
-    // Nest-overlay path: pointer is in a folder row's middle band. The overlay's
-    // existence already implies the type accepts nesting; still run canNest for
-    // the cycle guard.
-    if (isNestTarget) {
-      const allLite: BinderItemLite[] = binderItems.map(i => ({
-        id: i.id, type: i.type, parentId: i.parentId,
-      }))
-      if (!canNest(
-        { id: activeItem.id, type: activeItem.type, parentId: activeItem.parentId },
-        { id: overItem.id, type: overItem.type, parentId: overItem.parentId },
-        allLite,
-      )) {
+  const handleDragOver = useCallback(
+    (event: DragOverEvent) => {
+      const { active, over } = event
+      if (!over) {
         setDropZone(null)
         cancelAutoExpand()
         return
       }
-      scheduleAutoExpand(overId)
-      setDropZone({ overId, zone: 'middle' })
-      return
-    }
 
-    // Standard sortable path: pointer is on a row's top/bottom edge (or on a
-    // non-folder row). Classify before/after via real pointer Y vs row rect.
-    const overRect = over.rect
-    const pointerY = pointerYRef.current
-    const isFolder = overItem.type === 'part' || overItem.type === 'research_folder' || overItem.type === 'wiki_folder'
-    const zone = classifyDropZone(pointerY, overRect, isFolder)
-    // Middle on a sortable hit shouldn't happen (the nest overlay would have
-    // captured it); guard anyway.
-    if (!zone || zone === 'middle') {
+      const overId = String(over.id)
+
+      // SLOT HIT — the dragged item lands at this exact position.
+      const slot = parseSlotId(overId)
+      if (slot) {
+        cancelAutoExpand()
+        setDropZone({ kind: 'insert', parentId: slot.parentId, index: slot.index })
+        return
+      }
+
+      // ROW HIT — only folder rows are valid drop targets here (nest case).
+      // Non-folder rows ignore the hit; the user needs to hit a slot.
+      if (active.id === overId) {
+        setDropZone(null)
+        cancelAutoExpand()
+        return
+      }
+      const activeItem = binderItems.find((i) => i.id === active.id)
+      const overItem = binderItems.find((i) => i.id === overId)
+      if (!activeItem || !overItem) {
+        setDropZone(null)
+        cancelAutoExpand()
+        return
+      }
+      if (!isFolderType(overItem.type)) {
+        setDropZone(null)
+        cancelAutoExpand()
+        return
+      }
+      const allLite: BinderItemLite[] = binderItems.map((i) => ({
+        id: i.id,
+        type: i.type,
+        parentId: i.parentId,
+      }))
+      if (
+        canNest(
+          { id: activeItem.id, type: activeItem.type, parentId: activeItem.parentId },
+          { id: overItem.id, type: overItem.type, parentId: overItem.parentId },
+          allLite,
+        )
+      ) {
+        scheduleAutoExpand(overId)
+        setDropZone({ kind: 'nest', folderId: overId })
+        return
+      }
       setDropZone(null)
       cancelAutoExpand()
-      return
-    }
-    cancelAutoExpand()
-    setDropZone({ overId, zone })
-  }, [binderItems, cancelAutoExpand, scheduleAutoExpand])
+    },
+    [binderItems, cancelAutoExpand, scheduleAutoExpand],
+  )
 
-  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
-    const finalDropZone = dropZone
-    setDropZone(null)
-    cancelAutoExpand()
+  const handleDragEnd = useCallback(
+    async (event: DragEndEvent) => {
+      const finalDropZone = dropZone
+      setDropZone(null)
+      setDraggingItemId(null)
+      cancelAutoExpand()
 
-    const { active, over } = event
-    if (!over || !finalDropZone) return
+      const { active } = event
+      if (!finalDropZone) return
+      const activeId = active.id as string
+      const activeItem = binderItems.find((i) => i.id === activeId)
+      if (!activeItem) return
 
-    // Strip `:nest` suffix if present (nest-overlay droppable).
-    const overIdStr = String(over.id)
-    const overId = overIdStr.endsWith(':nest')
-      ? overIdStr.slice(0, -':nest'.length)
-      : overIdStr
-
-    if (active.id === overId) return
-
-    const activeId = active.id as string
-    const activeItem = binderItems.find(i => i.id === activeId)
-    const overItem = binderItems.find(i => i.id === overId)
-    if (!activeItem || !overItem) return
-
-    if (finalDropZone.zone === 'middle') {
-      // Nest into folder: parentId = folder, order = maxOrderInFolder + 1.
-      const childrenOfTarget = binderItems.filter(i => i.parentId === overId)
-      const maxOrder = childrenOfTarget.length === 0
-        ? -1
-        : Math.max(...childrenOfTarget.map(i => i.order))
-      const updates = [{ id: activeId, order: maxOrder + 1, parentId: overId }]
-
-      setBinderItems(prev =>
-        prev.map(item =>
-          item.id === activeId
-            ? { ...item, parentId: overId, order: maxOrder + 1 }
-            : item
+      if (finalDropZone.kind === 'nest') {
+        const folderId = finalDropZone.folderId
+        const childrenOfTarget = binderItems.filter(
+          (i) => i.parentId === folderId,
         )
+        const maxOrder =
+          childrenOfTarget.length === 0
+            ? -1
+            : Math.max(...childrenOfTarget.map((i) => i.order))
+        const updates = [
+          { id: activeId, order: maxOrder + 1, parentId: folderId },
+        ]
+        setBinderItems((prev) =>
+          prev.map((item) =>
+            item.id === activeId
+              ? { ...item, parentId: folderId, order: maxOrder + 1 }
+              : item,
+          ),
+        )
+        await reorderBinderItemsAction(bookId, updates)
+        return
+      }
+
+      // INSERT into a slot: place the dragged item at exact { parentId, index }.
+      const newParentId = finalDropZone.parentId
+      const targetIndex = finalDropZone.index
+
+      // Siblings in the NEW parent, sorted by display order (pinned-first,
+      // then `order`), excluding the active item if it's already there.
+      const siblings = binderItems
+        .filter((i) => i.parentId === newParentId && i.id !== activeId)
+        .sort((a, b) => {
+          const aPin = isItemPinned(a) ? 1 : 0
+          const bPin = isItemPinned(b) ? 1 : 0
+          if (aPin !== bPin) return bPin - aPin
+          return a.order - b.order
+        })
+
+      const insertIndex = Math.max(0, Math.min(targetIndex, siblings.length))
+      const newSiblingOrder = [...siblings]
+      newSiblingOrder.splice(insertIndex, 0, {
+        ...activeItem,
+        parentId: newParentId,
+      })
+
+      const updates = newSiblingOrder.map((s, idx) => ({
+        id: s.id,
+        order: idx,
+        parentId: newParentId,
+      }))
+
+      setBinderItems((prev) =>
+        prev.map((item) => {
+          const update = updates.find((u) => u.id === item.id)
+          return update
+            ? { ...item, order: update.order, parentId: update.parentId }
+            : item
+        }),
       )
       await reorderBinderItemsAction(bookId, updates)
-      return
-    }
+    },
+    [bookId, binderItems, dropZone, setBinderItems, cancelAutoExpand],
+  )
 
-    // reorder-before / reorder-after: dragged item adopts overItem's parentId,
-    // then recompute order within that parent group.
-    const newParentId = overItem.parentId
-    const siblings = binderItems.filter(i => i.parentId === newParentId && i.id !== activeId)
-    const overIndex = siblings.findIndex(s => s.id === overId)
-    const insertIndex = finalDropZone.zone === 'before' ? overIndex : overIndex + 1
-
-    const newSiblingOrder = [...siblings]
-    newSiblingOrder.splice(insertIndex, 0, { ...activeItem, parentId: newParentId })
-
-    const updates = newSiblingOrder.map((s, idx) => ({
-      id: s.id,
-      order: idx,
-      parentId: newParentId,
-    }))
-
-    // Optimistic update
-    setBinderItems(prev =>
-      prev.map(item => {
-        const update = updates.find(u => u.id === item.id)
-        return update ? { ...item, order: update.order, parentId: update.parentId } : item
-      })
-    )
-
-    await reorderBinderItemsAction(bookId, updates)
-  }, [bookId, binderItems, dropZone, setBinderItems, cancelAutoExpand])
+  const handleDragCancel = useCallback(() => {
+    setDropZone(null)
+    setDraggingItemId(null)
+    cancelAutoExpand()
+  }, [cancelAutoExpand])
 
   const ctxValue = useMemo<BinderTreeContextValue>(
-    () => ({ tree, collapsed, toggleCollapsed, dropZone }),
-    [tree, collapsed, toggleCollapsed, dropZone]
+    () => ({
+      tree,
+      collapsed,
+      toggleCollapsed,
+      dropZone,
+      draggingItemId,
+      visibleSlotIds,
+    }),
+    [tree, collapsed, toggleCollapsed, dropZone, draggingItemId, visibleSlotIds],
   )
 
   return (
@@ -397,20 +603,18 @@ export function BinderTree() {
           <DndContext
             sensors={sensors}
             collisionDetection={collisionDetection}
+            onDragStart={handleDragStart}
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
+            onDragCancel={handleDragCancel}
           >
             {/* No strategy: skip the verticalListSortingStrategy reorder
                 preview (which shifts other rows out of the way during drag).
-                That preview is what was making folder rows vacate when the
-                user tried to hover them as nest targets — there's no way to
-                "drop ON" a row that's moving out of the way. Without a
-                strategy, sortable still tracks reorder logically; the dropped
-                item just snaps to its new position on release. */}
+                With the slot model, reorder targets are the explicit Slot
+                droppables between rows — rows themselves only fire when
+                dropping ON a folder (nest case). */}
             <SortableContext items={flatIds}>
-              {tree.map(node => (
-                <BinderItem key={node.id} node={node} depth={0} />
-              ))}
+              {renderTreeWithSlots(tree, null, 0, draggingItemId, visibleSlotIds)}
             </SortableContext>
           </DndContext>
         </div>

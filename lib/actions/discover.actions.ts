@@ -64,8 +64,8 @@ export type BookCard = {
   isRecentlyActive: boolean
 }
 
-export type RailResult = {
-  books: BookCard[]
+export type RailResult<TItem = BookCard> = {
+  books: TItem[]
   strictCount: number
   nextCursor: string | null
 }

@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { DiscoverBookCard } from './discover-book-card'
-import type { RailResult } from '@/lib/actions/discover.actions'
+import type { RailResult, BookCard } from '@/lib/actions/discover.actions'
 
 type LoadMoreSlug =
   | 'trending'
@@ -10,24 +10,61 @@ type LoadMoreSlug =
   | 'new-releases'
   | 'best-ongoing'
   | 'following'
+  | 'live-now'
+  | 'voting-now'
+  | 'heating-up'
+  | 'newly-opened'
+  | 'recently-won'
+  | 'sparks-following'
 
-type Props = {
+type Props<TItem extends { id: string } = BookCard> = {
   title: string
   description: string
-  result: RailResult
+  result: RailResult<TItem>
   locale: string
   loadMoreAction: LoadMoreSlug
   filterRail?: React.ReactNode
+  /**
+   * Optional custom card renderer. Defaults to <DiscoverBookCard variant="grid">
+   * for D1 backward-compat. D2a Sparks sub-pages pass a <DiscoverSparkCard> renderer.
+   */
+  renderCard?: (item: TItem, locale: string) => React.ReactNode
+  /**
+   * Optional empty-state copy override. Default: "No books match this filter yet."
+   */
+  emptyMessage?: string
+  /**
+   * Optional href prefix for Load more links. Defaults to /${locale}/discover/${action}.
+   * D2a Spark sub-pages pass `/${locale}/discover/sparks/`.
+   */
+  loadMoreHrefBase?: string
 }
 
-export function DiscoverRailSubPage({
+function defaultRender<TItem extends { id: string }>(
+  item: TItem,
+  locale: string,
+): React.ReactNode {
+  return (
+    <DiscoverBookCard
+      book={item as unknown as BookCard}
+      locale={locale}
+      variant="grid"
+    />
+  )
+}
+
+export function DiscoverRailSubPage<TItem extends { id: string } = BookCard>({
   title,
   description,
   result,
   locale,
   loadMoreAction,
   filterRail,
-}: Props) {
+  renderCard,
+  emptyMessage,
+  loadMoreHrefBase,
+}: Props<TItem>) {
+  const render = renderCard ?? defaultRender
   return (
     <main className="max-w-5xl mx-auto px-4 py-6">
       <Link
@@ -46,7 +83,7 @@ export function DiscoverRailSubPage({
 
       {result.strictCount < 4 && result.books.length > 0 && (
         <p className="mb-4 text-[10px] uppercase tracking-wider font-[family-name:var(--font-mono)] text-[var(--canvas-dark-ink-muted)] italic">
-          Filling in with recently active books while {title} warms up.
+          Filling in with recently active items while {title} warms up.
         </p>
       )}
 
@@ -55,15 +92,13 @@ export function DiscoverRailSubPage({
         <div>
           {result.books.length === 0 ? (
             <p className="text-[13px] text-[var(--canvas-dark-ink-muted)] italic py-12 text-center">
-              No books match this filter yet.
+              {emptyMessage ?? 'No books match this filter yet.'}
             </p>
           ) : (
             <>
               <ul className="grid grid-cols-2 gap-3">
-                {result.books.map((book) => (
-                  <li key={book.id}>
-                    <DiscoverBookCard book={book} locale={locale} variant="grid" />
-                  </li>
+                {result.books.map((item) => (
+                  <li key={item.id}>{render(item, locale)}</li>
                 ))}
               </ul>
               {result.nextCursor && (
@@ -71,6 +106,7 @@ export function DiscoverRailSubPage({
                   action={loadMoreAction}
                   cursor={result.nextCursor}
                   locale={locale}
+                  hrefBase={loadMoreHrefBase}
                 />
               )}
             </>
@@ -87,15 +123,18 @@ function LoadMoreLink({
   action,
   cursor,
   locale,
+  hrefBase,
 }: {
   action: LoadMoreSlug
   cursor: string
   locale: string
+  hrefBase?: string
 }) {
+  const base = hrefBase ?? `/${locale}/discover/`
   return (
     <div className="mt-6 flex justify-center">
       <Link
-        href={`/${locale}/discover/${action}?cursor=${encodeURIComponent(cursor)}`}
+        href={`${base}${action}?cursor=${encodeURIComponent(cursor)}`}
         className="h-9 px-5 inline-flex items-center rounded-[var(--r-pill)] text-[12px] font-medium"
         style={{
           background:

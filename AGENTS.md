@@ -12,9 +12,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-11 (D1 Discover Books design spec landed)
+> **Last updated:** 2026-06-11 (D1 Discover Books design spec + implementation plan landed)
 >
-> **Last commit:** [25fe384](https://github.com/Cremacious/beehive-studio/commit/25fe384) — docs(d1): discover books design spec.
+> **Last commit:** [eb75ee2](https://github.com/Cremacious/beehive-studio/commit/eb75ee2) — docs(d1): discover books implementation plan.
+>
+> **D1 plan landed ([eb75ee2](https://github.com/Cremacious/beehive-studio/commit/eb75ee2)):** 14-task plan at [docs/superpowers/plans/2026-06-11-d1-discover-books.md](docs/superpowers/plans/2026-06-11-d1-discover-books.md). 8-wave shape per spec §13. Self-review confirmed every spec section maps to a task, types consistent across `BookCard` + `RailResult` + `GenreSlug`, no placeholders, 3 §15 open questions resolved inline (tuple base64url cursor per C-phase precedent · inline `first_publicly_discoverable_at` write in `publishBookAction` + `updateBookAction` tx · surface-shape tests mirror C2 `reading-actions.test.ts` static-import-after-vi.mock pattern from ca51b28). Task SHAs to come per-wave. **Awaiting Chris's pick:** subagent-driven (recommended, per C-phase precedent) vs inline executing-plans.
 >
 > **This session — brainstorm + spec for the Discover page overhaul:**
 >

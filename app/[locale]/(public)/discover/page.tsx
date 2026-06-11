@@ -1,12 +1,12 @@
-import { Suspense } from 'react'
 import Link from 'next/link'
-import { getDiscoverFeedAction, getDiscoverWritersAction } from '@/lib/actions/discover.actions'
+// TODO: T6 rewrite — Books tab moves to rail-stacked layout consuming the
+// new D1 actions (getTrendingBooksAction et al). For now, the Books tab
+// renders a minimal placeholder so the rest of the page (Sparks / Hives /
+// Lists / Clubs) keeps working.
+import { getTrendingBooksAction } from '@/lib/actions/discover.actions'
 import { getSparksAction } from '@/lib/actions/sparks.actions'
 import { getDiscoverableHivesAction } from '@/lib/actions/hive.actions'
 import { PageHead } from '@/components/community/page-head'
-import { FeedFilters } from './_components/feed-filters'
-import { WritersStrip } from './_components/writers-strip'
-import { LoadMoreFeed } from './_components/load-more-feed'
 import { DiscoverTabs } from './_components/tabs'
 import { SparkCard } from './_components/spark-card'
 import { HiveCard } from './_components/hive-card'
@@ -18,14 +18,13 @@ type Tab = 'books' | 'sparks' | 'hives' | 'lists' | 'clubs'
 
 type Props = {
   params: Promise<{ locale: string }>
-  searchParams: Promise<{ tab?: string; sort?: string; genre?: string }>
+  searchParams: Promise<{ tab?: string; genre?: string }>
 }
 
 export default async function DiscoverPage({ params, searchParams }: Props) {
   const { locale } = await params
   const resolved = await searchParams
   const tab: Tab = (resolved.tab === 'sparks' || resolved.tab === 'hives' || resolved.tab === 'lists' || resolved.tab === 'clubs') ? resolved.tab : 'books'
-  const sort: 'trending' | 'popular' | 'new' = (resolved.sort === 'popular' || resolved.sort === 'new') ? resolved.sort : 'trending'
   const genre = resolved.genre
 
   return (
@@ -40,7 +39,7 @@ export default async function DiscoverPage({ params, searchParams }: Props) {
         <DiscoverTabs currentTab={tab} />
       </div>
 
-      {tab === 'books' && <BooksTab locale={locale} sort={sort} genre={genre} />}
+      {tab === 'books' && <BooksTab locale={locale} genre={genre} />}
       {tab === 'sparks' && <SparksTab locale={locale} />}
       {tab === 'hives' && <HivesTab locale={locale} />}
       {tab === 'lists' && <ListsTab locale={locale} />}
@@ -49,46 +48,19 @@ export default async function DiscoverPage({ params, searchParams }: Props) {
   )
 }
 
-async function BooksTab({ locale, sort, genre }: { locale: string; sort: 'trending' | 'popular' | 'new'; genre?: string }) {
-  const [feedResult, writersResult] = await Promise.all([
-    getDiscoverFeedAction(sort, genre, 1),
-    getDiscoverWritersAction(),
-  ])
-
-  const books = feedResult.success ? feedResult.data.books : []
-  const hasMore = feedResult.success ? feedResult.data.hasMore : false
-  const writers = (writersResult.success && !genre) ? writersResult.data : []
+// TODO: T6 rewrite — replace this placeholder with the rail-stacked layout
+// (FeaturedFreshHero + 6 DiscoverRail + GenreFooterGrid) per spec §5/§6.
+async function BooksTab({ locale, genre }: { locale: string; genre?: string }) {
+  void locale
+  const trending = await getTrendingBooksAction({ genre })
+  const books = trending.success ? trending.data.books : []
 
   return (
-    <>
-      <div className="mb-4">
-        <Suspense fallback={<div className="h-[88px] border-b border-[var(--br-card)]" />}>
-          <FeedFilters currentSort={sort} currentGenre={genre} />
-        </Suspense>
-      </div>
-
-      <div>
-        {books.length === 0 ? (
-          <div className="text-center py-20 text-[var(--canvas-dark-ink-muted)] text-[13px]">
-            No books found for this filter.
-          </div>
-        ) : (
-          <LoadMoreFeed
-            initialBooks={books}
-            initialHasMore={hasMore}
-            sort={sort}
-            genre={genre}
-            locale={locale}
-          />
-        )}
-
-        {writers.length > 0 && (
-          <div className="mt-6">
-            <WritersStrip writers={writers} />
-          </div>
-        )}
-      </div>
-    </>
+    <div className="text-center py-20 text-[var(--canvas-dark-ink-muted)] text-[13px]">
+      {books.length === 0
+        ? 'No books here yet.'
+        : `Discover Books rewrite in progress. ${books.length} trending titles ready.`}
+    </div>
   )
 }
 

@@ -1,30 +1,76 @@
 'use server'
 
+import { unstable_cache } from 'next/cache'
 import { db } from '@/db'
-import { books, binderItems, chapters, bookLikes, bookmarks, bookComments } from '@/db/schema'
+import {
+  books,
+  binderItems,
+  chapters,
+  bookLikes,
+  bookmarks,
+  bookComments,
+} from '@/db/schema'
 import { userProfiles } from '@/db/schema'
-import { eq, and, desc, sql, count, isNull, ilike, or } from 'drizzle-orm'
-import { getOptionalUserId } from '@/lib/require-auth'
+import { follows, chapterReads, userBlocks } from '@/db/schema/social'
+import {
+  and,
+  eq,
+  desc,
+  sql,
+  count,
+  isNull,
+  ilike,
+  or,
+  ne,
+  gte,
+  inArray,
+  notInArray,
+  lt,
+} from 'drizzle-orm'
+import { requireAuth, getOptionalUserId } from '@/lib/require-auth'
 import { canReadBook } from '@/lib/books/can-read'
 import { isBlocked } from '@/lib/social/is-blocked'
 import { searchBooksSchema } from '@/lib/validations/reading-list'
+import { applyBackfill } from '@/lib/discover/backfill'
+import {
+  GENRES,
+  normalizeGenre,
+  isValidGenre,
+  type GenreSlug,
+} from '@/lib/discover/genres'
+import {
+  computeTrendingScore,
+  computeRisingStarsScore,
+} from '@/lib/discover/scoring'
 
-export type DiscoverBook = {
+import type { ActionResult } from './book.actions'
+
+// ─── Public types ─────────────────────────────────────────────────────────────
+
+export type BookCard = {
   id: string
   title: string
-  genre: string | null
-  coverUrl: string | null
-  synopsis: string | null
-  tags: string[] | null
-  updatedAt: Date
-  likeCount: number
-  bookmarkCount: number
-  wordCount: number
+  authorUserId: string
   authorUsername: string | null
   authorDisplayName: string | null
-  seriesName: string | null
-  seriesNumber: number | null
+  authorAvatarUrl: string | null
+  coverUrl: string | null
+  synopsis: string | null
+  genre: GenreSlug
+  tags: string[]
+  likeCount: number
+  chapterCount: number
+  lastUpdatedAt: Date | null
+  isRecentlyActive: boolean
 }
+
+export type RailResult = {
+  books: BookCard[]
+  strictCount: number
+  nextCursor: string | null
+}
+
+// Legacy types preserved for non-discover consumers (book reader, AddBookModal).
 
 export type PublicBook = {
   id: string
@@ -55,6 +101,26 @@ export type BookComment = {
   authorAvatarUrl: string | null
 }
 
+// Legacy projected row shape (pre-D1). Preserved for `book-card.tsx`'s
+// continued use until T6 swaps the home Books tab to <DiscoverBookCard> /
+// <RailBookCard>. New code should use BookCard instead.
+export type DiscoverBook = {
+  id: string
+  title: string
+  genre: string | null
+  coverUrl: string | null
+  synopsis: string | null
+  tags: string[] | null
+  updatedAt: Date
+  likeCount: number
+  bookmarkCount: number
+  wordCount: number
+  authorUsername: string | null
+  authorDisplayName: string | null
+  seriesName: string | null
+  seriesNumber: number | null
+}
+
 export type DiscoverWriter = {
   userId: string
   username: string | null
@@ -63,111 +129,1316 @@ export type DiscoverWriter = {
   bookCount: number
 }
 
-import type { ActionResult } from './book.actions'
+// ─── Constants ────────────────────────────────────────────────────────────────
 
-const PAGE_SIZE = 20
+const RAIL_LIMIT = 12
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000
+const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000
 
-export async function getDiscoverFeedAction(
-  sort: 'trending' | 'popular' | 'new' = 'trending',
-  genre?: string,
-  page: number = 1
-): Promise<ActionResult<{ books: DiscoverBook[]; hasMore: boolean }>> {
-  const offset = (page - 1) * PAGE_SIZE
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+// ─── Cursor helpers ───────────────────────────────────────────────────────────
 
-  const likeCountSq = db
-    .select({ bookId: bookLikes.bookId, likeTotal: count().as('like_total') })
-    .from(bookLikes)
-    .groupBy(bookLikes.bookId)
-    .as('like_counts')
+type CursorPayload = { sortKey: string | number; id: string } | null
 
-  const bookmarkCountSq = db
-    .select({ bookId: bookmarks.bookId, bookmarkTotal: count().as('bookmark_total') })
-    .from(bookmarks)
-    .groupBy(bookmarks.bookId)
-    .as('bookmark_counts')
+function encodeCursor(p: { sortKey: string | number; id: string }): string {
+  return Buffer.from(JSON.stringify(p)).toString('base64url')
+}
 
-  const recentLikesSq = db
-    .select({ bookId: bookLikes.bookId, recentLikeTotal: count().as('recent_like_total') })
-    .from(bookLikes)
-    .where(sql`${bookLikes.createdAt} > ${sevenDaysAgo}`)
-    .groupBy(bookLikes.bookId)
-    .as('recent_likes')
+function decodeCursor(s: string | null | undefined): CursorPayload {
+  if (!s) return null
+  try {
+    const parsed = JSON.parse(Buffer.from(s, 'base64url').toString())
+    if (
+      parsed &&
+      typeof parsed.id === 'string' &&
+      (typeof parsed.sortKey === 'string' || typeof parsed.sortKey === 'number')
+    ) {
+      return parsed
+    }
+    return null
+  } catch {
+    return null
+  }
+}
 
-  const recentBookmarksSq = db
-    .select({ bookId: bookmarks.bookId, recentBookmarkTotal: count().as('recent_bookmark_total') })
-    .from(bookmarks)
-    .where(sql`${bookmarks.createdAt} > ${sevenDaysAgo}`)
-    .groupBy(bookmarks.bookId)
-    .as('recent_bookmarks')
+// ─── Private helpers ──────────────────────────────────────────────────────────
 
-  const wordCountSq = db
-    .select({ bookId: chapters.bookId, wordTotal: sql<number>`SUM(${chapters.wordCount})`.as('word_total') })
+/**
+ * Resolves the bidirectional blocked-author set for a viewer in a single query.
+ * Empty Set for guests. Used by every rail action so blocked authors' books
+ * never leak into Discover.
+ */
+async function getBlockedAuthorIdsForViewer(
+  viewerId: string | null,
+): Promise<Set<string>> {
+  if (!viewerId) return new Set()
+  const rows = await db
+    .select({
+      blockerId: userBlocks.blockerId,
+      blockedId: userBlocks.blockedId,
+    })
+    .from(userBlocks)
+    .where(
+      or(
+        eq(userBlocks.blockerId, viewerId),
+        eq(userBlocks.blockedId, viewerId),
+      ),
+    )
+  const set = new Set<string>()
+  for (const r of rows) {
+    if (r.blockerId === viewerId) set.add(r.blockedId)
+    else set.add(r.blockerId)
+  }
+  return set
+}
+
+type RawBookRow = {
+  id: string
+  title: string
+  authorUserId: string
+  coverUrl: string | null
+  synopsis: string | null
+  genre: string | null
+  tags: string[] | null
+  updatedAt: Date
+  firstPubliclyDiscoverableAt: Date | null
+}
+
+/**
+ * Builds the canonical WHERE filter for any public+discoverable book lookup.
+ * Genre is optional; blocked-author set excludes when non-empty.
+ */
+function buildPublicBookFilters(
+  genre: GenreSlug | undefined,
+  blockedAuthorIds: Set<string>,
+) {
+  const filters = [
+    eq(books.visibility, 'PUBLIC'),
+    eq(books.discoverable, true),
+    ne(books.status, 'STANDALONE_HIVE_SHADOW'),
+  ]
+  if (genre) {
+    filters.push(eq(books.genre, genre))
+  }
+  if (blockedAuthorIds.size > 0) {
+    filters.push(notInArray(books.userId, Array.from(blockedAuthorIds)))
+  }
+  return filters
+}
+
+/**
+ * Projects a set of raw book rows to BookCard[] by joining authors + chapter
+ * aggregates + last-update timestamps. All hydration runs in 3 parallel
+ * queries stitched via Maps.
+ */
+async function projectToBookCards(rows: RawBookRow[]): Promise<BookCard[]> {
+  if (rows.length === 0) return []
+  const bookIds = rows.map((r) => r.id)
+  const authorIds = Array.from(new Set(rows.map((r) => r.authorUserId)))
+
+  const [authorRows, likeRows, chapterRows, lastUpdateRows] = await Promise.all([
+    db
+      .select({
+        userId: userProfiles.userId,
+        username: userProfiles.username,
+        displayName: userProfiles.displayName,
+        avatarUrl: userProfiles.avatarUrl,
+      })
+      .from(userProfiles)
+      .where(inArray(userProfiles.userId, authorIds)),
+    db
+      .select({ bookId: bookLikes.bookId, total: count() })
+      .from(bookLikes)
+      .where(inArray(bookLikes.bookId, bookIds))
+      .groupBy(bookLikes.bookId),
+    db
+      .select({ bookId: binderItems.bookId, total: count() })
+      .from(binderItems)
+      .where(
+        and(
+          inArray(binderItems.bookId, bookIds),
+          eq(binderItems.type, 'chapter'),
+        ),
+      )
+      .groupBy(binderItems.bookId),
+    db
+      .select({
+        bookId: chapters.bookId,
+        last: sql<Date>`MAX(${chapters.updatedAt})`,
+      })
+      .from(chapters)
+      .where(
+        and(
+          inArray(chapters.bookId, bookIds),
+          inArray(chapters.status, ['REVISED', 'FINAL']),
+        ),
+      )
+      .groupBy(chapters.bookId),
+  ])
+
+  const authorMap = new Map(authorRows.map((r) => [r.userId, r]))
+  const likeMap = new Map(likeRows.map((r) => [r.bookId, Number(r.total)]))
+  const chapterMap = new Map(chapterRows.map((r) => [r.bookId, Number(r.total)]))
+  const lastUpdateMap = new Map(
+    lastUpdateRows.map((r) => [r.bookId, r.last as Date | null]),
+  )
+
+  const thirtyDaysAgo = new Date(Date.now() - THIRTY_DAYS_MS)
+
+  return rows.map((r) => {
+    const author = authorMap.get(r.authorUserId)
+    const lastUpdated = lastUpdateMap.get(r.id) ?? null
+    const isRecentlyActive =
+      lastUpdated instanceof Date && lastUpdated >= thirtyDaysAgo
+    return {
+      id: r.id,
+      title: r.title,
+      authorUserId: r.authorUserId,
+      authorUsername: author?.username ?? null,
+      authorDisplayName: author?.displayName ?? null,
+      authorAvatarUrl: author?.avatarUrl ?? null,
+      coverUrl: r.coverUrl,
+      synopsis: r.synopsis,
+      genre: normalizeGenre(r.genre),
+      tags: r.tags ?? [],
+      likeCount: likeMap.get(r.id) ?? 0,
+      chapterCount: chapterMap.get(r.id) ?? 0,
+      lastUpdatedAt: lastUpdated,
+      isRecentlyActive,
+    }
+  })
+}
+
+/**
+ * §6.3 query widened to 30d, used as the universal backfill source for all
+ * rails. Returns RawBookRow[] sorted by MAX(chapters.updated_at) DESC.
+ */
+async function getRecentlyUpdatedRowsInternal(
+  genre: GenreSlug | undefined,
+  excludeIds: string[],
+  blockedAuthorIds: Set<string>,
+  limit: number,
+  windowMs: number = THIRTY_DAYS_MS,
+): Promise<RawBookRow[]> {
+  const windowStart = new Date(Date.now() - windowMs)
+  const filters = buildPublicBookFilters(genre, blockedAuthorIds)
+  if (excludeIds.length > 0) {
+    filters.push(notInArray(books.id, excludeIds))
+  }
+  // Aggregate over chapters in window.
+  const lastUpdateRows = await db
+    .select({
+      bookId: chapters.bookId,
+      last: sql<Date>`MAX(${chapters.updatedAt})`,
+    })
     .from(chapters)
+    .where(
+      and(
+        inArray(chapters.status, ['REVISED', 'FINAL']),
+        gte(chapters.updatedAt, windowStart),
+      ),
+    )
     .groupBy(chapters.bookId)
-    .as('word_counts')
+    .orderBy(desc(sql`MAX(${chapters.updatedAt})`))
+    .limit(limit * 4)
 
-  const baseQuery = db
+  if (lastUpdateRows.length === 0) return []
+  const candidateIds = lastUpdateRows.map((r) => r.bookId)
+
+  const rows = await db
     .select({
       id: books.id,
       title: books.title,
-      genre: books.genre,
+      authorUserId: books.userId,
       coverUrl: books.coverUrl,
       synopsis: books.synopsis,
+      genre: books.genre,
       tags: books.tags,
       updatedAt: books.updatedAt,
-      likeCount: sql<number>`COALESCE(${likeCountSq.likeTotal}, 0)`,
-      bookmarkCount: sql<number>`COALESCE(${bookmarkCountSq.bookmarkTotal}, 0)`,
-      wordCount: sql<number>`COALESCE(${wordCountSq.wordTotal}, 0)`,
-      authorUsername: userProfiles.username,
-      authorDisplayName: userProfiles.displayName,
-      seriesName: books.seriesName,
-      seriesNumber: books.seriesNumber,
+      firstPubliclyDiscoverableAt: books.firstPubliclyDiscoverableAt,
     })
     .from(books)
-    .innerJoin(userProfiles, eq(books.userId, userProfiles.userId))
-    .leftJoin(likeCountSq, eq(books.id, likeCountSq.bookId))
-    .leftJoin(bookmarkCountSq, eq(books.id, bookmarkCountSq.bookId))
-    .leftJoin(recentLikesSq, eq(books.id, recentLikesSq.bookId))
-    .leftJoin(recentBookmarksSq, eq(books.id, recentBookmarksSq.bookId))
-    .leftJoin(wordCountSq, eq(books.id, wordCountSq.bookId))
-    .where(
-      and(
-        eq(books.discoverable, true),
-        eq(books.visibility, 'PUBLIC'),
-        genre ? eq(books.genre, genre) : undefined
+    .where(and(...filters, inArray(books.id, candidateIds)))
+
+  // Re-order by lastUpdate map and slice to limit.
+  const lastUpdateMap = new Map(
+    lastUpdateRows.map((r) => [r.bookId, r.last as Date]),
+  )
+  const sorted = rows
+    .filter((r) => lastUpdateMap.has(r.id))
+    .sort((a, b) => {
+      const al = lastUpdateMap.get(a.id)!.getTime()
+      const bl = lastUpdateMap.get(b.id)!.getTime()
+      if (al !== bl) return bl - al
+      return b.id.localeCompare(a.id)
+    })
+    .slice(0, limit)
+  return sorted
+}
+
+/**
+ * Top-up wrapper used by every rail action. If strict result is short, runs
+ * the §6.3 backfill query widened to 30d and merges via applyBackfill.
+ */
+async function railWithBackfill(
+  strictRows: RawBookRow[],
+  genre: GenreSlug | undefined,
+  blockedAuthorIds: Set<string>,
+  nextCursor: string | null,
+): Promise<RailResult> {
+  if (strictRows.length >= 4) {
+    const cards = await projectToBookCards(strictRows)
+    return {
+      books: cards,
+      strictCount: strictRows.length,
+      nextCursor,
+    }
+  }
+  const excludeIds = strictRows.map((r) => r.id)
+  const backfill = await getRecentlyUpdatedRowsInternal(
+    genre,
+    excludeIds,
+    blockedAuthorIds,
+    4,
+    THIRTY_DAYS_MS,
+  )
+  const merged = applyBackfill(strictRows, backfill)
+  const cards = await projectToBookCards(merged.books as RawBookRow[])
+  return {
+    books: cards,
+    strictCount: merged.strictCount,
+    nextCursor,
+  }
+}
+
+// ─── 1. Featured Fresh hero ───────────────────────────────────────────────────
+
+export async function getFeaturedFreshBookAction(args: {
+  genre?: string
+}): Promise<ActionResult<BookCard | null>> {
+  const viewerId = await getOptionalUserId()
+  const blockedAuthorIds = await getBlockedAuthorIdsForViewer(viewerId)
+  const genre =
+    args.genre && isValidGenre(args.genre) ? (args.genre as GenreSlug) : undefined
+
+  const sevenDaysAgo = new Date(Date.now() - SEVEN_DAYS_MS)
+  const filters = buildPublicBookFilters(genre, blockedAuthorIds)
+  filters.push(gte(books.firstPubliclyDiscoverableAt, sevenDaysAgo))
+
+  const candidates = await db
+    .select({
+      id: books.id,
+      title: books.title,
+      authorUserId: books.userId,
+      coverUrl: books.coverUrl,
+      synopsis: books.synopsis,
+      genre: books.genre,
+      tags: books.tags,
+      updatedAt: books.updatedAt,
+      firstPubliclyDiscoverableAt: books.firstPubliclyDiscoverableAt,
+    })
+    .from(books)
+    .where(and(...filters))
+    .orderBy(desc(books.firstPubliclyDiscoverableAt))
+    .limit(40)
+
+  if (candidates.length === 0) return { success: true, data: null }
+
+  const candidateIds = candidates.map((c) => c.id)
+  const signals = await loadTrendingSignals(candidateIds, SEVEN_DAYS_MS)
+
+  let bestId: string | null = null
+  let bestScore = -1
+  for (const c of candidates) {
+    const s = signals.get(c.id) ?? {
+      likes: 0,
+      comments: 0,
+      reads: 0,
+      follows: 0,
+    }
+    const score = computeTrendingScore({
+      likes7d: s.likes,
+      comments7d: s.comments,
+      reads7d: s.reads,
+      follows7d: s.follows,
+    })
+    if (score > bestScore) {
+      bestScore = score
+      bestId = c.id
+    }
+  }
+
+  if (!bestId) {
+    // No signal — fall back to the most recent qualifying row.
+    const cards = await projectToBookCards([candidates[0]])
+    return { success: true, data: cards[0] ?? null }
+  }
+
+  const winner = candidates.find((c) => c.id === bestId)!
+  const cards = await projectToBookCards([winner])
+  return { success: true, data: cards[0] ?? null }
+}
+
+// ─── Trending signal loader (shared by Trending + Rising Stars) ───────────────
+
+type SignalCounts = {
+  likes: number
+  comments: number
+  reads: number
+  follows: number
+}
+
+/**
+ * Loads the 4 trending signals over a window for a set of book ids.
+ * Runs 4 GROUP BY queries in parallel and stitches into a Map keyed by bookId.
+ * Follows are aggregated per book via `follows.followee_id = books.user_id`.
+ */
+async function loadTrendingSignals(
+  bookIds: string[],
+  windowMs: number,
+): Promise<Map<string, SignalCounts>> {
+  if (bookIds.length === 0) return new Map()
+  const windowStart = new Date(Date.now() - windowMs)
+
+  const [likeRows, commentRows, readRows, followRows] = await Promise.all([
+    db
+      .select({ bookId: bookLikes.bookId, total: count() })
+      .from(bookLikes)
+      .where(
+        and(
+          inArray(bookLikes.bookId, bookIds),
+          gte(bookLikes.createdAt, windowStart),
+        ),
       )
-    )
+      .groupBy(bookLikes.bookId),
+    db
+      .select({ bookId: bookComments.bookId, total: count() })
+      .from(bookComments)
+      .where(
+        and(
+          inArray(bookComments.bookId, bookIds),
+          gte(bookComments.createdAt, windowStart),
+        ),
+      )
+      .groupBy(bookComments.bookId),
+    db
+      .select({ bookId: chapterReads.bookId, total: count() })
+      .from(chapterReads)
+      .where(
+        and(
+          inArray(chapterReads.bookId, bookIds),
+          gte(chapterReads.readAt, windowStart),
+        ),
+      )
+      .groupBy(chapterReads.bookId),
+    // Follow attribution: join follows to books by followee_id = books.user_id.
+    db
+      .select({
+        bookId: books.id,
+        total: count(),
+      })
+      .from(follows)
+      .innerJoin(books, eq(books.userId, follows.followeeId))
+      .where(
+        and(
+          inArray(books.id, bookIds),
+          gte(follows.createdAt, windowStart),
+        ),
+      )
+      .groupBy(books.id),
+  ])
 
-  const ordered =
-    sort === 'trending'
-      ? baseQuery.orderBy(
-          desc(sql`COALESCE(${recentLikesSq.recentLikeTotal}, 0) + COALESCE(${recentBookmarksSq.recentBookmarkTotal}, 0)`)
-        )
-      : sort === 'popular'
-      ? baseQuery.orderBy(
-          desc(sql`COALESCE(${likeCountSq.likeTotal}, 0) + COALESCE(${bookmarkCountSq.bookmarkTotal}, 0)`)
-        )
-      : baseQuery.orderBy(desc(books.updatedAt))
+  const map = new Map<string, SignalCounts>()
+  function bump(
+    bookId: string,
+    key: keyof SignalCounts,
+    value: number,
+  ): void {
+    const existing = map.get(bookId) ?? {
+      likes: 0,
+      comments: 0,
+      reads: 0,
+      follows: 0,
+    }
+    existing[key] = value
+    map.set(bookId, existing)
+  }
+  for (const r of likeRows) bump(r.bookId, 'likes', Number(r.total))
+  for (const r of commentRows) bump(r.bookId, 'comments', Number(r.total))
+  for (const r of readRows) bump(r.bookId, 'reads', Number(r.total))
+  for (const r of followRows) bump(r.bookId, 'follows', Number(r.total))
+  return map
+}
 
-  const rows = await ordered.limit(PAGE_SIZE + 1).offset(offset)
-  const hasMore = rows.length > PAGE_SIZE
+// ─── 2. Trending Now ──────────────────────────────────────────────────────────
+
+export async function getTrendingBooksAction(args: {
+  genre?: string
+  cursor?: string | null
+  window?: '24h' | '7d'
+}): Promise<ActionResult<RailResult>> {
+  const viewerId = await getOptionalUserId()
+  const blockedAuthorIds = await getBlockedAuthorIdsForViewer(viewerId)
+  const genre =
+    args.genre && isValidGenre(args.genre) ? (args.genre as GenreSlug) : undefined
+  const windowMs = args.window === '24h' ? TWENTY_FOUR_HOURS_MS : SEVEN_DAYS_MS
+  const cursor = decodeCursor(args.cursor)
+
+  // Step 1: pick a candidate set. We pull the top N most-recently-active books
+  // (over the window) and compute scores in JS. Cap candidate set to keep the
+  // signal queries bounded.
+  const windowStart = new Date(Date.now() - windowMs)
+  const filters = buildPublicBookFilters(genre, blockedAuthorIds)
+
+  const candidates = await db
+    .select({
+      id: books.id,
+      title: books.title,
+      authorUserId: books.userId,
+      coverUrl: books.coverUrl,
+      synopsis: books.synopsis,
+      genre: books.genre,
+      tags: books.tags,
+      updatedAt: books.updatedAt,
+      firstPubliclyDiscoverableAt: books.firstPubliclyDiscoverableAt,
+    })
+    .from(books)
+    .where(and(...filters, gte(books.updatedAt, windowStart)))
+    .orderBy(desc(books.updatedAt), desc(books.id))
+    .limit(200)
+
+  const candidateIds = candidates.map((c) => c.id)
+  const signals = await loadTrendingSignals(candidateIds, windowMs)
+
+  const scored = candidates.map((c) => {
+    const s = signals.get(c.id) ?? {
+      likes: 0,
+      comments: 0,
+      reads: 0,
+      follows: 0,
+    }
+    return {
+      row: c,
+      score: computeTrendingScore({
+        likes7d: s.likes,
+        comments7d: s.comments,
+        reads7d: s.reads,
+        follows7d: s.follows,
+      }),
+    }
+  })
+  // Sort: score DESC, updatedAt DESC, id DESC.
+  scored.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score
+    const at = a.row.updatedAt.getTime()
+    const bt = b.row.updatedAt.getTime()
+    if (bt !== at) return bt - at
+    return b.row.id.localeCompare(a.row.id)
+  })
+
+  // Cursor: walk past rows with score > cursor.sortKey OR (score === cursor.sortKey AND id > cursor.id).
+  let filtered = scored
+  if (cursor && typeof cursor.sortKey === 'number') {
+    const sk: number = cursor.sortKey;
+    filtered = scored.filter((s) => {
+      if (s.score < sk) return true
+      if (s.score === sk && s.row.id < cursor.id) return true
+      return false
+    })
+  }
+
+  const pageRows = filtered.slice(0, RAIL_LIMIT)
+  const strictRaw = pageRows.map((p) => p.row)
+  const last = pageRows[pageRows.length - 1]
+  const hasMore = filtered.length > RAIL_LIMIT
+  const nextCursor =
+    hasMore && last
+      ? encodeCursor({ sortKey: last.score, id: last.row.id })
+      : null
 
   return {
     success: true,
-    data: {
-      books: rows.slice(0, PAGE_SIZE),
-      hasMore,
-    },
+    data: await railWithBackfill(strictRaw, genre, blockedAuthorIds, nextCursor),
   }
 }
+
+// ─── 3. Rising Stars ──────────────────────────────────────────────────────────
+
+export async function getRisingStarsBooksAction(args: {
+  genre?: string
+  cursor?: string | null
+}): Promise<ActionResult<RailResult>> {
+  const viewerId = await getOptionalUserId()
+  const blockedAuthorIds = await getBlockedAuthorIdsForViewer(viewerId)
+  const genre =
+    args.genre && isValidGenre(args.genre) ? (args.genre as GenreSlug) : undefined
+  const cursor = decodeCursor(args.cursor)
+
+  const windowStart = new Date(Date.now() - SEVEN_DAYS_MS)
+  const filters = buildPublicBookFilters(genre, blockedAuthorIds)
+
+  const candidates = await db
+    .select({
+      id: books.id,
+      title: books.title,
+      authorUserId: books.userId,
+      coverUrl: books.coverUrl,
+      synopsis: books.synopsis,
+      genre: books.genre,
+      tags: books.tags,
+      updatedAt: books.updatedAt,
+      firstPubliclyDiscoverableAt: books.firstPubliclyDiscoverableAt,
+    })
+    .from(books)
+    .where(and(...filters, gte(books.updatedAt, windowStart)))
+    .orderBy(desc(books.updatedAt), desc(books.id))
+    .limit(200)
+
+  const candidateIds = candidates.map((c) => c.id)
+
+  const [signals, allTimeLikes] = await Promise.all([
+    loadTrendingSignals(candidateIds, SEVEN_DAYS_MS),
+    candidateIds.length === 0
+      ? Promise.resolve(
+          [] as Array<{ bookId: string; total: number | string }>,
+        )
+      : db
+          .select({ bookId: bookLikes.bookId, total: count() })
+          .from(bookLikes)
+          .where(inArray(bookLikes.bookId, candidateIds))
+          .groupBy(bookLikes.bookId),
+  ])
+
+  const allTimeMap = new Map(
+    allTimeLikes.map((r) => [r.bookId, Number(r.total)]),
+  )
+  const now = Date.now()
+  const scored = candidates.map((c) => {
+    const s = signals.get(c.id) ?? {
+      likes: 0,
+      comments: 0,
+      reads: 0,
+      follows: 0,
+    }
+    const firstPub = c.firstPubliclyDiscoverableAt ?? c.updatedAt
+    const ageDays = (now - firstPub.getTime()) / 86_400_000
+    return {
+      row: c,
+      score: computeRisingStarsScore({
+        likes7d: s.likes,
+        comments7d: s.comments,
+        reads7d: s.reads,
+        follows7d: s.follows,
+        totalLikesAllTime: allTimeMap.get(c.id) ?? 0,
+        ageDays,
+      }),
+    }
+  })
+  scored.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score
+    const aFirst = (a.row.firstPubliclyDiscoverableAt ?? a.row.updatedAt).getTime()
+    const bFirst = (b.row.firstPubliclyDiscoverableAt ?? b.row.updatedAt).getTime()
+    if (bFirst !== aFirst) return bFirst - aFirst
+    return b.row.id.localeCompare(a.row.id)
+  })
+
+  let filtered = scored
+  if (cursor && typeof cursor.sortKey === 'number') {
+    const sk: number = cursor.sortKey;
+    filtered = scored.filter((s) => {
+      if (s.score < sk) return true
+      if (s.score === sk && s.row.id < cursor.id) return true
+      return false
+    })
+  }
+
+  const pageRows = filtered.slice(0, RAIL_LIMIT)
+  const strictRaw = pageRows.map((p) => p.row)
+  const last = pageRows[pageRows.length - 1]
+  const hasMore = filtered.length > RAIL_LIMIT
+  const nextCursor =
+    hasMore && last
+      ? encodeCursor({ sortKey: last.score, id: last.row.id })
+      : null
+
+  return {
+    success: true,
+    data: await railWithBackfill(strictRaw, genre, blockedAuthorIds, nextCursor),
+  }
+}
+
+// ─── 4. Recently Updated ──────────────────────────────────────────────────────
+
+export async function getRecentlyUpdatedBooksAction(args: {
+  genre?: string
+  cursor?: string | null
+  window?: '7d' | '30d'
+}): Promise<ActionResult<RailResult>> {
+  const viewerId = await getOptionalUserId()
+  const blockedAuthorIds = await getBlockedAuthorIdsForViewer(viewerId)
+  const genre =
+    args.genre && isValidGenre(args.genre) ? (args.genre as GenreSlug) : undefined
+  const windowMs = args.window === '30d' ? THIRTY_DAYS_MS : SEVEN_DAYS_MS
+  const cursor = decodeCursor(args.cursor)
+
+  const windowStart = new Date(Date.now() - windowMs)
+  const lastUpdateRows = await db
+    .select({
+      bookId: chapters.bookId,
+      last: sql<Date>`MAX(${chapters.updatedAt})`,
+    })
+    .from(chapters)
+    .where(
+      and(
+        inArray(chapters.status, ['REVISED', 'FINAL']),
+        gte(chapters.updatedAt, windowStart),
+      ),
+    )
+    .groupBy(chapters.bookId)
+    .orderBy(desc(sql`MAX(${chapters.updatedAt})`))
+    .limit(200)
+
+  if (lastUpdateRows.length === 0) {
+    return {
+      success: true,
+      data: await railWithBackfill([], genre, blockedAuthorIds, null),
+    }
+  }
+
+  const candidateIds = lastUpdateRows.map((r) => r.bookId)
+  const filters = buildPublicBookFilters(genre, blockedAuthorIds)
+  filters.push(inArray(books.id, candidateIds))
+
+  const rows = await db
+    .select({
+      id: books.id,
+      title: books.title,
+      authorUserId: books.userId,
+      coverUrl: books.coverUrl,
+      synopsis: books.synopsis,
+      genre: books.genre,
+      tags: books.tags,
+      updatedAt: books.updatedAt,
+      firstPubliclyDiscoverableAt: books.firstPubliclyDiscoverableAt,
+    })
+    .from(books)
+    .where(and(...filters))
+
+  const lastMap = new Map(
+    lastUpdateRows.map((r) => [r.bookId, r.last as Date]),
+  )
+  const sorted = rows
+    .filter((r) => lastMap.has(r.id))
+    .sort((a, b) => {
+      const al = lastMap.get(a.id)!.getTime()
+      const bl = lastMap.get(b.id)!.getTime()
+      if (bl !== al) return bl - al
+      return b.id.localeCompare(a.id)
+    })
+
+  let filtered = sorted
+  if (cursor && typeof cursor.sortKey === 'number') {
+    const sk: number = cursor.sortKey;
+    filtered = sorted.filter((r) => {
+      const last = lastMap.get(r.id)!.getTime()
+      if (last < sk) return true
+      if (last === sk && r.id < cursor.id) return true
+      return false
+    })
+  }
+
+  const pageRows = filtered.slice(0, RAIL_LIMIT)
+  const lastRow = pageRows[pageRows.length - 1]
+  const hasMore = filtered.length > RAIL_LIMIT
+  const nextCursor =
+    hasMore && lastRow
+      ? encodeCursor({
+          sortKey: lastMap.get(lastRow.id)!.getTime(),
+          id: lastRow.id,
+        })
+      : null
+
+  return {
+    success: true,
+    data: await railWithBackfill(pageRows, genre, blockedAuthorIds, nextCursor),
+  }
+}
+
+// ─── 5. New Releases ──────────────────────────────────────────────────────────
+
+export async function getNewReleasesBooksAction(args: {
+  genre?: string
+  cursor?: string | null
+}): Promise<ActionResult<RailResult>> {
+  const viewerId = await getOptionalUserId()
+  const blockedAuthorIds = await getBlockedAuthorIdsForViewer(viewerId)
+  const genre =
+    args.genre && isValidGenre(args.genre) ? (args.genre as GenreSlug) : undefined
+  const cursor = decodeCursor(args.cursor)
+
+  const thirtyDaysAgo = new Date(Date.now() - THIRTY_DAYS_MS)
+  const filters = buildPublicBookFilters(genre, blockedAuthorIds)
+  filters.push(gte(books.firstPubliclyDiscoverableAt, thirtyDaysAgo))
+
+  if (cursor && typeof cursor.sortKey === 'number') {
+    const sk: number = cursor.sortKey;
+    const cursorDate = new Date(sk)
+    filters.push(
+      or(
+        lt(books.firstPubliclyDiscoverableAt, cursorDate),
+        and(
+          eq(books.firstPubliclyDiscoverableAt, cursorDate),
+          lt(books.id, cursor.id),
+        ),
+      )!,
+    )
+  }
+
+  const rows = await db
+    .select({
+      id: books.id,
+      title: books.title,
+      authorUserId: books.userId,
+      coverUrl: books.coverUrl,
+      synopsis: books.synopsis,
+      genre: books.genre,
+      tags: books.tags,
+      updatedAt: books.updatedAt,
+      firstPubliclyDiscoverableAt: books.firstPubliclyDiscoverableAt,
+    })
+    .from(books)
+    .where(and(...filters))
+    .orderBy(desc(books.firstPubliclyDiscoverableAt), desc(books.id))
+    .limit(RAIL_LIMIT + 1)
+
+  const hasMore = rows.length > RAIL_LIMIT
+  const pageRows = rows.slice(0, RAIL_LIMIT)
+  const last = pageRows[pageRows.length - 1]
+  const nextCursor =
+    hasMore && last && last.firstPubliclyDiscoverableAt
+      ? encodeCursor({
+          sortKey: last.firstPubliclyDiscoverableAt.getTime(),
+          id: last.id,
+        })
+      : null
+
+  return {
+    success: true,
+    data: await railWithBackfill(pageRows, genre, blockedAuthorIds, nextCursor),
+  }
+}
+
+// ─── 6. Best Ongoing ──────────────────────────────────────────────────────────
+
+const getBestOngoingMedian = unstable_cache(
+  async (): Promise<number> => {
+    // Build "currently active" book set = at least one chapter REVISED/FINAL
+    // updated in the last 30 days. Sum (likes + comments + author follower
+    // count) per book and return the median.
+    const thirtyDaysAgo = new Date(Date.now() - THIRTY_DAYS_MS)
+    const activeBookRows = await db
+      .selectDistinct({ bookId: chapters.bookId })
+      .from(chapters)
+      .where(
+        and(
+          inArray(chapters.status, ['REVISED', 'FINAL']),
+          gte(chapters.updatedAt, thirtyDaysAgo),
+        ),
+      )
+    if (activeBookRows.length === 0) return 0
+    const ids = activeBookRows.map((r) => r.bookId)
+
+    const [likeRows, commentRows, authorRows] = await Promise.all([
+      db
+        .select({ bookId: bookLikes.bookId, total: count() })
+        .from(bookLikes)
+        .where(inArray(bookLikes.bookId, ids))
+        .groupBy(bookLikes.bookId),
+      db
+        .select({ bookId: bookComments.bookId, total: count() })
+        .from(bookComments)
+        .where(inArray(bookComments.bookId, ids))
+        .groupBy(bookComments.bookId),
+      db
+        .select({ bookId: books.id, authorUserId: books.userId })
+        .from(books)
+        .where(inArray(books.id, ids)),
+    ])
+
+    const authorMap = new Map(authorRows.map((r) => [r.bookId, r.authorUserId]))
+    const authorIds = Array.from(new Set(authorMap.values()))
+    const followerRows =
+      authorIds.length === 0
+        ? []
+        : await db
+            .select({ followeeId: follows.followeeId, total: count() })
+            .from(follows)
+            .where(inArray(follows.followeeId, authorIds))
+            .groupBy(follows.followeeId)
+    const followerMap = new Map(
+      followerRows.map((r) => [r.followeeId, Number(r.total)]),
+    )
+
+    const likeMap = new Map(likeRows.map((r) => [r.bookId, Number(r.total)]))
+    const commentMap = new Map(
+      commentRows.map((r) => [r.bookId, Number(r.total)]),
+    )
+
+    const scores = ids.map((id) => {
+      const l = likeMap.get(id) ?? 0
+      const c = commentMap.get(id) ?? 0
+      const author = authorMap.get(id)
+      const f = author ? followerMap.get(author) ?? 0 : 0
+      return l + c + f
+    })
+    scores.sort((a, b) => a - b)
+    const mid = Math.floor(scores.length / 2)
+    return scores.length % 2 === 0
+      ? (scores[mid - 1] + scores[mid]) / 2
+      : scores[mid]
+  },
+  ['discover-best-ongoing-median'],
+  { revalidate: 300 },
+)
+
+export async function getBestOngoingBooksAction(args: {
+  genre?: string
+  cursor?: string | null
+}): Promise<ActionResult<RailResult>> {
+  const viewerId = await getOptionalUserId()
+  const blockedAuthorIds = await getBlockedAuthorIdsForViewer(viewerId)
+  const genre =
+    args.genre && isValidGenre(args.genre) ? (args.genre as GenreSlug) : undefined
+  const cursor = decodeCursor(args.cursor)
+
+  const median = await getBestOngoingMedian()
+  const thirtyDaysAgo = new Date(Date.now() - THIRTY_DAYS_MS)
+
+  // Active books = ones with a REVISED/FINAL chapter touched in last 30d.
+  const activeRows = await db
+    .selectDistinct({ bookId: chapters.bookId })
+    .from(chapters)
+    .where(
+      and(
+        inArray(chapters.status, ['REVISED', 'FINAL']),
+        gte(chapters.updatedAt, thirtyDaysAgo),
+      ),
+    )
+
+  if (activeRows.length === 0) {
+    return {
+      success: true,
+      data: await railWithBackfill([], genre, blockedAuthorIds, null),
+    }
+  }
+
+  const activeIds = activeRows.map((r) => r.bookId)
+  const filters = buildPublicBookFilters(genre, blockedAuthorIds)
+  filters.push(inArray(books.id, activeIds))
+
+  const rows = await db
+    .select({
+      id: books.id,
+      title: books.title,
+      authorUserId: books.userId,
+      coverUrl: books.coverUrl,
+      synopsis: books.synopsis,
+      genre: books.genre,
+      tags: books.tags,
+      updatedAt: books.updatedAt,
+      firstPubliclyDiscoverableAt: books.firstPubliclyDiscoverableAt,
+    })
+    .from(books)
+    .where(and(...filters))
+
+  const ids = rows.map((r) => r.id)
+  const [likeRows, commentRows] = await Promise.all([
+    ids.length === 0
+      ? Promise.resolve([] as Array<{ bookId: string; total: number | string }>)
+      : db
+          .select({ bookId: bookLikes.bookId, total: count() })
+          .from(bookLikes)
+          .where(inArray(bookLikes.bookId, ids))
+          .groupBy(bookLikes.bookId),
+    ids.length === 0
+      ? Promise.resolve([] as Array<{ bookId: string; total: number | string }>)
+      : db
+          .select({ bookId: bookComments.bookId, total: count() })
+          .from(bookComments)
+          .where(inArray(bookComments.bookId, ids))
+          .groupBy(bookComments.bookId),
+  ])
+  const likeMap = new Map(likeRows.map((r) => [r.bookId, Number(r.total)]))
+  const commentMap = new Map(
+    commentRows.map((r) => [r.bookId, Number(r.total)]),
+  )
+
+  const scored = rows
+    .map((r) => ({
+      row: r,
+      engagement: (likeMap.get(r.id) ?? 0) + (commentMap.get(r.id) ?? 0),
+    }))
+    .filter((s) => s.engagement >= median)
+    .sort((a, b) => {
+      if (b.engagement !== a.engagement) return b.engagement - a.engagement
+      return b.row.id.localeCompare(a.row.id)
+    })
+
+  let filtered = scored
+  if (cursor && typeof cursor.sortKey === 'number') {
+    const sk: number = cursor.sortKey;
+    filtered = scored.filter((s) => {
+      if (s.engagement < sk) return true
+      if (s.engagement === sk && s.row.id < cursor.id) return true
+      return false
+    })
+  }
+
+  const pageRows = filtered.slice(0, RAIL_LIMIT)
+  const strictRaw = pageRows.map((p) => p.row)
+  const last = pageRows[pageRows.length - 1]
+  const hasMore = filtered.length > RAIL_LIMIT
+  const nextCursor =
+    hasMore && last
+      ? encodeCursor({ sortKey: last.engagement, id: last.row.id })
+      : null
+
+  return {
+    success: true,
+    data: await railWithBackfill(strictRaw, genre, blockedAuthorIds, nextCursor),
+  }
+}
+
+// ─── 7. From Authors You Follow ───────────────────────────────────────────────
+//
+// Guest behavior: this action calls `requireAuth()`, which throws `AuthError`
+// for guests. Callers (the Books home page orchestrator) wrap in `.catch()` so
+// a guest visit doesn't crash the page; the surface simply hides the rail.
+
+export async function getFollowingFeedAction(args: {
+  genre?: string
+  cursor?: string | null
+}): Promise<ActionResult<RailResult>> {
+  const viewerId = await requireAuth()
+  const blockedAuthorIds = await getBlockedAuthorIdsForViewer(viewerId)
+  const genre =
+    args.genre && isValidGenre(args.genre) ? (args.genre as GenreSlug) : undefined
+  const cursor = decodeCursor(args.cursor)
+
+  // Followee ids.
+  const followeeRows = await db
+    .select({ id: follows.followeeId })
+    .from(follows)
+    .where(eq(follows.followerId, viewerId))
+  if (followeeRows.length === 0) {
+    return {
+      success: true,
+      data: { books: [], strictCount: 0, nextCursor: null },
+    }
+  }
+  const followeeIds = followeeRows.map((r) => r.id)
+
+  const thirtyDaysAgo = new Date(Date.now() - THIRTY_DAYS_MS)
+
+  // Books authored by followees + chapter activity in window.
+  const lastUpdateRows = await db
+    .select({
+      bookId: chapters.bookId,
+      last: sql<Date>`MAX(${chapters.updatedAt})`,
+    })
+    .from(chapters)
+    .innerJoin(books, eq(chapters.bookId, books.id))
+    .where(
+      and(
+        inArray(books.userId, followeeIds),
+        inArray(chapters.status, ['REVISED', 'FINAL']),
+        gte(chapters.updatedAt, thirtyDaysAgo),
+      ),
+    )
+    .groupBy(chapters.bookId)
+    .orderBy(desc(sql`MAX(${chapters.updatedAt})`))
+    .limit(200)
+
+  if (lastUpdateRows.length === 0) {
+    return {
+      success: true,
+      data: { books: [], strictCount: 0, nextCursor: null },
+    }
+  }
+
+  const candidateIds = lastUpdateRows.map((r) => r.bookId)
+  const filters = buildPublicBookFilters(genre, blockedAuthorIds)
+  filters.push(inArray(books.id, candidateIds))
+
+  const rows = await db
+    .select({
+      id: books.id,
+      title: books.title,
+      authorUserId: books.userId,
+      coverUrl: books.coverUrl,
+      synopsis: books.synopsis,
+      genre: books.genre,
+      tags: books.tags,
+      updatedAt: books.updatedAt,
+      firstPubliclyDiscoverableAt: books.firstPubliclyDiscoverableAt,
+    })
+    .from(books)
+    .where(and(...filters))
+
+  const lastMap = new Map(
+    lastUpdateRows.map((r) => [r.bookId, r.last as Date]),
+  )
+  const sorted = rows
+    .filter((r) => lastMap.has(r.id))
+    .sort((a, b) => {
+      const al = lastMap.get(a.id)!.getTime()
+      const bl = lastMap.get(b.id)!.getTime()
+      if (bl !== al) return bl - al
+      return b.id.localeCompare(a.id)
+    })
+
+  let filtered = sorted
+  if (cursor && typeof cursor.sortKey === 'number') {
+    const sk: number = cursor.sortKey;
+    filtered = sorted.filter((r) => {
+      const last = lastMap.get(r.id)!.getTime()
+      if (last < sk) return true
+      if (last === sk && r.id < cursor.id) return true
+      return false
+    })
+  }
+
+  const pageRows = filtered.slice(0, RAIL_LIMIT)
+  const lastRow = pageRows[pageRows.length - 1]
+  const hasMore = filtered.length > RAIL_LIMIT
+  const nextCursor =
+    hasMore && lastRow
+      ? encodeCursor({
+          sortKey: lastMap.get(lastRow.id)!.getTime(),
+          id: lastRow.id,
+        })
+      : null
+
+  // NOTE: Following rail does NOT backfill. strictCount === books.length.
+  const cards = await projectToBookCards(pageRows)
+  return {
+    success: true,
+    data: { books: cards, strictCount: cards.length, nextCursor },
+  }
+}
+
+// ─── 8. Backfill helper (public) ──────────────────────────────────────────────
+
+export async function getBackfillBooksAction(args: {
+  excludeIds: string[]
+  genre?: string
+  limit?: number
+}): Promise<ActionResult<BookCard[]>> {
+  const viewerId = await getOptionalUserId()
+  const blockedAuthorIds = await getBlockedAuthorIdsForViewer(viewerId)
+  const genre =
+    args.genre && isValidGenre(args.genre) ? (args.genre as GenreSlug) : undefined
+  const limit = args.limit ?? 4
+
+  const rows = await getRecentlyUpdatedRowsInternal(
+    genre,
+    args.excludeIds,
+    blockedAuthorIds,
+    limit,
+    THIRTY_DAYS_MS,
+  )
+  const cards = await projectToBookCards(rows)
+  return { success: true, data: cards }
+}
+
+// ─── 9. Search (Discover) ─────────────────────────────────────────────────────
+
+export async function searchBooksDiscoverAction(args: {
+  q: string
+  genre?: string
+  tag?: string
+  sort?: 'relevance' | 'recent' | 'popular'
+  cursor?: string | null
+}): Promise<
+  ActionResult<{ books: BookCard[]; nextCursor: string | null }>
+> {
+  const viewerId = await getOptionalUserId()
+  const blockedAuthorIds = await getBlockedAuthorIdsForViewer(viewerId)
+  const genre =
+    args.genre && isValidGenre(args.genre) ? (args.genre as GenreSlug) : undefined
+  const cursor = decodeCursor(args.cursor)
+
+  const q = args.q.trim()
+  if (q.length === 0) {
+    return { success: true, data: { books: [], nextCursor: null } }
+  }
+  // 'relevance' currently maps to 'recent' until a real relevance signal lands.
+  // TODO: real relevance scoring (per spec §9 — out of scope for D1).
+  const sort: 'recent' | 'popular' =
+    args.sort === 'popular' ? 'popular' : 'recent'
+
+  const like = `%${q}%`
+  const filters = buildPublicBookFilters(genre, blockedAuthorIds)
+  // Title / author display name / author username substring match, OR tag exact match.
+  filters.push(
+    or(
+      ilike(books.title, like),
+      ilike(userProfiles.displayName, like),
+      ilike(userProfiles.username, like),
+      sql`${q} = ANY(${books.tags})`,
+    )!,
+  )
+  if (args.tag) {
+    filters.push(sql`${args.tag} = ANY(${books.tags})`)
+  }
+
+  // Fetch a candidate window. For popular sort we need likeCount, so we
+  // hydrate after the SELECT for both sort modes for simplicity.
+  const rows = await db
+    .select({
+      id: books.id,
+      title: books.title,
+      authorUserId: books.userId,
+      coverUrl: books.coverUrl,
+      synopsis: books.synopsis,
+      genre: books.genre,
+      tags: books.tags,
+      updatedAt: books.updatedAt,
+      firstPubliclyDiscoverableAt: books.firstPubliclyDiscoverableAt,
+    })
+    .from(books)
+    .leftJoin(userProfiles, eq(userProfiles.userId, books.userId))
+    .where(and(...filters))
+    .limit(200)
+
+  // De-dupe (the JOIN can produce duplicates if a book has multiple matches).
+  const seen = new Set<string>()
+  const unique: typeof rows = []
+  for (const r of rows) {
+    if (seen.has(r.id)) continue
+    seen.add(r.id)
+    unique.push(r)
+  }
+
+  let sorted: typeof rows
+  if (sort === 'popular') {
+    const ids = unique.map((r) => r.id)
+    const likeRows =
+      ids.length === 0
+        ? []
+        : await db
+            .select({ bookId: bookLikes.bookId, total: count() })
+            .from(bookLikes)
+            .where(inArray(bookLikes.bookId, ids))
+            .groupBy(bookLikes.bookId)
+    const likeMap = new Map(likeRows.map((r) => [r.bookId, Number(r.total)]))
+    sorted = [...unique].sort((a, b) => {
+      const al = likeMap.get(a.id) ?? 0
+      const bl = likeMap.get(b.id) ?? 0
+      if (bl !== al) return bl - al
+      return b.id.localeCompare(a.id)
+    })
+    if (cursor && typeof cursor.sortKey === 'number') {
+    const sk: number = cursor.sortKey;
+      sorted = sorted.filter((r) => {
+        const lc = likeMap.get(r.id) ?? 0
+        if (lc < sk) return true
+        if (lc === sk && r.id < cursor.id) return true
+        return false
+      })
+    }
+    const pageRows = sorted.slice(0, RAIL_LIMIT)
+    const last = pageRows[pageRows.length - 1]
+    const hasMore = sorted.length > RAIL_LIMIT
+    const nextCursor =
+      hasMore && last
+        ? encodeCursor({
+            sortKey: likeMap.get(last.id) ?? 0,
+            id: last.id,
+          })
+        : null
+    const cards = await projectToBookCards(pageRows)
+    return { success: true, data: { books: cards, nextCursor } }
+  }
+
+  // 'recent' sort.
+  sorted = [...unique].sort((a, b) => {
+    const at = a.updatedAt.getTime()
+    const bt = b.updatedAt.getTime()
+    if (bt !== at) return bt - at
+    return b.id.localeCompare(a.id)
+  })
+  if (cursor && typeof cursor.sortKey === 'number') {
+    const sk: number = cursor.sortKey;
+    sorted = sorted.filter((r) => {
+      const t = r.updatedAt.getTime()
+      if (t < sk) return true
+      if (t === sk && r.id < cursor.id) return true
+      return false
+    })
+  }
+  const pageRows = sorted.slice(0, RAIL_LIMIT)
+  const last = pageRows[pageRows.length - 1]
+  const hasMore = sorted.length > RAIL_LIMIT
+  const nextCursor =
+    hasMore && last
+      ? encodeCursor({ sortKey: last.updatedAt.getTime(), id: last.id })
+      : null
+  const cards = await projectToBookCards(pageRows)
+  return { success: true, data: { books: cards, nextCursor } }
+}
+
+// ─── 10. Genre book counts (cached 5min) ──────────────────────────────────────
+
+const getGenreBookCountsCached = unstable_cache(
+  async (): Promise<Record<GenreSlug, number>> => {
+    const rows = await db
+      .select({ genre: books.genre, total: count() })
+      .from(books)
+      .where(
+        and(
+          eq(books.visibility, 'PUBLIC'),
+          eq(books.discoverable, true),
+          ne(books.status, 'STANDALONE_HIVE_SHADOW'),
+        ),
+      )
+      .groupBy(books.genre)
+
+    const counts: Record<GenreSlug, number> = GENRES.reduce(
+      (acc, slug) => {
+        acc[slug] = 0
+        return acc
+      },
+      {} as Record<GenreSlug, number>,
+    )
+    for (const r of rows) {
+      const slug = normalizeGenre(r.genre)
+      counts[slug] += Number(r.total)
+    }
+    return counts
+  },
+  ['discover-genre-counts'],
+  { revalidate: 300, tags: ['discover-genre-counts'] },
+)
+
+export async function getGenreBookCountsAction(): Promise<
+  ActionResult<Record<GenreSlug, number>>
+> {
+  const data = await getGenreBookCountsCached()
+  return { success: true, data }
+}
+
+// ─── Legacy preserved exports ─────────────────────────────────────────────────
+// These predate D1 and are still consumed by the public book reader page and
+// AddBookModal in /reading-lists and /clubs. The new D1 surface uses BookCard /
+// RailResult instead.
 
 /**
  * Returns the book data for the reader page. Does NOT gate by privacy.
  * Callers must gate access with `canReadBook()` before rendering.
  */
 export async function getPublicBookAction(
-  bookId: string
+  bookId: string,
 ): Promise<ActionResult<PublicBook>> {
   const [row] = await db
     .select({
@@ -192,18 +1463,21 @@ export async function getPublicBookAction(
 
   if (!row) return { success: false, error: 'NOT_FOUND' }
 
-  const [likeCount, bookmarkCount, wordCountResult, chapterCountResult] = await Promise.all([
-    db.select({ total: count() }).from(bookLikes).where(eq(bookLikes.bookId, bookId)),
-    db.select({ total: count() }).from(bookmarks).where(eq(bookmarks.bookId, bookId)),
-    db
-      .select({ total: sql<number>`COALESCE(SUM(${chapters.wordCount}), 0)` })
-      .from(chapters)
-      .where(eq(chapters.bookId, bookId)),
-    db
-      .select({ total: count() })
-      .from(binderItems)
-      .where(and(eq(binderItems.bookId, bookId), eq(binderItems.type, 'chapter'))),
-  ])
+  const [likeCount, bookmarkCount, wordCountResult, chapterCountResult] =
+    await Promise.all([
+      db.select({ total: count() }).from(bookLikes).where(eq(bookLikes.bookId, bookId)),
+      db.select({ total: count() }).from(bookmarks).where(eq(bookmarks.bookId, bookId)),
+      db
+        .select({ total: sql<number>`COALESCE(SUM(${chapters.wordCount}), 0)` })
+        .from(chapters)
+        .where(eq(chapters.bookId, bookId)),
+      db
+        .select({ total: count() })
+        .from(binderItems)
+        .where(
+          and(eq(binderItems.bookId, bookId), eq(binderItems.type, 'chapter')),
+        ),
+    ])
 
   return {
     success: true,
@@ -222,7 +1496,7 @@ const COMMENTS_PAGE_SIZE = 20
 
 export async function getBookCommentsAction(
   bookId: string,
-  page: number = 1
+  page: number = 1,
 ): Promise<ActionResult<{ comments: BookComment[]; hasMore: boolean }>> {
   const userId = await getOptionalUserId()
   const access = await canReadBook(bookId, userId)
@@ -288,31 +1562,6 @@ export async function getMoreByAuthorAction(
   return { success: true, data: rows[0] ?? null }
 }
 
-export async function getDiscoverWritersAction(): Promise<ActionResult<DiscoverWriter[]>> {
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-
-  const rows = await db
-    .select({
-      userId: userProfiles.userId,
-      username: userProfiles.username,
-      displayName: userProfiles.displayName,
-      avatarUrl: userProfiles.avatarUrl,
-      bookCount: sql<number>`COUNT(DISTINCT ${books.id})`,
-    })
-    .from(books)
-    .innerJoin(userProfiles, eq(books.userId, userProfiles.userId))
-    .innerJoin(bookLikes, and(
-      eq(bookLikes.bookId, books.id),
-      sql`${bookLikes.createdAt} > ${sevenDaysAgo}`
-    ))
-    .where(and(eq(books.discoverable, true), eq(books.visibility, 'PUBLIC')))
-    .groupBy(userProfiles.userId, userProfiles.username, userProfiles.displayName, userProfiles.avatarUrl)
-    .orderBy(desc(sql`COUNT(${bookLikes.userId})`))
-    .limit(3)
-
-  return { success: true, data: rows }
-}
-
 export type SearchBookHit = {
   bookId: string
   title: string
@@ -323,7 +1572,7 @@ export type SearchBookHit = {
 /**
  * C3 T7: search public+discoverable books by title or author display name,
  * filtered through bidirectional `isBlocked` on author. Used by AddBookModal's
- * Beehive search tab.
+ * Beehive search tab. Distinct from D1's `searchBooksDiscoverAction`.
  */
 export async function searchBooksAction(
   input: unknown,

@@ -1,7 +1,10 @@
 'use client'
 
+// TODO: T6 rewrite — this file will be deleted once the rail-stacked Books
+// home ships. Until then it's not mounted anywhere; the stub below exists
+// only so tsc + the build keep working while we transition.
+
 import { useState, useTransition } from 'react'
-import { getDiscoverFeedAction } from '@/lib/actions/discover.actions'
 import { BookCard } from './book-card'
 import type { DiscoverBook } from '@/lib/actions/discover.actions'
 
@@ -21,17 +24,12 @@ export function LoadMoreFeed({ initialBooks, initialHasMore, sort, genre, locale
 
   const loadMore = () => {
     startTransition(async () => {
-      const nextPage = page + 1
-      const result = await getDiscoverFeedAction(
-        sort as 'trending' | 'popular' | 'new',
-        genre,
-        nextPage
-      )
-      if (result.success) {
-        setBooks(prev => [...prev, ...result.data.books])
-        setHasMore(result.data.hasMore)
-        setPage(nextPage)
-      }
+      // TODO: T6 rewrite — load-more disabled; legacy getDiscoverFeedAction
+      // removed in D1 T3.
+      void sort
+      void genre
+      setPage(page + 1)
+      setHasMore(false)
     })
   }
 

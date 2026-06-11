@@ -1,0 +1,943 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Members page — design options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --canvas-dark-100: #262728;
+    --canvas-dark-150: #2a2b2c;
+    --canvas-dark-200: #2c2d2e;
+    --canvas-dark-250: #303132;
+    --canvas-dark-300: #34353b;
+    --canvas-dark-350: #3a3b40;
+    --canvas-dark-400: #404148;
+    --canvas-dark-ink: oklch(0.95 0.005 256);
+    --canvas-dark-ink-muted: oklch(0.78 0.005 256);
+    --canvas-dark-ink-faint: oklch(0.6 0.005 256);
+    --canvas-dark-ink-strong: oklch(1 0 0);
+    --brand: #FFC300;
+    --brand-hover: #ffd233;
+    --brand-ink: #1a1a1a;
+    --brand-soft: oklch(from #FFC300 l c h / 0.14);
+    --role-owner: #FFC300;
+    --role-moderator: oklch(0.72 0.13 250);
+    --role-contributor: oklch(0.78 0.13 165);
+    --role-reader: oklch(0.7 0.005 256);
+    --status-success: oklch(0.78 0.16 145);
+    --status-error: oklch(0.66 0.18 25);
+    --r-card: 20px;
+    --r-row: 14px;
+    --r-btn: 12px;
+    --r-pill: 999px;
+    --sh-card: 0 1px 0 rgba(255,255,255,0.04) inset, 0 8px 28px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+    --sh-tile: 0 1px 0 rgba(255,255,255,0.06) inset, 0 1px 2px rgba(0,0,0,0.3);
+    --sh-inset: inset 0 1px 3px rgba(0,0,0,0.35);
+    --sh-brand: 0 4px 16px oklch(from #FFC300 l c h / 0.28), 0 1px 0 rgba(255,255,255,0.2) inset;
+    --br-card: 1px solid rgba(255,255,255,0.06);
+    --br-soft: 1px solid rgba(255,255,255,0.04);
+    --font-display: 'Comfortaa', system-ui, sans-serif;
+    --font-ui: 'Comfortaa', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: #1f2021;
+    color: var(--canvas-dark-ink);
+    font-family: var(--font-ui);
+    line-height: 1.5;
+    padding: 40px 24px 80px;
+  }
+  .page-head {
+    max-width: 1200px;
+    margin: 0 auto 36px;
+    text-align: center;
+  }
+  .page-head h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 28px;
+    color: var(--brand);
+    margin: 0 0 8px;
+    letter-spacing: -0.01em;
+  }
+  .page-head p { color: var(--canvas-dark-ink-muted); font-size: 13px; margin: 0; }
+
+  .variant {
+    max-width: 1200px;
+    margin: 0 auto 72px;
+  }
+  .variant-head {
+    display: flex; align-items: baseline; gap: 14px; margin-bottom: 22px;
+    padding: 0 4px;
+  }
+  .tag {
+    font-family: var(--font-mono);
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--brand);
+    background: var(--brand-soft);
+    padding: 5px 12px; border-radius: var(--r-pill);
+  }
+  .variant-head h2 {
+    font-family: var(--font-display);
+    font-weight: 700; font-size: 22px; margin: 0;
+    color: var(--canvas-dark-ink-strong);
+  }
+  .variant-head p {
+    color: var(--canvas-dark-ink-muted); font-size: 13px;
+    margin: 0; line-height: 1.55; flex: 1;
+  }
+
+  /* Page shell — emulates HivePageShell */
+  .shell {
+    background: linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200));
+    border: var(--br-card);
+    border-radius: var(--r-card);
+    box-shadow: var(--sh-card);
+    overflow: hidden;
+  }
+  .shell-head {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 18px;
+    padding: 24px 28px 20px;
+    border-bottom: var(--br-soft);
+  }
+  .shell-head h1 {
+    font-family: var(--font-display);
+    font-weight: 700; font-size: 28px;
+    color: var(--brand);
+    margin: 0; letter-spacing: -0.01em;
+  }
+  .shell-head .sub {
+    color: var(--canvas-dark-ink-muted);
+    font-size: 13px; margin: 4px 0 0;
+  }
+
+  /* Shared atoms */
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 16px;
+    background: var(--brand); color: var(--brand-ink);
+    border-radius: var(--r-pill);
+    box-shadow: var(--sh-brand);
+    border: none; font: inherit; font-weight: 700; font-size: 13px;
+    cursor: pointer;
+  }
+  .btn-tile {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 14px;
+    background: linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300));
+    color: var(--canvas-dark-ink);
+    border-radius: var(--r-pill);
+    box-shadow: var(--sh-tile);
+    border: none; font: inherit; font-weight: 600; font-size: 12.5px;
+    cursor: pointer;
+  }
+  .btn-ghost {
+    padding: 8px 12px; border: 0; background: transparent;
+    color: var(--canvas-dark-ink-muted);
+    font: inherit; font-size: 12.5px; cursor: pointer;
+    border-radius: var(--r-pill);
+  }
+  .btn-ghost:hover { color: var(--canvas-dark-ink-strong); }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: var(--r-pill);
+    font-weight: 700;
+  }
+  .pill.owner { background: oklch(from var(--role-owner) l c h / 0.16); color: var(--role-owner); border: 1px solid oklch(from var(--role-owner) l c h / 0.3); }
+  .pill.mod { background: oklch(from var(--role-moderator) l c h / 0.16); color: var(--role-moderator); border: 1px solid oklch(from var(--role-moderator) l c h / 0.3); }
+  .pill.contrib { background: oklch(from var(--role-contributor) l c h / 0.16); color: var(--role-contributor); border: 1px solid oklch(from var(--role-contributor) l c h / 0.3); }
+  .pill.reader { background: oklch(from var(--role-reader) l c h / 0.16); color: var(--canvas-dark-ink-strong); border: 1px solid oklch(from var(--role-reader) l c h / 0.3); }
+
+  .avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--brand), var(--brand-hover));
+    color: var(--brand-ink);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px;
+    flex-shrink: 0;
+  }
+  .avatar.sm { width: 28px; height: 28px; font-size: 11px; }
+  .avatar.lg { width: 56px; height: 56px; font-size: 18px; }
+  .avatar.mint { background: linear-gradient(135deg, oklch(0.78 0.13 165), oklch(0.68 0.13 165)); color: white; }
+  .avatar.pink { background: linear-gradient(135deg, oklch(0.78 0.13 12), oklch(0.68 0.13 12)); color: white; }
+  .avatar.blue { background: linear-gradient(135deg, oklch(0.74 0.13 250), oklch(0.64 0.13 250)); color: white; }
+  .avatar.lilac { background: linear-gradient(135deg, oklch(0.78 0.11 305), oklch(0.68 0.11 305)); color: white; }
+  .avatar.slate { background: linear-gradient(135deg, oklch(0.55 0.02 256), oklch(0.45 0.02 256)); color: white; }
+
+  .input {
+    background: var(--canvas-dark-100); box-shadow: var(--sh-inset);
+    border: 0; border-radius: var(--r-row);
+    color: var(--canvas-dark-ink-strong);
+    padding: 11px 14px;
+    font: inherit; font-size: 14px;
+    outline: none; width: 100%;
+  }
+  .input.mono { font-family: var(--font-mono); font-size: 12.5px; }
+
+  .label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--canvas-dark-ink-muted);
+    margin-bottom: 8px;
+  }
+
+  /* ─────────────── OPTION A: Stat strip + forum table ─────────────── */
+  .a-stats {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr 1fr;
+    gap: 14px;
+    padding: 24px 28px;
+    border-bottom: var(--br-soft);
+  }
+  .stat-tile {
+    background: linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300));
+    box-shadow: var(--sh-tile);
+    border: var(--br-soft);
+    border-radius: var(--r-row);
+    padding: 16px 18px;
+  }
+  .stat-tile .label { margin: 0 0 8px; }
+  .stat-tile .v {
+    font-family: var(--font-display); font-weight: 700; font-size: 28px;
+    color: var(--brand); line-height: 1.1;
+  }
+  .stat-tile .v .of {
+    font-size: 14px; color: var(--canvas-dark-ink-muted); font-weight: 400;
+  }
+  .progress {
+    height: 6px; background: var(--canvas-dark-100); box-shadow: var(--sh-inset);
+    border-radius: var(--r-pill);
+    margin-top: 12px; overflow: hidden;
+  }
+  .progress .fill {
+    height: 100%; background: var(--brand); border-radius: var(--r-pill);
+  }
+  .who-tile { display: flex; align-items: center; gap: 12px; }
+  .who-tile .who-name {
+    font-family: var(--font-display); font-weight: 700; font-size: 14.5px;
+    color: var(--canvas-dark-ink-strong); margin: 0;
+  }
+  .who-tile .who-handle {
+    font-family: var(--font-mono); font-size: 10.5px;
+    letter-spacing: 0.08em; color: var(--canvas-dark-ink-muted);
+  }
+
+  .a-toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 14px;
+    padding: 16px 28px;
+    border-bottom: var(--br-soft);
+  }
+  .a-tabs { display: flex; gap: 4px; }
+  .a-tab {
+    padding: 7px 14px;
+    border: 0; background: transparent;
+    color: var(--canvas-dark-ink-muted);
+    font: inherit; font-size: 12.5px; font-weight: 600;
+    border-radius: var(--r-pill); cursor: pointer;
+  }
+  .a-tab.on {
+    background: var(--brand-soft); color: var(--brand);
+  }
+  .search {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--canvas-dark-100); box-shadow: var(--sh-inset);
+    border-radius: var(--r-pill); padding: 8px 14px;
+    color: var(--canvas-dark-ink-muted);
+    width: 240px;
+  }
+  .search input {
+    background: transparent; border: 0; outline: none;
+    color: var(--canvas-dark-ink-strong);
+    font: inherit; font-size: 13px; width: 100%;
+  }
+
+  .a-list {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) 140px 110px 48px;
+    column-gap: 14px;
+  }
+  .a-list .head-row {
+    display: contents;
+  }
+  .a-list .head-row > div {
+    padding: 12px 28px;
+    background: var(--canvas-dark-150);
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--canvas-dark-ink-muted);
+    border-bottom: var(--br-soft);
+  }
+  .a-list .row {
+    display: contents;
+  }
+  .a-list .row > div {
+    padding: 14px 28px;
+    display: flex; align-items: center; gap: 12px;
+    border-bottom: var(--br-soft);
+    background: transparent;
+    transition: background 0.12s;
+  }
+  .a-list .row:hover > div { background: rgba(255,255,255,0.025); }
+  .a-list .who-cell .who-name {
+    font-family: var(--font-display); font-weight: 700; font-size: 14px;
+    color: var(--canvas-dark-ink-strong);
+  }
+  .a-list .who-cell .who-handle {
+    font-family: var(--font-mono); font-size: 10.5px;
+    letter-spacing: 0.08em; color: var(--canvas-dark-ink-muted);
+    margin-top: 2px;
+  }
+  .a-list .joined {
+    color: var(--canvas-dark-ink-muted); font-size: 12.5px;
+  }
+  .kebab {
+    width: 28px; height: 28px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: var(--r-btn); border: 0; cursor: pointer;
+    background: transparent;
+    color: var(--canvas-dark-ink-muted);
+  }
+  .kebab:hover { background: var(--canvas-dark-150); color: var(--canvas-dark-ink-strong); }
+
+  /* ─────────────── OPTION B: Card grid + side rail ─────────────── */
+  .b-grid {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 18px;
+    padding: 22px;
+  }
+  .b-cards-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .b-cards-head h3 {
+    font-family: var(--font-display); font-weight: 700; font-size: 16px;
+    color: var(--canvas-dark-ink-strong); margin: 0;
+  }
+  .b-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+  }
+  .b-card {
+    background: linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300));
+    border: var(--br-soft);
+    border-radius: var(--r-card);
+    box-shadow: var(--sh-tile);
+    padding: 18px;
+    display: flex; flex-direction: column; gap: 8px;
+    position: relative;
+    overflow: hidden;
+  }
+  .b-card .accent {
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  }
+  .b-card.owner .accent { background: var(--role-owner); }
+  .b-card.mod .accent { background: var(--role-moderator); }
+  .b-card.contrib .accent { background: var(--role-contributor); }
+  .b-card.reader .accent { background: var(--role-reader); }
+  .b-card .head { display: flex; align-items: flex-start; justify-content: space-between; }
+  .b-card .name {
+    font-family: var(--font-display); font-weight: 700; font-size: 15px;
+    color: var(--canvas-dark-ink-strong);
+    margin: 8px 0 0;
+  }
+  .b-card .handle {
+    font-family: var(--font-mono); font-size: 10.5px;
+    letter-spacing: 0.08em; color: var(--canvas-dark-ink-muted);
+  }
+  .b-card .joined {
+    font-size: 11.5px; color: var(--canvas-dark-ink-faint);
+    margin-top: 8px;
+  }
+  .b-card .kebab { position: absolute; top: 12px; right: 12px; }
+
+  .b-rail {
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .b-rail-card {
+    background: linear-gradient(180deg, var(--canvas-dark-300), var(--canvas-dark-250));
+    border: var(--br-soft);
+    border-radius: var(--r-card);
+    padding: 18px;
+  }
+  .b-rail-card h4 {
+    font-family: var(--font-display); font-weight: 700; font-size: 14px;
+    color: var(--brand); margin: 0 0 10px;
+  }
+  .b-rail-card .label { margin: 0 0 6px; }
+  .b-rail-card .helper {
+    font-size: 11.5px; color: var(--canvas-dark-ink-muted);
+    margin: 0 0 12px; line-height: 1.5;
+  }
+  .b-friend-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0;
+    border-bottom: var(--br-soft);
+  }
+  .b-friend-row:last-child { border-bottom: 0; }
+  .b-friend-row .who { flex: 1; min-width: 0; }
+  .b-friend-row .who-n {
+    font-size: 12.5px; color: var(--canvas-dark-ink-strong); font-weight: 600;
+  }
+  .b-friend-row .who-h {
+    font-family: var(--font-mono); font-size: 10px;
+    color: var(--canvas-dark-ink-muted); letter-spacing: 0.06em;
+  }
+  .b-cap {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 12px;
+    background: oklch(from var(--brand) l c h / 0.08);
+    border: 1px solid oklch(from var(--brand) l c h / 0.18);
+    border-radius: var(--r-row);
+    margin-bottom: 14px;
+  }
+  .b-cap-text {
+    font-family: var(--font-mono); font-size: 10.5px;
+    color: var(--brand); letter-spacing: 0.08em; text-transform: uppercase;
+  }
+
+  /* ─────────────── OPTION C: Role-grouped sections ─────────────── */
+  .c-hero {
+    display: flex; align-items: center; gap: 22px;
+    padding: 28px;
+    background:
+      radial-gradient(circle at 90% 0%, oklch(from var(--brand) l c h / 0.10), transparent 55%),
+      linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200));
+    border-bottom: var(--br-soft);
+  }
+  .c-stack {
+    display: flex; align-items: center;
+    padding-left: 14px;
+  }
+  .c-stack .avatar { margin-left: -14px; border: 2px solid var(--canvas-dark-200); }
+  .c-hero .hero-meta { flex: 1; }
+  .c-hero h2 {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: 22px; color: var(--canvas-dark-ink-strong); margin: 0;
+  }
+  .c-hero .sub { color: var(--canvas-dark-ink-muted); font-size: 13.5px; margin-top: 4px; }
+  .c-ring {
+    position: relative;
+    width: 84px; height: 84px;
+    flex-shrink: 0;
+  }
+  .c-ring svg { transform: rotate(-90deg); }
+  .c-ring .center {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-family: var(--font-display); font-weight: 700;
+    color: var(--brand); font-size: 18px; line-height: 1;
+  }
+  .c-ring .center .sub {
+    font-family: var(--font-mono); font-size: 9px;
+    color: var(--canvas-dark-ink-muted); letter-spacing: 0.12em;
+    text-transform: uppercase; margin-top: 3px;
+  }
+
+  .c-search-bar {
+    padding: 16px 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 14px;
+    border-bottom: var(--br-soft);
+    background: var(--canvas-dark-150);
+  }
+  .c-section {
+    border-bottom: var(--br-soft);
+  }
+  .c-section-head {
+    padding: 16px 28px;
+    display: flex; align-items: center; gap: 10px;
+    background: linear-gradient(180deg, var(--canvas-dark-200), var(--canvas-dark-150));
+  }
+  .c-section-head .chevron {
+    color: var(--canvas-dark-ink-muted); font-family: var(--font-mono);
+  }
+  .c-section-head .name {
+    font-family: var(--font-display); font-weight: 700; font-size: 14px;
+    color: var(--canvas-dark-ink-strong); margin: 0;
+  }
+  .c-section-head .count {
+    font-family: var(--font-mono); font-size: 10.5px;
+    color: var(--canvas-dark-ink-muted); letter-spacing: 0.1em;
+  }
+  .c-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 28px;
+    border-top: var(--br-soft);
+    transition: background 0.12s;
+  }
+  .c-row:hover { background: rgba(255,255,255,0.025); }
+  .c-row:first-of-type { border-top: 0; }
+  .c-row .who { flex: 1; min-width: 0; }
+  .c-row .who-name {
+    font-family: var(--font-display); font-weight: 700; font-size: 14px;
+    color: var(--canvas-dark-ink-strong);
+  }
+  .c-row .who-handle {
+    font-family: var(--font-mono); font-size: 10.5px;
+    color: var(--canvas-dark-ink-muted); letter-spacing: 0.08em;
+    margin-top: 2px;
+  }
+  .c-row .joined {
+    font-size: 11.5px; color: var(--canvas-dark-ink-faint);
+    font-family: var(--font-mono);
+  }
+
+  /* Compare table */
+  .compare {
+    max-width: 1200px; margin: 0 auto;
+  }
+  .compare .panel { padding: 22px 28px; }
+  .compare h3 {
+    font-family: var(--font-display); color: var(--brand);
+    margin: 0 0 14px; font-size: 16px;
+  }
+  .compare table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .compare th, .compare td { padding: 10px 12px; text-align: left; }
+  .compare th {
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--canvas-dark-ink-muted); font-weight: 600;
+  }
+  .compare td { color: var(--canvas-dark-ink); border-top: var(--br-soft); }
+  .compare td:first-child { color: var(--canvas-dark-ink-muted); }
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <h1>Members page — 3 design options</h1>
+  <p>All three keep the same data (owner, roles, invites, capacity). They differ in how they organize it.</p>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- OPTION A — Stat strip + forum table                 -->
+<!-- ════════════════════════════════════════════════════ -->
+<section class="variant">
+  <div class="variant-head">
+    <span class="tag">Option A</span>
+    <div>
+      <h2>Stat strip + forum table</h2>
+      <p>Stats up top (capacity progress, owner card, oldest member), tabbed control for view (All / By role / Pending invites), then a dense forum-table list. Most "admin dashboard." Invite affordances live behind a CTA → modal so the page stays clean.</p>
+    </div>
+  </div>
+
+  <div class="shell">
+    <div class="shell-head">
+      <div>
+        <h1>Members</h1>
+        <p class="sub">8 of 25 members · 2 pending invites</p>
+      </div>
+      <button class="btn-primary">+ Invite</button>
+    </div>
+
+    <div class="a-stats">
+      <div class="stat-tile">
+        <p class="label">Capacity</p>
+        <div class="v">8<span class="of"> / 25</span></div>
+        <div class="progress"><div class="fill" style="width:32%;"></div></div>
+      </div>
+      <div class="stat-tile who-tile">
+        <div class="avatar lg">C</div>
+        <div>
+          <p class="label" style="margin:0 0 4px;">Owner</p>
+          <p class="who-name">Chris Mackall</p>
+          <p class="who-handle">@chrismackall</p>
+        </div>
+      </div>
+      <div class="stat-tile">
+        <p class="label">Founding member</p>
+        <p style="margin:6px 0 0; font-family: var(--font-display); font-weight: 700; font-size: 16px; color: var(--canvas-dark-ink-strong);">@mira_writes</p>
+        <p style="margin: 4px 0 0; font-family: var(--font-mono); font-size: 11px; color: var(--canvas-dark-ink-muted);">Joined Apr 2, 2026</p>
+      </div>
+    </div>
+
+    <div class="a-toolbar">
+      <div class="a-tabs">
+        <button class="a-tab on">All · 8</button>
+        <button class="a-tab">By role</button>
+        <button class="a-tab">Pending · 2</button>
+      </div>
+      <div class="search">
+        <span style="font-family: var(--font-mono); font-size: 12px;">🔍</span>
+        <input placeholder="Search members…" />
+      </div>
+    </div>
+
+    <div class="a-list">
+      <div class="head-row">
+        <div>Member</div>
+        <div>Role</div>
+        <div>Joined</div>
+        <div></div>
+      </div>
+      <div class="row">
+        <div class="who-cell"><div class="avatar">C</div><div><div class="who-name">Chris Mackall <span style="color: var(--canvas-dark-ink-muted); font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; margin-left: 6px;">YOU</span></div><div class="who-handle">@chrismackall</div></div></div>
+        <div><span class="pill owner">★ Owner</span></div>
+        <div class="joined">Mar 14, 2026</div>
+        <div><button class="kebab">⋯</button></div>
+      </div>
+      <div class="row">
+        <div class="who-cell"><div class="avatar mint">M</div><div><div class="who-name">Mira</div><div class="who-handle">@mira_writes</div></div></div>
+        <div><span class="pill mod">Moderator</span></div>
+        <div class="joined">Apr 2</div>
+        <div><button class="kebab">⋯</button></div>
+      </div>
+      <div class="row">
+        <div class="who-cell"><div class="avatar pink">J</div><div><div class="who-name">Jordan</div><div class="who-handle">@jordan_b</div></div></div>
+        <div><span class="pill contrib">Contributor</span></div>
+        <div class="joined">Apr 18</div>
+        <div><button class="kebab">⋯</button></div>
+      </div>
+      <div class="row">
+        <div class="who-cell"><div class="avatar blue">A</div><div><div class="who-name">Ash</div><div class="who-handle">@ash_writes</div></div></div>
+        <div><span class="pill contrib">Contributor</span></div>
+        <div class="joined">May 1</div>
+        <div><button class="kebab">⋯</button></div>
+      </div>
+      <div class="row">
+        <div class="who-cell"><div class="avatar lilac">S</div><div><div class="who-name">Sam</div><div class="who-handle">@samwrites</div></div></div>
+        <div><span class="pill reader">Beta reader</span></div>
+        <div class="joined">May 22</div>
+        <div><button class="kebab">⋯</button></div>
+      </div>
+      <div class="row">
+        <div class="who-cell"><div class="avatar slate">R</div><div><div class="who-name">River</div><div class="who-handle">@riverflow</div></div></div>
+        <div><span class="pill reader">Beta reader</span></div>
+        <div class="joined">Jun 4</div>
+        <div><button class="kebab">⋯</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- OPTION B — Card grid + side rail                    -->
+<!-- ════════════════════════════════════════════════════ -->
+<section class="variant">
+  <div class="variant-head">
+    <span class="tag">Option B</span>
+    <div>
+      <h2>Card grid + invite rail</h2>
+      <p>Each member is their own card (avatar, name, role pill, join date) with a colored top accent matching role. Right rail keeps all invite affordances pinned (link, username search, friend list). Most "directory-like" — feels like browsing people.</p>
+    </div>
+  </div>
+
+  <div class="shell">
+    <div class="shell-head">
+      <div>
+        <h1>Members</h1>
+        <p class="sub">8 members</p>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn-tile">📊 By role</button>
+        <button class="btn-tile">🔍 Search</button>
+      </div>
+    </div>
+
+    <div class="b-grid">
+      <div>
+        <div class="b-cards-head">
+          <h3>All members</h3>
+          <span style="font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--canvas-dark-ink-muted);">8 people · 32% of capacity</span>
+        </div>
+        <div class="b-card-grid">
+          <div class="b-card owner">
+            <div class="accent"></div>
+            <button class="kebab">⋯</button>
+            <div class="head"><div class="avatar lg">C</div></div>
+            <div>
+              <div class="name">Chris Mackall</div>
+              <div class="handle">@chrismackall</div>
+            </div>
+            <span class="pill owner" style="width: fit-content;">★ Owner</span>
+            <div class="joined">Joined Mar 14, 2026</div>
+          </div>
+          <div class="b-card mod">
+            <div class="accent"></div>
+            <button class="kebab">⋯</button>
+            <div class="head"><div class="avatar lg mint">M</div></div>
+            <div>
+              <div class="name">Mira</div>
+              <div class="handle">@mira_writes</div>
+            </div>
+            <span class="pill mod" style="width: fit-content;">Moderator</span>
+            <div class="joined">Joined Apr 2</div>
+          </div>
+          <div class="b-card contrib">
+            <div class="accent"></div>
+            <button class="kebab">⋯</button>
+            <div class="head"><div class="avatar lg pink">J</div></div>
+            <div>
+              <div class="name">Jordan</div>
+              <div class="handle">@jordan_b</div>
+            </div>
+            <span class="pill contrib" style="width: fit-content;">Contributor</span>
+            <div class="joined">Joined Apr 18</div>
+          </div>
+          <div class="b-card contrib">
+            <div class="accent"></div>
+            <button class="kebab">⋯</button>
+            <div class="head"><div class="avatar lg blue">A</div></div>
+            <div>
+              <div class="name">Ash</div>
+              <div class="handle">@ash_writes</div>
+            </div>
+            <span class="pill contrib" style="width: fit-content;">Contributor</span>
+            <div class="joined">Joined May 1</div>
+          </div>
+          <div class="b-card reader">
+            <div class="accent"></div>
+            <button class="kebab">⋯</button>
+            <div class="head"><div class="avatar lg lilac">S</div></div>
+            <div>
+              <div class="name">Sam</div>
+              <div class="handle">@samwrites</div>
+            </div>
+            <span class="pill reader" style="width: fit-content;">Beta reader</span>
+            <div class="joined">Joined May 22</div>
+          </div>
+          <div class="b-card reader">
+            <div class="accent"></div>
+            <button class="kebab">⋯</button>
+            <div class="head"><div class="avatar lg slate">R</div></div>
+            <div>
+              <div class="name">River</div>
+              <div class="handle">@riverflow</div>
+            </div>
+            <span class="pill reader" style="width: fit-content;">Beta reader</span>
+            <div class="joined">Joined Jun 4</div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="b-rail">
+        <div class="b-cap">
+          <span class="b-cap-text">Capacity</span>
+          <span style="font-family: var(--font-display); font-weight: 700; color: var(--brand);">8 / 25</span>
+        </div>
+
+        <div class="b-rail-card">
+          <h4>Invite link</h4>
+          <p class="helper">Share a link. Anyone who opens it joins as a Beta reader.</p>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <input class="input mono" value="beehive.studio/i/aB7x…" readonly />
+            <div style="display:flex; gap:8px;">
+              <button class="btn-tile" style="flex:1; justify-content:center;">📋 Copy</button>
+              <button class="btn-tile" style="flex:1; justify-content:center;">↻ New</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="b-rail-card">
+          <h4>Invite by username</h4>
+          <label class="label">Username</label>
+          <input class="input" placeholder="@username" />
+          <button class="btn-primary" style="margin-top:10px; width:100%; justify-content:center;">+ Send invite</button>
+        </div>
+
+        <div class="b-rail-card">
+          <h4>Invite friends</h4>
+          <p class="helper">Your friends, ready to invite.</p>
+          <div class="b-friend-row">
+            <div class="avatar sm">K</div>
+            <div class="who"><div class="who-n">Kai</div><div class="who-h">@kaiwrites</div></div>
+            <button class="btn-tile" style="padding: 6px 10px; font-size: 11px;">+ Invite</button>
+          </div>
+          <div class="b-friend-row">
+            <div class="avatar sm mint">N</div>
+            <div class="who"><div class="who-n">Noor</div><div class="who-h">@noor_ink</div></div>
+            <button class="btn-tile" style="padding: 6px 10px; font-size: 11px;">+ Invite</button>
+          </div>
+          <div class="b-friend-row">
+            <div class="avatar sm pink">T</div>
+            <div class="who"><div class="who-n">Tess</div><div class="who-h">@tessp</div></div>
+            <button class="btn-tile" style="padding: 6px 10px; font-size: 11px;">+ Invite</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- OPTION C — Role-grouped sectional                   -->
+<!-- ════════════════════════════════════════════════════ -->
+<section class="variant">
+  <div class="variant-head">
+    <span class="tag">Option C</span>
+    <div>
+      <h2>Role-grouped sectional</h2>
+      <p>Hero shows avatar stack + capacity ring up top. Body is one flowing list grouped by role (Owner / Moderators / Contributors / Beta readers) with collapsible sections. Most "organizational" — communicates hierarchy at a glance.</p>
+    </div>
+  </div>
+
+  <div class="shell">
+    <div class="c-hero">
+      <div class="c-stack">
+        <div class="avatar lg">C</div>
+        <div class="avatar lg mint">M</div>
+        <div class="avatar lg pink">J</div>
+        <div class="avatar lg blue">A</div>
+        <div class="avatar lg lilac">S</div>
+        <div class="avatar lg slate" style="background: linear-gradient(135deg, var(--canvas-dark-400), var(--canvas-dark-300)); color: var(--canvas-dark-ink-muted);">+3</div>
+      </div>
+      <div class="hero-meta">
+        <h2>The Master Hive's people</h2>
+        <p class="sub">8 members across 4 roles · 17 seats remaining</p>
+      </div>
+      <div class="c-ring">
+        <svg width="84" height="84" viewBox="0 0 84 84">
+          <circle cx="42" cy="42" r="36" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="8"/>
+          <circle cx="42" cy="42" r="36" fill="none" stroke="var(--brand)" stroke-width="8" stroke-dasharray="226" stroke-dashoffset="154" stroke-linecap="round"/>
+        </svg>
+        <div class="center">
+          8/25
+          <span class="sub">capacity</span>
+        </div>
+      </div>
+      <button class="btn-primary">+ Invite</button>
+    </div>
+
+    <div class="c-search-bar">
+      <div class="search" style="width: 300px;">
+        <span style="font-family: var(--font-mono);">🔍</span>
+        <input placeholder="Search by name or username…" />
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn-tile">Sort: A → Z</button>
+        <button class="btn-tile">View: grouped</button>
+      </div>
+    </div>
+
+    <div class="c-section">
+      <div class="c-section-head">
+        <span class="chevron">▾</span>
+        <h3 class="name" style="color: var(--role-owner);">★ Owner</h3>
+        <span class="count">1</span>
+      </div>
+      <div class="c-row">
+        <div class="avatar lg">C</div>
+        <div class="who">
+          <div class="who-name">Chris Mackall <span style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; color: var(--canvas-dark-ink-muted); margin-left: 6px;">YOU</span></div>
+          <div class="who-handle">@chrismackall</div>
+        </div>
+        <div class="joined">Joined Mar 14, 2026</div>
+        <button class="kebab">⋯</button>
+      </div>
+    </div>
+
+    <div class="c-section">
+      <div class="c-section-head">
+        <span class="chevron">▾</span>
+        <h3 class="name" style="color: var(--role-moderator);">Moderators</h3>
+        <span class="count">1</span>
+      </div>
+      <div class="c-row">
+        <div class="avatar mint">M</div>
+        <div class="who">
+          <div class="who-name">Mira</div>
+          <div class="who-handle">@mira_writes</div>
+        </div>
+        <div class="joined">Apr 2</div>
+        <button class="kebab">⋯</button>
+      </div>
+    </div>
+
+    <div class="c-section">
+      <div class="c-section-head">
+        <span class="chevron">▾</span>
+        <h3 class="name" style="color: var(--role-contributor);">Contributors</h3>
+        <span class="count">2</span>
+      </div>
+      <div class="c-row">
+        <div class="avatar pink">J</div>
+        <div class="who">
+          <div class="who-name">Jordan</div>
+          <div class="who-handle">@jordan_b</div>
+        </div>
+        <div class="joined">Apr 18</div>
+        <button class="kebab">⋯</button>
+      </div>
+      <div class="c-row">
+        <div class="avatar blue">A</div>
+        <div class="who">
+          <div class="who-name">Ash</div>
+          <div class="who-handle">@ash_writes</div>
+        </div>
+        <div class="joined">May 1</div>
+        <button class="kebab">⋯</button>
+      </div>
+    </div>
+
+    <div class="c-section">
+      <div class="c-section-head">
+        <span class="chevron">▾</span>
+        <h3 class="name">Beta readers</h3>
+        <span class="count">4</span>
+      </div>
+      <div class="c-row">
+        <div class="avatar lilac">S</div>
+        <div class="who">
+          <div class="who-name">Sam</div>
+          <div class="who-handle">@samwrites</div>
+        </div>
+        <div class="joined">May 22</div>
+        <button class="kebab">⋯</button>
+      </div>
+      <div class="c-row">
+        <div class="avatar slate">R</div>
+        <div class="who">
+          <div class="who-name">River</div>
+          <div class="who-handle">@riverflow</div>
+        </div>
+        <div class="joined">Jun 4</div>
+        <button class="kebab">⋯</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Compare table -->
+<div class="compare">
+  <div class="shell panel">
+    <h3>Compare at a glance</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Aspect</th>
+          <th>A — Stat strip + table</th>
+          <th>B — Card grid + rail</th>
+          <th>C — Role-grouped</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Mood</td><td>Admin dashboard</td><td>Member directory</td><td>Org chart / clean</td></tr>
+        <tr><td>Density</td><td>High — table fits many rows on screen</td><td>Medium — cards take more room</td><td>Medium — grouped, scrollable</td></tr>
+        <tr><td>Invite UX</td><td>CTA → modal (out of the way)</td><td>Pinned side rail (always visible)</td><td>CTA → modal (out of the way)</td></tr>
+        <tr><td>Role visibility</td><td>Pill column + optional grouping tab</td><td>Color accent strip + pill</td><td>Section header per role (strongest)</td></tr>
+        <tr><td>Owner spotlight</td><td>Owner stat tile</td><td>Owner card with accent</td><td>Avatar stack + own section</td></tr>
+        <tr><td>Capacity surface</td><td>Stat tile with progress bar</td><td>Pinned rail badge + bar</td><td>Hero ring chart</td></tr>
+        <tr><td>Best for</td><td>Larger hives, power admins</td><td>Smaller social hives</td><td>Hives with clear role structure</td></tr>
+        <tr><td>Implementation</td><td>Lowest — table CSS</td><td>Medium — card grid + rail</td><td>Medium — accordion sections + ring</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</body>
+</html>

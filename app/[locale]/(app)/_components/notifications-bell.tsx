@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
+import { toast } from 'sonner'
 import {
   AtSign, Heart, UserPlus, Users, Hexagon, MessageSquare,
   Bell as BellIcon, BookOpen, Sparkles, List, FileText, Edit3, StickyNote,
@@ -114,18 +115,55 @@ export function NotificationsBell() {
   }
 
   async function handleMarkAllRead() {
-    await markAllNotificationsReadAction()
+    // Capture state for rollback before optimistic flip.
+    const prevNotifications = notifications
+    const prevUnreadCount = unreadCount
+
+    // Optimistic update so the bell feels instant.
     setUnreadCount(0)
     setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+
+    try {
+      const result = await markAllNotificationsReadAction()
+      if (!result.success) {
+        setNotifications(prevNotifications)
+        setUnreadCount(prevUnreadCount)
+        toast.error('Could not mark all as read')
+        return
+      }
+      // Re-sync from server so any notifications that arrived during the flip
+      // (or anything that didn't persist for whatever reason) reflect truth on
+      // next render — defeats the "count returns on refresh" bug class.
+      await load()
+    } catch {
+      setNotifications(prevNotifications)
+      setUnreadCount(prevUnreadCount)
+      toast.error('Could not mark all as read')
+    }
   }
 
   async function handleNotificationClick(n: NotificationRow) {
     // Defend against double-click while a MENTION lookup is in flight.
     if (pendingRowId === n.id) return
 
-    await markNotificationReadAction(n.id)
-    setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, read: true } : x))
-    setUnreadCount(prev => Math.max(0, prev - 1))
+    if (!n.read) {
+      // Capture state for rollback. Optimistic flip first so the dot disappears
+      // before the navigation tear-down.
+      const wasRead = n.read
+      setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, read: true } : x))
+      setUnreadCount(prev => Math.max(0, prev - 1))
+      try {
+        const result = await markNotificationReadAction(n.id)
+        if (!result.success) {
+          // Rollback the single row.
+          setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, read: wasRead } : x))
+          setUnreadCount(prev => prev + 1)
+        }
+      } catch {
+        setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, read: wasRead } : x))
+        setUnreadCount(prev => prev + 1)
+      }
+    }
     if (n.resourceId && n.type === 'HIVE_INVITE') {
       // resourceId is the hiveId. The recipient isn't a member yet, so the
       // hive landing 404s — route to the accept-by-id page that finds their

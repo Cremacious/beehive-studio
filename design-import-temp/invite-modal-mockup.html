@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Invite modal — mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --canvas-dark-100: #262728;
+    --canvas-dark-150: #2a2b2c;
+    --canvas-dark-200: #2c2d2e;
+    --canvas-dark-250: #303132;
+    --canvas-dark-300: #34353b;
+    --canvas-dark-350: #3a3b40;
+    --canvas-dark-400: #404148;
+    --canvas-dark-ink: oklch(0.95 0.005 256);
+    --canvas-dark-ink-muted: oklch(0.78 0.005 256);
+    --canvas-dark-ink-faint: oklch(0.6 0.005 256);
+    --canvas-dark-ink-strong: oklch(1 0 0);
+    --brand: #FFC300;
+    --brand-hover: #ffd233;
+    --brand-ink: #1a1a1a;
+    --brand-soft: oklch(from #FFC300 l c h / 0.14);
+    --status-success: oklch(0.78 0.16 145);
+    --r-card: 20px;
+    --r-row: 14px;
+    --r-btn: 12px;
+    --r-pill: 999px;
+    --sh-card: 0 1px 0 rgba(255,255,255,0.04) inset, 0 8px 28px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+    --sh-tile: 0 1px 0 rgba(255,255,255,0.06) inset, 0 1px 2px rgba(0,0,0,0.3);
+    --sh-inset: inset 0 1px 3px rgba(0,0,0,0.35);
+    --br-card: 1px solid rgba(255,255,255,0.06);
+    --br-soft: 1px solid rgba(255,255,255,0.04);
+    --font-display: 'Comfortaa', system-ui, sans-serif;
+    --font-ui: 'Comfortaa', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: #1f2021;
+    color: var(--canvas-dark-ink);
+    font-family: var(--font-ui);
+    line-height: 1.5;
+    min-height: 100vh;
+    padding: 40px 24px 80px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  .stage {
+    width: 100%;
+    max-width: 620px;
+  }
+  .stage-head {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+  .stage-head h1 {
+    font-family: var(--font-display);
+    font-weight: 700; font-size: 22px;
+    color: var(--brand); margin: 0 0 6px;
+    letter-spacing: -0.01em;
+  }
+  .stage-head p {
+    color: var(--canvas-dark-ink-muted);
+    font-size: 13px; margin: 0;
+  }
+
+  /* ────────── Modal ────────── */
+  .modal {
+    background: linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200));
+    border: var(--br-card);
+    border-radius: var(--r-card);
+    box-shadow: var(--sh-card);
+    overflow: hidden;
+  }
+
+  .head {
+    padding: 22px 24px 18px;
+    border-bottom: var(--br-soft);
+  }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--canvas-dark-ink-muted);
+    margin: 0 0 4px;
+  }
+  .head h2 {
+    font-family: var(--font-display);
+    font-weight: 700; font-size: 22px;
+    color: var(--brand); margin: 0; letter-spacing: -0.01em;
+  }
+  .head .sub {
+    color: var(--canvas-dark-ink-muted);
+    font-size: 13px; margin: 4px 0 0;
+  }
+  .close {
+    position: absolute; top: 18px; right: 18px;
+    width: 28px; height: 28px;
+    border: 0; background: transparent; cursor: pointer;
+    color: var(--canvas-dark-ink-muted);
+    border-radius: var(--r-btn);
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .close:hover { background: rgba(255,255,255,0.05); color: var(--canvas-dark-ink-strong); }
+
+  .body { padding: 22px 24px; display: flex; flex-direction: column; gap: 26px; }
+
+  /* ────────── Primary: Invite link ────────── */
+  .primary {
+    padding: 18px;
+    background: linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300));
+    border: 1px solid oklch(from var(--brand) l c h / 0.18);
+    border-radius: var(--r-row);
+    box-shadow: var(--sh-tile);
+  }
+  .primary .row1 {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+  }
+  .primary .badge {
+    width: 28px; height: 28px;
+    background: var(--brand-soft); color: var(--brand);
+    border-radius: 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .primary h3 {
+    font-family: var(--font-display); font-weight: 700; font-size: 14px;
+    color: var(--canvas-dark-ink-strong); margin: 0;
+  }
+  .primary .pill-recommended {
+    margin-left: auto;
+    font-family: var(--font-mono); font-size: 9.5px;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--brand);
+    background: var(--brand-soft);
+    padding: 3px 8px; border-radius: var(--r-pill);
+    font-weight: 700;
+  }
+  .primary p.helper {
+    font-size: 12.5px; color: var(--canvas-dark-ink-muted);
+    margin: 0 0 14px; line-height: 1.5;
+  }
+  .link-bar {
+    display: flex; gap: 8px;
+    align-items: stretch;
+  }
+  .link-box {
+    flex: 1; min-width: 0;
+    background: var(--canvas-dark-100);
+    box-shadow: var(--sh-inset);
+    border-radius: var(--r-row);
+    padding: 0 14px;
+    height: 40px;
+    display: flex; align-items: center;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--canvas-dark-ink);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .link-box.empty { color: var(--canvas-dark-ink-faint); font-style: italic; }
+  .btn-tile {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 40px; padding: 0 14px;
+    background: linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300));
+    color: var(--canvas-dark-ink);
+    border-radius: var(--r-row);
+    box-shadow: var(--sh-tile);
+    border: none; font: inherit; font-weight: 600; font-size: 12.5px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .btn-tile:hover {
+    background: linear-gradient(180deg, var(--canvas-dark-400), var(--canvas-dark-350));
+    color: var(--canvas-dark-ink-strong);
+  }
+  /* Flat brand pill — NO glow (--sh-tile, not --sh-brand) */
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 40px; padding: 0 18px;
+    background: var(--brand); color: var(--brand-ink);
+    border-radius: var(--r-pill);
+    box-shadow: var(--sh-tile);
+    border: none; font: inherit; font-weight: 700; font-size: 13px;
+    cursor: pointer;
+  }
+  .btn-primary:hover { background: var(--brand-hover); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-primary.compact { height: 34px; padding: 0 14px; font-size: 12px; }
+
+  .role-note {
+    margin-top: 12px;
+    font-family: var(--font-mono); font-size: 10.5px;
+    color: var(--canvas-dark-ink-faint);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  /* ────────── Divider with label ────────── */
+  .or {
+    display: flex; align-items: center; gap: 12px;
+    color: var(--canvas-dark-ink-faint);
+    font-family: var(--font-mono); font-size: 10.5px;
+    letter-spacing: 0.16em; text-transform: uppercase;
+  }
+  .or::before, .or::after {
+    content: ''; flex: 1; height: 1px;
+    background: rgba(255,255,255,0.06);
+  }
+
+  /* ────────── Secondary: by username ────────── */
+  .secondary { display: flex; flex-direction: column; gap: 8px; }
+  .secondary h4 {
+    font-family: var(--font-display); font-weight: 700; font-size: 13px;
+    color: var(--canvas-dark-ink-strong); margin: 0 0 2px;
+  }
+  .secondary p.helper {
+    font-size: 12px; color: var(--canvas-dark-ink-muted); margin: 0;
+  }
+  .username-row {
+    display: flex; gap: 8px;
+    margin-top: 6px;
+  }
+  .input {
+    flex: 1;
+    background: var(--canvas-dark-100); box-shadow: var(--sh-inset);
+    border: 0; border-radius: var(--r-row);
+    color: var(--canvas-dark-ink-strong);
+    padding: 11px 14px;
+    font: inherit; font-size: 14px;
+    outline: none;
+  }
+  .input::placeholder { color: var(--canvas-dark-ink-faint); }
+
+  /* ────────── Secondary: friends list ────────── */
+  .friends-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .friends-head h4 {
+    font-family: var(--font-display); font-weight: 700; font-size: 13px;
+    color: var(--canvas-dark-ink-strong); margin: 0;
+  }
+  .search {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--canvas-dark-100); box-shadow: var(--sh-inset);
+    border-radius: var(--r-pill); padding: 6px 12px;
+    color: var(--canvas-dark-ink-muted);
+    width: 200px;
+  }
+  .search input {
+    background: transparent; border: 0; outline: none;
+    color: var(--canvas-dark-ink-strong);
+    font: inherit; font-size: 12px; width: 100%;
+  }
+  .friend-list {
+    display: flex; flex-direction: column;
+    max-height: 240px; overflow-y: auto;
+    background: var(--canvas-dark-100);
+    box-shadow: var(--sh-inset);
+    border-radius: var(--r-row);
+    padding: 4px;
+  }
+  .friend {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 10px;
+    border-radius: var(--r-btn);
+  }
+  .friend:hover { background: rgba(255,255,255,0.03); }
+  .avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--brand), var(--brand-hover));
+    color: var(--brand-ink);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 12px;
+    flex-shrink: 0;
+  }
+  .avatar.mint { background: linear-gradient(135deg, oklch(0.78 0.13 165), oklch(0.68 0.13 165)); color: white; }
+  .avatar.pink { background: linear-gradient(135deg, oklch(0.78 0.13 12), oklch(0.68 0.13 12)); color: white; }
+  .avatar.blue { background: linear-gradient(135deg, oklch(0.74 0.13 250), oklch(0.64 0.13 250)); color: white; }
+  .avatar.lilac { background: linear-gradient(135deg, oklch(0.78 0.11 305), oklch(0.68 0.11 305)); color: white; }
+  .friend .meta { flex: 1; min-width: 0; }
+  .friend .meta .n {
+    font-family: var(--font-display); font-weight: 700; font-size: 13px;
+    color: var(--canvas-dark-ink-strong);
+  }
+  .friend .meta .h {
+    font-family: var(--font-mono); font-size: 10.5px;
+    color: var(--canvas-dark-ink-muted); letter-spacing: 0.06em;
+  }
+  .pill-invited {
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--status-success);
+    background: oklch(from var(--status-success) l c h / 0.14);
+    padding: 4px 10px;
+    border-radius: var(--r-pill);
+    border: 1px solid oklch(from var(--status-success) l c h / 0.3);
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+
+  /* ────────── Footer ────────── */
+  .foot {
+    display: flex; justify-content: flex-end; gap: 10px;
+    padding: 16px 24px;
+    border-top: var(--br-soft);
+    background: var(--canvas-dark-150);
+  }
+  .btn-ghost {
+    padding: 9px 14px;
+    background: transparent;
+    color: var(--canvas-dark-ink-muted);
+    border: 0;
+    border-radius: var(--r-pill);
+    font: inherit; font-weight: 600; font-size: 13px;
+    cursor: pointer;
+  }
+  .btn-ghost:hover { color: var(--canvas-dark-ink-strong); }
+
+  /* Compare callouts (sample states) */
+  .states {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-top: 36px;
+  }
+  .state {
+    background: linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200));
+    border: var(--br-card);
+    border-radius: var(--r-card);
+    padding: 18px;
+  }
+  .state h3 {
+    font-family: var(--font-display); color: var(--brand);
+    margin: 0 0 10px; font-size: 14px;
+  }
+  .state p {
+    margin: 0; font-size: 12.5px; color: var(--canvas-dark-ink-muted);
+    line-height: 1.55;
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="stage-head">
+    <h1>Invite modal — option C</h1>
+    <p>Invite link is the primary affordance. Username + Friends sit below as secondary methods. No glow anywhere.</p>
+  </div>
+
+  <div class="modal" style="position: relative;">
+    <button class="close" aria-label="Close">✕</button>
+
+    <div class="head">
+      <p class="eyebrow">Grow your hive</p>
+      <h2>Invite to The Master Hive</h2>
+      <p class="sub">8 of 25 members. Pick the easiest path.</p>
+    </div>
+
+    <div class="body">
+
+      <!-- ━━━━━ PRIMARY: Invite link ━━━━━ -->
+      <div class="primary">
+        <div class="row1">
+          <span class="badge">🔗</span>
+          <h3>Share an invite link</h3>
+          <span class="pill-recommended">Recommended</span>
+        </div>
+        <p class="helper">Anyone who opens the link can join. Easiest way to onboard a new collaborator.</p>
+
+        <div class="link-bar">
+          <div class="link-box">beehive.studio/en/hive/invite/aB7xK2qP9LmRfYnZ</div>
+          <button class="btn-tile">📋 Copy</button>
+          <button class="btn-tile">↻ New</button>
+        </div>
+
+        <p class="role-note">New joiners land as · Beta reader · Promote later from the member list</p>
+      </div>
+
+      <div class="or">Or</div>
+
+      <!-- ━━━━━ SECONDARY: By username ━━━━━ -->
+      <div class="secondary">
+        <h4>Invite by username</h4>
+        <p class="helper">Send a direct invite to someone with a Beehive account.</p>
+        <div class="username-row">
+          <input class="input" placeholder="@username" />
+          <button class="btn-primary compact">Send</button>
+        </div>
+      </div>
+
+      <!-- ━━━━━ SECONDARY: Friends ━━━━━ -->
+      <div class="secondary">
+        <div class="friends-head">
+          <h4>Invite a friend</h4>
+          <div class="search">
+            <span style="font-family: var(--font-mono); font-size: 11px;">🔍</span>
+            <input placeholder="Search friends…" />
+          </div>
+        </div>
+
+        <div class="friend-list">
+          <div class="friend">
+            <div class="avatar">K</div>
+            <div class="meta">
+              <div class="n">Kai</div>
+              <div class="h">@kaiwrites · friends since Mar 2026</div>
+            </div>
+            <button class="btn-tile" style="height: 32px; padding: 0 12px; font-size: 11.5px;">+ Invite</button>
+          </div>
+          <div class="friend">
+            <div class="avatar mint">N</div>
+            <div class="meta">
+              <div class="n">Noor</div>
+              <div class="h">@noor_ink · friends since Feb 2026</div>
+            </div>
+            <span class="pill-invited">✓ Invited</span>
+          </div>
+          <div class="friend">
+            <div class="avatar pink">T</div>
+            <div class="meta">
+              <div class="n">Tess</div>
+              <div class="h">@tessp · friends since Jan 2026</div>
+            </div>
+            <button class="btn-tile" style="height: 32px; padding: 0 12px; font-size: 11.5px;">+ Invite</button>
+          </div>
+          <div class="friend">
+            <div class="avatar blue">D</div>
+            <div class="meta">
+              <div class="n">Dani</div>
+              <div class="h">@danijames · friends since Dec 2025</div>
+            </div>
+            <button class="btn-tile" style="height: 32px; padding: 0 12px; font-size: 11.5px;">+ Invite</button>
+          </div>
+          <div class="friend">
+            <div class="avatar lilac">P</div>
+            <div class="meta">
+              <div class="n">Pax</div>
+              <div class="h">@paxwriter · friends since Nov 2025</div>
+            </div>
+            <button class="btn-tile" style="height: 32px; padding: 0 12px; font-size: 11.5px;">+ Invite</button>
+          </div>
+        </div>
+        <p class="helper" style="margin-top: 8px;">See more (8 friends)</p>
+      </div>
+
+    </div>
+
+    <div class="foot">
+      <button class="btn-ghost">Done</button>
+    </div>
+  </div>
+
+  <div class="states">
+    <div class="state">
+      <h3>State: no link yet</h3>
+      <p>Link box shows italic "No invite link yet — generate one to share." in muted ink. Copy/New buttons collapse to a single brand-pill "Generate link" button.</p>
+    </div>
+    <div class="state">
+      <h3>State: at capacity</h3>
+      <p>Brand-pill "Send" disables, friend rows show "Hive full" muted pill instead of Invite. Link section shows a brand-yellow inline note "Hive is full — remove someone or upgrade to invite more."</p>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

@@ -2,7 +2,7 @@
 
 import { db } from '@/db'
 import { notifications } from '@/db/schema'
-import { eq, desc } from 'drizzle-orm'
+import { eq, and, desc } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import type { ActionResult } from './book.actions'
 
@@ -35,16 +35,26 @@ export async function getNotificationsAction(): Promise<ActionResult<{ notificat
 
 export async function markNotificationReadAction(notificationId: string): Promise<ActionResult> {
   const userId = await requireAuth()
+  // Scope to userId so an authed user can't mark another user's notifications
+  // read by guessing IDs. Previously the userId from requireAuth was unused.
   await db.update(notifications)
     .set({ read: true })
-    .where(eq(notifications.id, notificationId))
+    .where(and(
+      eq(notifications.id, notificationId),
+      eq(notifications.userId, userId),
+    ))
   return { success: true, data: undefined }
 }
 
 export async function markAllNotificationsReadAction(): Promise<ActionResult> {
   const userId = await requireAuth()
+  // Filter on read=false so we only touch rows that need updating — perf win
+  // on accounts with large notification history.
   await db.update(notifications)
     .set({ read: true })
-    .where(eq(notifications.userId, userId))
+    .where(and(
+      eq(notifications.userId, userId),
+      eq(notifications.read, false),
+    ))
   return { success: true, data: undefined }
 }

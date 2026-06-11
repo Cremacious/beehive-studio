@@ -416,6 +416,19 @@ export async function updateBookAction(
 
   if (Object.keys(updates).length === 0) return { success: true, data: undefined }
 
+  // D1: first_publicly_discoverable_at — set IF the new state is PUBLIC AND discoverable
+  // AND the column is currently NULL. updateBookAction's input schema doesn't surface
+  // `discoverable`, so we read it from the existing row to compute the next state.
+  if (updates.visibility === 'PUBLIC') {
+    const existing = await db.query.books.findFirst({
+      where: eq(books.id, bookId),
+      columns: { discoverable: true, firstPubliclyDiscoverableAt: true },
+    })
+    if (existing && existing.discoverable === true && existing.firstPubliclyDiscoverableAt == null) {
+      updates.firstPubliclyDiscoverableAt = new Date()
+    }
+  }
+
   await db
     .update(books)
     .set({ ...updates, updatedAt: new Date() })
@@ -432,9 +445,30 @@ export async function publishBookAction(bookId: string): Promise<ActionResult> {
   await assertBookOwner(bookId, userId)
 
   await db.transaction(async (tx) => {
+    // D1: read existing row first so we can decide whether to stamp
+    // first_publicly_discoverable_at as part of the update (gate: PUBLIC + discoverable
+    // AND currently NULL). publishBookAction always sets visibility=PUBLIC.
+    const [existing] = await tx
+      .select({
+        discoverable: books.discoverable,
+        firstPubliclyDiscoverableAt: books.firstPubliclyDiscoverableAt,
+      })
+      .from(books)
+      .where(eq(books.id, bookId))
+      .limit(1)
+
+    const updates: Partial<typeof books.$inferInsert> = {
+      visibility: 'PUBLIC',
+      status: 'PUBLISHED',
+      updatedAt: new Date(),
+    }
+    if (existing && existing.discoverable === true && existing.firstPubliclyDiscoverableAt == null) {
+      updates.firstPubliclyDiscoverableAt = new Date()
+    }
+
     await tx
       .update(books)
-      .set({ visibility: 'PUBLIC', status: 'PUBLISHED', updatedAt: new Date() })
+      .set(updates)
       .where(eq(books.id, bookId))
 
     // C1 T8 hook: book_published. publishBookAction always sets visibility=PUBLIC;

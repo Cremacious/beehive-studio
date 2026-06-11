@@ -31,11 +31,13 @@ export const books = pgTable('books', {
   compTitles: text('comp_titles').array(),
   seriesName: text('series_name'),
   seriesNumber: integer('series_number'),
+  firstPubliclyDiscoverableAt: timestamp('first_publicly_discoverable_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (t) => [
   index('books_user_id_idx').on(t.userId),
   index('books_discoverable_visibility_idx').on(t.discoverable, t.visibility),
+  index('books_first_public_idx').on(t.firstPubliclyDiscoverableAt),
 ])
 
 export const bookPublishingMetadata = pgTable('book_publishing_metadata', {

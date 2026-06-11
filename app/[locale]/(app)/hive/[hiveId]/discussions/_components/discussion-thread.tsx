@@ -19,7 +19,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { HiveSectionDivider } from '../../_components/hive-section-divider'
 import { TopicPill } from './discussion-row'
 import { RenderMentionsInText } from '@/components/mentions/render-mentions-in-text'
 import { MentionableTextarea } from '@/components/mentions/mentionable-textarea'
@@ -115,35 +114,49 @@ export function DiscussionThread({
   const replyCount = replies.length
 
   return (
-    <>
-      <HiveSectionDivider label="Original post" hideTopBorder>
-        <PostBody
-          post={post}
-          isTopLevel
-          viewerRole={viewerRole}
-          viewerUserId={viewerUserId}
-          locale={locale}
-          hiveId={hiveId}
-          onReplyClick={() => focusReplyWithMention(post.username)}
-        />
-      </HiveSectionDivider>
+    <div className="px-6 pb-6">
+      {/* OP card — Facebook-style. No left-side identity; meta cluster
+          sits in top-right (timestamp + topic pill + kebab). Bottom strip
+          shows reply count + a Reply CTA that focuses the composer. */}
+      <PostBody
+        post={post}
+        isTopLevel
+        viewerRole={viewerRole}
+        viewerUserId={viewerUserId}
+        locale={locale}
+        hiveId={hiveId}
+        replyCount={replyCount}
+        onReplyClick={() => focusReplyWithMention(post.username)}
+      />
 
-      <HiveSectionDivider
-        label={`${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}`}
+      {/* Indented reply thread — vertical line on the left connects all
+          replies + composer to the OP. Each reply is a chat-bubble with a
+          horizontal connector "elbow" pointing at it. */}
+      <div
+        className="relative mt-4 ml-5"
+        style={{ paddingLeft: 24, borderLeft: '2px solid oklch(from var(--canvas-dark-ink) l c h / 0.10)' }}
       >
+        <div
+          className="font-mono text-[10px] uppercase tracking-[0.14em] mb-3"
+          style={{ color: 'var(--canvas-dark-ink-muted)' }}
+        >
+          {replyCount} {replyCount === 1 ? 'REPLY' : 'REPLIES'}
+        </div>
+
         {replies.length === 0 ? (
           <div
             style={{
               background: 'var(--canvas-dark-100)',
               borderRadius: 'var(--r-row)',
               boxShadow: 'var(--sh-inset)',
+              color: 'var(--canvas-dark-ink-muted)',
             }}
-            className="px-3 py-6 text-center text-sm font-mono text-[var(--canvas-dark-ink-muted)] italic"
+            className="px-3 py-5 text-center text-[13px] font-geist italic"
           >
             No replies yet. Be the first to chime in.
           </div>
         ) : (
-          <div className="flex flex-col">
+          <div className="flex flex-col gap-3">
             {replies.map((reply) => (
               <PostBody
                 key={reply.id}
@@ -158,67 +171,70 @@ export function DiscussionThread({
             ))}
           </div>
         )}
-      </HiveSectionDivider>
 
-      <HiveSectionDivider label="Reply">
-        <div className="flex gap-3">
-          <Avatar size="md" username="you" />
-          <div className="flex-1 min-w-0">
-            <MentionableTextarea
-              ref={replyRef}
-              value={replyDraft}
-              onChange={setReplyDraft}
-              placeholder="Add a reply…"
-              rows={3}
-              style={{
-                background: 'var(--canvas-dark-100)',
-                borderRadius: 'var(--r-row)',
-                boxShadow: 'var(--sh-inset)',
-                color: 'var(--canvas-dark-ink-strong)',
-              }}
-              className="w-full px-3.5 py-3 min-h-[100px] resize-y font-geist text-sm leading-relaxed focus:outline-none placeholder:text-[var(--canvas-dark-ink-muted)]"
-            />
-            <div className="flex justify-end mt-2.5">
-              <button
-                type="button"
-                onClick={submitReply}
-                disabled={!replyDraft.trim() || replying}
+        {/* Composer — sits inside the indent so it visually reads as
+            "you are replying to the OP". Avatar + textarea + post button. */}
+        <div className="mt-5 relative">
+          {/* Connector elbow into the thread line */}
+          <span
+            aria-hidden
+            className="absolute"
+            style={{
+              left: -24, top: 24,
+              width: 16, height: 2,
+              background: 'oklch(from var(--canvas-dark-ink) l c h / 0.10)',
+              borderRadius: 1,
+            }}
+          />
+          <div className="flex gap-3">
+            <Avatar size="md" username="you" />
+            <div className="flex-1 min-w-0">
+              <MentionableTextarea
+                ref={replyRef}
+                value={replyDraft}
+                onChange={setReplyDraft}
+                placeholder="Write a reply…"
+                rows={3}
                 style={{
-                  background: 'var(--brand)',
-                  color: 'var(--brand-ink)',
-                  borderRadius: 'var(--r-pill)',
-                  boxShadow: 'var(--sh-tile)',
-                  transition: 'background .14s, transform .1s',
+                  background: 'var(--canvas-dark-100)',
+                  borderRadius: 'var(--r-row)',
+                  boxShadow: 'var(--sh-inset)',
+                  color: 'var(--canvas-dark-ink-strong)',
                 }}
-                onMouseEnter={(e) => {
-                  if (e.currentTarget.disabled) return
-                  e.currentTarget.style.background = 'var(--brand-hover)'
-                  e.currentTarget.style.transform = 'translateY(-1px)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'var(--brand)'
-                  e.currentTarget.style.transform = 'none'
-                }}
-                onMouseDown={(e) => {
-                  if (e.currentTarget.disabled) return
-                  e.currentTarget.style.background = 'var(--brand-active)'
-                  e.currentTarget.style.transform = 'none'
-                }}
-                onMouseUp={(e) => {
-                  if (e.currentTarget.disabled) return
-                  e.currentTarget.style.background = 'var(--brand-hover)'
-                  e.currentTarget.style.transform = 'translateY(-1px)'
-                }}
-                className="font-geist font-semibold text-[13px] px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5"
-              >
-                <Reply size={12} />
-                {replying ? 'Posting…' : 'Post Reply'}
-              </button>
+                className="w-full px-3.5 py-3 min-h-[88px] resize-y font-geist text-sm leading-relaxed focus:outline-none placeholder:text-[var(--canvas-dark-ink-muted)] border-0"
+              />
+              <div className="flex justify-end mt-2.5">
+                <button
+                  type="button"
+                  onClick={submitReply}
+                  disabled={!replyDraft.trim() || replying}
+                  style={{
+                    background: 'var(--brand)',
+                    color: 'var(--brand-ink)',
+                    borderRadius: 'var(--r-pill)',
+                    boxShadow: 'var(--sh-tile)',
+                    transition: 'background .14s, transform .1s',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (e.currentTarget.disabled) return
+                    e.currentTarget.style.background = 'var(--brand-hover)'
+                    e.currentTarget.style.transform = 'translateY(-1px)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'var(--brand)'
+                    e.currentTarget.style.transform = 'none'
+                  }}
+                  className="font-geist font-semibold text-[13px] px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1.5"
+                >
+                  <Reply size={12} />
+                  {replying ? 'Posting…' : 'Post Reply'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </HiveSectionDivider>
-    </>
+      </div>
+    </div>
   )
 }
 
@@ -260,6 +276,7 @@ function PostBody({
   viewerUserId,
   locale,
   hiveId,
+  replyCount,
   onReplyClick,
 }: {
   post: DiscussionPostRow
@@ -268,6 +285,8 @@ function PostBody({
   viewerUserId: string
   locale: string
   hiveId: string
+  /** OP only: drives the "N replies" count in the bottom action bar. */
+  replyCount?: number
   onReplyClick: () => void
 }) {
   const router = useRouter()
@@ -327,8 +346,22 @@ function PostBody({
   return (
     <article
       style={cardStyle}
-      className={`flex gap-4 px-5 py-4 ${isTopLevel ? '' : 'mt-3 first:mt-0'}`}
+      className={`relative flex gap-4 px-5 py-4`}
     >
+      {/* Horizontal connector elbow from the vertical thread line into the
+          reply card. Only renders for replies — OP sits above the line. */}
+      {!isTopLevel && (
+        <span
+          aria-hidden
+          className="absolute"
+          style={{
+            left: -24, top: 24,
+            width: 22, height: 2,
+            background: 'oklch(from var(--canvas-dark-ink) l c h / 0.10)',
+            borderRadius: 1,
+          }}
+        />
+      )}
       <Avatar
         size={isTopLevel ? 'lg' : 'md'}
         username={post.username}
@@ -449,6 +482,35 @@ function PostBody({
               </p>
             )
           })()
+        )}
+
+        {/* OP action bar — Facebook-style. Reply CTA (focuses the composer)
+            on the left, "N replies" count on the right. Only renders on the
+            OP card; replies have their own inline Reply button in the header
+            cluster. */}
+        {isTopLevel && !editing && (
+          <div
+            className="mt-4 pt-3 flex items-center gap-3"
+            style={{ borderTop: '1px solid oklch(from var(--canvas-dark-ink) l c h / 0.06)' }}
+          >
+            <button
+              type="button"
+              onClick={onReplyClick}
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md font-geist text-[13px] font-medium text-[var(--canvas-dark-ink-muted)] hover:text-[var(--canvas-dark-ink-strong)] hover:bg-[oklch(from_var(--canvas-dark-ink)_l_c_h_/_0.04)] transition-colors"
+            >
+              <Reply size={14} />
+              Reply
+            </button>
+            <span
+              className="ml-auto font-mono text-[11px]"
+              style={{
+                color: 'var(--canvas-dark-ink-muted)',
+                letterSpacing: '0.04em',
+              }}
+            >
+              {replyCount ?? 0} {(replyCount ?? 0) === 1 ? 'reply' : 'replies'}
+            </span>
+          </div>
         )}
       </div>
 

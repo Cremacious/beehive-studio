@@ -12,9 +12,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-11 (Smoke-fix sweep across hive routes — collab loading spinner + wiki rename affordance + outline beat-link in dialog + cross-act drop highlight + chapters-in-collections on hive list + invite-by-id accept route + discussion thread cards + invite friends panel + binder row left-align + cancel-friend-request fallback action)
+> **Last updated:** 2026-06-11 (Hive smoke-fix sweep + discussion thread redesign — Facebook-style indented replies with thread line + chat bubbles + connector elbows)
 >
-> **Last commit (pending):** ~16 surface tweaks staged for the upcoming push.
+> **Last commit:** [2de32aa](https://github.com/Cremacious/beehive-studio/commit/2de32aa) — feat(hive): smoke-fix sweep across collab + wiki + outline + discussions. Follow-up commit lands the discussion thread Variant A redesign.
 >
 > **This session — font-size + FBM + word-goal + reader-page FBM**:
 >

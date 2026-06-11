@@ -12,7 +12,42 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-11 (Hive members redesign + notification bell fixes)
+> **Last updated:** 2026-06-11 (D1 Discover Books design spec landed)
+>
+> **Last commit:** [25fe384](https://github.com/Cremacious/beehive-studio/commit/25fe384) — docs(d1): discover books design spec.
+>
+> **This session — brainstorm + spec for the Discover page overhaul:**
+>
+> Chris kicked off a brainstorm to redesign `/[locale]/discover`. Two goals stacked: (1) visual refresh — current page predates the locked iOS-inspired design system; reads as prototype-grade chrome with hex literals + sparse content. (2) functional expansion — current 5-tab directory feels shallow; Chris wants Beehive to rival Royal Road + Wattpad for novel discovery and be DeviantArt-like for the broader creative-sharing layer (Sparks = writing challenges, Hives = collab groups, Lists = curated reading, Clubs = Facebook-groups-around-books).
+>
+> The ask is genuinely multi-milestone, so the brainstorm opened by decomposing into 4 sub-projects: **D1 Discover Books** (this spec — marquee surface, rivals Royal Road), **D2 Discover Sparks + Hives**, **D3 Discover Lists + Clubs**, **D4 Cross-surface home + personalization**. Visual refresh rides each sub-project scoped to its surface. Chris locked the decomposition + algorithm-first lean (no curator tooling).
+>
+> **10 brainstorm decisions locked, spec written + committed at [25fe384](https://github.com/Cremacious/beehive-studio/commit/25fe384):** [docs/superpowers/specs/2026-06-11-d1-discover-books-design.md](docs/superpowers/specs/2026-06-11-d1-discover-books-design.md). Highlights:
+>
+> - **Rail set (6):** Trending Now (7d velocity weighted by likes/comments/reads/follows) · Rising Stars (velocity-as-percentage, biased toward newer/smaller books) · Recently Updated (chapter REVISED/FINAL flip in last 7d) · New Releases (≤30d since first PUBLIC+discoverable) · Best Ongoing (active in last 30d + above-median engagement, approximates ongoing without completion enum) · From Authors You Follow (authed-only). Most Popular dropped (slow + redundant). Best Completed deferred (needs completion-status enum).
+> - **IA — hybrid:** rail-stacked home + dedicated `/discover/[rail-slug]` sub-page per rail + `/discover/genre/[slug]` hubs (14 slugs) + `/discover/search?q=…&genre=…&tag=…` + `/discover/following` authed-only. Genre chip strip on home scopes ALL rails in place (doesn't navigate). Tab strip stays — non-Books tabs get light visual card touch-up only; functional deepening waits D2/D3.
+> - **Card variants:** `<RailBookCard>` (A — compact cover-forward, ~168px) for rails. `<DiscoverBookCard>` (B — info-dense cover-left/metadata-right, ~280px) for sub-pages + search + genre hub grids. `<FeaturedFreshHero>` (full-width algorithmic spotlight, ≤7d new + velocity-sorted in that window, hidden if no qualifying book).
+> - **Genre taxonomy locked at 14 curated** (Fantasy / Sci-Fi / Romance / Mystery / Horror / Thriller / Historical / Contemporary / Literary / YA / Adventure / Drama / Poetry / Other — mirrors wiki vocab). `books.genre` becomes Zod-enforced (no Postgres enum migration — Zod normalization is cheaper). Free-text tags stay as secondary axis on B-cards + searchable.
+> - **Low-volume strategy:** every rail returning <4 strict-criteria results backfills from "Recently Updated within 30d" until ≥4 cards, with a transparent mono caption `"Filling in with recently active books while [Rail Name] warms up."` Caption auto-vanishes once strict criteria yield ≥4.
+> - **Schema change:** ONE additive column — `books.first_publicly_discoverable_at timestamp NULL` — set on first transition to (PUBLIC + discoverable=true), backfilled from `updated_at` (or `created_at` fallback). Partial index `(first_public DESC) WHERE PUBLIC + discoverable`.
+> - **Server actions:** 10 new actions in `lib/actions/discover.actions.ts` (one per rail + Featured Fresh + backfill helper + search + genre counts) all returning `{books, strictCount, nextCursor}` shape. 3 pure helper modules in `lib/discover/` (`scoring.ts` + `backfill.ts` + `genres.ts`).
+> - **Visual chrome locked to AGENTS.md design system:** panel + tile gradients, brand-yellow restraint (rail titles + active chip + "New this week" badge + search focus ring + Start reading CTA + ● Updating + footer genre chips — nowhere else), Comfortaa headings, JetBrains Mono labels, page-bg `#262728`, home = `max-w-7xl` / sub-pages = `max-w-5xl`. Legacy `feed-filters.tsx` (sort dropdown) + `writers-strip.tsx` deleted (rails absorb both).
+> - **Test posture:** unit tests for pure helpers (scoring + backfill + genre predicate), surface-shape tests per the C-phase static-import pattern (ca51b28 lesson) for the 10 actions, manual smoke for visual + IA per AGENTS.md convention.
+> - **Indicative phasing (14 tasks):** T1 schema migration · T2 pure helpers · T3 action layer rewrite (deletes legacy `getDiscoverFeedAction` + `getDiscoverWritersAction`) · T4-T5 card + rail components · T6 Books home page · T7 chip strip + search input · T8 genre footer grid · T9-T10 sub-page shell + 6 routes · T11 genre hub route · T12 search page · T13 non-Books card touch-up · T14 smoke + ship.
+> - **15-item carry-forward smoke checklist** baked into spec §14.
+>
+> **Brainstorm cadence:** visual companion used once for the card density A-vs-B comparison ([book-card-density.html](.superpowers/brainstorm/17409-1781194026/content/book-card-density.html)); rest of the 10 questions answered in terminal (conceptual choices, not visual). Chris picked the algorithm-first lean (Q2-A), Royal-Road-style rail mix (Q3 = my recommendation A+B+D+E+F+H+I), hybrid IA (Q4-C), compact cover-forward rail cards (Q5-A), curated+free-text genre/tag (Q6-C), full search in D1 (Q7-A), transparent backfill (Q8-B), keep tab strip with non-Books touch-up (Q9-B), Featured Fresh hero (Q10-B).
+>
+> **Patterns now load-bearing for plan-writing + future Discover sub-projects:**
+> 1. **Algorithm-first lean is binding across D1-D4** — no curator-tooling / Editor's-Picks / editorial-calendar work scoped into any of the 4 sub-projects unless explicitly re-opened. If a future product call wants curation, it's a separate Phase.
+> 2. **Backfill-with-caption pattern** (`{books, strictCount}` + caption when `strictCount < 4`) is the canonical low-volume rail behavior. D2-D4 should reuse this shape for Sparks / Hives / Lists / Clubs rails when those land.
+> 3. **`first_publicly_discoverable_at` is the canonical "new release" timestamp** — set on first transition to PUBLIC+discoverable, never updated on subsequent flips. Reusable for any future "newly discoverable" surface (D2-D4 may want it on `sparks` / `hives` / `reading_lists` / `book_clubs`).
+> 4. **Rail-sub-page pattern** (rail on home + `/discover/[rail-slug]` sub-page + shared filter/pagination chrome via generic `<DiscoverRailSubPage>`) is the canonical "See all" deepening. D2-D4 rails should follow.
+> 5. **Genre = 14 curated, Zod-enforced at validation layer, free-text in DB.** Don't promote to Postgres enum — too expensive to migrate existing free-text data, and Zod normalization handles the chip-strip + sub-route guarantees we need.
+>
+> **Next concrete step:** Chris reviews the spec at [docs/superpowers/specs/2026-06-11-d1-discover-books-design.md](docs/superpowers/specs/2026-06-11-d1-discover-books-design.md). If approved, invoke writing-plans skill to produce the implementation plan (subagent-driven cadence per the C-phase precedent — per-task implementer → spec review → code-quality review → fix loop, with per-task commits and tests staying green throughout). Suggested wave shape per spec §13: W1 = T1 schema, W2 = T2 helpers, W3 = T3 action layer rewrite (single combined commit since all actions share `discover.actions.ts` per the C-phase Wave-3 precedent), W4 = T4+T5 card/rail components in parallel, W5 = T6+T7+T8 home assembly sequential (page consumes T7+T8 components), W6 = T9+T10+T11+T12 parallel (4 isolated route scopes), W7 = T13 non-Books touch-up alone, W8 = T14 smoke + AGENTS.md + ship. After D1 ships + smokes clean, decide whether to dispatch D2 Sparks+Hives next, or pivot to another priority. Prior-session paragraph (Hive members redesign + notification bell fixes) preserved verbatim below for history.
+>
+> **Prior — Last updated:** 2026-06-11 (Hive members redesign + notification bell fixes)
 >
 > **Last commit:** [396495d](https://github.com/Cremacious/beehive-studio/commit/396495d) — feat(hive/members): redesign + notification bell fixes.
 >

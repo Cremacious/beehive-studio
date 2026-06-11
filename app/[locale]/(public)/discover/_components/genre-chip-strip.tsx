@@ -3,9 +3,17 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useTransition } from 'react'
 import { GENRES, GENRE_LABEL } from '@/lib/discover/genres'
 
-type Props = { activeGenre: string | undefined; locale: string }
+type Props = {
+  activeGenre: string | undefined
+  locale: string
+  /**
+   * Which Discover tab the chips control. Default 'books' preserves D1 behavior.
+   * 'sparks' keeps the `tab=sparks` query param when changing genre.
+   */
+  tabContext?: 'books' | 'sparks'
+}
 
-export function GenreChipStrip({ activeGenre, locale }: Props) {
+export function GenreChipStrip({ activeGenre, locale, tabContext = 'books' }: Props) {
   const router = useRouter()
   const sp = useSearchParams()
   const [, startTransition] = useTransition()
@@ -14,6 +22,7 @@ export function GenreChipStrip({ activeGenre, locale }: Props) {
     const params = new URLSearchParams(sp.toString())
     if (slug) params.set('genre', slug)
     else params.delete('genre')
+    if (tabContext === 'sparks') params.set('tab', 'sparks')
     const qs = params.toString()
     startTransition(() => {
       router.push(`/${locale}/discover${qs ? `?${qs}` : ''}`, { scroll: false })

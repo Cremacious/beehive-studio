@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import {
   getFeaturedFreshBookAction,
   getTrendingBooksAction,
@@ -9,15 +8,25 @@ import {
   getFollowingFeedAction,
   getGenreBookCountsAction,
   type RailResult,
+  type BookCard,
 } from '@/lib/actions/discover.actions'
-import { getSparksAction } from '@/lib/actions/sparks.actions'
+import {
+  getFeaturedSparkAction,
+  getLiveNowSparksAction,
+  getVotingNowSparksAction,
+  getHeatingUpSparksAction,
+  getNewlyOpenedSparksAction,
+  getFollowingSparksAction,
+  getRecentlyWonSparksAction,
+  getSparkGenreCountsAction,
+  type SparkCard,
+  type RailResult as SparkRailResult,
+} from '@/lib/actions/discover-sparks.actions'
 import { getDiscoverableHivesAction } from '@/lib/actions/hive.actions'
 import { isValidGenre } from '@/lib/discover/genres'
 import { PageHead } from '@/components/community/page-head'
 import { DiscoverTabs } from './_components/tabs'
-import { SparkCard } from './_components/spark-card'
 import { HiveCard } from './_components/hive-card'
-import { CreateSparkModal } from './_components/create-spark-modal'
 import { ListsTabContent } from './_components/lists-tab-content'
 import { ClubsTabContent } from './_components/clubs-tab-content'
 import { FeaturedFreshHero } from './_components/featured-fresh-hero'
@@ -25,6 +34,8 @@ import { DiscoverRail } from './_components/discover-rail'
 import { GenreChipStrip } from './_components/genre-chip-strip'
 import { DiscoverSearchInput } from './_components/discover-search-input'
 import { GenreFooterGrid } from './_components/genre-footer-grid'
+import { FeaturedSparkHero } from './_components/featured-spark-hero'
+import { DiscoverSparkRail } from './_components/discover-spark-rail'
 
 type Tab = 'books' | 'sparks' | 'hives' | 'lists' | 'clubs'
 
@@ -59,7 +70,7 @@ export default async function DiscoverPage({ params, searchParams }: Props) {
       </div>
 
       {tab === 'books' && <BooksTab locale={locale} genre={genre} />}
-      {tab === 'sparks' && <SparksTab locale={locale} />}
+      {tab === 'sparks' && <SparksTab locale={locale} genre={genre} />}
       {tab === 'hives' && <HivesTab locale={locale} />}
       {tab === 'lists' && <ListsTab locale={locale} />}
       {tab === 'clubs' && <ClubsTab locale={locale} />}
@@ -96,8 +107,9 @@ async function BooksTab({ locale, genre }: { locale: string; genre?: string }) {
     getGenreBookCountsAction(),
   ])
 
-  const followingResult: { success: true; data: RailResult } | { success: false; error: string } =
-    following
+  const followingResult:
+    | { success: true; data: RailResult<BookCard> }
+    | { success: false; error: string } = following
 
   return (
     <div className="flex flex-col gap-5">
@@ -171,45 +183,124 @@ async function BooksTab({ locale, genre }: { locale: string; genre?: string }) {
   )
 }
 
-async function SparksTab({ locale }: { locale: string }) {
-  const [activeResult, closedResult] = await Promise.all([
-    getSparksAction('active'),
-    getSparksAction('closed'),
+type SparkFollowingFallback = { success: false; error: 'GUEST' }
+
+async function SparksTab({ locale, genre }: { locale: string; genre?: string }) {
+  const safeGenre = genre && isValidGenre(genre) ? genre : undefined
+
+  const [
+    hero,
+    liveNow,
+    votingNow,
+    heatingUp,
+    newlyOpened,
+    following,
+    recentlyWon,
+    genreCounts,
+  ] = await Promise.all([
+    getFeaturedSparkAction({ genre: safeGenre }),
+    getLiveNowSparksAction({ genre: safeGenre }),
+    getVotingNowSparksAction({ genre: safeGenre }),
+    getHeatingUpSparksAction({ genre: safeGenre }),
+    getNewlyOpenedSparksAction({ genre: safeGenre }),
+    getFollowingSparksAction({ genre: safeGenre }).catch(
+      (): SparkFollowingFallback => ({ success: false, error: 'GUEST' }),
+    ),
+    getRecentlyWonSparksAction({ genre: safeGenre }),
+    getSparkGenreCountsAction(),
   ])
-  const activeSparks = activeResult.success ? activeResult.data.sparks : []
-  const closedSparks = closedResult.success ? closedResult.data.sparks : []
+
+  const followingResult:
+    | { success: true; data: SparkRailResult<SparkCard> }
+    | { success: false; error: string } = following
 
   return (
-    <div>
-      {/* Active Sparks grid */}
-      <div className="flex items-center justify-between mb-4">
-        <p className="text-[var(--canvas-dark-ink-muted)] text-[11px] uppercase tracking-wider font-[family-name:var(--font-mono)]">Active Sparks</p>
-        <CreateSparkModal locale={locale} />
-      </div>
-      {activeSparks.length === 0 ? (
-        <p className="text-[var(--canvas-dark-ink-muted)] text-[13px] py-8 text-center">No active Sparks yet. Create one!</p>
-      ) : (
-        <div className="grid grid-cols-2 gap-3 mb-8">
-          {activeSparks.map(spark => <SparkCard key={spark.id} spark={spark} locale={locale} />)}
-        </div>
+    <div className="flex flex-col gap-5">
+      {hero.success && hero.data && (
+        <FeaturedSparkHero spark={hero.data} locale={locale} />
       )}
 
-      {/* Past Sparks */}
-      {closedSparks.length > 0 && (
-        <>
-          <p className="text-[var(--canvas-dark-ink-muted)] text-[11px] uppercase tracking-wider font-[family-name:var(--font-mono)] mb-3">Past Sparks</p>
-          <div className="flex flex-col gap-2">
-            {closedSparks.map(spark => (
-              <Link key={spark.id} href={`/${locale}/sparks/${spark.id}`} className="flex items-center gap-3 py-2.5 border-b border-[var(--br-card)] hover:bg-[var(--canvas-dark-200)] px-2 rounded transition-colors">
-                <p className="text-[var(--canvas-dark-ink)] text-[13px] flex-1 truncate">&ldquo;{spark.prompt}&rdquo;</p>
-                {spark.winnerUsername && (
-                  <span className="text-[var(--brand)] text-[11px] shrink-0">🏆 {spark.winnerUsername}</span>
-                )}
-                <span className="text-[var(--canvas-dark-ink-muted)] text-[11px] shrink-0">{spark.entryCount} entries</span>
-              </Link>
-            ))}
-          </div>
-        </>
+      <div
+        className="flex items-center gap-3 sticky top-0 z-10 py-3"
+        style={{
+          background: 'rgba(38,39,40,0.95)',
+          backdropFilter: 'blur(8px)',
+        }}
+      >
+        <GenreChipStrip
+          activeGenre={safeGenre}
+          locale={locale}
+          tabContext="sparks"
+        />
+        <div className="ml-auto">
+          <DiscoverSearchInput
+            locale={locale}
+            searchHref={`/${locale}/discover/sparks/search`}
+            placeholder="Search Sparks, prompts, creators..."
+            ariaLabel="Search Discover Sparks"
+          />
+        </div>
+      </div>
+
+      {liveNow.success && (
+        <DiscoverSparkRail
+          title="Live now"
+          subPageHref={`/${locale}/discover/sparks/live-now${qs(safeGenre)}`}
+          result={liveNow.data}
+          locale={locale}
+          showUrgencyCaption
+        />
+      )}
+      {votingNow.success && (
+        <DiscoverSparkRail
+          title="Voting now"
+          subPageHref={`/${locale}/discover/sparks/voting-now${qs(safeGenre)}`}
+          result={votingNow.data}
+          locale={locale}
+        />
+      )}
+      {heatingUp.success && (
+        <DiscoverSparkRail
+          title="Heating up"
+          subPageHref={`/${locale}/discover/sparks/heating-up${qs(safeGenre)}`}
+          result={heatingUp.data}
+          locale={locale}
+        />
+      )}
+      {newlyOpened.success && (
+        <DiscoverSparkRail
+          title="Newly opened"
+          subPageHref={`/${locale}/discover/sparks/newly-opened${qs(safeGenre)}`}
+          result={newlyOpened.data}
+          locale={locale}
+        />
+      )}
+      {followingResult.success && (
+        <DiscoverSparkRail
+          title="From writers you follow"
+          subPageHref={`/${locale}/discover/sparks/following${qs(safeGenre)}`}
+          result={followingResult.data}
+          locale={locale}
+          hideWhenEmpty
+        />
+      )}
+      {recentlyWon.success && (
+        <DiscoverSparkRail
+          title="Recently won"
+          subPageHref={`/${locale}/discover/sparks/recently-won${qs(safeGenre)}`}
+          result={recentlyWon.data}
+          locale={locale}
+        />
+      )}
+
+      {genreCounts.success && (
+        <GenreFooterGrid
+          counts={genreCounts.data}
+          locale={locale}
+          linkBase={`/${locale}/discover/sparks/genre/`}
+          title="Browse Sparks by genre"
+          countLabel="sparks"
+        />
       )}
     </div>
   )

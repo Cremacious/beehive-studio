@@ -1,11 +1,18 @@
 import Link from 'next/link'
-// TODO: T6 rewrite — Books tab moves to rail-stacked layout consuming the
-// new D1 actions (getTrendingBooksAction et al). For now, the Books tab
-// renders a minimal placeholder so the rest of the page (Sparks / Hives /
-// Lists / Clubs) keeps working.
-import { getTrendingBooksAction } from '@/lib/actions/discover.actions'
+import {
+  getFeaturedFreshBookAction,
+  getTrendingBooksAction,
+  getRisingStarsBooksAction,
+  getRecentlyUpdatedBooksAction,
+  getNewReleasesBooksAction,
+  getBestOngoingBooksAction,
+  getFollowingFeedAction,
+  getGenreBookCountsAction,
+  type RailResult,
+} from '@/lib/actions/discover.actions'
 import { getSparksAction } from '@/lib/actions/sparks.actions'
 import { getDiscoverableHivesAction } from '@/lib/actions/hive.actions'
+import { isValidGenre } from '@/lib/discover/genres'
 import { PageHead } from '@/components/community/page-head'
 import { DiscoverTabs } from './_components/tabs'
 import { SparkCard } from './_components/spark-card'
@@ -13,6 +20,11 @@ import { HiveCard } from './_components/hive-card'
 import { CreateSparkModal } from './_components/create-spark-modal'
 import { ListsTabContent } from './_components/lists-tab-content'
 import { ClubsTabContent } from './_components/clubs-tab-content'
+import { FeaturedFreshHero } from './_components/featured-fresh-hero'
+import { DiscoverRail } from './_components/discover-rail'
+import { GenreChipStrip } from './_components/genre-chip-strip'
+import { DiscoverSearchInput } from './_components/discover-search-input'
+import { GenreFooterGrid } from './_components/genre-footer-grid'
 
 type Tab = 'books' | 'sparks' | 'hives' | 'lists' | 'clubs'
 
@@ -24,11 +36,18 @@ type Props = {
 export default async function DiscoverPage({ params, searchParams }: Props) {
   const { locale } = await params
   const resolved = await searchParams
-  const tab: Tab = (resolved.tab === 'sparks' || resolved.tab === 'hives' || resolved.tab === 'lists' || resolved.tab === 'clubs') ? resolved.tab : 'books'
-  const genre = resolved.genre
+  const tab: Tab =
+    resolved.tab === 'sparks' ||
+    resolved.tab === 'hives' ||
+    resolved.tab === 'lists' ||
+    resolved.tab === 'clubs'
+      ? resolved.tab
+      : 'books'
+  const rawGenre = typeof resolved.genre === 'string' ? resolved.genre : undefined
+  const genre = rawGenre && isValidGenre(rawGenre) ? rawGenre : undefined
 
   return (
-    <main className="cm-wrap w-5xl">
+    <main className="cm-wrap max-w-7xl mx-auto">
       <PageHead
         eyebrow="Find your next read & your next circle"
         title="Discover"
@@ -48,18 +67,106 @@ export default async function DiscoverPage({ params, searchParams }: Props) {
   )
 }
 
-// TODO: T6 rewrite — replace this placeholder with the rail-stacked layout
-// (FeaturedFreshHero + 6 DiscoverRail + GenreFooterGrid) per spec §5/§6.
+function qs(genre: string | undefined): string {
+  return genre ? `?genre=${encodeURIComponent(genre)}` : ''
+}
+
+type FollowingFallback = { success: false; error: 'GUEST' }
+
 async function BooksTab({ locale, genre }: { locale: string; genre?: string }) {
-  void locale
-  const trending = await getTrendingBooksAction({ genre })
-  const books = trending.success ? trending.data.books : []
+  const [
+    hero,
+    trending,
+    rising,
+    recentlyUpdated,
+    newReleases,
+    bestOngoing,
+    following,
+    genreCounts,
+  ] = await Promise.all([
+    getFeaturedFreshBookAction({ genre }),
+    getTrendingBooksAction({ genre }),
+    getRisingStarsBooksAction({ genre }),
+    getRecentlyUpdatedBooksAction({ genre }),
+    getNewReleasesBooksAction({ genre }),
+    getBestOngoingBooksAction({ genre }),
+    getFollowingFeedAction({ genre }).catch(
+      (): FollowingFallback => ({ success: false, error: 'GUEST' }),
+    ),
+    getGenreBookCountsAction(),
+  ])
+
+  const followingResult: { success: true; data: RailResult } | { success: false; error: string } =
+    following
 
   return (
-    <div className="text-center py-20 text-[var(--canvas-dark-ink-muted)] text-[13px]">
-      {books.length === 0
-        ? 'No books here yet.'
-        : `Discover Books rewrite in progress. ${books.length} trending titles ready.`}
+    <div className="flex flex-col gap-5">
+      {hero.success && hero.data && <FeaturedFreshHero book={hero.data} locale={locale} />}
+
+      <div
+        className="flex items-center gap-3 sticky top-0 z-10 py-3"
+        style={{
+          background: 'rgba(38,39,40,0.95)',
+          backdropFilter: 'blur(8px)',
+        }}
+      >
+        <GenreChipStrip activeGenre={genre} locale={locale} />
+        <div className="ml-auto">
+          <DiscoverSearchInput locale={locale} />
+        </div>
+      </div>
+
+      {trending.success && (
+        <DiscoverRail
+          title="Trending Now"
+          subPageHref={`/${locale}/discover/trending${qs(genre)}`}
+          result={trending.data}
+          locale={locale}
+        />
+      )}
+      {rising.success && (
+        <DiscoverRail
+          title="Rising Stars"
+          subPageHref={`/${locale}/discover/rising${qs(genre)}`}
+          result={rising.data}
+          locale={locale}
+        />
+      )}
+      {recentlyUpdated.success && (
+        <DiscoverRail
+          title="Recently Updated"
+          subPageHref={`/${locale}/discover/recently-updated${qs(genre)}`}
+          result={recentlyUpdated.data}
+          locale={locale}
+        />
+      )}
+      {newReleases.success && (
+        <DiscoverRail
+          title="New Releases"
+          subPageHref={`/${locale}/discover/new-releases${qs(genre)}`}
+          result={newReleases.data}
+          locale={locale}
+        />
+      )}
+      {bestOngoing.success && (
+        <DiscoverRail
+          title="Best Ongoing"
+          subPageHref={`/${locale}/discover/best-ongoing${qs(genre)}`}
+          result={bestOngoing.data}
+          locale={locale}
+        />
+      )}
+      {followingResult.success && (
+        <DiscoverRail
+          title="From Authors You Follow"
+          subPageHref={`/${locale}/discover/following${qs(genre)}`}
+          result={followingResult.data}
+          locale={locale}
+          hideWhenEmpty
+        />
+      )}
+
+      {genreCounts.success && <GenreFooterGrid counts={genreCounts.data} locale={locale} />}
     </div>
   )
 }

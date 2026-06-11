@@ -12,7 +12,43 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-11 (Hive smoke-fix sweep + discussion thread redesign — Facebook-style indented replies with thread line + chat bubbles + connector elbows)
+> **Last updated:** 2026-06-11 (Hive submissions UX overhaul + buzz board sticky-note redesign)
+>
+> **Last commit:** [566d694](https://github.com/Cremacious/beehive-studio/commit/566d694) — feat(hive): submissions UX overhaul + buzz board sticky redesign.
+>
+> **This session — submissions + buzz board:**
+>
+> 1. **Persona-aware Submissions explainer + docs.** `/hive/[hiveId]/submissions` now mounts a `<SubmissionsExplainer>` on every view with a base 2-sentence "what submissions are" + role-specific tail (OWNER → "you write directly in studio, submissions are for invited contributors"; BETA_READER → "your role is annotations + suggestions"). Empty states rewritten: BETA_READER renders nothing (explainer covers it), CONTRIBUTOR gets explanatory CTA + brand-pill "+ Start a draft", reviewer-empty replaced with "Nothing to review yet." copy. New full docs article at `/[locale]/(public)/docs/submissions` (uses LegalPage chrome, accessible via "Learn more →" in the explainer) + client `<BackLink>` using `router.back()` so it returns to the caller. `LegalPage` gained optional `preHeader` slot for the back link.
+>
+> 2. **Submission composer toolbar + title required.** New `<ComposerToolbar>` mounts above the body editor on `/submissions/new` (B/I/U/strike/highlight/link, P/H1/H2/H3, bullet/ordered/quote/HR, align L/C/R, undo/redo — flat 30×30 tile-gradient buttons matching studio editor recipe, `onMouseDown` focus-preserve for ProseMirror). Title now uses standard recessed input sizing (matches Insert at selector), required asterisk + error ring + helper. `canSubmit` requires non-empty title; server `submitSubmissionAction` adds `TITLE_REQUIRED` guard so blank-title chapters can't reach the binder if a client is bypassed. Header subtitle changed to "Draft · Auto-saves as you type" (removed the duplicate "Draft" HiveSectionDivider label).
+>
+> 3. **Approve flow stops leaving stale buttons.** `<SubmissionReview>` was `router.push('/studio/${bookId}')` after approve — jarring navigation. Now `router.refresh()` only; the dynamic `[submissionId]/page.tsx` re-evaluates, sees `draftStatus === 'APPROVED'`, and renders `<SubmissionRead>` in place. Buttons disappear, page shows the approved view, toast confirms.
+>
+> 4. **Buzz board: sticky-note redesign (Option B from mockups).** Compose modal rebuilt: SHARE WITH YOUR HIVE mono eyebrow + brand-yellow "Pin a new note" title + 2-card type picker (Text / Link with icon + name + blurb, brand-yellow border on active). Body uses **standard dark-gray recessed input** (per Chris's explicit call — sticky color stays on the feed). Counter turns brand-yellow at >90% capacity. Brand-pill "📌 Pin it" CTA. Edit modal mirrors the chrome with "Save" CTA. **Sticky textarea fix:** `MentionableTextarea` just spreads `...rest` onto a bare `<textarea>` with no default styling — without className/style the browser fell back to `cols="20"` (narrow stub bug Chris caught). Fixed by passing shared `textareaStyle` (`--canvas-dark-100` + `--sh-inset` + 14px font + 120px min-height) and `className="w-full"` on every call site (compose + edit, both text and caption variants).
+>
+> 5. **Buzz post card → sticky note.** Replaced flat tile-gradient `<article>` with tinted sticky chrome: deterministic 5-color palette (yellow/mint/pink/blue/lilac) via FNV-style hash on `post.id`, slight rotation (-1.2° to +1.4°) from the same hash so reloads keep the same color/angle. Pin dot decoration top-center. Body switched to Newsreader serif (writerly feel). Header is mono uppercase "@USERNAME · TIME". Hover: snaps to 0° + 2px lift + deeper shadow. Kebab, like button, link card all preserved. `<LinkCard>` bg darkened to `rgba(0,0,0,0.32)` so it sits recessed inside the colored sticky instead of clashing.
+>
+> 6. **Buzz feed → corkboard.** `<BuzzFeed>` wraps content in a corkboard surface: `--canvas-dark-100` base + two subtle warm radial accents + dot-grid texture overlay via `radial-gradient` background-image. 3-col auto-fill grid at `minmax(260px, 1fr)`, gap-7 for breathing room around rotated stickies. Empty + populated states share the chrome.
+>
+> 7. **Feed stale-state bug fixed.** `BuzzFeed` was doing `useState(initialPosts)` which only honors initial value on first mount — `router.refresh()` after compose/edit/delete updated server data but the client state stayed stale (user had to manually reload). Added `useEffect(() => { setPosts(initialPosts); setCursor(initialCursor); }, [initialPosts, initialCursor])` sync.
+>
+> **Mockup files** (preserved for reference): [design-import-temp/submission-composer-mockups.html](design-import-temp/submission-composer-mockups.html) (3 composer variants — Chris picked A with smaller title input), [design-import-temp/buzz-board-mockups.html](design-import-temp/buzz-board-mockups.html) (3 buzz variants — Chris picked B with dark textarea).
+>
+> **Patterns now load-bearing:**
+> 1. **`MentionableTextarea` requires explicit `className`/`style`** for sizing — it spreads `...rest` onto a bare `<textarea>`. Future consumers must pass `className="w-full"` + recessed input style; otherwise the browser falls back to `cols="20"` (~150px wide).
+> 2. **`useState(initialProp)` only honors initial value on FIRST mount.** Any client component that takes `initialX` from a server parent and needs to reflect `router.refresh()` updates must `useEffect(() => setX(initialX), [initialX])`. Catch this whenever wiring a refresh-after-mutation flow.
+> 3. **Approve/reject flows should `router.refresh()` in place** rather than push to a sibling route. Lets the dynamic page re-evaluate and swap to the post-state view (e.g. APPROVED → SubmissionRead) without jarring navigation.
+> 4. **`'use server'` modules cannot export sync helpers.** Already documented; reaffirmed when the server-side `TITLE_REQUIRED` guard landed inside the existing action without needing a sibling helper module.
+> 5. **Standard recessed input recipe:** `background: var(--canvas-dark-100)` + `boxShadow: var(--sh-inset)` + `border: 0` + `borderRadius: var(--r-row)` + `padding: 11px 14px` + `fontSize: 14px` + `fontFamily: var(--font-ui)`. Reusable for any new form field.
+>
+> **Known follow-ups (deferred):**
+> 1. **`?invite_claimed=1` sonner toast handler** — friend invite redirects with the param, profile page doesn't read it (pre-existing, untouched).
+> 2. **Pre-session modification to `discussions/_components/discussion-thread.tsx`** was present in working tree at session start. Left unstaged (not session work). Chris can commit or restore separately.
+> 3. **Locale hardcoded `/en/`** in notifications-bell (pre-existing tech debt).
+>
+> **Next concrete step:** Chris smokes `/en/hive/cr8ng5tka18kzp2h9u72q4xy/{submissions,buzz}` end-to-end. Submissions targets: (1) contributor `/submissions/new` — title field same height as Insert at + required block + new toolbar functional; (2) submit with non-empty title → reviewer page; (3) reviewer Approve → page in-place flips to SubmissionRead, no stale buttons; (4) explainer copy reads right per role; (5) `/docs/submissions` back link returns to hive. Buzz targets: (1) compose modal — textarea full-width + standard dark-gray bg + Pin it CTA works; (2) new buzz appears immediately without manual reload; (3) feed shows tinted sticky notes in 3-col grid on corkboard; (4) edit modal mirrors compose chrome. Report issues for follow-up. After smoke, prior known priorities still open: discussion-thread file decision, hive routes smoke checklist remnants, em-dash audit cleanup, H5 Dashboard, Phase 9 polish — see "Prior" block below.
+>
+> **Prior — Last updated:** 2026-06-11 (Hive smoke-fix sweep + discussion thread redesign — Facebook-style indented replies with thread line + chat bubbles + connector elbows)
 >
 > **Last commit:** [2de32aa](https://github.com/Cremacious/beehive-studio/commit/2de32aa) — feat(hive): smoke-fix sweep across collab + wiki + outline + discussions. Follow-up commit lands the discussion thread Variant A redesign.
 >

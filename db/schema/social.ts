@@ -137,7 +137,17 @@ export const sparks = pgTable('sparks', {
   status: sparkStatusEnum('status').notNull().default('OPEN'),
   votingEndsAt: timestamp('voting_ends_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-})
+  // D2a additions: genre (shared 14-slug vocabulary with D1), first-public stamp
+  // for "Newly opened" rail, denormalized entry count for "Heating up" rail.
+  genre: text('genre'),
+  firstPubliclyDiscoverableAt: timestamp('first_publicly_discoverable_at'),
+  entryCount: integer('entry_count').notNull().default(0),
+}, (t) => [
+  index('sparks_discoverable_visibility_idx').on(t.discoverable, t.visibility),
+  index('sparks_status_deadline_idx').on(t.status, t.deadline),
+  index('sparks_status_voting_ends_idx').on(t.status, t.votingEndsAt),
+  index('sparks_first_public_idx').on(t.firstPubliclyDiscoverableAt),
+])
 
 export const sparkEntries = pgTable('spark_entries', {
   id: text('id').primaryKey().$defaultFn(() => createId()),

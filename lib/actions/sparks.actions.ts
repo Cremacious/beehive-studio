@@ -31,6 +31,7 @@ import { extractMentionUsernamesFromText } from '@/lib/mentions/extract-mentions
 import { resolveMentionedUsers } from '@/lib/mentions/resolve-mentions'
 import { recordMentionNotificationsTx } from '@/lib/mentions/record-mention-notifications'
 import { shouldSkipNotification } from '@/lib/notifications/check-preferences'
+import { GENRES } from '@/lib/discover/genres'
 import type { SparkStatus, SparkVisibility } from '@/db/schema/social'
 import type { ActionResult } from './book.actions'
 
@@ -124,6 +125,8 @@ const createSparkSchema = z
     visibility: z.enum(['PUBLIC', 'FRIENDS', 'PRIVATE']).default('PUBLIC'),
     discoverable: z.boolean().optional().default(true),
     votingDurationHours: z.number().int().min(1).max(720).default(48),
+    // D2a: genre is optional + nullable; validated against D1's 14-slug vocabulary.
+    genre: z.enum(GENRES).optional().nullable(),
   })
   .transform((data) => ({
     ...data,
@@ -466,6 +469,15 @@ export async function createSparkAction(input: {
     parsed.data.deadline.getTime() + parsed.data.votingDurationHours * 3600_000
   )
 
+  // D2a load-bearing pattern (mirrors D1 books): when a spark is created PUBLIC
+  // + discoverable from the start, stamp firstPubliclyDiscoverableAt immediately
+  // so it qualifies for the "Newly opened" rail. If created non-public, the
+  // stamp stays null until a future write transitions it to PUBLIC+discoverable
+  // (a path that doesn't exist yet — there's no updateSparkAction — but the
+  // gate pattern is preserved for forward compat).
+  const isInitiallyPublic =
+    parsed.data.visibility === 'PUBLIC' && parsed.data.discoverable === true
+
   const [created] = await db
     .insert(sparks)
     .values({
@@ -477,6 +489,8 @@ export async function createSparkAction(input: {
       discoverable: parsed.data.discoverable,
       status: 'OPEN',
       votingEndsAt,
+      genre: parsed.data.genre ?? null,
+      firstPubliclyDiscoverableAt: isInitiallyPublic ? new Date() : null,
     })
     .returning({ id: sparks.id })
 
@@ -725,6 +739,16 @@ export async function submitSparkEntryAction(
         wordCount,
       })
       .returning({ id: sparkEntries.id })
+
+    // D2a: bump denormalized entry_count in-tx so "Heating up" rail and
+    // SparkCard projections stay consistent. No decrement is wired because
+    // there's no entry-delete action in the C2 codebase. If one is added
+    // later, mirror the GREATEST(entry_count - 1, 0) underflow guard pattern
+    // from C-phase counter denorm precedents.
+    await tx
+      .update(sparks)
+      .set({ entryCount: sql`${sparks.entryCount} + 1` })
+      .where(eq(sparks.id, sparkId))
 
     // C2 T8: gate the feed event on PUBLIC visibility. FRIENDS/PRIVATE
     // spark entries never write to the feed.

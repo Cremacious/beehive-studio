@@ -3,10 +3,11 @@
 import { useRef, useState } from 'react'
 import { createId } from '@paralleldrive/cuid2'
 import {
-  DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent,
+  DndContext, closestCenter, PointerSensor, useSensor, useSensors,
+  type DragEndEvent, type DragOverEvent, type DragStartEvent,
 } from '@dnd-kit/core'
 import { SortableContext, arrayMove } from '@dnd-kit/sortable'
-import { Plus, Search, X } from 'lucide-react'
+import { Pencil, Plus, Search, X } from 'lucide-react'
 import { updateBinderItemAction } from '@/lib/actions/binder.actions'
 import type { BinderItemRow } from '@/lib/actions/binder.actions'
 import { groupBeatsByAct, distinctActs } from '@/lib/outline/group-by-act'
@@ -103,6 +104,35 @@ function HiveOutlineSurfaceInner({
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
+  // Cross-act drop visual feedback. While the user drags a beat, track which
+  // act key the pointer is currently hovering over (resolved by looking up
+  // the act of the `over` beat). When the hover act differs from the source
+  // act, that act's <article> card lights up with a brand ring + tinted bg
+  // so the user knows "release here moves the beat into this act."
+  const [draggingBeatId, setDraggingBeatId] = useState<string | null>(null)
+  const [hoverActKey, setHoverActKey] = useState<string | null>(null)
+  const sourceActKey = draggingBeatId
+    ? (beats.find(b => b.id === draggingBeatId)?.act ?? null) ?? '__noact__'
+    : null
+
+  function handleDragStart(event: DragStartEvent) {
+    if (readOnly) return
+    setDraggingBeatId(String(event.active.id))
+    const src = beats.find(b => b.id === event.active.id)
+    setHoverActKey((src?.act ?? null) ?? '__noact__')
+  }
+  function handleDragOver(event: DragOverEvent) {
+    const { over } = event
+    if (!over) { setHoverActKey(null); return }
+    const overBeat = beats.find(b => b.id === over.id)
+    if (!overBeat) return
+    setHoverActKey(overBeat.act ?? '__noact__')
+  }
+  function handleDragCancel() {
+    setDraggingBeatId(null)
+    setHoverActKey(null)
+  }
+
   function commit(next: Beat[]) {
     setBeats(next)
     if (readOnly) return
@@ -153,6 +183,8 @@ function HiveOutlineSurfaceInner({
     commit(beats.map(b => b.act === oldName ? { ...b, act: newName } : b))
   }
   function handleDragEnd(event: DragEndEvent) {
+    setDraggingBeatId(null)
+    setHoverActKey(null)
     if (readOnly) return
     const { active, over } = event
     if (!over || active.id === over.id) return
@@ -210,30 +242,50 @@ function HiveOutlineSurfaceInner({
         }
       `}</style>
 
-      <header className="flex items-start justify-between gap-4 pt-6 pb-5 mb-2">
+      <header className="flex items-start justify-between gap-4 pt-6 pb-3 mb-2">
         <div className="min-w-0 flex-1">
-          <h1
-            role="textbox"
-            aria-label="Outline title"
-            contentEditable={!readOnly}
-            suppressContentEditableWarning
-            data-placeholder="Untitled outline"
-            className="font-comfortaa font-bold leading-tight outline-none"
-            style={{
-              color: 'var(--brand)',
-              fontSize: 28,
-              cursor: readOnly ? 'default' : 'text',
-            }}
-            onBlur={e => commitTitle(e.currentTarget.textContent ?? '')}
-            onKeyDown={e => {
-              if (e.key === 'Enter') {
-                e.preventDefault()
-                ;(e.currentTarget as HTMLElement).blur()
-              }
-            }}
-          >
-            {title || ''}
-          </h1>
+          <div className="inline-flex items-center gap-2 group">
+            <h1
+              role="textbox"
+              aria-label="Outline title (click to rename)"
+              contentEditable={!readOnly}
+              suppressContentEditableWarning
+              data-placeholder="Untitled outline"
+              className="font-comfortaa font-bold leading-tight outline-none"
+              style={{
+                color: 'var(--brand)',
+                fontSize: 28,
+                cursor: readOnly ? 'default' : 'text',
+              }}
+              onBlur={e => commitTitle(e.currentTarget.textContent ?? '')}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  ;(e.currentTarget as HTMLElement).blur()
+                }
+              }}
+            >
+              {title || ''}
+            </h1>
+            {!readOnly && (
+              <span
+                aria-hidden
+                title="Click the title to rename"
+                className="opacity-60 group-hover:opacity-100 transition-opacity"
+                style={{ color: 'var(--canvas-dark-ink-muted)' }}
+              >
+                <Pencil size={14} />
+              </span>
+            )}
+          </div>
+          {!readOnly && (
+            <p
+              className="mt-1.5 text-[12px]"
+              style={{ color: 'var(--canvas-dark-ink-muted)' }}
+            >
+              Click the title above to rename this outline.
+            </p>
+          )}
           {(lastEditedByUsername || lastEditedAt) && (
             <p
               className="mt-1 text-[13px]"
@@ -249,6 +301,18 @@ function HiveOutlineSurfaceInner({
           <SaveStatusBadge status={saveStatus} />
         </div>
       </header>
+
+      {!readOnly && (
+        <p
+          className="mb-4 text-[12.5px] leading-relaxed"
+          style={{ color: 'var(--canvas-dark-ink-muted)' }}
+        >
+          <span style={{ color: 'var(--canvas-dark-ink-strong)', fontWeight: 600 }}>Outline basics:</span>{' '}
+          Beats are scenes. Acts group beats. Drag the{' '}
+          <span className="inline-flex align-middle mx-0.5" style={{ color: 'var(--canvas-dark-ink)' }} aria-hidden>⋮⋮</span>
+          {' '}handle to reorder beats or move them between acts. Dropping onto another act&apos;s card will highlight it in yellow.
+        </p>
+      )}
 
       <div data-slot="outline-pane-body">
         <div className="mx-auto" style={{ maxWidth: '100%' }}>
@@ -276,7 +340,14 @@ function HiveOutlineSurfaceInner({
               </p>
             )
           ) : (
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
+              onDragEnd={handleDragEnd}
+              onDragCancel={handleDragCancel}
+            >
               <div className="flex flex-col gap-3.5">
                 {groupBeatsByAct(beats).map(group => {
                   let globalIdx = 0
@@ -284,14 +355,23 @@ function HiveOutlineSurfaceInner({
                     if (b.id === group.beats[0]?.id) break
                     globalIdx++
                   }
+                  const actKey = group.act ?? '__noact__'
+                  const isCrossActTarget = !!draggingBeatId
+                    && hoverActKey === actKey
+                    && sourceActKey !== actKey
                   return (
                     <article
-                      key={group.act ?? '__noact__'}
+                      key={actKey}
                       style={{
-                        background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+                        background: isCrossActTarget
+                          ? 'linear-gradient(180deg, oklch(from var(--brand) l c h / 0.18), oklch(from var(--brand) l c h / 0.10))'
+                          : 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
                         borderRadius: 'var(--r-row)',
-                        boxShadow: 'var(--sh-tile)',
+                        boxShadow: isCrossActTarget
+                          ? '0 0 0 2px var(--brand), 0 0 0 6px oklch(from var(--brand) l c h / 0.22), var(--sh-tile)'
+                          : 'var(--sh-tile)',
                         overflow: 'hidden',
+                        transition: 'background 120ms ease, box-shadow 120ms ease',
                       }}
                     >
                       <header
@@ -491,23 +571,51 @@ function HiveOutlineSurfaceInner({
           </datalist>
 
           {!readOnly && (newActDraft !== null ? (
-            <input
-              autoFocus
-              value={newActDraft}
-              onChange={e => setNewActDraft(e.target.value)}
-              onBlur={e => commitNewAct(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
-                if (e.key === 'Escape') { setNewActDraft(null) }
-              }}
-              placeholder="Act name"
-              className="w-full mt-3.5 px-4 py-[13px] rounded-[var(--r-row)] text-sm font-medium bg-transparent outline-none"
-              style={{
-                border: '1px dashed var(--color-brand)',
-                color: 'var(--canvas-dark-ink)',
-                fontFamily: 'var(--font-ui)',
-              }}
-            />
+            <div className="mt-3.5 flex items-stretch gap-2">
+              <input
+                autoFocus
+                value={newActDraft}
+                onChange={e => setNewActDraft(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    commitNewAct(newActDraft)
+                  }
+                  if (e.key === 'Escape') { setNewActDraft(null) }
+                }}
+                placeholder="Act name"
+                className="flex-1 px-4 py-[13px] rounded-[var(--r-row)] text-sm font-medium bg-transparent outline-none"
+                style={{
+                  border: '1px dashed var(--color-brand)',
+                  color: 'var(--canvas-dark-ink)',
+                  fontFamily: 'var(--font-ui)',
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => commitNewAct(newActDraft)}
+                disabled={!newActDraft.trim()}
+                className="px-4 rounded-[var(--r-row)] text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{
+                  background: 'var(--brand)',
+                  color: 'var(--brand-ink)',
+                }}
+              >
+                Confirm
+              </button>
+              <button
+                type="button"
+                onClick={() => setNewActDraft(null)}
+                className="px-3 rounded-[var(--r-row)] text-sm font-medium transition-colors"
+                style={{
+                  background: 'transparent',
+                  border: '1px solid var(--canvas-dark-350)',
+                  color: 'var(--canvas-dark-ink-muted)',
+                }}
+              >
+                Cancel
+              </button>
+            </div>
           ) : (
             <button
               type="button"
@@ -565,6 +673,7 @@ function HiveOutlineSurfaceInner({
         mode={dialogState.mode === 'edit' ? 'edit' : 'create'}
         initial={editingBeat ?? {}}
         defaultAct={dialogState.mode === 'create' ? dialogState.defaultAct : null}
+        chapters={chapters}
         readOnly={readOnly}
         onOpenChange={open => { if (!open) closeDialog() }}
         onSave={patch => {
@@ -578,7 +687,7 @@ function HiveOutlineSurfaceInner({
               color: patch.color,
               label: patch.label,
               act: dialogState.defaultAct,
-              linkedChapterId: null,
+              linkedChapterId: patch.linkedChapterId ?? null,
             }
             commit([...beats, newBeat])
           } else if (dialogState.mode === 'edit' && editingBeat) {

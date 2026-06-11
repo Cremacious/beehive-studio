@@ -127,7 +127,11 @@ export function NotificationsBell() {
     setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, read: true } : x))
     setUnreadCount(prev => Math.max(0, prev - 1))
     if (n.resourceId && n.type === 'HIVE_INVITE') {
-      window.location.href = `/${locale}/hive/${n.resourceId}`
+      // resourceId is the hiveId. The recipient isn't a member yet, so the
+      // hive landing 404s — route to the accept-by-id page that finds their
+      // PENDING invite row and renders accept/decline. Already-member case
+      // is handled inside that page via a short-circuit redirect.
+      window.location.href = `/${locale}/hive/accept/${n.resourceId}`
     } else if (n.type === 'FRIEND_REQUEST') {
       window.location.href = `/${locale}/friends?tab=requests`
     } else if (n.type === 'FRIEND_ACCEPTED') {

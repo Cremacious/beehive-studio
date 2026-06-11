@@ -194,6 +194,36 @@ export async function cancelFriendRequestAction(
   return { success: true, data: null }
 }
 
+/**
+ * Cancel a pending outgoing friend request by the target user's id, without
+ * needing the friendship row's PK. Used by surfaces that render the Cancel
+ * Request button but don't have the row id handy (e.g. profile page when the
+ * server projection failed to thread the id, or any future caller).
+ */
+export async function cancelFriendRequestByTargetAction(
+  input: { targetUserId: string },
+): Promise<ActionResult<null>> {
+  const userId = await requireAuth()
+  const targetUserId = input.targetUserId
+  if (!targetUserId || typeof targetUserId !== 'string') {
+    return { success: false, error: 'INVALID_INPUT' }
+  }
+  const [row] = await db
+    .select()
+    .from(friendships)
+    .where(
+      and(
+        eq(friendships.requesterId, userId),
+        eq(friendships.recipientId, targetUserId),
+        eq(friendships.status, 'PENDING'),
+      ),
+    )
+    .limit(1)
+  if (!row) return { success: false, error: 'NOT_FOUND' }
+  await db.delete(friendships).where(eq(friendships.id, row.id))
+  return { success: true, data: null }
+}
+
 export async function unfriendAction(
   input: { otherUserId: string },
 ): Promise<ActionResult<null>> {

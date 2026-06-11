@@ -17,7 +17,7 @@ export function SaveStatusBadge({ status }: Props) {
     return (
       <span
         className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-[0.10em] font-semibold"
-        style={{ color: 'var(--canvas-dark-ink)' }}
+        style={{ color: 'currentColor' }}
       >
         Auto-saves as you type
       </span>

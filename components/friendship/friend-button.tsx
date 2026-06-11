@@ -14,6 +14,7 @@ import {
 import {
   acceptFriendRequestAction,
   cancelFriendRequestAction,
+  cancelFriendRequestByTargetAction,
   rejectFriendRequestAction,
   sendFriendRequestAction,
   unfriendAction,
@@ -77,13 +78,10 @@ export function FriendButton({
   }
 
   function handleCancel() {
-    if (!friendshipId) {
-      // We don't have the id from this surface — fall back to refresh.
-      router.refresh()
-      return
-    }
     startTransition(async () => {
-      const result = await cancelFriendRequestAction({ friendshipId })
+      const result = friendshipId
+        ? await cancelFriendRequestAction({ friendshipId })
+        : await cancelFriendRequestByTargetAction({ targetUserId })
       if (!result.success) {
         toast.error(humanize(result.error))
         return

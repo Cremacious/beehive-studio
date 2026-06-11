@@ -574,6 +574,10 @@ export function OutlineBoard({ item }: Props) {
         mode={dialogState.mode === 'edit' ? 'edit' : 'create'}
         initial={editingBeat ?? {}}
         defaultAct={dialogState.mode === 'create' ? dialogState.defaultAct : null}
+        chapters={binderItems
+          .filter(b => b.type === 'chapter' && b.chapterId)
+          .sort((a, b) => a.order - b.order)
+          .map(b => ({ id: b.chapterId!, title: b.title }))}
         onOpenChange={open => { if (!open) closeDialog() }}
         onSave={patch => {
           if (dialogState.mode === 'create') {
@@ -585,7 +589,7 @@ export function OutlineBoard({ item }: Props) {
               color: patch.color,
               label: patch.label,
               act: dialogState.defaultAct,
-              linkedChapterId: null,
+              linkedChapterId: patch.linkedChapterId ?? null,
             }
             commit({
               beats: [...beats, newBeat],

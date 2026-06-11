@@ -11,6 +11,7 @@ import Typography from '@tiptap/extension-typography'
 import TextAlign from '@tiptap/extension-text-align'
 import { HiveAnnotationMark } from '@/lib/tiptap-extensions/hive-annotation-mark'
 import { HiveSuggestionMark } from '@/lib/tiptap-extensions/hive-suggestion-mark'
+import { FontSizeMark } from '@/lib/tiptap-extensions/font-size'
 import { SelectionPopover } from '@/components/hive/collab/selection-popover'
 import { CollaborationGutter } from '@/components/hive/collab/collaboration-gutter'
 import {
@@ -52,6 +53,7 @@ export function HiveChapterSurface({
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       HiveAnnotationMark,
       HiveSuggestionMark,
+      FontSizeMark,
     ],
     content: (data.chapter.content as object | null) ?? null,
     editorProps: {

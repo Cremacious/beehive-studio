@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { PanelRightClose, PanelRightOpen, MessageSquare } from 'lucide-react'
+import { PanelRightClose, PanelRightOpen, MessageSquare, Loader2 } from 'lucide-react'
 import type { Editor } from '@tiptap/react'
 import type { HiveRole } from '@/lib/hive/permissions'
 import type { AnnotationRow } from '@/lib/actions/hive-annotations.actions'
@@ -94,6 +94,7 @@ export function CollaborationGutter({
   const {
     annotations,
     suggestions,
+    loading,
     refresh,
     mutate,
   } = useCollabData({ chapterId, hiveId, refreshTrigger })
@@ -283,7 +284,12 @@ export function CollaborationGutter({
           onChange={setFilter}
         />
 
-        {visibleAnnotations.length === 0 && visibleSuggestions.length === 0 ? (
+        {loading && annotations.length === 0 && suggestions.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 py-6 text-[11px] text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Loading…</span>
+          </div>
+        ) : visibleAnnotations.length === 0 && visibleSuggestions.length === 0 ? (
           <div className="py-6 text-center text-[11px] text-muted-foreground">
             No annotations or suggestions yet.
           </div>
@@ -352,7 +358,12 @@ export function CollaborationGutter({
       />
 
       <div className="relative flex-1 overflow-y-auto">
-        {visibleAnnotations.length === 0 && visibleSuggestions.length === 0 ? (
+        {loading && annotations.length === 0 && suggestions.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 px-3 py-8 text-[11px] text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Loading…</span>
+          </div>
+        ) : visibleAnnotations.length === 0 && visibleSuggestions.length === 0 ? (
           <div className="px-3 py-8 text-center text-[11px] text-muted-foreground">
             No annotations or suggestions yet.
           </div>

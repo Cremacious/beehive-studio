@@ -55,6 +55,8 @@ type BeatDialogProps = {
   mode: 'create' | 'edit'
   initial: Partial<Beat>
   defaultAct?: string | null
+  /** Chapters available to link to. Empty array hides the chapter picker. */
+  chapters?: Array<{ id: string; title: string }>
   onSave: (patch: Partial<Beat>) => void
   onDelete?: () => void
   onOpenChange: (open: boolean) => void
@@ -66,6 +68,7 @@ export function BeatDialog({
   mode,
   initial,
   defaultAct: _defaultAct,
+  chapters = [],
   onSave,
   onDelete,
   onOpenChange,
@@ -75,6 +78,7 @@ export function BeatDialog({
   const [description, setDescription] = useState(initial.description ?? '')
   const [color, setColor] = useState<BeatColor | null>(initial.color ?? null)
   const [label, setLabel] = useState<BeatLabel | null>(initial.label ?? null)
+  const [linkedChapterId, setLinkedChapterId] = useState<string | null>(initial.linkedChapterId ?? null)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const titleRef = useRef<HTMLInputElement>(null)
 
@@ -84,6 +88,7 @@ export function BeatDialog({
     setDescription(initial.description ?? '')
     setColor(initial.color ?? null)
     setLabel(initial.label ?? null)
+    setLinkedChapterId(initial.linkedChapterId ?? null)
   }, [open, initial])
 
   useEffect(() => {
@@ -106,6 +111,7 @@ export function BeatDialog({
       description: description.trim() || undefined,
       color,
       label,
+      linkedChapterId,
     })
     onOpenChange(false)
   }
@@ -253,6 +259,25 @@ export function BeatDialog({
               </button>
             </div>
           </Field>
+
+          {chapters.length > 0 && (
+            <Field label="Linked chapter">
+              <select
+                value={linkedChapterId ?? ''}
+                onChange={e => setLinkedChapterId(e.target.value || null)}
+                disabled={readOnly}
+                className="w-full px-3 py-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand)] disabled:opacity-60"
+                style={{ background: 'var(--canvas-dark-100)', color: 'var(--canvas-dark-ink)' }}
+              >
+                <option value="">None</option>
+                {chapters.map((c, i) => (
+                  <option key={c.id} value={c.id}>
+                    {i + 1}. {c.title || 'Untitled chapter'}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
         </div>
 
         <DialogFooter className="!justify-between">

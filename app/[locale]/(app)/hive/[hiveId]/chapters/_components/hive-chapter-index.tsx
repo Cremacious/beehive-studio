@@ -8,6 +8,8 @@ type Chapter = {
   title: string
   order: number
   updatedAt: Date
+  collectionId: string | null
+  collectionTitle: string | null
 }
 
 type Props = {
@@ -89,22 +91,29 @@ export function HiveChapterIndex({ hiveId, locale, chapters }: Props) {
           const chapterHref = `${base}/chapters/${chapter.chapterId}`
 
           return (
-            <li
-              key={chapter.id}
-              className="grid grid-cols-[40px_1fr_180px] items-center gap-3 px-5 py-3 hover:bg-[var(--canvas-dark-300)] transition-colors"
-            >
-              {num}
-              <div className="min-w-0">
-                <Link
-                  href={chapterHref}
-                  className="block font-medium text-[15px] text-[var(--canvas-dark-ink-strong)] hover:text-[var(--brand)] truncate transition-colors"
-                >
-                  {chapter.title}
-                </Link>
-              </div>
-              <span className="font-mono text-[11px] tracking-wider text-[var(--canvas-dark-ink-muted)] text-right">
-                {relTime(chapter.updatedAt)}
-              </span>
+            <li key={chapter.id} className="group">
+              <Link
+                href={chapterHref}
+                className="grid grid-cols-[40px_1fr_180px] items-center gap-3 px-5 py-3 hover:bg-[var(--canvas-dark-300)] transition-colors no-underline"
+              >
+                {num}
+                <div className="min-w-0">
+                  {chapter.collectionTitle && (
+                    <span
+                      className="block font-mono text-[10px] uppercase tracking-wider truncate"
+                      style={{ color: 'var(--canvas-dark-ink-muted)' }}
+                    >
+                      {chapter.collectionTitle}
+                    </span>
+                  )}
+                  <span className="block font-medium text-[15px] text-[var(--canvas-dark-ink-strong)] group-hover:text-[var(--brand)] truncate transition-colors">
+                    {chapter.title}
+                  </span>
+                </div>
+                <span className="font-mono text-[11px] tracking-wider text-[var(--canvas-dark-ink-muted)] text-right">
+                  {relTime(chapter.updatedAt)}
+                </span>
+              </Link>
             </li>
           )
         })}

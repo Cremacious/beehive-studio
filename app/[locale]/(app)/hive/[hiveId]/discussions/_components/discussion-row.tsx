@@ -41,10 +41,11 @@ export function DiscussionRow({
   hiveId: string
   locale: string
 }) {
-  // Derive title from first line; excerpt is remainder.
+  // Derive title from first line. The body remainder is intentionally NOT
+  // shown in the list — the row only carries title + author + counts so it
+  // reads like a forum index. Click through to see the full body.
   const firstLine = row.bodyExcerpt.split('\n')[0] ?? ''
   const title = (row.title || firstLine).slice(0, 80) || 'Untitled'
-  const remainder = row.bodyExcerpt.slice(title.length).trim()
 
   return (
     <Link
@@ -58,14 +59,6 @@ export function DiscussionRow({
             {title}
           </h3>
         </div>
-        {remainder && (
-          <p
-            className="text-[13px] truncate text-[var(--canvas-dark-ink-muted)]"
-            style={{ letterSpacing: '0.01em' }}
-          >
-            {remainder}
-          </p>
-        )}
         {row.username && (
           <p
             className="text-[11px] font-mono text-[var(--canvas-dark-ink-muted)]"

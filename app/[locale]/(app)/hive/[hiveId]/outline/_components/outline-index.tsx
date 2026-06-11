@@ -131,12 +131,6 @@ export function OutlineIndex({
         className="pt-1"
         style={{ borderTop: '1px solid oklch(from var(--canvas-dark-300) l c h / 0.5)' }}
       >
-        <p
-          className="px-6 pt-5 pb-3 font-mono text-[10px] uppercase tracking-wider"
-          style={{ color: 'var(--canvas-dark-ink-muted)' }}
-        >
-          Outlines
-        </p>
         <div
           className="grid items-center gap-4 px-6 py-2.5 text-[10px] font-mono uppercase tracking-wider"
           style={{

@@ -182,7 +182,7 @@ export function BinderItem({ node, depth }: Props) {
         ref={setNodeRef}
         style={{
           ...style,
-          paddingLeft: `${8 + depth * 12}px`,
+          paddingLeft: `${depth * 12}px`,
           borderRadius: 'var(--r-row)',
           background: isActive
             ? 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))'
@@ -213,7 +213,7 @@ export function BinderItem({ node, depth }: Props) {
             center-shifted instead of flush against the indent edge. */}
         <span
           className="absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 text-muted-foreground pointer-events-none"
-          style={{ left: `${16 + depth * 12}px` }}
+          style={{ left: `${8 + depth * 12}px` }}
           aria-hidden
         >
           <GripVertical size={12} />

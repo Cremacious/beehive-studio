@@ -12,9 +12,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-10 (Admin panel + onboarding + em-dash audit + reader collections + chapter comments + binder DnD slot rework + FBM on reader + per-selection font sizes — 10 commits shipped)
+> **Last updated:** 2026-06-11 (Smoke-fix sweep across hive routes — collab loading spinner + wiki rename affordance + outline beat-link in dialog + cross-act drop highlight + chapters-in-collections on hive list + invite-by-id accept route + discussion thread cards + invite friends panel + binder row left-align + cancel-friend-request fallback action)
 >
-> **Last commit:** [b8c4510](https://github.com/Cremacious/beehive-studio/commit/b8c4510) — feat(editor): per-selection font sizes + FBM on reader + word goal UX.
+> **Last commit (pending):** ~16 surface tweaks staged for the upcoming push.
 >
 > **This session — font-size + FBM + word-goal + reader-page FBM**:
 >

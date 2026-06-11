@@ -314,14 +314,21 @@ function PostBody({
     }
   }
 
-  // Top-level posts use the .post shape (bare flex, no chrome).
-  // Replies use .reply-row shape (hairline border-top between siblings).
-  const rootClass = isTopLevel
-    ? 'flex gap-4'
-    : 'flex gap-3 py-4 first:pt-0 first:border-t-0 border-t border-[var(--canvas-dark-300)]/40'
+  // Each post (OP + reply) is its own forum-style card with tile chrome.
+  // The OP is rendered slightly bigger (avatar + body type scale).
+  const cardStyle: React.CSSProperties = {
+    background:
+      'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+    borderRadius: 'var(--r-row)',
+    boxShadow: 'var(--sh-tile)',
+    border: 'var(--br-card)',
+  }
 
   return (
-    <article className={rootClass}>
+    <article
+      style={cardStyle}
+      className={`flex gap-4 px-5 py-4 ${isTopLevel ? '' : 'mt-3 first:mt-0'}`}
+    >
       <Avatar
         size={isTopLevel ? 'lg' : 'md'}
         username={post.username}
@@ -329,31 +336,48 @@ function PostBody({
       />
       <div className="flex-1 min-w-0">
         <header className="flex items-center gap-2.5 flex-wrap mb-2">
-          {post.username ? (
-            <span
-              className={`font-comfortaa font-bold text-[var(--canvas-dark-ink-strong)] ${
-                isTopLevel ? 'text-[15px]' : 'text-sm'
-              }`}
-            >
-              @{post.username}
-            </span>
-          ) : (
-            <span className="text-sm font-semibold text-[var(--canvas-dark-ink-muted)] italic">
-              Unknown
-            </span>
-          )}
-          <span
-            className="text-[11px] font-mono text-[var(--canvas-dark-ink-muted)]"
-            style={{ letterSpacing: '0.04em' }}
-          >
-            {relTime(post.createdAt)}
-          </span>
-          {isTopLevel && post.topic && (
-            <span className="ml-auto">
-              <TopicPill topic={post.topic} />
-            </span>
-          )}
+          {/* Author identity row only renders for replies — the OP author is
+              already shown in the page subtitle ("Started by @handle"), so
+              the OP card just carries the right-side meta cluster. */}
           {!isTopLevel && (
+            <>
+              {post.username ? (
+                <span className="font-comfortaa font-bold text-sm text-[var(--canvas-dark-ink-strong)]">
+                  @{post.username}
+                </span>
+              ) : (
+                <span className="text-sm font-semibold text-[var(--canvas-dark-ink-muted)] italic">
+                  Unknown
+                </span>
+              )}
+              <span
+                className="text-[11px] font-mono text-[var(--canvas-dark-ink-muted)]"
+                style={{ letterSpacing: '0.04em' }}
+              >
+                {relTime(post.createdAt)}
+              </span>
+            </>
+          )}
+
+          {/* Right cluster. OP: timestamp + topic pill + kebab. Replies:
+              reply button + kebab. */}
+          {isTopLevel ? (
+            <div className="ml-auto flex items-center gap-2.5 flex-wrap">
+              <span
+                className="text-[11px] font-mono text-[var(--canvas-dark-ink-muted)]"
+                style={{ letterSpacing: '0.04em' }}
+              >
+                {relTime(post.createdAt)}
+              </span>
+              {post.topic && <TopicPill topic={post.topic} />}
+              {canEdit && (
+                <PostKebab
+                  onEdit={() => { setDraft(post.body); setEditing(true) }}
+                  onDelete={() => setConfirmDelete(true)}
+                />
+              )}
+            </div>
+          ) : (
             <div className="ml-auto flex items-center gap-1">
               <button
                 type="button"
@@ -363,11 +387,13 @@ function PostBody({
                 <Reply size={11} />
                 Reply
               </button>
-              {canEdit && <PostKebab onEdit={() => { setDraft(post.body); setEditing(true) }} onDelete={() => setConfirmDelete(true)} />}
+              {canEdit && (
+                <PostKebab
+                  onEdit={() => { setDraft(post.body); setEditing(true) }}
+                  onDelete={() => setConfirmDelete(true)}
+                />
+              )}
             </div>
-          )}
-          {isTopLevel && canEdit && (
-            <PostKebab onEdit={() => { setDraft(post.body); setEditing(true) }} onDelete={() => setConfirmDelete(true)} />
           )}
         </header>
 
@@ -376,8 +402,15 @@ function PostBody({
             <MentionableTextarea
               value={draft}
               onChange={setDraft}
-              rows={Math.max(4, Math.min(draft.split('\n').length + 1, 16))}
+              rows={Math.max(5, Math.min(draft.split('\n').length + 2, 16))}
               autoFocus
+              style={{
+                background: 'var(--canvas-dark-100)',
+                borderRadius: 'var(--r-row)',
+                boxShadow: 'var(--sh-inset)',
+                color: 'var(--canvas-dark-ink-strong)',
+              }}
+              className="w-full px-3.5 py-3 min-h-[120px] resize-y font-geist text-sm leading-relaxed focus:outline-none placeholder:text-[var(--canvas-dark-ink-muted)] border-0"
             />
             <div className="flex justify-end gap-2">
               <Button
@@ -397,13 +430,25 @@ function PostBody({
             </div>
           </div>
         ) : (
-          <p
-            className={`m-0 whitespace-pre-line text-[var(--canvas-dark-ink)] ${
-              isTopLevel ? 'text-[14.5px] leading-[1.7]' : 'text-sm leading-[1.6]'
-            }`}
-          >
-            <RenderMentionsInText text={post.body} />
-          </p>
+          (() => {
+            // OP card: strip the first line — it's the derived discussion
+            // title, already shown as the brand-yellow h1 in the page header.
+            // Replies show body verbatim. If a top-level post is a single
+            // line (the title IS the whole body), the card body is hidden.
+            const displayBody = isTopLevel
+              ? post.body.split('\n').slice(1).join('\n').trim()
+              : post.body
+            if (!displayBody) return null
+            return (
+              <p
+                className={`m-0 whitespace-pre-line text-[var(--canvas-dark-ink)] ${
+                  isTopLevel ? 'text-[15px] leading-[1.7]' : 'text-[14px] leading-[1.6]'
+                }`}
+              >
+                <RenderMentionsInText text={displayBody} />
+              </p>
+            )
+          })()
         )}
       </div>
 

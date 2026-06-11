@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useMemo, useRef, useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Pencil, Plus } from 'lucide-react'
 import type { BinderItemRow } from '@/lib/actions/binder.actions'
 import { updateBinderItemAction } from '@/lib/actions/binder.actions'
 import { CATEGORY_TEMPLATE_MAP, type WikiCategory } from '@/lib/wiki/category-templates'
@@ -290,27 +290,43 @@ export function WikiEntryEditor({ item, readOnly = false }: { item: BinderItemRo
 
       <div className="mx-auto max-w-[840px] px-8 py-8 space-y-6">
         {/* TOP BAR */}
-        <header className="flex items-center justify-between">
-          <span className="wiki-ink-muted text-[10px] font-mono uppercase tracking-[0.10em] font-semibold">
+        <header className="wiki-ink-muted flex items-center justify-between">
+          <span className="text-[10px] font-mono uppercase tracking-[0.10em] font-semibold">
             Wiki ▸ {template.label}
           </span>
           <SaveStatusBadge status={status} />
         </header>
 
         {/* HERO — title + chips (transparent) */}
-        <section className="space-y-4 pt-2">
-          <div
-            role="textbox"
-            aria-label="Entry title"
-            contentEditable={!readOnly}
-            suppressContentEditableWarning
-            data-placeholder="Untitled entry"
-            data-empty={item.title ? 'false' : 'true'}
-            className="wiki-title-field"
-            onBlur={e => commitTitle(e.currentTarget.textContent ?? '')}
-          >
-            {item.title}
+        <section className="space-y-2 pt-2">
+          <div className="flex items-center justify-center gap-2 group">
+            <div
+              role="textbox"
+              aria-label="Entry title (click to rename)"
+              contentEditable={!readOnly}
+              suppressContentEditableWarning
+              data-placeholder="Untitled entry"
+              data-empty={item.title ? 'false' : 'true'}
+              className="wiki-title-field"
+              onBlur={e => commitTitle(e.currentTarget.textContent ?? '')}
+            >
+              {item.title}
+            </div>
+            {!readOnly && (
+              <span
+                aria-hidden
+                title="Click the title to rename"
+                className="wiki-ink-muted opacity-50 group-hover:opacity-100 transition-opacity shrink-0"
+              >
+                <Pencil size={16} />
+              </span>
+            )}
           </div>
+          {!readOnly && (
+            <p className="wiki-ink-muted text-center text-[11px] italic">
+              Click the title above to rename this entry.
+            </p>
+          )}
           <div className="flex flex-wrap items-center justify-center gap-2">
             <span
               className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-mono font-semibold uppercase tracking-[0.10em]"
@@ -363,8 +379,12 @@ export function WikiEntryEditor({ item, readOnly = false }: { item: BinderItemRo
               <button type="button" onClick={addSection} className="wiki-add-section">
                 <Plus size={14} /> Add section
               </button>
-              <p className="wiki-ink-strong text-center text-[11px] leading-relaxed max-w-[460px] mx-auto">
-                Each section has its own label and text area. Click a label to rename it, hover a section to remove it.
+              <p className="wiki-ink-strong text-center text-[12px] leading-relaxed max-w-[520px] mx-auto">
+                Build your wiki entry your way. Use{' '}
+                <strong>Add section</strong> to create new sections like
+                {' '}<em>Personality</em>, <em>Physical Details</em>, or{' '}
+                <em>Relationships</em>. Click any section label to rename it,
+                hover a section to remove it.
               </p>
             </div>
           )}

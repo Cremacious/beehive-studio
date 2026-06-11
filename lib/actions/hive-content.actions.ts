@@ -388,6 +388,8 @@ export async function getHiveChapterListAction(
     title: string
     order: number
     updatedAt: Date
+    collectionId: string | null
+    collectionTitle: string | null
   }>
 }>> {
   const userId = await requireAuth()
@@ -403,9 +405,16 @@ export async function getHiveChapterListAction(
   // what /hive/[hiveId]/chapters/[chapterId] (T13) expects in its URL.
   // `updatedAt` prefers chapters.updatedAt (content edit) and falls back to
   // binderItems.updatedAt (title/order changes) when null.
+  //
+  // We pull BOTH `chapter` and `part` (collection) rows so we can walk the
+  // binder tree depth-first and surface chapters that live inside collections
+  // — `binderItems.order` is parent-scoped, so a flat filter to type='chapter'
+  // would order nested chapters incorrectly and (worse) miss them entirely on
+  // surfaces that filter to parentId === null.
   const rows = await db
     .select({
       id: binderItems.id,
+      type: binderItems.type,
       chapterId: chapters.id,
       title: binderItems.title,
       order: binderItems.order,
@@ -415,20 +424,53 @@ export async function getHiveChapterListAction(
     })
     .from(binderItems)
     .leftJoin(chapters, eq(chapters.binderItemId, binderItems.id))
-    .where(and(eq(binderItems.bookId, hive.bookId), eq(binderItems.type, 'chapter')))
+    .where(and(
+      eq(binderItems.bookId, hive.bookId),
+      inArray(binderItems.type, ['chapter', 'part']),
+    ))
     .orderBy(asc(binderItems.order))
 
-  const topLevel = rows
-    .filter(r => r.parentId === null)
-    .map(({ id, chapterId, title, order, binderUpdatedAt, chapterUpdatedAt }) => ({
-      id,
-      chapterId,
-      title,
-      order,
-      updatedAt: chapterUpdatedAt ?? binderUpdatedAt,
-    }))
+  type Row = typeof rows[number]
+  const byParent = new Map<string | null, Row[]>()
+  for (const r of rows) {
+    const key = r.parentId
+    const list = byParent.get(key) ?? []
+    list.push(r)
+    byParent.set(key, list)
+  }
+  for (const list of byParent.values()) list.sort((a, b) => a.order - b.order)
 
-  return { success: true, data: { bookId: hive.bookId, chapters: topLevel } }
+  const flat: Array<{
+    id: string
+    chapterId: string | null
+    title: string
+    order: number
+    updatedAt: Date
+    collectionId: string | null
+    collectionTitle: string | null
+  }> = []
+
+  function walk(parentId: string | null, collectionId: string | null, collectionTitle: string | null) {
+    const children = byParent.get(parentId) ?? []
+    for (const r of children) {
+      if (r.type === 'chapter') {
+        flat.push({
+          id: r.id,
+          chapterId: r.chapterId,
+          title: r.title,
+          order: r.order,
+          updatedAt: r.chapterUpdatedAt ?? r.binderUpdatedAt,
+          collectionId,
+          collectionTitle,
+        })
+      } else if (r.type === 'part') {
+        walk(r.id, r.id, r.title)
+      }
+    }
+  }
+  walk(null, null, null)
+
+  return { success: true, data: { bookId: hive.bookId, chapters: flat } }
 }
 
 // ── H3 T13: Hive chapter view ────────────────────────────────────────────────

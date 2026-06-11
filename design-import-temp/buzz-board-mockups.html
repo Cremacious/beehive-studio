@@ -1,0 +1,1013 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Buzz Board + Compose modal — design options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Newsreader:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --canvas-dark-100: #262728;
+    --canvas-dark-150: #2a2b2c;
+    --canvas-dark-200: #2c2d2e;
+    --canvas-dark-250: #303132;
+    --canvas-dark-300: #34353b;
+    --canvas-dark-350: #3a3b40;
+    --canvas-dark-400: #404148;
+    --canvas-dark-ink: oklch(0.95 0.005 256);
+    --canvas-dark-ink-muted: oklch(0.78 0.005 256);
+    --canvas-dark-ink-faint: oklch(0.6 0.005 256);
+    --canvas-dark-ink-strong: oklch(1 0 0);
+    --brand: #FFC300;
+    --brand-hover: #ffd233;
+    --brand-ink: #1a1a1a;
+    --brand-soft: oklch(from #FFC300 l c h / 0.14);
+    --accent-mint: oklch(0.78 0.13 165);
+    --accent-pink: oklch(0.78 0.13 12);
+    --accent-blue: oklch(0.74 0.13 250);
+    --accent-lilac: oklch(0.78 0.11 305);
+    --r-card: 20px;
+    --r-row: 14px;
+    --r-btn: 12px;
+    --r-pill: 999px;
+    --sh-card: 0 1px 0 rgba(255,255,255,0.04) inset, 0 8px 28px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+    --sh-tile: 0 1px 0 rgba(255,255,255,0.06) inset, 0 1px 2px rgba(0,0,0,0.3);
+    --sh-inset: inset 0 1px 3px rgba(0,0,0,0.35);
+    --sh-brand: 0 4px 16px oklch(from #FFC300 l c h / 0.28), 0 1px 0 rgba(255,255,255,0.2) inset;
+    --br-card: 1px solid rgba(255,255,255,0.06);
+    --br-soft: 1px solid rgba(255,255,255,0.04);
+    --font-display: 'Comfortaa', system-ui, sans-serif;
+    --font-ui: 'Comfortaa', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+    --font-prose: 'Newsreader', Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: #1f2021;
+    color: var(--canvas-dark-ink);
+    font-family: var(--font-ui);
+    line-height: 1.5;
+    min-height: 100vh;
+    padding: 40px 24px 80px;
+  }
+
+  .page-head {
+    max-width: 1400px;
+    margin: 0 auto 32px;
+    text-align: center;
+  }
+  .page-head h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 28px;
+    letter-spacing: -0.01em;
+    color: var(--brand);
+    margin: 0 0 8px;
+  }
+  .page-head p { color: var(--canvas-dark-ink-muted); font-size: 13px; margin: 0; }
+
+  .variant-block {
+    max-width: 1400px;
+    margin: 0 auto 64px;
+  }
+  .variant-head {
+    display: flex; align-items: baseline; gap: 14px; margin-bottom: 18px;
+    padding: 0 8px;
+  }
+  .tag {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--brand);
+    background: var(--brand-soft);
+    padding: 5px 12px;
+    border-radius: var(--r-pill);
+  }
+  .variant-head h2 {
+    font-family: var(--font-display);
+    font-weight: 700; font-size: 22px; margin: 0;
+    color: var(--canvas-dark-ink-strong);
+  }
+  .variant-head p {
+    color: var(--canvas-dark-ink-muted); font-size: 13px;
+    margin: 0; line-height: 1.55; flex: 1;
+  }
+  .pair {
+    display: grid;
+    grid-template-columns: 480px 1fr;
+    gap: 28px;
+  }
+  @media (max-width: 1180px) {
+    .pair { grid-template-columns: 1fr; }
+  }
+
+  .section-label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--canvas-dark-ink-muted);
+    margin: 0 0 10px;
+  }
+
+  /* shared */
+  .panel {
+    background:
+      linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200));
+    border: var(--br-card);
+    border-radius: var(--r-card);
+    box-shadow: var(--sh-card);
+  }
+  .tile {
+    background:
+      linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300));
+    border: var(--br-soft);
+    border-radius: var(--r-row);
+    box-shadow: var(--sh-tile);
+  }
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 18px;
+    background: var(--brand); color: var(--brand-ink);
+    border-radius: var(--r-pill);
+    box-shadow: var(--sh-brand);
+    border: none; font: inherit; font-weight: 700; font-size: 13px;
+    cursor: pointer;
+  }
+  .btn-ghost {
+    padding: 10px 16px;
+    background: transparent; color: var(--canvas-dark-ink-muted);
+    border: none; font: inherit; font-weight: 600; font-size: 13px;
+    cursor: pointer; border-radius: var(--r-pill);
+  }
+  .btn-ghost:hover { color: var(--canvas-dark-ink-strong); }
+
+  /* ─────────── A: GLASS CARD ─────────── */
+  .a-modal { padding: 0; overflow: hidden; }
+  .a-modal-head {
+    padding: 24px 28px 18px;
+    background: radial-gradient(circle at 12% 0%, oklch(from var(--brand) l c h / 0.18), transparent 60%),
+                linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200));
+    border-bottom: var(--br-soft);
+  }
+  .a-modal-head .eyebrow {
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--brand); margin: 0 0 6px;
+  }
+  .a-modal-head h3 {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: 24px; color: var(--canvas-dark-ink-strong);
+    margin: 0; letter-spacing: -0.01em;
+  }
+  .a-modal-head p {
+    margin: 6px 0 0; font-size: 13px; color: var(--canvas-dark-ink-muted);
+  }
+  .a-segmented {
+    display: inline-flex;
+    padding: 4px;
+    background: var(--canvas-dark-100);
+    box-shadow: var(--sh-inset);
+    border-radius: var(--r-pill);
+    margin: 18px 28px 0;
+  }
+  .a-segmented button {
+    padding: 8px 22px;
+    font: inherit; font-weight: 700; font-size: 12.5px;
+    border: none; background: transparent;
+    color: var(--canvas-dark-ink-muted);
+    border-radius: var(--r-pill);
+    cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .a-segmented button.on {
+    background: var(--brand); color: var(--brand-ink);
+    box-shadow: var(--sh-brand);
+  }
+  .a-body { padding: 18px 28px 22px; }
+  .a-textarea {
+    width: 100%;
+    background: var(--canvas-dark-100);
+    box-shadow: var(--sh-inset);
+    border: 0; border-radius: var(--r-row);
+    color: var(--canvas-dark-ink-strong);
+    padding: 16px 18px;
+    font: inherit; font-size: 15px; line-height: 1.55;
+    outline: none; resize: none;
+    min-height: 140px;
+  }
+  .a-textarea::placeholder { color: var(--canvas-dark-ink-faint); }
+  .a-tools {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 12px;
+  }
+  .a-tools .left { display: flex; gap: 6px; }
+  .a-tools .chip {
+    width: 32px; height: 32px;
+    border-radius: var(--r-btn);
+    background: linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300));
+    box-shadow: var(--sh-tile);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--brand); font-weight: 700; font-size: 13px;
+    border: 0; cursor: pointer;
+  }
+  .a-counter {
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--canvas-dark-ink-faint);
+  }
+  .a-counter strong { color: var(--canvas-dark-ink-strong); }
+  .a-foot {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 28px;
+    border-top: var(--br-soft);
+    background: linear-gradient(180deg, var(--canvas-dark-200), var(--canvas-dark-150));
+  }
+  .a-foot .hint {
+    font-family: var(--font-mono); font-size: 10.5px;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--canvas-dark-ink-faint);
+  }
+
+  /* A bento feed — varied tile sizes in a 6-col masonry-ish grid */
+  .a-feed {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    grid-auto-rows: 80px;
+    gap: 14px;
+  }
+  .bento {
+    border-radius: var(--r-card);
+    padding: 18px 20px;
+    display: flex; flex-direction: column;
+    overflow: hidden; position: relative;
+  }
+  .bento .head {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 8px; flex-shrink: 0;
+  }
+  .bento .avatar {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--brand), var(--brand-hover));
+    color: var(--brand-ink);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 12px;
+  }
+  .bento .meta {
+    font-size: 12px; color: var(--canvas-dark-ink-strong); font-weight: 600;
+  }
+  .bento .meta .time {
+    color: var(--canvas-dark-ink-faint); font-weight: 400; margin-left: 4px;
+  }
+  .bento .body {
+    color: var(--canvas-dark-ink); font-size: 14px; line-height: 1.55;
+    flex: 1; min-height: 0;
+  }
+  .bento .foot {
+    display: flex; align-items: center; gap: 14px;
+    margin-top: 12px; padding-top: 12px;
+    border-top: var(--br-soft);
+    font-size: 12px; color: var(--canvas-dark-ink-muted);
+    flex-shrink: 0;
+  }
+  .bento .heart { display: inline-flex; align-items: center; gap: 5px; }
+  .bento .heart .h-icon { color: var(--brand); }
+
+  .bento.text {
+    grid-column: span 2; grid-row: span 2;
+    background: linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300));
+    box-shadow: var(--sh-tile);
+  }
+  .bento.text.tall { grid-row: span 3; }
+
+  .bento.link {
+    grid-column: span 3; grid-row: span 3;
+    background: linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300));
+    box-shadow: var(--sh-tile);
+    padding: 0;
+  }
+  .bento.link .link-preview {
+    flex: 1; min-height: 0;
+    background:
+      radial-gradient(circle at 20% 20%, oklch(from var(--accent-blue) l c h / 0.18), transparent 50%),
+      linear-gradient(135deg, oklch(from var(--brand) l c h / 0.08), oklch(from var(--accent-pink) l c h / 0.12));
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 18px;
+  }
+  .bento.link .url-pill {
+    align-self: flex-start;
+    font-family: var(--font-mono); font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    background: rgba(0,0,0,0.45);
+    color: var(--canvas-dark-ink-strong);
+    padding: 4px 10px; border-radius: var(--r-pill);
+    margin-bottom: 8px;
+  }
+  .bento.link .link-title {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: 18px; color: var(--canvas-dark-ink-strong);
+    line-height: 1.3; max-width: 90%;
+  }
+  .bento.link .link-foot {
+    padding: 14px 18px;
+    display: flex; align-items: center; gap: 14px;
+    font-size: 12px; color: var(--canvas-dark-ink-muted);
+    border-top: var(--br-soft);
+  }
+
+  .bento.featured {
+    grid-column: span 4; grid-row: span 2;
+    background:
+      radial-gradient(circle at 95% 0%, oklch(from var(--brand) l c h / 0.16), transparent 55%),
+      linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300));
+    box-shadow: var(--sh-tile);
+    border: 1px solid oklch(from var(--brand) l c h / 0.3);
+  }
+  .bento.featured .ribbon {
+    position: absolute; top: 14px; right: 14px;
+    font-family: var(--font-mono); font-size: 9.5px;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    background: var(--brand); color: var(--brand-ink);
+    padding: 3px 9px; border-radius: var(--r-pill);
+    font-weight: 700;
+  }
+  .bento.compact {
+    grid-column: span 2; grid-row: span 2;
+    background: linear-gradient(180deg, var(--canvas-dark-300), var(--canvas-dark-250));
+    box-shadow: var(--sh-tile);
+  }
+
+  /* ─────────── B: STICKY NOTES ─────────── */
+  .b-modal { padding: 26px 28px; }
+  .b-eyebrow {
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--canvas-dark-ink-muted);
+    margin: 0 0 4px;
+  }
+  .b-title {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: 22px; color: var(--brand); margin: 0 0 4px;
+  }
+  .b-sub {
+    color: var(--canvas-dark-ink-muted); font-size: 13px;
+    margin: 0 0 18px;
+  }
+  .b-type-row {
+    display: flex; gap: 10px; margin-bottom: 16px;
+  }
+  .b-type {
+    flex: 1; padding: 12px 14px;
+    background: linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300));
+    box-shadow: var(--sh-tile);
+    border-radius: var(--r-row);
+    border: 1px solid transparent;
+    cursor: pointer; text-align: left;
+    color: var(--canvas-dark-ink);
+  }
+  .b-type.on {
+    border-color: var(--brand);
+    box-shadow: var(--sh-tile), 0 0 0 3px var(--brand-soft);
+  }
+  .b-type .b-type-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px;
+    border-radius: 8px;
+    background: var(--brand-soft); color: var(--brand);
+    font-weight: 700; margin-bottom: 6px;
+  }
+  .b-type .b-type-name {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: 14px; color: var(--canvas-dark-ink-strong);
+  }
+  .b-type .b-type-blurb {
+    font-size: 11.5px; color: var(--canvas-dark-ink-muted);
+    margin-top: 2px;
+  }
+  .b-note {
+    background: linear-gradient(180deg, oklch(from var(--brand) l c h / 0.10), oklch(from var(--brand) l c h / 0.04));
+    border: 1px solid oklch(from var(--brand) l c h / 0.25);
+    border-radius: var(--r-row);
+    padding: 18px;
+    min-height: 200px;
+    position: relative;
+  }
+  .b-note .pin {
+    position: absolute; top: -8px; left: 50%;
+    transform: translateX(-50%);
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--brand);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  }
+  .b-note textarea {
+    width: 100%; min-height: 160px;
+    background: transparent; border: 0;
+    color: var(--canvas-dark-ink-strong);
+    font-family: var(--font-prose); font-size: 17px;
+    line-height: 1.55; outline: none; resize: none;
+  }
+  .b-note textarea::placeholder { color: var(--canvas-dark-ink-faint); font-style: italic; }
+  .b-counter {
+    display: flex; justify-content: flex-end;
+    margin-top: 6px;
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--canvas-dark-ink-faint);
+  }
+  .b-foot {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 20px;
+  }
+
+  /* B feed — sticky notes pinned to a corkboard */
+  .b-feed {
+    background:
+      radial-gradient(circle at 20% 30%, rgba(255,200,90,0.04), transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(255,200,90,0.03), transparent 50%),
+      var(--canvas-dark-100);
+    box-shadow: var(--sh-inset);
+    border-radius: var(--r-card);
+    padding: 28px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+    position: relative;
+    min-height: 540px;
+  }
+  .b-feed::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image: radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 16px 16px;
+    pointer-events: none;
+    border-radius: var(--r-card);
+  }
+  .sticky {
+    position: relative;
+    border-radius: var(--r-row);
+    padding: 18px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.4), 0 1px 0 rgba(255,255,255,0.1) inset;
+    transform: rotate(-1deg);
+  }
+  .sticky:nth-child(2) { transform: rotate(1.5deg); }
+  .sticky:nth-child(3) { transform: rotate(-0.5deg); }
+  .sticky:nth-child(4) { transform: rotate(0.8deg); }
+  .sticky:nth-child(5) { transform: rotate(-1.2deg); }
+  .sticky:nth-child(6) { transform: rotate(0.5deg); }
+  .sticky::before {
+    content: ''; position: absolute; top: -6px; left: 50%;
+    transform: translateX(-50%);
+    width: 10px; height: 10px; border-radius: 50%;
+    background: rgba(0,0,0,0.55);
+    box-shadow: 0 1px 1px rgba(255,255,255,0.06);
+  }
+  .sticky.yellow {
+    background: linear-gradient(180deg, oklch(from var(--brand) l c h / 0.18), oklch(from var(--brand) l c h / 0.10));
+    border: 1px solid oklch(from var(--brand) l c h / 0.3);
+  }
+  .sticky.mint {
+    background: linear-gradient(180deg, oklch(from var(--accent-mint) l c h / 0.18), oklch(from var(--accent-mint) l c h / 0.08));
+    border: 1px solid oklch(from var(--accent-mint) l c h / 0.3);
+  }
+  .sticky.pink {
+    background: linear-gradient(180deg, oklch(from var(--accent-pink) l c h / 0.18), oklch(from var(--accent-pink) l c h / 0.08));
+    border: 1px solid oklch(from var(--accent-pink) l c h / 0.3);
+  }
+  .sticky.blue {
+    background: linear-gradient(180deg, oklch(from var(--accent-blue) l c h / 0.18), oklch(from var(--accent-blue) l c h / 0.08));
+    border: 1px solid oklch(from var(--accent-blue) l c h / 0.3);
+  }
+  .sticky.lilac {
+    background: linear-gradient(180deg, oklch(from var(--accent-lilac) l c h / 0.18), oklch(from var(--accent-lilac) l c h / 0.08));
+    border: 1px solid oklch(from var(--accent-lilac) l c h / 0.3);
+  }
+  .sticky .who {
+    font-size: 11px; color: var(--canvas-dark-ink-muted);
+    font-family: var(--font-mono); letter-spacing: 0.06em;
+    text-transform: uppercase; margin-bottom: 8px;
+  }
+  .sticky .who strong { color: var(--canvas-dark-ink-strong); font-weight: 700; }
+  .sticky .text {
+    color: var(--canvas-dark-ink-strong); font-size: 14.5px;
+    line-height: 1.5; font-family: var(--font-prose);
+  }
+  .sticky .foot {
+    display: flex; align-items: center; gap: 12px;
+    margin-top: 14px; font-size: 11px;
+    color: var(--canvas-dark-ink-muted);
+  }
+  .sticky.link .url {
+    margin-top: 10px;
+    background: rgba(0,0,0,0.25);
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--canvas-dark-ink); word-break: break-all;
+  }
+
+  /* ─────────── C: COMMAND BAR ─────────── */
+  .c-modal { padding: 0; overflow: hidden; }
+  .c-bar {
+    display: flex; align-items: center; gap: 0;
+    padding: 0;
+    background: linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200));
+    border-bottom: var(--br-soft);
+  }
+  .c-bar .left {
+    padding: 14px 18px;
+    border-right: var(--br-soft);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .c-bar .left .icon {
+    width: 26px; height: 26px;
+    border-radius: 8px;
+    background: var(--brand-soft); color: var(--brand);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-weight: 700;
+  }
+  .c-bar .left .label {
+    font-family: var(--font-mono); font-size: 11px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--canvas-dark-ink-muted);
+  }
+  .c-bar .tabs { display: flex; flex: 1; }
+  .c-bar .tabs button {
+    padding: 14px 18px;
+    background: transparent; border: 0;
+    color: var(--canvas-dark-ink-muted);
+    font: inherit; font-weight: 600; font-size: 13px;
+    cursor: pointer; position: relative;
+  }
+  .c-bar .tabs button.on {
+    color: var(--brand);
+  }
+  .c-bar .tabs button.on::after {
+    content: ''; position: absolute;
+    left: 16px; right: 16px; bottom: -1px;
+    height: 2px; background: var(--brand);
+    border-radius: 2px;
+  }
+  .c-input {
+    width: 100%; background: transparent; border: 0;
+    color: var(--canvas-dark-ink-strong);
+    padding: 28px 28px 12px;
+    font-family: var(--font-prose); font-size: 22px;
+    line-height: 1.4; outline: none; resize: none;
+    min-height: 140px;
+  }
+  .c-input::placeholder {
+    color: var(--canvas-dark-ink-faint); font-style: italic;
+  }
+  .c-meta {
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 28px 18px;
+    font-family: var(--font-mono); font-size: 11px;
+    color: var(--canvas-dark-ink-faint);
+  }
+  .c-meta .kbd {
+    display: inline-flex; align-items: center;
+    padding: 3px 8px; gap: 4px;
+    background: linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300));
+    box-shadow: var(--sh-tile);
+    border-radius: 6px;
+    color: var(--canvas-dark-ink-strong);
+    font-size: 10.5px; font-weight: 700;
+  }
+  .c-foot {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 22px;
+    background: var(--canvas-dark-150);
+    border-top: var(--br-soft);
+  }
+
+  /* C feed — staggered 2-col masonry */
+  .c-feed {
+    column-count: 2;
+    column-gap: 16px;
+  }
+  .c-card {
+    break-inside: avoid;
+    margin-bottom: 16px;
+    background: linear-gradient(180deg, var(--canvas-dark-300), var(--canvas-dark-250));
+    border: var(--br-card);
+    border-radius: var(--r-card);
+    padding: 20px;
+    box-shadow: var(--sh-tile);
+  }
+  .c-card.featured {
+    background:
+      radial-gradient(circle at 0% 0%, oklch(from var(--brand) l c h / 0.10), transparent 60%),
+      linear-gradient(180deg, var(--canvas-dark-300), var(--canvas-dark-250));
+    border-color: oklch(from var(--brand) l c h / 0.25);
+  }
+  .c-card .head {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 12px;
+  }
+  .c-card .avatar {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--brand), var(--brand-hover));
+    color: var(--brand-ink); font-weight: 700; font-size: 13px;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .c-card .name { font-weight: 700; color: var(--canvas-dark-ink-strong); font-size: 13px; }
+  .c-card .time { color: var(--canvas-dark-ink-faint); font-size: 11.5px; font-family: var(--font-mono); }
+  .c-card .body {
+    color: var(--canvas-dark-ink); font-size: 14px; line-height: 1.6;
+  }
+  .c-card .quote {
+    font-family: var(--font-prose); font-size: 16px;
+    font-style: italic; line-height: 1.5;
+    padding-left: 12px;
+    border-left: 3px solid var(--brand);
+  }
+  .c-card.link .link-frame {
+    margin-top: 14px;
+    border-radius: var(--r-row);
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-lilac));
+    height: 140px;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 14px;
+    color: white;
+  }
+  .c-card.link .link-frame .ttl {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: 16px;
+  }
+  .c-card.link .link-frame .url {
+    font-family: var(--font-mono); font-size: 10.5px;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    opacity: 0.85; margin-top: 4px;
+  }
+  .c-card .foot {
+    display: flex; align-items: center; gap: 14px;
+    margin-top: 14px; padding-top: 12px;
+    border-top: var(--br-soft);
+    font-size: 12px; color: var(--canvas-dark-ink-muted);
+  }
+  .c-card .foot .heart { color: var(--brand); }
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <h1>Buzz Board — 3 design directions</h1>
+  <p>Each option is a paired set: a redesigned compose modal AND a matching feed layout that speaks the same visual language.</p>
+</div>
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- A — Glass Card + Bento                              -->
+<!-- ════════════════════════════════════════════════════ -->
+<section class="variant-block">
+  <div class="variant-head">
+    <span class="tag">Option A</span>
+    <div>
+      <h2>Glass card + Bento grid</h2>
+      <p>Modal: a polished radial-glow header, iOS segmented control, recessed textarea, brand-yellow primary. Feed: varied-size tiles in a 6-col bento grid — featured posts span wide, links get cover treatment, text posts pack tight. Most "Apple-like".</p>
+    </div>
+  </div>
+
+  <span class="section-label">Compose modal</span>
+  <div class="pair">
+    <div class="panel a-modal">
+      <div class="a-modal-head">
+        <p class="eyebrow">Share with the hive</p>
+        <h3>New buzz</h3>
+        <p>An inspiration, a link, or a vibe — anything goes.</p>
+      </div>
+      <div class="a-segmented">
+        <button class="on">✦ Text</button>
+        <button>🔗 Link</button>
+      </div>
+      <div class="a-body">
+        <textarea class="a-textarea" placeholder="What's on your mind? Drop a quote, an idea, a question…">Just finished re-reading Earthsea. Le Guin's pacing in book 2 is unreal — every chapter ends on a turn that makes the next one feel earned. Anyone else working on their own coming-of-age arc?</textarea>
+        <div class="a-tools">
+          <div class="left">
+            <button class="chip">@</button>
+            <button class="chip">😊</button>
+            <button class="chip">B</button>
+          </div>
+          <div class="a-counter"><strong>187</strong> / 1000</div>
+        </div>
+      </div>
+      <div class="a-foot">
+        <span class="hint">⏎ to post · Esc to cancel</span>
+        <div style="display:flex; gap:8px;">
+          <button class="btn-ghost">Cancel</button>
+          <button class="btn-primary">↑ Post buzz</button>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <span class="section-label">Feed layout</span>
+      <div class="a-feed">
+        <div class="bento featured">
+          <span class="ribbon">Pinned</span>
+          <div class="head">
+            <div class="avatar">C</div>
+            <div class="meta">Chris <span class="time">· 2h</span></div>
+          </div>
+          <div class="body" style="font-family: var(--font-prose); font-size: 16.5px; line-height: 1.55;">Chapter 14 done. The midpoint reversal works — Mira finds the bones aren't decoration, they're a map. Calling it for the night.</div>
+          <div class="foot">
+            <span class="heart"><span class="h-icon">♥</span> 5</span>
+            <span>2 replies</span>
+          </div>
+        </div>
+
+        <div class="bento text">
+          <div class="head">
+            <div class="avatar" style="background: linear-gradient(135deg, var(--accent-mint), var(--accent-blue));">M</div>
+            <div class="meta">Mira <span class="time">· 4h</span></div>
+          </div>
+          <div class="body">Worldbuilding rabbithole: did you know cuttlefish can see polarized light?</div>
+          <div class="foot"><span class="heart"><span class="h-icon">♥</span> 2</span></div>
+        </div>
+
+        <div class="bento link">
+          <div class="link-preview">
+            <span class="url-pill">paris-review.org</span>
+            <div class="link-title">An Interview with Ursula K. Le Guin</div>
+          </div>
+          <div class="link-foot">
+            <div style="font-weight:700; color:var(--canvas-dark-ink-strong);">Jordan</div>
+            <span style="margin-left:auto;">· 6h</span>
+            <span class="heart" style="display:inline-flex; align-items:center; gap:4px; color:var(--brand);">♥ 8</span>
+          </div>
+        </div>
+
+        <div class="bento compact">
+          <div class="head">
+            <div class="avatar" style="background: linear-gradient(135deg, var(--accent-pink), var(--accent-lilac));">A</div>
+            <div class="meta">Ash <span class="time">· 1d</span></div>
+          </div>
+          <div class="body" style="font-size:13px;">Stuck on dialogue today. Everything sounds wooden.</div>
+          <div class="foot"><span class="heart"><span class="h-icon">♥</span> 1</span></div>
+        </div>
+
+        <div class="bento compact">
+          <div class="head">
+            <div class="avatar" style="background: linear-gradient(135deg, var(--accent-blue), var(--accent-lilac));">R</div>
+            <div class="meta">River <span class="time">· 2d</span></div>
+          </div>
+          <div class="body" style="font-size:13px;">Caffeine intake today: too much.</div>
+          <div class="foot"><span class="heart"><span class="h-icon">♥</span> 3</span></div>
+        </div>
+
+        <div class="bento text tall">
+          <div class="head">
+            <div class="avatar" style="background: linear-gradient(135deg, var(--brand), var(--accent-pink));">S</div>
+            <div class="meta">Sam <span class="time">· 2d</span></div>
+          </div>
+          <div class="body">Hot take: every scene should either advance plot or reveal character. If it does neither, it's prose porn.</div>
+          <div class="foot"><span class="heart"><span class="h-icon">♥</span> 4</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- B — Sticky Notes                                    -->
+<!-- ════════════════════════════════════════════════════ -->
+<section class="variant-block">
+  <div class="variant-head">
+    <span class="tag">Option B</span>
+    <div>
+      <h2>Sticky notes on a corkboard</h2>
+      <p>Modal: pick a post type as a tile-card, then write on a virtual sticky note. Feed: every buzz is a tinted sticky pinned to a subtle dot-grid corkboard, rotated slightly for that human-scrawled feel. Most playful — leans into "writers' bulletin board".</p>
+    </div>
+  </div>
+
+  <span class="section-label">Compose modal</span>
+  <div class="pair">
+    <div class="panel b-modal">
+      <p class="b-eyebrow">Share with your hive</p>
+      <h3 class="b-title">Pin a new note</h3>
+      <p class="b-sub">Pick a type. Write what's on your mind.</p>
+
+      <div class="b-type-row">
+        <button class="b-type on">
+          <div class="b-type-icon">✎</div>
+          <div class="b-type-name">Text</div>
+          <div class="b-type-blurb">A thought, quote, or question.</div>
+        </button>
+        <button class="b-type">
+          <div class="b-type-icon">🔗</div>
+          <div class="b-type-name">Link</div>
+          <div class="b-type-blurb">Share an article, video, or post.</div>
+        </button>
+      </div>
+
+      <div class="b-note">
+        <div class="pin"></div>
+        <textarea placeholder="What's the buzz?">Just finished re-reading Earthsea. Le Guin's pacing in book 2 is unreal — every chapter ends on a turn that makes the next one feel earned.</textarea>
+      </div>
+      <div class="b-counter">152 / 1000</div>
+
+      <div class="b-foot">
+        <button class="btn-ghost">Cancel</button>
+        <button class="btn-primary">📌 Pin it</button>
+      </div>
+    </div>
+
+    <div>
+      <span class="section-label">Feed layout</span>
+      <div class="b-feed">
+        <div class="sticky yellow">
+          <div class="who"><strong>Chris</strong> · 2h</div>
+          <div class="text">Chapter 14 done. The midpoint reversal works — Mira finds the bones aren't decoration, they're a map. Calling it for the night.</div>
+          <div class="foot">♥ 5 · 2 replies</div>
+        </div>
+        <div class="sticky mint">
+          <div class="who"><strong>Mira</strong> · 4h</div>
+          <div class="text">Worldbuilding rabbithole: did you know cuttlefish can see polarized light? Now I have to put one in chapter 8.</div>
+          <div class="foot">♥ 2</div>
+        </div>
+        <div class="sticky pink link">
+          <div class="who"><strong>Jordan</strong> · 6h</div>
+          <div class="text">"You cannot buy the revolution. You cannot make the revolution. You can only be the revolution." — Le Guin</div>
+          <div class="url">paris-review.org/interviews/le-guin</div>
+          <div class="foot">♥ 8</div>
+        </div>
+        <div class="sticky blue">
+          <div class="who"><strong>Ash</strong> · 1d</div>
+          <div class="text">Stuck on dialogue today. Everything sounds wooden.</div>
+          <div class="foot">♥ 1 · 3 replies</div>
+        </div>
+        <div class="sticky lilac">
+          <div class="who"><strong>Sam</strong> · 2d</div>
+          <div class="text">Hot take: every scene should either advance plot or reveal character. If it does neither, cut it.</div>
+          <div class="foot">♥ 4</div>
+        </div>
+        <div class="sticky yellow">
+          <div class="who"><strong>River</strong> · 2d</div>
+          <div class="text">Caffeine intake today: too much. Word count: also too much. Worth it.</div>
+          <div class="foot">♥ 3</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════ -->
+<!-- C — Command Bar + Masonry                           -->
+<!-- ════════════════════════════════════════════════════ -->
+<section class="variant-block">
+  <div class="variant-head">
+    <span class="tag">Option C</span>
+    <div>
+      <h2>Command-bar compose + Masonry feed</h2>
+      <p>Modal: a focused, no-chrome composer — type-switcher as a tab strip up top, big serif input dominates, keyboard hints in the footer. Feed: 2-column masonry where each card sizes itself to content — pull-quotes, links with cover gradients, plain text posts each get their own treatment. Most editorial.</p>
+    </div>
+  </div>
+
+  <span class="section-label">Compose modal</span>
+  <div class="pair">
+    <div class="panel c-modal">
+      <div class="c-bar">
+        <div class="left">
+          <span class="icon">✦</span>
+          <span class="label">New buzz</span>
+        </div>
+        <div class="tabs">
+          <button class="on">Text</button>
+          <button>Link</button>
+        </div>
+      </div>
+      <textarea class="c-input" placeholder="Share an inspiration, a quote, an idea…">Le Guin's pacing in Earthsea book 2 is unreal — every chapter ends on a turn that makes the next one feel earned.</textarea>
+      <div class="c-meta">
+        <span>132 / 1000</span>
+        <span>·</span>
+        <span>Type @ to mention</span>
+      </div>
+      <div class="c-foot">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="kbd">⏎</span>
+          <span style="font-family: var(--font-mono); font-size: 11px; color: var(--canvas-dark-ink-faint);">to post</span>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn-ghost">Cancel</button>
+          <button class="btn-primary">Post</button>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <span class="section-label">Feed layout</span>
+      <div class="c-feed">
+        <div class="c-card featured">
+          <div class="head">
+            <div class="avatar">C</div>
+            <div>
+              <div class="name">Chris</div>
+              <div class="time">2 hours ago</div>
+            </div>
+          </div>
+          <div class="body">Chapter 14 done. The midpoint reversal works — Mira finds the bones aren't decoration, they're a map. Calling it for the night.</div>
+          <div class="foot">
+            <span class="heart">♥ 5</span>
+            <span>2 replies</span>
+          </div>
+        </div>
+
+        <div class="c-card">
+          <div class="head">
+            <div class="avatar" style="background: linear-gradient(135deg, var(--accent-mint), var(--accent-blue));">M</div>
+            <div>
+              <div class="name">Mira</div>
+              <div class="time">4h ago</div>
+            </div>
+          </div>
+          <div class="quote">"You cannot buy the revolution. You cannot make the revolution. You can only be the revolution."</div>
+          <div class="foot"><span class="heart">♥ 8</span></div>
+        </div>
+
+        <div class="c-card link">
+          <div class="head">
+            <div class="avatar" style="background: linear-gradient(135deg, var(--accent-pink), var(--brand));">J</div>
+            <div>
+              <div class="name">Jordan</div>
+              <div class="time">6h ago</div>
+            </div>
+          </div>
+          <div class="body">This interview reshaped how I think about world-building.</div>
+          <div class="link-frame">
+            <div class="ttl">An Interview with Ursula K. Le Guin</div>
+            <div class="url">paris-review.org</div>
+          </div>
+          <div class="foot"><span class="heart">♥ 12</span></div>
+        </div>
+
+        <div class="c-card">
+          <div class="head">
+            <div class="avatar" style="background: linear-gradient(135deg, var(--accent-lilac), var(--accent-pink));">A</div>
+            <div>
+              <div class="name">Ash</div>
+              <div class="time">1d ago</div>
+            </div>
+          </div>
+          <div class="body">Stuck on dialogue today. Everything sounds wooden.</div>
+          <div class="foot">
+            <span class="heart">♥ 1</span>
+            <span>3 replies</span>
+          </div>
+        </div>
+
+        <div class="c-card">
+          <div class="head">
+            <div class="avatar" style="background: linear-gradient(135deg, var(--brand), var(--accent-pink));">S</div>
+            <div>
+              <div class="name">Sam</div>
+              <div class="time">2d ago</div>
+            </div>
+          </div>
+          <div class="body">Hot take: every scene should either advance plot or reveal character. If it does neither, it's prose porn.</div>
+          <div class="foot"><span class="heart">♥ 4</span></div>
+        </div>
+
+        <div class="c-card">
+          <div class="head">
+            <div class="avatar" style="background: linear-gradient(135deg, var(--accent-blue), var(--accent-lilac));">R</div>
+            <div>
+              <div class="name">River</div>
+              <div class="time">2d ago</div>
+            </div>
+          </div>
+          <div class="body">Caffeine intake today: too much. Word count: also too much. Worth it.</div>
+          <div class="foot"><span class="heart">♥ 3</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div style="max-width: 1400px; margin: 0 auto;">
+  <div class="panel" style="padding: 22px 28px;">
+    <h3 style="font-family: var(--font-display); color: var(--brand); margin: 0 0 12px; font-size: 16px;">Quick compare</h3>
+    <table style="width:100%; border-collapse: collapse; font-size: 13px;">
+      <thead>
+        <tr style="color: var(--canvas-dark-ink-muted); text-align: left;">
+          <th style="padding: 8px 12px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600;">Aspect</th>
+          <th style="padding: 8px 12px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600;">A — Glass + Bento</th>
+          <th style="padding: 8px 12px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600;">B — Sticky notes</th>
+          <th style="padding: 8px 12px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600;">C — Command bar</th>
+        </tr>
+      </thead>
+      <tbody style="color: var(--canvas-dark-ink);">
+        <tr style="border-top: var(--br-soft);"><td style="padding: 10px 12px; color: var(--canvas-dark-ink-muted);">Mood</td><td style="padding: 10px 12px;">Apple-polished, social</td><td style="padding: 10px 12px;">Playful, writer's bulletin board</td><td style="padding: 10px 12px;">Editorial, focused</td></tr>
+        <tr style="border-top: var(--br-soft);"><td style="padding: 10px 12px; color: var(--canvas-dark-ink-muted);">Tile variation</td><td style="padding: 10px 12px;">High — 6-col grid, span 2-4</td><td style="padding: 10px 12px;">Medium — 3-col, color &amp; rotation</td><td style="padding: 10px 12px;">Medium — masonry, content-sized</td></tr>
+        <tr style="border-top: var(--br-soft);"><td style="padding: 10px 12px; color: var(--canvas-dark-ink-muted);">Color use</td><td style="padding: 10px 12px;">Brand-y, occasional gradients</td><td style="padding: 10px 12px;">Rotating accent tints per note</td><td style="padding: 10px 12px;">Mostly neutral with brand accents</td></tr>
+        <tr style="border-top: var(--br-soft);"><td style="padding: 10px 12px; color: var(--canvas-dark-ink-muted);">Best for</td><td style="padding: 10px 12px;">Visual variety, mixed media</td><td style="padding: 10px 12px;">Casual, off-the-cuff vibes</td><td style="padding: 10px 12px;">Long-form thoughts &amp; quotes</td></tr>
+        <tr style="border-top: var(--br-soft);"><td style="padding: 10px 12px; color: var(--canvas-dark-ink-muted);">Implementation</td><td style="padding: 10px 12px;">Medium — CSS grid spans, modal redesign</td><td style="padding: 10px 12px;">Medium — sticky styles, rotation</td><td style="padding: 10px 12px;">Lowest — CSS columns, tab strip</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</body>
+</html>

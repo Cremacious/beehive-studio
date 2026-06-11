@@ -1,0 +1,857 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Submission composer — design options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Newsreader:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --canvas-dark-100: #262728;
+    --canvas-dark-150: #2a2b2c;
+    --canvas-dark-200: #2c2d2e;
+    --canvas-dark-250: #303132;
+    --canvas-dark-300: #34353b;
+    --canvas-dark-350: #3a3b40;
+    --canvas-dark-400: #404148;
+    --canvas-dark-ink: oklch(0.95 0.005 256);
+    --canvas-dark-ink-muted: oklch(0.78 0.005 256);
+    --canvas-dark-ink-faint: oklch(0.6 0.005 256);
+    --canvas-dark-ink-strong: oklch(1 0 0);
+    --brand: #FFC300;
+    --brand-hover: #ffd233;
+    --brand-ink: #1a1a1a;
+    --brand-soft: oklch(from #FFC300 l c h / 0.14);
+    --status-success: oklch(0.78 0.16 145);
+    --status-error: oklch(0.66 0.18 25);
+    --r-card: 20px;
+    --r-row: 14px;
+    --r-btn: 12px;
+    --r-pill: 999px;
+    --sh-card: 0 1px 0 rgba(255,255,255,0.04) inset, 0 8px 28px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+    --sh-card-soft: 0 1px 0 rgba(255,255,255,0.04) inset, 0 4px 16px rgba(0,0,0,0.3);
+    --sh-tile: 0 1px 0 rgba(255,255,255,0.06) inset, 0 1px 2px rgba(0,0,0,0.3);
+    --sh-inset: inset 0 1px 3px rgba(0,0,0,0.35);
+    --sh-brand: 0 4px 16px oklch(from #FFC300 l c h / 0.28), 0 1px 0 rgba(255,255,255,0.2) inset;
+    --br-card: 1px solid rgba(255,255,255,0.06);
+    --br-soft: 1px solid rgba(255,255,255,0.04);
+    --font-display: 'Comfortaa', system-ui, sans-serif;
+    --font-ui: 'Comfortaa', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+    --font-prose: 'Newsreader', Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: #1f2021;
+    color: var(--canvas-dark-ink);
+    font-family: var(--font-ui);
+    line-height: 1.5;
+    min-height: 100vh;
+    padding: 40px 24px 80px;
+  }
+
+  /* ───────── Page chrome ───────── */
+  .page-head {
+    max-width: 1400px;
+    margin: 0 auto 32px;
+    text-align: center;
+  }
+  .page-head h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 26px;
+    letter-spacing: -0.01em;
+    color: var(--brand);
+    margin: 0 0 8px;
+  }
+  .page-head p {
+    color: var(--canvas-dark-ink-muted);
+    font-size: 13px;
+    margin: 0;
+  }
+  .grid {
+    max-width: 1680px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 24px;
+  }
+  @media (max-width: 1280px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+
+  .variant {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .variant-head {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .variant-head .tag {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--brand);
+    background: var(--brand-soft);
+    padding: 4px 10px;
+    border-radius: var(--r-pill);
+    width: max-content;
+  }
+  .variant-head h2 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 18px;
+    margin: 0;
+    color: var(--canvas-dark-ink-strong);
+  }
+  .variant-head p {
+    color: var(--canvas-dark-ink-muted);
+    font-size: 12.5px;
+    margin: 0;
+    line-height: 1.55;
+  }
+
+  .frame {
+    background:
+      linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200));
+    border: var(--br-card);
+    border-radius: var(--r-card);
+    box-shadow: var(--sh-card);
+    overflow: hidden;
+  }
+
+  /* ───────── Shared header bar ───────── */
+  .shell-head {
+    padding: 16px 22px 14px;
+    border-bottom: var(--br-soft);
+  }
+  .breadcrumb {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--canvas-dark-ink-muted);
+    margin-bottom: 8px;
+    cursor: pointer;
+  }
+  .breadcrumb:hover { color: var(--brand); }
+  .shell-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 22px;
+    color: var(--brand);
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+  .shell-sub {
+    color: var(--canvas-dark-ink-muted);
+    font-size: 12.5px;
+    margin: 0;
+  }
+
+  /* ───────── Inputs (shared) ───────── */
+  .label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--canvas-dark-ink-muted);
+    margin-bottom: 8px;
+  }
+  .label .req {
+    color: var(--status-error);
+    margin-left: 2px;
+  }
+  .input, .select {
+    width: 100%;
+    background: var(--canvas-dark-100);
+    box-shadow: var(--sh-inset);
+    border: 0;
+    border-radius: var(--r-row);
+    color: var(--canvas-dark-ink-strong);
+    padding: 12px 14px;
+    font: inherit;
+    font-size: 14px;
+    outline: none;
+  }
+  .input:focus, .select:focus { box-shadow: var(--sh-inset), 0 0 0 2px var(--brand-soft); }
+  .input.title-input {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 700;
+    padding: 14px 18px;
+    color: var(--brand);
+  }
+  .input.title-input::placeholder { color: var(--canvas-dark-ink-faint); font-weight: 400; }
+  .helper {
+    margin-top: 6px;
+    font-size: 11.5px;
+    color: var(--canvas-dark-ink-faint);
+    line-height: 1.5;
+  }
+
+  /* ───────── Toolbar ───────── */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 10px 12px;
+    background: linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200));
+    border: var(--br-card);
+    border-bottom: none;
+    border-radius: var(--r-row) var(--r-row) 0 0;
+  }
+  .tgroup { display: flex; gap: 4px; }
+  .tbtn {
+    width: 30px;
+    height: 30px;
+    border-radius: var(--r-btn);
+    background: linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300));
+    box-shadow: var(--sh-tile);
+    color: var(--brand);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: none;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 12px;
+  }
+  .tbtn.italic { font-style: italic; }
+  .tbtn.underline { text-decoration: underline; }
+  .tbtn.active { background: var(--brand); color: var(--brand-ink); }
+  .tbtn:hover:not(.active) {
+    background: linear-gradient(180deg, var(--canvas-dark-400), var(--canvas-dark-350));
+  }
+  .tsep {
+    width: 1px;
+    height: 20px;
+    background: rgba(255,255,255,0.08);
+    margin: 0 4px;
+  }
+
+  /* ───────── Body sheet ───────── */
+  .sheet {
+    background: var(--canvas-dark-100);
+    box-shadow: var(--sh-inset);
+    border-radius: 0 0 var(--r-row) var(--r-row);
+    padding: 24px 28px;
+    min-height: 320px;
+    font-family: var(--font-prose);
+    font-size: 17px;
+    line-height: 1.75;
+    color: var(--canvas-dark-ink);
+  }
+  .sheet p { margin: 0 0 1em; }
+  .sheet h2 {
+    font-family: var(--font-display);
+    color: var(--canvas-dark-ink-strong);
+    font-size: 20px;
+    margin: 0 0 0.5em;
+  }
+  .placeholder { color: var(--canvas-dark-ink-faint); font-style: italic; }
+
+  /* ───────── Pills / chips ───────── */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: var(--r-pill);
+  }
+  .pill.draft {
+    background: oklch(from var(--brand) l c h / 0.16);
+    color: var(--brand);
+  }
+  .pill.saved {
+    background: oklch(from var(--status-success) l c h / 0.16);
+    color: var(--status-success);
+  }
+  .pill.muted {
+    background: rgba(255,255,255,0.05);
+    color: var(--canvas-dark-ink-muted);
+  }
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  /* ───────── Footer / submit bar ───────── */
+  .submit-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 14px 22px;
+    border-top: var(--br-soft);
+    background: linear-gradient(180deg, var(--canvas-dark-200), var(--canvas-dark-150));
+  }
+  .meta-cluster {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .word-count {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--canvas-dark-ink-muted);
+  }
+  .word-count strong {
+    color: var(--canvas-dark-ink-strong);
+    font-weight: 700;
+  }
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    background: var(--brand);
+    color: var(--brand-ink);
+    border-radius: var(--r-pill);
+    box-shadow: var(--sh-brand);
+    border: none;
+    font: inherit;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: transform 0.1s, background 0.14s;
+  }
+  .btn-primary:hover { background: var(--brand-hover); transform: translateY(-1px); }
+  .btn-primary:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: var(--sh-tile);
+  }
+  .btn-secondary {
+    padding: 10px 14px;
+    background: linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300));
+    color: var(--canvas-dark-ink-strong);
+    border-radius: var(--r-pill);
+    box-shadow: var(--sh-tile);
+    border: none;
+    font: inherit;
+    font-weight: 600;
+    font-size: 12.5px;
+    cursor: pointer;
+  }
+
+  /* ───────── VARIANT A: card-stacked ───────── */
+  .va-body {
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .meta-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  @media (max-width: 720px) { .meta-row { grid-template-columns: 1fr; } }
+
+  /* ───────── VARIANT B: writer's sheet ───────── */
+  .vb-frame { padding: 0; }
+  .vb-meta-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 22px;
+    background: linear-gradient(180deg, var(--canvas-dark-200), var(--canvas-dark-150));
+    border-bottom: var(--br-soft);
+  }
+  .vb-meta-strip .left, .vb-meta-strip .right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .vb-title-block {
+    padding: 36px 56px 4px;
+    background: var(--canvas-dark-100);
+    box-shadow: var(--sh-inset);
+  }
+  .vb-title {
+    width: 100%;
+    background: transparent;
+    border: 0;
+    color: var(--brand);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 34px;
+    letter-spacing: -0.02em;
+    outline: none;
+    padding: 0;
+  }
+  .vb-title::placeholder { color: var(--canvas-dark-ink-faint); font-weight: 400; }
+  .vb-byline {
+    margin-top: 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--canvas-dark-ink-faint);
+  }
+  .vb-byline strong { color: var(--brand); font-weight: 700; }
+  .vb-toolbar {
+    background: var(--canvas-dark-100);
+    padding: 8px 56px;
+    border-bottom: var(--br-soft);
+    box-shadow: var(--sh-inset);
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .vb-sheet {
+    background: var(--canvas-dark-100);
+    padding: 28px 56px 60px;
+    min-height: 360px;
+    font-family: var(--font-prose);
+    font-size: 17.5px;
+    line-height: 1.85;
+    color: var(--canvas-dark-ink);
+    box-shadow: var(--sh-inset);
+  }
+  .vb-sheet p { margin: 0 0 1.1em; }
+  .vb-sheet .first::first-letter {
+    font-family: var(--font-display);
+    font-size: 3.5em;
+    font-weight: 700;
+    line-height: 1;
+    float: left;
+    margin: 0.05em 0.12em 0 0;
+    color: var(--brand);
+  }
+  .vb-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 22px;
+    background: linear-gradient(180deg, var(--canvas-dark-200), var(--canvas-dark-150));
+    border-top: var(--br-soft);
+  }
+  .vb-target {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300));
+    box-shadow: var(--sh-tile);
+    border-radius: var(--r-pill);
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--canvas-dark-ink-strong);
+    border: none;
+  }
+  .vb-target:hover { background: linear-gradient(180deg, var(--canvas-dark-400), var(--canvas-dark-350)); }
+  .vb-target .label-bit { color: var(--canvas-dark-ink-muted); }
+  .vb-target .value-bit { color: var(--brand); font-weight: 700; }
+
+  /* ───────── VARIANT C: split sidebar ───────── */
+  .vc-frame { display: grid; grid-template-columns: 240px 1fr; min-height: 560px; }
+  @media (max-width: 1280px) { .vc-frame { grid-template-columns: 1fr; } }
+  .vc-sidebar {
+    background: linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200));
+    border-right: var(--br-soft);
+    padding: 22px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+  .vc-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .vc-section .stat-val {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 22px;
+    color: var(--brand);
+  }
+  .vc-section .stat-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--canvas-dark-ink-muted);
+  }
+  .vc-save-card {
+    background: linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300));
+    box-shadow: var(--sh-tile);
+    border-radius: var(--r-row);
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--canvas-dark-ink);
+  }
+  .vc-main {
+    display: flex;
+    flex-direction: column;
+  }
+  .vc-title-bar {
+    padding: 22px 28px 14px;
+    border-bottom: var(--br-soft);
+  }
+  .vc-title {
+    width: 100%;
+    background: transparent;
+    border: 0;
+    color: var(--brand);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 26px;
+    outline: none;
+    padding: 0;
+    letter-spacing: -0.01em;
+  }
+  .vc-title::placeholder { color: var(--canvas-dark-ink-faint); font-weight: 400; }
+  .vc-toolbar {
+    padding: 10px 28px;
+    background: var(--canvas-dark-150);
+    border-bottom: var(--br-soft);
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .vc-sheet {
+    flex: 1;
+    background: var(--canvas-dark-100);
+    box-shadow: var(--sh-inset);
+    padding: 28px 32px;
+    font-family: var(--font-prose);
+    font-size: 17px;
+    line-height: 1.8;
+    color: var(--canvas-dark-ink);
+    overflow-y: auto;
+  }
+  .vc-sheet p { margin: 0 0 1em; }
+
+  /* ───────── Helper note ───────── */
+  .note {
+    margin: 12px 0 0;
+    padding: 14px 16px;
+    background: oklch(from var(--brand) l c h / 0.06);
+    border-left: 2px solid var(--brand);
+    border-radius: 0 var(--r-row) var(--r-row) 0;
+    color: var(--canvas-dark-ink);
+    font-size: 12.5px;
+    line-height: 1.6;
+  }
+  .note strong { color: var(--brand); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <h1>Submission composer — 3 design options</h1>
+  <p>Three takes on /hive/[hiveId]/submissions/new — pick one to build, or call out which pieces to mix.</p>
+</div>
+
+<div class="grid">
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- VARIANT A — Card-stacked metadata                    -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <div class="variant">
+    <div class="variant-head">
+      <span class="tag">Option A</span>
+      <h2>Card-stacked metadata</h2>
+      <p>Each field in its own recessed input. Sticky submit bar at the bottom. Closest to the current page but properly scaled, with clear hierarchy and a real save-status chip up top.</p>
+    </div>
+
+    <div class="frame">
+      <div class="shell-head">
+        <div class="breadcrumb">← Back to submissions</div>
+        <h3 class="shell-title">New submission</h3>
+        <div style="display:flex; align-items:center; gap:10px; margin-top:10px;">
+          <span class="pill draft"><span class="dot"></span> Draft</span>
+          <span class="pill saved">● Saved 2s ago</span>
+          <span class="word-count" style="margin-left:auto;"><strong>248</strong> words</span>
+        </div>
+      </div>
+
+      <div class="va-body">
+        <div>
+          <label class="label">Chapter title<span class="req">*</span></label>
+          <input class="input title-input" placeholder="Give your chapter a title…" value="The Bone Garden" />
+          <p class="helper">This becomes the chapter's name in the book if approved.</p>
+        </div>
+
+        <div class="meta-row">
+          <div>
+            <label class="label">Insert at</label>
+            <select class="select">
+              <option>End (default)</option>
+              <option>Beginning</option>
+              <option>After "Chapter 1: A Quiet Morning"</option>
+            </select>
+          </div>
+          <div>
+            <label class="label">Submitting to</label>
+            <div class="input" style="display:flex; align-items:center; gap:10px; padding:11px 14px;">
+              <div style="width:24px; height:24px; border-radius:6px; background:linear-gradient(135deg, var(--brand), var(--brand-hover)); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:var(--brand-ink);">W</div>
+              <span style="font-size:13px;">Whispers in the Hive</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="label">Body</label>
+          <div class="toolbar">
+            <div class="tgroup">
+              <button class="tbtn">B</button>
+              <button class="tbtn italic">I</button>
+              <button class="tbtn underline">U</button>
+            </div>
+            <div class="tsep"></div>
+            <div class="tgroup">
+              <button class="tbtn">H1</button>
+              <button class="tbtn">H2</button>
+              <button class="tbtn">H3</button>
+            </div>
+            <div class="tsep"></div>
+            <div class="tgroup">
+              <button class="tbtn">•</button>
+              <button class="tbtn">1.</button>
+              <button class="tbtn">"</button>
+            </div>
+            <div class="tsep"></div>
+            <div class="tgroup">
+              <button class="tbtn">↺</button>
+              <button class="tbtn">↻</button>
+            </div>
+          </div>
+          <div class="sheet">
+            <p>The garden had been dead for three hundred years before Mira found it. The bones beneath the rosebushes were pale and clean, arranged in patterns that looked, at first, accidental.</p>
+            <p>At first.</p>
+            <p class="placeholder">Continue writing…</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="submit-bar">
+        <div class="meta-cluster">
+          <span class="pill muted">Auto-saves every 800ms</span>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button class="btn-secondary">Save &amp; close</button>
+          <button class="btn-primary">↑ Submit for review</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- VARIANT B — Writer's sheet                           -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <div class="variant">
+    <div class="variant-head">
+      <span class="tag">Option B</span>
+      <h2>Writer's sheet</h2>
+      <p>One unified manuscript page. Title sits inside the canvas. Metadata collapses into thin chrome strips top &amp; bottom. Most immersive — feels like writing, not filling out a form.</p>
+    </div>
+
+    <div class="frame vb-frame">
+      <div class="vb-meta-strip">
+        <div class="left">
+          <div class="breadcrumb" style="margin:0;">← Submissions</div>
+        </div>
+        <div class="right">
+          <span class="pill draft"><span class="dot"></span> Draft</span>
+          <span class="pill saved">● Saved</span>
+        </div>
+      </div>
+
+      <div class="vb-title-block">
+        <input class="vb-title" placeholder="Title your chapter…" value="The Bone Garden" />
+        <div class="vb-byline">A submission for <strong>Whispers in the Hive</strong></div>
+      </div>
+
+      <div class="vb-toolbar">
+        <button class="tbtn">B</button>
+        <button class="tbtn italic">I</button>
+        <button class="tbtn underline">U</button>
+        <div class="tsep"></div>
+        <button class="tbtn">H2</button>
+        <button class="tbtn">H3</button>
+        <div class="tsep"></div>
+        <button class="tbtn">•</button>
+        <button class="tbtn">1.</button>
+        <button class="tbtn">"</button>
+        <div class="tsep"></div>
+        <button class="tbtn">↺</button>
+        <button class="tbtn">↻</button>
+      </div>
+
+      <div class="vb-sheet">
+        <p class="first">The garden had been dead for three hundred years before Mira found it. The bones beneath the rosebushes were pale and clean, arranged in patterns that looked, at first, accidental.</p>
+        <p>At first.</p>
+        <p>She knelt at the edge of what had once been a flagstone path, brushing soil from a small white femur — too short for a man, too long for a child.</p>
+        <p class="placeholder">Continue writing…</p>
+      </div>
+
+      <div class="vb-controls">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <button class="vb-target">
+            <span class="label-bit">Insert at:</span>
+            <span class="value-bit">End of book</span>
+            <span style="color:var(--canvas-dark-ink-muted);">▾</span>
+          </button>
+          <span class="word-count"><strong>248</strong> words</span>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button class="btn-secondary">Save &amp; close</button>
+          <button class="btn-primary">↑ Submit for review</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="note">
+      <strong>Why this might fit:</strong> contributors are writing, not configuring. The title becomes part of the canvas (not a separate form field), and the "Insert at" decision drops into a pill button so it's there but doesn't compete with the prose.
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════ -->
+  <!-- VARIANT C — Split sidebar                            -->
+  <!-- ════════════════════════════════════════════════════ -->
+  <div class="variant">
+    <div class="variant-head">
+      <span class="tag">Option C</span>
+      <h2>Split sidebar metadata</h2>
+      <p>Narrow left rail holds all metadata + status + submit. Right side is just the writing canvas — full-width, no competing UI. Feels like Mail / Notion compose.</p>
+    </div>
+
+    <div class="frame vc-frame">
+      <div class="vc-sidebar">
+        <div>
+          <div class="breadcrumb" style="margin-bottom:14px;">← Submissions</div>
+          <span class="pill draft" style="margin-bottom:6px;"><span class="dot"></span> Draft</span>
+        </div>
+
+        <div class="vc-section">
+          <span class="stat-label">Word count</span>
+          <span class="stat-val">248</span>
+        </div>
+
+        <div class="vc-save-card">
+          <span style="color: var(--status-success); font-size:14px;">●</span>
+          <div>
+            <div style="font-weight:600; font-size:12.5px;">Saved</div>
+            <div style="color:var(--canvas-dark-ink-muted); font-size:11px;">2 seconds ago</div>
+          </div>
+        </div>
+
+        <div class="vc-section">
+          <span class="stat-label">Insert at</span>
+          <select class="select" style="padding:9px 12px; font-size:12.5px;">
+            <option>End (default)</option>
+            <option>Beginning</option>
+            <option>After Ch. 1</option>
+          </select>
+        </div>
+
+        <div class="vc-section">
+          <span class="stat-label">Submitting to</span>
+          <div style="display:flex; align-items:center; gap:10px; padding:8px 0;">
+            <div style="width:28px; height:28px; border-radius:7px; background:linear-gradient(135deg, var(--brand), var(--brand-hover)); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:var(--brand-ink);">W</div>
+            <span style="font-size:12.5px; color:var(--canvas-dark-ink-strong); font-weight:600;">Whispers in the Hive</span>
+          </div>
+        </div>
+
+        <div style="margin-top:auto; display:flex; flex-direction:column; gap:8px;">
+          <button class="btn-primary" style="width:100%; justify-content:center;">↑ Submit for review</button>
+          <button class="btn-secondary" style="width:100%;">Save &amp; close</button>
+        </div>
+      </div>
+
+      <div class="vc-main">
+        <div class="vc-title-bar">
+          <label class="label" style="margin-bottom:4px;">Chapter title <span class="req">*</span></label>
+          <input class="vc-title" placeholder="Give your chapter a title…" value="The Bone Garden" />
+        </div>
+        <div class="vc-toolbar">
+          <button class="tbtn">B</button>
+          <button class="tbtn italic">I</button>
+          <button class="tbtn underline">U</button>
+          <div class="tsep"></div>
+          <button class="tbtn">H1</button>
+          <button class="tbtn">H2</button>
+          <button class="tbtn">H3</button>
+          <div class="tsep"></div>
+          <button class="tbtn">•</button>
+          <button class="tbtn">1.</button>
+          <button class="tbtn">"</button>
+          <button class="tbtn">—</button>
+          <div class="tsep"></div>
+          <button class="tbtn">↺</button>
+          <button class="tbtn">↻</button>
+        </div>
+        <div class="vc-sheet">
+          <p>The garden had been dead for three hundred years before Mira found it. The bones beneath the rosebushes were pale and clean, arranged in patterns that looked, at first, accidental.</p>
+          <p>At first.</p>
+          <p>She knelt at the edge of what had once been a flagstone path, brushing soil from a small white femur — too short for a man, too long for a child.</p>
+          <p class="placeholder">Continue writing…</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="note">
+      <strong>Why this might fit:</strong> the writer always knows where they stand (word count, save state, target chapter, target book) but the canvas dominates. Submit is one click away and never moves.
+    </div>
+  </div>
+
+</div>
+
+<div style="max-width: 1680px; margin: 64px auto 0; padding: 0 12px;">
+  <div class="frame" style="padding: 22px 28px;">
+    <h3 style="font-family: var(--font-display); color: var(--brand); margin: 0 0 12px; font-size: 16px;">Compare at a glance</h3>
+    <table style="width:100%; border-collapse: collapse; font-size: 13px;">
+      <thead>
+        <tr style="color: var(--canvas-dark-ink-muted); text-align: left;">
+          <th style="padding: 8px 12px; font-weight: 600; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;">Concern</th>
+          <th style="padding: 8px 12px; font-weight: 600; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;">A — Card-stacked</th>
+          <th style="padding: 8px 12px; font-weight: 600; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;">B — Writer's sheet</th>
+          <th style="padding: 8px 12px; font-weight: 600; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;">C — Split sidebar</th>
+        </tr>
+      </thead>
+      <tbody style="color: var(--canvas-dark-ink);">
+        <tr style="border-top: var(--br-soft);"><td style="padding: 10px 12px; color: var(--canvas-dark-ink-muted);">Title prominence</td><td style="padding: 10px 12px;">Big recessed input with helper</td><td style="padding: 10px 12px;">In-canvas as part of the manuscript</td><td style="padding: 10px 12px;">Top of canvas, labeled, sized for editing</td></tr>
+        <tr style="border-top: var(--br-soft);"><td style="padding: 10px 12px; color: var(--canvas-dark-ink-muted);">Insert-at affordance</td><td style="padding: 10px 12px;">Standard recessed select</td><td style="padding: 10px 12px;">Pill button in footer chrome</td><td style="padding: 10px 12px;">Inline in sidebar with always-visible context</td></tr>
+        <tr style="border-top: var(--br-soft);"><td style="padding: 10px 12px; color: var(--canvas-dark-ink-muted);">Submit visibility</td><td style="padding: 10px 12px;">Sticky bar at bottom</td><td style="padding: 10px 12px;">Footer next to insert-at</td><td style="padding: 10px 12px;">Always-on pinned at bottom of sidebar</td></tr>
+        <tr style="border-top: var(--br-soft);"><td style="padding: 10px 12px; color: var(--canvas-dark-ink-muted);">Save status</td><td style="padding: 10px 12px;">Chip in header next to Draft pill</td><td style="padding: 10px 12px;">Chip in top strip</td><td style="padding: 10px 12px;">Dedicated card in sidebar with timestamp</td></tr>
+        <tr style="border-top: var(--br-soft);"><td style="padding: 10px 12px; color: var(--canvas-dark-ink-muted);">Writing feel</td><td style="padding: 10px 12px;">Form-like, structured</td><td style="padding: 10px 12px;">Manuscript-like, immersive</td><td style="padding: 10px 12px;">Doc-app-like, ergonomic</td></tr>
+        <tr style="border-top: var(--br-soft);"><td style="padding: 10px 12px; color: var(--canvas-dark-ink-muted);">Implementation effort</td><td style="padding: 10px 12px;">Lowest — closest to current shape</td><td style="padding: 10px 12px;">Medium — drop-cap + in-canvas title</td><td style="padding: 10px 12px;">Highest — grid layout, sidebar component</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</body>
+</html>

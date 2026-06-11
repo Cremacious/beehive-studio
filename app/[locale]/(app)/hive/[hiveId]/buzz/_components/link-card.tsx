@@ -16,9 +16,10 @@ export function LinkCard({ url }: { url: string }) {
       target="_blank"
       rel="noopener noreferrer"
       style={{
-        background: 'var(--canvas-dark-100)',
-        boxShadow: 'var(--sh-inset)',
+        background: 'rgba(0,0,0,0.32)',
+        boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.35)',
         borderRadius: 'var(--r-row)',
+        border: '1px solid rgba(255,255,255,0.06)',
       }}
       className="flex items-center gap-3 p-3 mt-3 no-underline"
     >

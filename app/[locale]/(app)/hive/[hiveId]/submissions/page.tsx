@@ -5,6 +5,7 @@ import { listHiveSubmissionsAction } from '@/lib/actions/hive-submissions.action
 import { requireHiveMember, canSubmitChapter } from '@/lib/hive/permissions'
 import { HivePageShell } from '../_components/hive-page-shell'
 import { SubmissionsList } from './_components/submissions-list'
+import { SubmissionsExplainer } from './_components/submissions-explainer'
 
 function NewSubmissionCTA({ locale, hiveId }: { locale: string; hiveId: string }) {
   return (
@@ -50,6 +51,7 @@ export default async function SubmissionsPage({
       subtitle="Chapter drafts submitted for review."
       headerSlot={canSubmit ? <NewSubmissionCTA locale={locale} hiveId={hiveId} /> : undefined}
     >
+      <SubmissionsExplainer viewerRole={viewerRole} locale={locale} />
       <SubmissionsList
         hiveId={hiveId}
         locale={locale}

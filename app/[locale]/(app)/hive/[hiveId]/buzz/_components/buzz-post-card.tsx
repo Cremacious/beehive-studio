@@ -19,6 +19,63 @@ import { LinkCard } from './link-card'
 import { EditBuzzModal } from './edit-buzz-modal'
 import { RenderMentionsInText } from '@/components/mentions/render-mentions-in-text'
 
+// ─── Sticky palette ─────────────────────────────────────────────────────────
+// 5 oklch tints. Choice is deterministic per post id so the same buzz always
+// renders the same color across mounts. Rotation comes from the same hash so
+// the corkboard feels natural without being chaotic across reloads.
+const STICKY_VARIANTS = [
+  // yellow (brand)
+  {
+    bg: 'linear-gradient(180deg, oklch(from var(--brand) l c h / 0.18), oklch(from var(--brand) l c h / 0.10))',
+    border: 'oklch(from var(--brand) l c h / 0.32)',
+    accent: 'var(--brand)',
+  },
+  // mint
+  {
+    bg: 'linear-gradient(180deg, oklch(0.78 0.13 165 / 0.18), oklch(0.78 0.13 165 / 0.08))',
+    border: 'oklch(0.78 0.13 165 / 0.32)',
+    accent: 'oklch(0.86 0.13 165)',
+  },
+  // pink
+  {
+    bg: 'linear-gradient(180deg, oklch(0.78 0.13 12 / 0.18), oklch(0.78 0.13 12 / 0.08))',
+    border: 'oklch(0.78 0.13 12 / 0.32)',
+    accent: 'oklch(0.86 0.13 12)',
+  },
+  // blue
+  {
+    bg: 'linear-gradient(180deg, oklch(0.74 0.13 250 / 0.18), oklch(0.74 0.13 250 / 0.08))',
+    border: 'oklch(0.74 0.13 250 / 0.32)',
+    accent: 'oklch(0.84 0.13 250)',
+  },
+  // lilac
+  {
+    bg: 'linear-gradient(180deg, oklch(0.78 0.11 305 / 0.18), oklch(0.78 0.11 305 / 0.08))',
+    border: 'oklch(0.78 0.11 305 / 0.32)',
+    accent: 'oklch(0.86 0.11 305)',
+  },
+] as const
+
+// Rotation candidates — small angles so the board stays readable.
+const ROTATIONS = ['-1.2deg', '-0.6deg', '0.5deg', '0.9deg', '1.4deg'] as const
+
+// FNV-style id hash → stable integer for variant + rotation selection.
+function hashId(id: string): number {
+  let h = 2166136261
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i)
+    h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0
+  }
+  return h
+}
+
+function pickStyle(id: string) {
+  const h = hashId(id)
+  const variant = STICKY_VARIANTS[h % STICKY_VARIANTS.length]
+  const rotation = ROTATIONS[(h >> 4) % ROTATIONS.length]
+  return { ...variant, rotation }
+}
+
 function relTime(d: Date | string): string {
   const date = new Date(d)
   const seconds = Math.floor((Date.now() - date.getTime()) / 1000)
@@ -30,17 +87,6 @@ function relTime(d: Date | string): string {
   const days = Math.floor(hours / 24)
   if (days < 7) return `${days}d ago`
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-}
-
-function deriveTitleAndExcerpt(body: string): { title: string; excerpt: string | null } {
-  const trimmed = body.trim()
-  const firstNewline = trimmed.indexOf('\n')
-  if (firstNewline === -1) {
-    return { title: trimmed.slice(0, 80), excerpt: null }
-  }
-  const title = trimmed.slice(0, firstNewline).slice(0, 80)
-  const remainder = trimmed.slice(firstNewline + 1).trim()
-  return { title, excerpt: remainder || null }
 }
 
 export function BuzzPostCard({
@@ -71,26 +117,59 @@ export function BuzzPostCard({
     post.updatedAt &&
     new Date(post.updatedAt).getTime() - new Date(post.createdAt).getTime() > 1000
 
-  const { title, excerpt } = deriveTitleAndExcerpt(post.body ?? '')
+  const style = pickStyle(post.id)
 
   return (
     <article
+      className="relative break-inside-avoid"
       style={{
-        background:
-          'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+        background: style.bg,
+        border: `1px solid ${style.border}`,
         borderRadius: 'var(--r-row)',
-        boxShadow: 'var(--sh-tile)',
-        border: 'var(--br-card)',
-        padding: 24,
+        padding: '20px 20px 18px',
+        boxShadow:
+          '0 8px 22px rgba(0,0,0,0.42), 0 1px 0 rgba(255,255,255,0.10) inset',
+        transform: `rotate(${style.rotation})`,
+        transition: 'transform 0.18s ease, box-shadow 0.18s ease',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'rotate(0deg) translateY(-2px)'
+        e.currentTarget.style.boxShadow =
+          '0 12px 32px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.12) inset'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = `rotate(${style.rotation})`
+        e.currentTarget.style.boxShadow =
+          '0 8px 22px rgba(0,0,0,0.42), 0 1px 0 rgba(255,255,255,0.10) inset'
       }}
     >
+      {/* Pin decoration */}
+      <span
+        aria-hidden
+        className="absolute"
+        style={{
+          top: '-6px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: 12,
+          height: 12,
+          borderRadius: '50%',
+          background: 'rgba(0,0,0,0.55)',
+          boxShadow:
+            '0 1px 0 rgba(255,255,255,0.08), 0 2px 4px rgba(0,0,0,0.4)',
+        }}
+      />
+
       {/* Header row */}
-      <div className="flex items-center gap-[9px] mb-3">
+      <div className="flex items-center gap-2 mb-2.5">
         <span
           aria-hidden
-          className="inline-flex items-center justify-center w-9 h-9 rounded-full shrink-0 overflow-hidden"
+          className="inline-flex items-center justify-center shrink-0 overflow-hidden"
           style={{
-            background: 'oklch(from var(--brand) l c h / 0.14)',
+            width: 24,
+            height: 24,
+            borderRadius: '50%',
+            background: 'oklch(from var(--brand) l c h / 0.18)',
             color: 'var(--brand)',
           }}
         >
@@ -99,34 +178,34 @@ export function BuzzPostCard({
             <img
               src={post.avatarUrl}
               alt=""
-              className="w-9 h-9 rounded-full object-cover"
+              className="rounded-full object-cover"
+              style={{ width: 24, height: 24 }}
             />
           ) : (
-            <span className="font-comfortaa font-semibold text-xs">
+            <span className="font-comfortaa font-semibold text-[11px]">
               {post.username?.[0]?.toUpperCase() ?? '?'}
             </span>
           )}
         </span>
         <span
-          className="font-comfortaa font-semibold text-[14px]"
-          style={{ color: 'var(--canvas-dark-ink-strong)' }}
+          className="font-mono uppercase tracking-wider"
+          style={{
+            fontSize: '10.5px',
+            letterSpacing: '0.08em',
+            color: 'var(--canvas-dark-ink-muted)',
+          }}
         >
-          @{post.username ?? 'unknown'}
-        </span>
-        <span
-          className="font-mono text-[11px] tracking-wider"
-          style={{ color: 'var(--canvas-dark-ink-muted)' }}
-        >
-          · {relTime(post.createdAt)}
-        </span>
-        {edited && (
-          <span
-            className="italic font-mono text-[11px] tracking-wider"
-            style={{ color: 'var(--canvas-dark-ink-muted)' }}
+          <strong
+            style={{
+              color: 'var(--canvas-dark-ink-strong)',
+              fontWeight: 700,
+            }}
           >
-            · (edited)
-          </span>
-        )}
+            @{post.username ?? 'unknown'}
+          </strong>{' '}
+          · {relTime(post.createdAt)}
+          {edited && <span className="italic"> · edited</span>}
+        </span>
         {canEdit && (
           <div className="ml-auto">
             <DropdownMenu>
@@ -138,9 +217,9 @@ export function BuzzPostCard({
                     color: 'var(--canvas-dark-ink-muted)',
                     borderRadius: 'var(--r-btn)',
                   }}
-                  className="p-1 transition-colors hover:bg-[var(--canvas-dark-100)] hover:text-[var(--canvas-dark-ink-strong)]"
+                  className="p-1 transition-colors hover:bg-black/20 hover:text-[var(--canvas-dark-ink-strong)]"
                 >
-                  <MoreVertical size={16} />
+                  <MoreVertical size={15} />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -164,26 +243,25 @@ export function BuzzPostCard({
         )}
       </div>
 
-      {title && (
-        <h3
-          className="font-comfortaa font-bold text-[16px] mt-1"
-          style={{ color: 'var(--brand)', margin: '8px 0 0' }}
-        >
-          <RenderMentionsInText text={title} />
-        </h3>
-      )}
-      {excerpt && (
+      {/* Body — Newsreader for the writerly feel */}
+      {post.body && post.body.trim() && (
         <p
-          className="text-[14px] mt-1 line-clamp-2 whitespace-pre-wrap break-words"
-          style={{ color: 'var(--canvas-dark-ink)', lineHeight: 1.5, margin: '6px 0 0' }}
+          className="whitespace-pre-wrap break-words"
+          style={{
+            fontFamily: 'var(--font-prose, Newsreader, Georgia, serif)',
+            fontSize: '14.5px',
+            lineHeight: 1.55,
+            color: 'var(--canvas-dark-ink-strong)',
+            margin: 0,
+          }}
         >
-          <RenderMentionsInText text={excerpt} />
+          <RenderMentionsInText text={post.body} />
         </p>
       )}
 
       {post.type === 'LINK' && post.linkUrl && <LinkCard url={post.linkUrl} />}
 
-      <div className="flex items-center gap-4 mt-3">
+      <div className="flex items-center gap-4 mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <LikeButton
           buzzId={post.id}
           initialLiked={post.viewerLiked}

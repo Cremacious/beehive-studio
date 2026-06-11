@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { Save } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -12,13 +13,25 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { MentionableTextarea } from '@/components/mentions/mentionable-textarea'
 import { updateBuzzPostAction } from '@/lib/actions/hive-buzz.actions'
 import type { BuzzPostSummary } from '@/lib/actions/hive-buzz.actions'
 
 const TEXT_MAX = 1000
 const CAPTION_MAX = 280
+
+const textareaStyle: React.CSSProperties = {
+  background: 'var(--canvas-dark-100)',
+  boxShadow: 'var(--sh-inset)',
+  border: 0,
+  borderRadius: 'var(--r-row)',
+  padding: '14px 16px',
+  fontFamily: 'var(--font-ui)',
+  fontSize: '14.5px',
+  lineHeight: 1.55,
+  color: 'var(--canvas-dark-ink-strong)',
+  minHeight: '120px',
+}
 
 function isValidHttpsUrl(s: string): boolean {
   try {
@@ -40,7 +53,6 @@ export function EditBuzzModal({ open, onOpenChange, post }: Props) {
   const [linkUrl, setLinkUrl] = useState(post.linkUrl ?? '')
   const [submitting, setSubmitting] = useState(false)
 
-  // Sync if a different post is being edited (component reused).
   useEffect(() => {
     if (open) {
       setBody(post.body)
@@ -82,63 +94,117 @@ export function EditBuzzModal({ open, onOpenChange, post }: Props) {
     onOpenChange(next)
   }
 
+  const max = post.type === 'TEXT' ? TEXT_MAX : CAPTION_MAX
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Edit buzz</DialogTitle>
+          <p
+            className="font-mono uppercase tracking-wider"
+            style={{
+              fontSize: '10px',
+              letterSpacing: '0.16em',
+              color: 'var(--canvas-dark-ink-muted)',
+              marginBottom: '4px',
+            }}
+          >
+            {post.type === 'TEXT' ? 'Text note' : 'Link share'} · editing
+          </p>
+          <DialogTitle
+            className="font-comfortaa font-bold"
+            style={{
+              fontSize: '22px',
+              color: 'var(--brand)',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            Edit note
+          </DialogTitle>
           <DialogDescription>
-            Update your post. The type can't be changed. Delete and recreate to
-            switch between text and link.
+            The type can&apos;t be changed. Delete and recreate to switch between text and link.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-muted/40 text-muted-foreground w-fit">
-          {post.type === 'TEXT' ? 'Text' : 'Link'} · locked
-        </div>
-
         {post.type === 'TEXT' ? (
-          <div className="space-y-1">
+          <div>
             <MentionableTextarea
               value={body}
               onChange={setBody}
               placeholder="What's the buzz?"
-              rows={5}
+              rows={6}
               maxLength={TEXT_MAX}
               autoFocus
+              className="w-full outline-none resize-y disabled:opacity-60"
+              style={textareaStyle}
             />
-            <div className="flex justify-end text-[11px] text-muted-foreground">
-              {body.length} / {TEXT_MAX}
-            </div>
+            <Counter current={body.length} max={max} />
           </div>
         ) : (
-          <div className="space-y-3">
-            <div className="space-y-1">
-              <Input
+          <div className="flex flex-col gap-3">
+            <div>
+              <label
+                className="block mb-[7px] font-mono uppercase"
+                style={{
+                  fontSize: '10px',
+                  letterSpacing: '0.12em',
+                  color: 'var(--canvas-dark-ink-muted)',
+                }}
+              >
+                URL <span style={{ color: 'var(--status-error)' }}>*</span>
+              </label>
+              <input
                 type="url"
                 inputMode="url"
                 value={linkUrl}
                 onChange={(e) => setLinkUrl(e.target.value)}
-                placeholder="https://..."
+                placeholder="https://…"
                 aria-invalid={linkUrl.length > 0 && !linkValid}
+                className="w-full outline-none disabled:opacity-60"
+                style={{
+                  background: 'var(--canvas-dark-100)',
+                  boxShadow:
+                    linkUrl.length > 0 && !linkValid
+                      ? 'inset 0 0 0 1px oklch(from var(--status-error) l c h / 0.5), var(--sh-inset)'
+                      : 'var(--sh-inset)',
+                  border: 0,
+                  borderRadius: 'var(--r-row)',
+                  padding: '11px 14px',
+                  fontFamily: 'var(--font-ui)',
+                  fontSize: '14px',
+                  color: 'var(--canvas-dark-ink-strong)',
+                }}
               />
               {linkUrl.length > 0 && !linkValid && (
-                <p className="text-[11px] text-destructive">
-                  Must be a valid https URL
+                <p
+                  className="mt-1.5 text-[12px]"
+                  style={{ color: 'var(--status-error)' }}
+                >
+                  Must be a valid https URL.
                 </p>
               )}
             </div>
-            <div className="space-y-1">
+            <div>
+              <label
+                className="block mb-[7px] font-mono uppercase"
+                style={{
+                  fontSize: '10px',
+                  letterSpacing: '0.12em',
+                  color: 'var(--canvas-dark-ink-muted)',
+                }}
+              >
+                Caption (optional)
+              </label>
               <MentionableTextarea
                 value={body}
                 onChange={setBody}
-                placeholder="Optional caption..."
+                placeholder="Why are you sharing this?"
                 rows={3}
                 maxLength={CAPTION_MAX}
+                className="w-full outline-none resize-y disabled:opacity-60"
+                style={textareaStyle}
               />
-              <div className="flex justify-end text-[11px] text-muted-foreground">
-                {body.length} / {CAPTION_MAX}
-              </div>
+              <Counter current={body.length} max={max} />
             </div>
           </div>
         )}
@@ -157,16 +223,34 @@ export function EditBuzzModal({ open, onOpenChange, post }: Props) {
             disabled={!canSubmit}
             style={{
               background: 'var(--brand)',
-              color: 'var(--brand-ink, oklch(0.18 0.02 60))',
-              borderRadius: 'var(--r-btn)',
+              color: 'var(--brand-ink)',
+              borderRadius: 'var(--r-pill)',
               boxShadow: 'var(--sh-tile)',
             }}
-            className="inline-flex items-center gap-1.5 font-geist font-semibold text-sm px-4 py-2 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 font-comfortaa font-semibold text-[13px] px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
+            <Save size={14} />
             {submitting ? 'Saving…' : 'Save'}
           </button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  )
+}
+
+function Counter({ current, max }: { current: number; max: number }) {
+  return (
+    <div
+      className="flex justify-end mt-1.5 font-mono"
+      style={{
+        fontSize: '11px',
+        color:
+          current > max * 0.9
+            ? 'var(--brand)'
+            : 'var(--canvas-dark-ink-faint)',
+      }}
+    >
+      {current} / {max}
+    </div>
   )
 }

@@ -173,6 +173,9 @@ export async function submitSubmissionAction(
   if (submission.draftStatus !== 'DRAFT') {
     return { success: false, error: 'INVALID_STATE' }
   }
+  if (submission.title.trim() === '') {
+    return { success: false, error: 'TITLE_REQUIRED' }
+  }
 
   const now = new Date()
 

@@ -7,14 +7,17 @@ import type { ReactNode } from 'react'
 export function LegalPage({
   title,
   updated,
+  preHeader,
   children,
 }: {
   title: string
   updated?: string
+  preHeader?: ReactNode
   children: ReactNode
 }) {
   return (
     <div className="max-w-3xl mx-auto px-6 py-16">
+      {preHeader}
       <h1
         className="font-display"
         style={{

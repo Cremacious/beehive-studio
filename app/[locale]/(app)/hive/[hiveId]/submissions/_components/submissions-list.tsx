@@ -1,7 +1,12 @@
 'use client'
 
+import Link from 'next/link'
 import type { SubmissionRow as SubmissionRowData } from '@/lib/actions/hive-submissions.actions'
-import { canReviewSubmissions, type HiveRole } from '@/lib/hive/permissions'
+import {
+  canReviewSubmissions,
+  canSubmitChapter,
+  type HiveRole,
+} from '@/lib/hive/permissions'
 import { HiveSubSectionHeader } from '../../_components/hive-sub-section-header'
 import { SubmissionRow } from './submission-row'
 
@@ -23,6 +28,7 @@ export function SubmissionsList({
   allInHive,
 }: Props) {
   const canReview = canReviewSubmissions(viewerRole)
+  const canSubmit = canSubmitChapter(viewerRole)
 
   // Determine which sections render so we can correctly suppress the top
   // border on the first one.
@@ -38,14 +44,41 @@ export function SubmissionsList({
   const noContent = !showDrafts && !showMine && !showAll
 
   if (noContent) {
+    // BETA_READER (or any other persona with no sections) — the explainer
+    // above already tells them why this page is empty. Render nothing.
+    if (!canSubmit) return null
+
+    // CONTRIBUTOR with nothing yet: explanatory empty state + CTA.
     return (
-      <div className="px-6 py-8">
-        <p
-          className="text-sm italic"
-          style={{ color: 'var(--canvas-dark-ink-muted)' }}
+      <div className="px-6 py-10">
+        <div
+          className="mx-auto max-w-xl text-center"
+          style={{ color: 'var(--canvas-dark-ink)' }}
         >
-          No submissions yet.
-        </p>
+          <p className="mb-2 text-[15px] font-semibold">
+            You haven&apos;t drafted anything yet.
+          </p>
+          <p
+            className="mb-5 text-[13.5px] leading-relaxed"
+            style={{ color: 'var(--canvas-dark-ink-muted)' }}
+          >
+            Start a chapter draft and submit it. Owners and moderators will
+            review, and if approved, it lands in the book as a new chapter
+            authored by you.
+          </p>
+          <Link
+            href={`/${locale}/hive/${hiveId}/submissions/new`}
+            className="inline-block px-4 py-2 text-[13px] font-semibold"
+            style={{
+              background: 'var(--brand)',
+              color: 'var(--brand-ink)',
+              borderRadius: 'var(--r-pill)',
+              boxShadow: 'var(--sh-tile)',
+            }}
+          >
+            + Start a draft
+          </Link>
+        </div>
       </div>
     )
   }
@@ -80,12 +113,21 @@ export function SubmissionsList({
           hideTopBorder={firstShown === 'all'}
         >
           {allInHive.length === 0 ? (
-            <p
-              className="px-5 py-6 text-sm italic"
-              style={{ color: 'var(--canvas-dark-ink-muted)' }}
-            >
-              No submissions to review.
-            </p>
+            <div className="px-5 py-6">
+              <p
+                className="mb-1 text-[14px] font-medium"
+                style={{ color: 'var(--canvas-dark-ink)' }}
+              >
+                Nothing to review yet.
+              </p>
+              <p
+                className="text-[13px] leading-relaxed"
+                style={{ color: 'var(--canvas-dark-ink-muted)' }}
+              >
+                When a contributor submits a chapter, it shows up here for
+                approval or rejection.
+              </p>
+            </div>
           ) : (
             <ForumRows rows={allInHive} hiveId={hiveId} locale={locale} />
           )}

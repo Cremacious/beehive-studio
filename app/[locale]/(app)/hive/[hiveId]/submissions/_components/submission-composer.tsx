@@ -18,7 +18,7 @@ import {
 import { extractWordCount } from '@/lib/tiptap-utils'
 import { SaveStatusBadge, type FormSaveStatus } from '@/app/[locale]/(app)/studio/[bookId]/_components/front-back-matter/save-status-badge'
 import { HivePageShell } from '../../_components/hive-page-shell'
-import { HiveSectionDivider } from '../../_components/hive-section-divider'
+import { ComposerToolbar } from './composer-toolbar'
 
 type ChapterRef = { id: string; title: string; order: number }
 
@@ -177,7 +177,12 @@ export function SubmissionComposer({
     }
   }
 
-  const canSubmit = editable && submissionId !== null && wordCount > 0 && !submitting
+  const canSubmit =
+    editable &&
+    submissionId !== null &&
+    wordCount > 0 &&
+    title.trim().length > 0 &&
+    !submitting
 
   const shellTitle =
     mode === 'new'
@@ -188,7 +193,7 @@ export function SubmissionComposer({
     <HivePageShell
       width="standard"
       title={shellTitle}
-      subtitle="Auto-saves as you type."
+      subtitle="Draft · Auto-saves as you type"
       back={{ href: `/${locale}/hive/${hiveId}/submissions`, label: 'submissions' }}
     >
       <div data-slot="submission-composer-pane">
@@ -228,7 +233,7 @@ export function SubmissionComposer({
           }
         `}</style>
 
-        <HiveSectionDivider label="Draft" hideTopBorder>
+        <div className="px-6 py-5">
           <div className="flex flex-col gap-4">
             {/* Save status row */}
             <div className="flex items-center justify-between gap-3">
@@ -250,28 +255,58 @@ export function SubmissionComposer({
               </span>
             </div>
 
-            {/* Large title input (mockup uses borderless Comfortaa 22px) */}
-            <input
-              type="text"
-              value={title}
-              disabled={!editable}
-              placeholder="Untitled submission"
-              onChange={(e) => {
-                setTitle(e.target.value)
-                titleRef.current = e.target.value
-                scheduleSave()
-              }}
-              className="w-full outline-none disabled:opacity-60"
-              style={{
-                background: 'transparent',
-                border: 0,
-                padding: '4px 0',
-                fontFamily: 'var(--font-display)',
-                fontWeight: 700,
-                fontSize: '22px',
-                color: 'var(--canvas-dark-ink-strong)',
-              }}
-            />
+            {/* Chapter title — required */}
+            <div>
+              <label
+                htmlFor="submission-title"
+                className="block mb-[7px] font-mono uppercase"
+                style={{
+                  fontSize: '10px',
+                  letterSpacing: '0.12em',
+                  color: 'var(--canvas-dark-ink-muted)',
+                }}
+              >
+                Chapter title{' '}
+                <span style={{ color: 'var(--status-error)' }}>*</span>
+              </label>
+              <input
+                id="submission-title"
+                type="text"
+                value={title}
+                disabled={!editable}
+                placeholder="Give your chapter a title before submitting"
+                aria-required="true"
+                aria-invalid={editable && title.trim() === ''}
+                onChange={(e) => {
+                  setTitle(e.target.value)
+                  titleRef.current = e.target.value
+                  scheduleSave()
+                }}
+                className="w-full outline-none disabled:opacity-60"
+                style={{
+                  background: 'var(--canvas-dark-100)',
+                  boxShadow:
+                    editable && title.trim() === ''
+                      ? 'inset 0 0 0 1px oklch(from var(--status-error) l c h / 0.5), var(--sh-inset)'
+                      : 'var(--sh-inset)',
+                  border: 0,
+                  borderRadius: 'var(--r-row)',
+                  padding: '11px 14px',
+                  fontFamily: 'var(--font-ui)',
+                  fontSize: '14px',
+                  color: 'var(--canvas-dark-ink-strong)',
+                }}
+              />
+              {editable && title.trim() === '' && (
+                <p
+                  className="mt-1.5 text-[12px]"
+                  style={{ color: 'var(--status-error)' }}
+                >
+                  A title is required. This becomes the chapter&apos;s name in
+                  the book if approved.
+                </p>
+              )}
+            </div>
 
             {/* Insert at */}
             <div>
@@ -330,11 +365,14 @@ export function SubmissionComposer({
               >
                 Body
               </label>
+              {editable && <ComposerToolbar editor={editor} />}
               <div
                 style={{
                   background: 'var(--canvas-dark-100)',
                   boxShadow: 'var(--sh-inset)',
-                  borderRadius: 'var(--r-row)',
+                  borderRadius: editable
+                    ? '0 0 var(--r-row) var(--r-row)'
+                    : 'var(--r-row)',
                   padding: '18px 22px',
                   minHeight: '240px',
                 }}
@@ -382,7 +420,7 @@ export function SubmissionComposer({
               </button>
             </div>
           </div>
-        </HiveSectionDivider>
+        </div>
       </div>
     </HivePageShell>
   )

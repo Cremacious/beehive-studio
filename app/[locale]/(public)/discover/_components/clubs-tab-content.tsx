@@ -4,7 +4,11 @@ import { ClubCard } from '@/app/[locale]/(app)/clubs/_components/club-card'
 export async function ClubsTabContent({ locale }: { locale: string }) {
   const result = await getClubsAction({ filter: 'discover', limit: 24 })
   if (!result.success) {
-    return <p className="text-red-400">Failed to load clubs.</p>
+    return (
+      <p style={{ color: 'var(--status-error)' }} className="italic">
+        Failed to load clubs.
+      </p>
+    )
   }
   const rows = result.data.rows
   if (rows.length === 0) {

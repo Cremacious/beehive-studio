@@ -4,7 +4,11 @@ import { ListCard } from '@/app/[locale]/(app)/reading-lists/_components/list-ca
 export async function ListsTabContent({ locale }: { locale: string }) {
   const result = await getDiscoverableListsAction({ limit: 24 })
   if (!result.success) {
-    return <p className="text-red-400">Failed to load lists.</p>
+    return (
+      <p style={{ color: 'var(--status-error)' }} className="italic">
+        Failed to load lists.
+      </p>
+    )
   }
   const rows = result.data.rows
   if (rows.length === 0) {

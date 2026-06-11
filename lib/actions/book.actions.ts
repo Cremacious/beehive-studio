@@ -638,6 +638,20 @@ export async function updateBookDetailsAction(
   const d = parsed.data
 
   await db.transaction(async (tx) => {
+    // D1: stamp first_publicly_discoverable_at on first transition to
+    // (PUBLIC + discoverable) when the column is still NULL.
+    const becomingPublic = d.visibility === 'PUBLIC' && d.discoverable === true
+    let stampFirstPublic = false
+    if (becomingPublic) {
+      const current = await tx.query.books.findFirst({
+        where: eq(books.id, bookId),
+        columns: { firstPubliclyDiscoverableAt: true },
+      })
+      if (current && current.firstPubliclyDiscoverableAt == null) {
+        stampFirstPublic = true
+      }
+    }
+
     await tx
       .update(books)
       .set({
@@ -656,6 +670,7 @@ export async function updateBookDetailsAction(
         visibility: d.visibility,
         discoverable: d.discoverable,
         updatedAt: new Date(),
+        ...(stampFirstPublic ? { firstPubliclyDiscoverableAt: new Date() } : {}),
       })
       .where(eq(books.id, bookId))
 

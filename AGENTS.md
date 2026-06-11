@@ -12,7 +12,44 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-11 (Hive submissions UX overhaul + buzz board sticky-note redesign)
+> **Last updated:** 2026-06-11 (Hive members redesign + notification bell fixes)
+>
+> **Last commit:** [396495d](https://github.com/Cremacious/beehive-studio/commit/396495d) — feat(hive/members): redesign + notification bell fixes.
+>
+> **This session — members page + bell:**
+>
+> 1. **Members page rebuilt around an InviteModal.** Dropped all the inline invite chrome (link panel, friends panel, capacity counter) and replaced it with a brand-pill `+ Invite` button in the page header (mounted via `HivePageShell` `headerSlot`) that opens a single modal. Modal layout: `GROW YOUR HIVE` mono eyebrow + brand-yellow "Invite members" title + "N of 5 members" sub. Primary section is a lifted card with `--brand-soft` tinted border, Link2 icon chip, "RECOMMENDED" pill — Generate brand-pill collapses to recessed URL box + Copy/↻ New tiles after first generation. Mono note below: "New joiners land as · Beta reader · Promote later from the member list". `OR` divider. Secondary: by-username (input + flat Send brand-pill, Enter key submits). Secondary: invite-a-friend (heading + recessed search pill, max-height scrollable list of friends with per-row Invite tile or "✓ Invited" success pill). All three preserve the existing server actions (`generateInviteLinkAction`, `inviteMemberByUsernameAction`).
+>
+> 2. **Friends-in-hive filtered out at the source.** Chris caught that `testguy3` was rendering in the friends list with an "In hive" pill — useless noise. `recentFriends` now does `.filter((f) => !memberUserIds.has(f.userId))` BEFORE the sort, so members can never reach the row render path. Empty-state copy is now context-aware: zero friends → "Add friends from their profile pages…"; all-friends-in-hive → "All of your friends are already in this hive. 🎉"; otherwise list. Dropped the dead `isMember` branch + "In hive" pill.
+>
+> 3. **HiveMembers reduced to forum-table.** All the per-section `HiveSectionDivider` wrapping deleted. Now just a clean toolbar row (`ALL MEMBERS · N` mono label left, recessed search pill right) over a forum-table member list: header strip (Member / Role / Joined / actions) with `--canvas-dark-100` background + mono uppercase labels, `divide-y` rows, hover state. Member cell: 34px avatar + name (or email fallback) + optional `YOU` mono chip + mono `@handle` below. Role cell: inline role select for OWNER+can-change, otherwise role pill. Joined cell: mono short-date. Action: X remove button for OWNER/MOD on non-owner non-self. Empty state for zero matches.
+>
+> 4. **No glow anywhere on the page.** Every brand button uses `--sh-tile` (flat tile shadow) — the brand `+ Invite` CTA, the Send button, the Generate invite link button, and the friend-row Invite tiles. Per Chris's explicit call: drop `--sh-brand` glow entirely. Hover swaps to `var(--brand-hover)`, no spread/blur halo.
+>
+> 5. **Notification bell — security + reliability bug fixes.** Three things stacked:
+>    - **Security:** `markNotificationReadAction` (`lib/actions/notifications.actions.ts`) was declaring `const userId = await requireAuth()` and never using it. UPDATE was scoped only by `notifications.id`, so any authed user could mark another user's notification read by guessing IDs. Fix scopes the WHERE on `and(id, userId)`.
+>    - **Perf:** `markAllNotificationsReadAction` adds `eq(notifications.read, false)` to the WHERE so the UPDATE skips rows already at the desired state — cheap win on heavy notification accounts.
+>    - **Client reliability:** `handleMarkAllRead` and `handleNotificationClick` previously did `await action()` then optimistic-flipped without checking `result.success`. If the action threw or returned failure, the bell silently showed 0 and the count returned on next refresh ("doesnt always work" + "count returns on refresh" bug class Chris reported). Both handlers now: (a) capture state for rollback before optimistic flip, (b) `try/catch` + `result.success` check with `toast.error('Could not mark all as read')` on failure, (c) `await load()` AFTER successful mark-all-read to re-sync server truth (defeats the silent-drift class).
+>    - `handleNotificationClick` now also gates the read flip on `!n.read` — no redundant DB write on already-read rows when the user re-clicks for navigation.
+>
+> **Mockup files** (preserved for reference): [design-import-temp/members-page-mockups.html](design-import-temp/members-page-mockups.html) (3 layouts — Chris picked A minus stat strip), [design-import-temp/invite-modal-mockup.html](design-import-temp/invite-modal-mockup.html) (final modal design picked as option C: link primary, username + friends secondary, no glow).
+>
+> **Patterns now load-bearing:**
+> 1. **Filter-at-source for cross-context lists.** When a list (like friends-to-invite) overlaps with another list (like current-members), the filter belongs in the data layer of the consuming component, NOT at row-render time. Stale "X is in Y" badges are a code smell — drop the row instead. Avoids dead branches + confusing empty rows.
+> 2. **`requireAuth()` return value MUST be consumed.** TypeScript can't catch the case where you call `await requireAuth()` to gate access but never use the returned userId in the scope of your query. Treat the userId as a mandatory parameter in every WHERE clause that touches user-owned data. Audit pattern: search for `const userId = await requireAuth()` followed by an UPDATE/DELETE/INSERT that doesn't reference `userId` in its conditions.
+> 3. **Optimistic update + post-success re-sync** is the canonical pattern for "operation that the user wants instant feedback on but that has a backed state to confirm against." Bell pattern: `setX(optimistic) → await action() → if (!result.success) rollback + toast → else await load()`. The `load()` after success is the bit that defeats stale-state-on-refresh bugs even when the write itself succeeded but new data arrived during the round-trip.
+> 4. **shadcn Dialog primitive carries the chrome — no need to restyle in InviteModal.** New invite UI just had to wire content into `DialogContent`. The brand iOS-modern chrome cascades automatically. Future invite-style modals (anywhere a contextual action needs a tabbed/sectioned form) should do the same: reach for `Dialog`, not roll custom overlays.
+> 5. **`headerSlot` is the right place for context-scoped CTAs.** When a CTA only makes sense within a specific page's header (like "+ Invite" on members), thread it via `HivePageShell.headerSlot` — keeps the page's content area clean for the actual data. Don't shove CTAs into the content area unless they're inline next to specific rows.
+>
+> **Known follow-ups (deferred):**
+> 1. **Pre-session modification to `discussions/_components/discussion-thread.tsx`** still uncommitted in working tree (unchanged across sessions). Chris can commit or restore separately.
+> 2. **Capacity display says "X / 5 members" even for premium users.** `FREE_HIVE_MEMBER_LIMIT = 5` is hardcoded into the bell's display; premium users actually have `Infinity` capacity via `getMemberLimit`. Pre-existing inconsistency, not introduced this session.
+> 3. **`?invite_claimed=1` toast handler** — still deferred from earlier session.
+> 4. **AGENTS.md "Prior" cascade is now exceedingly long** — each session prepends a new block. Worth an archive pass eventually (move pre-2026-06-08 blocks to a separate file).
+>
+> **Next concrete step:** Chris smokes `/en/hive/cr8ng5tka18kzp2h9u72q4xy/members` end-to-end: (1) page renders with member table only (no inline invite chrome, no glow on `+ Invite`); (2) `+ Invite` opens modal — Generate link → URL appears → Copy works; (3) Username form: send invite to a real user → toast success, field clears; (4) Friends list: `testguy3` (already a member) is NOT in the list; (5) Invite a non-member friend → "✓ Invited" pill appears; (6) Search filters friends correctly. Then notification bell: (1) accumulate some unread notifications (any action that generates one); (2) click `Mark all read` → badge disappears immediately; (3) refresh page → badge stays at 0 (only repopulates if a brand-new notification arrives). Report issues for follow-up. After smoke, prior known priorities are still open: discussion-thread file decision, broader hive route smokes, em-dash audit residue, H5 Dashboard. See "Prior" block below.
+>
+> **Prior — Last updated:** 2026-06-11 (Hive submissions UX overhaul + buzz board sticky-note redesign)
 >
 > **Last commit:** [566d694](https://github.com/Cremacious/beehive-studio/commit/566d694) — feat(hive): submissions UX overhaul + buzz board sticky redesign.
 >

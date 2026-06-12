@@ -12,9 +12,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-11 (D-phase polish pass round 2 — LoadMoreSlug typed union eliminated. D3a Lists + D3b Clubs + D4 Home all still awaiting smoke.)
+> **Last updated:** 2026-06-11 (D-phase polish pass round 3 — ForYouRail interleaved. D3a Lists + D3b Clubs + D4 Home all still awaiting smoke.)
 >
-> **Last commit:** [f52c3b1](https://github.com/Cremacious/beehive-studio/commit/f52c3b1) — refactor(discover/sub-page): eliminate LoadMoreSlug union + loadMoreAction prop.
+> **Last commit:** [a0f1fa8](https://github.com/Cremacious/beehive-studio/commit/a0f1fa8) — refactor(d4/for-you): interleave entities round-robin instead of grouped chunks.
+>
+> **D-phase polish pass round 3 ([a0f1fa8](https://github.com/Cremacious/beehive-studio/commit/a0f1fa8)):** ForYouRail now interleaves entities round-robin (B, S, H, L, C, B, S, H, L, C) instead of shipping in entity-grouped chunks (2B, 2S, 2H, 2L, 2C). Pure UI ordering tweak — same items fetched, same chrome. D4 deferred follow-up cleared.
 >
 > **D-phase polish pass round 2 ([f52c3b1](https://github.com/Cremacious/beehive-studio/commit/f52c3b1)):** typed `LoadMoreSlug` union eliminated from `<DiscoverRailSubPage>` (had grown to 18 string-literal entries — 1 per sub-route slug). Replaced `loadMoreAction` + `loadMoreHrefBase` prop pair with single required `loadMorePath` full-URL string prop. All 28 files updated atomically (1 shared component + 27 sub-route consumers: 6 D1 Books · 6 D2a Sparks · 5 D2b Hives · 5 D3a Lists · 5 D3b Clubs). Dead `'sparks-following'` slug deleted as part of the sweep. Net change +38 / -87 LOC. URLs unchanged; runtime behavior identical. Future D-phase additions no longer require touching the shared sub-page component. 679/679 tests, tsc clean.
 >

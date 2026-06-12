@@ -12,9 +12,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-11 (D4 Discover Home ✅ CODE-COMPLETE — final D-phase sub-project shipped autonomously. D3a Lists + D3b Clubs + D4 all awaiting smoke.)
+> **Last updated:** 2026-06-11 (D-phase polish pass — 3 orphan legacy files deleted + relTime helper consolidated. D3a Lists + D3b Clubs + D4 Home all still awaiting smoke.)
 >
-> **Last commit:** [e203146](https://github.com/Cremacious/beehive-studio/commit/e203146) — feat(d4/home): Discover root cross-entity home tab + For You rail.
+> **Last commit:** [5f21936](https://github.com/Cremacious/beehive-studio/commit/5f21936) — refactor(utils): consolidate relTime helper to lib/utils/rel-time.ts.
+>
+> **D-phase polish pass shipped (2 commits):**
+> - **[b9af60b](https://github.com/Cremacious/beehive-studio/commit/b9af60b)** — `chore(discover): delete 3 orphan legacy components.` Three orphan files (`lists-tab-content.tsx` from D3a + `clubs-tab-content.tsx` from D3b + `hive-card.tsx` from D2b) confirmed unreferenced after each entity's deepened tab shipped. `git rm`'d. Tests 673/673, tsc clean.
+> - **[5f21936](https://github.com/Cremacious/beehive-studio/commit/5f21936)** — `refactor(utils): consolidate relTime helper to lib/utils/rel-time.ts.` Single canonical helper at `lib/utils/rel-time.ts` + 6 unit tests. 6 discover card components updated to import from the new module (rail-hive-card + discover-hive-card + rail-list-card + discover-list-card + rail-club-card + discover-club-card). Implementer preserved existing 'never' null semantics rather than spec's `''` to avoid silent UI regressions on existing rendered cards. Spark `timeLeftLabel` helpers (3 files) deliberately untouched — different forward-countdown semantics. Tests 679/679 (+6), tsc clean.
+>
+> **🎉 DISCOVER PHASE (D1-D4) COMPLETE.** D1 Books · D2a Sparks · D2b Hives · D3a Lists · D3b Clubs · D4 Home — all 6 sub-projects code-complete. Beehive's Discover surface rivals Royal Road / Wattpad: rail-driven destinations per entity + cross-entity home + Featured heroes + 14-genre browse + search + personalization.
 >
 > **🎉 DISCOVER PHASE (D1-D4) COMPLETE.** D1 Books · D2a Sparks · D2b Hives · D3a Lists · D3b Clubs · D4 Home — all 6 sub-projects code-complete. Beehive's Discover surface now rivals Royal Road / Wattpad: rail-driven destinations per entity + cross-entity home + Featured heroes + 14-genre browse + search + personalization via "For you" rail aggregating follows across all 5 entities.
 >

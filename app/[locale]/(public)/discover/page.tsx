@@ -22,11 +22,20 @@ import {
   type SparkCard,
   type RailResult as SparkRailResult,
 } from '@/lib/actions/discover-sparks.actions'
-import { getDiscoverableHivesAction } from '@/lib/actions/hive.actions'
+import {
+  getFeaturedHiveAction,
+  getTrendingHivesAction,
+  getRecentlyActiveHivesAction,
+  getNewHivesAction,
+  getLookingForCollaboratorsHivesAction,
+  getFollowingHivesAction,
+  getHiveGenreCountsAction,
+  type HiveCard as HiveCardType,
+  type RailResult as HiveRailResult,
+} from '@/lib/actions/discover-hives.actions'
 import { isValidGenre } from '@/lib/discover/genres'
 import { PageHead } from '@/components/community/page-head'
 import { DiscoverTabs } from './_components/tabs'
-import { HiveCard } from './_components/hive-card'
 import { ListsTabContent } from './_components/lists-tab-content'
 import { ClubsTabContent } from './_components/clubs-tab-content'
 import { FeaturedFreshHero } from './_components/featured-fresh-hero'
@@ -36,6 +45,8 @@ import { DiscoverSearchInput } from './_components/discover-search-input'
 import { GenreFooterGrid } from './_components/genre-footer-grid'
 import { FeaturedSparkHero } from './_components/featured-spark-hero'
 import { DiscoverSparkRail } from './_components/discover-spark-rail'
+import { FeaturedHiveHero } from './_components/featured-hive-hero'
+import { DiscoverHiveRail } from './_components/discover-hive-rail'
 
 type Tab = 'books' | 'sparks' | 'hives' | 'lists' | 'clubs'
 
@@ -71,7 +82,7 @@ export default async function DiscoverPage({ params, searchParams }: Props) {
 
       {tab === 'books' && <BooksTab locale={locale} genre={genre} />}
       {tab === 'sparks' && <SparksTab locale={locale} genre={genre} />}
-      {tab === 'hives' && <HivesTab locale={locale} />}
+      {tab === 'hives' && <HivesTab locale={locale} genre={genre} />}
       {tab === 'lists' && <ListsTab locale={locale} />}
       {tab === 'clubs' && <ClubsTab locale={locale} />}
     </main>
@@ -324,19 +335,107 @@ async function ClubsTab({ locale }: { locale: string }) {
   )
 }
 
-async function HivesTab({ locale }: { locale: string }) {
-  const result = await getDiscoverableHivesAction()
-  const hives = result.success ? result.data : []
+type HiveFollowingFallback = { success: false; error: 'GUEST' }
+
+async function HivesTab({ locale, genre }: { locale: string; genre?: string }) {
+  const safeGenre = genre && isValidGenre(genre) ? genre : undefined
+
+  const [
+    hero,
+    trending,
+    recentlyActive,
+    newHives,
+    lookingForCollab,
+    following,
+    genreCounts,
+  ] = await Promise.all([
+    getFeaturedHiveAction({ genre: safeGenre }),
+    getTrendingHivesAction({ genre: safeGenre }),
+    getRecentlyActiveHivesAction({ genre: safeGenre }),
+    getNewHivesAction({ genre: safeGenre }),
+    getLookingForCollaboratorsHivesAction({ genre: safeGenre }),
+    getFollowingHivesAction({ genre: safeGenre }).catch(
+      (): HiveFollowingFallback => ({ success: false, error: 'GUEST' }),
+    ),
+    getHiveGenreCountsAction(),
+  ])
+
+  const followingResult:
+    | { success: true; data: HiveRailResult<HiveCardType> }
+    | { success: false; error: string } = following
 
   return (
-    <div>
-      <p className="text-[var(--canvas-dark-ink-muted)] text-[11px] uppercase tracking-wider font-[family-name:var(--font-mono)] mb-4">Public Hives</p>
-      {hives.length === 0 ? (
-        <p className="text-[var(--canvas-dark-ink-muted)] text-[13px] py-8 text-center">No public Hives yet.</p>
-      ) : (
-        <div className="grid grid-cols-2 gap-3">
-          {hives.map(hive => <HiveCard key={hive.id} hive={hive} locale={locale} />)}
+    <div className="flex flex-col gap-5">
+      {hero.success && hero.data && <FeaturedHiveHero hive={hero.data} locale={locale} />}
+
+      <div
+        className="flex items-center gap-3 sticky top-0 z-10 py-3"
+        style={{
+          background: 'rgba(38,39,40,0.95)',
+          backdropFilter: 'blur(8px)',
+        }}
+      >
+        <GenreChipStrip activeGenre={safeGenre} locale={locale} tabContext="hives" />
+        <div className="ml-auto">
+          <DiscoverSearchInput
+            locale={locale}
+            searchHref={`/${locale}/discover/hives/search`}
+            placeholder="Search Hives, communities, owners..."
+            ariaLabel="Search Discover Hives"
+          />
         </div>
+      </div>
+
+      {trending.success && (
+        <DiscoverHiveRail
+          title="Trending now"
+          subPageHref={`/${locale}/discover/hives/trending${qs(safeGenre)}`}
+          result={trending.data}
+          locale={locale}
+        />
+      )}
+      {recentlyActive.success && (
+        <DiscoverHiveRail
+          title="Recently active"
+          subPageHref={`/${locale}/discover/hives/recently-active${qs(safeGenre)}`}
+          result={recentlyActive.data}
+          locale={locale}
+        />
+      )}
+      {newHives.success && (
+        <DiscoverHiveRail
+          title="New communities"
+          subPageHref={`/${locale}/discover/hives/new${qs(safeGenre)}`}
+          result={newHives.data}
+          locale={locale}
+        />
+      )}
+      {lookingForCollab.success && (
+        <DiscoverHiveRail
+          title="Looking for collaborators"
+          subPageHref={`/${locale}/discover/hives/looking-for-collaborators${qs(safeGenre)}`}
+          result={lookingForCollab.data}
+          locale={locale}
+        />
+      )}
+      {followingResult.success && (
+        <DiscoverHiveRail
+          title="From writers you follow"
+          subPageHref={`/${locale}/discover/hives/following${qs(safeGenre)}`}
+          result={followingResult.data}
+          locale={locale}
+          hideWhenEmpty
+        />
+      )}
+
+      {genreCounts.success && (
+        <GenreFooterGrid
+          counts={genreCounts.data}
+          locale={locale}
+          linkBase={`/${locale}/discover/hives/genre/`}
+          title="Browse Hives by genre"
+          countLabel="hives"
+        />
       )}
     </div>
   )

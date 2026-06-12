@@ -12,9 +12,46 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-11 (D3b Discover Clubs ✅ CODE-COMPLETE — 7 of 8 tasks shipped via autonomous subagent flow; T8 smoke on Chris. D3a Lists also code-complete, awaiting smoke from prior run.)
+> **Last updated:** 2026-06-11 (D4 Discover Home ✅ CODE-COMPLETE — final D-phase sub-project shipped autonomously. D3a Lists + D3b Clubs + D4 all awaiting smoke.)
 >
-> **Last commit:** [8349019](https://github.com/Cremacious/beehive-studio/commit/8349019) — feat(d3b/genre-hub-and-search): /discover/clubs/genre/[slug] + /discover/clubs/search routes.
+> **Last commit:** [e203146](https://github.com/Cremacious/beehive-studio/commit/e203146) — feat(d4/home): Discover root cross-entity home tab + For You rail.
+>
+> **🎉 DISCOVER PHASE (D1-D4) COMPLETE.** D1 Books · D2a Sparks · D2b Hives · D3a Lists · D3b Clubs · D4 Home — all 6 sub-projects code-complete. Beehive's Discover surface now rivals Royal Road / Wattpad: rail-driven destinations per entity + cross-entity home + Featured heroes + 14-genre browse + search + personalization via "For you" rail aggregating follows across all 5 entities.
+>
+> **D4 Discover Home ✅ CODE-COMPLETE.** All 1 implementation task shipped (T1 single combined commit; T2 is smoke + AGENTS.md only). 673/673 tests, tsc clean. Pure orchestration — NO schema, NO new server actions, NO new entity-specific cards. Just `/discover` root rewrite + new "Home" tab as the first/default tab + composition of existing rails. New `<ForYouRail>` component renders mixed-entity dispatch (top 2 each from Following actions across all 5 entities).
+>
+> **Wave SHA map:**
+> - **W1** = T1 [e203146](https://github.com/Cremacious/beehive-studio/commit/e203146) — single combined commit for tab strip extension (`'home'` added as first entry) + `<HomeTab>` server component (Promise.all 11 actions: hero + 5 entity-trending + 5 entity-following) + `<ForYouRail>` mixed-entity component returning null when items empty + tab parser default → `'home'`.
+> - **W2** = T2 (smoke + AGENTS.md + ship) — this commit closes the loop; smoke on Chris.
+>
+> **What `/discover` (default home, no `?tab=`) now renders:**
+> 1. PageHead → 6-tab strip (Home · Books · Sparks · Hives · Lists · Clubs).
+> 2. `<FeaturedFreshHero>` (D1's hero reused — hidden when no qualifier).
+> 3. `<ForYouRail>` (authed-only; returns null when guest OR no follows match).
+> 4. "Top books trending" rail → "See all books →" routes to `/discover?tab=books`.
+> 5. "Sparks live right now" rail (with urgency caption) → `?tab=sparks`.
+> 6. "Active hives" rail → `?tab=hives`.
+> 7. "Most-followed lists" rail → `?tab=lists`.
+> 8. "Active clubs" rail → `?tab=clubs`.
+>
+> Each "See all →" routes to the entity's deepened tab home from D1-D3b. Click any rail card and you go straight to the entity's reader/dashboard/page.
+>
+> **Patterns now load-bearing across D-phase (D4 contributions):**
+> 1. **Cross-entity orchestration via composition** — D4 ships ZERO new actions and zero new entity-specific cards. Pure composition of existing surfaces. Pattern: when adding cross-cutting views, reuse per-entity rail components + actions + chrome rather than building parallel surfaces. The `<DiscoverRail>` / `<DiscoverSparkRail>` / etc. wrappers from D1-D3b are designed for this kind of reuse.
+> 2. **Tagged-union polymorphic rail item** — `ForYouItem` is `{kind, data}` discriminated union dispatched at render to the right RailCard variant. Reusable for any future cross-entity feed (e.g. activity stream, mixed search results).
+> 3. **Following-action AuthError + .catch fallback** — handler-per-source AuthError catch pattern (mirrors D1-D3b) cleanly composes 5 Following sources without complex auth gating. Each Following action throws on guest independently; each is caught locally.
+>
+> **Deferred follow-ups (non-blocking):**
+> 1. "For You" rail header subtitle "See all from people you follow" — no actual "See all" link (would require a new /discover/for-you route). Subtitle copy could be "Tailored to your follows" or similar if Chris wants less navigational implication.
+> 2. ForYouRail max items = 10 (2 × 5 entities). At scale could randomize/shuffle order across entities or weight by recency. v1 ships in entity-grouped order (2 books + 2 sparks + 2 hives + 2 lists + 2 clubs).
+> 3. Browse-all-genres footer grid NOT included on home (per spec — kept on individual tab homes only). Could add cross-entity genre footer in a polish pass.
+> 4. Dev DB has likely no/few entries for any entity — most rails will be empty until seed data exists. Migration + structure + auth gating all validate regardless.
+>
+> **Next concrete step:** Chris runs manual smoke on `npm run dev`. Targets: (1) `/en/discover` (no query) renders Home tab as default; (2) tab strip shows 6 tabs with Home first + selected; (3) Featured Fresh hero hides cleanly when no qualifier; (4) "For You" rail hidden as guest; (5) "For You" rail hidden when authed but zero relevant follows; (6) clicking any rail's "See all →" goes to the right tab home with `?tab=X`; (7) cards in each rail are the entity's RailCard variant unchanged (RailBookCard for books, RailSparkCard for sparks, etc.); (8) all 5 existing tab homes (Books/Sparks/Hives/Lists/Clubs) still work unchanged when clicked; (9) URL with `?tab=home` matches no-query default; (10) URL with unknown `?tab=xyz` falls back to home; (11) brand-yellow restraint honored on home (rail titles + Featured Fresh + Top books CTA + brand-pill across surfaces). After smoke passes, **🎉 Discover Phase is fully complete** — Chris can decide next pivot (other roadmap items, polish, deferred follow-ups from D1-D4 list).
+>
+> **Prior — Last updated:** 2026-06-11 (D3b Discover Clubs ✅ CODE-COMPLETE — 7 of 8 tasks shipped via autonomous subagent flow; T8 smoke on Chris. D3a Lists also code-complete, awaiting smoke from prior run.)
+>
+> **Prior last commit:** [8349019](https://github.com/Cremacious/beehive-studio/commit/8349019) — feat(d3b/genre-hub-and-search): /discover/clubs/genre/[slug] + /discover/clubs/search routes.
 >
 > **D3b Discover Clubs ✅ CODE-COMPLETE.** All 7 implementation tasks shipped end-to-end via autonomous subagent flow. 673/673 tests, tsc clean throughout. Full Clubs discovery surface ships: algorithm-first 5-rail Clubs tab home (Trending · Active · New · Open to join · Following), Featured Club "Open + active" hero (openJoin=true + activity_score_7d > 0 + last_activity_at ≤14d, sort score DESC, hidden when no qualifier), genre chip strip reusing D1's 14-genre vocabulary, 5 rail sub-routes, 14 genre hub routes, search route with genre + sort filter rail, Browse Clubs by genre footer grid. Schema additive on `book_clubs` (`genre` + `first_publicly_discoverable_at` + `last_activity_at` denorm + 3 indexes; first-public stamp at createClub + updateClub; last_activity_at wired at 3 sites incl. `deriveCurrentBookTx` extension which covers both setCurrentBook + addClubBook callers in single edit). 9 new server actions in NEW file `lib/actions/discover-clubs.actions.ts`. Three new card components mirroring D2b Hive card pattern (48px current_book cover left + community meta right + member avatar stack; optional "OPEN" brand-yellow pill when openJoin). New `<DiscoverClubRail>` wrapper.
 >

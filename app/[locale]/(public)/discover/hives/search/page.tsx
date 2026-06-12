@@ -84,6 +84,10 @@ export default async function HiveSearchPage({ params, searchParams }: Props) {
           result={data}
           locale={locale}
           hasQuery={!!q}
+          q={q}
+          genre={genre}
+          size={size}
+          sort={sort}
         />
       </div>
     </main>

@@ -77,7 +77,14 @@ export default async function ClubSearchPage({ params, searchParams }: Props) {
           activeSort={sort}
           locale={locale}
         />
-        <ClubSearchResults result={data} locale={locale} hasQuery={!!q} />
+        <ClubSearchResults
+          result={data}
+          locale={locale}
+          hasQuery={!!q}
+          q={q}
+          genre={genre}
+          sort={sort}
+        />
       </div>
     </main>
   )

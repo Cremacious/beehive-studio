@@ -77,7 +77,14 @@ export default async function ListSearchPage({ params, searchParams }: Props) {
           activeSort={sort}
           locale={locale}
         />
-        <ListSearchResults result={data} locale={locale} hasQuery={!!q} />
+        <ListSearchResults
+          result={data}
+          locale={locale}
+          hasQuery={!!q}
+          q={q}
+          genre={genre}
+          sort={sort}
+        />
       </div>
     </main>
   )

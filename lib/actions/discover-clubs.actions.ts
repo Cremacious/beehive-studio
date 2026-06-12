@@ -851,7 +851,10 @@ export async function getClubBackfillAction(args: {
  *   recent → createdAt DESC
  *   most-active → activityScore DESC (computeActivityScore=true)
  *   most-members → memberCount DESC
- * v1 ships WITHOUT cursor pagination — nextCursor always null (matches D2a/D2b).
+ * Cursor pagination: standard (sortKey, id) tuple per sort mode.
+ *   recent → (createdAt ISO string, id)
+ *   most-members → (memberCount, id)
+ *   most-active/relevance → (activityScore, id) ranked in JS
  */
 export async function searchClubsDiscoverAction(args: {
   q: string
@@ -867,6 +870,7 @@ export async function searchClubsDiscoverAction(args: {
   const blocked = await getBlockedClubOwnerIdsForViewer(viewerId)
   const sort = args.sort ?? 'recent'
   const needsActivity = sort === 'most-active' || sort === 'relevance'
+  const cursor = decodeCursor(args.cursor)
 
   const pattern = `%${trimmed}%`
 
@@ -880,23 +884,53 @@ export async function searchClubsDiscoverAction(args: {
     ),
   ]
 
-  let rows: Array<{ id: string }>
+  // Cursor tail clause for DB-sorted modes (recent / most-members).
+  if (cursor) {
+    if (sort === 'recent' && typeof cursor.sortKey === 'string') {
+      const cursorDate = new Date(cursor.sortKey)
+      const tail = or(
+        lt(bookClubs.createdAt, cursorDate),
+        and(
+          eq(bookClubs.createdAt, cursorDate),
+          lt(bookClubs.id, cursor.id),
+        ),
+      )
+      if (tail) conds.push(tail)
+    } else if (sort === 'most-members' && typeof cursor.sortKey === 'number') {
+      const sk = cursor.sortKey
+      const tail = or(
+        lt(bookClubs.memberCount, sk),
+        and(
+          eq(bookClubs.memberCount, sk),
+          lt(bookClubs.id, cursor.id),
+        ),
+      )
+      if (tail) conds.push(tail)
+    }
+  }
+
+  let rows: Array<{ id: string; createdAt?: Date; memberCount?: number; score?: number }>
+  let hasMore = false
   if (sort === 'recent') {
-    rows = await db
-      .select({ id: bookClubs.id })
+    const dbRows = await db
+      .select({ id: bookClubs.id, createdAt: bookClubs.createdAt })
       .from(bookClubs)
       .leftJoin(userProfiles, eq(userProfiles.userId, bookClubs.ownerId))
       .where(and(...conds))
       .orderBy(desc(bookClubs.createdAt), desc(bookClubs.id))
       .limit(PAGE_SIZE + 1)
+    hasMore = dbRows.length > PAGE_SIZE
+    rows = dbRows.slice(0, PAGE_SIZE)
   } else if (sort === 'most-members') {
-    rows = await db
-      .select({ id: bookClubs.id })
+    const dbRows = await db
+      .select({ id: bookClubs.id, memberCount: bookClubs.memberCount })
       .from(bookClubs)
       .leftJoin(userProfiles, eq(userProfiles.userId, bookClubs.ownerId))
       .where(and(...conds))
       .orderBy(desc(bookClubs.memberCount), desc(bookClubs.id))
       .limit(PAGE_SIZE + 1)
+    hasMore = dbRows.length > PAGE_SIZE
+    rows = dbRows.slice(0, PAGE_SIZE)
   } else {
     // most-active or relevance: collect a wider candidate window and rank by score in JS.
     const candidateRows = await db
@@ -905,24 +939,48 @@ export async function searchClubsDiscoverAction(args: {
       .leftJoin(userProfiles, eq(userProfiles.userId, bookClubs.ownerId))
       .where(and(...conds))
       .orderBy(desc(bookClubs.lastActivityAt), desc(bookClubs.id))
-      .limit(100)
+      .limit(200)
     const candIds = candidateRows.map((r) => r.id)
     const scoreMap =
-      candIds.length > 0 ? await loadActivityScoreMap(candIds) : new Map()
-    rows = candIds
+      candIds.length > 0
+        ? await loadActivityScoreMap(candIds)
+        : new Map<string, number>()
+    let ranked = candIds
       .map((id) => ({ id, score: scoreMap.get(id) ?? 0 }))
-      .sort((a, b) => b.score - a.score)
-      .slice(0, PAGE_SIZE + 1)
-      .map((r) => ({ id: r.id }))
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score
+        return a.id < b.id ? 1 : -1
+      })
+    if (cursor && typeof cursor.sortKey === 'number') {
+      const sk = cursor.sortKey
+      ranked = ranked.filter(
+        (r) => r.score < sk || (r.score === sk && r.id < cursor.id),
+      )
+    }
+    hasMore = ranked.length > PAGE_SIZE
+    rows = ranked.slice(0, PAGE_SIZE)
   }
 
-  const page = rows.slice(0, PAGE_SIZE)
-  const projected = await projectToClubCards(page, {
-    computeActivityScore: needsActivity,
-  })
-  // v1: no cursor — search nextCursor always null. Revisit if smoke shows a
-  // hot query that needs paging (matches D2a/D2b precedent).
-  return { success: true, data: { books: projected, nextCursor: null } }
+  const projected = await projectToClubCards(
+    rows.map((r) => ({ id: r.id })),
+    { computeActivityScore: needsActivity },
+  )
+
+  const last = rows[rows.length - 1]
+  let nextCursor: string | null = null
+  if (hasMore && last) {
+    if (sort === 'recent' && last.createdAt) {
+      nextCursor = encodeCursor({
+        sortKey: last.createdAt.toISOString(),
+        id: last.id,
+      })
+    } else if (sort === 'most-members' && typeof last.memberCount === 'number') {
+      nextCursor = encodeCursor({ sortKey: last.memberCount, id: last.id })
+    } else if (typeof last.score === 'number') {
+      nextCursor = encodeCursor({ sortKey: last.score, id: last.id })
+    }
+  }
+  return { success: true, data: { books: projected, nextCursor } }
 }
 
 // ─── 9. Genre counts (cached 5min) ────────────────────────────────────────────

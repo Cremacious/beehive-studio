@@ -818,8 +818,10 @@ export async function getSparkBackfillAction(args: {
  *   recent    → createdAt DESC
  *   urgent    → deadline ASC (OPEN-meaningful only)
  *   most-entered → entryCount DESC
- * v1 ships WITHOUT cursor pagination — search nextCursor always null; revisit
- * if smoke shows a hot query that needs paging.
+ * Cursor pagination: standard (sortKey, id) tuple per sort mode.
+ *   recent/relevance → (createdAt ISO string, id)
+ *   urgent → (deadline ISO string, id) ASC
+ *   most-entered → (entryCount, id)
  */
 export async function searchSparksDiscoverAction(args: {
   q: string
@@ -837,6 +839,7 @@ export async function searchSparksDiscoverAction(args: {
   const viewerId = await getOptionalUserId()
   const blocked = await getBlockedSparkCreatorIdsForViewer(viewerId)
   const sort = args.sort ?? 'recent'
+  const cursor = decodeCursor(args.cursor)
 
   const conds = [
     ...buildPublicSparkFilters(args.genre, blocked),
@@ -844,6 +847,33 @@ export async function searchSparksDiscoverAction(args: {
   ]
   if (args.status && args.status !== 'all') {
     conds.push(eq(sparks.status, args.status))
+  }
+
+  // Cursor tail clause per sort mode.
+  if (cursor) {
+    if (sort === 'urgent' && typeof cursor.sortKey === 'string') {
+      const cursorDate = new Date(cursor.sortKey)
+      const tail = or(
+        gt(sparks.deadline, cursorDate),
+        and(eq(sparks.deadline, cursorDate), lt(sparks.id, cursor.id)),
+      )
+      if (tail) conds.push(tail)
+    } else if (sort === 'most-entered' && typeof cursor.sortKey === 'number') {
+      const sk = cursor.sortKey
+      const tail = or(
+        lt(sparks.entryCount, sk),
+        and(eq(sparks.entryCount, sk), lt(sparks.id, cursor.id)),
+      )
+      if (tail) conds.push(tail)
+    } else if (typeof cursor.sortKey === 'string') {
+      // recent / relevance
+      const cursorDate = new Date(cursor.sortKey)
+      const tail = or(
+        lt(sparks.createdAt, cursorDate),
+        and(eq(sparks.createdAt, cursorDate), lt(sparks.id, cursor.id)),
+      )
+      if (tail) conds.push(tail)
+    }
   }
 
   const orderClause =
@@ -855,19 +885,42 @@ export async function searchSparksDiscoverAction(args: {
           [desc(sparks.createdAt), desc(sparks.id)]
 
   const rows = await db
-    .select({ id: sparks.id })
+    .select({
+      id: sparks.id,
+      createdAt: sparks.createdAt,
+      deadline: sparks.deadline,
+      entryCount: sparks.entryCount,
+    })
     .from(sparks)
     .where(and(...conds))
     .orderBy(...orderClause)
     .limit(PAGE_SIZE + 1)
 
+  const hasMore = rows.length > PAGE_SIZE
   const page = rows.slice(0, PAGE_SIZE)
   const projected = await projectToSparkCards(page, {
     computeVoteTotal: true,
     computeWinner: true,
   })
-  // v1: no cursor (see action doc).
-  return { success: true, data: { books: projected, nextCursor: null } }
+
+  const last = page[page.length - 1]
+  let nextCursor: string | null = null
+  if (hasMore && last) {
+    if (sort === 'urgent' && last.deadline) {
+      nextCursor = encodeCursor({
+        sortKey: last.deadline.toISOString(),
+        id: last.id,
+      })
+    } else if (sort === 'most-entered') {
+      nextCursor = encodeCursor({ sortKey: last.entryCount, id: last.id })
+    } else {
+      nextCursor = encodeCursor({
+        sortKey: last.createdAt.toISOString(),
+        id: last.id,
+      })
+    }
+  }
+  return { success: true, data: { books: projected, nextCursor } }
 }
 
 // ─── 10. Spark genre counts (cached 5min) ─────────────────────────────────────

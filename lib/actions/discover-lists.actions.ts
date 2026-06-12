@@ -784,7 +784,10 @@ export async function getListBackfillAction(args: {
  *   recent → createdAt DESC
  *   most-followed → followerCount DESC
  *   most-books → bookCount DESC
- * v1 ships WITHOUT cursor pagination — nextCursor always null (matches D2a/D2b).
+ * Cursor pagination: standard (sortKey, id) tuple per sort mode.
+ *   recent → (createdAt ISO string, id)
+ *   most-books → (bookCount, id)
+ *   most-followed/relevance → (followerCount, id)
  */
 export async function searchListsDiscoverAction(args: {
   q: string
@@ -799,6 +802,7 @@ export async function searchListsDiscoverAction(args: {
   const viewerId = await getOptionalUserId()
   const blocked = await getBlockedListOwnerIdsForViewer(viewerId)
   const sort = args.sort ?? 'recent'
+  const cursor = decodeCursor(args.cursor)
 
   const pattern = `%${trimmed}%`
 
@@ -812,11 +816,57 @@ export async function searchListsDiscoverAction(args: {
     ),
   ]
 
+  // Cursor tail clause per sort mode.
+  if (cursor) {
+    if (sort === 'recent' && typeof cursor.sortKey === 'string') {
+      const cursorDate = new Date(cursor.sortKey)
+      const tail = or(
+        lt(readingLists.createdAt, cursorDate),
+        and(
+          eq(readingLists.createdAt, cursorDate),
+          lt(readingLists.id, cursor.id),
+        ),
+      )
+      if (tail) conds.push(tail)
+    } else if (sort === 'most-books' && typeof cursor.sortKey === 'number') {
+      const sk = cursor.sortKey
+      const tail = or(
+        lt(readingLists.bookCount, sk),
+        and(
+          eq(readingLists.bookCount, sk),
+          lt(readingLists.id, cursor.id),
+        ),
+      )
+      if (tail) conds.push(tail)
+    } else if (typeof cursor.sortKey === 'number') {
+      // most-followed or relevance
+      const sk = cursor.sortKey
+      const tail = or(
+        lt(readingLists.followerCount, sk),
+        and(
+          eq(readingLists.followerCount, sk),
+          lt(readingLists.id, cursor.id),
+        ),
+      )
+      if (tail) conds.push(tail)
+    }
+  }
+
   // Always leftJoin userProfiles for the owner-name ILIKE.
-  let rows: Array<{ id: string }>
+  let rows: Array<{
+    id: string
+    createdAt: Date
+    bookCount: number
+    followerCount: number
+  }>
   if (sort === 'recent') {
     rows = await db
-      .select({ id: readingLists.id })
+      .select({
+        id: readingLists.id,
+        createdAt: readingLists.createdAt,
+        bookCount: readingLists.bookCount,
+        followerCount: readingLists.followerCount,
+      })
       .from(readingLists)
       .leftJoin(userProfiles, eq(userProfiles.userId, readingLists.userId))
       .where(and(...conds))
@@ -824,7 +874,12 @@ export async function searchListsDiscoverAction(args: {
       .limit(PAGE_SIZE + 1)
   } else if (sort === 'most-books') {
     rows = await db
-      .select({ id: readingLists.id })
+      .select({
+        id: readingLists.id,
+        createdAt: readingLists.createdAt,
+        bookCount: readingLists.bookCount,
+        followerCount: readingLists.followerCount,
+      })
       .from(readingLists)
       .leftJoin(userProfiles, eq(userProfiles.userId, readingLists.userId))
       .where(and(...conds))
@@ -834,7 +889,12 @@ export async function searchListsDiscoverAction(args: {
     // most-followed or relevance: both collapse to followerCount DESC for v1.
     // TODO: real relevance scoring (e.g. Postgres full-text + ts_rank).
     rows = await db
-      .select({ id: readingLists.id })
+      .select({
+        id: readingLists.id,
+        createdAt: readingLists.createdAt,
+        bookCount: readingLists.bookCount,
+        followerCount: readingLists.followerCount,
+      })
       .from(readingLists)
       .leftJoin(userProfiles, eq(userProfiles.userId, readingLists.userId))
       .where(and(...conds))
@@ -842,13 +902,28 @@ export async function searchListsDiscoverAction(args: {
       .limit(PAGE_SIZE + 1)
   }
 
+  const hasMore = rows.length > PAGE_SIZE
   const page = rows.slice(0, PAGE_SIZE)
-  const projected = await projectToListCards(page, {
-    computeFollowersGained: false,
-  })
-  // v1: no cursor — search nextCursor always null. Revisit if smoke shows a
-  // hot query that needs paging (matches D2a/D2b precedent).
-  return { success: true, data: { books: projected, nextCursor: null } }
+  const projected = await projectToListCards(
+    page.map((r) => ({ id: r.id })),
+    { computeFollowersGained: false },
+  )
+
+  const last = page[page.length - 1]
+  let nextCursor: string | null = null
+  if (hasMore && last) {
+    if (sort === 'recent') {
+      nextCursor = encodeCursor({
+        sortKey: last.createdAt.toISOString(),
+        id: last.id,
+      })
+    } else if (sort === 'most-books') {
+      nextCursor = encodeCursor({ sortKey: last.bookCount, id: last.id })
+    } else {
+      nextCursor = encodeCursor({ sortKey: last.followerCount, id: last.id })
+    }
+  }
+  return { success: true, data: { books: projected, nextCursor } }
 }
 
 // ─── 9. Genre counts (cached 5min) ────────────────────────────────────────────

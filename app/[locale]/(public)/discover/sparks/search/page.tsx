@@ -87,6 +87,10 @@ export default async function SparkSearchPage({ params, searchParams }: Props) {
           result={data}
           locale={locale}
           hasQuery={!!q}
+          q={q}
+          genre={genre}
+          status={status}
+          sort={sort}
         />
       </div>
     </main>

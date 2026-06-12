@@ -1044,7 +1044,10 @@ export async function getHiveBackfillAction(args: {
  *   recent → createdAt DESC
  *   most-active → activityScore DESC (computeActivityScore=true)
  *   most-members → memberCount DESC
- * v1 ships WITHOUT cursor pagination — nextCursor always null (matches D2a).
+ * Cursor pagination: standard (sortKey, id) tuple per sort mode.
+ *   recent → (createdAt ISO string, id)
+ *   most-members → (memberCount, id)
+ *   most-active/relevance → (activityScore, id) ranked in JS
  */
 export async function searchHivesDiscoverAction(args: {
   q: string
@@ -1062,6 +1065,7 @@ export async function searchHivesDiscoverAction(args: {
   const size = args.size ?? 'any'
   const sort = args.sort ?? 'recent'
   const needsActivity = sort === 'most-active' || sort === 'relevance'
+  const cursor = decodeCursor(args.cursor)
 
   const pattern = `%${trimmed}%`
 
@@ -1075,13 +1079,33 @@ export async function searchHivesDiscoverAction(args: {
     ),
   ]
 
+  // Cursor tail clause for DB-sorted modes (recent / most-members).
+  if (cursor) {
+    if (sort === 'recent' && typeof cursor.sortKey === 'string') {
+      const cursorDate = new Date(cursor.sortKey)
+      const tail = or(
+        lt(hives.createdAt, cursorDate),
+        and(eq(hives.createdAt, cursorDate), lt(hives.id, cursor.id)),
+      )
+      if (tail) conds.push(tail)
+    } else if (sort === 'most-members' && typeof cursor.sortKey === 'number') {
+      const sk = cursor.sortKey
+      const tail = or(
+        lt(hives.memberCount, sk),
+        and(eq(hives.memberCount, sk), lt(hives.id, cursor.id)),
+      )
+      if (tail) conds.push(tail)
+    }
+  }
+
   // We always JOIN userProfiles for the owner-name ILIKE, and books when genre filter is on.
   // For sort=most-active we collect candidates then re-sort in JS via the scoreMap.
-  let rows: Array<{ id: string }>
+  let rows: Array<{ id: string; createdAt?: Date; memberCount?: number; score?: number }>
+  let hasMore = false
   if (sort === 'recent') {
-    rows = args.genre
+    const dbRows = args.genre
       ? await db
-          .select({ id: hives.id })
+          .select({ id: hives.id, createdAt: hives.createdAt })
           .from(hives)
           .innerJoin(books, eq(books.id, hives.bookId))
           .leftJoin(userProfiles, eq(userProfiles.userId, hives.ownerId))
@@ -1089,16 +1113,18 @@ export async function searchHivesDiscoverAction(args: {
           .orderBy(desc(hives.createdAt), desc(hives.id))
           .limit(PAGE_SIZE + 1)
       : await db
-          .select({ id: hives.id })
+          .select({ id: hives.id, createdAt: hives.createdAt })
           .from(hives)
           .leftJoin(userProfiles, eq(userProfiles.userId, hives.ownerId))
           .where(and(...conds))
           .orderBy(desc(hives.createdAt), desc(hives.id))
           .limit(PAGE_SIZE + 1)
+    hasMore = dbRows.length > PAGE_SIZE
+    rows = dbRows.slice(0, PAGE_SIZE)
   } else if (sort === 'most-members') {
-    rows = args.genre
+    const dbRows = args.genre
       ? await db
-          .select({ id: hives.id })
+          .select({ id: hives.id, memberCount: hives.memberCount })
           .from(hives)
           .innerJoin(books, eq(books.id, hives.bookId))
           .leftJoin(userProfiles, eq(userProfiles.userId, hives.ownerId))
@@ -1106,12 +1132,14 @@ export async function searchHivesDiscoverAction(args: {
           .orderBy(desc(hives.memberCount), desc(hives.id))
           .limit(PAGE_SIZE + 1)
       : await db
-          .select({ id: hives.id })
+          .select({ id: hives.id, memberCount: hives.memberCount })
           .from(hives)
           .leftJoin(userProfiles, eq(userProfiles.userId, hives.ownerId))
           .where(and(...conds))
           .orderBy(desc(hives.memberCount), desc(hives.id))
           .limit(PAGE_SIZE + 1)
+    hasMore = dbRows.length > PAGE_SIZE
+    rows = dbRows.slice(0, PAGE_SIZE)
   } else {
     // most-active or relevance: collect a wider candidate window and rank by score in JS.
     const candidateRows = args.genre
@@ -1122,32 +1150,53 @@ export async function searchHivesDiscoverAction(args: {
           .leftJoin(userProfiles, eq(userProfiles.userId, hives.ownerId))
           .where(and(...conds))
           .orderBy(desc(hives.lastActivityAt), desc(hives.id))
-          .limit(100)
+          .limit(200)
       : await db
           .select({ id: hives.id })
           .from(hives)
           .leftJoin(userProfiles, eq(userProfiles.userId, hives.ownerId))
           .where(and(...conds))
           .orderBy(desc(hives.lastActivityAt), desc(hives.id))
-          .limit(100)
+          .limit(200)
     const candIds = candidateRows.map((r) => r.id)
     const scoreMap =
-      candIds.length > 0 ? await loadActivityScoreMap(candIds) : new Map()
-    rows = candIds
+      candIds.length > 0 ? await loadActivityScoreMap(candIds) : new Map<string, number>()
+    let ranked = candIds
       .map((id) => ({ id, score: scoreMap.get(id) ?? 0 }))
-      .sort((a, b) => b.score - a.score)
-      .slice(0, PAGE_SIZE + 1)
-      .map((r) => ({ id: r.id }))
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score
+        return a.id < b.id ? 1 : -1
+      })
+    if (cursor && typeof cursor.sortKey === 'number') {
+      const sk = cursor.sortKey
+      ranked = ranked.filter(
+        (r) => r.score < sk || (r.score === sk && r.id < cursor.id),
+      )
+    }
+    hasMore = ranked.length > PAGE_SIZE
+    rows = ranked.slice(0, PAGE_SIZE)
   }
 
-  const page = rows.slice(0, PAGE_SIZE)
-  const projected = await projectToHiveCards(page, {
+  const projected = await projectToHiveCards(rows.map((r) => ({ id: r.id })), {
     computeActivityScore: needsActivity,
     computeBuzzCount: needsActivity,
   })
-  // v1: no cursor — search nextCursor always null. Revisit if smoke shows a
-  // hot query that needs paging (matches D2a precedent).
-  return { success: true, data: { books: projected, nextCursor: null } }
+
+  const last = rows[rows.length - 1]
+  let nextCursor: string | null = null
+  if (hasMore && last) {
+    if (sort === 'recent' && last.createdAt) {
+      nextCursor = encodeCursor({
+        sortKey: last.createdAt.toISOString(),
+        id: last.id,
+      })
+    } else if (sort === 'most-members' && typeof last.memberCount === 'number') {
+      nextCursor = encodeCursor({ sortKey: last.memberCount, id: last.id })
+    } else if (typeof last.score === 'number') {
+      nextCursor = encodeCursor({ sortKey: last.score, id: last.id })
+    }
+  }
+  return { success: true, data: { books: projected, nextCursor } }
 }
 
 // ─── 9. Genre counts (cached 5min) ────────────────────────────────────────────

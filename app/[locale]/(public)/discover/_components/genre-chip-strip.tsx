@@ -10,8 +10,9 @@ type Props = {
    * Which Discover tab the chips control. Default 'books' preserves D1 behavior.
    * 'sparks' keeps the `tab=sparks` query param when changing genre.
    * 'hives' keeps the `tab=hives` query param when changing genre.
+   * 'lists' keeps the `tab=lists` query param when changing genre.
    */
-  tabContext?: 'books' | 'sparks' | 'hives'
+  tabContext?: 'books' | 'sparks' | 'hives' | 'lists'
 }
 
 export function GenreChipStrip({ activeGenre, locale, tabContext = 'books' }: Props) {
@@ -25,6 +26,7 @@ export function GenreChipStrip({ activeGenre, locale, tabContext = 'books' }: Pr
     else params.delete('genre')
     if (tabContext === 'sparks') params.set('tab', 'sparks')
     if (tabContext === 'hives') params.set('tab', 'hives')
+    if (tabContext === 'lists') params.set('tab', 'lists')
     const qs = params.toString()
     startTransition(() => {
       router.push(`/${locale}/discover${qs ? `?${qs}` : ''}`, { scroll: false })

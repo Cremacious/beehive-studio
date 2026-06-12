@@ -33,10 +33,20 @@ import {
   type HiveCard as HiveCardType,
   type RailResult as HiveRailResult,
 } from '@/lib/actions/discover-hives.actions'
+import {
+  getFeaturedListAction,
+  getTrendingListsAction,
+  getRecentlyUpdatedListsAction,
+  getNewListsAction,
+  getMostFollowedListsAction,
+  getFollowingListsAction,
+  getListGenreCountsAction,
+  type ListCard as ListCardType,
+  type RailResult as ListRailResult,
+} from '@/lib/actions/discover-lists.actions'
 import { isValidGenre } from '@/lib/discover/genres'
 import { PageHead } from '@/components/community/page-head'
 import { DiscoverTabs } from './_components/tabs'
-import { ListsTabContent } from './_components/lists-tab-content'
 import { ClubsTabContent } from './_components/clubs-tab-content'
 import { FeaturedFreshHero } from './_components/featured-fresh-hero'
 import { DiscoverRail } from './_components/discover-rail'
@@ -47,6 +57,8 @@ import { FeaturedSparkHero } from './_components/featured-spark-hero'
 import { DiscoverSparkRail } from './_components/discover-spark-rail'
 import { FeaturedHiveHero } from './_components/featured-hive-hero'
 import { DiscoverHiveRail } from './_components/discover-hive-rail'
+import { FeaturedListHero } from './_components/featured-list-hero'
+import { DiscoverListRail } from './_components/discover-list-rail'
 
 type Tab = 'books' | 'sparks' | 'hives' | 'lists' | 'clubs'
 
@@ -83,7 +95,7 @@ export default async function DiscoverPage({ params, searchParams }: Props) {
       {tab === 'books' && <BooksTab locale={locale} genre={genre} />}
       {tab === 'sparks' && <SparksTab locale={locale} genre={genre} />}
       {tab === 'hives' && <HivesTab locale={locale} genre={genre} />}
-      {tab === 'lists' && <ListsTab locale={locale} />}
+      {tab === 'lists' && <ListsTab locale={locale} genre={genre} />}
       {tab === 'clubs' && <ClubsTab locale={locale} />}
     </main>
   )
@@ -317,11 +329,108 @@ async function SparksTab({ locale, genre }: { locale: string; genre?: string }) 
   )
 }
 
-async function ListsTab({ locale }: { locale: string }) {
+type ListFollowingFallback = { success: false; error: 'GUEST' }
+
+async function ListsTab({ locale, genre }: { locale: string; genre?: string }) {
+  const safeGenre = genre && isValidGenre(genre) ? genre : undefined
+
+  const [
+    hero,
+    trending,
+    recentlyUpdated,
+    newLists,
+    mostFollowed,
+    following,
+    genreCounts,
+  ] = await Promise.all([
+    getFeaturedListAction({ genre: safeGenre }),
+    getTrendingListsAction({ genre: safeGenre }),
+    getRecentlyUpdatedListsAction({ genre: safeGenre }),
+    getNewListsAction({ genre: safeGenre }),
+    getMostFollowedListsAction({ genre: safeGenre }),
+    getFollowingListsAction({ genre: safeGenre }).catch(
+      (): ListFollowingFallback => ({ success: false, error: 'GUEST' }),
+    ),
+    getListGenreCountsAction(),
+  ])
+
+  const followingResult:
+    | { success: true; data: ListRailResult<ListCardType> }
+    | { success: false; error: string } = following
+
   return (
-    <div>
-      <p className="text-[var(--canvas-dark-ink-muted)] text-[11px] uppercase tracking-wider font-[family-name:var(--font-mono)] mb-4">Discoverable Reading Lists</p>
-      <ListsTabContent locale={locale} />
+    <div className="flex flex-col gap-5">
+      {hero.success && hero.data && <FeaturedListHero list={hero.data} locale={locale} />}
+
+      <div
+        className="flex items-center gap-3 sticky top-0 z-10 py-3"
+        style={{
+          background: 'rgba(38,39,40,0.95)',
+          backdropFilter: 'blur(8px)',
+        }}
+      >
+        <GenreChipStrip activeGenre={safeGenre} locale={locale} tabContext="lists" />
+        <div className="ml-auto">
+          <DiscoverSearchInput
+            locale={locale}
+            searchHref={`/${locale}/discover/lists/search`}
+            placeholder="Search Lists, curators, books..."
+            ariaLabel="Search Discover Lists"
+          />
+        </div>
+      </div>
+
+      {trending.success && (
+        <DiscoverListRail
+          title="Trending"
+          subPageHref={`/${locale}/discover/lists/trending${qs(safeGenre)}`}
+          result={trending.data}
+          locale={locale}
+        />
+      )}
+      {recentlyUpdated.success && (
+        <DiscoverListRail
+          title="Recently updated"
+          subPageHref={`/${locale}/discover/lists/recently-updated${qs(safeGenre)}`}
+          result={recentlyUpdated.data}
+          locale={locale}
+        />
+      )}
+      {newLists.success && (
+        <DiscoverListRail
+          title="New"
+          subPageHref={`/${locale}/discover/lists/new${qs(safeGenre)}`}
+          result={newLists.data}
+          locale={locale}
+        />
+      )}
+      {mostFollowed.success && (
+        <DiscoverListRail
+          title="Most followed"
+          subPageHref={`/${locale}/discover/lists/most-followed${qs(safeGenre)}`}
+          result={mostFollowed.data}
+          locale={locale}
+        />
+      )}
+      {followingResult.success && (
+        <DiscoverListRail
+          title="From writers you follow"
+          subPageHref={`/${locale}/discover/lists/following${qs(safeGenre)}`}
+          result={followingResult.data}
+          locale={locale}
+          hideWhenEmpty
+        />
+      )}
+
+      {genreCounts.success && (
+        <GenreFooterGrid
+          counts={genreCounts.data}
+          locale={locale}
+          linkBase={`/${locale}/discover/lists/genre/`}
+          title="Browse Lists by genre"
+          countLabel="lists"
+        />
+      )}
     </div>
   )
 }

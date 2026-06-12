@@ -37,9 +37,11 @@ export async function deriveCurrentBookTx(tx: DrizzleTx, opts: DeriveOpts): Prom
     .where(eq(bookClubBooks.id, opts.newCurrentBookId));
 
   // 4. Update denorm pointer on club row.
+  // D3b: also bump last_activity_at — current-book changes count as activity.
+  const now = new Date();
   await tx
     .update(bookClubs)
-    .set({ currentBookId: opts.newCurrentBookId, updatedAt: new Date() })
+    .set({ currentBookId: opts.newCurrentBookId, updatedAt: now, lastActivityAt: now })
     .where(eq(bookClubs.id, opts.clubId));
 
   // 5. Fire activity event if PUBLIC+discoverable.

@@ -201,6 +201,10 @@ export async function createClubAction(
   }
 
   const id = createId()
+  // D3b: stamp first-public if club is born PUBLIC+discoverable.
+  const now = new Date()
+  const isInitialPublicDiscoverable =
+    parsed.data.visibility === 'PUBLIC' && parsed.data.discoverable === true
   await db.transaction(async (tx) => {
     await tx.insert(bookClubs).values({
       id,
@@ -213,6 +217,7 @@ export async function createClubAction(
       discoverable: parsed.data.discoverable,
       openJoin: parsed.data.openJoin,
       memberCount: 1,
+      firstPubliclyDiscoverableAt: isInitialPublicDiscoverable ? now : null,
     })
     await tx.insert(bookClubMembers).values({
       id: createId(),
@@ -592,6 +597,32 @@ export async function updateClubAction(
   }
 
   await db.transaction(async (tx) => {
+    // D3b: first-public stamp gate. If this update transitions the club into
+    // PUBLIC + discoverable for the first time, stamp firstPubliclyDiscoverableAt.
+    // Mirrors D3a updateListAction / D2b updateHiveAction.
+    const current = await tx.query.bookClubs.findFirst({
+      where: eq(bookClubs.id, parsed.data.clubId),
+      columns: {
+        visibility: true,
+        discoverable: true,
+        firstPubliclyDiscoverableAt: true,
+      },
+    })
+    if (current) {
+      const nextVisibility = updates.visibility ?? current.visibility
+      const nextDiscoverable =
+        updates.discoverable !== undefined
+          ? updates.discoverable
+          : current.discoverable
+      const becomingPublic =
+        nextVisibility === 'PUBLIC' &&
+        nextDiscoverable === true &&
+        current.firstPubliclyDiscoverableAt == null
+      if (becomingPublic) {
+        updates.firstPubliclyDiscoverableAt = updates.updatedAt as Date
+      }
+    }
+
     await tx.update(bookClubs).set(updates).where(eq(bookClubs.id, parsed.data.clubId))
 
     // C5a: resolve + record mentions for description.
@@ -697,9 +728,13 @@ export async function joinClubAction(
       await tx
         .insert(bookClubMembers)
         .values({ id: createId(), clubId: club.id, userId, role: 'MEMBER' })
+      // D3b: bump last_activity_at alongside member_count denorm.
       await tx
         .update(bookClubs)
-        .set({ memberCount: sql`${bookClubs.memberCount} + 1` })
+        .set({
+          memberCount: sql`${bookClubs.memberCount} + 1`,
+          lastActivityAt: new Date(),
+        })
         .where(eq(bookClubs.id, club.id))
     })
     return { success: true, data: { joined: true, requested: false } }
@@ -1682,6 +1717,12 @@ export async function createClubDiscussionAction(
       title: parsed.data.title,
       content: parsed.data.content,
     })
+
+    // D3b: bump last_activity_at on the club denorm.
+    await tx
+      .update(bookClubs)
+      .set({ lastActivityAt: new Date() })
+      .where(eq(bookClubs.id, parsed.data.clubId))
 
     // C5a: resolve + record mentions.
     if (contentUsernames.length > 0) {

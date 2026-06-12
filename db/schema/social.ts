@@ -325,12 +325,22 @@ export const bookClubs = pgTable(
     memberCount: integer('member_count').notNull().default(1),
     // FK to book_club_books added via raw ALTER in migration step 14 (forward ref).
     currentBookId: text('current_book_id'),
+    // D3b: 14-genre slug, Zod-enforced at validation layer (free text in DB).
+    genre: text('genre'),
+    // D3b: stamped on first transition to PUBLIC+discoverable, never updated.
+    firstPubliclyDiscoverableAt: timestamp('first_publicly_discoverable_at'),
+    // D3b: denorm of last activity-y event (discussion, join, current book change).
+    lastActivityAt: timestamp('last_activity_at'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
   },
   (t) => [
     index('book_clubs_owner_created_idx').on(t.ownerId, t.createdAt.desc()),
     index('book_clubs_discoverable_visibility_idx').on(t.discoverable, t.visibility),
+    // D3b: indexes for Discover rails (last_activity, first_public partial, open_join).
+    index('book_clubs_last_activity_idx').on(t.lastActivityAt.desc()),
+    index('book_clubs_first_public_idx').on(t.firstPubliclyDiscoverableAt.desc()),
+    index('book_clubs_open_join_idx').on(t.openJoin, t.memberCount.desc()),
   ],
 )
 

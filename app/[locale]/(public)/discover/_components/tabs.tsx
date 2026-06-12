@@ -1,9 +1,10 @@
 'use client'
 import { useRouter, usePathname } from 'next/navigation'
 
-type Tab = 'books' | 'sparks' | 'hives' | 'lists' | 'clubs'
+type Tab = 'home' | 'books' | 'sparks' | 'hives' | 'lists' | 'clubs'
 
 const TABS: { id: Tab; label: string }[] = [
+  { id: 'home', label: 'Home' },
   { id: 'books', label: 'Books' },
   { id: 'sparks', label: 'Sparks' },
   { id: 'hives', label: 'Hives' },

@@ -71,8 +71,9 @@ import { FeaturedListHero } from './_components/featured-list-hero'
 import { DiscoverListRail } from './_components/discover-list-rail'
 import { FeaturedClubHero } from './_components/featured-club-hero'
 import { DiscoverClubRail } from './_components/discover-club-rail'
+import { ForYouRail, type ForYouItem } from './_components/for-you-rail'
 
-type Tab = 'books' | 'sparks' | 'hives' | 'lists' | 'clubs'
+type Tab = 'home' | 'books' | 'sparks' | 'hives' | 'lists' | 'clubs'
 
 type Props = {
   params: Promise<{ locale: string }>
@@ -83,12 +84,13 @@ export default async function DiscoverPage({ params, searchParams }: Props) {
   const { locale } = await params
   const resolved = await searchParams
   const tab: Tab =
+    resolved.tab === 'books' ||
     resolved.tab === 'sparks' ||
     resolved.tab === 'hives' ||
     resolved.tab === 'lists' ||
     resolved.tab === 'clubs'
       ? resolved.tab
-      : 'books'
+      : 'home'
   const rawGenre = typeof resolved.genre === 'string' ? resolved.genre : undefined
   const genre = rawGenre && isValidGenre(rawGenre) ? rawGenre : undefined
 
@@ -104,6 +106,7 @@ export default async function DiscoverPage({ params, searchParams }: Props) {
         <DiscoverTabs currentTab={tab} />
       </div>
 
+      {tab === 'home' && <HomeTab locale={locale} />}
       {tab === 'books' && <BooksTab locale={locale} genre={genre} />}
       {tab === 'sparks' && <SparksTab locale={locale} genre={genre} />}
       {tab === 'hives' && <HivesTab locale={locale} genre={genre} />}
@@ -118,6 +121,133 @@ function qs(genre: string | undefined): string {
 }
 
 type FollowingFallback = { success: false; error: 'GUEST' }
+
+async function HomeTab({ locale }: { locale: string }) {
+  const [
+    hero,
+    trendingBooks,
+    liveNowSparks,
+    activeHives,
+    mostFollowedLists,
+    activeClubs,
+    followingBooks,
+    followingSparks,
+    followingHives,
+    followingLists,
+    followingClubs,
+  ] = await Promise.all([
+    getFeaturedFreshBookAction({}),
+    getTrendingBooksAction({}),
+    getLiveNowSparksAction({}),
+    getRecentlyActiveHivesAction({}),
+    getMostFollowedListsAction({}),
+    getActiveClubsAction({}),
+    getFollowingFeedAction({}).catch(
+      (): FollowingFallback => ({ success: false, error: 'GUEST' }),
+    ),
+    getFollowingSparksAction({}).catch(
+      (): FollowingFallback => ({ success: false, error: 'GUEST' }),
+    ),
+    getFollowingHivesAction({}).catch(
+      (): FollowingFallback => ({ success: false, error: 'GUEST' }),
+    ),
+    getFollowingListsAction({}).catch(
+      (): FollowingFallback => ({ success: false, error: 'GUEST' }),
+    ),
+    getFollowingClubsAction({}).catch(
+      (): FollowingFallback => ({ success: false, error: 'GUEST' }),
+    ),
+  ])
+
+  const forYouItems: ForYouItem[] = []
+  if (followingBooks.success) {
+    forYouItems.push(
+      ...followingBooks.data.books
+        .slice(0, 2)
+        .map((b): ForYouItem => ({ kind: 'book', data: b })),
+    )
+  }
+  if (followingSparks.success) {
+    forYouItems.push(
+      ...followingSparks.data.books
+        .slice(0, 2)
+        .map((s): ForYouItem => ({ kind: 'spark', data: s })),
+    )
+  }
+  if (followingHives.success) {
+    forYouItems.push(
+      ...followingHives.data.books
+        .slice(0, 2)
+        .map((h): ForYouItem => ({ kind: 'hive', data: h })),
+    )
+  }
+  if (followingLists.success) {
+    forYouItems.push(
+      ...followingLists.data.books
+        .slice(0, 2)
+        .map((l): ForYouItem => ({ kind: 'list', data: l })),
+    )
+  }
+  if (followingClubs.success) {
+    forYouItems.push(
+      ...followingClubs.data.books
+        .slice(0, 2)
+        .map((c): ForYouItem => ({ kind: 'club', data: c })),
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-5">
+      {hero.success && hero.data && (
+        <FeaturedFreshHero book={hero.data} locale={locale} />
+      )}
+
+      <ForYouRail items={forYouItems} locale={locale} />
+
+      {trendingBooks.success && (
+        <DiscoverRail
+          title="Top books trending"
+          subPageHref={`/${locale}/discover?tab=books`}
+          result={trendingBooks.data}
+          locale={locale}
+        />
+      )}
+      {liveNowSparks.success && (
+        <DiscoverSparkRail
+          title="Sparks live right now"
+          subPageHref={`/${locale}/discover?tab=sparks`}
+          result={liveNowSparks.data}
+          locale={locale}
+          showUrgencyCaption
+        />
+      )}
+      {activeHives.success && (
+        <DiscoverHiveRail
+          title="Active hives"
+          subPageHref={`/${locale}/discover?tab=hives`}
+          result={activeHives.data}
+          locale={locale}
+        />
+      )}
+      {mostFollowedLists.success && (
+        <DiscoverListRail
+          title="Most-followed lists"
+          subPageHref={`/${locale}/discover?tab=lists`}
+          result={mostFollowedLists.data}
+          locale={locale}
+        />
+      )}
+      {activeClubs.success && (
+        <DiscoverClubRail
+          title="Active clubs"
+          subPageHref={`/${locale}/discover?tab=clubs`}
+          result={activeClubs.data}
+          locale={locale}
+        />
+      )}
+    </div>
+  )
+}
 
 async function BooksTab({ locale, genre }: { locale: string; genre?: string }) {
   const [

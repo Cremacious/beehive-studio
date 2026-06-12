@@ -44,10 +44,20 @@ import {
   type ListCard as ListCardType,
   type RailResult as ListRailResult,
 } from '@/lib/actions/discover-lists.actions'
+import {
+  getFeaturedClubAction,
+  getTrendingClubsAction,
+  getActiveClubsAction,
+  getNewClubsAction,
+  getOpenToJoinClubsAction,
+  getFollowingClubsAction,
+  getClubGenreCountsAction,
+  type ClubCard as ClubCardType,
+  type RailResult as ClubRailResult,
+} from '@/lib/actions/discover-clubs.actions'
 import { isValidGenre } from '@/lib/discover/genres'
 import { PageHead } from '@/components/community/page-head'
 import { DiscoverTabs } from './_components/tabs'
-import { ClubsTabContent } from './_components/clubs-tab-content'
 import { FeaturedFreshHero } from './_components/featured-fresh-hero'
 import { DiscoverRail } from './_components/discover-rail'
 import { GenreChipStrip } from './_components/genre-chip-strip'
@@ -59,6 +69,8 @@ import { FeaturedHiveHero } from './_components/featured-hive-hero'
 import { DiscoverHiveRail } from './_components/discover-hive-rail'
 import { FeaturedListHero } from './_components/featured-list-hero'
 import { DiscoverListRail } from './_components/discover-list-rail'
+import { FeaturedClubHero } from './_components/featured-club-hero'
+import { DiscoverClubRail } from './_components/discover-club-rail'
 
 type Tab = 'books' | 'sparks' | 'hives' | 'lists' | 'clubs'
 
@@ -96,7 +108,7 @@ export default async function DiscoverPage({ params, searchParams }: Props) {
       {tab === 'sparks' && <SparksTab locale={locale} genre={genre} />}
       {tab === 'hives' && <HivesTab locale={locale} genre={genre} />}
       {tab === 'lists' && <ListsTab locale={locale} genre={genre} />}
-      {tab === 'clubs' && <ClubsTab locale={locale} />}
+      {tab === 'clubs' && <ClubsTab locale={locale} genre={genre} />}
     </main>
   )
 }
@@ -435,11 +447,107 @@ async function ListsTab({ locale, genre }: { locale: string; genre?: string }) {
   )
 }
 
-async function ClubsTab({ locale }: { locale: string }) {
+type ClubFollowingFallback = { success: false; error: 'GUEST' }
+
+async function ClubsTab({ locale, genre }: { locale: string; genre?: string }) {
+  const safeGenre = genre && isValidGenre(genre) ? genre : undefined
+
+  const [hero, trending, active, newClubs, openToJoin, following, genreCounts] =
+    await Promise.all([
+      getFeaturedClubAction({ genre: safeGenre }),
+      getTrendingClubsAction({ genre: safeGenre }),
+      getActiveClubsAction({ genre: safeGenre }),
+      getNewClubsAction({ genre: safeGenre }),
+      getOpenToJoinClubsAction({ genre: safeGenre }),
+      getFollowingClubsAction({ genre: safeGenre }).catch(
+        (): ClubFollowingFallback => ({ success: false, error: 'GUEST' }),
+      ),
+      getClubGenreCountsAction(),
+    ])
+
+  const followingResult:
+    | { success: true; data: ClubRailResult<ClubCardType> }
+    | { success: false; error: string } = following
+
   return (
-    <div>
-      <p className="text-[var(--canvas-dark-ink-muted)] text-[11px] uppercase tracking-wider font-[family-name:var(--font-mono)] mb-4">Discoverable Book Clubs</p>
-      <ClubsTabContent locale={locale} />
+    <div className="flex flex-col gap-5">
+      {hero.success && hero.data && (
+        <FeaturedClubHero club={hero.data} locale={locale} />
+      )}
+
+      <div
+        className="flex items-center gap-3 sticky top-0 z-10 py-3"
+        style={{
+          background: 'rgba(38,39,40,0.95)',
+          backdropFilter: 'blur(8px)',
+        }}
+      >
+        <GenreChipStrip
+          activeGenre={safeGenre}
+          locale={locale}
+          tabContext="clubs"
+        />
+        <div className="ml-auto">
+          <DiscoverSearchInput
+            locale={locale}
+            searchHref={`/${locale}/discover/clubs/search`}
+            placeholder="Search Clubs, communities, owners..."
+            ariaLabel="Search Discover Clubs"
+          />
+        </div>
+      </div>
+
+      {trending.success && (
+        <DiscoverClubRail
+          title="Trending"
+          subPageHref={`/${locale}/discover/clubs/trending${qs(safeGenre)}`}
+          result={trending.data}
+          locale={locale}
+        />
+      )}
+      {active.success && (
+        <DiscoverClubRail
+          title="Active"
+          subPageHref={`/${locale}/discover/clubs/active${qs(safeGenre)}`}
+          result={active.data}
+          locale={locale}
+        />
+      )}
+      {newClubs.success && (
+        <DiscoverClubRail
+          title="New"
+          subPageHref={`/${locale}/discover/clubs/new${qs(safeGenre)}`}
+          result={newClubs.data}
+          locale={locale}
+        />
+      )}
+      {openToJoin.success && (
+        <DiscoverClubRail
+          title="Open to join"
+          subPageHref={`/${locale}/discover/clubs/open-to-join${qs(safeGenre)}`}
+          result={openToJoin.data}
+          locale={locale}
+        />
+      )}
+      {followingResult.success && (
+        <DiscoverClubRail
+          title="From writers you follow"
+          subPageHref={`/${locale}/discover/clubs/following${qs(safeGenre)}`}
+          result={followingResult.data}
+          locale={locale}
+          hideWhenEmpty
+        />
+      )}
+
+      {genreCounts.success && (
+        <GenreFooterGrid
+          counts={genreCounts.data}
+          locale={locale}
+          linkBase={`/${locale}/discover/clubs/genre/`}
+          title="Browse Clubs by genre"
+          countLabel="clubs"
+        />
+      )}
     </div>
   )
 }

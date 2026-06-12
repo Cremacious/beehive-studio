@@ -11,8 +11,9 @@ type Props = {
    * 'sparks' keeps the `tab=sparks` query param when changing genre.
    * 'hives' keeps the `tab=hives` query param when changing genre.
    * 'lists' keeps the `tab=lists` query param when changing genre.
+   * 'clubs' keeps the `tab=clubs` query param when changing genre.
    */
-  tabContext?: 'books' | 'sparks' | 'hives' | 'lists'
+  tabContext?: 'books' | 'sparks' | 'hives' | 'lists' | 'clubs'
 }
 
 export function GenreChipStrip({ activeGenre, locale, tabContext = 'books' }: Props) {
@@ -27,6 +28,7 @@ export function GenreChipStrip({ activeGenre, locale, tabContext = 'books' }: Pr
     if (tabContext === 'sparks') params.set('tab', 'sparks')
     if (tabContext === 'hives') params.set('tab', 'hives')
     if (tabContext === 'lists') params.set('tab', 'lists')
+    if (tabContext === 'clubs') params.set('tab', 'clubs')
     const qs = params.toString()
     startTransition(() => {
       router.push(`/${locale}/discover${qs ? `?${qs}` : ''}`, { scroll: false })

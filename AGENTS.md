@@ -12,9 +12,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-11 (D-phase polish pass — 3 orphan legacy files deleted + relTime helper consolidated. D3a Lists + D3b Clubs + D4 Home all still awaiting smoke.)
+> **Last updated:** 2026-06-11 (D-phase polish pass round 2 — LoadMoreSlug typed union eliminated. D3a Lists + D3b Clubs + D4 Home all still awaiting smoke.)
 >
-> **Last commit:** [5f21936](https://github.com/Cremacious/beehive-studio/commit/5f21936) — refactor(utils): consolidate relTime helper to lib/utils/rel-time.ts.
+> **Last commit:** [f52c3b1](https://github.com/Cremacious/beehive-studio/commit/f52c3b1) — refactor(discover/sub-page): eliminate LoadMoreSlug union + loadMoreAction prop.
+>
+> **D-phase polish pass round 2 ([f52c3b1](https://github.com/Cremacious/beehive-studio/commit/f52c3b1)):** typed `LoadMoreSlug` union eliminated from `<DiscoverRailSubPage>` (had grown to 18 string-literal entries — 1 per sub-route slug). Replaced `loadMoreAction` + `loadMoreHrefBase` prop pair with single required `loadMorePath` full-URL string prop. All 28 files updated atomically (1 shared component + 27 sub-route consumers: 6 D1 Books · 6 D2a Sparks · 5 D2b Hives · 5 D3a Lists · 5 D3b Clubs). Dead `'sparks-following'` slug deleted as part of the sweep. Net change +38 / -87 LOC. URLs unchanged; runtime behavior identical. Future D-phase additions no longer require touching the shared sub-page component. 679/679 tests, tsc clean.
+>
+> **Prior polish pass round 1 (still shipped):**
+> - **[b9af60b](https://github.com/Cremacious/beehive-studio/commit/b9af60b)** — `chore(discover): delete 3 orphan legacy components.`
+> - **[5f21936](https://github.com/Cremacious/beehive-studio/commit/5f21936)** — `refactor(utils): consolidate relTime helper to lib/utils/rel-time.ts.` 6 unit tests added.
 >
 > **D-phase polish pass shipped (2 commits):**
 > - **[b9af60b](https://github.com/Cremacious/beehive-studio/commit/b9af60b)** — `chore(discover): delete 3 orphan legacy components.` Three orphan files (`lists-tab-content.tsx` from D3a + `clubs-tab-content.tsx` from D3b + `hive-card.tsx` from D2b) confirmed unreferenced after each entity's deepened tab shipped. `git rm`'d. Tests 673/673, tsc clean.

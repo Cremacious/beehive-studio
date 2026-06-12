@@ -159,41 +159,36 @@ async function HomeTab({ locale }: { locale: string }) {
     ),
   ])
 
+  // Build per-entity slices, then interleave round-robin so the rail reads as
+  // varied (B, S, H, L, C, B, S, H, L, C) rather than entity-grouped chunks.
+  const entityQueues: ForYouItem[][] = [
+    followingBooks.success
+      ? followingBooks.data.books.slice(0, 2).map((b): ForYouItem => ({ kind: 'book', data: b }))
+      : [],
+    followingSparks.success
+      ? followingSparks.data.books.slice(0, 2).map((s): ForYouItem => ({ kind: 'spark', data: s }))
+      : [],
+    followingHives.success
+      ? followingHives.data.books.slice(0, 2).map((h): ForYouItem => ({ kind: 'hive', data: h }))
+      : [],
+    followingLists.success
+      ? followingLists.data.books.slice(0, 2).map((l): ForYouItem => ({ kind: 'list', data: l }))
+      : [],
+    followingClubs.success
+      ? followingClubs.data.books.slice(0, 2).map((c): ForYouItem => ({ kind: 'club', data: c }))
+      : [],
+  ]
   const forYouItems: ForYouItem[] = []
-  if (followingBooks.success) {
-    forYouItems.push(
-      ...followingBooks.data.books
-        .slice(0, 2)
-        .map((b): ForYouItem => ({ kind: 'book', data: b })),
-    )
-  }
-  if (followingSparks.success) {
-    forYouItems.push(
-      ...followingSparks.data.books
-        .slice(0, 2)
-        .map((s): ForYouItem => ({ kind: 'spark', data: s })),
-    )
-  }
-  if (followingHives.success) {
-    forYouItems.push(
-      ...followingHives.data.books
-        .slice(0, 2)
-        .map((h): ForYouItem => ({ kind: 'hive', data: h })),
-    )
-  }
-  if (followingLists.success) {
-    forYouItems.push(
-      ...followingLists.data.books
-        .slice(0, 2)
-        .map((l): ForYouItem => ({ kind: 'list', data: l })),
-    )
-  }
-  if (followingClubs.success) {
-    forYouItems.push(
-      ...followingClubs.data.books
-        .slice(0, 2)
-        .map((c): ForYouItem => ({ kind: 'club', data: c })),
-    )
+  let active = entityQueues.some((q) => q.length > 0)
+  while (active) {
+    active = false
+    for (const q of entityQueues) {
+      const next = q.shift()
+      if (next) {
+        forYouItems.push(next)
+        active = true
+      }
+    }
   }
 
   return (

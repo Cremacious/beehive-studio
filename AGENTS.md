@@ -12,9 +12,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-11 (D-phase polish pass round 3 — ForYouRail interleaved. D3a Lists + D3b Clubs + D4 Home all still awaiting smoke.)
+> **Last updated:** 2026-06-11 (D-phase polish pass round 4 — search cursor pagination across all 5 entity searches. D3a Lists + D3b Clubs + D4 Home all still awaiting smoke.)
 >
-> **Last commit:** [a0f1fa8](https://github.com/Cremacious/beehive-studio/commit/a0f1fa8) — refactor(d4/for-you): interleave entities round-robin instead of grouped chunks.
+> **Last commit:** [641eca7](https://github.com/Cremacious/beehive-studio/commit/641eca7) — feat(discover/search): cursor pagination across all 5 entity searches.
+>
+> **D-phase polish pass round 4 ([641eca7](https://github.com/Cremacious/beehive-studio/commit/641eca7)):** all 5 entity search routes upgraded from v1-no-cursor to standard tuple-cursor pagination. Books search already had cursor (verified during exploration, not modified). Sparks/Hives/Lists/Clubs each got: sort-key-aware cursor encoding (createdAt for recent, entityCount for popularity sorts, JS-ranked score for relevance/most-active where applicable) + result components extended with explicit `q`/`genre`/`size`/`sort` props for Load more URL construction + 4 search pages updated to thread the new props. Hives + Clubs JS-ranked sort candidate window bumped 100 → 200 to match Trending rail pattern. 12 files total. 679/679 tests, tsc clean. Each TODO: real relevance scoring comment preserved (collapse-to-recent/most-active posture unchanged).
 >
 > **D-phase polish pass round 3 ([a0f1fa8](https://github.com/Cremacious/beehive-studio/commit/a0f1fa8)):** ForYouRail now interleaves entities round-robin (B, S, H, L, C, B, S, H, L, C) instead of shipping in entity-grouped chunks (2B, 2S, 2H, 2L, 2C). Pure UI ordering tweak — same items fetched, same chrome. D4 deferred follow-up cleared.
 >

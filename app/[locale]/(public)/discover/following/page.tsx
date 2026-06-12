@@ -40,7 +40,7 @@ export default async function FollowingPage({ params, searchParams }: Props) {
       description="Recent updates from authors you follow."
       result={result.data}
       locale={locale}
-      loadMoreAction="following"
+      loadMorePath={`/${locale}/discover/following`}
     />
   )
 }

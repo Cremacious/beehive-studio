@@ -47,8 +47,7 @@ export default async function FollowingClubsPage({
       description="Active Clubs run by writers you follow."
       result={result.data}
       locale={locale}
-      loadMoreAction="following"
-      loadMoreHrefBase={`/${locale}/discover/clubs/`}
+      loadMorePath={`/${locale}/discover/clubs/following`}
       emptyMessage="No Clubs from writers you follow. Try following more writers."
       renderCard={(item, loc) => (
         <DiscoverClubCard club={item} locale={loc} variant="grid" />

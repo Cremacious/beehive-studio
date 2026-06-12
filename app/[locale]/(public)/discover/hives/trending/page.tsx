@@ -46,8 +46,7 @@ export default async function TrendingHivesPage({
       description="Active Hives in the last 7 days, weighted by buzz posts, discussions, chapter updates, and submissions."
       result={result.data}
       locale={locale}
-      loadMoreAction="trending"
-      loadMoreHrefBase={`/${locale}/discover/hives/`}
+      loadMorePath={`/${locale}/discover/hives/trending`}
       emptyMessage="No active Hives match this filter yet. Try a different size or genre."
       renderCard={(item, loc) => (
         <DiscoverHiveCard hive={item} locale={loc} variant="grid" />

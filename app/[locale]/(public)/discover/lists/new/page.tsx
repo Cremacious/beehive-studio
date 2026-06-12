@@ -33,8 +33,7 @@ export default async function NewListsPage({ params, searchParams }: Props) {
       description="Lists that became discoverable in the last 30 days."
       result={result.data}
       locale={locale}
-      loadMoreAction="new"
-      loadMoreHrefBase={`/${locale}/discover/lists/`}
+      loadMorePath={`/${locale}/discover/lists/new`}
       emptyMessage="No new Lists in the last 30 days. Check back soon."
       renderCard={(item, loc) => (
         <DiscoverListCard list={item} locale={loc} variant="grid" />

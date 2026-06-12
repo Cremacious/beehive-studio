@@ -47,8 +47,7 @@ export default async function FollowingListsPage({
       description="Recent updates from Lists curated by writers you follow."
       result={result.data}
       locale={locale}
-      loadMoreAction="following"
-      loadMoreHrefBase={`/${locale}/discover/lists/`}
+      loadMorePath={`/${locale}/discover/lists/following`}
       emptyMessage="No Lists from writers you follow. Try following more writers."
       renderCard={(item, loc) => (
         <DiscoverListCard list={item} locale={loc} variant="grid" />

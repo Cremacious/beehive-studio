@@ -3,32 +3,17 @@ import { ArrowLeft } from 'lucide-react'
 import { DiscoverBookCard } from './discover-book-card'
 import type { RailResult, BookCard } from '@/lib/actions/discover.actions'
 
-type LoadMoreSlug =
-  | 'trending'
-  | 'rising'
-  | 'recently-updated'
-  | 'new-releases'
-  | 'best-ongoing'
-  | 'following'
-  | 'live-now'
-  | 'voting-now'
-  | 'heating-up'
-  | 'newly-opened'
-  | 'recently-won'
-  | 'sparks-following'
-  | 'recently-active'
-  | 'new'
-  | 'looking-for-collaborators'
-  | 'most-followed'
-  | 'active'
-  | 'open-to-join'
-
 type Props<TItem extends { id: string } = BookCard> = {
   title: string
   description: string
   result: RailResult<TItem>
   locale: string
-  loadMoreAction: LoadMoreSlug
+  /**
+   * Full path used to build the Load more link. The component appends
+   * `?cursor=...` to this. Required for type consistency even when the
+   * current page has no nextCursor.
+   */
+  loadMorePath: string
   filterRail?: React.ReactNode
   /**
    * Optional custom card renderer. Defaults to <DiscoverBookCard variant="grid">
@@ -39,11 +24,6 @@ type Props<TItem extends { id: string } = BookCard> = {
    * Optional empty-state copy override. Default: "No books match this filter yet."
    */
   emptyMessage?: string
-  /**
-   * Optional href prefix for Load more links. Defaults to /${locale}/discover/${action}.
-   * D2a Spark sub-pages pass `/${locale}/discover/sparks/`.
-   */
-  loadMoreHrefBase?: string
 }
 
 function defaultRender<TItem extends { id: string }>(
@@ -64,11 +44,10 @@ export function DiscoverRailSubPage<TItem extends { id: string } = BookCard>({
   description,
   result,
   locale,
-  loadMoreAction,
+  loadMorePath,
   filterRail,
   renderCard,
   emptyMessage,
-  loadMoreHrefBase,
 }: Props<TItem>) {
   const render = renderCard ?? defaultRender
   return (
@@ -109,10 +88,8 @@ export function DiscoverRailSubPage<TItem extends { id: string } = BookCard>({
               </ul>
               {result.nextCursor && (
                 <LoadMoreLink
-                  action={loadMoreAction}
+                  path={loadMorePath}
                   cursor={result.nextCursor}
-                  locale={locale}
-                  hrefBase={loadMoreHrefBase}
                 />
               )}
             </>
@@ -126,21 +103,16 @@ export function DiscoverRailSubPage<TItem extends { id: string } = BookCard>({
 // D1 v1: a simple Link that pushes ?cursor=... and lets the server re-fetch
 // from that cursor. Append-in-memory pagination is a follow-up.
 function LoadMoreLink({
-  action,
+  path,
   cursor,
-  locale,
-  hrefBase,
 }: {
-  action: LoadMoreSlug
+  path: string
   cursor: string
-  locale: string
-  hrefBase?: string
 }) {
-  const base = hrefBase ?? `/${locale}/discover/`
   return (
     <div className="mt-6 flex justify-center">
       <Link
-        href={`${base}${action}?cursor=${encodeURIComponent(cursor)}`}
+        href={`${path}?cursor=${encodeURIComponent(cursor)}`}
         className="h-9 px-5 inline-flex items-center rounded-[var(--r-pill)] text-[12px] font-medium"
         style={{
           background:

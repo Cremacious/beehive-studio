@@ -29,7 +29,7 @@ export default async function BestOngoingPage({ params, searchParams }: Props) {
       description="Actively updating books above the platform engagement median."
       result={result.data}
       locale={locale}
-      loadMoreAction="best-ongoing"
+      loadMorePath={`/${locale}/discover/best-ongoing`}
     />
   )
 }

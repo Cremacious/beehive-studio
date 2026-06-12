@@ -36,8 +36,7 @@ export default async function OpenToJoinClubsPage({
       description="Clubs accepting members right now, sorted by community size."
       result={result.data}
       locale={locale}
-      loadMoreAction="open-to-join"
-      loadMoreHrefBase={`/${locale}/discover/clubs/`}
+      loadMorePath={`/${locale}/discover/clubs/open-to-join`}
       emptyMessage="No open Clubs right now. Check back soon."
       renderCard={(item, loc) => (
         <DiscoverClubCard club={item} locale={loc} variant="grid" />

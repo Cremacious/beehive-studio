@@ -46,8 +46,7 @@ export default async function NewHivesPage({
       description="Hives that became discoverable in the last 30 days."
       result={result.data}
       locale={locale}
-      loadMoreAction="new"
-      loadMoreHrefBase={`/${locale}/discover/hives/`}
+      loadMorePath={`/${locale}/discover/hives/new`}
       emptyMessage="No new Hives in the last 30 days. Check back soon."
       renderCard={(item, loc) => (
         <DiscoverHiveCard hive={item} locale={loc} variant="grid" />

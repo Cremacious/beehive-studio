@@ -33,8 +33,7 @@ export default async function RecentlyWonPage({ params, searchParams }: Props) {
       description="Sparks closed in the last 90 days with a chosen winner."
       result={result.data}
       locale={locale}
-      loadMoreAction="recently-won"
-      loadMoreHrefBase={`/${locale}/discover/sparks/`}
+      loadMorePath={`/${locale}/discover/sparks/recently-won`}
       emptyMessage="No Sparks have wrapped up recently."
       renderCard={(item, loc) => (
         <DiscoverSparkCard spark={item} locale={loc} variant="grid" />

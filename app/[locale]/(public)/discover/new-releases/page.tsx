@@ -29,7 +29,7 @@ export default async function NewReleasesPage({ params, searchParams }: Props) {
       description="Recently published books, discovered in the last 30 days."
       result={result.data}
       locale={locale}
-      loadMoreAction="new-releases"
+      loadMorePath={`/${locale}/discover/new-releases`}
     />
   )
 }

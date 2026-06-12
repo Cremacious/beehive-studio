@@ -29,7 +29,7 @@ export default async function TrendingPage({ params, searchParams }: Props) {
       description="Fastest-rising books across the last 7 days, weighted by likes, comments, reads, and follows."
       result={result.data}
       locale={locale}
-      loadMoreAction="trending"
+      loadMorePath={`/${locale}/discover/trending`}
     />
   )
 }

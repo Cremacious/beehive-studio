@@ -36,8 +36,7 @@ export default async function MostFollowedListsPage({
       description="All-time most-followed Lists across the platform."
       result={result.data}
       locale={locale}
-      loadMoreAction="most-followed"
-      loadMoreHrefBase={`/${locale}/discover/lists/`}
+      loadMorePath={`/${locale}/discover/lists/most-followed`}
       emptyMessage="No followed Lists yet. Check back soon."
       renderCard={(item, loc) => (
         <DiscoverListCard list={item} locale={loc} variant="grid" />

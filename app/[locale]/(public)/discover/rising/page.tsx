@@ -29,7 +29,7 @@ export default async function RisingPage({ params, searchParams }: Props) {
       description="Newer authors gaining fast relative to their existing footprint. Surfaces undiscovered voices."
       result={result.data}
       locale={locale}
-      loadMoreAction="rising"
+      loadMorePath={`/${locale}/discover/rising`}
     />
   )
 }

@@ -40,8 +40,7 @@ export default async function LookingForCollaboratorsHivesPage({
       description="Small Hives (2 to 5 members) with recent activity. Room to grow."
       result={result.data}
       locale={locale}
-      loadMoreAction="looking-for-collaborators"
-      loadMoreHrefBase={`/${locale}/discover/hives/`}
+      loadMorePath={`/${locale}/discover/hives/looking-for-collaborators`}
       emptyMessage="No small Hives are currently looking for collaborators. Try a different genre."
       renderCard={(item, loc) => (
         <DiscoverHiveCard hive={item} locale={loc} variant="grid" />

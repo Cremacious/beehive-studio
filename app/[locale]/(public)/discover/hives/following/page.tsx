@@ -57,8 +57,7 @@ export default async function FollowingHivesPage({
       description="Active Hives owned by writers you follow."
       result={result.data}
       locale={locale}
-      loadMoreAction="following"
-      loadMoreHrefBase={`/${locale}/discover/hives/`}
+      loadMorePath={`/${locale}/discover/hives/following`}
       emptyMessage="No active Hives from writers you follow. Try following more writers."
       renderCard={(item, loc) => (
         <DiscoverHiveCard hive={item} locale={loc} variant="grid" />

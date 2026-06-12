@@ -33,8 +33,7 @@ export default async function LiveNowPage({ params, searchParams }: Props) {
       description="Sparks accepting entries right now, ordered by closest deadline."
       result={result.data}
       locale={locale}
-      loadMoreAction="live-now"
-      loadMoreHrefBase={`/${locale}/discover/sparks/`}
+      loadMorePath={`/${locale}/discover/sparks/live-now`}
       emptyMessage="No Sparks are live right now. Check back soon."
       renderCard={(item, loc) => (
         <DiscoverSparkCard spark={item} locale={loc} variant="grid" />

@@ -33,8 +33,7 @@ export default async function TrendingListsPage({ params, searchParams }: Props)
       description="Lists gaining followers fastest in the last 7 days."
       result={result.data}
       locale={locale}
-      loadMoreAction="trending"
-      loadMoreHrefBase={`/${locale}/discover/lists/`}
+      loadMorePath={`/${locale}/discover/lists/trending`}
       emptyMessage="No trending Lists yet. Check back soon."
       renderCard={(item, loc) => (
         <DiscoverListCard list={item} locale={loc} variant="grid" />

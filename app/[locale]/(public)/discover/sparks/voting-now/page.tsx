@@ -33,8 +33,7 @@ export default async function VotingNowPage({ params, searchParams }: Props) {
       description="Sparks in their voting window. Vote before voting closes."
       result={result.data}
       locale={locale}
-      loadMoreAction="voting-now"
-      loadMoreHrefBase={`/${locale}/discover/sparks/`}
+      loadMorePath={`/${locale}/discover/sparks/voting-now`}
       emptyMessage="No Sparks are in voting right now."
       renderCard={(item, loc) => (
         <DiscoverSparkCard spark={item} locale={loc} variant="grid" />

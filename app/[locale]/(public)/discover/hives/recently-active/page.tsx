@@ -46,8 +46,7 @@ export default async function RecentlyActiveHivesPage({
       description="Hives with any activity in the last 7 days, most-recent first."
       result={result.data}
       locale={locale}
-      loadMoreAction="recently-active"
-      loadMoreHrefBase={`/${locale}/discover/hives/`}
+      loadMorePath={`/${locale}/discover/hives/recently-active`}
       emptyMessage="No Hives have been active in the last 7 days. Try a different filter."
       renderCard={(item, loc) => (
         <DiscoverHiveCard hive={item} locale={loc} variant="grid" />

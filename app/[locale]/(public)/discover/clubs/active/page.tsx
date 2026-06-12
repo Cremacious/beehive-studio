@@ -33,8 +33,7 @@ export default async function ActiveClubsPage({ params, searchParams }: Props) {
       description="Clubs with discussions, book changes, or new members in the last 7 days."
       result={result.data}
       locale={locale}
-      loadMoreAction="active"
-      loadMoreHrefBase={`/${locale}/discover/clubs/`}
+      loadMorePath={`/${locale}/discover/clubs/active`}
       emptyMessage="No active Clubs right now. Check back soon."
       renderCard={(item, loc) => (
         <DiscoverClubCard club={item} locale={loc} variant="grid" />

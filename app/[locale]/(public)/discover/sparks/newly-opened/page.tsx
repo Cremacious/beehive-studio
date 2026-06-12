@@ -33,8 +33,7 @@ export default async function NewlyOpenedPage({ params, searchParams }: Props) {
       description="Recently opened Sparks. Fresh prompts to enter."
       result={result.data}
       locale={locale}
-      loadMoreAction="newly-opened"
-      loadMoreHrefBase={`/${locale}/discover/sparks/`}
+      loadMorePath={`/${locale}/discover/sparks/newly-opened`}
       emptyMessage="No Sparks have opened recently."
       renderCard={(item, loc) => (
         <DiscoverSparkCard spark={item} locale={loc} variant="grid" />

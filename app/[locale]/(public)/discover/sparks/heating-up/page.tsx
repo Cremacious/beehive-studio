@@ -33,8 +33,7 @@ export default async function HeatingUpPage({ params, searchParams }: Props) {
       description="Open Sparks with the most entries. Lots of competition; lots to read."
       result={result.data}
       locale={locale}
-      loadMoreAction="heating-up"
-      loadMoreHrefBase={`/${locale}/discover/sparks/`}
+      loadMorePath={`/${locale}/discover/sparks/heating-up`}
       emptyMessage="No Sparks are heating up yet."
       renderCard={(item, loc) => (
         <DiscoverSparkCard spark={item} locale={loc} variant="grid" />

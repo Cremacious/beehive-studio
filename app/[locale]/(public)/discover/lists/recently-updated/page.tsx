@@ -39,8 +39,7 @@ export default async function RecentlyUpdatedListsPage({
       description="Lists with books added or removed in the last 7 days, most-recent first."
       result={result.data}
       locale={locale}
-      loadMoreAction="recently-updated"
-      loadMoreHrefBase={`/${locale}/discover/lists/`}
+      loadMorePath={`/${locale}/discover/lists/recently-updated`}
       emptyMessage="No Lists updated recently. Check back soon."
       renderCard={(item, loc) => (
         <DiscoverListCard list={item} locale={loc} variant="grid" />

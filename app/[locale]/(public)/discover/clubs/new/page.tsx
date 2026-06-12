@@ -33,8 +33,7 @@ export default async function NewClubsPage({ params, searchParams }: Props) {
       description="Clubs that became discoverable in the last 30 days."
       result={result.data}
       locale={locale}
-      loadMoreAction="new"
-      loadMoreHrefBase={`/${locale}/discover/clubs/`}
+      loadMorePath={`/${locale}/discover/clubs/new`}
       emptyMessage="No new Clubs in the last 30 days. Check back soon."
       renderCard={(item, loc) => (
         <DiscoverClubCard club={item} locale={loc} variant="grid" />

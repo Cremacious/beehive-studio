@@ -47,8 +47,7 @@ export default async function FollowingSparksPage({
       description="Recent prompts from writers you follow."
       result={result.data}
       locale={locale}
-      loadMoreAction="following"
-      loadMoreHrefBase={`/${locale}/discover/sparks/`}
+      loadMorePath={`/${locale}/discover/sparks/following`}
       emptyMessage="No recent prompts from writers you follow."
       renderCard={(item, loc) => (
         <DiscoverSparkCard spark={item} locale={loc} variant="grid" />

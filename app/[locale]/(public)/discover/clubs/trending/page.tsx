@@ -33,8 +33,7 @@ export default async function TrendingClubsPage({ params, searchParams }: Props)
       description="Most active Clubs in the last 7 days."
       result={result.data}
       locale={locale}
-      loadMoreAction="trending"
-      loadMoreHrefBase={`/${locale}/discover/clubs/`}
+      loadMorePath={`/${locale}/discover/clubs/trending`}
       emptyMessage="No trending Clubs yet. Check back soon."
       renderCard={(item, loc) => (
         <DiscoverClubCard club={item} locale={loc} variant="grid" />

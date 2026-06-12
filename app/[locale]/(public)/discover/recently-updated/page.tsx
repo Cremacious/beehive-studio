@@ -29,7 +29,7 @@ export default async function RecentlyUpdatedPage({ params, searchParams }: Prop
       description="Books with new chapters in the last 7 days. Drive return visits."
       result={result.data}
       locale={locale}
-      loadMoreAction="recently-updated"
+      loadMorePath={`/${locale}/discover/recently-updated`}
     />
   )
 }

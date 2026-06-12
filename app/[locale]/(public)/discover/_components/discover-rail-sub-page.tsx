@@ -20,6 +20,8 @@ type LoadMoreSlug =
   | 'new'
   | 'looking-for-collaborators'
   | 'most-followed'
+  | 'active'
+  | 'open-to-join'
 
 type Props<TItem extends { id: string } = BookCard> = {
   title: string

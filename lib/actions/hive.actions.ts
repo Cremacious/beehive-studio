@@ -98,6 +98,7 @@ export async function createHiveAction(input: unknown): Promise<ActionResult<{ h
     }
 
     const hiveId = createId()
+    const isInitialPublicDiscoverable = data.visibility === 'PUBLIC' && data.discoverable === true
     await db.transaction(async (tx) => {
       await tx.insert(hives).values({
         id: hiveId,
@@ -107,12 +108,15 @@ export async function createHiveAction(input: unknown): Promise<ActionResult<{ h
         description: data.description ?? null,
         visibility: data.visibility,
         discoverable: data.discoverable,
+        // D2b: stamp first-public if hive is born PUBLIC+discoverable.
+        firstPubliclyDiscoverableAt: isInitialPublicDiscoverable ? new Date() : null,
       })
       await tx.insert(hiveMembers).values({
         hiveId,
         userId,
         role: 'OWNER',
       })
+      // member_count column defaults to 1 (owner) so no increment needed here.
 
       // C1 T8 hook: hive_created. Gate on PUBLIC+discoverable. Spec §3.4.
       if (data.visibility === 'PUBLIC' && data.discoverable === true) {
@@ -205,7 +209,31 @@ export async function updateHiveAction(input: unknown): Promise<ActionResult<voi
     if (parsed.visibility !== undefined) patch.visibility = parsed.visibility
     if (parsed.discoverable !== undefined) patch.discoverable = parsed.discoverable
 
-    await db.update(hives).set(patch).where(eq(hives.id, parsed.hiveId))
+    // D2b: first-public stamp gate. Mirrors D1's updateBookDetailsAction +
+    // D2a's createSparkAction. If this update transitions the hive into
+    // PUBLIC + discoverable for the first time, stamp firstPubliclyDiscoverableAt.
+    await db.transaction(async (tx) => {
+      const current = await tx.query.hives.findFirst({
+        where: eq(hives.id, parsed.hiveId),
+        columns: {
+          visibility: true,
+          discoverable: true,
+          firstPubliclyDiscoverableAt: true,
+        },
+      })
+      if (current) {
+        const nextVisibility = parsed.visibility ?? current.visibility
+        const nextDiscoverable = parsed.discoverable ?? current.discoverable
+        const becomingPublic =
+          nextVisibility === 'PUBLIC' &&
+          nextDiscoverable === true &&
+          current.firstPubliclyDiscoverableAt == null
+        if (becomingPublic) {
+          patch.firstPubliclyDiscoverableAt = new Date()
+        }
+      }
+      await tx.update(hives).set(patch).where(eq(hives.id, parsed.hiveId))
+    })
     return { success: true, data: undefined }
   } catch (e) {
     return { success: false, error: e instanceof Error ? e.message : 'Unknown error' }
@@ -291,6 +319,12 @@ export async function joinHiveByLinkAction(token: string): Promise<ActionResult<
   await db.transaction(async (tx) => {
     await tx.insert(hiveMembers).values({ hiveId: invite.hiveId, userId, role: invite.role })
 
+    // D2b: keep member_count denorm warm.
+    await tx
+      .update(hives)
+      .set({ memberCount: sql`${hives.memberCount} + 1` })
+      .where(eq(hives.id, invite.hiveId))
+
     // C1 T8 hook: hive_joined. Gate on PUBLIC+discoverable. Spec §3.4.
     const [hiveRow] = await tx
       .select({ name: hives.name, visibility: hives.visibility, discoverable: hives.discoverable })
@@ -321,6 +355,12 @@ export async function acceptHiveInviteAction(inviteId: string): Promise<ActionRe
   await db.transaction(async (tx) => {
     await tx.update(hiveInvites).set({ status: 'ACCEPTED' }).where(eq(hiveInvites.id, inviteId))
     await tx.insert(hiveMembers).values({ hiveId: invite.hiveId, userId, role: invite.role })
+
+    // D2b: keep member_count denorm warm.
+    await tx
+      .update(hives)
+      .set({ memberCount: sql`${hives.memberCount} + 1` })
+      .where(eq(hives.id, invite.hiveId))
 
     // C1 T8 hook: hive_joined. Gate on PUBLIC+discoverable. Spec §3.4.
     const [hive] = await tx
@@ -359,7 +399,19 @@ export async function declineHiveInviteAction(inviteId: string): Promise<ActionR
 export async function removeMemberAction(hiveId: string, targetUserId: string): Promise<ActionResult> {
   const userId = await requireAuth()
   await assertHiveAdmin(hiveId, userId)
-  await db.delete(hiveMembers).where(and(eq(hiveMembers.hiveId, hiveId), eq(hiveMembers.userId, targetUserId)))
+  await db.transaction(async (tx) => {
+    const deleted = await tx
+      .delete(hiveMembers)
+      .where(and(eq(hiveMembers.hiveId, hiveId), eq(hiveMembers.userId, targetUserId)))
+      .returning({ id: hiveMembers.id })
+    if (deleted.length > 0) {
+      // D2b: keep member_count denorm warm. Floor at 1 — owner is always a member.
+      await tx
+        .update(hives)
+        .set({ memberCount: sql`GREATEST(${hives.memberCount} - 1, 1)` })
+        .where(eq(hives.id, hiveId))
+    }
+  })
   return { success: true, data: undefined }
 }
 
@@ -375,7 +427,19 @@ export async function leaveHiveAction(hiveId: string): Promise<ActionResult> {
   const hive = await db.query.hives.findFirst({ where: eq(hives.id, hiveId), columns: { ownerId: true } })
   if (!hive) return { success: false, error: 'Hive not found' }
   if (hive.ownerId === userId) return { success: false, error: 'OWNER_MUST_TRANSFER_OR_DELETE' }
-  await db.delete(hiveMembers).where(and(eq(hiveMembers.hiveId, hiveId), eq(hiveMembers.userId, userId)))
+  await db.transaction(async (tx) => {
+    const deleted = await tx
+      .delete(hiveMembers)
+      .where(and(eq(hiveMembers.hiveId, hiveId), eq(hiveMembers.userId, userId)))
+      .returning({ id: hiveMembers.id })
+    if (deleted.length > 0) {
+      // D2b: keep member_count denorm warm. Floor at 1 — owner is always a member.
+      await tx
+        .update(hives)
+        .set({ memberCount: sql`GREATEST(${hives.memberCount} - 1, 1)` })
+        .where(eq(hives.id, hiveId))
+    }
+  })
   return { success: true, data: undefined }
 }
 

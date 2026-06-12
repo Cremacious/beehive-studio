@@ -1,5 +1,6 @@
 import { db } from '@/db'
-import { hiveActivity } from '@/db/schema'
+import { hiveActivity, hives } from '@/db/schema'
+import { eq } from 'drizzle-orm'
 
 export type HiveActivityType =
   | 'chapter_submitted'
@@ -54,4 +55,9 @@ export async function recordHiveActivityTx(
     subjectId: opts.subjectId ?? null,
     payload: opts.payload ?? null,
   })
+  // D2b: keep hives.last_activity_at denormalized + warm for Discover rails.
+  await tx
+    .update(hives)
+    .set({ lastActivityAt: new Date() })
+    .where(eq(hives.id, opts.hiveId))
 }

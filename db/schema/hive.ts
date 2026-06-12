@@ -24,10 +24,17 @@ export const hives = pgTable('hives', {
   visibility: hiveVisibilityEnum('visibility').default('PRIVATE').notNull(),
   discoverable: boolean('discoverable').default(false).notNull(),
   status: hiveStatusEnum('status').default('ACTIVE').notNull(),
+  firstPubliclyDiscoverableAt: timestamp('first_publicly_discoverable_at'),
+  memberCount: integer('member_count').notNull().default(1),
+  lastActivityAt: timestamp('last_activity_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (t) => [
   uniqueIndex('hives_book_id_unique').on(t.bookId),
+  index('hives_discoverable_visibility_idx').on(t.discoverable, t.visibility),
+  index('hives_member_count_idx').on(t.memberCount),
+  index('hives_last_activity_at_idx').on(t.lastActivityAt),
+  index('hives_first_public_idx').on(t.firstPubliclyDiscoverableAt),
 ])
 
 export const hiveMembers = pgTable('hive_members', {

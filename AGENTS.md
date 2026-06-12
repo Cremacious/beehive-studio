@@ -12,9 +12,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-11 (D-phase polish pass round 4 — search cursor pagination across all 5 entity searches. D3a Lists + D3b Clubs + D4 Home all still awaiting smoke.)
+> **Last updated:** 2026-06-11 (AGENTS.md narrative archive pass — 52% line reduction. D3a + D3b + D4 still awaiting smoke. Autonomous run pause point.)
 >
-> **Last commit:** [641eca7](https://github.com/Cremacious/beehive-studio/commit/641eca7) — feat(discover/search): cursor pagination across all 5 entity searches.
+> **Last commit:** [7363218](https://github.com/Cremacious/beehive-studio/commit/7363218) — docs(agents): archive older Prior narrative cascade to AGENTS-archive.md.
+>
+> **AGENTS.md narrative archive pass ([7363218](https://github.com/Cremacious/beehive-studio/commit/7363218)):** AGENTS.md trimmed 2016 → 959 lines (52% reduction). 25 historical "Prior — Last updated" blocks moved to sibling [AGENTS-archive.md](./AGENTS-archive.md) (1066 lines) — search by phase name (e.g. "D2a", "H3", "C5b") or commit SHA to find specific session context. Working Agreement + Design System + Copy & Voice rule + What Has Been Built + Key Patterns + Free Tier Limits all preserved unchanged in active doc. Resume Here + 3 most-recent Prior blocks (D2b · D3a · D3b shipping summaries) kept for short-term cross-D-phase context.
 >
 > **D-phase polish pass round 4 ([641eca7](https://github.com/Cremacious/beehive-studio/commit/641eca7)):** all 5 entity search routes upgraded from v1-no-cursor to standard tuple-cursor pagination. Books search already had cursor (verified during exploration, not modified). Sparks/Hives/Lists/Clubs each got: sort-key-aware cursor encoding (createdAt for recent, entityCount for popularity sorts, JS-ranked score for relevance/most-active where applicable) + result components extended with explicit `q`/`genre`/`size`/`sort` props for Load more URL construction + 4 search pages updated to thread the new props. Hives + Clubs JS-ranked sort candidate window bumped 100 → 200 to match Trending rail pattern. 12 files total. 679/679 tests, tsc clean. Each TODO: real relevance scoring comment preserved (collapse-to-recent/most-active posture unchanged).
 >

@@ -258,10 +258,18 @@ export const readingLists = pgTable(
     followerCount: integer('follower_count').notNull().default(0),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    // D3a: Discover Lists additive columns.
+    genre: text('genre'),
+    firstPubliclyDiscoverableAt: timestamp('first_publicly_discoverable_at'),
+    lastUpdatedAt: timestamp('last_updated_at'),
   },
   (t) => [
     index('reading_lists_user_created_idx').on(t.userId, t.createdAt.desc()),
     index('reading_lists_discoverable_visibility_idx').on(t.discoverable, t.visibility),
+    index('reading_lists_last_updated_idx').on(t.lastUpdatedAt.desc()),
+    index('reading_lists_follower_count_idx').on(t.followerCount.desc()),
+    // first_public partial index created in migrate-d3a.ts (drizzle has no
+    // first-class partial-index DSL for the predicate we need).
   ],
 )
 

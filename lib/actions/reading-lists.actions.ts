@@ -128,6 +128,12 @@ export async function createListAction(
   }
 
   const id = createId()
+  // D3a: stamp first-public if list is born PUBLIC+discoverable (kind=CUSTOM
+  // by construction here). last_updated_at seeded to now so denorm is
+  // populated from row birth.
+  const now = new Date()
+  const isInitialPublicDiscoverable =
+    parsed.data.visibility === 'PUBLIC' && parsed.data.discoverable === true
   await db.transaction(async (tx) => {
     await tx.insert(readingLists).values({
       id,
@@ -138,6 +144,8 @@ export async function createListAction(
       visibility: parsed.data.visibility,
       discoverable: parsed.data.discoverable,
       tags: parsed.data.tags,
+      firstPubliclyDiscoverableAt: isInitialPublicDiscoverable ? now : null,
+      lastUpdatedAt: now,
     })
     if (parsed.data.visibility === 'PUBLIC') {
       await recordSocialActivityTx(tx, {
@@ -561,9 +569,40 @@ export async function updateListAction(
   ) {
     updates.discoverable = false
   }
-  updates.updatedAt = new Date()
+  const updateNow = new Date()
+  updates.updatedAt = updateNow
+  // D3a: bump last_updated_at denorm on any metadata edit.
+  updates.lastUpdatedAt = updateNow
 
   await db.transaction(async (tx) => {
+    // D3a: first-public stamp gate. If this update transitions the list into
+    // PUBLIC + discoverable + kind=CUSTOM for the first time, stamp
+    // firstPubliclyDiscoverableAt. Mirrors D2b updateHiveAction.
+    const current = await tx.query.readingLists.findFirst({
+      where: eq(readingLists.id, parsed.data.listId),
+      columns: {
+        visibility: true,
+        discoverable: true,
+        kind: true,
+        firstPubliclyDiscoverableAt: true,
+      },
+    })
+    if (current) {
+      const nextVisibility = updates.visibility ?? current.visibility
+      const nextDiscoverable =
+        updates.discoverable !== undefined
+          ? updates.discoverable
+          : current.discoverable
+      const becomingPublic =
+        nextVisibility === 'PUBLIC' &&
+        nextDiscoverable === true &&
+        current.kind === 'CUSTOM' &&
+        current.firstPubliclyDiscoverableAt == null
+      if (becomingPublic) {
+        updates.firstPubliclyDiscoverableAt = updateNow
+      }
+    }
+
     await tx
       .update(readingLists)
       .set(updates)
@@ -665,11 +704,14 @@ export async function addBookToListAction(
       order: maxOrder + 1,
     })
 
+    const addNow = new Date()
     await tx
       .update(readingLists)
       .set({
         bookCount: sql`${readingLists.bookCount} + 1`,
-        updatedAt: new Date(),
+        updatedAt: addNow,
+        // D3a: bump last_updated_at denorm on book add.
+        lastUpdatedAt: addNow,
       })
       .where(eq(readingLists.id, parsed.data.listId))
 
@@ -804,11 +846,14 @@ export async function removeBookFromListAction(
     await tx
       .delete(readingListBooks)
       .where(eq(readingListBooks.id, parsed.data.bookRowId))
+    const removeNow = new Date()
     await tx
       .update(readingLists)
       .set({
         bookCount: sql`GREATEST(${readingLists.bookCount} - 1, 0)`,
-        updatedAt: new Date(),
+        updatedAt: removeNow,
+        // D3a: bump last_updated_at denorm on book remove.
+        lastUpdatedAt: removeNow,
       })
       .where(eq(readingLists.id, row.listId))
   })

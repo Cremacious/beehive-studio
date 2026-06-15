@@ -80,3 +80,74 @@ describe('discover actions surface', () => {
     expect(typeof discoverActions.searchBooksAction).toBe('function')
   })
 })
+
+describe('searchBooksDiscoverAction — W2.1 extended filter inputs', () => {
+  it('accepts empty input (no q, no filters) and returns success', async () => {
+    const r = await discoverActions.searchBooksDiscoverAction({})
+    expect(r.success).toBe(true)
+  })
+
+  it('accepts multi-genre via genres[]', async () => {
+    const r = await discoverActions.searchBooksDiscoverAction({
+      genres: ['fantasy', 'sci-fi'],
+    })
+    expect(r.success).toBe(true)
+  })
+
+  it('drops unknown genres from genres[] (silently filtered)', async () => {
+    const r = await discoverActions.searchBooksDiscoverAction({
+      genres: ['fantasy', 'not-a-real-genre'],
+    })
+    expect(r.success).toBe(true)
+  })
+
+  it.each(['short', 'novella', 'novel', 'epic'] as const)(
+    'accepts length=%s',
+    async (len) => {
+      const r = await discoverActions.searchBooksDiscoverAction({ length: len })
+      expect(r.success).toBe(true)
+    },
+  )
+
+  it.each(['ongoing', 'completed'] as const)(
+    'accepts status=%s',
+    async (st) => {
+      const r = await discoverActions.searchBooksDiscoverAction({ status: st })
+      expect(r.success).toBe(true)
+    },
+  )
+
+  it.each(['standalone', 'in-series'] as const)(
+    'accepts series=%s',
+    async (s) => {
+      const r = await discoverActions.searchBooksDiscoverAction({ series: s })
+      expect(r.success).toBe(true)
+    },
+  )
+
+  it.each(['week', 'month'] as const)('accepts updated=%s', async (u) => {
+    const r = await discoverActions.searchBooksDiscoverAction({ updated: u })
+    expect(r.success).toBe(true)
+  })
+
+  it('composes all new filters together', async () => {
+    const r = await discoverActions.searchBooksDiscoverAction({
+      q: 'crown',
+      genres: ['fantasy'],
+      length: 'novel',
+      status: 'ongoing',
+      series: 'in-series',
+      updated: 'week',
+      sort: 'popular',
+    })
+    expect(r.success).toBe(true)
+  })
+
+  it('still accepts the legacy single genre input', async () => {
+    const r = await discoverActions.searchBooksDiscoverAction({
+      q: 'crown',
+      genre: 'fantasy',
+    })
+    expect(r.success).toBe(true)
+  })
+})

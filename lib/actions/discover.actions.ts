@@ -1254,9 +1254,17 @@ export async function getBackfillBooksAction(args: {
 // ─── 9. Search (Discover) ─────────────────────────────────────────────────────
 
 export async function searchBooksDiscoverAction(args: {
-  q: string
+  q?: string
   genre?: string
+  /** Multi-select genre — when non-empty, takes precedence over single `genre`. */
+  genres?: string[]
   tag?: string
+  /** Word-count bucket. Applied via correlated subquery over chapters.word_count. */
+  length?: 'any' | 'short' | 'novella' | 'novel' | 'epic'
+  /** Status bucket derived from updated_at (Ongoing = updated within 90d). */
+  status?: 'any' | 'ongoing' | 'completed'
+  series?: 'any' | 'standalone' | 'in-series'
+  updated?: 'anytime' | 'week' | 'month'
   sort?: 'relevance' | 'recent' | 'popular'
   cursor?: string | null
 }): Promise<
@@ -1264,32 +1272,76 @@ export async function searchBooksDiscoverAction(args: {
 > {
   const viewerId = await getOptionalUserId()
   const blockedAuthorIds = await getBlockedAuthorIdsForViewer(viewerId)
-  const genre =
-    args.genre && isValidGenre(args.genre) ? (args.genre as GenreSlug) : undefined
   const cursor = decodeCursor(args.cursor)
 
-  const q = args.q.trim()
-  if (q.length === 0) {
-    return { success: true, data: { books: [], nextCursor: null } }
-  }
+  const q = (args.q ?? '').trim()
+
   // 'relevance' currently maps to 'recent' until a real relevance signal lands.
   // TODO: real relevance scoring (per spec §9 — out of scope for D1).
   const sort: 'recent' | 'popular' =
     args.sort === 'popular' ? 'popular' : 'recent'
 
-  const like = `%${q}%`
-  const filters = buildPublicBookFilters(genre, blockedAuthorIds)
-  // Title / author display name / author username substring match, OR tag exact match.
-  filters.push(
-    or(
-      ilike(books.title, like),
-      ilike(userProfiles.displayName, like),
-      ilike(userProfiles.username, like),
-      sql`${q} = ANY(${books.tags})`,
-    )!,
-  )
+  // Build base filter set — start with public + discoverable + non-blocked.
+  // Apply single-genre via the existing helper unless `genres` (plural) is supplied.
+  const multiGenres = (args.genres ?? [])
+    .filter((g): g is string => typeof g === 'string' && isValidGenre(g))
+  const singleGenre =
+    !multiGenres.length && args.genre && isValidGenre(args.genre)
+      ? (args.genre as GenreSlug)
+      : undefined
+  const filters = buildPublicBookFilters(singleGenre, blockedAuthorIds)
+
+  if (multiGenres.length > 0) {
+    filters.push(inArray(books.genre, multiGenres as GenreSlug[]))
+  }
+
+  // Title / author / tag search clause — only when q is non-empty.
+  if (q.length > 0) {
+    const like = `%${q}%`
+    filters.push(
+      or(
+        ilike(books.title, like),
+        ilike(userProfiles.displayName, like),
+        ilike(userProfiles.username, like),
+        sql`${q} = ANY(${books.tags})`,
+      )!,
+    )
+  }
+
   if (args.tag) {
     filters.push(sql`${args.tag} = ANY(${books.tags})`)
+  }
+
+  // Length bucket via correlated subquery (chapters table has wordCount; books
+  // does not). Trade-off: per-row subquery cost is real at scale; if hot,
+  // denormalize books.aggregate_word_count later. Spec §11 deferred follow-up.
+  if (args.length && args.length !== 'any') {
+    const wcSql = sql<number>`COALESCE((SELECT SUM(${chapters.wordCount}) FROM ${chapters} WHERE ${chapters.bookId} = ${books.id}), 0)`
+    if (args.length === 'short') filters.push(sql`${wcSql} < 20000`)
+    else if (args.length === 'novella') filters.push(sql`${wcSql} >= 20000 AND ${wcSql} < 50000`)
+    else if (args.length === 'novel') filters.push(sql`${wcSql} >= 50000 AND ${wcSql} < 120000`)
+    else if (args.length === 'epic') filters.push(sql`${wcSql} >= 120000`)
+  }
+
+  // Status bucket — 90-day updated_at heuristic per plan resolved decision 1.
+  if (args.status && args.status !== 'any') {
+    const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
+    if (args.status === 'ongoing') filters.push(gte(books.updatedAt, ninetyDaysAgo))
+    else if (args.status === 'completed') filters.push(lt(books.updatedAt, ninetyDaysAgo))
+  }
+
+  // Series posture.
+  if (args.series && args.series !== 'any') {
+    if (args.series === 'standalone') filters.push(isNull(books.seriesName))
+    else if (args.series === 'in-series')
+      filters.push(sql`${books.seriesName} IS NOT NULL`)
+  }
+
+  // Updated recency bucket.
+  if (args.updated && args.updated !== 'anytime') {
+    const days = args.updated === 'week' ? 7 : 30
+    const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
+    filters.push(gte(books.updatedAt, cutoff))
   }
 
   // Fetch a candidate window. For popular sort we need likeCount, so we

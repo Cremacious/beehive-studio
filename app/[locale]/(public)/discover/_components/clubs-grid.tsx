@@ -1,12 +1,183 @@
-type Props = {
-  sp: Record<string, string | string[] | undefined>
-  locale: string
+import {
+  searchClubsDiscoverAction,
+  getFeaturedClubAction,
+  type ClubCard,
+} from '@/lib/actions/discover-clubs.actions'
+import {
+  parseStringParam,
+  parseMultiSelect,
+  parseRadio,
+  buildUrl,
+} from '@/lib/discover/url-state'
+import { GENRE_LABEL, isValidGenre, type GenreSlug } from '@/lib/discover/genres'
+import { SlimFeaturedStrip } from './slim-featured-strip'
+import { SortHeader } from './sort-header'
+import { ActiveFilterChips, type ActiveFilterChip } from './active-filter-chips'
+import { ClubGridCard } from './club-grid-card'
+
+type SP = Record<string, string | string[] | undefined>
+type Props = { sp: SP; locale: string }
+
+const SIZES = ['any', 'intimate', 'mid', 'large'] as const
+const ACTIVITIES = ['any', 'week'] as const
+const SORTS = ['most-active', 'recent', 'most-members'] as const
+
+const SIZE_LABEL: Record<(typeof SIZES)[number], string> = {
+  any: 'Any size',
+  intimate: 'Intimate',
+  mid: 'Medium',
+  large: 'Large',
+}
+const ACTIVITY_LABEL: Record<(typeof ACTIVITIES)[number], string> = {
+  any: 'Any',
+  week: 'Active this week',
+}
+const ACCESS_LABEL: Record<string, string> = {
+  open: 'Open to join',
+  approval: 'Approval required',
+}
+const CURRENT_LABEL: Record<string, string> = {
+  'has-current': 'Has current book',
+  between: 'Between books',
 }
 
-export function ClubsGrid(_props: Props) {
+const SORT_OPTIONS = [
+  { value: 'most-active', label: 'Most active' },
+  { value: 'recent', label: 'Most recent' },
+  { value: 'most-members', label: 'Most members' },
+] as const
+
+function pickRaw(sp: SP, key: string): string | undefined {
+  const v = sp[key]
+  return typeof v === 'string' ? v : undefined
+}
+
+function buildChips(sp: SP, locale: string): ActiveFilterChip[] {
+  const chips: ActiveFilterChip[] = []
+  const q = parseStringParam(pickRaw(sp, 'q'))
+  const genres = parseMultiSelect(pickRaw(sp, 'genres'))
+  const size = parseRadio(pickRaw(sp, 'size'), SIZES, 'any')
+  const access = parseMultiSelect(pickRaw(sp, 'accessStates'))
+  const activity = parseRadio(pickRaw(sp, 'activity'), ACTIVITIES, 'any')
+  const currentBook = parseMultiSelect(pickRaw(sp, 'currentBook'))
+  const sort = parseRadio(pickRaw(sp, 'sort'), SORTS, 'most-active')
+
+  const all: Record<string, string | string[] | undefined> = {
+    q,
+    genres: genres.length ? genres : undefined,
+    size: size !== 'any' ? size : undefined,
+    accessStates: access.length ? access : undefined,
+    activity: activity !== 'any' ? activity : undefined,
+    currentBook: currentBook.length ? currentBook : undefined,
+    sort: sort !== 'most-active' ? sort : undefined,
+  }
+  const without = (key: string) =>
+    buildUrl('clubs', { ...all, [key]: undefined }, `/${locale}/discover`)
+  const withoutMulti = (
+    key: 'genres' | 'accessStates' | 'currentBook',
+    val: string,
+  ) => {
+    const current =
+      key === 'genres' ? genres : key === 'accessStates' ? access : currentBook
+    const next = current.filter((v) => v !== val)
+    return buildUrl(
+      'clubs',
+      { ...all, [key]: next.length ? next : undefined },
+      `/${locale}/discover`,
+    )
+  }
+
+  if (q) chips.push({ label: `Search: ${q}`, removeHref: without('q') })
+  for (const g of genres) {
+    if (isValidGenre(g)) {
+      chips.push({
+        label: GENRE_LABEL[g as GenreSlug],
+        removeHref: withoutMulti('genres', g),
+      })
+    }
+  }
+  if (size !== 'any')
+    chips.push({ label: SIZE_LABEL[size], removeHref: without('size') })
+  for (const a of access) {
+    const label = ACCESS_LABEL[a]
+    if (label)
+      chips.push({ label, removeHref: withoutMulti('accessStates', a) })
+  }
+  if (activity !== 'any')
+    chips.push({
+      label: ACTIVITY_LABEL[activity],
+      removeHref: without('activity'),
+    })
+  for (const c of currentBook) {
+    const label = CURRENT_LABEL[c]
+    if (label) chips.push({ label, removeHref: withoutMulti('currentBook', c) })
+  }
+  return chips
+}
+
+export async function ClubsGrid({ sp, locale }: Props) {
+  const q = parseStringParam(pickRaw(sp, 'q'))
+  const genres = parseMultiSelect(pickRaw(sp, 'genres'))
+  const size = parseRadio(pickRaw(sp, 'size'), SIZES, 'any')
+  const access = parseMultiSelect(pickRaw(sp, 'accessStates')) as Array<
+    'open' | 'approval'
+  >
+  const currentBook = parseMultiSelect(pickRaw(sp, 'currentBook')) as Array<
+    'has-current' | 'between'
+  >
+  const sort = parseRadio(pickRaw(sp, 'sort'), SORTS, 'most-active')
+
+  const [resultsRes, featuredRes] = await Promise.all([
+    searchClubsDiscoverAction({
+      q,
+      genres,
+      size,
+      accessStates: access,
+      currentBook,
+      sort,
+    }),
+    getFeaturedClubAction({}),
+  ])
+
+  const clubs: ClubCard[] = resultsRes.success ? resultsRes.data.books : []
+  const featured =
+    featuredRes.success && featuredRes.data
+      ? {
+          title: featuredRes.data.name,
+          caption: featuredRes.data.currentBookTitle
+            ? `reading ${featuredRes.data.currentBookTitle}`
+            : `${featuredRes.data.memberCount} members`,
+          href: `/${locale}/clubs/${featuredRes.data.id}`,
+        }
+      : null
+
   return (
-    <div className="text-[14px] text-[var(--canvas-dark-ink-muted)] py-8">
-      TODO: ClubsGrid (wires in W5.4)
+    <div className="flex flex-col gap-4">
+      <SlimFeaturedStrip kind="club" featured={featured} />
+      <SortHeader
+        count={clubs.length}
+        entityNoun={clubs.length === 1 ? 'club' : 'clubs'}
+        sortOptions={SORT_OPTIONS.map((o) => ({ ...o }))}
+        selectedSort={sort}
+      />
+      <ActiveFilterChips chips={buildChips(sp, locale)} />
+      {clubs.length === 0 ? (
+        <p className="italic text-[var(--canvas-dark-ink-muted)] py-8 text-center">
+          No clubs match these filters. Try clearing one.
+        </p>
+      ) : (
+        <div
+          className="grid gap-4"
+          style={{
+            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+            justifyItems: 'start',
+          }}
+        >
+          {clubs.map((club) => (
+            <ClubGridCard key={club.id} club={club} locale={locale} />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

@@ -862,6 +862,11 @@ export async function searchClubsDiscoverAction(args: {
   /** Multi-select genre; non-empty array takes precedence over single `genre`. */
   genres?: string[]
   /**
+   * Member-count bucket — intimate (<=5), mid (6-15), large (>15).
+   * 'any' (default) applies no filter.
+   */
+  size?: 'any' | 'intimate' | 'mid' | 'large'
+  /**
    * Access posture. 'open' → openJoin=true; 'approval' → openJoin=false.
    * OR semantics within array: both selected = no narrowing.
    */
@@ -892,6 +897,15 @@ export async function searchClubsDiscoverAction(args: {
 
   if (multiGenres.length > 0) {
     conds.push(sql`${bookClubs.genre} = ANY(${multiGenres})`)
+  }
+
+  // Size bucket on memberCount denorm.
+  if (args.size === 'intimate') {
+    conds.push(sql`${bookClubs.memberCount} <= 5`)
+  } else if (args.size === 'mid') {
+    conds.push(sql`${bookClubs.memberCount} > 5 AND ${bookClubs.memberCount} <= 15`)
+  } else if (args.size === 'large') {
+    conds.push(sql`${bookClubs.memberCount} > 15`)
   }
 
   // Access posture — OR within array; if both selected, no filter added.

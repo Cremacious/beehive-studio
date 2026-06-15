@@ -56,13 +56,13 @@ export function NumberedPagination({
 
   return (
     <nav
-      className="flex items-center justify-center gap-1.5 pt-4 flex-wrap"
+      className="flex items-center justify-center gap-1 pt-6 flex-wrap"
       aria-label="Pagination"
     >
       {hasPrev ? (
         <Link
           href={hrefFor(page - 1)}
-          className="inline-flex items-center gap-1 px-2.5 py-1.5 text-[12px] rounded-[var(--r-row)] border border-transparent text-[var(--canvas-dark-ink)] hover:bg-[oklch(from_var(--brand)_l_c_h_/_0.10)] hover:text-[var(--brand)]"
+          className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] text-[var(--canvas-dark-ink-muted)] hover:text-[var(--brand)] transition-colors"
           aria-label="Previous page"
         >
           <ChevronLeft size={14} aria-hidden="true" />
@@ -70,7 +70,7 @@ export function NumberedPagination({
         </Link>
       ) : (
         <span
-          className="inline-flex items-center gap-1 px-2.5 py-1.5 text-[12px] rounded-[var(--r-row)] text-[var(--canvas-dark-ink-muted)] opacity-50 cursor-not-allowed"
+          className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] text-[var(--canvas-dark-ink-muted)] opacity-30 cursor-not-allowed"
           aria-disabled="true"
         >
           <ChevronLeft size={14} aria-hidden="true" />
@@ -83,7 +83,7 @@ export function NumberedPagination({
           return (
             <span
               key={`ellipsis-${i}`}
-              className="px-2 text-[12px] text-[var(--canvas-dark-ink-muted)]"
+              className="px-1 text-[12px] text-[var(--canvas-dark-ink-muted)]"
               aria-hidden="true"
             >
               …
@@ -95,8 +95,11 @@ export function NumberedPagination({
           return (
             <span
               key={cell}
-              className="inline-flex items-center justify-center min-w-[32px] px-2.5 py-1.5 text-[12px] font-bold rounded-[var(--r-row)]"
+              className="inline-flex items-center justify-center text-[12px] font-bold"
               style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '999px',
                 background: 'var(--brand)',
                 color: 'var(--brand-ink)',
               }}
@@ -110,7 +113,12 @@ export function NumberedPagination({
           <Link
             key={cell}
             href={hrefFor(cell)}
-            className="inline-flex items-center justify-center min-w-[32px] px-2.5 py-1.5 text-[12px] rounded-[var(--r-row)] border border-[var(--br-card)] text-[var(--canvas-dark-ink)] hover:border-[var(--brand)] hover:text-[var(--brand)]"
+            className="inline-flex items-center justify-center text-[12px] text-[var(--canvas-dark-ink)] hover:bg-[rgba(255,255,255,0.05)] hover:text-[var(--brand)] transition-colors"
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '999px',
+            }}
             aria-label={`Go to page ${cell}`}
           >
             {cell}
@@ -121,7 +129,7 @@ export function NumberedPagination({
       {hasNext ? (
         <Link
           href={hrefFor(page + 1)}
-          className="inline-flex items-center gap-1 px-2.5 py-1.5 text-[12px] rounded-[var(--r-row)] border border-transparent text-[var(--canvas-dark-ink)] hover:bg-[oklch(from_var(--brand)_l_c_h_/_0.10)] hover:text-[var(--brand)]"
+          className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] text-[var(--canvas-dark-ink)] hover:text-[var(--brand)] transition-colors"
           aria-label="Next page"
         >
           Next
@@ -129,7 +137,7 @@ export function NumberedPagination({
         </Link>
       ) : (
         <span
-          className="inline-flex items-center gap-1 px-2.5 py-1.5 text-[12px] rounded-[var(--r-row)] text-[var(--canvas-dark-ink-muted)] opacity-50 cursor-not-allowed"
+          className="inline-flex items-center gap-1 px-3 py-1.5 text-[12px] text-[var(--canvas-dark-ink-muted)] opacity-30 cursor-not-allowed"
           aria-disabled="true"
         >
           Next

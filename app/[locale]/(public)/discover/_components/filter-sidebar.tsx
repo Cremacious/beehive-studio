@@ -7,32 +7,51 @@ type Props = {
   children: ReactNode
 }
 
+/**
+ * Discover sidebar — S2 dark iOS "section tiles" treatment.
+ *
+ * No border, no shadow. Vertical gradient surface. Sticks below the 56px
+ * AppNav and stretches to the bottom of the viewport on scroll. Filter
+ * sections are themselves rounded tiles (rendered by <FilterSection>),
+ * giving the iOS Settings grouped feel.
+ */
 export function FilterSidebar({ activeCount, clearHref, children }: Props) {
   return (
     <aside
-      className="self-start rounded-[var(--r-card)] border border-[var(--br-card)] overflow-hidden"
+      className="overflow-hidden"
       style={{
         width: 'var(--w-discover-sidebar)',
         background:
-          'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
-        boxShadow: 'var(--sh-card)',
+          'linear-gradient(180deg, #222426 0%, #1b1c1e 100%)',
+        position: 'sticky',
+        top: '64px',
+        height: 'calc(100vh - 80px)',
+        display: 'flex',
+        flexDirection: 'column',
+        borderRadius: '18px',
       }}
       aria-label="Filters"
     >
-      <header className="flex items-center justify-between px-4 py-3 border-b border-[var(--br-card)]">
+      <header
+        className="flex items-center justify-between px-5 py-4"
+        style={{
+          borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+          flexShrink: 0,
+        }}
+      >
         <h2 className="text-[11px] font-bold tracking-[0.08em] uppercase text-[var(--brand)]">
           Filters
         </h2>
         {clearHref && activeCount > 0 ? (
           <Link
             href={clearHref}
-            className="text-[10px] text-[var(--canvas-dark-ink-muted)] underline hover:text-[var(--brand)]"
+            className="text-[10px] text-[var(--canvas-dark-ink-muted)] hover:text-[var(--brand)]"
           >
             Clear all ({activeCount})
           </Link>
         ) : null}
       </header>
-      <div className="px-4 py-3 space-y-4 max-h-[calc(100vh-180px)] overflow-y-auto">
+      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
         {children}
       </div>
     </aside>

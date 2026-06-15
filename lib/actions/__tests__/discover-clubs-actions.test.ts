@@ -65,3 +65,63 @@ describe('discover-clubs actions surface', () => {
     expect(recent.success).toBe(true)
   })
 })
+
+describe('searchClubsDiscoverAction — W2.5 extended filter inputs', () => {
+  it('accepts empty input (no q, no filters)', async () => {
+    const r = await discoverClubsActions.searchClubsDiscoverAction({})
+    expect(r.success).toBe(true)
+  })
+
+  it('accepts multi-genre via genres[]', async () => {
+    const r = await discoverClubsActions.searchClubsDiscoverAction({
+      genres: ['fantasy', 'sci-fi'],
+    })
+    expect(r.success).toBe(true)
+  })
+
+  it.each(['open', 'approval'] as const)(
+    'accepts accessStates=[%s]',
+    async (a) => {
+      const r = await discoverClubsActions.searchClubsDiscoverAction({
+        accessStates: [a],
+      })
+      expect(r.success).toBe(true)
+    },
+  )
+
+  it('accepts accessStates with both selected (no narrowing)', async () => {
+    const r = await discoverClubsActions.searchClubsDiscoverAction({
+      accessStates: ['open', 'approval'],
+    })
+    expect(r.success).toBe(true)
+  })
+
+  it.each(['has-current', 'between'] as const)(
+    'accepts currentBook=[%s]',
+    async (c) => {
+      const r = await discoverClubsActions.searchClubsDiscoverAction({
+        currentBook: [c],
+      })
+      expect(r.success).toBe(true)
+    },
+  )
+
+  it('composes all new filters together', async () => {
+    const r = await discoverClubsActions.searchClubsDiscoverAction({
+      q: 'tea',
+      genres: ['fantasy'],
+      accessStates: ['open'],
+      currentBook: ['has-current'],
+      sort: 'most-active',
+    })
+    expect(r.success).toBe(true)
+  })
+
+  it('preserves legacy single-genre input', async () => {
+    const r = await discoverClubsActions.searchClubsDiscoverAction({
+      q: 'tea',
+      genre: 'fantasy',
+    })
+    expect(r.success).toBe(true)
+  })
+})

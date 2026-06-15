@@ -857,32 +857,73 @@ export async function getClubBackfillAction(args: {
  *   most-active/relevance → (activityScore, id) ranked in JS
  */
 export async function searchClubsDiscoverAction(args: {
-  q: string
+  q?: string
   genre?: GenreSlug
+  /** Multi-select genre; non-empty array takes precedence over single `genre`. */
+  genres?: string[]
+  /**
+   * Access posture. 'open' → openJoin=true; 'approval' → openJoin=false.
+   * OR semantics within array: both selected = no narrowing.
+   */
+  accessStates?: Array<'open' | 'approval'>
+  /**
+   * Current-book posture. 'has-current' → currentBookId IS NOT NULL;
+   * 'between' → currentBookId IS NULL. OR semantics within array.
+   */
+  currentBook?: Array<'has-current' | 'between'>
   sort?: 'relevance' | 'recent' | 'most-active' | 'most-members'
   cursor?: string | null
 }): Promise<ActionResult<{ books: ClubCard[]; nextCursor: string | null }>> {
-  const trimmed = args.q.trim()
-  if (trimmed.length === 0) {
-    return { success: true, data: { books: [], nextCursor: null } }
-  }
   const viewerId = await getOptionalUserId()
   const blocked = await getBlockedClubOwnerIdsForViewer(viewerId)
   const sort = args.sort ?? 'recent'
   const needsActivity = sort === 'most-active' || sort === 'relevance'
   const cursor = decodeCursor(args.cursor)
+  const trimmed = (args.q ?? '').trim()
 
-  const pattern = `%${trimmed}%`
+  // Multi-genre takes precedence over single genre.
+  const multiGenres = (args.genres ?? []).filter(
+    (g): g is string => typeof g === 'string',
+  )
+  const singleGenre =
+    multiGenres.length === 0 ? args.genre : undefined
 
-  const conds = [
-    ...buildPublicClubFilters(args.genre, blocked),
-    or(
+  const conds = [...buildPublicClubFilters(singleGenre, blocked)]
+
+  if (multiGenres.length > 0) {
+    conds.push(sql`${bookClubs.genre} = ANY(${multiGenres})`)
+  }
+
+  // Access posture — OR within array; if both selected, no filter added.
+  const accessSet = new Set(args.accessStates ?? [])
+  const accessNarrow =
+    accessSet.size === 1 ? Array.from(accessSet)[0] : undefined
+  if (accessNarrow === 'open') {
+    conds.push(eq(bookClubs.openJoin, true))
+  } else if (accessNarrow === 'approval') {
+    conds.push(eq(bookClubs.openJoin, false))
+  }
+
+  // Current-book posture — OR within array.
+  const currentSet = new Set(args.currentBook ?? [])
+  const currentNarrow =
+    currentSet.size === 1 ? Array.from(currentSet)[0] : undefined
+  if (currentNarrow === 'has-current') {
+    conds.push(isNotNull(bookClubs.currentBookId))
+  } else if (currentNarrow === 'between') {
+    conds.push(sql`${bookClubs.currentBookId} IS NULL`)
+  }
+
+  if (trimmed.length > 0) {
+    const pattern = `%${trimmed}%`
+    const titleOr = or(
       sql`${bookClubs.name} ILIKE ${pattern}`,
       sql`${bookClubs.description} ILIKE ${pattern}`,
       sql`${userProfiles.username} ILIKE ${pattern}`,
       sql`${userProfiles.displayName} ILIKE ${pattern}`,
-    ),
-  ]
+    )
+    if (titleOr) conds.push(titleOr)
+  }
 
   // Cursor tail clause for DB-sorted modes (recent / most-members).
   if (cursor) {

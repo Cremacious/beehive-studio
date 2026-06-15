@@ -790,31 +790,70 @@ export async function getListBackfillAction(args: {
  *   most-followed/relevance → (followerCount, id)
  */
 export async function searchListsDiscoverAction(args: {
-  q: string
+  q?: string
   genre?: GenreSlug
+  /** Multi-select genre; non-empty array takes precedence over single `genre`. */
+  genres?: string[]
+  /** Follower-count threshold. '10+' filters to lists with followerCount >= 10. */
+  popularity?: 'any' | '10+'
+  /** Updated recency — applied to lastUpdatedAt. */
+  updated?: 'anytime' | 'month'
+  /** anyone (default) / following (curator must be in viewer's follow set). */
+  curator?: 'anyone' | 'following'
   sort?: 'relevance' | 'recent' | 'most-followed' | 'most-books'
   cursor?: string | null
 }): Promise<ActionResult<{ books: ListCard[]; nextCursor: string | null }>> {
-  const trimmed = args.q.trim()
-  if (trimmed.length === 0) {
-    return { success: true, data: { books: [], nextCursor: null } }
-  }
   const viewerId = await getOptionalUserId()
   const blocked = await getBlockedListOwnerIdsForViewer(viewerId)
   const sort = args.sort ?? 'recent'
   const cursor = decodeCursor(args.cursor)
+  const trimmed = (args.q ?? '').trim()
 
-  const pattern = `%${trimmed}%`
+  // Multi-genre takes precedence over single genre.
+  const multiGenres = (args.genres ?? []).filter(
+    (g): g is string => typeof g === 'string',
+  )
+  const singleGenre =
+    multiGenres.length === 0 ? args.genre : undefined
 
-  const conds = [
-    ...buildPublicListFilters(args.genre, blocked),
-    or(
+  const conds = [...buildPublicListFilters(singleGenre, blocked)]
+
+  if (multiGenres.length > 0) {
+    conds.push(sql`${readingLists.genre} = ANY(${multiGenres})`)
+    conds.push(isNotNull(readingLists.genre))
+  }
+
+  if (trimmed.length > 0) {
+    const pattern = `%${trimmed}%`
+    const titleOr = or(
       sql`${readingLists.title} ILIKE ${pattern}`,
       sql`${readingLists.description} ILIKE ${pattern}`,
       sql`${userProfiles.username} ILIKE ${pattern}`,
       sql`${userProfiles.displayName} ILIKE ${pattern}`,
-    ),
-  ]
+    )
+    if (titleOr) conds.push(titleOr)
+  }
+
+  // Popularity threshold.
+  if (args.popularity === '10+') {
+    conds.push(gte(readingLists.followerCount, 10))
+  }
+
+  // Updated recency.
+  if (args.updated === 'month') {
+    const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    conds.push(
+      sql`${readingLists.lastUpdatedAt} IS NOT NULL AND ${readingLists.lastUpdatedAt} >= ${cutoff}`,
+    )
+  }
+
+  // Curator-following filter — only effective when viewer is authed. Guest
+  // requests with curator='following' silently fall through (no Following
+  // affordance is shown to guests per spec §4).
+  if (args.curator === 'following' && viewerId) {
+    const followedSubquery = sql<string>`(SELECT ${follows.followeeId} FROM ${follows} WHERE ${follows.followerId} = ${viewerId})`
+    conds.push(sql`${readingLists.userId} IN ${followedSubquery}`)
+  }
 
   // Cursor tail clause per sort mode.
   if (cursor) {

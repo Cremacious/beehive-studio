@@ -67,3 +67,61 @@ describe('discover-lists actions surface', () => {
     expect(recent.success).toBe(true)
   })
 })
+
+describe('searchListsDiscoverAction — W2.4 extended filter inputs', () => {
+  it('accepts empty input (no q, no filters)', async () => {
+    const r = await discoverListsActions.searchListsDiscoverAction({})
+    expect(r.success).toBe(true)
+  })
+
+  it('accepts multi-genre via genres[]', async () => {
+    const r = await discoverListsActions.searchListsDiscoverAction({
+      genres: ['fantasy', 'sci-fi'],
+    })
+    expect(r.success).toBe(true)
+  })
+
+  it('accepts popularity=10+', async () => {
+    const r = await discoverListsActions.searchListsDiscoverAction({
+      popularity: '10+',
+    })
+    expect(r.success).toBe(true)
+  })
+
+  it('accepts updated=month', async () => {
+    const r = await discoverListsActions.searchListsDiscoverAction({
+      updated: 'month',
+    })
+    expect(r.success).toBe(true)
+  })
+
+  it.each(['anyone', 'following'] as const)(
+    'accepts curator=%s (guest treated as anyone)',
+    async (c) => {
+      const r = await discoverListsActions.searchListsDiscoverAction({
+        curator: c,
+      })
+      expect(r.success).toBe(true)
+    },
+  )
+
+  it('composes all new filters together', async () => {
+    const r = await discoverListsActions.searchListsDiscoverAction({
+      q: 'gut me',
+      genres: ['fantasy'],
+      popularity: '10+',
+      updated: 'month',
+      curator: 'following',
+      sort: 'most-followed',
+    })
+    expect(r.success).toBe(true)
+  })
+
+  it('preserves legacy single-genre input', async () => {
+    const r = await discoverListsActions.searchListsDiscoverAction({
+      q: 'gut me',
+      genre: 'fantasy',
+    })
+    expect(r.success).toBe(true)
+  })
+})

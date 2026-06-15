@@ -8,6 +8,7 @@ import {
   buildUrl,
   toggleMulti,
   TAB_IDS,
+  parseMode,
 } from '../url-state'
 
 describe('parseTab', () => {
@@ -121,6 +122,22 @@ describe('buildUrl', () => {
 
   it('accepts a custom basePath', () => {
     expect(buildUrl('books', {}, '/en/discover')).toBe('/en/discover?tab=books')
+  })
+})
+
+describe('parseMode', () => {
+  it('returns the mode when valid', () => {
+    expect(parseMode('for-you')).toBe('for-you')
+    expect(parseMode('trending')).toBe('trending')
+    expect(parseMode('popular')).toBe('popular')
+    expect(parseMode('all')).toBe('all')
+  })
+
+  it('returns undefined for missing / null / empty / unknown values', () => {
+    expect(parseMode(undefined)).toBeUndefined()
+    expect(parseMode(null)).toBeUndefined()
+    expect(parseMode('')).toBeUndefined()
+    expect(parseMode('xyz')).toBeUndefined()
   })
 })
 

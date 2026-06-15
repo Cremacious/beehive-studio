@@ -74,3 +74,16 @@ export function toggleMulti(current: string[], value: string): string[] {
   }
   return [...current, value]
 }
+
+export type ModeId = 'for-you' | 'trending' | 'popular' | 'all'
+
+export const MODE_IDS = ['for-you', 'trending', 'popular', 'all'] as const
+
+const MODE_SET: ReadonlySet<ModeId> = new Set(MODE_IDS)
+
+export function parseMode(raw: string | undefined | null): ModeId | undefined {
+  if (raw && (MODE_SET as ReadonlySet<string>).has(raw)) {
+    return raw as ModeId
+  }
+  return undefined
+}

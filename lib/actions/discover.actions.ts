@@ -1267,12 +1267,21 @@ export async function searchBooksDiscoverAction(args: {
   updated?: 'anytime' | 'week' | 'month'
   sort?: 'relevance' | 'recent' | 'popular'
   cursor?: string | null
+  /** 1-indexed page number for numbered pagination. When set, overrides cursor. */
+  page?: number
 }): Promise<
-  ActionResult<{ books: BookCard[]; nextCursor: string | null }>
+  ActionResult<{
+    books: BookCard[]
+    nextCursor: string | null
+    totalCount: number
+  }>
 > {
   const viewerId = await getOptionalUserId()
   const blockedAuthorIds = await getBlockedAuthorIdsForViewer(viewerId)
   const cursor = decodeCursor(args.cursor)
+  const page = Math.max(1, Math.floor(args.page ?? 1))
+  const usePagination = (args.page ?? 0) > 0
+  const offset = (page - 1) * RAIL_LIMIT
 
   const q = (args.q ?? '').trim()
 
@@ -1344,24 +1353,34 @@ export async function searchBooksDiscoverAction(args: {
     filters.push(gte(books.updatedAt, cutoff))
   }
 
-  // Fetch a candidate window. For popular sort we need likeCount, so we
-  // hydrate after the SELECT for both sort modes for simplicity.
-  const rows = await db
-    .select({
-      id: books.id,
-      title: books.title,
-      authorUserId: books.userId,
-      coverUrl: books.coverUrl,
-      synopsis: books.synopsis,
-      genre: books.genre,
-      tags: books.tags,
-      updatedAt: books.updatedAt,
-      firstPubliclyDiscoverableAt: books.firstPubliclyDiscoverableAt,
-    })
-    .from(books)
-    .leftJoin(userProfiles, eq(userProfiles.userId, books.userId))
-    .where(and(...filters))
-    .limit(200)
+  // Fetch a candidate window + total count in parallel. The COUNT query
+  // backs numbered pagination's totalPages math; the 200-candidate cap
+  // means very large unfiltered queries can show more cards than the
+  // candidate window — that's a known v1 limitation (spec deferred).
+  const [rows, totalCountRows] = await Promise.all([
+    db
+      .select({
+        id: books.id,
+        title: books.title,
+        authorUserId: books.userId,
+        coverUrl: books.coverUrl,
+        synopsis: books.synopsis,
+        genre: books.genre,
+        tags: books.tags,
+        updatedAt: books.updatedAt,
+        firstPubliclyDiscoverableAt: books.firstPubliclyDiscoverableAt,
+      })
+      .from(books)
+      .leftJoin(userProfiles, eq(userProfiles.userId, books.userId))
+      .where(and(...filters))
+      .limit(200),
+    db
+      .select({ total: count(books.id) })
+      .from(books)
+      .leftJoin(userProfiles, eq(userProfiles.userId, books.userId))
+      .where(and(...filters)),
+  ])
+  const totalCount = Number(totalCountRows[0]?.total ?? 0)
 
   // De-dupe (the JOIN can produce duplicates if a book has multiple matches).
   const seen = new Set<string>()
@@ -1390,7 +1409,7 @@ export async function searchBooksDiscoverAction(args: {
       if (bl !== al) return bl - al
       return b.id.localeCompare(a.id)
     })
-    if (cursor && typeof cursor.sortKey === 'number') {
+    if (!usePagination && cursor && typeof cursor.sortKey === 'number') {
     const sk: number = cursor.sortKey;
       sorted = sorted.filter((r) => {
         const lc = likeMap.get(r.id) ?? 0
@@ -1399,18 +1418,19 @@ export async function searchBooksDiscoverAction(args: {
         return false
       })
     }
-    const pageRows = sorted.slice(0, RAIL_LIMIT)
+    const startIdx = usePagination ? offset : 0
+    const pageRows = sorted.slice(startIdx, startIdx + RAIL_LIMIT)
     const last = pageRows[pageRows.length - 1]
-    const hasMore = sorted.length > RAIL_LIMIT
+    const hasMore = sorted.length > startIdx + RAIL_LIMIT
     const nextCursor =
-      hasMore && last
+      hasMore && last && !usePagination
         ? encodeCursor({
             sortKey: likeMap.get(last.id) ?? 0,
             id: last.id,
           })
         : null
     const cards = await projectToBookCards(pageRows)
-    return { success: true, data: { books: cards, nextCursor } }
+    return { success: true, data: { books: cards, nextCursor, totalCount } }
   }
 
   // 'recent' sort.
@@ -1420,7 +1440,7 @@ export async function searchBooksDiscoverAction(args: {
     if (bt !== at) return bt - at
     return b.id.localeCompare(a.id)
   })
-  if (cursor && typeof cursor.sortKey === 'number') {
+  if (!usePagination && cursor && typeof cursor.sortKey === 'number') {
     const sk: number = cursor.sortKey;
     sorted = sorted.filter((r) => {
       const t = r.updatedAt.getTime()
@@ -1429,15 +1449,16 @@ export async function searchBooksDiscoverAction(args: {
       return false
     })
   }
-  const pageRows = sorted.slice(0, RAIL_LIMIT)
+  const startIdx = usePagination ? offset : 0
+  const pageRows = sorted.slice(startIdx, startIdx + RAIL_LIMIT)
   const last = pageRows[pageRows.length - 1]
-  const hasMore = sorted.length > RAIL_LIMIT
+  const hasMore = sorted.length > startIdx + RAIL_LIMIT
   const nextCursor =
-    hasMore && last
+    hasMore && last && !usePagination
       ? encodeCursor({ sortKey: last.updatedAt.getTime(), id: last.id })
       : null
   const cards = await projectToBookCards(pageRows)
-  return { success: true, data: { books: cards, nextCursor } }
+  return { success: true, data: { books: cards, nextCursor, totalCount } }
 }
 
 // ─── 10. Genre book counts (cached 5min) ──────────────────────────────────────

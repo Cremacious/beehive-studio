@@ -7,6 +7,7 @@ import {
   parseStringParam,
   parseMultiSelect,
   parseRadio,
+  parseIntParam,
   buildUrl,
 } from '@/lib/discover/url-state'
 import { GENRE_LABEL, isValidGenre, type GenreSlug } from '@/lib/discover/genres'
@@ -14,6 +15,9 @@ import { SlimFeaturedStrip } from './slim-featured-strip'
 import { SortHeader } from './sort-header'
 import { ActiveFilterChips, type ActiveFilterChip } from './active-filter-chips'
 import { BookGridCard } from './book-grid-card'
+import { NumberedPagination } from './numbered-pagination'
+
+const PAGE_SIZE = 12
 
 type SP = Record<string, string | string[] | undefined>
 
@@ -141,6 +145,7 @@ export async function BooksGrid({ sp, locale }: Props) {
   const series = parseRadio(pickRaw(sp, 'series'), SERIES, 'any')
   const updated = parseRadio(pickRaw(sp, 'updated'), UPDATED, 'anytime')
   const sort = parseRadio(pickRaw(sp, 'sort'), SORTS, 'trending')
+  const page = Math.max(1, parseIntParam(pickRaw(sp, 'page'), 1))
 
   const [resultsRes, featuredRes] = await Promise.all([
     searchBooksDiscoverAction({
@@ -151,11 +156,14 @@ export async function BooksGrid({ sp, locale }: Props) {
       series,
       updated,
       sort: mapSortToAction(sort),
+      page,
     }),
     getFeaturedFreshBookAction({}),
   ])
 
   const books: BookCard[] = resultsRes.success ? resultsRes.data.books : []
+  const totalCount: number = resultsRes.success ? resultsRes.data.totalCount : 0
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
   const featured =
     featuredRes.success && featuredRes.data
       ? {
@@ -173,8 +181,8 @@ export async function BooksGrid({ sp, locale }: Props) {
     <div className="flex flex-col gap-4">
       <SlimFeaturedStrip kind="book" featured={featured} />
       <SortHeader
-        count={books.length}
-        entityNoun={books.length === 1 ? 'book' : 'books'}
+        count={totalCount}
+        entityNoun={totalCount === 1 ? 'book' : 'books'}
         sortOptions={SORT_OPTIONS.map((o) => ({ ...o }))}
         selectedSort={sort}
       />
@@ -184,17 +192,34 @@ export async function BooksGrid({ sp, locale }: Props) {
           No books match these filters. Try clearing one.
         </p>
       ) : (
-        <div
-          className="grid gap-4"
-          style={{
-            gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-            justifyItems: 'start',
-          }}
-        >
-          {books.map((book) => (
-            <BookGridCard key={book.id} book={book} locale={locale} />
-          ))}
-        </div>
+        <>
+          <div
+            className="grid gap-4"
+            style={{
+              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+              justifyItems: 'start',
+            }}
+          >
+            {books.map((book) => (
+              <BookGridCard key={book.id} book={book} locale={locale} />
+            ))}
+          </div>
+          <NumberedPagination
+            tab="books"
+            locale={locale}
+            page={page}
+            totalPages={totalPages}
+            baseParams={{
+              q,
+              genres: genres.length ? genres : undefined,
+              length: length !== 'any' ? length : undefined,
+              status: status !== 'any' ? status : undefined,
+              series: series !== 'any' ? series : undefined,
+              updated: updated !== 'anytime' ? updated : undefined,
+              sort: sort !== 'trending' ? sort : undefined,
+            }}
+          />
+        </>
       )}
     </div>
   )

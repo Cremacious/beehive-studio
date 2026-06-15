@@ -45,6 +45,7 @@ export type SparkVisibility = 'PUBLIC' | 'FRIENDS' | 'PRIVATE'
 export type SparkCard = {
   id: string
   title: string
+  prompt: string
   status: SparkStatus
   visibility: SparkVisibility
   genre: GenreSlug | null
@@ -174,6 +175,7 @@ async function projectToSparkCards(
     .select({
       id: sparks.id,
       title: sparks.title,
+      prompt: sparks.prompt,
       status: sparks.status,
       visibility: sparks.visibility,
       genre: sparks.genre,
@@ -256,6 +258,7 @@ async function projectToSparkCards(
     return {
       id: r.id,
       title: r.title,
+      prompt: r.prompt,
       status: r.status as SparkStatus,
       visibility: r.visibility as SparkVisibility,
       genre: r.genre && isValidGenre(r.genre) ? r.genre : null,

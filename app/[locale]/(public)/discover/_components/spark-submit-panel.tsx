@@ -28,8 +28,11 @@ export function SparkSubmitPanel({ sparkId, wordLimit }: Props) {
           ALREADY_SUBMITTED: 'You already have an entry in this Spark.',
           SPARK_NOT_OPEN: 'This Spark is no longer accepting entries.',
           WORD_LIMIT_EXCEEDED: `Entry exceeds the ${wordLimit}-word limit.`,
+          NOT_ALLOWED: "You don't have permission to enter this Spark.",
+          NOT_FOUND: 'This Spark no longer exists.',
+          INVALID_INPUT: 'Please check your entry and try again.',
         }
-        setError(msgs[result.error] ?? 'Failed to submit. Try again.')
+        setError(msgs[result.error] ?? `Failed to submit (${result.error}). Try again.`)
       }
     })
   }

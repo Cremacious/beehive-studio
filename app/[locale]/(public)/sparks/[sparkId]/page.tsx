@@ -169,10 +169,24 @@ export default async function SparkDetailPage({ params }: Props) {
           </section>
         )}
 
-        {/* Submit panel (OPEN + authenticated + no existing entry) */}
-        {spark.status === 'OPEN' && userId && !hasUserEntry && (
+        {/* Submit panel (OPEN + authenticated + not creator + no existing entry).
+            The spark creator can't enter their own spark; hide the form rather
+            than surfacing a NOT_ALLOWED error on every submit attempt. */}
+        {spark.status === 'OPEN' && userId && !isCreator && !hasUserEntry && (
           <section className="panel" style={{ marginBottom: 22 }}>
             <SparkSubmitPanel sparkId={sparkId} wordLimit={spark.wordLimit} />
+          </section>
+        )}
+
+        {/* Creator's own-spark notice during OPEN — replaces the submit form. */}
+        {spark.status === 'OPEN' && userId && isCreator && (
+          <section
+            className="panel panel-pad"
+            style={{ marginBottom: 22, textAlign: 'center' }}
+          >
+            <p className="meta" style={{ margin: 0 }}>
+              You created this Spark. Once entries arrive, you'll pick a creator's choice winner.
+            </p>
           </section>
         )}
 

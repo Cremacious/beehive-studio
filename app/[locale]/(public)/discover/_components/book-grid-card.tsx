@@ -35,18 +35,22 @@ export function BookGridCard({ book, locale }: Props) {
         }}
       >
         <RailCoverArt coverUrl={book.coverUrl} title={book.title} width={200} />
-        <div className="p-3">
+        <div className="p-3 flex flex-col" style={{ height: '88px' }}>
+          {/* Reserve room for 2 lines of title regardless of actual content so
+              every card lands at the same overall height. line-clamp-2 caps,
+              min-height pads short titles. */}
           <p
             className="text-[14px] font-semibold leading-snug line-clamp-2"
             style={{
               color: 'var(--canvas-dark-ink-strong)',
               fontFamily: 'var(--font-display)',
+              minHeight: '2.6em',
             }}
           >
             {book.title}
           </p>
           <p
-            className="text-[11px] mt-1 truncate"
+            className="text-[11px] mt-auto truncate"
             style={{
               color: 'var(--canvas-dark-ink-muted)',
               fontFamily: 'var(--font-mono)',

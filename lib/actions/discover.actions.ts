@@ -48,8 +48,10 @@ import {
   buildPublicBookFilters,
   projectToBookCards,
   applyBookFilterInputs,
+  loadTrendingSignals,
   type BookCard,
   type RawBookRow,
+  type TrendingSignalCounts,
 } from './discover-shared'
 
 import type { ActionResult } from './book.actions'
@@ -328,95 +330,10 @@ export async function getFeaturedFreshBookAction(args: {
 }
 
 // ─── Trending signal loader (shared by Trending + Rising Stars) ───────────────
+// `loadTrendingSignals` + `TrendingSignalCounts` live in `./discover-shared`
+// so the For You orchestrator can reuse them. Re-aliased here for local refs.
 
-type SignalCounts = {
-  likes: number
-  comments: number
-  reads: number
-  follows: number
-}
-
-/**
- * Loads the 4 trending signals over a window for a set of book ids.
- * Runs 4 GROUP BY queries in parallel and stitches into a Map keyed by bookId.
- * Follows are aggregated per book via `follows.followee_id = books.user_id`.
- */
-async function loadTrendingSignals(
-  bookIds: string[],
-  windowMs: number,
-): Promise<Map<string, SignalCounts>> {
-  if (bookIds.length === 0) return new Map()
-  const windowStart = new Date(Date.now() - windowMs)
-
-  const [likeRows, commentRows, readRows, followRows] = await Promise.all([
-    db
-      .select({ bookId: bookLikes.bookId, total: count() })
-      .from(bookLikes)
-      .where(
-        and(
-          inArray(bookLikes.bookId, bookIds),
-          gte(bookLikes.createdAt, windowStart),
-        ),
-      )
-      .groupBy(bookLikes.bookId),
-    db
-      .select({ bookId: bookComments.bookId, total: count() })
-      .from(bookComments)
-      .where(
-        and(
-          inArray(bookComments.bookId, bookIds),
-          gte(bookComments.createdAt, windowStart),
-        ),
-      )
-      .groupBy(bookComments.bookId),
-    db
-      .select({ bookId: chapterReads.bookId, total: count() })
-      .from(chapterReads)
-      .where(
-        and(
-          inArray(chapterReads.bookId, bookIds),
-          gte(chapterReads.readAt, windowStart),
-        ),
-      )
-      .groupBy(chapterReads.bookId),
-    // Follow attribution: join follows to books by followee_id = books.user_id.
-    db
-      .select({
-        bookId: books.id,
-        total: count(),
-      })
-      .from(follows)
-      .innerJoin(books, eq(books.userId, follows.followeeId))
-      .where(
-        and(
-          inArray(books.id, bookIds),
-          gte(follows.createdAt, windowStart),
-        ),
-      )
-      .groupBy(books.id),
-  ])
-
-  const map = new Map<string, SignalCounts>()
-  function bump(
-    bookId: string,
-    key: keyof SignalCounts,
-    value: number,
-  ): void {
-    const existing = map.get(bookId) ?? {
-      likes: 0,
-      comments: 0,
-      reads: 0,
-      follows: 0,
-    }
-    existing[key] = value
-    map.set(bookId, existing)
-  }
-  for (const r of likeRows) bump(r.bookId, 'likes', Number(r.total))
-  for (const r of commentRows) bump(r.bookId, 'comments', Number(r.total))
-  for (const r of readRows) bump(r.bookId, 'reads', Number(r.total))
-  for (const r of followRows) bump(r.bookId, 'follows', Number(r.total))
-  return map
-}
+type SignalCounts = TrendingSignalCounts
 
 // ─── 2. Trending Now ──────────────────────────────────────────────────────────
 

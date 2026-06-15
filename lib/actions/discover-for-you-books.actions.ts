@@ -12,10 +12,12 @@ import {
   buildPublicBookFilters,
   getBlockedAuthorIdsForViewer,
   projectToBookCards,
+  rankByTrendingScore,
   type BookCard,
   type FilterInputs,
   type RawBookRow,
 } from './discover-shared'
+import { topGenres, type SignalRow } from '@/lib/discover/taste-vector'
 import type { ActionResult } from './book.actions'
 
 /**
@@ -148,4 +150,75 @@ async function tier1Candidates(opts: {
     .where(and(...conds))
     .orderBy(desc(books.updatedAt), desc(books.id))
     .limit(opts.limit)
+}
+
+/**
+ * Tier 2 candidate pool for the For You rail: books in the viewer's top 3
+ * inferred-genre buckets (derived from likes×3 + followed-author own-books×2 +
+ * viewer's own-books×1 weighted signal), excluding tier 1 ids, ranked by
+ * trending score. Private helper consumed by the orchestrator (W2.6).
+ */
+async function tier2Candidates(opts: {
+  viewerId: string
+  excludeIds: Set<string>
+  filterInputs: FilterInputs
+  blocked: Set<string>
+  limit: number
+}): Promise<RawBookRow[]> {
+  // Step 1: fetch viewer's signal rows (3 parallel queries).
+  const [likedGenres, followedAuthorGenres, ownBookGenres] = await Promise.all([
+    db
+      .select({ genre: books.genre })
+      .from(bookLikes)
+      .innerJoin(books, eq(books.id, bookLikes.bookId))
+      .where(eq(bookLikes.userId, opts.viewerId)),
+    db
+      .select({ genre: books.genre })
+      .from(follows)
+      .innerJoin(books, eq(books.userId, follows.followeeId))
+      .where(eq(follows.followerId, opts.viewerId)),
+    db
+      .select({ genre: books.genre })
+      .from(books)
+      .where(eq(books.userId, opts.viewerId)),
+  ])
+
+  // Step 2: weighted signal rows → top 3 genres.
+  const rows: SignalRow[] = [
+    ...likedGenres.map((r) => ({ genre: r.genre, weight: 3 })),
+    ...followedAuthorGenres.map((r) => ({ genre: r.genre, weight: 2 })),
+    ...ownBookGenres.map((r) => ({ genre: r.genre, weight: 1 })),
+  ]
+  const top3 = topGenres(rows, 3)
+  if (top3.length === 0) return []
+
+  // Step 3: fetch books in those genres, excluding tier 1, ranked by trending.
+  const conds = [
+    ...buildPublicBookFilters(undefined, opts.blocked),
+    inArray(books.genre, top3),
+  ]
+  if (opts.excludeIds.size > 0) {
+    conds.push(notInArray(books.id, Array.from(opts.excludeIds)))
+  }
+  applyBookFilterInputs(conds, opts.filterInputs)
+
+  // Fetch a 200-row candidate window, then rank in JS.
+  const candidates = await db
+    .select({
+      id: books.id,
+      title: books.title,
+      authorUserId: books.userId,
+      coverUrl: books.coverUrl,
+      synopsis: books.synopsis,
+      genre: books.genre,
+      tags: books.tags,
+      updatedAt: books.updatedAt,
+      firstPubliclyDiscoverableAt: books.firstPubliclyDiscoverableAt,
+    })
+    .from(books)
+    .where(and(...conds))
+    .limit(200)
+
+  const ranked = await rankByTrendingScore(candidates)
+  return ranked.slice(0, opts.limit)
 }

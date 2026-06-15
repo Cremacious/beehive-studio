@@ -13,9 +13,11 @@ import {
   binderItems,
   chapters,
   bookLikes,
+  bookComments,
 } from '@/db/schema'
 import { userProfiles } from '@/db/schema'
-import { userBlocks } from '@/db/schema/social'
+import { userBlocks, follows, chapterReads } from '@/db/schema/social'
+import { computeTrendingScore } from '@/lib/discover/scoring'
 import {
   and,
   eq,
@@ -296,5 +298,136 @@ export async function projectToBookCards(
       isRecentlyActive,
     }
   })
+}
+
+// ─── Trending signal loader + scorer ──────────────────────────────────────────
+
+const SEVEN_DAYS_MS_SHARED = 7 * 24 * 60 * 60 * 1000
+
+export type TrendingSignalCounts = {
+  likes: number
+  comments: number
+  reads: number
+  follows: number
+}
+
+/**
+ * Loads the 4 trending signals over a window for a set of book ids.
+ * Runs 4 GROUP BY queries in parallel and stitches into a Map keyed by bookId.
+ * Follows are aggregated per book via `follows.followee_id = books.user_id`.
+ */
+export async function loadTrendingSignals(
+  bookIds: string[],
+  windowMs: number = SEVEN_DAYS_MS_SHARED,
+): Promise<Map<string, TrendingSignalCounts>> {
+  if (bookIds.length === 0) return new Map()
+  const windowStart = new Date(Date.now() - windowMs)
+
+  const [likeRows, commentRows, readRows, followRows] = await Promise.all([
+    db
+      .select({ bookId: bookLikes.bookId, total: count() })
+      .from(bookLikes)
+      .where(
+        and(
+          inArray(bookLikes.bookId, bookIds),
+          gte(bookLikes.createdAt, windowStart),
+        ),
+      )
+      .groupBy(bookLikes.bookId),
+    db
+      .select({ bookId: bookComments.bookId, total: count() })
+      .from(bookComments)
+      .where(
+        and(
+          inArray(bookComments.bookId, bookIds),
+          gte(bookComments.createdAt, windowStart),
+        ),
+      )
+      .groupBy(bookComments.bookId),
+    db
+      .select({ bookId: chapterReads.bookId, total: count() })
+      .from(chapterReads)
+      .where(
+        and(
+          inArray(chapterReads.bookId, bookIds),
+          gte(chapterReads.readAt, windowStart),
+        ),
+      )
+      .groupBy(chapterReads.bookId),
+    db
+      .select({
+        bookId: books.id,
+        total: count(),
+      })
+      .from(follows)
+      .innerJoin(books, eq(books.userId, follows.followeeId))
+      .where(
+        and(
+          inArray(books.id, bookIds),
+          gte(follows.createdAt, windowStart),
+        ),
+      )
+      .groupBy(books.id),
+  ])
+
+  const map = new Map<string, TrendingSignalCounts>()
+  function bump(
+    bookId: string,
+    key: keyof TrendingSignalCounts,
+    value: number,
+  ): void {
+    const existing = map.get(bookId) ?? {
+      likes: 0,
+      comments: 0,
+      reads: 0,
+      follows: 0,
+    }
+    existing[key] = value
+    map.set(bookId, existing)
+  }
+  for (const r of likeRows) bump(r.bookId, 'likes', Number(r.total))
+  for (const r of commentRows) bump(r.bookId, 'comments', Number(r.total))
+  for (const r of readRows) bump(r.bookId, 'reads', Number(r.total))
+  for (const r of followRows) bump(r.bookId, 'follows', Number(r.total))
+  return map
+}
+
+/**
+ * Ranks a candidate window of book rows by 7-day trending score
+ * (likes×1 + comments×2 + reads×1 + follows×3). Loads the 7d signal
+ * counts in parallel via GROUP BY queries against bookLikes, bookComments,
+ * chapterReads, follows. Returns rows sorted by score desc with id desc
+ * tiebreak (so the ordering is deterministic).
+ */
+export async function rankByTrendingScore(
+  candidates: RawBookRow[],
+): Promise<RawBookRow[]> {
+  if (candidates.length === 0) return []
+  const signals = await loadTrendingSignals(
+    candidates.map((c) => c.id),
+    SEVEN_DAYS_MS_SHARED,
+  )
+  const scored = candidates.map((c) => {
+    const s = signals.get(c.id) ?? {
+      likes: 0,
+      comments: 0,
+      reads: 0,
+      follows: 0,
+    }
+    return {
+      row: c,
+      score: computeTrendingScore({
+        likes7d: s.likes,
+        comments7d: s.comments,
+        reads7d: s.reads,
+        follows7d: s.follows,
+      }),
+    }
+  })
+  scored.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score
+    return b.row.id.localeCompare(a.row.id)
+  })
+  return scored.map((s) => s.row)
 }
 

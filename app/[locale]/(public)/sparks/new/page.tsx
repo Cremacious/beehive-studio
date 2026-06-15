@@ -1,6 +1,7 @@
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
+import { CreateSparkForm } from './_components/create-spark-form'
 
 type Props = {
   params: Promise<{ locale: string }>
@@ -36,16 +37,7 @@ export default async function SparksNewPage({ params }: Props) {
         </p>
       </header>
 
-      {/* W4.2 wires in <CreateSparkForm /> here */}
-      <div
-        className="rounded-2xl p-6 text-[13px]"
-        style={{
-          background: 'rgba(255, 255, 255, 0.03)',
-          color: 'var(--canvas-dark-ink-muted)',
-        }}
-      >
-        Form coming in W4.2.
-      </div>
+      <CreateSparkForm locale={locale} />
     </main>
   )
 }

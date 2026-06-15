@@ -19,7 +19,11 @@ import {
 } from './discover-shared'
 import { topGenres, type SignalRow } from '@/lib/discover/taste-vector'
 import { getPlatformTopGenres } from '@/lib/discover/platform-top-genres'
+import { stitchTiers } from '@/lib/discover/stitch-tiers'
 import type { ActionResult } from './book.actions'
+
+const TIER_QUOTAS = { tier1: 6, tier2: 4, tier3: 2 } as const
+const TIER_FETCH_LIMIT = 60
 
 /**
  * Returns true if the viewer has any discovery signal: at least one follow,
@@ -266,4 +270,80 @@ async function tier3Candidates(opts: {
 
   const ranked = await rankByTrendingScore(candidates)
   return ranked.slice(0, opts.limit)
+}
+
+/**
+ * For You is a 3-tier hybrid recommendation algorithm:
+ *   Tier 1: books from followed authors the viewer hasn't liked or read
+ *   Tier 2: books in the viewer's top 3 genres (taste vector: likes×3 +
+ *           follows×2 + own×1), ranked by 7-day trending score
+ *   Tier 3: trending books in the platform's most-followed 3 genres
+ *           (fallback for cold-start users with no signal)
+ *
+ * Stitched 6/4/2 per 12-card page with tier overflow: if a higher tier is
+ * short on the page, lower tiers backfill to keep pages full.
+ *
+ * totalCount is the sum of distinct tier candidate counts (capped at 180).
+ */
+export async function getForYouBooksAction(args: {
+  viewerId: string
+  page?: number
+  filters?: FilterInputs
+}): Promise<
+  ActionResult<{
+    books: BookCard[]
+    totalCount: number
+    tierBreakdown: { tier1: number; tier2: number; tier3: number }
+  }>
+> {
+  const page = Math.max(1, Math.floor(args.page ?? 1))
+  const filterInputs = args.filters ?? {}
+  const blocked = await getBlockedAuthorIdsForViewer(args.viewerId)
+
+  // Tier 1.
+  const t1 = await tier1Candidates({
+    viewerId: args.viewerId,
+    filterInputs,
+    blocked,
+    limit: TIER_FETCH_LIMIT,
+  })
+  const t1Ids = new Set(t1.map((r) => r.id))
+
+  // Tier 2 (exclude tier 1).
+  const t2 = await tier2Candidates({
+    viewerId: args.viewerId,
+    excludeIds: t1Ids,
+    filterInputs,
+    blocked,
+    limit: TIER_FETCH_LIMIT,
+  })
+  const t12Ids = new Set([...t1Ids, ...t2.map((r) => r.id)])
+
+  // Tier 3 (exclude tier 1 ∪ tier 2).
+  const t3 = await tier3Candidates({
+    excludeIds: t12Ids,
+    filterInputs,
+    blocked,
+    limit: TIER_FETCH_LIMIT,
+  })
+
+  const totalCount = t1.length + t2.length + t3.length
+  const stitched = stitchTiers({
+    t1,
+    t2,
+    t3,
+    page,
+    pageSize: PAGE_SIZE_BOOKS,
+    quotas: TIER_QUOTAS,
+  })
+
+  const cards = await projectToBookCards(stitched)
+  return {
+    success: true,
+    data: {
+      books: cards,
+      totalCount,
+      tierBreakdown: { tier1: t1.length, tier2: t2.length, tier3: t3.length },
+    },
+  }
 }

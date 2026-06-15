@@ -83,3 +83,30 @@ describe('getPopularBooksAction', () => {
     expect(r.success).toBe(true)
   })
 })
+
+describe('getForYouBooksAction', () => {
+  it('is exported as a function', () => {
+    expect(typeof forYouActions.getForYouBooksAction).toBe('function')
+  })
+
+  it('returns success with books + totalCount + tierBreakdown', async () => {
+    const r = await forYouActions.getForYouBooksAction({ viewerId: 'user-1' })
+    expect(r.success).toBe(true)
+    if (r.success) {
+      expect(Array.isArray(r.data.books)).toBe(true)
+      expect(typeof r.data.totalCount).toBe('number')
+      expect(r.data.tierBreakdown).toHaveProperty('tier1')
+      expect(r.data.tierBreakdown).toHaveProperty('tier2')
+      expect(r.data.tierBreakdown).toHaveProperty('tier3')
+    }
+  })
+
+  it('accepts filters + page', async () => {
+    const r = await forYouActions.getForYouBooksAction({
+      viewerId: 'user-1',
+      page: 2,
+      filters: { genres: ['fantasy'], length: 'novel' },
+    })
+    expect(r.success).toBe(true)
+  })
+})

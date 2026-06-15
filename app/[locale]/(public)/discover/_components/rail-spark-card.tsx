@@ -2,31 +2,13 @@
 
 import Link from 'next/link'
 import type { SparkCard } from '@/lib/actions/discover-sparks.actions'
+import {
+  timeLeftLabel,
+  statusToken,
+  statusLabel,
+} from '@/lib/sparks/spark-card-helpers'
 
 const FORTY_EIGHT_HOURS_MS = 48 * 60 * 60 * 1000
-
-function timeLeftLabel(deadline: Date): string {
-  const ms = deadline.getTime() - Date.now()
-  if (ms <= 0) return 'Just now'
-  const days = Math.floor(ms / 86400000)
-  const hours = Math.floor((ms % 86400000) / 3600000)
-  const minutes = Math.floor((ms % 3600000) / 60000)
-  if (days > 0) return `${days}d`
-  if (hours > 0) return `${hours}h`
-  return `${minutes}m`
-}
-
-function statusToken(status: SparkCard['status']): string {
-  if (status === 'OPEN') return 'var(--spark-status-open)'
-  if (status === 'VOTING') return 'var(--brand)'
-  return 'var(--canvas-dark-ink-muted)'
-}
-
-function statusLabel(status: SparkCard['status']): string {
-  if (status === 'OPEN') return 'Open'
-  if (status === 'VOTING') return 'Voting'
-  return 'Closed'
-}
 
 type Props = {
   spark: SparkCard

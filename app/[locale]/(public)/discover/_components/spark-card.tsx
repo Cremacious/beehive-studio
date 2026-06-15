@@ -1,105 +1,161 @@
+'use client'
+
 import Link from 'next/link'
-import { Clock, Globe, Lock, MessageSquare, Heart, Users } from 'lucide-react'
-import type { SparkSummary } from '@/lib/actions/sparks.actions'
-import { StatusPill } from './status-pill'
+import type { SparkCard as SparkCardData } from '@/lib/actions/discover-sparks.actions'
+import { truncateAtWord } from '@/lib/sparks/truncate-at-word'
+import {
+  timeLeftLabel,
+  statusToken,
+  statusLabel,
+} from '@/lib/sparks/spark-card-helpers'
 
-function timeLeftLabel(deadline: Date): string {
-  const ms = deadline.getTime() - Date.now()
-  if (ms <= 0) return ''
-  const days = Math.floor(ms / 86400000)
-  const hours = Math.floor((ms % 86400000) / 3600000)
-  return days > 0 ? `${days}d` : `${hours}h`
+type Props = {
+  spark: SparkCardData
+  locale: string
+  /** sm = 240px target width, md = 280px target (default). */
+  size?: 'sm' | 'md'
 }
 
-const VIS_META = {
-  PUBLIC: { label: 'Public', Icon: Globe, cls: 'vis-public' as const },
-  FRIENDS: { label: 'Friends', Icon: Users, cls: 'vis-friends' as const },
-  PRIVATE: { label: 'Private', Icon: Lock, cls: 'vis-private' as const },
-}
+const TEASER_MAX = 80
 
-function statusToken(status: 'OPEN' | 'VOTING' | 'CLOSED'): string {
-  if (status === 'OPEN') return 'var(--spark-status-open)'
-  if (status === 'VOTING') return 'var(--spark-status-voting)'
-  return 'var(--spark-status-closed)'
-}
-
-export function SparkCard({ spark, locale }: { spark: SparkSummary; locale: string }) {
-  const vis = VIS_META[spark.visibility]
-  const VisIcon = vis.Icon
+export function SparkCard({ spark, locale, size = 'md' }: Props) {
+  const isOpen = spark.status === 'OPEN'
+  const isVoting = spark.status === 'VOTING'
   const isClosed = spark.status === 'CLOSED'
-  const deadlineLabel =
-    spark.status === 'OPEN'
-      ? timeLeftLabel(spark.deadline)
-      : spark.status === 'VOTING' && spark.votingEndsAt
-        ? timeLeftLabel(spark.votingEndsAt)
-        : ''
+
+  const accent = statusToken(spark.status)
+
+  // Countdown source per status: OPEN tracks deadline, VOTING tracks votingEndsAt,
+  // CLOSED shows no countdown.
+  const countdownDate = isOpen ? spark.deadline : isVoting ? spark.votingEndsAt : null
+  const countdownLabel = countdownDate ? timeLeftLabel(countdownDate) : ''
+
+  const teaser =
+    spark.prompt && spark.prompt.length > 0
+      ? truncateAtWord(spark.prompt, TEASER_MAX)
+      : null
+
+  const titleSize = size === 'sm' ? 'text-[15px]' : 'text-[17px]'
 
   return (
     <Link
       href={`/${locale}/sparks/${spark.id}`}
-      className="ccard"
-      style={isClosed ? undefined : undefined}
+      className="block no-underline w-full transition-transform hover:-translate-y-px"
+      aria-label={`Open Spark: ${spark.title}`}
     >
       <div
-        className="cc-cover cover-grad"
-        style={
-          {
-            ['--pt' as string]: statusToken(spark.status),
-            ...(isClosed ? { height: '88px' } : {}),
-          } as React.CSSProperties
-        }
+        className="overflow-hidden"
+        style={{
+          background:
+            'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+          borderRadius: '14px',
+          boxShadow: 'var(--sh-tile)',
+        }}
       >
-        <div className="cc-pills">
-          <StatusPill status={spark.status} />
-          <span className={`pill ${vis.cls}`}>
-            <VisIcon />
-            {vis.label}
-          </span>
-        </div>
-      </div>
-      <div className="cc-body">
-        <h3 className="cc-title">{spark.prompt}</h3>
-        {spark.wordLimit ? (
-          <p className="cc-desc">max {spark.wordLimit} words · by {spark.creatorDisplayName ?? spark.creatorUsername ?? 'Unknown'}</p>
-        ) : (
-          <p className="cc-desc">by {spark.creatorDisplayName ?? spark.creatorUsername ?? 'Unknown'}</p>
-        )}
-        <div className="cc-foot">
-          {isClosed && spark.winnerUsername ? (
-            <span className="meta">
-              Won by{' '}
-              <b style={{ color: 'var(--canvas-dark-ink)', fontFamily: 'var(--font-display)' }}>
-                @{spark.winnerUsername}
-              </b>
+        {/* 3px status-color top strip */}
+        <div aria-hidden="true" style={{ height: '3px', background: accent }} />
+
+        <div className="p-4">
+          {/* Header row: status pill + genre label */}
+          <div className="flex items-center justify-between mb-3">
+            <span
+              className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] rounded-full"
+              style={{
+                background: `oklch(from ${accent} l c h / 0.15)`,
+                color: accent,
+                fontFamily: 'var(--font-mono)',
+              }}
+            >
+              {isOpen && <span aria-hidden="true">⚡</span>}
+              {isVoting && <span aria-hidden="true">🗳</span>}
+              {isClosed && <span aria-hidden="true">○</span>}
+              {statusLabel(spark.status)}
+              {countdownLabel ? ` · ${countdownLabel}` : ''}
             </span>
-          ) : deadlineLabel ? (
-            <span className="deadline" style={{ padding: '4px 11px' }}>
-              <Clock />
-              {spark.status === 'VOTING' ? (
-                <>
-                  Voting ends in <b>{deadlineLabel}</b>
-                </>
-              ) : (
-                <>
-                  <b>{deadlineLabel}</b> left
-                </>
-              )}
-            </span>
+            {spark.genre ? (
+              <span
+                className="text-[9px] uppercase tracking-[0.08em]"
+                style={{
+                  color: 'var(--canvas-dark-ink-muted)',
+                  fontFamily: 'var(--font-mono)',
+                }}
+              >
+                {spark.genre}
+              </span>
+            ) : null}
+          </div>
+
+          {/* Title — Comfortaa bold, line-clamp-2, min-height to reserve 2 lines */}
+          <h4
+            className={`${titleSize} font-bold leading-tight line-clamp-2`}
+            style={{
+              color: 'var(--canvas-dark-ink-strong)',
+              fontFamily: 'var(--font-display)',
+              minHeight: '2.6em',
+              marginBottom: '6px',
+            }}
+          >
+            {spark.title}
+          </h4>
+
+          {/* Prompt teaser — Newsreader italic 11px, min-height for uniformity */}
+          {teaser ? (
+            <p
+              className="text-[11px] italic mb-3"
+              style={{
+                color: 'var(--canvas-dark-ink-muted)',
+                fontFamily: 'var(--font-prose)',
+                lineHeight: 1.4,
+                minHeight: '2.6em',
+              }}
+            >
+              {teaser}
+            </p>
           ) : (
-            <span />
+            <div style={{ minHeight: '2.6em', marginBottom: '12px' }} aria-hidden="true" />
           )}
-          <div className="cc-stats">
-            {isClosed ? (
-              <span className="cc-stat">
-                <Heart />
-                {spark.entryCount}
+
+          {/* Hairline divider + meta footer */}
+          <div
+            className="flex items-center justify-between pt-3"
+            style={{
+              borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+            }}
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              {spark.creatorAvatarUrl ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={spark.creatorAvatarUrl}
+                  alt=""
+                  className="w-[18px] h-[18px] rounded-full object-cover flex-shrink-0"
+                />
+              ) : (
+                <div
+                  className="w-[18px] h-[18px] rounded-full flex-shrink-0"
+                  style={{ background: 'var(--canvas-dark-100)' }}
+                  aria-hidden="true"
+                />
+              )}
+              <span
+                className="text-[10px] truncate"
+                style={{
+                  color: 'var(--canvas-dark-ink-muted)',
+                  fontFamily: 'var(--font-mono)',
+                }}
+              >
+                @{spark.creatorUsername ?? 'unknown'}
               </span>
-            ) : (
-              <span className="cc-stat">
-                <MessageSquare />
-                {spark.entryCount}
-              </span>
-            )}
+            </div>
+            <div
+              className="text-[10px] flex-shrink-0"
+              style={{
+                color: 'var(--canvas-dark-ink-muted)',
+                fontFamily: 'var(--font-mono)',
+              }}
+            >
+              {spark.entryCount} {spark.entryCount === 1 ? 'entry' : 'entries'}
+            </div>
           </div>
         </div>
       </div>

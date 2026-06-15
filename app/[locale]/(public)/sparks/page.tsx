@@ -1,8 +1,35 @@
 import Link from 'next/link'
 import { Plus, Sparkles, Search, Flame, Vote, Archive } from 'lucide-react'
-import { getSparksAction } from '@/lib/actions/sparks.actions'
+import { getSparksAction, type SparkSummary } from '@/lib/actions/sparks.actions'
+import type { SparkCard as SparkCardData } from '@/lib/actions/discover-sparks.actions'
 import { PageHead } from '@/components/community/page-head'
 import { SparkCard } from '../discover/_components/spark-card'
+
+// Adapter: legacy SparkSummary (sparks.actions) → new SparkCardData (discover-sparks.actions).
+// SparkSummary has no `title`/`genre`/`creatorAvatarUrl`/`creatorUserId` — fall back gracefully.
+function toSparkCardData(s: SparkSummary): SparkCardData {
+  return {
+    id: s.id,
+    title: s.creatorDisplayName ? `${s.creatorDisplayName}'s Spark` : 'Untitled Spark',
+    prompt: s.prompt,
+    status: s.status,
+    visibility: s.visibility,
+    genre: null,
+    deadline: s.deadline,
+    votingEndsAt: s.votingEndsAt,
+    creatorUserId: '',
+    creatorUsername: s.creatorUsername,
+    creatorDisplayName: s.creatorDisplayName,
+    creatorAvatarUrl: null,
+    entryCount: s.entryCount,
+    voteTotal: 0,
+    winnerUserId: null,
+    winnerUsername: s.winnerUsername,
+    winnerDisplayName: null,
+    createdAt: s.deadline,
+    firstPubliclyDiscoverableAt: null,
+  }
+}
 
 type Props = { params: Promise<{ locale: string }> }
 
@@ -103,7 +130,7 @@ export default async function SparksIndexPage({ params }: Props) {
             ) : (
               <div className="grid-3">
                 {active.map((s) => (
-                  <SparkCard key={s.id} spark={s} locale={locale} />
+                  <SparkCard key={s.id} spark={toSparkCardData(s)} locale={locale} />
                 ))}
               </div>
             )}
@@ -119,7 +146,7 @@ export default async function SparksIndexPage({ params }: Props) {
             </div>
             <div className="grid-3">
               {voting.map((s) => (
-                <SparkCard key={s.id} spark={s} locale={locale} />
+                <SparkCard key={s.id} spark={toSparkCardData(s)} locale={locale} />
               ))}
             </div>
           </div>
@@ -134,7 +161,7 @@ export default async function SparksIndexPage({ params }: Props) {
             </div>
             <div className="grid-2">
               {closed.map((s) => (
-                <SparkCard key={s.id} spark={s} locale={locale} />
+                <SparkCard key={s.id} spark={toSparkCardData(s)} locale={locale} />
               ))}
             </div>
           </div>

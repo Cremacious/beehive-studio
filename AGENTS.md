@@ -12,9 +12,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-15 (🎉 **SPARK REDESIGN CODE-COMPLETE.** All 5 waves shipped via subagent-driven impl. Title-first model + A+B hybrid card + /sparks/new page + detail reshape live. Manual smoke pending.)
+> **Last updated:** 2026-06-15 (Spark redesign shipped + first smoke fix — submit form hidden for spark creator + actionable error copy for the other rejection codes.)
 >
-> **Last commit:** [96195c2](https://github.com/Cremacious/beehive-studio/commit/96195c2) — refactor(discover/sparks): FeaturedSparkHero drops italic quote treatment.
+> **Last commit:** [8a15394](https://github.com/Cremacious/beehive-studio/commit/8a15394) — fix(sparks): hide submit form for spark creator + actionable error copy.
 >
 > **🎉 Spark redesign code-complete this session ([a89de65](https://github.com/Cremacious/beehive-studio/commit/a89de65) spec → [530ed22](https://github.com/Cremacious/beehive-studio/commit/530ed22) plan → 14 commits across 5 waves → [96195c2](https://github.com/Cremacious/beehive-studio/commit/96195c2) final).** Sparks now have explicit `title` (short, 60 char) + `prompt` (the writing challenge, NEW column) + `description` (optional context, existing column). A+B hybrid card renders title as Comfortaa hero with 80-char Newsreader italic teaser of the prompt. Detail page shows title as H1, prompt as brand-yellow-rule blockquote, description as "Context" section when present. `/sparks/new` page exists (previously 404'd). Existing `<CreateSparkModal>` aligned to same schema. **803/803 tests, tsc clean throughout.**
 >

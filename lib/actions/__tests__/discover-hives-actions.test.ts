@@ -67,3 +67,64 @@ describe('discover-hives actions surface', () => {
     expect(recent.success).toBe(true)
   })
 })
+
+describe('searchHivesDiscoverAction — W2.3 extended filter inputs', () => {
+  it('accepts empty input (no q, no filters)', async () => {
+    const r = await discoverHivesActions.searchHivesDiscoverAction({})
+    expect(r.success).toBe(true)
+  })
+
+  it('accepts multi-genre via genres[]', async () => {
+    const r = await discoverHivesActions.searchHivesDiscoverAction({
+      genres: ['fantasy', 'sci-fi'],
+    })
+    expect(r.success).toBe(true)
+  })
+
+  it.each(['has-book', 'standalone'] as const)(
+    'accepts linked=[%s]',
+    async (l) => {
+      const r = await discoverHivesActions.searchHivesDiscoverAction({
+        linked: [l],
+      })
+      expect(r.success).toBe(true)
+    },
+  )
+
+  it('accepts linked with both selected (no narrowing)', async () => {
+    const r = await discoverHivesActions.searchHivesDiscoverAction({
+      linked: ['has-book', 'standalone'],
+    })
+    expect(r.success).toBe(true)
+  })
+
+  it.each(['looking-for-collaborators', 'open-to-join'] as const)(
+    'accepts openStates=[%s]',
+    async (s) => {
+      const r = await discoverHivesActions.searchHivesDiscoverAction({
+        openStates: [s],
+      })
+      expect(r.success).toBe(true)
+    },
+  )
+
+  it('composes all new filters together', async () => {
+    const r = await discoverHivesActions.searchHivesDiscoverAction({
+      q: 'marrow',
+      genres: ['fantasy'],
+      size: 'small',
+      openStates: ['looking-for-collaborators'],
+      linked: ['has-book'],
+      sort: 'most-active',
+    })
+    expect(r.success).toBe(true)
+  })
+
+  it('preserves legacy single-genre input', async () => {
+    const r = await discoverHivesActions.searchHivesDiscoverAction({
+      q: 'marrow',
+      genre: 'fantasy',
+    })
+    expect(r.success).toBe(true)
+  })
+})

@@ -1050,34 +1050,86 @@ export async function getHiveBackfillAction(args: {
  *   most-active/relevance → (activityScore, id) ranked in JS
  */
 export async function searchHivesDiscoverAction(args: {
-  q: string
+  q?: string
   genre?: GenreSlug
+  /** Multi-select genre; non-empty array takes precedence over single `genre`. */
+  genres?: string[]
   size?: SizeBucket
+  /**
+   * Hive open-state. Accepts:
+   *   - 'looking-for-collaborators' → small (member_count 2-5) + active in last 30d.
+   *   - 'open-to-join' → no-op for v1 (every discoverable hive accepts invites
+   *     via the existing invite-link model; no explicit column exists). The
+   *     filter is parsed but the UI checkbox is currently informational only.
+   * OR semantics within array: both selected = no narrowing beyond size/recency.
+   */
+  openStates?: Array<'looking-for-collaborators' | 'open-to-join'>
+  /**
+   * Linked-book posture. Accepts:
+   *   - 'has-book'   → linked book is a real book (status != STANDALONE_HIVE_SHADOW)
+   *   - 'standalone' → linked book is a shadow row (status = STANDALONE_HIVE_SHADOW)
+   * OR semantics within array: both selected = no filter.
+   */
+  linked?: Array<'has-book' | 'standalone'>
   sort?: 'relevance' | 'recent' | 'most-active' | 'most-members'
   cursor?: string | null
 }): Promise<ActionResult<{ books: HiveCard[]; nextCursor: string | null }>> {
-  const trimmed = args.q.trim()
-  if (trimmed.length === 0) {
-    return { success: true, data: { books: [], nextCursor: null } }
-  }
   const viewerId = await getOptionalUserId()
   const blocked = await getBlockedHiveOwnerIdsForViewer(viewerId)
   const size = args.size ?? 'any'
   const sort = args.sort ?? 'recent'
   const needsActivity = sort === 'most-active' || sort === 'relevance'
   const cursor = decodeCursor(args.cursor)
+  const trimmed = (args.q ?? '').trim()
 
-  const pattern = `%${trimmed}%`
+  // Multi-genre takes precedence over single genre.
+  const multiGenres = (args.genres ?? []).filter(
+    (g): g is string => typeof g === 'string',
+  )
+  const singleGenre =
+    multiGenres.length === 0 ? args.genre : undefined
 
-  const conds = [
-    ...buildPublicHiveFilters(args.genre, size, blocked),
-    or(
+  // Linked posture — figure out which subset of {has-book, standalone} the
+  // viewer chose. Empty (or both selected) = no filter; otherwise narrow.
+  const linkedSet = new Set(args.linked ?? [])
+  const linkedNarrow = linkedSet.size === 1 ? Array.from(linkedSet)[0] : undefined
+
+  const needsBooksJoin =
+    Boolean(singleGenre) || multiGenres.length > 0 || linkedNarrow !== undefined
+
+  const conds = [...buildPublicHiveFilters(singleGenre, size, blocked)]
+
+  if (multiGenres.length > 0) {
+    conds.push(sql`${books.genre} = ANY(${multiGenres})`)
+  }
+
+  if (linkedNarrow === 'has-book') {
+    conds.push(sql`${books.status} != 'STANDALONE_HIVE_SHADOW'`)
+  } else if (linkedNarrow === 'standalone') {
+    conds.push(sql`${books.status} = 'STANDALONE_HIVE_SHADOW'`)
+  }
+
+  // openStates filter — 'looking-for-collaborators' approximates the LFC rail
+  // semantics (small + recently active). 'open-to-join' has no schema column
+  // and is treated as a no-op (see jsdoc above).
+  const openSet = new Set(args.openStates ?? [])
+  if (openSet.has('looking-for-collaborators')) {
+    conds.push(sql`${hives.memberCount} <= 5`)
+    conds.push(
+      sql`${hives.lastActivityAt} IS NOT NULL AND ${hives.lastActivityAt} >= now() - interval '${sql.raw(String(LFC_ACTIVITY_WINDOW_DAYS))} days'`,
+    )
+  }
+
+  if (trimmed.length > 0) {
+    const pattern = `%${trimmed}%`
+    const titleOr = or(
       sql`${hives.name} ILIKE ${pattern}`,
       sql`${hives.description} ILIKE ${pattern}`,
       sql`${userProfiles.username} ILIKE ${pattern}`,
       sql`${userProfiles.displayName} ILIKE ${pattern}`,
-    ),
-  ]
+    )
+    if (titleOr) conds.push(titleOr)
+  }
 
   // Cursor tail clause for DB-sorted modes (recent / most-members).
   if (cursor) {
@@ -1103,7 +1155,7 @@ export async function searchHivesDiscoverAction(args: {
   let rows: Array<{ id: string; createdAt?: Date; memberCount?: number; score?: number }>
   let hasMore = false
   if (sort === 'recent') {
-    const dbRows = args.genre
+    const dbRows = needsBooksJoin
       ? await db
           .select({ id: hives.id, createdAt: hives.createdAt })
           .from(hives)
@@ -1122,7 +1174,7 @@ export async function searchHivesDiscoverAction(args: {
     hasMore = dbRows.length > PAGE_SIZE
     rows = dbRows.slice(0, PAGE_SIZE)
   } else if (sort === 'most-members') {
-    const dbRows = args.genre
+    const dbRows = needsBooksJoin
       ? await db
           .select({ id: hives.id, memberCount: hives.memberCount })
           .from(hives)
@@ -1142,7 +1194,7 @@ export async function searchHivesDiscoverAction(args: {
     rows = dbRows.slice(0, PAGE_SIZE)
   } else {
     // most-active or relevance: collect a wider candidate window and rank by score in JS.
-    const candidateRows = args.genre
+    const candidateRows = needsBooksJoin
       ? await db
           .select({ id: hives.id })
           .from(hives)

@@ -33,6 +33,7 @@ import {
 import { inArray, eq, sql } from 'drizzle-orm'
 import { createId } from '@paralleldrive/cuid2'
 import { auth } from '../lib/auth'
+import { synthesizeTitle } from '../lib/sparks/synthesize-title'
 
 // ─── Safety ─────────────────────────────────────────────────────────────────
 
@@ -119,6 +120,14 @@ const SPARK_PROMPTS = [
   'A character apologizes in the wrong language.',
   'The map was drawn by the lost.',
   'Two siblings, one secret, one kettle.',
+] as const
+
+const SPARK_CONTEXTS = [
+  'Inspired by a dream I had.',
+  'Trying out something character-driven.',
+  'Open to surreal interpretations.',
+  'Wanted to push the prompt past its obvious frame.',
+  'Looking for entries that lean into mood over plot.',
 ] as const
 
 const HIVE_NAMES = [
@@ -420,11 +429,16 @@ async function seedSparks(usersList: SeededUser[], count: number) {
         : status === 'VOTING'
           ? new Date(Date.now() - (i % 3) * 86400_000)   // recently passed
           : daysAgo(20 + (i % 30))                        // long past
+    // Every 3rd spark gets a context blurb to exercise the detail page's
+    // "Context" section during smoke; others leave description null.
+    const description =
+      i % 3 === 0 ? SPARK_CONTEXTS[i % SPARK_CONTEXTS.length] : null
     rows.push({
       id: createId(),
       creatorId: creator.id,
-      title: prompt,
-      description: `A spark from @${creator.username}.`,
+      title: synthesizeTitle(prompt),
+      prompt,
+      description,
       wordLimit,
       deadline,
       visibility: 'PUBLIC' as const,

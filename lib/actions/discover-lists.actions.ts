@@ -794,6 +794,11 @@ export async function searchListsDiscoverAction(args: {
   genre?: GenreSlug
   /** Multi-select genre; non-empty array takes precedence over single `genre`. */
   genres?: string[]
+  /**
+   * Book-count bucket — small (<=5), mid (6-20), large (>20).
+   * 'any' (default) applies no filter.
+   */
+  size?: 'any' | 'small' | 'mid' | 'large'
   /** Follower-count threshold. '10+' filters to lists with followerCount >= 10. */
   popularity?: 'any' | '10+'
   /** Updated recency — applied to lastUpdatedAt. */
@@ -832,6 +837,15 @@ export async function searchListsDiscoverAction(args: {
       sql`${userProfiles.displayName} ILIKE ${pattern}`,
     )
     if (titleOr) conds.push(titleOr)
+  }
+
+  // Size bucket on bookCount denorm column.
+  if (args.size === 'small') {
+    conds.push(sql`${readingLists.bookCount} <= 5`)
+  } else if (args.size === 'mid') {
+    conds.push(sql`${readingLists.bookCount} > 5 AND ${readingLists.bookCount} <= 20`)
+  } else if (args.size === 'large') {
+    conds.push(sql`${readingLists.bookCount} > 20`)
   }
 
   // Popularity threshold.

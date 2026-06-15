@@ -9,10 +9,10 @@ type ModeEntry = {
 }
 
 const ALL_MODES: ModeEntry[] = [
+  { id: 'all', label: 'All', Icon: Library },
   { id: 'for-you', label: 'For You', Icon: Sparkles },
   { id: 'trending', label: 'Trending', Icon: Flame },
   { id: 'popular', label: 'Popular', Icon: Star },
-  { id: 'all', label: 'All', Icon: Library },
 ]
 
 type Props = {
@@ -26,14 +26,16 @@ type Props = {
 
 /**
  * iOS segmented control for /discover discovery mode. Renders 4 buttons
- * for authed viewers (For You / Trending / Popular / All), 3 for guests
+ * for authed viewers (All / For You / Trending / Popular), 3 for guests
  * (no For You). Active mode is a brand-yellow rounded pill; inactive
  * modes are bare label + icon with a subtle hover tint.
  *
- * Each mode link is a server-rendered <Link> with `?mode=X` preserved
- * across other filter params. The 'trending' mode is the default for
- * guests + zero-signal authed users, so when 'trending' is selected
- * we drop the `?mode=` param entirely.
+ * Each mode link is a server-rendered <Link> with an explicit `?mode=X`
+ * param. We do NOT collapse to "default mode = no param" on the toggle —
+ * if we did, clicking Trending while an authed user was in default-For-You
+ * mode would generate a no-mode URL that the server then resolves back to
+ * For You, making the Trending button a no-op for that user. Always set
+ * the mode explicitly so the user's click is honored.
  *
  * Mode switches reset `?page=1` (page param dropped from baseParams).
  */
@@ -50,12 +52,8 @@ export function DiscoveryModeToggle({
     const params: Record<string, string | string[] | undefined> = { ...baseParams }
     // page resets on mode switch
     delete params.page
-    // Default mode (trending) omits the URL param.
-    if (modeId === 'trending') {
-      delete params.mode
-    } else {
-      params.mode = modeId
-    }
+    // Always set the mode explicitly — see jsdoc above.
+    params.mode = modeId
     return buildUrl(tab, params, `/${locale}/discover`)
   }
 

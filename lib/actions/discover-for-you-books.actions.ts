@@ -3,8 +3,8 @@
 import { cache } from 'react'
 import { db } from '@/db'
 import { books, bookLikes } from '@/db/schema'
-import { follows } from '@/db/schema/social'
-import { and, count, desc, eq, sql } from 'drizzle-orm'
+import { follows, chapterReads } from '@/db/schema/social'
+import { and, count, desc, eq, inArray, notInArray, sql } from 'drizzle-orm'
 import { getOptionalUserId } from '@/lib/require-auth'
 import {
   PAGE_SIZE_BOOKS,
@@ -14,6 +14,7 @@ import {
   projectToBookCards,
   type BookCard,
   type FilterInputs,
+  type RawBookRow,
 } from './discover-shared'
 import type { ActionResult } from './book.actions'
 
@@ -94,4 +95,57 @@ export async function getPopularBooksAction(args: {
   const totalCount = Number(totalCountRows[0]?.total ?? 0)
   const cards = await projectToBookCards(pageRows)
   return { success: true, data: { books: cards, totalCount } }
+}
+
+/**
+ * Tier 1 candidate pool for the For You rail: books authored by people the
+ * viewer follows, excluding books the viewer has already liked or read a
+ * chapter of. Ordered by recency. Private helper consumed by the orchestrator
+ * (W2.6); not exported.
+ */
+async function tier1Candidates(opts: {
+  viewerId: string
+  filterInputs: FilterInputs
+  blocked: Set<string>
+  limit: number
+}): Promise<RawBookRow[]> {
+  const followedAuthorIdsSubquery = db
+    .select({ id: follows.followeeId })
+    .from(follows)
+    .where(eq(follows.followerId, opts.viewerId))
+
+  const likedBookIdsSubquery = db
+    .select({ id: bookLikes.bookId })
+    .from(bookLikes)
+    .where(eq(bookLikes.userId, opts.viewerId))
+
+  const readBookIdsSubquery = db
+    .select({ id: chapterReads.bookId })
+    .from(chapterReads)
+    .where(eq(chapterReads.userId, opts.viewerId))
+
+  const conds = [
+    ...buildPublicBookFilters(undefined, opts.blocked),
+    inArray(books.userId, followedAuthorIdsSubquery),
+    notInArray(books.id, likedBookIdsSubquery),
+    notInArray(books.id, readBookIdsSubquery),
+  ]
+  applyBookFilterInputs(conds, opts.filterInputs)
+
+  return db
+    .select({
+      id: books.id,
+      title: books.title,
+      authorUserId: books.userId,
+      coverUrl: books.coverUrl,
+      synopsis: books.synopsis,
+      genre: books.genre,
+      tags: books.tags,
+      updatedAt: books.updatedAt,
+      firstPubliclyDiscoverableAt: books.firstPubliclyDiscoverableAt,
+    })
+    .from(books)
+    .where(and(...conds))
+    .orderBy(desc(books.updatedAt), desc(books.id))
+    .limit(opts.limit)
 }

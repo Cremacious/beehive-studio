@@ -50,6 +50,7 @@ import {
   applyBookFilterInputs,
   loadTrendingSignals,
   type BookCard,
+  type FilterInputs,
   type RawBookRow,
   type TrendingSignalCounts,
 } from './discover-shared'
@@ -341,13 +342,27 @@ export async function getTrendingBooksAction(args: {
   genre?: string
   cursor?: string | null
   window?: '24h' | '7d'
-}): Promise<ActionResult<RailResult>> {
+  /** 1-indexed page number for numbered pagination. When set, overrides cursor. */
+  page?: number
+  /** Multi-filter input shape used by Hot Books grid (W3). */
+  filters?: FilterInputs
+}): Promise<
+  ActionResult<{
+    books: BookCard[]
+    strictCount: number
+    nextCursor: string | null
+    totalCount: number
+  }>
+> {
   const viewerId = await getOptionalUserId()
   const blockedAuthorIds = await getBlockedAuthorIdsForViewer(viewerId)
   const genre =
     args.genre && isValidGenre(args.genre) ? (args.genre as GenreSlug) : undefined
   const windowMs = args.window === '24h' ? TWENTY_FOUR_HOURS_MS : SEVEN_DAYS_MS
   const cursor = decodeCursor(args.cursor)
+  const usePagination = (args.page ?? 0) > 0
+  const page = Math.max(1, Math.floor(args.page ?? 1))
+  const offset = (page - 1) * PAGE_SIZE_BOOKS
 
   // Step 1: pick a candidate set. We pull the top N most-recently-active books
   // (over the window) and compute scores in JS. Cap candidate set to keep the
@@ -355,22 +370,80 @@ export async function getTrendingBooksAction(args: {
   const windowStart = new Date(Date.now() - windowMs)
   const filters = buildPublicBookFilters(genre, blockedAuthorIds)
 
-  const candidates = await db
-    .select({
-      id: books.id,
-      title: books.title,
-      authorUserId: books.userId,
-      coverUrl: books.coverUrl,
-      synopsis: books.synopsis,
-      genre: books.genre,
-      tags: books.tags,
-      updatedAt: books.updatedAt,
-      firstPubliclyDiscoverableAt: books.firstPubliclyDiscoverableAt,
-    })
-    .from(books)
-    .where(and(...filters, gte(books.updatedAt, windowStart)))
-    .orderBy(desc(books.updatedAt), desc(books.id))
-    .limit(200)
+  // Hot Books (paginated) mode: apply the multi-filter inputs so the candidate
+  // set and totalCount reflect the user's filter selections. The `q` clause
+  // inside `applyBookFilterInputs` references `userProfiles`, so we leftJoin
+  // when filters are present.
+  const hasFilterInputs = usePagination && !!args.filters
+  if (hasFilterInputs) {
+    applyBookFilterInputs(filters, args.filters!)
+  }
+
+  // Window cutoff: only enforce for legacy cursor mode. In pagination mode the
+  // filter inputs (`updated`, `status`) already shape the recency window; an
+  // additional 7d hard cutoff would erase results when filter inputs widen
+  // the search.
+  const whereClauses = usePagination
+    ? and(...filters)
+    : and(...filters, gte(books.updatedAt, windowStart))
+
+  // Build candidates query — leftJoin userProfiles when filter inputs are
+  // present (since `applyBookFilterInputs` references those columns for `q`).
+  const candidatesSelect = {
+    id: books.id,
+    title: books.title,
+    authorUserId: books.userId,
+    coverUrl: books.coverUrl,
+    synopsis: books.synopsis,
+    genre: books.genre,
+    tags: books.tags,
+    updatedAt: books.updatedAt,
+    firstPubliclyDiscoverableAt: books.firstPubliclyDiscoverableAt,
+  }
+
+  const candidatesPromise = hasFilterInputs
+    ? db
+        .select(candidatesSelect)
+        .from(books)
+        .leftJoin(userProfiles, eq(userProfiles.userId, books.userId))
+        .where(whereClauses)
+        .orderBy(desc(books.updatedAt), desc(books.id))
+        .limit(200)
+    : db
+        .select(candidatesSelect)
+        .from(books)
+        .where(whereClauses)
+        .orderBy(desc(books.updatedAt), desc(books.id))
+        .limit(200)
+
+  // Run candidate fetch + (paginated) total count in parallel.
+  const totalCountPromise = usePagination
+    ? hasFilterInputs
+      ? db
+          .select({ total: count(books.id) })
+          .from(books)
+          .leftJoin(userProfiles, eq(userProfiles.userId, books.userId))
+          .where(whereClauses)
+      : db
+          .select({ total: count(books.id) })
+          .from(books)
+          .where(whereClauses)
+    : Promise.resolve(null as { total: number | string }[] | null)
+
+  const [candidatesRaw, totalCountRows] = await Promise.all([
+    candidatesPromise,
+    totalCountPromise,
+  ])
+
+  // De-dupe candidates (leftJoin can yield duplicates per row when the join
+  // multiplies). Legacy path skips the join so this is a no-op there.
+  const seen = new Set<string>()
+  const candidates: typeof candidatesRaw = []
+  for (const r of candidatesRaw) {
+    if (seen.has(r.id)) continue
+    seen.add(r.id)
+    candidates.push(r)
+  }
 
   const candidateIds = candidates.map((c) => c.id)
   const signals = await loadTrendingSignals(candidateIds, windowMs)
@@ -402,8 +475,9 @@ export async function getTrendingBooksAction(args: {
   })
 
   // Cursor: walk past rows with score > cursor.sortKey OR (score === cursor.sortKey AND id > cursor.id).
+  // Only applied in legacy cursor mode.
   let filtered = scored
-  if (cursor && typeof cursor.sortKey === 'number') {
+  if (!usePagination && cursor && typeof cursor.sortKey === 'number') {
     const sk: number = cursor.sortKey;
     filtered = scored.filter((s) => {
       if (s.score < sk) return true
@@ -412,18 +486,48 @@ export async function getTrendingBooksAction(args: {
     })
   }
 
-  const pageRows = filtered.slice(0, PAGE_SIZE_BOOKS)
+  const startIdx = usePagination ? offset : 0
+  const pageRows = filtered.slice(startIdx, startIdx + PAGE_SIZE_BOOKS)
   const strictRaw = pageRows.map((p) => p.row)
   const last = pageRows[pageRows.length - 1]
-  const hasMore = filtered.length > PAGE_SIZE_BOOKS
+  const hasMore = filtered.length > startIdx + PAGE_SIZE_BOOKS
   const nextCursor =
-    hasMore && last
+    hasMore && last && !usePagination
       ? encodeCursor({ sortKey: last.score, id: last.row.id })
       : null
 
+  // Pagination mode skips the rail backfill (offset semantics don't blend
+  // with "top up to 4 cards"). Numbered grids show fewer cards when filters
+  // narrow the result set — that's the correct UX.
+  if (usePagination) {
+    const cards = await projectToBookCards(strictRaw)
+    const totalCount = Number(totalCountRows?.[0]?.total ?? cards.length)
+    return {
+      success: true,
+      data: {
+        books: cards,
+        strictCount: cards.length,
+        nextCursor: null,
+        totalCount,
+      },
+    }
+  }
+
+  // Legacy cursor mode — preserved behavior + railWithBackfill.
+  const rail = await railWithBackfill(
+    strictRaw,
+    genre,
+    blockedAuthorIds,
+    nextCursor,
+  )
   return {
     success: true,
-    data: await railWithBackfill(strictRaw, genre, blockedAuthorIds, nextCursor),
+    data: {
+      ...rail,
+      // No COUNT query runs in legacy mode; fall back to the candidate-window
+      // size so callers that read `totalCount` still get a sensible non-zero.
+      totalCount: scored.length,
+    },
   }
 }
 

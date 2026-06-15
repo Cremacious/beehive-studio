@@ -81,25 +81,14 @@ export function FeaturedSparkHero({ spark, locale }: Props) {
           Featured Spark
         </span>
         <p
-          className="text-[28px] italic line-clamp-3"
+          className="text-[28px] line-clamp-3"
           style={{
-            fontFamily: 'var(--font-prose)',
+            fontFamily: 'var(--font-display)',
             color: 'var(--canvas-dark-ink-strong)',
             lineHeight: 1.3,
-            fontWeight: 500,
+            fontWeight: 700,
           }}
         >
-          <span
-            aria-hidden
-            style={{
-              color: 'var(--brand)',
-              fontWeight: 700,
-              fontSize: '32px',
-              marginRight: '4px',
-            }}
-          >
-            “
-          </span>
           {spark.title}
         </p>
         <p

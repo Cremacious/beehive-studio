@@ -12,9 +12,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-15 (🎉 **DISCOVER REDESIGN CODE-COMPLETE.** All 7 waves shipped this session. 6 tabs wired end-to-end with sidebar + grid. 47 legacy sub-routes deleted. Manual smoke is the last gate.)
+> **Last updated:** 2026-06-15 (🎉 **DISCOVER REDESIGN CODE-COMPLETE + 1st smoke fix.** Page container widened from 1280px → 1680px so the grid flows 4+ cards wide alongside the 240px sidebar.)
 >
-> **Last commit:** [515154c](https://github.com/Cremacious/beehive-studio/commit/515154c) — chore(discover): delete legacy D1-D4 rail sub-routes + entity search routes (W7.1).
+> **Last commit:** [8f01fc0](https://github.com/Cremacious/beehive-studio/commit/8f01fc0) — fix(discover): widen page container + tighten card min-widths for 4+ col grid.
 >
 > **🎉 Discover redesign code-complete this session ([253fba6](https://github.com/Cremacious/beehive-studio/commit/253fba6) spec → [d949f76](https://github.com/Cremacious/beehive-studio/commit/d949f76) plan → 7 waves of feature commits → [515154c](https://github.com/Cremacious/beehive-studio/commit/515154c) cleanup).** The rail-driven D1-D4 Discover surface has been replaced with an ecommerce/bookstore-aisle pattern: persistent left sidebar of filters + 4-col card grid, consistent across all 6 tabs (Home + Books + Sparks + Hives + Lists + Clubs). 758/758 tests, tsc clean throughout.
 >

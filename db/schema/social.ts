@@ -126,6 +126,7 @@ export const sparks = pgTable('sparks', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
   creatorId: text('creator_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   title: text('title').notNull(),
+  prompt: text('prompt').notNull().default(''),
   description: text('description'),
   rules: text('rules'),
   deadline: timestamp('deadline'),

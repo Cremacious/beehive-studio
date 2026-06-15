@@ -4,15 +4,14 @@ import { headers } from 'next/headers'
 import { Plus } from 'lucide-react'
 import { auth } from '@/lib/auth'
 import { parseRadio, parseIntParam } from '@/lib/discover/url-state'
-import {
-  getCommunitySparksAction,
-  type CommunitySparkRow,
-} from '@/lib/actions/sparks-hub.actions'
+import { getCommunitySparksAction } from '@/lib/actions/sparks-hub.actions'
+import { getTrendingSparksForRailAction } from '@/lib/actions/sparks-rail.actions'
+import { pickPromptTemplate } from '@/lib/sparks/prompt-templates'
 import { SparksTabStrip } from './_components/sparks-tab-strip'
 import { SparksSortDropdown } from './_components/sparks-sort-dropdown'
-import { SparksEmptyState } from './_components/sparks-empty-state'
 import { SparksHubPagination } from './_components/sparks-hub-pagination'
-import { SparkCard } from '../discover/_components/spark-card'
+import { SparksRightRail } from './_components/sparks-right-rail'
+import { SparksGrid } from './_components/sparks-grid'
 
 type SP = Record<string, string | string[] | undefined>
 type Props = {
@@ -49,12 +48,15 @@ export default async function SparksHubPage({ params, searchParams }: Props) {
   )
   const page = Math.max(1, parseIntParam(pickRaw(sp, 'page'), 1))
 
-  const result = await getCommunitySparksAction({ viewerId, tab, sort, page })
+  const [result, trendingR] = await Promise.all([
+    getCommunitySparksAction({ viewerId, tab, sort, page }),
+    getTrendingSparksForRailAction({ limit: 1 }),
+  ])
   if (!result.success) {
     return (
       <main
         className="mx-auto w-full px-6 pt-7 pb-6"
-        style={{ maxWidth: '1920px' }}
+        style={{ maxWidth: '1680px' }}
       >
         <p className="text-red-400 text-sm">Failed to load sparks.</p>
       </main>
@@ -63,104 +65,107 @@ export default async function SparksHubPage({ params, searchParams }: Props) {
   const { sparks, totalCount, bucketCounts } = result.data
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
 
+  const trendingSpark =
+    trendingR.success && trendingR.data[0]
+      ? {
+          id: trendingR.data[0].id,
+          title: trendingR.data[0].title,
+          entryCount: trendingR.data[0].entryCount,
+          deadline: trendingR.data[0].deadline,
+        }
+      : null
+  const promptTemplate = pickPromptTemplate(viewerId)
+
   return (
     <main
       className="mx-auto w-full px-6 pt-7 pb-6"
-      style={{ maxWidth: '1920px' }}
+      style={{ maxWidth: '1680px' }}
     >
-      <header className="flex items-start justify-between gap-4 mb-6">
-        <div>
-          <h1
-            className="text-[32px] font-bold leading-tight"
-            style={{
-              color: 'var(--canvas-dark-ink-strong)',
-              fontFamily: 'var(--font-display)',
-            }}
-          >
-            Sparks
-          </h1>
-          <p
-            className="text-[13px] mt-1.5"
-            style={{ color: 'var(--canvas-dark-ink-muted)' }}
-          >
-            Sparks from you, your circle, and prompts you&apos;ve entered.
-          </p>
-        </div>
-        <Link
-          href={`/${locale}/sparks/new`}
-          className="inline-flex items-center gap-1.5 px-4 py-2 text-[12px] font-bold rounded-lg"
-          style={{ background: 'var(--brand)', color: 'var(--brand-ink)' }}
-        >
-          <Plus size={14} aria-hidden="true" />
-          New Spark
-        </Link>
-      </header>
+      <div className="grid items-start xl:grid-cols-[minmax(0,1fr)_300px] grid-cols-1 gap-8">
+        <div className="min-w-0">
+          <header className="flex items-start justify-between gap-4 mb-6">
+            <div>
+              <h1
+                className="text-[32px] font-bold leading-tight"
+                style={{
+                  color: 'var(--canvas-dark-ink-strong)',
+                  fontFamily: 'var(--font-display)',
+                }}
+              >
+                Sparks
+              </h1>
+              <p
+                className="text-[13px] mt-1.5"
+                style={{ color: 'var(--canvas-dark-ink-muted)' }}
+              >
+                Sparks from you, your circle, and prompts you&apos;ve entered.
+              </p>
+            </div>
+            <Link
+              href={`/${locale}/sparks/new`}
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-[12px] font-bold rounded-lg"
+              style={{ background: 'var(--brand)', color: 'var(--brand-ink)' }}
+            >
+              <Plus size={14} aria-hidden="true" />
+              New Spark
+            </Link>
+          </header>
 
-      <div className="mb-4">
-        <SparksTabStrip
-          locale={locale}
-          current={tab}
-          counts={bucketCounts}
-          baseParams={{
-            sort: sort !== 'recent' ? sort : undefined,
-          }}
-        />
-      </div>
-
-      <div className="flex items-center justify-between mb-3">
-        <div
-          className="text-[12px]"
-          style={{ color: 'var(--canvas-dark-ink-muted)' }}
-        >
-          <strong style={{ color: 'var(--canvas-dark-ink)' }}>
-            {totalCount.toLocaleString()}
-          </strong>{' '}
-          sparks
-        </div>
-        <div className="flex items-center gap-2">
-          <span
-            className="text-[10px] uppercase tracking-[0.08em]"
-            style={{ color: 'var(--canvas-dark-ink-muted)' }}
-          >
-            Sort
-          </span>
-          <SparksSortDropdown selected={sort} />
-        </div>
-      </div>
-
-      {sparks.length === 0 ? (
-        <SparksEmptyState tab={tab} locale={locale} />
-      ) : (
-        <>
-          <div
-            className="grid gap-4"
-            style={{
-              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-              justifyItems: 'start',
-            }}
-          >
-            {sparks.map((spark: CommunitySparkRow) => (
-              <SparkCard
-                key={spark.id}
-                spark={spark}
-                locale={locale}
-                sourceTag={spark.source}
-                size="md"
-              />
-            ))}
+          <div className="mb-4">
+            <SparksTabStrip
+              locale={locale}
+              current={tab}
+              counts={bucketCounts}
+              baseParams={{
+                sort: sort !== 'recent' ? sort : undefined,
+              }}
+            />
           </div>
 
-          <SparksHubPagination
+          <div className="flex items-center justify-between mb-3">
+            <div
+              className="text-[12px]"
+              style={{ color: 'var(--canvas-dark-ink-muted)' }}
+            >
+              <strong style={{ color: 'var(--canvas-dark-ink)' }}>
+                {totalCount.toLocaleString()}
+              </strong>{' '}
+              sparks
+            </div>
+            <div className="flex items-center gap-2">
+              <span
+                className="text-[10px] uppercase tracking-[0.08em]"
+                style={{ color: 'var(--canvas-dark-ink-muted)' }}
+              >
+                Sort
+              </span>
+              <SparksSortDropdown selected={sort} />
+            </div>
+          </div>
+
+          <SparksGrid
+            sparks={sparks}
+            tab={tab}
             locale={locale}
-            page={page}
-            totalPages={totalPages}
-            baseParams={{
-              tab: tab !== 'all' ? tab : undefined,
-              sort: sort !== 'recent' ? sort : undefined,
-            }}
+            bucketCounts={bucketCounts}
+            promptTemplate={promptTemplate}
+            trendingSpark={trendingSpark}
           />
-        </>
-      )}
+
+          {totalCount > PAGE_SIZE ? (
+            <SparksHubPagination
+              locale={locale}
+              page={page}
+              totalPages={totalPages}
+              baseParams={{
+                tab: tab !== 'all' ? tab : undefined,
+                sort: sort !== 'recent' ? sort : undefined,
+              }}
+            />
+          ) : null}
+        </div>
+        <SparksRightRail locale={locale} />
+      </div>
     </main>
   )
 }

@@ -30,7 +30,7 @@ export default async function DiscoverPage({ params, searchParams }: Props) {
 
   return (
     <main
-      className="mx-auto w-full px-6 pt-7 pb-24"
+      className="mx-auto w-full px-6 pt-7 pb-6"
       style={{ maxWidth: '1920px' }}
     >
       <PageHead

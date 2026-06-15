@@ -25,7 +25,7 @@ export function FilterSidebar({ activeCount, clearHref, children }: Props) {
           'linear-gradient(180deg, #222426 0%, #1b1c1e 100%)',
         position: 'sticky',
         top: '64px',
-        height: 'calc(100vh - 80px)',
+        height: 'calc(100vh - 72px)',
         display: 'flex',
         flexDirection: 'column',
         borderRadius: '18px',

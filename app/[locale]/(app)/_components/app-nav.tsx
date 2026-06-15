@@ -32,12 +32,11 @@ export function AppNav({ locale, user, username }: AppNavProps) {
 
   return (
     <header
-      className="sticky top-1.5 z-40 mx-4 mt-1.5 backdrop-blur-md"
+      className="sticky top-0 z-40 backdrop-blur-md"
       style={{
         background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
-        borderRadius: 'var(--r-nav)',
         boxShadow: 'var(--sh-card)',
-        border: 'var(--br-card)',
+        borderBottom: 'var(--br-card)',
         height: '56px',
       }}
     >

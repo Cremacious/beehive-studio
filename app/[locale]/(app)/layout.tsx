@@ -5,6 +5,7 @@ import { db } from '@/db'
 import { userProfiles } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { AppNav } from './_components/app-nav'
+import { AppFooter } from '@/components/app-footer'
 
 export default async function AppLayout({
   children,
@@ -29,6 +30,7 @@ export default async function AppLayout({
     <div className="min-h-screen bg-[#262728] flex flex-col">
       <AppNav locale={locale} user={session.user} username={profile.username ?? null} />
       <main className="flex-1 flex flex-col pt-1.5">{children}</main>
+      <AppFooter />
     </div>
   )
 }

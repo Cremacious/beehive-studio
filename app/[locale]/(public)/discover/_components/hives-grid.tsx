@@ -8,6 +8,7 @@ import {
   parseStringParam,
   parseMultiSelect,
   parseRadio,
+  parseIntParam,
   buildUrl,
 } from '@/lib/discover/url-state'
 import { GENRE_LABEL, isValidGenre, type GenreSlug } from '@/lib/discover/genres'
@@ -15,6 +16,9 @@ import { SlimFeaturedStrip } from './slim-featured-strip'
 import { SortHeader } from './sort-header'
 import { ActiveFilterChips, type ActiveFilterChip } from './active-filter-chips'
 import { HiveGridCard } from './hive-grid-card'
+import { NumberedPagination } from './numbered-pagination'
+
+const PAGE_SIZE = 12
 
 type SP = Record<string, string | string[] | undefined>
 type Props = { sp: SP; locale: string }
@@ -123,6 +127,7 @@ export async function HivesGrid({ sp, locale }: Props) {
     'has-book' | 'standalone'
   >
   const sort = parseRadio(pickRaw(sp, 'sort'), SORTS, 'most-active')
+  const page = Math.max(1, parseIntParam(pickRaw(sp, 'page'), 1))
 
   const [resultsRes, featuredRes] = await Promise.all([
     searchHivesDiscoverAction({
@@ -132,11 +137,14 @@ export async function HivesGrid({ sp, locale }: Props) {
       openStates,
       linked,
       sort,
+      page,
     }),
     getFeaturedHiveAction({}),
   ])
 
   const hives: HiveCard[] = resultsRes.success ? resultsRes.data.books : []
+  const totalCount: number = resultsRes.success ? resultsRes.data.totalCount : 0
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
   const featured =
     featuredRes.success && featuredRes.data
       ? {
@@ -150,8 +158,8 @@ export async function HivesGrid({ sp, locale }: Props) {
     <div className="flex flex-col gap-4">
       <SlimFeaturedStrip kind="hive" featured={featured} />
       <SortHeader
-        count={hives.length}
-        entityNoun={hives.length === 1 ? 'hive' : 'hives'}
+        count={totalCount}
+        entityNoun={totalCount === 1 ? 'hive' : 'hives'}
         sortOptions={SORT_OPTIONS.map((o) => ({ ...o }))}
         selectedSort={sort}
       />
@@ -161,17 +169,33 @@ export async function HivesGrid({ sp, locale }: Props) {
           No hives match these filters. Try clearing one.
         </p>
       ) : (
-        <div
-          className="grid gap-4"
-          style={{
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-            justifyItems: 'start',
-          }}
-        >
-          {hives.map((hive) => (
-            <HiveGridCard key={hive.id} hive={hive} locale={locale} />
-          ))}
-        </div>
+        <>
+          <div
+            className="grid gap-4"
+            style={{
+              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              justifyItems: 'start',
+            }}
+          >
+            {hives.map((hive) => (
+              <HiveGridCard key={hive.id} hive={hive} locale={locale} />
+            ))}
+          </div>
+          <NumberedPagination
+            tab="hives"
+            locale={locale}
+            page={page}
+            totalPages={totalPages}
+            baseParams={{
+              q,
+              genres: genres.length ? genres : undefined,
+              size: size !== 'any' ? size : undefined,
+              openStates: openStates.length ? openStates : undefined,
+              linked: linked.length ? linked : undefined,
+              sort: sort !== 'most-active' ? sort : undefined,
+            }}
+          />
+        </>
       )}
     </div>
   )

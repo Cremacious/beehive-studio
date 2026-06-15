@@ -807,12 +807,23 @@ export async function searchListsDiscoverAction(args: {
   curator?: 'anyone' | 'following'
   sort?: 'relevance' | 'recent' | 'most-followed' | 'most-books'
   cursor?: string | null
-}): Promise<ActionResult<{ books: ListCard[]; nextCursor: string | null }>> {
+  /** 1-indexed page number for numbered pagination. */
+  page?: number
+}): Promise<
+  ActionResult<{
+    books: ListCard[]
+    nextCursor: string | null
+    totalCount: number
+  }>
+> {
   const viewerId = await getOptionalUserId()
   const blocked = await getBlockedListOwnerIdsForViewer(viewerId)
   const sort = args.sort ?? 'recent'
   const cursor = decodeCursor(args.cursor)
   const trimmed = (args.q ?? '').trim()
+  const pageNum = Math.max(1, Math.floor(args.page ?? 1))
+  const usePagination = (args.page ?? 0) > 0
+  const offset = (pageNum - 1) * PAGE_SIZE
 
   // Multi-genre takes precedence over single genre.
   const multiGenres = (args.genres ?? []).filter(
@@ -869,8 +880,8 @@ export async function searchListsDiscoverAction(args: {
     conds.push(sql`${readingLists.userId} IN ${followedSubquery}`)
   }
 
-  // Cursor tail clause per sort mode.
-  if (cursor) {
+  // Cursor tail clause per sort mode. Skip when using numbered pagination.
+  if (cursor && !usePagination) {
     if (sort === 'recent' && typeof cursor.sortKey === 'string') {
       const cursorDate = new Date(cursor.sortKey)
       const tail = or(
@@ -905,6 +916,13 @@ export async function searchListsDiscoverAction(args: {
     }
   }
 
+  // Parallel COUNT query for totalCount + main fetch.
+  const totalCountPromise = db
+    .select({ total: count(readingLists.id) })
+    .from(readingLists)
+    .leftJoin(userProfiles, eq(userProfiles.userId, readingLists.userId))
+    .where(and(...conds))
+
   // Always leftJoin userProfiles for the owner-name ILIKE.
   let rows: Array<{
     id: string
@@ -925,6 +943,7 @@ export async function searchListsDiscoverAction(args: {
       .where(and(...conds))
       .orderBy(desc(readingLists.createdAt), desc(readingLists.id))
       .limit(PAGE_SIZE + 1)
+      .offset(offset)
   } else if (sort === 'most-books') {
     rows = await db
       .select({
@@ -938,6 +957,7 @@ export async function searchListsDiscoverAction(args: {
       .where(and(...conds))
       .orderBy(desc(readingLists.bookCount), desc(readingLists.id))
       .limit(PAGE_SIZE + 1)
+      .offset(offset)
   } else {
     // most-followed or relevance: both collapse to followerCount DESC for v1.
     // TODO: real relevance scoring (e.g. Postgres full-text + ts_rank).
@@ -953,7 +973,10 @@ export async function searchListsDiscoverAction(args: {
       .where(and(...conds))
       .orderBy(desc(readingLists.followerCount), desc(readingLists.id))
       .limit(PAGE_SIZE + 1)
+      .offset(offset)
   }
+  const totalCountRows = await totalCountPromise
+  const totalCount = Number(totalCountRows[0]?.total ?? 0)
 
   const hasMore = rows.length > PAGE_SIZE
   const page = rows.slice(0, PAGE_SIZE)
@@ -976,7 +999,14 @@ export async function searchListsDiscoverAction(args: {
       nextCursor = encodeCursor({ sortKey: last.followerCount, id: last.id })
     }
   }
-  return { success: true, data: { books: projected, nextCursor } }
+  return {
+    success: true,
+    data: {
+      books: projected,
+      nextCursor: usePagination ? null : nextCursor,
+      totalCount,
+    },
+  }
 }
 
 // ─── 9. Genre counts (cached 5min) ────────────────────────────────────────────

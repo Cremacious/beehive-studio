@@ -878,13 +878,24 @@ export async function searchClubsDiscoverAction(args: {
   currentBook?: Array<'has-current' | 'between'>
   sort?: 'relevance' | 'recent' | 'most-active' | 'most-members'
   cursor?: string | null
-}): Promise<ActionResult<{ books: ClubCard[]; nextCursor: string | null }>> {
+  /** 1-indexed page number for numbered pagination. */
+  page?: number
+}): Promise<
+  ActionResult<{
+    books: ClubCard[]
+    nextCursor: string | null
+    totalCount: number
+  }>
+> {
   const viewerId = await getOptionalUserId()
   const blocked = await getBlockedClubOwnerIdsForViewer(viewerId)
   const sort = args.sort ?? 'recent'
   const needsActivity = sort === 'most-active' || sort === 'relevance'
   const cursor = decodeCursor(args.cursor)
   const trimmed = (args.q ?? '').trim()
+  const pageNum = Math.max(1, Math.floor(args.page ?? 1))
+  const usePagination = (args.page ?? 0) > 0
+  const offset = (pageNum - 1) * PAGE_SIZE
 
   // Multi-genre takes precedence over single genre.
   const multiGenres = (args.genres ?? []).filter(
@@ -939,8 +950,9 @@ export async function searchClubsDiscoverAction(args: {
     if (titleOr) conds.push(titleOr)
   }
 
-  // Cursor tail clause for DB-sorted modes (recent / most-members).
-  if (cursor) {
+  // Cursor tail clause for DB-sorted modes (recent / most-members). Skip
+  // when using numbered pagination.
+  if (cursor && !usePagination) {
     if (sort === 'recent' && typeof cursor.sortKey === 'string') {
       const cursorDate = new Date(cursor.sortKey)
       const tail = or(
@@ -964,6 +976,13 @@ export async function searchClubsDiscoverAction(args: {
     }
   }
 
+  // Total count query — same filters. Runs in parallel with the main fetch.
+  const totalCountPromise = db
+    .select({ total: count(bookClubs.id) })
+    .from(bookClubs)
+    .leftJoin(userProfiles, eq(userProfiles.userId, bookClubs.ownerId))
+    .where(and(...conds))
+
   let rows: Array<{ id: string; createdAt?: Date; memberCount?: number; score?: number }>
   let hasMore = false
   if (sort === 'recent') {
@@ -974,6 +993,7 @@ export async function searchClubsDiscoverAction(args: {
       .where(and(...conds))
       .orderBy(desc(bookClubs.createdAt), desc(bookClubs.id))
       .limit(PAGE_SIZE + 1)
+      .offset(offset)
     hasMore = dbRows.length > PAGE_SIZE
     rows = dbRows.slice(0, PAGE_SIZE)
   } else if (sort === 'most-members') {
@@ -984,6 +1004,7 @@ export async function searchClubsDiscoverAction(args: {
       .where(and(...conds))
       .orderBy(desc(bookClubs.memberCount), desc(bookClubs.id))
       .limit(PAGE_SIZE + 1)
+      .offset(offset)
     hasMore = dbRows.length > PAGE_SIZE
     rows = dbRows.slice(0, PAGE_SIZE)
   } else {
@@ -1006,15 +1027,19 @@ export async function searchClubsDiscoverAction(args: {
         if (b.score !== a.score) return b.score - a.score
         return a.id < b.id ? 1 : -1
       })
-    if (cursor && typeof cursor.sortKey === 'number') {
+    if (!usePagination && cursor && typeof cursor.sortKey === 'number') {
       const sk = cursor.sortKey
       ranked = ranked.filter(
         (r) => r.score < sk || (r.score === sk && r.id < cursor.id),
       )
     }
-    hasMore = ranked.length > PAGE_SIZE
-    rows = ranked.slice(0, PAGE_SIZE)
+    const startIdx = usePagination ? offset : 0
+    hasMore = ranked.length > startIdx + PAGE_SIZE
+    rows = ranked.slice(startIdx, startIdx + PAGE_SIZE)
   }
+
+  const totalCountRows = await totalCountPromise
+  const totalCount = Number(totalCountRows[0]?.total ?? 0)
 
   const projected = await projectToClubCards(
     rows.map((r) => ({ id: r.id })),
@@ -1035,7 +1060,14 @@ export async function searchClubsDiscoverAction(args: {
       nextCursor = encodeCursor({ sortKey: last.score, id: last.id })
     }
   }
-  return { success: true, data: { books: projected, nextCursor } }
+  return {
+    success: true,
+    data: {
+      books: projected,
+      nextCursor: usePagination ? null : nextCursor,
+      totalCount,
+    },
+  }
 }
 
 // ─── 9. Genre counts (cached 5min) ────────────────────────────────────────────

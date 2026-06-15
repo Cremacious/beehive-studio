@@ -840,14 +840,23 @@ export async function searchSparksDiscoverAction(args: {
   creator?: 'anyone' | 'following'
   sort?: 'relevance' | 'recent' | 'urgent' | 'most-entered'
   cursor?: string | null
+  /** 1-indexed page number for numbered pagination. When set, overrides cursor. */
+  page?: number
 }): Promise<
-  ActionResult<{ books: SparkCard[]; nextCursor: string | null }>
+  ActionResult<{
+    books: SparkCard[]
+    nextCursor: string | null
+    totalCount: number
+  }>
 > {
   const viewerId = await getOptionalUserId()
   const blocked = await getBlockedSparkCreatorIdsForViewer(viewerId)
   const sort = args.sort ?? 'recent'
   const cursor = decodeCursor(args.cursor)
   const trimmed = (args.q ?? '').trim()
+  const pageNum = Math.max(1, Math.floor(args.page ?? 1))
+  const usePagination = (args.page ?? 0) > 0
+  const offset = (pageNum - 1) * PAGE_SIZE
 
   // Multi-genre takes precedence; falls back to legacy single-genre helper.
   const multiGenres = (args.genres ?? []).filter(
@@ -910,8 +919,8 @@ export async function searchSparksDiscoverAction(args: {
     conds.push(sql`${sparks.creatorId} IN ${followedSubquery}`)
   }
 
-  // Cursor tail clause per sort mode.
-  if (cursor) {
+  // Cursor tail clause per sort mode. Skip when using numbered pagination.
+  if (cursor && !usePagination) {
     if (sort === 'urgent' && typeof cursor.sortKey === 'string') {
       const cursorDate = new Date(cursor.sortKey)
       const tail = or(
@@ -945,17 +954,34 @@ export async function searchSparksDiscoverAction(args: {
         : // 'recent' + 'relevance' (TODO: real relevance scoring)
           [desc(sparks.createdAt), desc(sparks.id)]
 
-  const rows = await db
-    .select({
-      id: sparks.id,
-      createdAt: sparks.createdAt,
-      deadline: sparks.deadline,
-      entryCount: sparks.entryCount,
-    })
-    .from(sparks)
-    .where(and(...conds))
-    .orderBy(...orderClause)
-    .limit(PAGE_SIZE + 1)
+  const [rows, totalCountRows] = await Promise.all([
+    usePagination
+      ? db
+          .select({
+            id: sparks.id,
+            createdAt: sparks.createdAt,
+            deadline: sparks.deadline,
+            entryCount: sparks.entryCount,
+          })
+          .from(sparks)
+          .where(and(...conds))
+          .orderBy(...orderClause)
+          .limit(PAGE_SIZE + 1)
+          .offset(offset)
+      : db
+          .select({
+            id: sparks.id,
+            createdAt: sparks.createdAt,
+            deadline: sparks.deadline,
+            entryCount: sparks.entryCount,
+          })
+          .from(sparks)
+          .where(and(...conds))
+          .orderBy(...orderClause)
+          .limit(PAGE_SIZE + 1),
+    db.select({ total: count(sparks.id) }).from(sparks).where(and(...conds)),
+  ])
+  const totalCount = Number(totalCountRows[0]?.total ?? 0)
 
   const hasMore = rows.length > PAGE_SIZE
   const page = rows.slice(0, PAGE_SIZE)
@@ -981,7 +1007,14 @@ export async function searchSparksDiscoverAction(args: {
       })
     }
   }
-  return { success: true, data: { books: projected, nextCursor } }
+  return {
+    success: true,
+    data: {
+      books: projected,
+      nextCursor: usePagination ? null : nextCursor,
+      totalCount,
+    },
+  }
 }
 
 // ─── 10. Spark genre counts (cached 5min) ─────────────────────────────────────

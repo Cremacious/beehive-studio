@@ -7,6 +7,7 @@ import {
   parseStringParam,
   parseMultiSelect,
   parseRadio,
+  parseIntParam,
   buildUrl,
 } from '@/lib/discover/url-state'
 import { GENRE_LABEL, isValidGenre, type GenreSlug } from '@/lib/discover/genres'
@@ -14,6 +15,9 @@ import { SlimFeaturedStrip } from './slim-featured-strip'
 import { SortHeader } from './sort-header'
 import { ActiveFilterChips, type ActiveFilterChip } from './active-filter-chips'
 import { ListGridCard } from './list-grid-card'
+import { NumberedPagination } from './numbered-pagination'
+
+const PAGE_SIZE = 12
 
 type SP = Record<string, string | string[] | undefined>
 type Props = { sp: SP; locale: string }
@@ -123,6 +127,7 @@ export async function ListsGrid({ sp, locale }: Props) {
   const updated = parseRadio(pickRaw(sp, 'updated'), UPDATEDS, 'anytime')
   const curator = parseRadio(pickRaw(sp, 'curator'), CURATORS, 'anyone')
   const sort = parseRadio(pickRaw(sp, 'sort'), SORTS, 'most-followed')
+  const page = Math.max(1, parseIntParam(pickRaw(sp, 'page'), 1))
 
   const [resultsRes, featuredRes] = await Promise.all([
     searchListsDiscoverAction({
@@ -133,11 +138,14 @@ export async function ListsGrid({ sp, locale }: Props) {
       updated,
       curator,
       sort,
+      page,
     }),
     getFeaturedListAction({}),
   ])
 
   const lists: ListCard[] = resultsRes.success ? resultsRes.data.books : []
+  const totalCount: number = resultsRes.success ? resultsRes.data.totalCount : 0
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
   const featured =
     featuredRes.success && featuredRes.data
       ? {
@@ -153,8 +161,8 @@ export async function ListsGrid({ sp, locale }: Props) {
     <div className="flex flex-col gap-4">
       <SlimFeaturedStrip kind="list" featured={featured} />
       <SortHeader
-        count={lists.length}
-        entityNoun={lists.length === 1 ? 'list' : 'lists'}
+        count={totalCount}
+        entityNoun={totalCount === 1 ? 'list' : 'lists'}
         sortOptions={SORT_OPTIONS.map((o) => ({ ...o }))}
         selectedSort={sort}
       />
@@ -164,17 +172,34 @@ export async function ListsGrid({ sp, locale }: Props) {
           No lists match these filters. Try clearing one.
         </p>
       ) : (
-        <div
-          className="grid gap-4"
-          style={{
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-            justifyItems: 'start',
-          }}
-        >
-          {lists.map((list) => (
-            <ListGridCard key={list.id} list={list} locale={locale} />
-          ))}
-        </div>
+        <>
+          <div
+            className="grid gap-4"
+            style={{
+              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              justifyItems: 'start',
+            }}
+          >
+            {lists.map((list) => (
+              <ListGridCard key={list.id} list={list} locale={locale} />
+            ))}
+          </div>
+          <NumberedPagination
+            tab="lists"
+            locale={locale}
+            page={page}
+            totalPages={totalPages}
+            baseParams={{
+              q,
+              genres: genres.length ? genres : undefined,
+              size: size !== 'any' ? size : undefined,
+              popularity: popularity !== 'any' ? popularity : undefined,
+              updated: updated !== 'anytime' ? updated : undefined,
+              curator: curator !== 'anyone' ? curator : undefined,
+              sort: sort !== 'most-followed' ? sort : undefined,
+            }}
+          />
+        </>
       )}
     </div>
   )

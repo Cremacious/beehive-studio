@@ -1073,7 +1073,15 @@ export async function searchHivesDiscoverAction(args: {
   linked?: Array<'has-book' | 'standalone'>
   sort?: 'relevance' | 'recent' | 'most-active' | 'most-members'
   cursor?: string | null
-}): Promise<ActionResult<{ books: HiveCard[]; nextCursor: string | null }>> {
+  /** 1-indexed page number for numbered pagination. */
+  page?: number
+}): Promise<
+  ActionResult<{
+    books: HiveCard[]
+    nextCursor: string | null
+    totalCount: number
+  }>
+> {
   const viewerId = await getOptionalUserId()
   const blocked = await getBlockedHiveOwnerIdsForViewer(viewerId)
   const size = args.size ?? 'any'
@@ -1081,6 +1089,9 @@ export async function searchHivesDiscoverAction(args: {
   const needsActivity = sort === 'most-active' || sort === 'relevance'
   const cursor = decodeCursor(args.cursor)
   const trimmed = (args.q ?? '').trim()
+  const pageNum = Math.max(1, Math.floor(args.page ?? 1))
+  const usePagination = (args.page ?? 0) > 0
+  const offset = (pageNum - 1) * PAGE_SIZE
 
   // Multi-genre takes precedence over single genre.
   const multiGenres = (args.genres ?? []).filter(
@@ -1131,8 +1142,9 @@ export async function searchHivesDiscoverAction(args: {
     if (titleOr) conds.push(titleOr)
   }
 
-  // Cursor tail clause for DB-sorted modes (recent / most-members).
-  if (cursor) {
+  // Cursor tail clause for DB-sorted modes (recent / most-members). Skip
+  // when using numbered pagination — offset is the source of truth.
+  if (cursor && !usePagination) {
     if (sort === 'recent' && typeof cursor.sortKey === 'string') {
       const cursorDate = new Date(cursor.sortKey)
       const tail = or(
@@ -1150,6 +1162,22 @@ export async function searchHivesDiscoverAction(args: {
     }
   }
 
+  // Total count query — same filters + JOINs as the main fetch. Runs once
+  // regardless of sort mode.
+  const totalCountRows = needsBooksJoin
+    ? await db
+        .select({ total: count(hives.id) })
+        .from(hives)
+        .innerJoin(books, eq(books.id, hives.bookId))
+        .leftJoin(userProfiles, eq(userProfiles.userId, hives.ownerId))
+        .where(and(...conds))
+    : await db
+        .select({ total: count(hives.id) })
+        .from(hives)
+        .leftJoin(userProfiles, eq(userProfiles.userId, hives.ownerId))
+        .where(and(...conds))
+  const totalCount = Number(totalCountRows[0]?.total ?? 0)
+
   // We always JOIN userProfiles for the owner-name ILIKE, and books when genre filter is on.
   // For sort=most-active we collect candidates then re-sort in JS via the scoreMap.
   let rows: Array<{ id: string; createdAt?: Date; memberCount?: number; score?: number }>
@@ -1164,6 +1192,7 @@ export async function searchHivesDiscoverAction(args: {
           .where(and(...conds))
           .orderBy(desc(hives.createdAt), desc(hives.id))
           .limit(PAGE_SIZE + 1)
+          .offset(offset)
       : await db
           .select({ id: hives.id, createdAt: hives.createdAt })
           .from(hives)
@@ -1171,6 +1200,7 @@ export async function searchHivesDiscoverAction(args: {
           .where(and(...conds))
           .orderBy(desc(hives.createdAt), desc(hives.id))
           .limit(PAGE_SIZE + 1)
+          .offset(offset)
     hasMore = dbRows.length > PAGE_SIZE
     rows = dbRows.slice(0, PAGE_SIZE)
   } else if (sort === 'most-members') {
@@ -1183,6 +1213,7 @@ export async function searchHivesDiscoverAction(args: {
           .where(and(...conds))
           .orderBy(desc(hives.memberCount), desc(hives.id))
           .limit(PAGE_SIZE + 1)
+          .offset(offset)
       : await db
           .select({ id: hives.id, memberCount: hives.memberCount })
           .from(hives)
@@ -1190,6 +1221,7 @@ export async function searchHivesDiscoverAction(args: {
           .where(and(...conds))
           .orderBy(desc(hives.memberCount), desc(hives.id))
           .limit(PAGE_SIZE + 1)
+          .offset(offset)
     hasMore = dbRows.length > PAGE_SIZE
     rows = dbRows.slice(0, PAGE_SIZE)
   } else {
@@ -1219,14 +1251,15 @@ export async function searchHivesDiscoverAction(args: {
         if (b.score !== a.score) return b.score - a.score
         return a.id < b.id ? 1 : -1
       })
-    if (cursor && typeof cursor.sortKey === 'number') {
+    if (!usePagination && cursor && typeof cursor.sortKey === 'number') {
       const sk = cursor.sortKey
       ranked = ranked.filter(
         (r) => r.score < sk || (r.score === sk && r.id < cursor.id),
       )
     }
-    hasMore = ranked.length > PAGE_SIZE
-    rows = ranked.slice(0, PAGE_SIZE)
+    const startIdx = usePagination ? offset : 0
+    hasMore = ranked.length > startIdx + PAGE_SIZE
+    rows = ranked.slice(startIdx, startIdx + PAGE_SIZE)
   }
 
   const projected = await projectToHiveCards(rows.map((r) => ({ id: r.id })), {
@@ -1248,7 +1281,14 @@ export async function searchHivesDiscoverAction(args: {
       nextCursor = encodeCursor({ sortKey: last.score, id: last.id })
     }
   }
-  return { success: true, data: { books: projected, nextCursor } }
+  return {
+    success: true,
+    data: {
+      books: projected,
+      nextCursor: usePagination ? null : nextCursor,
+      totalCount,
+    },
+  }
 }
 
 // ─── 9. Genre counts (cached 5min) ────────────────────────────────────────────

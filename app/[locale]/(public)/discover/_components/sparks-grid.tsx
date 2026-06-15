@@ -7,6 +7,7 @@ import {
   parseStringParam,
   parseMultiSelect,
   parseRadio,
+  parseIntParam,
   buildUrl,
 } from '@/lib/discover/url-state'
 import { GENRE_LABEL, isValidGenre, type GenreSlug } from '@/lib/discover/genres'
@@ -14,6 +15,9 @@ import { SlimFeaturedStrip } from './slim-featured-strip'
 import { SortHeader } from './sort-header'
 import { ActiveFilterChips, type ActiveFilterChip } from './active-filter-chips'
 import { SparkGridCard } from './spark-grid-card'
+import { NumberedPagination } from './numbered-pagination'
+
+const PAGE_SIZE = 12
 
 type SP = Record<string, string | string[] | undefined>
 type Props = { sp: SP; locale: string }
@@ -124,6 +128,7 @@ export async function SparksGrid({ sp, locale }: Props) {
   const timeLeft = parseRadio(pickRaw(sp, 'timeLeft'), TIME_LEFTS, 'any')
   const creator = parseRadio(pickRaw(sp, 'creator'), CREATORS, 'anyone')
   const sort = parseRadio(pickRaw(sp, 'sort'), SORTS, 'urgent')
+  const page = Math.max(1, parseIntParam(pickRaw(sp, 'page'), 1))
 
   const [resultsRes, featuredRes] = await Promise.all([
     searchSparksDiscoverAction({
@@ -134,11 +139,14 @@ export async function SparksGrid({ sp, locale }: Props) {
       timeLeft,
       creator,
       sort,
+      page,
     }),
     getFeaturedSparkAction({}),
   ])
 
   const sparks: SparkCard[] = resultsRes.success ? resultsRes.data.books : []
+  const totalCount: number = resultsRes.success ? resultsRes.data.totalCount : 0
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
   const featured =
     featuredRes.success && featuredRes.data
       ? {
@@ -154,8 +162,8 @@ export async function SparksGrid({ sp, locale }: Props) {
     <div className="flex flex-col gap-4">
       <SlimFeaturedStrip kind="spark" featured={featured} />
       <SortHeader
-        count={sparks.length}
-        entityNoun={sparks.length === 1 ? 'spark' : 'sparks'}
+        count={totalCount}
+        entityNoun={totalCount === 1 ? 'spark' : 'sparks'}
         sortOptions={SORT_OPTIONS.map((o) => ({ ...o }))}
         selectedSort={sort}
       />
@@ -165,17 +173,34 @@ export async function SparksGrid({ sp, locale }: Props) {
           No sparks match these filters. Try clearing one.
         </p>
       ) : (
-        <div
-          className="grid gap-4"
-          style={{
-            gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-            justifyItems: 'start',
-          }}
-        >
-          {sparks.map((spark) => (
-            <SparkGridCard key={spark.id} spark={spark} locale={locale} />
-          ))}
-        </div>
+        <>
+          <div
+            className="grid gap-4"
+            style={{
+              gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+              justifyItems: 'start',
+            }}
+          >
+            {sparks.map((spark) => (
+              <SparkGridCard key={spark.id} spark={spark} locale={locale} />
+            ))}
+          </div>
+          <NumberedPagination
+            tab="sparks"
+            locale={locale}
+            page={page}
+            totalPages={totalPages}
+            baseParams={{
+              q,
+              genres: genres.length ? genres : undefined,
+              state: state !== 'all' ? state : undefined,
+              wordLimit: wordLimit !== 'any' ? wordLimit : undefined,
+              timeLeft: timeLeft !== 'any' ? timeLeft : undefined,
+              creator: creator !== 'anyone' ? creator : undefined,
+              sort: sort !== 'urgent' ? sort : undefined,
+            }}
+          />
+        </>
       )}
     </div>
   )

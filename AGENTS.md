@@ -12,9 +12,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-15 (Numbered pagination shipped across 5 entity tabs + seed wipe hardened against orphan binder_items.)
+> **Last updated:** 2026-06-15 (Discover Books default cover now matches /studio — brand-yellow honeycomb pattern instead of soft paper-tone fallback. Seed nulls coverUrl so seed books exercise the new default.)
 >
-> **Last commit:** [7246dfb](https://github.com/Cremacious/beehive-studio/commit/7246dfb) — fix(scripts/seed-discover): defensive wipe handles orphan binder_items.
+> **Last commit:** [9a0568a](https://github.com/Cremacious/beehive-studio/commit/9a0568a) — feat(discover/books): brand-yellow honeycomb fallback cover.
 >
 > **Discover redesign — Numbered pagination (Chris picked style B from mockups):** Shared `<NumberedPagination>` component at `app/[locale]/(public)/discover/_components/numbered-pagination.tsx`. Renders `‹ Prev · 1 · 2 · 3 · … · N · Next ›`; ellipses appear when the window has gaps. Active page brand-yellow filled with `aria-current="page"`. Each page link is a server-rendered `<Link>` with `?page=N` preserved across other filter params; page=1 strips the param. Books wired at [50ab48c](https://github.com/Cremacious/beehive-studio/commit/50ab48c); Sparks/Hives/Lists/Clubs cascade at [e09bd1a](https://github.com/Cremacious/beehive-studio/commit/e09bd1a). Each action received a new optional `page?: number` input (1-indexed), parallel COUNT() query for accurate totalCount, SQL `.offset(offset)` on DB-sorted sort branches OR `slice(offset, offset+PAGE_SIZE)` on JS-sorted branches (Hives + Clubs most-active mode). Cursor logic bypassed when paginating; nextCursor returned null in paginated mode. Return type widened with required totalCount field. **Home tab deliberately not paginated** — cross-entity offset is awkward and Home is a curated overview, not a deep-browse surface. 758/758 tests, tsc clean.
 >

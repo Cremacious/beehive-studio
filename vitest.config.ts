@@ -5,6 +5,10 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
-    include: ['__tests__/**/*.test.ts', 'lib/**/__tests__/**/*.test.ts'],
+    include: [
+      '__tests__/**/*.test.ts',
+      'lib/**/__tests__/**/*.test.ts',
+      'app/**/__tests__/**/*.test.ts',
+    ],
   },
 })

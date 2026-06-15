@@ -331,7 +331,9 @@ async function seedBooks(usersList: SeededUser[]): Promise<SeededBook[]> {
       const synopsis = `${pick(SYNOPSIS_FRAGMENTS)} ${pick(SYNOPSIS_BEATS)}`
 
       const bookId = createId()
-      const coverUrl = `https://api.dicebear.com/8.x/shapes/svg?seed=${bookId}&backgroundColor=${COVER_PALETTES[bookIdx % COVER_PALETTES.length].replace(/[^a-z0-9]/gi, '')}`
+      // Seeded books deliberately leave coverUrl null so they show the
+      // brand-yellow honeycomb fallback (matches /studio book card styling).
+      const coverUrl: string | null = null
 
       await db.insert(books).values({
         id: bookId,

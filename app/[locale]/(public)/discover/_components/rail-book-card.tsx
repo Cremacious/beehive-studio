@@ -83,7 +83,7 @@ export function RailBookCard({ book, locale }: Props) {
 function CoverArt({
   coverUrl,
   title,
-  width,
+  // width currently unused — kept for back-compat with existing call sites.
 }: {
   coverUrl: string | null
   title: string
@@ -104,24 +104,47 @@ function CoverArt({
       </div>
     )
   }
+  // Brand-yellow honeycomb fallback — matches /studio book cards.
+  // Pattern is inlined per-card so the <pattern id> can be unique across
+  // multiple cards on the same page (id collisions cause shared cache repaints).
+  const patternId = `hex-${title.replace(/[^a-z0-9]/gi, '').slice(0, 16)}-${title.length}`
   return (
     <div
-      className="relative w-full flex items-center justify-center p-3"
+      className="relative w-full"
       style={{
         aspectRatio: '2 / 3',
-        background:
-          'linear-gradient(135deg, oklch(0.88 0.045 75), oklch(0.82 0.06 70))',
+        backgroundColor: 'var(--brand)',
       }}
     >
-      <span
-        className="text-center text-[15px] font-semibold leading-tight line-clamp-4"
-        style={{
-          fontFamily: 'var(--font-prose)',
-          color: 'oklch(0.32 0.05 60)',
-        }}
+      <svg
+        className="absolute inset-0 w-full h-full pointer-events-none"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
       >
-        {title}
-      </span>
+        <defs>
+          <pattern
+            id={patternId}
+            x="0"
+            y="0"
+            width="60"
+            height="52"
+            patternUnits="userSpaceOnUse"
+          >
+            <g
+              fill="none"
+              stroke="rgba(40, 25, 5, 0.22)"
+              strokeWidth="1.4"
+              strokeLinejoin="round"
+            >
+              <polygon points="15,0 27,7 27,19 15,26 3,19 3,7" />
+              <polygon points="45,26 57,33 57,45 45,52 33,45 33,33" />
+              <polygon points="45,-26 57,-19 57,-7 45,0 33,-7 33,-19" />
+              <polygon points="15,52 27,59 27,71 15,78 3,71 3,59" />
+            </g>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill={`url(#${patternId})`} />
+      </svg>
     </div>
   )
 }

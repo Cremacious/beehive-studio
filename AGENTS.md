@@ -12,9 +12,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-15 (Hot Books shipped + 2 smoke fixes — toggle order/click + uniform card heights.)
+> **Last updated:** 2026-06-15 (Slim footer + flush full-width nav + tighter discover padding shipped. Spark card redesign discussion next.)
 >
-> **Last commit:** [2845da8](https://github.com/Cremacious/beehive-studio/commit/2845da8) — fix(discover/books): uniform grid card height regardless of title length.
+> **Last commit:** [f484d54](https://github.com/Cremacious/beehive-studio/commit/f484d54) — feat(chrome): slim footer + flush full-width nav + tighter discover padding.
 >
 > **🎉 Hot Books discovery code-complete this session ([dd23b8c](https://github.com/Cremacious/beehive-studio/commit/dd23b8c) spec → [885dab9](https://github.com/Cremacious/beehive-studio/commit/885dab9) plan → 13 commits across 6 waves → [3abf081](https://github.com/Cremacious/beehive-studio/commit/3abf081) final).** The slim "★ FEATURED · The Master Trials" strip is gone from `/discover?tab=books`. In its place: an iOS segmented toggle (`For You · Trending · Popular · All`, 4 buttons authed / 3 buttons guest with For You omitted) styled in dark iOS to match the sidebar tiles. Sort dropdown narrowed from 4 options to 2 (`Most recent · A-Z`). For You is a 3-tier hybrid algorithm. **785/785 tests, tsc clean throughout.**
 >

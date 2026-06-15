@@ -14,6 +14,7 @@
     "db:seed": "tsx scripts/seed.ts",
     "db:seed:publishing": "tsx scripts/seed-publishing.ts",
     "seed:smoketest": "dotenv -e .env.local -- tsx scripts/seed-smoketest.ts",
+    "seed:discover": "dotenv -e .env.local -- tsx scripts/seed-discover.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },

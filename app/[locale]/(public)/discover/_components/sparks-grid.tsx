@@ -168,7 +168,7 @@ export async function SparksGrid({ sp, locale }: Props) {
         <div
           className="grid gap-4"
           style={{
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
             justifyItems: 'start',
           }}
         >

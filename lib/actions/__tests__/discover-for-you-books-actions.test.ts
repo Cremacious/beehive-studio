@@ -60,3 +60,26 @@ describe('discover for-you actions surface', () => {
     expect(typeof r).toBe('boolean')
   })
 })
+
+describe('getPopularBooksAction', () => {
+  it('is exported as a function', () => {
+    expect(typeof forYouActions.getPopularBooksAction).toBe('function')
+  })
+
+  it('returns success with books + totalCount on empty input', async () => {
+    const r = await forYouActions.getPopularBooksAction({})
+    expect(r.success).toBe(true)
+    if (r.success) {
+      expect(Array.isArray(r.data.books)).toBe(true)
+      expect(typeof r.data.totalCount).toBe('number')
+    }
+  })
+
+  it('accepts filters + page', async () => {
+    const r = await forYouActions.getPopularBooksAction({
+      page: 2,
+      filters: { genres: ['fantasy'], length: 'novel' },
+    })
+    expect(r.success).toBe(true)
+  })
+})

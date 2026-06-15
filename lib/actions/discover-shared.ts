@@ -1,0 +1,300 @@
+/**
+ * Shared (non-'use server') helpers + types for Discover book actions.
+ *
+ * Lives outside `discover.actions.ts` so that non-async exports (constants,
+ * sync helpers, types) don't violate Next.js's `'use server'` rule that every
+ * export from a server-action module must be an async function. Server-action
+ * modules import from here freely.
+ */
+
+import { db } from '@/db'
+import {
+  books,
+  binderItems,
+  chapters,
+  bookLikes,
+} from '@/db/schema'
+import { userProfiles } from '@/db/schema'
+import { userBlocks } from '@/db/schema/social'
+import {
+  and,
+  eq,
+  sql,
+  count,
+  isNull,
+  ilike,
+  or,
+  ne,
+  gte,
+  inArray,
+  notInArray,
+  lt,
+  type SQL,
+} from 'drizzle-orm'
+import {
+  normalizeGenre,
+  isValidGenre,
+  type GenreSlug,
+} from '@/lib/discover/genres'
+
+// ─── Public types ─────────────────────────────────────────────────────────────
+
+export type BookCard = {
+  id: string
+  title: string
+  authorUserId: string
+  authorUsername: string | null
+  authorDisplayName: string | null
+  authorAvatarUrl: string | null
+  coverUrl: string | null
+  synopsis: string | null
+  genre: GenreSlug
+  tags: string[]
+  likeCount: number
+  chapterCount: number
+  lastUpdatedAt: Date | null
+  isRecentlyActive: boolean
+}
+
+export type RawBookRow = {
+  id: string
+  title: string
+  authorUserId: string
+  coverUrl: string | null
+  synopsis: string | null
+  genre: string | null
+  tags: string[] | null
+  updatedAt: Date
+  firstPubliclyDiscoverableAt: Date | null
+}
+
+export type FilterInputs = {
+  q?: string
+  genres?: string[]
+  length?: 'any' | 'short' | 'novella' | 'novel' | 'epic'
+  status?: 'any' | 'ongoing' | 'completed'
+  series?: 'any' | 'standalone' | 'in-series'
+  updated?: 'anytime' | 'week' | 'month'
+}
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+export const PAGE_SIZE_BOOKS = 12
+
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Resolves the bidirectional blocked-author set for a viewer in a single query.
+ * Empty Set for guests. Used by every rail action so blocked authors' books
+ * never leak into Discover.
+ */
+export async function getBlockedAuthorIdsForViewer(
+  viewerId: string | null,
+): Promise<Set<string>> {
+  if (!viewerId) return new Set()
+  const rows = await db
+    .select({
+      blockerId: userBlocks.blockerId,
+      blockedId: userBlocks.blockedId,
+    })
+    .from(userBlocks)
+    .where(
+      or(
+        eq(userBlocks.blockerId, viewerId),
+        eq(userBlocks.blockedId, viewerId),
+      ),
+    )
+  const set = new Set<string>()
+  for (const r of rows) {
+    if (r.blockerId === viewerId) set.add(r.blockedId)
+    else set.add(r.blockerId)
+  }
+  return set
+}
+
+/**
+ * Builds the canonical WHERE filter for any public+discoverable book lookup.
+ * Genre is optional; blocked-author set excludes when non-empty.
+ */
+export function buildPublicBookFilters(
+  genre: GenreSlug | undefined,
+  blockedAuthorIds: Set<string>,
+): SQL[] {
+  const filters: SQL[] = [
+    eq(books.visibility, 'PUBLIC'),
+    eq(books.discoverable, true),
+    ne(books.status, 'STANDALONE_HIVE_SHADOW'),
+  ]
+  if (genre) {
+    filters.push(eq(books.genre, genre))
+  }
+  if (blockedAuthorIds.size > 0) {
+    filters.push(notInArray(books.userId, Array.from(blockedAuthorIds)))
+  }
+  return filters
+}
+
+/**
+ * Mutates `filters` in place by pushing WHERE clauses for the optional
+ * filter inputs (`q`, `genres`, `length`, `status`, `series`, `updated`).
+ * Extracted from `searchBooksDiscoverAction` so other actions (Hot, Popular,
+ * etc.) can apply the same filter semantics without re-implementing them.
+ *
+ * NOTE on `q`: the title/author search clause references `userProfiles`
+ * columns. Callers that pass `q` MUST `leftJoin(userProfiles, ...)` on their
+ * query, otherwise the SQL will fail.
+ */
+export function applyBookFilterInputs(
+  filters: SQL[],
+  input: FilterInputs,
+): void {
+  const q = (input.q ?? '').trim()
+
+  if (input.genres && input.genres.length > 0) {
+    const multiGenres = input.genres.filter(
+      (g): g is string => typeof g === 'string' && isValidGenre(g),
+    )
+    if (multiGenres.length > 0) {
+      filters.push(inArray(books.genre, multiGenres as GenreSlug[]))
+    }
+  }
+
+  // Title / author / tag search clause — only when q is non-empty.
+  if (q.length > 0) {
+    const like = `%${q}%`
+    filters.push(
+      or(
+        ilike(books.title, like),
+        ilike(userProfiles.displayName, like),
+        ilike(userProfiles.username, like),
+        sql`${q} = ANY(${books.tags})`,
+      )!,
+    )
+  }
+
+  // Length bucket via correlated subquery (chapters table has wordCount; books
+  // does not). Trade-off: per-row subquery cost is real at scale; if hot,
+  // denormalize books.aggregate_word_count later. Spec §11 deferred follow-up.
+  if (input.length && input.length !== 'any') {
+    const wcSql = sql<number>`COALESCE((SELECT SUM(${chapters.wordCount}) FROM ${chapters} WHERE ${chapters.bookId} = ${books.id}), 0)`
+    if (input.length === 'short') filters.push(sql`${wcSql} < 20000`)
+    else if (input.length === 'novella')
+      filters.push(sql`${wcSql} >= 20000 AND ${wcSql} < 50000`)
+    else if (input.length === 'novel')
+      filters.push(sql`${wcSql} >= 50000 AND ${wcSql} < 120000`)
+    else if (input.length === 'epic') filters.push(sql`${wcSql} >= 120000`)
+  }
+
+  // Status bucket — 90-day updated_at heuristic per plan resolved decision 1.
+  if (input.status && input.status !== 'any') {
+    const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
+    if (input.status === 'ongoing')
+      filters.push(gte(books.updatedAt, ninetyDaysAgo))
+    else if (input.status === 'completed')
+      filters.push(lt(books.updatedAt, ninetyDaysAgo))
+  }
+
+  // Series posture.
+  if (input.series && input.series !== 'any') {
+    if (input.series === 'standalone') filters.push(isNull(books.seriesName))
+    else if (input.series === 'in-series')
+      filters.push(sql`${books.seriesName} IS NOT NULL`)
+  }
+
+  // Updated recency bucket.
+  if (input.updated && input.updated !== 'anytime') {
+    const days = input.updated === 'week' ? 7 : 30
+    const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
+    filters.push(gte(books.updatedAt, cutoff))
+  }
+}
+
+/**
+ * Projects a set of raw book rows to BookCard[] by joining authors + chapter
+ * aggregates + last-update timestamps. All hydration runs in 3 parallel
+ * queries stitched via Maps.
+ */
+export async function projectToBookCards(
+  rows: RawBookRow[],
+): Promise<BookCard[]> {
+  if (rows.length === 0) return []
+  const bookIds = rows.map((r) => r.id)
+  const authorIds = Array.from(new Set(rows.map((r) => r.authorUserId)))
+
+  const [authorRows, likeRows, chapterRows, lastUpdateRows] = await Promise.all([
+    db
+      .select({
+        userId: userProfiles.userId,
+        username: userProfiles.username,
+        displayName: userProfiles.displayName,
+        avatarUrl: userProfiles.avatarUrl,
+      })
+      .from(userProfiles)
+      .where(inArray(userProfiles.userId, authorIds)),
+    db
+      .select({ bookId: bookLikes.bookId, total: count() })
+      .from(bookLikes)
+      .where(inArray(bookLikes.bookId, bookIds))
+      .groupBy(bookLikes.bookId),
+    db
+      .select({ bookId: binderItems.bookId, total: count() })
+      .from(binderItems)
+      .where(
+        and(
+          inArray(binderItems.bookId, bookIds),
+          eq(binderItems.type, 'chapter'),
+        ),
+      )
+      .groupBy(binderItems.bookId),
+    db
+      .select({
+        bookId: chapters.bookId,
+        last: sql<Date>`MAX(${chapters.updatedAt})`,
+      })
+      .from(chapters)
+      .where(
+        and(
+          inArray(chapters.bookId, bookIds),
+          inArray(chapters.status, ['REVISED', 'FINAL']),
+        ),
+      )
+      .groupBy(chapters.bookId),
+  ])
+
+  const authorMap = new Map(authorRows.map((r) => [r.userId, r]))
+  const likeMap = new Map(likeRows.map((r) => [r.bookId, Number(r.total)]))
+  const chapterMap = new Map(
+    chapterRows.map((r) => [r.bookId, Number(r.total)]),
+  )
+  const lastUpdateMap = new Map(
+    lastUpdateRows.map((r) => [r.bookId, r.last as Date | null]),
+  )
+
+  const thirtyDaysAgo = new Date(Date.now() - THIRTY_DAYS_MS)
+
+  return rows.map((r) => {
+    const author = authorMap.get(r.authorUserId)
+    const lastUpdated = lastUpdateMap.get(r.id) ?? null
+    const isRecentlyActive =
+      lastUpdated instanceof Date && lastUpdated >= thirtyDaysAgo
+    return {
+      id: r.id,
+      title: r.title,
+      authorUserId: r.authorUserId,
+      authorUsername: author?.username ?? null,
+      authorDisplayName: author?.displayName ?? null,
+      authorAvatarUrl: author?.avatarUrl ?? null,
+      coverUrl: r.coverUrl,
+      synopsis: r.synopsis,
+      genre: normalizeGenre(r.genre),
+      tags: r.tags ?? [],
+      likeCount: likeMap.get(r.id) ?? 0,
+      chapterCount: chapterMap.get(r.id) ?? 0,
+      lastUpdatedAt: lastUpdated,
+      isRecentlyActive,
+    }
+  })
+}
+

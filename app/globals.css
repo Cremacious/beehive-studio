@@ -265,6 +265,9 @@
   --r-pill: 999px;  /* fully rounded: status pills, save indicator, premium badge, sprint button */
   --r-nav:  20px;   /* app nav bar */
 
+  /* Discover redesign — bookstore aisle */
+  --w-discover-sidebar: 240px;
+
   /* Aesthetic refresh depth system */
   --sh-card:
     0 1px 0 oklch(1 0 0 / 0.06) inset,

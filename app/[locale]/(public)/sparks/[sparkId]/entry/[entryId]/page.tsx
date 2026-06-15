@@ -49,7 +49,7 @@ export default async function SparkEntryPage({ params }: Props) {
             marginBottom: 6,
           }}
         >
-          ← Spark · {spark.prompt}
+          ← Spark · {spark.title}
         </Link>
 
         <header style={{ marginBottom: 22 }}>

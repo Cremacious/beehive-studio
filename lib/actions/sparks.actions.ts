@@ -59,6 +59,7 @@ export type SparkSummary = {
 }
 
 export type SparkDetail = SparkSummary & {
+  title: string
   description: string | null
   rules: string | null
   creatorUserId: string
@@ -404,7 +405,8 @@ export async function getSparkAction(
 
   const detail: SparkDetail = {
     id: spark.id,
-    prompt: spark.title,
+    title: spark.title,
+    prompt: spark.prompt || spark.title,
     deadline,
     wordLimit: spark.wordLimit ?? null,
     status,

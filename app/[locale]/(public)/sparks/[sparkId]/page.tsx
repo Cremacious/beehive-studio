@@ -66,7 +66,7 @@ export default async function SparkDetailPage({ params }: Props) {
         <PageHead
           back={{ href: `/${locale}/sparks`, label: 'sparks' }}
           eyebrow={`Spark · ${creatorLabel}`}
-          title={spark.prompt}
+          title={spark.title}
           subtitle={
             <span className="flex flex-wrap items-center gap-3">
               <StatusPill status={spark.status} />
@@ -85,6 +85,50 @@ export default async function SparkDetailPage({ params }: Props) {
             </span>
           }
         />
+
+        {/* Prompt hero blockquote */}
+        {spark.prompt ? (
+          <blockquote
+            className="max-w-[65ch]"
+            style={{
+              margin: '0 0 22px 0',
+              borderLeft: '4px solid var(--brand)',
+              paddingLeft: '16px',
+              color: 'var(--canvas-dark-ink)',
+              fontFamily: 'var(--font-prose)',
+              fontSize: '18px',
+              fontStyle: 'italic',
+              lineHeight: 1.55,
+            }}
+          >
+            {spark.prompt}
+          </blockquote>
+        ) : null}
+
+        {/* Optional Context section */}
+        {spark.description ? (
+          <section style={{ marginBottom: 22 }} className="max-w-[65ch]">
+            <div
+              className="eyebrow-mono"
+              style={{ marginBottom: 6 }}
+            >
+              CONTEXT
+            </div>
+            <p
+              style={{
+                margin: 0,
+                fontFamily: 'var(--font-prose)',
+                fontSize: '14px',
+                lineHeight: 1.6,
+                color: 'var(--canvas-dark-ink)',
+                whiteSpace: 'pre-wrap',
+              }}
+            >
+              {spark.description}
+            </p>
+          </section>
+        ) : null}
+
 
         {/* CLOSED: Winner banner */}
         {spark.status === 'CLOSED' && spark.winnerEntryId && (

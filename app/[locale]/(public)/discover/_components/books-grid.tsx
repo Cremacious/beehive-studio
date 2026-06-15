@@ -1,17 +1,26 @@
 import {
   searchBooksDiscoverAction,
-  getFeaturedFreshBookAction,
+  getTrendingBooksAction,
   type BookCard,
 } from '@/lib/actions/discover.actions'
+import {
+  getForYouBooksAction,
+  getPopularBooksAction,
+  hasAnyDiscoverySignalAction,
+} from '@/lib/actions/discover-for-you-books.actions'
 import {
   parseStringParam,
   parseMultiSelect,
   parseRadio,
   parseIntParam,
+  parseMode,
   buildUrl,
+  type ModeId,
 } from '@/lib/discover/url-state'
+import { resolveDefaultMode } from '@/lib/discover/resolve-default-mode'
+import { getOptionalUserId } from '@/lib/require-auth'
 import { GENRE_LABEL, isValidGenre, type GenreSlug } from '@/lib/discover/genres'
-import { SlimFeaturedStrip } from './slim-featured-strip'
+import { DiscoveryModeToggle } from './discovery-mode-toggle'
 import { SortHeader } from './sort-header'
 import { ActiveFilterChips, type ActiveFilterChip } from './active-filter-chips'
 import { BookGridCard } from './book-grid-card'
@@ -30,7 +39,7 @@ const LENGTHS = ['any', 'short', 'novella', 'novel', 'epic'] as const
 const STATUSES = ['any', 'ongoing', 'completed'] as const
 const SERIES = ['any', 'standalone', 'in-series'] as const
 const UPDATED = ['anytime', 'week', 'month'] as const
-const SORTS = ['trending', 'recent', 'most-liked', 'a-z'] as const
+const SORTS = ['recent', 'a-z'] as const
 
 const LENGTH_LABEL: Record<(typeof LENGTHS)[number], string> = {
   any: 'Any length',
@@ -56,9 +65,7 @@ const UPDATED_LABEL: Record<(typeof UPDATED)[number], string> = {
 }
 
 const SORT_OPTIONS = [
-  { value: 'trending', label: 'Trending' },
   { value: 'recent', label: 'Most recent' },
-  { value: 'most-liked', label: 'Most liked' },
   { value: 'a-z', label: 'A–Z' },
 ] as const
 
@@ -67,13 +74,12 @@ function pickRaw(sp: SP, key: string): string | undefined {
   return typeof v === 'string' ? v : undefined
 }
 
-// Maps the redesign's sort enum onto the action's existing sort param.
-// 'trending' and 'a-z' currently fall back to 'recent' until the action grows
-// dedicated branches. Documented in spec §11 as a deferred polish item.
+// Maps the narrowed sort enum onto the 'all' search action's existing sort param.
+// TODO(plan): `searchBooksDiscoverAction` does not yet have a true 'a-z'
+// branch — it falls back to 'recent'. Spec §11 deferred polish item.
 function mapSortToAction(
   sort: (typeof SORTS)[number],
 ): 'recent' | 'popular' | 'relevance' {
-  if (sort === 'most-liked') return 'popular'
   return 'recent'
 }
 
@@ -85,7 +91,8 @@ function buildChips(sp: SP, locale: string): ActiveFilterChip[] {
   const status = parseRadio(pickRaw(sp, 'status'), STATUSES, 'any')
   const series = parseRadio(pickRaw(sp, 'series'), SERIES, 'any')
   const updated = parseRadio(pickRaw(sp, 'updated'), UPDATED, 'anytime')
-  const sort = parseRadio(pickRaw(sp, 'sort'), SORTS, 'trending')
+  const sort = parseRadio(pickRaw(sp, 'sort'), SORTS, 'recent')
+  const modeRaw = pickRaw(sp, 'mode')
 
   // Build a base map of all current params, then per chip create a "without me" URL.
   const all: Record<string, string | string[] | undefined> = {
@@ -95,7 +102,8 @@ function buildChips(sp: SP, locale: string): ActiveFilterChip[] {
     status: status !== 'any' ? status : undefined,
     series: series !== 'any' ? series : undefined,
     updated: updated !== 'anytime' ? updated : undefined,
-    sort: sort !== 'trending' ? sort : undefined,
+    sort: sort !== 'recent' ? sort : undefined,
+    mode: modeRaw,
   }
 
   function withoutKey(key: string): string {
@@ -138,48 +146,96 @@ function buildChips(sp: SP, locale: string): ActiveFilterChip[] {
 }
 
 export async function BooksGrid({ sp, locale }: Props) {
+  const viewerId = await getOptionalUserId()
+  const isAuthed = viewerId !== null
+
   const q = parseStringParam(pickRaw(sp, 'q'))
   const genres = parseMultiSelect(pickRaw(sp, 'genres'))
   const length = parseRadio(pickRaw(sp, 'length'), LENGTHS, 'any')
   const status = parseRadio(pickRaw(sp, 'status'), STATUSES, 'any')
   const series = parseRadio(pickRaw(sp, 'series'), SERIES, 'any')
   const updated = parseRadio(pickRaw(sp, 'updated'), UPDATED, 'anytime')
-  const sort = parseRadio(pickRaw(sp, 'sort'), SORTS, 'trending')
+  const sort = parseRadio(pickRaw(sp, 'sort'), SORTS, 'recent')
   const page = Math.max(1, parseIntParam(pickRaw(sp, 'page'), 1))
 
-  const [resultsRes, featuredRes] = await Promise.all([
-    searchBooksDiscoverAction({
-      q,
-      genres,
-      length,
-      status,
-      series,
-      updated,
-      sort: mapSortToAction(sort),
-      page,
-    }),
-    getFeaturedFreshBookAction({}),
-  ])
+  // Resolve active discovery mode.
+  const parsedMode = parseMode(pickRaw(sp, 'mode'))
+  let resolvedMode: ModeId
+  if (parsedMode) {
+    // Silent guest fallback: ?mode=for-you with no auth → trending.
+    if (parsedMode === 'for-you' && !isAuthed) {
+      resolvedMode = 'trending'
+    } else {
+      resolvedMode = parsedMode
+    }
+  } else {
+    const hasSignal = isAuthed
+      ? await hasAnyDiscoverySignalAction(viewerId!)
+      : false
+    resolvedMode = resolveDefaultMode({ isAuthed, hasSignal })
+  }
+
+  const filterInputs = {
+    q,
+    genres: genres.length ? genres : undefined,
+    length,
+    status,
+    series,
+    updated,
+  }
+
+  const resultsRes = await (async () => {
+    switch (resolvedMode) {
+      case 'for-you':
+        return getForYouBooksAction({
+          viewerId: viewerId!,
+          page,
+          filters: filterInputs,
+        })
+      case 'trending':
+        return getTrendingBooksAction({ page, filters: filterInputs })
+      case 'popular':
+        return getPopularBooksAction({ page, filters: filterInputs })
+      case 'all':
+        return searchBooksDiscoverAction({
+          q,
+          genres,
+          length,
+          status,
+          series,
+          updated,
+          sort: mapSortToAction(sort),
+          page,
+        })
+    }
+  })()
 
   const books: BookCard[] = resultsRes.success ? resultsRes.data.books : []
   const totalCount: number = resultsRes.success ? resultsRes.data.totalCount : 0
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
-  const featured =
-    featuredRes.success && featuredRes.data
-      ? {
-          title: featuredRes.data.title,
-          caption: featuredRes.data.authorUsername
-            ? `Fresh from @${featuredRes.data.authorUsername}`
-            : 'A fresh new release',
-          href: `/${locale}/books/${featuredRes.data.id}`,
-        }
-      : null
 
   const chips = buildChips(sp, locale)
 
+  // baseParams for DiscoveryModeToggle (no mode, no page).
+  const toggleBaseParams: Record<string, string | string[] | undefined> = {
+    q,
+    genres: genres.length ? genres : undefined,
+    length: length !== 'any' ? length : undefined,
+    status: status !== 'any' ? status : undefined,
+    series: series !== 'any' ? series : undefined,
+    updated: updated !== 'anytime' ? updated : undefined,
+    sort: sort !== 'recent' ? sort : undefined,
+  }
+
   return (
     <div className="flex flex-col gap-4">
-      <SlimFeaturedStrip kind="book" featured={featured} />
+      <DiscoveryModeToggle
+        tab="books"
+        locale={locale}
+        current={resolvedMode}
+        isAuthed={isAuthed}
+        baseParams={toggleBaseParams}
+      />
       <SortHeader
         count={totalCount}
         entityNoun={totalCount === 1 ? 'book' : 'books'}
@@ -216,7 +272,8 @@ export async function BooksGrid({ sp, locale }: Props) {
               status: status !== 'any' ? status : undefined,
               series: series !== 'any' ? series : undefined,
               updated: updated !== 'anytime' ? updated : undefined,
-              sort: sort !== 'trending' ? sort : undefined,
+              sort: sort !== 'recent' ? sort : undefined,
+              mode: resolvedMode === 'trending' ? undefined : resolvedMode,
             }}
           />
         </>

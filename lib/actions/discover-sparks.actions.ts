@@ -164,7 +164,7 @@ type ProjectionOpts = { computeVoteTotal: boolean; computeWinner: boolean }
  * total + winner-entry joins are conditional on opts so OPEN-only rails skip
  * the unnecessary round-trips.
  */
-async function projectToSparkCards(
+export async function projectToSparkCards(
   rows: Array<{ id: string }>,
   opts: ProjectionOpts,
 ): Promise<SparkCard[]> {

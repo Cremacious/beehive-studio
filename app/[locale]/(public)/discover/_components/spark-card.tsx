@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import type { SparkCard as SparkCardData } from '@/lib/actions/discover-sparks.actions'
+import type { CommunitySparkSource } from '@/lib/actions/sparks-hub.actions'
 import { truncateAtWord } from '@/lib/sparks/truncate-at-word'
 import {
   timeLeftLabel,
@@ -14,11 +15,38 @@ type Props = {
   locale: string
   /** sm = 240px target width, md = 280px target (default). */
   size?: 'sm' | 'md'
+  sourceTag?: CommunitySparkSource | null
 }
 
 const TEASER_MAX = 80
 
-export function SparkCard({ spark, locale, size = 'md' }: Props) {
+const SOURCE_TAG_STYLE: Record<
+  CommunitySparkSource,
+  { bg: string; color: string; label: string }
+> = {
+  yours: {
+    bg: 'oklch(from var(--brand) l c h / 0.15)',
+    color: 'var(--brand)',
+    label: 'YOURS',
+  },
+  following: {
+    bg: 'oklch(0.6 0.15 240 / 0.15)',
+    color: 'oklch(0.7 0.15 240)',
+    label: 'FOLLOWING',
+  },
+  friend: {
+    bg: 'oklch(0.55 0.18 310 / 0.15)',
+    color: 'oklch(0.7 0.18 310)',
+    label: 'FRIEND',
+  },
+  entered: {
+    bg: 'oklch(0.6 0.15 150 / 0.15)',
+    color: 'oklch(0.7 0.15 150)',
+    label: 'ENTERED',
+  },
+}
+
+export function SparkCard({ spark, locale, size = 'md', sourceTag }: Props) {
   const isOpen = spark.status === 'OPEN'
   const isVoting = spark.status === 'VOTING'
   const isClosed = spark.status === 'CLOSED'
@@ -72,7 +100,18 @@ export function SparkCard({ spark, locale, size = 'md' }: Props) {
               {statusLabel(spark.status)}
               {countdownLabel ? ` · ${countdownLabel}` : ''}
             </span>
-            {spark.genre ? (
+            {sourceTag ? (
+              <span
+                className="inline-flex items-center px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] rounded-full"
+                style={{
+                  background: SOURCE_TAG_STYLE[sourceTag].bg,
+                  color: SOURCE_TAG_STYLE[sourceTag].color,
+                  fontFamily: 'var(--font-mono)',
+                }}
+              >
+                {SOURCE_TAG_STYLE[sourceTag].label}
+              </span>
+            ) : spark.genre ? (
               <span
                 className="text-[9px] uppercase tracking-[0.08em]"
                 style={{

@@ -29,7 +29,10 @@ export default async function DiscoverPage({ params, searchParams }: Props) {
   const tab = parseTab(rawTab)
 
   return (
-    <main className="cm-wrap mx-auto px-6" style={{ maxWidth: '1680px' }}>
+    <main
+      className="mx-auto w-full px-6 pt-7 pb-24"
+      style={{ maxWidth: '1920px' }}
+    >
       <PageHead
         eyebrow="Find your next read & your next circle"
         title="Discover"

@@ -18,6 +18,7 @@ import {
   type RawBookRow,
 } from './discover-shared'
 import { topGenres, type SignalRow } from '@/lib/discover/taste-vector'
+import { getPlatformTopGenres } from '@/lib/discover/platform-top-genres'
 import type { ActionResult } from './book.actions'
 
 /**
@@ -203,6 +204,50 @@ async function tier2Candidates(opts: {
   applyBookFilterInputs(conds, opts.filterInputs)
 
   // Fetch a 200-row candidate window, then rank in JS.
+  const candidates = await db
+    .select({
+      id: books.id,
+      title: books.title,
+      authorUserId: books.userId,
+      coverUrl: books.coverUrl,
+      synopsis: books.synopsis,
+      genre: books.genre,
+      tags: books.tags,
+      updatedAt: books.updatedAt,
+      firstPubliclyDiscoverableAt: books.firstPubliclyDiscoverableAt,
+    })
+    .from(books)
+    .where(and(...conds))
+    .limit(200)
+
+  const ranked = await rankByTrendingScore(candidates)
+  return ranked.slice(0, opts.limit)
+}
+
+/**
+ * Tier 3 candidate pool for the For You rail: fallback for viewers with no
+ * personal signal. Uses the cached platform-wide most-followed 3 genres,
+ * excludes ids already returned by tier 1/2, ranked by trending score.
+ * Private helper consumed by the orchestrator (W2.6).
+ */
+async function tier3Candidates(opts: {
+  excludeIds: Set<string>
+  filterInputs: FilterInputs
+  blocked: Set<string>
+  limit: number
+}): Promise<RawBookRow[]> {
+  const top3 = await getPlatformTopGenres()
+  if (top3.length === 0) return []
+
+  const conds = [
+    ...buildPublicBookFilters(undefined, opts.blocked),
+    inArray(books.genre, top3),
+  ]
+  if (opts.excludeIds.size > 0) {
+    conds.push(notInArray(books.id, Array.from(opts.excludeIds)))
+  }
+  applyBookFilterInputs(conds, opts.filterInputs)
+
   const candidates = await db
     .select({
       id: books.id,

@@ -102,7 +102,7 @@ Six ghost variants, picked dynamically based on the active tab and viewer state:
 | **From Discover** | always when grid has < 6 real items | Trending platform spark (title + prompt teaser + entries/time-left) | `Enter →` → `/discover/spark/[id]` |
 | **Follow writers** | when Following bucket has < 3 real | "Your Following tab is empty. We can suggest active writers." | `Find writers →` → `/discover?tab=sparks` |
 | **Connect with friends** | when Friends bucket has < 1 real | "When friends accept your request, their sparks show up here." | `Manage friends →` → `/friends` |
-| **Prompt template** | always (rotates daily) | Pre-baked prompt seed (random of ~20 templates) | `Use this prompt →` → `/sparks/new?prompt=<encoded>` |
+| **Prompt template** | always (rotates daily per viewer) | Pre-baked prompt from the 10-item seed list below | `Use this prompt →` → `/sparks/new?prompt=<encoded>&wordLimit=<n>` |
 | **Enter a Spark** | when Entered bucket has 0 real | "Sparks you enter collect here." | `Browse open Sparks →` → `/discover?tab=sparks` |
 | **Create your first** | when Yours bucket has 0 real | "Got a prompt nagging at you?" | `+ New Spark` → `/sparks/new` |
 
@@ -116,7 +116,36 @@ Each tab gets up to 5 ghosts. Logic runs in the server action, AFTER fetching re
 - **Friends tab:** Connect with friends + From Discover × 2
 - **Entered tab:** Enter a Spark + From Discover × 2 + Prompt template
 
-Cap: ghosts only fill until total cards (real + ghost) ≥ 6, OR a hard maximum of 5 ghosts per page. Page never shows MORE than 6 cards from ghosts + real combined when real < 6. When real ≥ 6, ghosts disappear entirely (page is healthy).
+**Cap:** 5 ghosts maximum, OR until total cards (real + ghost) reach 6 — whichever hits first. Concrete table:
+
+| Real sparks | Ghosts shown | Total cards |
+|---:|---:|---:|
+| 0 | 5 | 5 |
+| 1 | 5 | 6 |
+| 2 | 4 | 6 |
+| 3 | 3 | 6 |
+| 4 | 2 | 6 |
+| 5 | 1 | 6 |
+| 6+ | 0 | n (page is healthy) |
+
+### Prompt template seed list
+
+The "Prompt template" ghost variant draws from this curated seed list. Implementation picks deterministically by `(viewerId + dayOfYear) % seedList.length` so a given viewer sees the same template all day but it rotates daily.
+
+```
+1.  "A door that only opens on Tuesdays" — 500 words
+2.  "Write a 100-word story where nothing happens, and it matters" — 100 words
+3.  "What if [object] could remember? Pick an everyday object. Give it 100 years of memory" — 800 words
+4.  "The last letter from a sentient lighthouse" — 600 words
+5.  "A 3-line poem about hunger" — 50 words
+6.  "Describe a color that doesn't exist" — 300 words
+7.  "Two strangers, one bench, no dialogue" — 500 words
+8.  "Write a recipe for an emotion" — 200 words
+9.  "Your character's morning routine, but reveal a secret on line 7" — 400 words
+10. "A weather report from inside a dream" — 250 words
+```
+
+Templates encode into the CTA URL as `/sparks/new?prompt=<encoded-text>&wordLimit=<n>` so the New Spark form pre-fills both fields. Future templates land in `lib/sparks/prompt-templates.ts` as a single exported array — no DB table needed.
 
 ### Dismiss behavior
 

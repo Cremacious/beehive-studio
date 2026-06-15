@@ -13,6 +13,7 @@
     "db:studio": "dotenv -e .env.local -- drizzle-kit studio",
     "db:seed": "tsx scripts/seed.ts",
     "db:seed:publishing": "tsx scripts/seed-publishing.ts",
+    "migrate:sparks-title": "dotenv -e .env.local -- tsx scripts/migrate-sparks-title.ts",
     "seed:smoketest": "dotenv -e .env.local -- tsx scripts/seed-smoketest.ts",
     "seed:discover": "dotenv -e .env.local -- tsx scripts/seed-discover.ts",
     "test": "vitest run",

@@ -30,7 +30,7 @@ import {
   bookClubMembers,
   bookClubBooks,
 } from '../db/schema'
-import { inArray, eq } from 'drizzle-orm'
+import { inArray, eq, sql } from 'drizzle-orm'
 import { createId } from '@paralleldrive/cuid2'
 import { auth } from '../lib/auth'
 
@@ -202,8 +202,34 @@ async function wipe() {
     return
   }
   console.log(`  Found ${ids.length} prior — deleting…`)
+
+  // Defensive cleanup: prior partial seed runs can leave orphan binder_items
+  // (cascade chain misbehaves when deletion is interrupted). Wipe the seed
+  // users' books explicitly first, with their binder_items + chapters cleared
+  // first, so the cascade has nothing left to trip over. THEN cascade-delete
+  // the users.
+  const userBooks = await db
+    .select({ id: books.id })
+    .from(books)
+    .where(inArray(books.userId, ids))
+  const bookIds = userBooks.map((b) => b.id)
+
+  if (bookIds.length > 0) {
+    // chapters references binder_items.id (set null) AND books.id (cascade);
+    // delete chapters first to keep both FKs satisfied.
+    await db.delete(chapters).where(inArray(chapters.bookId, bookIds))
+    await db.delete(binderItems).where(inArray(binderItems.bookId, bookIds))
+    await db.delete(books).where(inArray(books.id, bookIds))
+  }
+
+  // Also nuke any orphan binder_items left over from prior interrupted runs
+  // (book_id pointing at a now-deleted book). Idempotent.
+  await db.execute(
+    sql`DELETE FROM binder_items WHERE book_id NOT IN (SELECT id FROM books)`,
+  )
+
   await db.delete(users).where(inArray(users.id, ids))
-  console.log(`  ✓ wiped ${ids.length} users + cascaded data`)
+  console.log(`  ✓ wiped ${ids.length} users + ${bookIds.length} books + cascaded data`)
 }
 
 // ─── Users ──────────────────────────────────────────────────────────────────

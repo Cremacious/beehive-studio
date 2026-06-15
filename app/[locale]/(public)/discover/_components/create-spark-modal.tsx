@@ -49,7 +49,10 @@ export function CreateSparkModal({ locale }: { locale: string }) {
   const submit = () => {
     setError(null)
     startTransition(async () => {
+      // W4.3 shim: title temporarily mirrors prompt until W4.4 adds a dedicated
+      // title field to this modal. The shared schema now requires both.
       const result = await createSparkAction({
+        title: prompt.slice(0, 60),
         prompt,
         deadline: new Date(deadline),
         wordLimit: wordLimit ? parseInt(wordLimit) : undefined,

@@ -32,6 +32,7 @@ import { resolveMentionedUsers } from '@/lib/mentions/resolve-mentions'
 import { recordMentionNotificationsTx } from '@/lib/mentions/record-mention-notifications'
 import { shouldSkipNotification } from '@/lib/notifications/check-preferences'
 import { GENRES } from '@/lib/discover/genres'
+import { createSparkSchema, type CreateSparkInput } from '@/lib/validations/spark'
 import type { SparkStatus, SparkVisibility } from '@/db/schema/social'
 import type { ActionResult } from './book.actions'
 
@@ -114,25 +115,17 @@ function computeStatus(deadline: Date): SparkStatus {
 
 // ─── Zod Schemas ──────────────────────────────────────────────────────────────
 
-const createSparkSchema = z
-  .object({
-    prompt: z.string().min(10).max(500),
-    deadline: z.date().refine(
-      d => d.getTime() > Date.now() + 60 * 60 * 1000,
-      { message: 'Deadline must be at least 1 hour from now' }
-    ),
-    wordLimit: z.number().int().positive().optional(),
-    visibility: z.enum(['PUBLIC', 'FRIENDS', 'PRIVATE']).default('PUBLIC'),
-    discoverable: z.boolean().optional().default(true),
-    votingDurationHours: z.number().int().min(1).max(720).default(48),
-    // D2a: genre is optional + nullable; validated against D1's 14-slug vocabulary.
-    genre: z.enum(GENRES).optional().nullable(),
-  })
-  .transform((data) => ({
-    ...data,
-    // 3-layer defense: server-side coercion mirrors createBookSchema precedent.
-    discoverable: data.visibility === 'PUBLIC' ? data.discoverable : false,
-  }))
+// `createSparkSchema` now imported from `@/lib/validations/spark` (W4.3).
+// `votingDurationHours` is NOT part of the shared schema — it's an action-level
+// optional parameter (default 48h) since it's a creation-time knob, not part of
+// the spec'd "title-first" content model.
+const votingDurationHoursSchema = z
+  .number()
+  .int()
+  .min(1)
+  .max(720)
+  .optional()
+  .default(48)
 
 const submitEntrySchema = z.object({
   content: z.string().min(1),
@@ -439,18 +432,35 @@ export async function getSparkAction(
  * (1-720, default 48). Computes votingEndsAt = deadline + duration. Inserts
  * with status='OPEN'.
  */
-export async function createSparkAction(input: {
-  prompt: string
-  deadline: Date
-  wordLimit?: number
-  visibility?: SparkVisibility
-  discoverable?: boolean
-  votingDurationHours?: number
-}): Promise<ActionResult<{ sparkId: string }>> {
+export async function createSparkAction(
+  input: CreateSparkInput & { votingDurationHours?: number },
+): Promise<ActionResult<{ sparkId: string; id: string }>> {
   const userId = await requireAuth()
 
   const parsed = createSparkSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+
+  // votingDurationHours is action-level, not in the shared schema.
+  const votingDurationParsed = votingDurationHoursSchema.safeParse(
+    input.votingDurationHours,
+  )
+  if (!votingDurationParsed.success) {
+    return { success: false, error: 'INVALID_INPUT' }
+  }
+  const votingDurationHours = votingDurationParsed.data
+
+  // Action-level guards beyond the shared schema:
+  //  1. Deadline must be at least 1 hour from now.
+  //  2. Genre, if provided, must be in the 14-slug vocabulary.
+  //  3. discoverable coerced to false when visibility !== PUBLIC (3-layer defense).
+  if (parsed.data.deadline.getTime() <= Date.now() + 60 * 60 * 1000) {
+    return { success: false, error: 'INVALID_INPUT' }
+  }
+  if (parsed.data.genre != null && !(GENRES as readonly string[]).includes(parsed.data.genre)) {
+    return { success: false, error: 'INVALID_INPUT' }
+  }
+  const discoverable =
+    parsed.data.visibility === 'PUBLIC' ? parsed.data.discoverable : false
 
   // Free tier: max 1 active spark
   const votingEnd = new Date(Date.now() - VOTING_WINDOW_MS)
@@ -466,7 +476,7 @@ export async function createSparkAction(input: {
   }
 
   const votingEndsAt = new Date(
-    parsed.data.deadline.getTime() + parsed.data.votingDurationHours * 3600_000
+    parsed.data.deadline.getTime() + votingDurationHours * 3600_000,
   )
 
   // D2a load-bearing pattern (mirrors D1 books): when a spark is created PUBLIC
@@ -476,17 +486,20 @@ export async function createSparkAction(input: {
   // (a path that doesn't exist yet — there's no updateSparkAction — but the
   // gate pattern is preserved for forward compat).
   const isInitiallyPublic =
-    parsed.data.visibility === 'PUBLIC' && parsed.data.discoverable === true
+    parsed.data.visibility === 'PUBLIC' && discoverable === true
 
   const [created] = await db
     .insert(sparks)
     .values({
       creatorId: userId,
-      title: parsed.data.prompt,
+      title: parsed.data.title,
+      prompt: parsed.data.prompt,
+      description: parsed.data.description ?? null,
+      rules: parsed.data.rules ?? null,
       deadline: parsed.data.deadline,
       wordLimit: parsed.data.wordLimit ?? null,
       visibility: parsed.data.visibility,
-      discoverable: parsed.data.discoverable,
+      discoverable,
       status: 'OPEN',
       votingEndsAt,
       genre: parsed.data.genre ?? null,
@@ -494,7 +507,7 @@ export async function createSparkAction(input: {
     })
     .returning({ id: sparks.id })
 
-  return { success: true, data: { sparkId: created.id } }
+  return { success: true, data: { sparkId: created.id, id: created.id } }
 }
 
 /**

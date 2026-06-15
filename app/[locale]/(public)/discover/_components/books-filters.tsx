@@ -82,7 +82,10 @@ export function BooksFilters({ sp, locale }: Props) {
     (series !== 'any' ? 1 : 0) +
     (updated !== 'anytime' ? 1 : 0)
 
-  const clearHref = `/${locale}/discover?tab=books`
+  const mode = pickRaw(sp, 'mode')
+  const clearHref =
+    `/${locale}/discover?tab=books` +
+    (mode ? `&mode=${encodeURIComponent(mode)}` : '')
 
   return (
     <FilterSidebar activeCount={activeCount} clearHref={clearHref}>

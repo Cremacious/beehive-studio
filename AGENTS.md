@@ -12,9 +12,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-15 (Spark redesign spec locked — title-first model, A+B hybrid card, new /sparks/new page. Plan + impl next.)
+> **Last updated:** 2026-06-15 (Spark redesign — spec + 6-wave plan both locked. Ready for implementation.)
 >
-> **Last commit:** [a89de65](https://github.com/Cremacious/beehive-studio/commit/a89de65) — docs(specs): spark redesign — title-first model + new card + /sparks/new page.
+> **Last commit:** [530ed22](https://github.com/Cremacious/beehive-studio/commit/530ed22) — docs(plans): spark redesign implementation plan — 6 waves.
 >
 > **🎉 Hot Books discovery code-complete this session ([dd23b8c](https://github.com/Cremacious/beehive-studio/commit/dd23b8c) spec → [885dab9](https://github.com/Cremacious/beehive-studio/commit/885dab9) plan → 13 commits across 6 waves → [3abf081](https://github.com/Cremacious/beehive-studio/commit/3abf081) final).** The slim "★ FEATURED · The Master Trials" strip is gone from `/discover?tab=books`. In its place: an iOS segmented toggle (`For You · Trending · Popular · All`, 4 buttons authed / 3 buttons guest with For You omitted) styled in dark iOS to match the sidebar tiles. Sort dropdown narrowed from 4 options to 2 (`Most recent · A-Z`). For You is a 3-tier hybrid algorithm. **785/785 tests, tsc clean throughout.**
 >
@@ -72,7 +72,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 >
 > **Discover redesign spec ([253fba6](https://github.com/Cremacious/beehive-studio/commit/253fba6)):** Chris asked to redesign all 6 `/[locale]/discover` tabs around an ecommerce/bookstore-aisle pattern — persistent left sidebar of filters + 4-col card grid — replacing the rail-driven D1-D4 surface. Brainstorm session ran through visual companion mockups; locked decisions: (1) Layout A persistent ~240px sidebar + grid replaces rails entirely on every tab; (2) Filter taxonomy "curated essentials" — 6 sidebar controls per tab tuned to the entity (Books length/series, Sparks state/word-limit, Hives size/open-state, Lists size/popularity, Clubs size/access, Home cross-entity Show filter); (3) Card design Z — slim 1-line `★ FEATURED · …` strip above the grid replaces today's full-width Featured heroes; (4) Books cards drop word-count line, keep cover + title + @author; other entity cards stay close to today's RailCard shapes; (5) Home adopts same sidebar shape with new Show filter (5 entity checkboxes) + interleaved mixed-entity grid; (6) URL is the source of truth for every filter — bookmarkable, server-rendered first paint. NO schema changes — existing 5 search actions extended with the new filter inputs. D1-D4 rail/hero/chip components stay in repo but drop from Discover composition. Mobile sidebar, saved presets, autocomplete, cross-entity genre hubs, Books `Ongoing/Completed` schema decision, and sub-route URL aliases all deferred to plan-time follow-ups.
 >
-> **Next concrete step:** Chris reviews the spec at [docs/superpowers/specs/2026-06-15-spark-redesign-design.md](docs/superpowers/specs/2026-06-15-spark-redesign-design.md). Once approved → writing-plans skill → 6-ish-wave implementation. Plan will resolve: (a) whether `<CreateSparkModal>` gets the full polish or stays minimal for v1, (b) seed `synthesizeTitle()` helper shape, (c) prompt teaser word-boundary truncation algorithm.
+> **Next concrete step:** Chris reviews the plan at [docs/superpowers/plans/2026-06-15-spark-redesign.md](docs/superpowers/plans/2026-06-15-spark-redesign.md). Two execution options: **Subagent-Driven (recommended)** — fresh subagent per task with review between; or **Inline Execution** — batched in main loop with checkpoints. First implementation task is W1.1 (`truncateAtWord` helper + tests) — pure module, ~15 LOC + 5 tests.
 >
 > **Prior — Last updated:** 2026-06-11 (AGENTS.md narrative archive pass — 52% line reduction. D3a + D3b + D4 still awaiting smoke. Autonomous run pause point.)
 >

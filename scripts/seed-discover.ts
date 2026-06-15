@@ -284,7 +284,7 @@ async function seedBooks(usersList: SeededUser[]): Promise<SeededBook[]> {
   // ~2 books per user
   let bookIdx = 0
   for (const u of usersList) {
-    const bookCount = 1 + (bookIdx % 3) // 1, 2, or 3
+    const bookCount = 2 + (bookIdx % 3) // 2, 3, or 4 — more books per user so filters keep paginating after narrowing
     for (let b = 0; b < bookCount; b++) {
       const title = BOOK_TITLES[bookIdx % BOOK_TITLES.length] + (bookIdx >= BOOK_TITLES.length ? ` ${Math.floor(bookIdx / BOOK_TITLES.length) + 1}` : '')
       const genre = GENRES[bookIdx % GENRES.length]
@@ -595,20 +595,20 @@ async function seedClubs(
 async function main() {
   console.log('\n=== DISCOVER SEED ===\n')
   await wipe()
-  const usersList = await seedUsers(30)
+  const usersList = await seedUsers(50)
   await seedFollows(usersList)
   const booksList = await seedBooks(usersList)
-  await seedSparks(usersList, 25)
-  await seedHives(usersList, booksList, 20)
-  await seedLists(usersList, booksList, 20)
-  await seedClubs(usersList, booksList, 20)
+  await seedSparks(usersList, 45)
+  await seedHives(usersList, booksList, 35)
+  await seedLists(usersList, booksList, 35)
+  await seedClubs(usersList, booksList, 35)
   console.log('\n=== DONE ===')
   console.log(`Users:  ${usersList.length}`)
   console.log(`Books:  ${booksList.length}`)
-  console.log(`Sparks: 25`)
-  console.log(`Hives:  20`)
-  console.log(`Lists:  20`)
-  console.log(`Clubs:  20`)
+  console.log(`Sparks: 45`)
+  console.log(`Hives:  35`)
+  console.log(`Lists:  35`)
+  console.log(`Clubs:  35`)
   console.log(`\nLogin: any seed account with password ${DEFAULT_PASSWORD}`)
   console.log(`(e.g. ${EMAIL_PREFIX}${usersList[0].username}@beehive.local)`)
   console.log(`\nOpen /en/discover to see the populated surface.\n`)

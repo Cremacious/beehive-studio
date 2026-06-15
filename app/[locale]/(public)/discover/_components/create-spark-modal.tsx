@@ -15,9 +15,12 @@ import {
   PUBLIC_FRIENDS_PRIVATE_OPTIONS,
 } from '@/components/visibility-picker'
 import type { SparkVisibility } from '@/db/schema/social'
+import { TITLE_MAX } from '@/lib/validations/spark'
 
 export function CreateSparkModal({ locale }: { locale: string }) {
   const [open, setOpen] = useState(false)
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
   const [prompt, setPrompt] = useState('')
   const [deadline, setDeadline] = useState('')
   const [wordLimit, setWordLimit] = useState('')
@@ -31,6 +34,8 @@ export function CreateSparkModal({ locale }: { locale: string }) {
   // Reset form when closed.
   useEffect(() => {
     if (!open) {
+      setTitle('')
+      setDescription('')
       setPrompt('')
       setDeadline('')
       setWordLimit('')
@@ -49,11 +54,11 @@ export function CreateSparkModal({ locale }: { locale: string }) {
   const submit = () => {
     setError(null)
     startTransition(async () => {
-      // W4.3 shim: title temporarily mirrors prompt until W4.4 adds a dedicated
-      // title field to this modal. The shared schema now requires both.
+      const trimmedDescription = description.trim()
       const result = await createSparkAction({
-        title: prompt.slice(0, 60),
+        title: title.trim(),
         prompt,
+        description: trimmedDescription ? trimmedDescription : undefined,
         deadline: new Date(deadline),
         wordLimit: wordLimit ? parseInt(wordLimit) : undefined,
         visibility,
@@ -118,6 +123,37 @@ export function CreateSparkModal({ locale }: { locale: string }) {
 
           <div className="flex flex-col gap-5 max-h-[62vh] overflow-y-auto pr-1 -mr-1">
             <div className="flex flex-col gap-2">
+              <div className="flex items-baseline justify-between">
+                <label htmlFor="sk-title" className={labelClass} style={labelStyle}>
+                  Title <span style={{ color: 'var(--brand)' }}>*</span>
+                </label>
+                <span
+                  className="text-[10px] font-mono tabular-nums"
+                  style={{
+                    color:
+                      title.length >= TITLE_MAX
+                        ? 'var(--status-error)'
+                        : title.length >= 50
+                          ? 'var(--brand)'
+                          : 'var(--canvas-dark-ink-faint)',
+                  }}
+                >
+                  {title.length}/{TITLE_MAX}
+                </span>
+              </div>
+              <input
+                id="sk-title"
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder={`Short, catchy. "Kingdom Heist"`}
+                maxLength={70}
+                className="w-full h-10 px-3.5 rounded-[var(--r-row)] text-[14px] outline-none focus:ring-2 focus:ring-[oklch(from_var(--brand)_l_c_h_/_0.35)]"
+                style={inputStyle}
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
               <label htmlFor="sk-prompt" className={labelClass} style={labelStyle}>
                 Prompt <span style={{ color: 'var(--brand)' }}>*</span>
               </label>
@@ -125,8 +161,29 @@ export function CreateSparkModal({ locale }: { locale: string }) {
                 id="sk-prompt"
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Write a prompt that sparks creativity…"
+                placeholder="The actual writing challenge."
                 rows={3}
+                className="w-full px-3.5 py-2.5 rounded-[var(--r-row)] text-[14px] resize-none outline-none focus:ring-2 focus:ring-[oklch(from_var(--brand)_l_c_h_/_0.35)]"
+                style={inputStyle}
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label htmlFor="sk-description" className={labelClass} style={labelStyle}>
+                Description
+                <span
+                  className="ml-2 normal-case tracking-normal"
+                  style={{ color: 'var(--canvas-dark-ink-faint)' }}
+                >
+                  optional
+                </span>
+              </label>
+              <textarea
+                id="sk-description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Extra context, inspiration, examples."
+                rows={2}
                 className="w-full px-3.5 py-2.5 rounded-[var(--r-row)] text-[14px] resize-none outline-none focus:ring-2 focus:ring-[oklch(from_var(--brand)_l_c_h_/_0.35)]"
                 style={inputStyle}
               />
@@ -260,7 +317,7 @@ export function CreateSparkModal({ locale }: { locale: string }) {
             <button
               type="button"
               onClick={submit}
-              disabled={isPending || !prompt.trim() || !deadline}
+              disabled={isPending || !title.trim() || !prompt.trim() || !deadline}
               className="h-9 px-5 rounded-[var(--r-pill)] text-[13px] font-semibold disabled:opacity-40"
               style={{ background: 'var(--brand)', color: 'var(--brand-ink)' }}
             >

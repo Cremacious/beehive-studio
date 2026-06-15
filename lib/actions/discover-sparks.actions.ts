@@ -824,29 +824,90 @@ export async function getSparkBackfillAction(args: {
  *   most-entered → (entryCount, id)
  */
 export async function searchSparksDiscoverAction(args: {
-  q: string
+  q?: string
   genre?: GenreSlug
+  /** Multi-select genre; non-empty array takes precedence over single `genre`. */
+  genres?: string[]
+  /** Legacy direct enum input — preserved. */
   status?: SparkStatus | 'all'
+  /** New W2.2 friendly alias mapping live→OPEN, voting→VOTING, ended→CLOSED. */
+  state?: 'live' | 'voting' | 'ended' | 'all'
+  /** Word-limit bucket. NULL wordLimit is excluded from every bucket. */
+  wordLimit?: 'any' | 'flash' | 'medium' | 'long'
+  /** Time-left bucket. Applied to `deadline` when state is live; ignored otherwise. */
+  timeLeft?: 'any' | '24h' | 'week'
+  /** anyone (default) / following (creator must be in the viewer's follow set). */
+  creator?: 'anyone' | 'following'
   sort?: 'relevance' | 'recent' | 'urgent' | 'most-entered'
   cursor?: string | null
 }): Promise<
   ActionResult<{ books: SparkCard[]; nextCursor: string | null }>
 > {
-  const trimmed = args.q.trim()
-  if (trimmed.length === 0) {
-    return { success: true, data: { books: [], nextCursor: null } }
-  }
   const viewerId = await getOptionalUserId()
   const blocked = await getBlockedSparkCreatorIdsForViewer(viewerId)
   const sort = args.sort ?? 'recent'
   const cursor = decodeCursor(args.cursor)
+  const trimmed = (args.q ?? '').trim()
 
-  const conds = [
-    ...buildPublicSparkFilters(args.genre, blocked),
-    sql`${sparks.title} ILIKE ${`%${trimmed}%`}`,
-  ]
-  if (args.status && args.status !== 'all') {
-    conds.push(eq(sparks.status, args.status))
+  // Multi-genre takes precedence; falls back to legacy single-genre helper.
+  const multiGenres = (args.genres ?? []).filter(
+    (g): g is string => typeof g === 'string',
+  )
+  const singleGenre =
+    multiGenres.length === 0 ? args.genre : undefined
+  const conds = [...buildPublicSparkFilters(singleGenre, blocked)]
+  if (multiGenres.length > 0) {
+    conds.push(sql`${sparks.genre} = ANY(${multiGenres})`)
+  }
+
+  if (trimmed.length > 0) {
+    conds.push(sql`${sparks.title} ILIKE ${`%${trimmed}%`}`)
+  }
+
+  // Status / state resolution. `state` (new) wins over `status` (legacy) when both
+  // supplied; either maps to the same `sparks.status` column.
+  const resolvedStatus: SparkStatus | 'all' | undefined =
+    args.state === 'live'
+      ? 'OPEN'
+      : args.state === 'voting'
+        ? 'VOTING'
+        : args.state === 'ended'
+          ? 'CLOSED'
+          : args.state === 'all'
+            ? 'all'
+            : args.status
+  if (resolvedStatus && resolvedStatus !== 'all') {
+    conds.push(eq(sparks.status, resolvedStatus))
+  }
+
+  // Word-limit bucket (NULL wordLimit excluded — treated as "not yet classified").
+  if (args.wordLimit && args.wordLimit !== 'any') {
+    if (args.wordLimit === 'flash') {
+      conds.push(sql`${sparks.wordLimit} IS NOT NULL AND ${sparks.wordLimit} < 500`)
+    } else if (args.wordLimit === 'medium') {
+      conds.push(
+        sql`${sparks.wordLimit} >= 500 AND ${sparks.wordLimit} < 2000`,
+      )
+    } else if (args.wordLimit === 'long') {
+      conds.push(sql`${sparks.wordLimit} >= 2000`)
+    }
+  }
+
+  // Time-left bucket — only meaningful for OPEN (submission window) sparks.
+  // We apply it to `deadline` regardless of state filter; sparks with NULL
+  // deadlines are excluded.
+  if (args.timeLeft && args.timeLeft !== 'any') {
+    const hours = args.timeLeft === '24h' ? 24 : 24 * 7
+    const cutoff = new Date(Date.now() + hours * 60 * 60 * 1000)
+    conds.push(sql`${sparks.deadline} IS NOT NULL AND ${sparks.deadline} <= ${cutoff}`)
+  }
+
+  // Creator-following filter — only effective when viewer is authed. Guest
+  // requests with creator='following' silently fall through (no Following
+  // affordance is shown to guests in the UI per spec §4).
+  if (args.creator === 'following' && viewerId) {
+    const followedSubquery = sql<string>`(SELECT ${follows.followeeId} FROM ${follows} WHERE ${follows.followerId} = ${viewerId})`
+    conds.push(sql`${sparks.creatorId} IN ${followedSubquery}`)
   }
 
   // Cursor tail clause per sort mode.

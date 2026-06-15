@@ -61,3 +61,75 @@ describe('discover-sparks actions surface', () => {
     expect(live.success).toBe(true)
   })
 })
+
+describe('searchSparksDiscoverAction — W2.2 extended filter inputs', () => {
+  it('accepts empty input (no q, no filters)', async () => {
+    const r = await discoverSparksActions.searchSparksDiscoverAction({})
+    expect(r.success).toBe(true)
+  })
+
+  it('accepts multi-genre via genres[]', async () => {
+    const r = await discoverSparksActions.searchSparksDiscoverAction({
+      genres: ['fantasy', 'sci-fi'],
+    })
+    expect(r.success).toBe(true)
+  })
+
+  it.each(['live', 'voting', 'ended', 'all'] as const)(
+    'accepts state=%s',
+    async (s) => {
+      const r = await discoverSparksActions.searchSparksDiscoverAction({
+        state: s,
+      })
+      expect(r.success).toBe(true)
+    },
+  )
+
+  it.each(['flash', 'medium', 'long'] as const)(
+    'accepts wordLimit=%s',
+    async (w) => {
+      const r = await discoverSparksActions.searchSparksDiscoverAction({
+        wordLimit: w,
+      })
+      expect(r.success).toBe(true)
+    },
+  )
+
+  it.each(['24h', 'week'] as const)('accepts timeLeft=%s', async (t) => {
+    const r = await discoverSparksActions.searchSparksDiscoverAction({
+      timeLeft: t,
+    })
+    expect(r.success).toBe(true)
+  })
+
+  it.each(['anyone', 'following'] as const)(
+    'accepts creator=%s (guest treated as anyone)',
+    async (c) => {
+      const r = await discoverSparksActions.searchSparksDiscoverAction({
+        creator: c,
+      })
+      expect(r.success).toBe(true)
+    },
+  )
+
+  it('composes all new filters together', async () => {
+    const r = await discoverSparksActions.searchSparksDiscoverAction({
+      q: 'heist',
+      genres: ['fantasy'],
+      state: 'live',
+      wordLimit: 'medium',
+      timeLeft: '24h',
+      creator: 'following',
+      sort: 'urgent',
+    })
+    expect(r.success).toBe(true)
+  })
+
+  it('preserves legacy status enum input', async () => {
+    const r = await discoverSparksActions.searchSparksDiscoverAction({
+      q: 'heist',
+      status: 'OPEN',
+    })
+    expect(r.success).toBe(true)
+  })
+})

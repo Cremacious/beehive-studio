@@ -1,121 +1,50 @@
-'use client'
-
-import Link from 'next/link'
-import type { ListCard } from '@/lib/actions/discover-lists.actions'
-import { relTime } from '@/lib/utils/rel-time'
+import type { ListCard as DiscoverListCardData } from '@/lib/actions/discover-lists.actions'
+import { GENRE_LABEL, isValidGenre } from '@/lib/discover/genres'
+import { ListCard, type ListCardData } from '@/components/list/list-card'
 
 type Props = {
-  list: ListCard
+  list: DiscoverListCardData
   locale: string
 }
 
+function adapt(list: DiscoverListCardData): ListCardData {
+  return {
+    id: list.id,
+    title: list.title,
+    description: list.description,
+    genre:
+      list.genre && isValidGenre(list.genre) ? GENRE_LABEL[list.genre] : null,
+    bookCount: list.bookCount,
+    followerCount: list.followerCount,
+    sourceTag: null,
+    curator: {
+      userId: list.ownerUserId,
+      username: list.ownerUsername,
+      displayName: list.ownerDisplayName,
+      avatarUrl: list.ownerAvatarUrl,
+    },
+    coverPreviews: list.bookCoverPreviews
+      .filter((p) => p.bookId !== null)
+      .map((p) => ({
+        bookId: (p.bookId as string) ?? '',
+        coverUrl: p.coverUrl,
+      })),
+  }
+}
+
 export function RailListCard({ list, locale }: Props) {
-  const tags = list.tags.slice(0, 2)
   return (
-    <Link
+    <ListCard
+      list={adapt(list)}
+      size="sm"
+      showSourceTag={false}
       href={`/${locale}/reading-lists/${list.id}`}
-      className="block no-underline w-[280px] shrink-0"
-      aria-label={`Open List: ${list.title}`}
-    >
-      <div
-        className="relative transition-transform"
-        style={{
-          background:
-            'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-          borderRadius: 'var(--r-card)',
-          boxShadow: 'var(--sh-tile)',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'translateY(-1px)'
-          e.currentTarget.style.boxShadow =
-            '0 6px 18px rgb(0 0 0 / 0.35), 0 2px 4px rgb(0 0 0 / 0.25)'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = ''
-          e.currentTarget.style.boxShadow = 'var(--sh-tile)'
-        }}
-      >
-        {/* Book stack at top */}
-        <BookStack
-          previews={list.bookCoverPreviews}
-          bookCount={list.bookCount}
-          coverSize={60}
-        />
-
-        {/* Body */}
-        <div style={{ padding: '18px' }}>
-          <h3
-            className="font-semibold text-[16px] truncate mb-1.5"
-            style={{
-              color: 'var(--canvas-dark-ink-strong)',
-              fontFamily: 'var(--font-comfortaa)',
-            }}
-          >
-            {list.title}
-          </h3>
-
-          <div
-            className="flex items-center gap-1.5 text-[11px] min-w-0 mb-2.5"
-            style={{
-              color: 'var(--canvas-dark-ink-muted)',
-              fontFamily: 'var(--font-mono)',
-            }}
-          >
-            <OwnerAvatar
-              avatarUrl={list.ownerAvatarUrl}
-              username={list.ownerUsername}
-              size={14}
-            />
-            <span className="truncate">
-              curated by @{list.ownerUsername ?? 'unknown'}
-            </span>
-          </div>
-
-          {tags.length > 0 ? (
-            <div className="flex items-center gap-1.5 flex-wrap mb-3">
-              {tags.map((t) => (
-                <span
-                  key={t}
-                  className="inline-flex items-center px-1.5 py-0.5 text-[9px] uppercase"
-                  style={{
-                    background: 'oklch(from var(--brand) l c h / 0.12)',
-                    color: 'var(--brand)',
-                    borderRadius: 'var(--r-pill)',
-                    fontFamily: 'var(--font-mono)',
-                    letterSpacing: '0.1em',
-                  }}
-                >
-                  {t}
-                </span>
-              ))}
-            </div>
-          ) : null}
-
-          {/* Hairline divider */}
-          <div
-            aria-hidden
-            style={{ height: 1, background: 'var(--br-card)' }}
-          />
-
-          {/* Meta row */}
-          <div
-            className="flex items-center gap-2 pt-3 text-[10px]"
-            style={{
-              color: 'var(--canvas-dark-ink-muted)',
-              fontFamily: 'var(--font-mono)',
-            }}
-          >
-            <span>📚 {list.bookCount}</span>
-            <span>👥 {list.followerCount}</span>
-            <span className="ml-auto">{relTime(list.lastUpdatedAt)}</span>
-          </div>
-        </div>
-      </div>
-    </Link>
+    />
   )
 }
 
-// ─── Shared sub-components (also used by discover-list-card + featured-list-hero) ─
+// ─── Legacy shared sub-components — still consumed by featured-list-hero.tsx
+// and discover-list-card.tsx. Preserved to avoid call-site churn.
 
 export function BookStack({
   previews,
@@ -124,7 +53,7 @@ export function BookStack({
   fanDeg = 3,
   overlap = 12,
 }: {
-  previews: ListCard['bookCoverPreviews']
+  previews: DiscoverListCardData['bookCoverPreviews']
   bookCount: number
   coverSize: number
   fanDeg?: number

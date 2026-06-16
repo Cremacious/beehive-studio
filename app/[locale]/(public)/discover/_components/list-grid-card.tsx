@@ -1,5 +1,47 @@
-// W3.4 of discover redesign. v1 ships as a thin re-export of the existing
-// RailListCard — already renders the list cell with fanned 3-cover book stack,
-// curator + book + follower counts. Grid layout uses justify-items-start
-// to accommodate the card's fixed width.
-export { RailListCard as ListGridCard } from './rail-list-card'
+// T5 of reading-lists hub redesign. Thin re-export of the shared V2 ListCard
+// at size='md'. Source-tag pill hidden on /discover surfaces (no source
+// signal — viewer is browsing all discoverable lists).
+import type { ListCard as DiscoverListCardData } from '@/lib/actions/discover-lists.actions'
+import { GENRE_LABEL, isValidGenre } from '@/lib/discover/genres'
+import { ListCard, type ListCardData } from '@/components/list/list-card'
+
+type Props = {
+  list: DiscoverListCardData
+  locale: string
+}
+
+function adapt(list: DiscoverListCardData): ListCardData {
+  return {
+    id: list.id,
+    title: list.title,
+    description: list.description,
+    genre:
+      list.genre && isValidGenre(list.genre) ? GENRE_LABEL[list.genre] : null,
+    bookCount: list.bookCount,
+    followerCount: list.followerCount,
+    sourceTag: null,
+    curator: {
+      userId: list.ownerUserId,
+      username: list.ownerUsername,
+      displayName: list.ownerDisplayName,
+      avatarUrl: list.ownerAvatarUrl,
+    },
+    coverPreviews: list.bookCoverPreviews
+      .filter((p) => p.bookId !== null)
+      .map((p) => ({
+        bookId: (p.bookId as string) ?? '',
+        coverUrl: p.coverUrl,
+      })),
+  }
+}
+
+export function ListGridCard({ list, locale }: Props) {
+  return (
+    <ListCard
+      list={adapt(list)}
+      size="md"
+      showSourceTag={false}
+      href={`/${locale}/reading-lists/${list.id}`}
+    />
+  )
+}

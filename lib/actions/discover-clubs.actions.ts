@@ -67,6 +67,8 @@ export type ClubCard = {
   createdAt: Date
   firstPubliclyDiscoverableAt: Date | null
   memberPreviews: Array<{ userId: string; avatarUrl: string | null }>
+  // Clubs hub redesign: additive cover image URL projection.
+  coverImageUrl: string | null
 }
 
 export type RailResult<T = ClubCard> = {
@@ -199,6 +201,7 @@ async function projectToClubCards(
       lastActivityAt: bookClubs.lastActivityAt,
       createdAt: bookClubs.createdAt,
       firstPubliclyDiscoverableAt: bookClubs.firstPubliclyDiscoverableAt,
+      coverImageUrl: bookClubs.coverImageUrl,
     })
     .from(bookClubs)
     .leftJoin(bookClubBooks, eq(bookClubBooks.id, bookClubs.currentBookId))
@@ -257,6 +260,7 @@ async function projectToClubCards(
       createdAt: r.createdAt,
       firstPubliclyDiscoverableAt: r.firstPubliclyDiscoverableAt,
       memberPreviews: memberPreviewsMap.get(r.id) ?? [],
+      coverImageUrl: r.coverImageUrl,
     }
   })
 

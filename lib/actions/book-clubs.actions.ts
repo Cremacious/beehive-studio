@@ -87,6 +87,10 @@ export type ClubSummary = {
   viewerMembership: { role: BookClubMemberRole | null; pendingJoinRequest: boolean }
   createdAt: Date
   updatedAt: Date
+  // Clubs hub redesign: additive projections for the V2 card.
+  coverImageUrl: string | null
+  memberPreviews: Array<{ userId: string; avatarUrl: string | null }>
+  lastActivityAt: Date | null
 }
 
 export type ClubDetail = {
@@ -329,7 +333,27 @@ export async function getClubsAction(input: {
     ownerUsername: string | null
     ownerDisplayName: string | null
     ownerAvatarUrl: string | null
+    // Clubs hub redesign additive projections.
+    coverImageUrl: string | null
+    lastActivityAt: Date | null
+    memberPreviews: Array<{ userId: string; avatarUrl: string | null }>
   }
+
+  // Correlated subquery: top 4 most-recent members per club, each with avatar.
+  // Pattern mirrors hive.actions.ts (commit c2d7d11).
+  const memberPreviewsSql = sql<
+    Array<{ userId: string; avatarUrl: string | null }>
+  >`COALESCE((
+    SELECT json_agg(json_build_object('userId', sub.user_id, 'avatarUrl', sub.avatar_url))
+    FROM (
+      SELECT bcm2.user_id, up2.avatar_url
+      FROM book_club_members bcm2
+      LEFT JOIN user_profiles up2 ON up2.user_id = bcm2.user_id
+      WHERE bcm2.club_id = ${bookClubs.id}
+      ORDER BY bcm2.joined_at DESC
+      LIMIT 4
+    ) sub
+  ), '[]'::json)`
 
   let rawRows: RawRow[] = []
 
@@ -352,6 +376,9 @@ export async function getClubsAction(input: {
         ownerUsername: userProfiles.username,
         ownerDisplayName: userProfiles.displayName,
         ownerAvatarUrl: userProfiles.avatarUrl,
+        coverImageUrl: bookClubs.coverImageUrl,
+        lastActivityAt: bookClubs.lastActivityAt,
+        memberPreviews: memberPreviewsSql,
       })
       .from(bookClubs)
       .innerJoin(
@@ -390,6 +417,9 @@ export async function getClubsAction(input: {
         ownerUsername: userProfiles.username,
         ownerDisplayName: userProfiles.displayName,
         ownerAvatarUrl: userProfiles.avatarUrl,
+        coverImageUrl: bookClubs.coverImageUrl,
+        lastActivityAt: bookClubs.lastActivityAt,
+        memberPreviews: memberPreviewsSql,
       })
       .from(bookClubs)
       .leftJoin(userProfiles, eq(userProfiles.userId, bookClubs.ownerId))
@@ -463,6 +493,9 @@ export async function getClubsAction(input: {
     viewerMembership: memberships[i],
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
+    coverImageUrl: r.coverImageUrl,
+    memberPreviews: r.memberPreviews ?? [],
+    lastActivityAt: r.lastActivityAt,
   }))
 
   return { success: true, data: { rows: result, nextCursor } }
@@ -516,6 +549,18 @@ export async function getClubAction(
     currentBook = row ?? null
   }
 
+  // Fetch top-4 most-recent members for the V2 card avatar stack.
+  const memberPreviewRows = await db
+    .select({
+      userId: bookClubMembers.userId,
+      avatarUrl: userProfiles.avatarUrl,
+    })
+    .from(bookClubMembers)
+    .leftJoin(userProfiles, eq(userProfiles.userId, bookClubMembers.userId))
+    .where(eq(bookClubMembers.clubId, club.id))
+    .orderBy(desc(bookClubMembers.joinedAt))
+    .limit(4)
+
   const summary: ClubSummary = {
     id: club.id,
     name: club.name,
@@ -531,6 +576,12 @@ export async function getClubAction(
     viewerMembership: membership,
     createdAt: club.createdAt,
     updatedAt: club.updatedAt,
+    coverImageUrl: club.coverImageUrl,
+    memberPreviews: memberPreviewRows.map((m) => ({
+      userId: m.userId,
+      avatarUrl: m.avatarUrl,
+    })),
+    lastActivityAt: club.lastActivityAt,
   }
 
   return {

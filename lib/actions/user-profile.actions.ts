@@ -392,6 +392,22 @@ export async function getUserPublicClubsAction(
   const viewerId = await getOptionalUserId()
   const cap = Math.min(Math.max(limit, 1), 20)
 
+  // Clubs hub redesign: correlated subquery projecting top-4 most-recent
+  // members per club for V2 card avatar stack. Mirrors hive precedent.
+  const memberPreviewsSql = sql<
+    Array<{ userId: string; avatarUrl: string | null }>
+  >`COALESCE((
+    SELECT json_agg(json_build_object('userId', sub.user_id, 'avatarUrl', sub.avatar_url))
+    FROM (
+      SELECT bcm2.user_id, up2.avatar_url
+      FROM book_club_members bcm2
+      LEFT JOIN user_profiles up2 ON up2.user_id = bcm2.user_id
+      WHERE bcm2.club_id = ${bookClubs.id}
+      ORDER BY bcm2.joined_at DESC
+      LIMIT 4
+    ) sub
+  ), '[]'::json)`
+
   const candidates = await db
     .select({
       id: bookClubs.id,
@@ -410,6 +426,9 @@ export async function getUserPublicClubsAction(
       ownerUsername: userProfiles.username,
       ownerDisplayName: userProfiles.displayName,
       ownerAvatarUrl: userProfiles.avatarUrl,
+      coverImageUrl: bookClubs.coverImageUrl,
+      lastActivityAt: bookClubs.lastActivityAt,
+      memberPreviews: memberPreviewsSql,
     })
     .from(bookClubs)
     .innerJoin(
@@ -482,6 +501,9 @@ export async function getUserPublicClubsAction(
     viewerMembership: memberships[i],
     createdAt: r.createdAt,
     updatedAt: r.updatedAt,
+    coverImageUrl: r.coverImageUrl,
+    memberPreviews: r.memberPreviews ?? [],
+    lastActivityAt: r.lastActivityAt,
   }))
 
   return { success: true, data: result }

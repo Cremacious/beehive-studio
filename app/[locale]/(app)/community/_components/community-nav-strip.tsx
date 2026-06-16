@@ -1,15 +1,16 @@
 import Link from 'next/link';
+import { Users, Hexagon, Sparkles, BookMarked, BookOpen, type LucideIcon } from 'lucide-react';
 
 type Props = { locale: string };
 
-type Entry = { href: string; glyph: string; label: string };
+type Entry = { href: string; icon: LucideIcon; label: string };
 
 const ENTRIES: Entry[] = [
-  { href: '/friends',       glyph: '👥', label: 'Friends' },
-  { href: '/hives',         glyph: '🐝', label: 'Hives' },
-  { href: '/sparks',        glyph: '✨', label: 'Sparks' },
-  { href: '/reading-lists', glyph: '📚', label: 'Reading Lists' },
-  { href: '/clubs',         glyph: '📖', label: 'Clubs' },
+  { href: '/friends',       icon: Users,      label: 'Friends' },
+  { href: '/hives',         icon: Hexagon,    label: 'Hives' },
+  { href: '/sparks',        icon: Sparkles,   label: 'Sparks' },
+  { href: '/reading-lists', icon: BookMarked, label: 'Reading Lists' },
+  { href: '/clubs',         icon: BookOpen,   label: 'Clubs' },
 ];
 
 export function CommunityNavStrip({ locale }: Props) {
@@ -23,32 +24,35 @@ export function CommunityNavStrip({ locale }: Props) {
         flexWrap: 'wrap',
       }}
     >
-      {ENTRIES.map((e) => (
-        <Link
-          key={e.href}
-          href={`/${locale}${e.href}`}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '8px 14px',
-            background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-            borderRadius: 999,
-            boxShadow: 'var(--sh-tile, 0 4px 12px rgba(0,0,0,0.3))',
-            textDecoration: 'none',
-            color: 'var(--canvas-dark-ink-strong)',
-            fontSize: 12,
-            fontFamily: 'var(--font-mono, monospace)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.06em',
-            fontWeight: 700,
-            transition: 'color 120ms',
-          }}
-        >
-          <span style={{ fontSize: 14, lineHeight: 1 }} aria-hidden>{e.glyph}</span>
-          <span>{e.label}</span>
-        </Link>
-      ))}
+      {ENTRIES.map((e) => {
+        const Icon = e.icon;
+        return (
+          <Link
+            key={e.href}
+            href={`/${locale}${e.href}`}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '8px 14px',
+              background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+              borderRadius: 999,
+              boxShadow: 'var(--sh-tile, 0 4px 12px rgba(0,0,0,0.3))',
+              textDecoration: 'none',
+              color: 'var(--canvas-dark-ink-strong)',
+              fontSize: 12,
+              fontFamily: 'var(--font-mono, monospace)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+              fontWeight: 700,
+              transition: 'color 120ms',
+            }}
+          >
+            <Icon size={14} strokeWidth={2} color="var(--brand)" aria-hidden />
+            <span>{e.label}</span>
+          </Link>
+        );
+      })}
     </nav>
   );
 }

@@ -128,7 +128,11 @@ export const replyIdSchema = z.object({ replyId: z.string().min(1) })
 export const getClubsInputSchema = z.object({
   filter: z.enum(['mine', 'discover']),
   cursor: z.string().optional(),
-  limit: z.number().int().min(1).max(50).optional(),
+  // Max raised from 50 → 200 so the Clubs Hub aggregator can over-fetch the
+  // viewer's full club set (SINGLE_BUCKET_CAP = 126) in one call without
+  // cursor pagination. Other callers (community feed, profile) use default
+  // limits well below 200, so this is safely additive.
+  limit: z.number().int().min(1).max(200).optional(),
 })
 
 export const getClubBooksInputSchema = z.object({

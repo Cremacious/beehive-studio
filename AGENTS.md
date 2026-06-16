@@ -12,9 +12,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-16 (Community Dashboard BENTO REDESIGN spec landed — supersedes T1-T4 shipped earlier today. Chris reviews spec, then writing-plans skill.)
+> **Last updated:** 2026-06-16 (Community Dashboard BENTO REDESIGN spec + 16-task plan landed — supersedes T1-T4. Chris picks execution mode → kick off T1.)
 >
-> **Last commit:** [e555930](https://github.com/Cremacious/beehive-studio/commit/e555930) — docs(specs): community dashboard bento redesign — locked v6. [docs/superpowers/specs/2026-06-16-community-dashboard-bento-redesign-design.md](docs/superpowers/specs/2026-06-16-community-dashboard-bento-redesign-design.md).
+> **Last commit:** [c38fa26](https://github.com/Cremacious/beehive-studio/commit/c38fa26) — docs(plans): community dashboard bento redesign — 16-task plan. [docs/superpowers/plans/2026-06-16-community-dashboard-bento-redesign.md](docs/superpowers/plans/2026-06-16-community-dashboard-bento-redesign.md).
+>
+> **Plan ([c38fa26](https://github.com/Cremacious/beehive-studio/commit/c38fa26)):** 16-task implementation plan for the bento redesign — T1 shared types · T2 sparkline · T3 hero signal resolver (6 kinds, priority ladder) · T4 viewer pulse stats with 7d sparklines · T5 panel-row projections (hives/sparks/lists/clubs/friends) · T6 dashboard fallbacks · T7 aggregator with `safe()` + React `cache()` · T8 pulse panel · T9 mid-tile shared component · T10 hero panel · T11 friends desk with inline pagination · T12 grid orchestrator · T13 page.tsx rewrite · T14 `/community/feed` route · T15 delete superseded T1-T4 files (`community-hub.actions.ts`, `community-hub.shared.ts`, `highlights-rail.tsx`, `activity-feed.tsx`) · T16 smoke + AGENTS.md + ship. Each task has full code + exact commands per writing-plans skill.
 >
 > **Bento redesign brainstorm + spec (this session):** Chris smoked the just-shipped T1-T4 community hub (feed-left + 5-panel right rail + variant-D chrome + live-nudge empty states) and called it half-finished — empty state too sparse, populated state anemic. Asked for a top-to-bottom overhaul. After exploring 3 layout directions in `.superpowers/brainstorm/34275-1781636500/content/layout-variants.html` (A Bento Hero Grid / B Magazine Sections / C Pulse Dashboard), Chris picked A — Apple-Fitness-style mixed-tile bento. Iterated through 5 mockup revisions to lock proportions:
 >
@@ -35,7 +37,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 >
 > **30D pulse window deferred to v2.** v1 ships with `7D` only (head pill row shows just one).
 >
-> **Next concrete step:** Chris reviews the spec at [docs/superpowers/specs/2026-06-16-community-dashboard-bento-redesign-design.md](docs/superpowers/specs/2026-06-16-community-dashboard-bento-redesign-design.md) (commit [e555930](https://github.com/Cremacious/beehive-studio/commit/e555930)). If approved → invoke writing-plans skill to scaffold the implementation plan (likely 8-12 tasks: rename + rewrite aggregator, build sparkline component, build mid-tile-panel shared component, build hero-panel with 6 kinds, build pulse-panel, build friends-desk-panel, page.tsx rewrite, new /community/feed route, smoke + AGENTS.md + ship). If revisions wanted → iterate spec then re-commit.
+> **Next concrete step:** Chris picks execution mode (subagent-driven recommended OR inline). On subagent-driven: dispatch fresh subagent per task starting T1 (shared types) → T2 sparkline → T3 hero resolver → through T16 ship. Review between tasks. On inline: batch execution with checkpoints. Plan + spec are the source of truth; mockup HTML at `.superpowers/brainstorm/34275-1781636500/content/bento-v6.html` (hero + pulse) and `bento-v2.html` (mid-tiles + friends + clubs + empty states) is the visual fidelity reference for layout-sensitive tasks (T8-T12).
 >
 > **Prior — Last updated:** 2026-06-16 (Community Hub Dashboard T1-T4 ✅ CODE-COMPLETE + smoke crash fix + variant D chrome+empty-states pass. 7 commits, reload smoke on Chris.) — **NOTE: this prior state is superseded by the bento redesign spec above. T1-T4 files will be replaced.**
 >

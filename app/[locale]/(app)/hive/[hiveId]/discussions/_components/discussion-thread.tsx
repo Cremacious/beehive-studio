@@ -129,58 +129,76 @@ export function DiscussionThread({
         onReplyClick={() => focusReplyWithMention(post.username)}
       />
 
-      {/* Indented reply thread — vertical line on the left connects all
-          replies + composer to the OP. Each reply is a chat-bubble with a
-          horizontal connector "elbow" pointing at it. */}
-      <div
-        className="relative mt-4 ml-5"
-        style={{ paddingLeft: 24, borderLeft: '2px solid oklch(from var(--canvas-dark-ink) l c h / 0.10)' }}
-      >
+      {/* Indented reply thread. Layout split so the vertical thread line
+          stops at the composer's connector elbow instead of dangling past
+          the textarea + post button. The line runs through the replies
+          block (borderLeft) + extends as a short absolute "stub" into the
+          composer up to the elbow position, then ends. */}
+      <div className="mt-4 ml-5">
+        {/* Replies block — thread line runs full height of this section. */}
         <div
-          className="font-mono text-[10px] uppercase tracking-[0.14em] mb-3"
-          style={{ color: 'var(--canvas-dark-ink-muted)' }}
+          className="relative"
+          style={{
+            paddingLeft: 24,
+            borderLeft: '2px solid oklch(from var(--canvas-dark-ink) l c h / 0.10)',
+          }}
         >
-          {replyCount} {replyCount === 1 ? 'REPLY' : 'REPLIES'}
+          <div
+            className="font-mono text-[10px] uppercase tracking-[0.14em] mb-3"
+            style={{ color: 'var(--canvas-dark-ink-muted)' }}
+          >
+            {replyCount} {replyCount === 1 ? 'REPLY' : 'REPLIES'}
+          </div>
+
+          {replies.length === 0 ? (
+            <div
+              style={{
+                background: 'var(--canvas-dark-100)',
+                borderRadius: 'var(--r-row)',
+                boxShadow: 'var(--sh-inset)',
+                color: 'var(--canvas-dark-ink-muted)',
+              }}
+              className="px-3 py-5 text-center text-[13px] font-geist italic"
+            >
+              No replies yet. Be the first to chime in.
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {replies.map((reply) => (
+                <PostBody
+                  key={reply.id}
+                  post={reply}
+                  isTopLevel={false}
+                  viewerRole={viewerRole}
+                  viewerUserId={viewerUserId}
+                  locale={locale}
+                  hiveId={hiveId}
+                  onReplyClick={() => focusReplyWithMention(reply.username)}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
-        {replies.length === 0 ? (
-          <div
-            style={{
-              background: 'var(--canvas-dark-100)',
-              borderRadius: 'var(--r-row)',
-              boxShadow: 'var(--sh-inset)',
-              color: 'var(--canvas-dark-ink-muted)',
-            }}
-            className="px-3 py-5 text-center text-[13px] font-geist italic"
-          >
-            No replies yet. Be the first to chime in.
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {replies.map((reply) => (
-              <PostBody
-                key={reply.id}
-                post={reply}
-                isTopLevel={false}
-                viewerRole={viewerRole}
-                viewerUserId={viewerUserId}
-                locale={locale}
-                hiveId={hiveId}
-                onReplyClick={() => focusReplyWithMention(reply.username)}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Composer — sits inside the indent so it visually reads as
-            "you are replying to the OP". Avatar + textarea + post button. */}
-        <div className="mt-5 relative">
-          {/* Connector elbow into the thread line */}
+        {/* Composer block — thread line continues as a short absolute stub
+            from the gap above down to the elbow (44px total: 20px of mt-5
+            gap + 24px to the elbow). Below the elbow there's NO line — so
+            it doesn't dangle past the textarea. */}
+        <div className="mt-5 relative" style={{ paddingLeft: 24 }}>
           <span
             aria-hidden
             className="absolute"
             style={{
-              left: -24, top: 24,
+              left: 0, top: -20,
+              width: 2, height: 44,
+              background: 'oklch(from var(--canvas-dark-ink) l c h / 0.10)',
+            }}
+          />
+          <span
+            aria-hidden
+            className="absolute"
+            style={{
+              left: 0, top: 24,
               width: 16, height: 2,
               background: 'oklch(from var(--canvas-dark-ink) l c h / 0.10)',
               borderRadius: 1,

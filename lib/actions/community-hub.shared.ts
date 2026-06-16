@@ -55,12 +55,47 @@ export type FriendsPanelData = {
   suggestionsCount: number
 }
 
+export type FallbackNudges = {
+  // Activity-feed empty-state cards (all from the discoverable pool).
+  todaysSparkTitle: string | null
+  todaysSparkId: string | null
+  todaysSparkEntryCount: number
+  openClubName: string | null
+  openClubId: string | null
+  openClubCurrentBookTitle: string | null
+  suggestedWriterCount: number
+  // Per-panel discover-pool counts for empty-state nudges.
+  openHivesCount: number  // discoverable hives accepting members
+  openSparksCount: number // OPEN status, discoverable
+  trendingListName: string | null
+  trendingListId: string | null
+  trendingListFollowerGain: number | null
+  openClubsCount: number  // discoverable + openJoin
+}
+
 export type CommunityHighlights = {
   hives: HivePanelData
   sparks: SparksPanelData
   lists: ListsPanelData
   clubs: ClubsPanelData
   friends: FriendsPanelData
+  fallbacks: FallbackNudges
+}
+
+export const EMPTY_FALLBACKS: FallbackNudges = {
+  todaysSparkTitle: null,
+  todaysSparkId: null,
+  todaysSparkEntryCount: 0,
+  openClubName: null,
+  openClubId: null,
+  openClubCurrentBookTitle: null,
+  suggestedWriterCount: 0,
+  openHivesCount: 0,
+  openSparksCount: 0,
+  trendingListName: null,
+  trendingListId: null,
+  trendingListFollowerGain: null,
+  openClubsCount: 0,
 }
 
 export const EMPTY_HIGHLIGHTS: CommunityHighlights = {
@@ -110,4 +145,5 @@ export const EMPTY_HIGHLIGHTS: CommunityHighlights = {
     milestoneType: null,
     suggestionsCount: 0,
   },
+  fallbacks: EMPTY_FALLBACKS,
 }

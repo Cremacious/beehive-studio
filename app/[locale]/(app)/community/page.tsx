@@ -32,6 +32,7 @@ export default async function CommunityPage({
             initialRows={feedRows}
             initialCursor={feedCursor}
             locale={locale}
+            fallbacks={highlights.fallbacks}
           />
         </main>
         <aside className="xl:sticky xl:top-20 xl:h-[calc(100vh-100px)] flex flex-col">

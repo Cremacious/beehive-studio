@@ -15,6 +15,7 @@ import type {
   ListsPanelData,
   ClubsPanelData,
   FriendsPanelData,
+  FallbackNudges,
 } from '@/lib/actions/community-hub.shared'
 
 // ─── Shared chrome ────────────────────────────────────────────────────────────
@@ -24,31 +25,37 @@ type HighlightRow = {
   body: React.ReactNode
 }
 
+type FallbackRow = {
+  tag: string
+  body: React.ReactNode
+  cta: string
+  href: string
+}
+
 function HighlightPanel({
   icon: Icon,
   label,
   href,
   rows,
-  emptyMessage,
-  emptyHref,
+  fallback,
   ariaLabel,
 }: {
   icon: LucideIcon
   label: string
   href: string
   rows: HighlightRow[]
-  emptyMessage: string
-  emptyHref: string
+  fallback: FallbackRow
   ariaLabel: string
 }) {
   return (
     <section
       aria-label={ariaLabel}
-      className="flex-1 min-h-0 flex flex-col rounded-[var(--r-row)] border border-[var(--br-card)] overflow-hidden"
+      className="flex-1 min-h-0 flex flex-col rounded-[14px] overflow-hidden"
       style={{
         background:
           'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-        boxShadow: 'var(--sh-tile)',
+        boxShadow:
+          'inset 0 1px 0 rgba(255,255,255,0.04), 0 2px 6px rgba(0,0,0,0.3)',
       }}
     >
       <Link
@@ -66,17 +73,28 @@ function HighlightPanel({
       <div className="flex-1 min-h-0 overflow-y-auto px-3 pb-2">
         {rows.length === 0 ? (
           <Link
-            href={emptyHref}
-            className="block py-2 text-xs italic text-[var(--canvas-dark-ink-muted)] hover:text-[var(--canvas-dark-ink)]"
+            href={fallback.href}
+            className="block py-2 group"
           >
-            {emptyMessage}{' '}
-            <span className="text-[var(--brand)] not-italic">→</span>
+            <div className="text-[8px] font-mono uppercase tracking-wider text-[var(--brand)]/70">
+              {fallback.tag}
+            </div>
+            <div className="text-xs text-[var(--canvas-dark-ink)] line-clamp-2 mt-0.5">
+              {fallback.body}
+            </div>
+            <div className="inline-flex items-center gap-1 mt-1.5 px-2 py-1 rounded-md text-[10px] text-[var(--brand)] group-hover:bg-[var(--brand)]/10"
+                 style={{ background: 'rgba(255,195,0,0.06)' }}>
+              {fallback.cta}
+            </div>
           </Link>
         ) : (
           rows.map((row, i) => (
             <div
               key={i}
-              className="py-2 border-t border-white/[0.04] first:border-t-0"
+              className="py-2"
+              style={{
+                borderTop: i === 0 ? 'none' : '1px solid rgba(255,255,255,0.04)',
+              }}
             >
               <div className="text-[8px] font-mono uppercase tracking-wider text-[var(--brand)]/80">
                 {row.tag}
@@ -92,7 +110,7 @@ function HighlightPanel({
   )
 }
 
-// ─── Per-category panel builders ──────────────────────────────────────────────
+// ─── Per-category row builders ────────────────────────────────────────────────
 
 function buildHiveRows(data: HivePanelData): HighlightRow[] {
   const rows: HighlightRow[] = []
@@ -104,9 +122,7 @@ function buildHiveRows(data: HivePanelData): HighlightRow[] {
   }
   if (data.wordGoalHiveName && data.wordGoalPct !== null) {
     const left =
-      data.wordGoalDaysLeft !== null
-        ? ` · ${data.wordGoalDaysLeft}d left`
-        : ''
+      data.wordGoalDaysLeft !== null ? ` · ${data.wordGoalDaysLeft}d left` : ''
     rows.push({
       tag: 'Word goal',
       body: `${data.wordGoalHiveName}: ${data.wordGoalPct}%${left}`,
@@ -219,6 +235,95 @@ function buildFriendsRows(data: FriendsPanelData): HighlightRow[] {
   return rows
 }
 
+// ─── Fallback builders (variant D: live nudges from discoverable pool) ───────
+
+function hivesFallback(f: FallbackNudges, locale: string): FallbackRow {
+  if (f.openHivesCount > 0) {
+    return {
+      tag: 'Open to join',
+      body: `${f.openHivesCount} ${f.openHivesCount === 1 ? 'hive is' : 'hives are'} looking for writers`,
+      cta: 'Browse →',
+      href: `/${locale}/discover?tab=hives`,
+    }
+  }
+  return {
+    tag: 'Get started',
+    body: 'Create your first hive to write with friends',
+    cta: '＋ Create →',
+    href: `/${locale}/studio`,
+  }
+}
+
+function sparksFallback(f: FallbackNudges, locale: string): FallbackRow {
+  if (f.openSparksCount > 0) {
+    return {
+      tag: 'Live now',
+      body: `${f.openSparksCount} ${f.openSparksCount === 1 ? 'spark is' : 'sparks are'} accepting entries`,
+      cta: 'See all →',
+      href: `/${locale}/sparks`,
+    }
+  }
+  return {
+    tag: 'Try one',
+    body: 'Start a writing prompt of your own',
+    cta: '＋ New Spark →',
+    href: `/${locale}/sparks/new`,
+  }
+}
+
+function listsFallback(f: FallbackNudges, locale: string): FallbackRow {
+  if (f.trendingListName && f.trendingListFollowerGain !== null) {
+    return {
+      tag: 'Trending',
+      body: `"${f.trendingListName}" +${f.trendingListFollowerGain} followers this week`,
+      cta: 'View →',
+      href: f.trendingListId
+        ? `/${locale}/reading-lists/${f.trendingListId}`
+        : `/${locale}/reading-lists`,
+    }
+  }
+  return {
+    tag: 'Build one',
+    body: 'Curate book recs to share with the community',
+    cta: '＋ Start →',
+    href: `/${locale}/reading-lists`,
+  }
+}
+
+function clubsFallback(f: FallbackNudges, locale: string): FallbackRow {
+  if (f.openClubsCount > 0) {
+    return {
+      tag: 'Open to join',
+      body: `${f.openClubsCount} ${f.openClubsCount === 1 ? 'club is' : 'clubs are'} accepting members`,
+      cta: 'Browse →',
+      href: `/${locale}/discover?tab=clubs`,
+    }
+  }
+  return {
+    tag: 'Start one',
+    body: 'Form a book club around your favorite genre',
+    cta: '＋ Create →',
+    href: `/${locale}/clubs`,
+  }
+}
+
+function friendsFallback(f: FallbackNudges, locale: string): FallbackRow {
+  if (f.suggestedWriterCount > 0) {
+    return {
+      tag: 'Suggested',
+      body: `${f.suggestedWriterCount} new writers near your taste`,
+      cta: 'See all →',
+      href: `/${locale}/friends?tab=find`,
+    }
+  }
+  return {
+    tag: 'Invite',
+    body: 'Bring a friend to write with',
+    cta: 'Get link →',
+    href: `/${locale}/friends?tab=find`,
+  }
+}
+
 // ─── Orchestrator ─────────────────────────────────────────────────────────────
 
 export function HighlightsRail({
@@ -228,6 +333,7 @@ export function HighlightsRail({
   highlights: CommunityHighlights
   locale: string
 }) {
+  const { fallbacks } = highlights
   return (
     <div className="flex flex-col gap-2 h-full">
       <HighlightPanel
@@ -236,8 +342,7 @@ export function HighlightsRail({
         label="Hives"
         href={`/${locale}/hives`}
         rows={buildHiveRows(highlights.hives)}
-        emptyMessage="No hives yet · Create one"
-        emptyHref={`/${locale}/studio`}
+        fallback={hivesFallback(fallbacks, locale)}
       />
       <HighlightPanel
         ariaLabel="Sparks highlights"
@@ -245,8 +350,7 @@ export function HighlightsRail({
         label="Sparks"
         href={`/${locale}/sparks`}
         rows={buildSparkRows(highlights.sparks)}
-        emptyMessage="Today's prompt is waiting"
-        emptyHref={`/${locale}/sparks`}
+        fallback={sparksFallback(fallbacks, locale)}
       />
       <HighlightPanel
         ariaLabel="Reading lists highlights"
@@ -254,8 +358,7 @@ export function HighlightsRail({
         label="Lists"
         href={`/${locale}/reading-lists`}
         rows={buildListRows(highlights.lists)}
-        emptyMessage="Build your first list"
-        emptyHref={`/${locale}/reading-lists`}
+        fallback={listsFallback(fallbacks, locale)}
       />
       <HighlightPanel
         ariaLabel="Book clubs highlights"
@@ -263,8 +366,7 @@ export function HighlightsRail({
         label="Clubs"
         href={`/${locale}/clubs`}
         rows={buildClubRows(highlights.clubs)}
-        emptyMessage="Discover open clubs"
-        emptyHref={`/${locale}/discover?tab=clubs`}
+        fallback={clubsFallback(fallbacks, locale)}
       />
       <HighlightPanel
         ariaLabel="Friends highlights"
@@ -272,8 +374,7 @@ export function HighlightsRail({
         label="Friends"
         href={`/${locale}/friends`}
         rows={buildFriendsRows(highlights.friends)}
-        emptyMessage="Invite a friend"
-        emptyHref={`/${locale}/friends?tab=find`}
+        fallback={friendsFallback(fallbacks, locale)}
       />
     </div>
   )

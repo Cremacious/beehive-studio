@@ -70,6 +70,7 @@ import type {
   ClubsPanelData,
   FriendsPanelData,
   CommunityHighlights,
+  FallbackNudges,
 } from './community-hub.shared'
 
 // ─── Helper: safe sub-query wrapper ───────────────────────────────────────────
@@ -561,6 +562,135 @@ async function loadFriendsSuggestionsCount() {
   return { suggestionsCount: res.success ? res.data.length : 0 }
 }
 
+// ─── FALLBACK NUDGES (variant D — discoverable-pool tease for empty states) ──
+
+async function loadTodaysSpark(): Promise<{
+  todaysSparkTitle: string | null
+  todaysSparkId: string | null
+  todaysSparkEntryCount: number
+}> {
+  const now = new Date()
+  const rows = await db
+    .select({ id: sparks.id, title: sparks.title, entryCount: sparks.entryCount })
+    .from(sparks)
+    .where(and(
+      eq(sparks.status, 'OPEN'),
+      eq(sparks.discoverable, true),
+      eq(sparks.visibility, 'PUBLIC'),
+      or(isNull(sparks.deadline), gt(sparks.deadline, now)),
+    ))
+    .orderBy(desc(sparks.entryCount), desc(sparks.createdAt))
+    .limit(1)
+  const top = rows[0]
+  return {
+    todaysSparkTitle: top?.title ?? null,
+    todaysSparkId: top?.id ?? null,
+    todaysSparkEntryCount: top?.entryCount ?? 0,
+  }
+}
+
+async function loadFeaturedOpenClub(): Promise<{
+  openClubName: string | null
+  openClubId: string | null
+  openClubCurrentBookTitle: string | null
+}> {
+  const rows = await db
+    .select({
+      id: bookClubs.id,
+      name: bookClubs.name,
+      bookTitle: bookClubBooks.title,
+    })
+    .from(bookClubs)
+    .leftJoin(bookClubBooks, eq(bookClubBooks.id, bookClubs.currentBookId))
+    .where(and(
+      eq(bookClubs.openJoin, true),
+      eq(bookClubs.discoverable, true),
+      eq(bookClubs.visibility, 'PUBLIC'),
+    ))
+    .orderBy(sql`${bookClubs.lastActivityAt} DESC NULLS LAST`)
+    .limit(1)
+  const top = rows[0]
+  return {
+    openClubName: top?.name ?? null,
+    openClubId: top?.id ?? null,
+    openClubCurrentBookTitle: top?.bookTitle ?? null,
+  }
+}
+
+async function loadOpenHivesCount(): Promise<{ openHivesCount: number }> {
+  const rows = await db
+    .select({ id: hives.id })
+    .from(hives)
+    .where(and(
+      eq(hives.discoverable, true),
+      eq(hives.visibility, 'PUBLIC'),
+      lt(hives.memberCount, 5),
+    ))
+    .limit(100)
+  return { openHivesCount: rows.length }
+}
+
+async function loadOpenSparksCount(): Promise<{ openSparksCount: number }> {
+  const now = new Date()
+  const rows = await db
+    .select({ id: sparks.id })
+    .from(sparks)
+    .where(and(
+      eq(sparks.status, 'OPEN'),
+      eq(sparks.discoverable, true),
+      eq(sparks.visibility, 'PUBLIC'),
+      or(isNull(sparks.deadline), gt(sparks.deadline, now)),
+    ))
+    .limit(100)
+  return { openSparksCount: rows.length }
+}
+
+async function loadTrendingList(): Promise<{
+  trendingListName: string | null
+  trendingListId: string | null
+  trendingListFollowerGain: number | null
+}> {
+  const cutoff = new Date(Date.now() - 7 * DAY_MS)
+  const rows = await db
+    .select({
+      listId: readingLists.id,
+      listTitle: readingLists.title,
+      gain: sql<number>`COUNT(${readingListFollows.userId})::int`,
+    })
+    .from(readingLists)
+    .innerJoin(readingListFollows, and(
+      eq(readingListFollows.listId, readingLists.id),
+      gte(readingListFollows.createdAt, cutoff),
+    ))
+    .where(and(
+      eq(readingLists.discoverable, true),
+      eq(readingLists.visibility, 'PUBLIC'),
+      sql`${readingLists.kind} != 'LIKED'`,
+    ))
+    .groupBy(readingLists.id, readingLists.title)
+    .orderBy(sql`COUNT(${readingListFollows.userId}) DESC`)
+    .limit(1)
+  const top = rows[0]
+  return {
+    trendingListName: top?.listTitle ?? null,
+    trendingListId: top?.listId ?? null,
+    trendingListFollowerGain: top?.gain ?? null,
+  }
+}
+
+async function loadOpenClubsCount(): Promise<{ openClubsCount: number }> {
+  const rows = await db
+    .select({ id: bookClubs.id })
+    .from(bookClubs)
+    .where(and(
+      eq(bookClubs.openJoin, true),
+      eq(bookClubs.discoverable, true),
+      eq(bookClubs.visibility, 'PUBLIC'),
+    ))
+    .limit(100)
+  return { openClubsCount: rows.length }
+}
+
 // ─── Public aggregator ────────────────────────────────────────────────────────
 
 async function _getCommunityHubHighlights(): Promise<ActionResult<CommunityHighlights>> {
@@ -583,6 +713,12 @@ async function _getCommunityHubHighlights(): Promise<ActionResult<CommunityHighl
       friendsPending,
       friendsMilestones,
       friendsSuggestions,
+      fbTodaysSpark,
+      fbOpenClub,
+      fbOpenHives,
+      fbOpenSparks,
+      fbTrendingList,
+      fbOpenClubs,
     ] = await Promise.all([
       safe(() => loadHivePendingReview(userId), { pendingReviewCount: 0, pendingReviewHiveName: null, pendingReviewHiveId: null }),
       safe(() => loadHiveWordGoal(userId), { wordGoalHiveName: null, wordGoalHiveId: null, wordGoalPct: null, wordGoalDaysLeft: null }),
@@ -599,7 +735,23 @@ async function _getCommunityHubHighlights(): Promise<ActionResult<CommunityHighl
       safe(() => loadFriendsPendingRequests(userId), { pendingRequestsCount: 0 }),
       safe(() => loadFriendsMilestones(userId), { milestoneUsername: null, milestoneType: null as 'first_book' | 'spark_win' | null }),
       safe(() => loadFriendsSuggestionsCount(), { suggestionsCount: 0 }),
+      safe(() => loadTodaysSpark(), { todaysSparkTitle: null, todaysSparkId: null, todaysSparkEntryCount: 0 }),
+      safe(() => loadFeaturedOpenClub(), { openClubName: null, openClubId: null, openClubCurrentBookTitle: null }),
+      safe(() => loadOpenHivesCount(), { openHivesCount: 0 }),
+      safe(() => loadOpenSparksCount(), { openSparksCount: 0 }),
+      safe(() => loadTrendingList(), { trendingListName: null, trendingListId: null, trendingListFollowerGain: null }),
+      safe(() => loadOpenClubsCount(), { openClubsCount: 0 }),
     ])
+
+    const fallbacks: FallbackNudges = {
+      ...fbTodaysSpark,
+      ...fbOpenClub,
+      suggestedWriterCount: friendsSuggestions.suggestionsCount,
+      ...fbOpenHives,
+      ...fbOpenSparks,
+      ...fbTrendingList,
+      ...fbOpenClubs,
+    }
 
     return {
       success: true,
@@ -609,6 +761,7 @@ async function _getCommunityHubHighlights(): Promise<ActionResult<CommunityHighl
         lists: { ...listsTrending, ...listsNewFromFollowed, ...listsBooksAdded },
         clubs: { ...clubsCurrent, ...clubsUnread, ...clubsInvite },
         friends: { ...friendsPending, ...friendsMilestones, ...friendsSuggestions },
+        fallbacks,
       },
     }
   } catch (err) {

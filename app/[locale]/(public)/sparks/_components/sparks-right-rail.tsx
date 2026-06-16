@@ -4,6 +4,7 @@ import {
   getTrendingSparksForRailAction,
   getViewerSparkStatsAction,
 } from '@/lib/actions/sparks-rail.actions'
+import { StatsPanel } from '@/components/community/stats-panel'
 
 type Props = { locale: string }
 
@@ -26,14 +27,15 @@ export async function SparksRightRail({ locale }: Props) {
       style={{ position: 'sticky', top: 80, width: 300, alignSelf: 'start' }}
       aria-label="Sparks suggestions"
     >
-      <RailPanel title="Your spark stats">
-        <div className="grid grid-cols-2 gap-3 pt-1">
-          <StatTile value={stats.created} label="Created" emphasize />
-          <StatTile value={stats.entered} label="Entered" />
-          <StatTile value={stats.entriesReceived} label="Entries received" />
-          <StatTile value={stats.wins} label="Wins" />
-        </div>
-      </RailPanel>
+      <StatsPanel
+        title="Your spark stats"
+        stats={[
+          { value: stats.created, label: 'Created', emphasize: true },
+          { value: stats.entered, label: 'Entered' },
+          { value: stats.entriesReceived, label: 'Received' },
+          { value: stats.wins, label: 'Wins' },
+        ]}
+      />
 
       <RailPanel
         title="Trending now"
@@ -165,28 +167,6 @@ function RailPanel({
         ) : null}
       </div>
       {children}
-    </div>
-  )
-}
-
-function StatTile({ value, label, emphasize }: { value: number; label: string; emphasize?: boolean }) {
-  return (
-    <div>
-      <div
-        className="text-[22px] font-bold leading-none"
-        style={{
-          color: emphasize ? 'var(--brand)' : 'var(--canvas-dark-ink-strong)',
-          fontFamily: 'var(--font-display)',
-        }}
-      >
-        {value}
-      </div>
-      <div
-        className="text-[10px] uppercase tracking-[0.08em] mt-1.5"
-        style={{ color: 'var(--canvas-dark-ink-muted)', fontFamily: 'var(--font-mono)' }}
-      >
-        {label}
-      </div>
     </div>
   )
 }

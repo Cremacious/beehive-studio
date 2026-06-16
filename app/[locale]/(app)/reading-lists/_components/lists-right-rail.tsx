@@ -5,6 +5,7 @@ import {
   getTrendingListsForRailAction,
 } from '@/lib/actions/reading-lists-hub.actions'
 import { FollowCuratorButton } from './follow-curator-button'
+import { StatsPanel } from '@/components/community/stats-panel'
 
 type Props = { locale: string; viewerId: string }
 
@@ -27,14 +28,15 @@ export async function ListsRightRail({ locale, viewerId }: Props) {
       style={{ position: 'sticky', top: 80, width: 300, alignSelf: 'start' }}
       aria-label="Reading lists suggestions"
     >
-      <RailPanel title="Your list stats">
-        <div className="grid grid-cols-2 gap-2 pt-1">
-          <StatTile value={stats.created} label="Created" emphasize />
-          <StatTile value={stats.following} label="Following" />
-          <StatTile value={stats.followers} label="Followers" />
-          <StatTile value={stats.booksSaved} label="Books saved" />
-        </div>
-      </RailPanel>
+      <StatsPanel
+        title="Your list stats"
+        stats={[
+          { value: stats.created, label: 'Created', emphasize: true },
+          { value: stats.following, label: 'Following' },
+          { value: stats.followers, label: 'Followers' },
+          { value: stats.booksSaved, label: 'Saved' },
+        ]}
+      />
 
       <RailPanel
         title="Trending lists"
@@ -202,51 +204,6 @@ function RailPanel({
         ) : null}
       </div>
       {children}
-    </div>
-  )
-}
-
-function StatTile({
-  value,
-  label,
-  emphasize,
-}: {
-  value: number | string
-  label: string
-  emphasize?: boolean
-}) {
-  // Created tile uses FLAT brand-tinted bg (locked from Chris's mockup review).
-  // The other 3 tiles keep the standard --tile-bg vertical gradient.
-  return (
-    <div
-      style={{
-        background: emphasize ? 'rgba(255, 195, 0, 0.10)' : 'var(--tile-bg)',
-        border: emphasize
-          ? '1px solid rgba(255, 195, 0, 0.22)'
-          : 'var(--br-card)',
-        borderRadius: 'var(--r-btn)',
-        padding: 12,
-        boxShadow: emphasize ? 'none' : 'var(--sh-tile)',
-      }}
-    >
-      <div
-        className="text-[20px] font-bold leading-none"
-        style={{
-          color: emphasize ? 'var(--brand)' : 'var(--canvas-dark-ink-strong)',
-          fontFamily: 'var(--font-display)',
-        }}
-      >
-        {value}
-      </div>
-      <div
-        className="text-[10px] uppercase tracking-[0.1em] mt-1.5 font-semibold"
-        style={{
-          color: 'var(--canvas-dark-ink-muted)',
-          fontFamily: 'var(--font-mono)',
-        }}
-      >
-        {label}
-      </div>
     </div>
   )
 }

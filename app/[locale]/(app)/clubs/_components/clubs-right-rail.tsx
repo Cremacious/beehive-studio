@@ -4,6 +4,7 @@ import {
   getViewerClubStatsAction,
   getTrendingClubsForRailAction,
 } from '@/lib/actions/clubs-rail.actions'
+import { StatsPanel } from '@/components/community/stats-panel'
 
 type Props = { locale: string }
 
@@ -30,14 +31,15 @@ export async function ClubsRightRail({ locale }: Props) {
       }}
       aria-label="Clubs suggestions"
     >
-      <RailPanel title="Your club stats">
-        <div className="grid grid-cols-2 gap-3 pt-1">
-          <StatTile value={stats.owned} label="Owned" emphasize />
-          <StatTile value={stats.memberOf} label="Member of" />
-          <StatTile value={stats.booksFinished} label="Books finished" />
-          <StatTile value={stats.currentlyReading} label="Currently reading" />
-        </div>
-      </RailPanel>
+      <StatsPanel
+        title="Your club stats"
+        stats={[
+          { value: stats.owned, label: 'Owned', emphasize: true },
+          { value: stats.memberOf, label: 'Member of' },
+          { value: stats.booksFinished, label: 'Finished' },
+          { value: stats.currentlyReading, label: 'Reading' },
+        ]}
+      />
 
       <RailPanel
         title="Trending clubs"
@@ -211,35 +213,3 @@ function RailPanel({
   )
 }
 
-function StatTile({
-  value,
-  label,
-  emphasize,
-}: {
-  value: number | string
-  label: string
-  emphasize?: boolean
-}) {
-  return (
-    <div>
-      <div
-        className="text-[22px] font-bold leading-none"
-        style={{
-          color: emphasize ? 'var(--brand)' : 'var(--canvas-dark-ink-strong)',
-          fontFamily: 'var(--font-display)',
-        }}
-      >
-        {value}
-      </div>
-      <div
-        className="text-[10px] uppercase tracking-[0.08em] mt-1.5"
-        style={{
-          color: 'var(--canvas-dark-ink-muted)',
-          fontFamily: 'var(--font-mono)',
-        }}
-      >
-        {label}
-      </div>
-    </div>
-  )
-}

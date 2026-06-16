@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react'
 import Link from 'next/link'
+import { StatsPanel } from '@/components/community/stats-panel'
 import {
   getViewerHiveStatsAction,
   getTrendingHivesForRailAction,
@@ -30,14 +31,15 @@ export async function HivesRightRail({ locale }: Props) {
       }}
       aria-label="Hives suggestions"
     >
-      <RailPanel title="Your hive stats">
-        <div className="grid grid-cols-2 gap-3 pt-1">
-          <StatTile value={stats.owned} label="Owned" emphasize />
-          <StatTile value={stats.memberOf} label="Member of" />
-          <StatTile value={stats.activeGoals} label="Active goals" />
-          <StatTile value={`${stats.weeklyGoalPct}%`} label="Weekly goal" />
-        </div>
-      </RailPanel>
+      <StatsPanel
+        title="Your hive stats"
+        stats={[
+          { value: stats.owned, label: 'Owned', emphasize: true },
+          { value: stats.memberOf, label: 'Member of' },
+          { value: stats.activeGoals, label: 'Goals' },
+          { value: `${stats.weeklyGoalPct}%`, label: 'Weekly' },
+        ]}
+      />
 
       <RailPanel
         title="Trending hives"
@@ -157,35 +159,3 @@ function RailPanel({
   )
 }
 
-function StatTile({
-  value,
-  label,
-  emphasize,
-}: {
-  value: number | string
-  label: string
-  emphasize?: boolean
-}) {
-  return (
-    <div>
-      <div
-        className="text-[22px] font-bold leading-none"
-        style={{
-          color: emphasize ? 'var(--brand)' : 'var(--canvas-dark-ink-strong)',
-          fontFamily: 'var(--font-display)',
-        }}
-      >
-        {value}
-      </div>
-      <div
-        className="text-[10px] uppercase tracking-[0.08em] mt-1.5"
-        style={{
-          color: 'var(--canvas-dark-ink-muted)',
-          fontFamily: 'var(--font-mono)',
-        }}
-      >
-        {label}
-      </div>
-    </div>
-  )
-}

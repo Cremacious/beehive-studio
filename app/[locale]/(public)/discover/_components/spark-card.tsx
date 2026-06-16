@@ -68,11 +68,11 @@ export function SparkCard({ spark, locale, size = 'md', sourceTag }: Props) {
   return (
     <Link
       href={`/${locale}/sparks/${spark.id}`}
-      className="block no-underline w-full transition-transform hover:-translate-y-px"
+      className="block no-underline w-full h-full transition-transform hover:-translate-y-px"
       aria-label={`Open Spark: ${spark.title}`}
     >
       <div
-        className="overflow-hidden"
+        className="overflow-hidden h-full flex flex-col"
         style={{
           background:
             'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
@@ -83,7 +83,7 @@ export function SparkCard({ spark, locale, size = 'md', sourceTag }: Props) {
         {/* 3px status-color top strip */}
         <div aria-hidden="true" style={{ height: '3px', background: accent }} />
 
-        <div className="p-4">
+        <div className="p-4 flex-1 flex flex-col">
           {/* Header row: status pill + genre label */}
           <div className="flex items-center justify-between mb-3">
             <span

@@ -19,7 +19,7 @@ type Props = {
   searchParams: Promise<SP>
 }
 
-const PAGE_SIZE = 12
+const PAGE_SIZE = 9
 
 function pickRaw(sp: SP, key: string): string | undefined {
   const v = sp[key]
@@ -111,7 +111,7 @@ export default async function SparksHubPage({ params, searchParams }: Props) {
             </Link>
           </header>
 
-          <div className="mb-4">
+          <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
             <SparksTabStrip
               locale={locale}
               current={tab}
@@ -120,18 +120,6 @@ export default async function SparksHubPage({ params, searchParams }: Props) {
                 sort: sort !== 'recent' ? sort : undefined,
               }}
             />
-          </div>
-
-          <div className="flex items-center justify-between mb-3">
-            <div
-              className="text-[12px]"
-              style={{ color: 'var(--canvas-dark-ink-muted)' }}
-            >
-              <strong style={{ color: 'var(--canvas-dark-ink)' }}>
-                {totalCount.toLocaleString()}
-              </strong>{' '}
-              sparks
-            </div>
             <div className="flex items-center gap-2">
               <span
                 className="text-[10px] uppercase tracking-[0.08em]"

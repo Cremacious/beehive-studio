@@ -35,7 +35,7 @@ export function SparksGrid({ sparks, tab, locale, bucketCounts, promptTemplate, 
       className="grid gap-4"
       style={{
         gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-        justifyItems: 'start',
+        alignItems: 'stretch',
       }}
     >
       {sparks.map(s => (

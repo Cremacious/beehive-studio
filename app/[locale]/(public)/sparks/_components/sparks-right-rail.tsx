@@ -26,6 +26,55 @@ export async function SparksRightRail({ locale }: Props) {
       style={{ position: 'sticky', top: 80, width: 300, alignSelf: 'start' }}
       aria-label="Sparks suggestions"
     >
+      <RailPanel title="Your spark stats">
+        <div className="grid grid-cols-2 gap-3 pt-1">
+          <StatTile value={stats.created} label="Created" emphasize />
+          <StatTile value={stats.entered} label="Entered" />
+          <StatTile value={stats.entriesReceived} label="Entries received" />
+          <StatTile value={stats.wins} label="Wins" />
+        </div>
+      </RailPanel>
+
+      <RailPanel
+        title="Trending now"
+        seeAllHref={`/${locale}/discover?tab=sparks`}
+        seeAllLabel="Discover →"
+      >
+        {trending.length === 0 ? (
+          <p
+            className="text-[12px] py-1"
+            style={{ color: 'var(--canvas-dark-ink-muted)' }}
+          >
+            Nothing trending right now.
+          </p>
+        ) : (
+          trending.map((s, i) => (
+            <Link
+              key={s.id}
+              href={`/${locale}/discover/spark/${s.id}`}
+              className="block py-2"
+              style={{
+                borderTop: i === 0 ? 'none' : '1px solid rgba(255,255,255,0.04)',
+              }}
+            >
+              <div
+                className="text-[12px] font-bold leading-snug mb-1"
+                style={{ color: 'var(--canvas-dark-ink-strong)' }}
+              >
+                {s.title}
+              </div>
+              <div
+                className="text-[10px] uppercase tracking-[0.06em]"
+                style={{ color: 'var(--canvas-dark-ink-muted)', fontFamily: 'var(--font-mono)' }}
+              >
+                {s.status === 'VOTING' ? '🗳️ VOTING' : '⚡ OPEN'} · {s.entryCount} entries
+                {s.deadline ? ` · ${formatLeft(s.deadline)}` : ''}
+              </div>
+            </Link>
+          ))
+        )}
+      </RailPanel>
+
       {writers.length > 0 ? (
         <RailPanel
           title="Suggested writers"
@@ -75,54 +124,6 @@ export async function SparksRightRail({ locale }: Props) {
         </RailPanel>
       ) : null}
 
-      <RailPanel
-        title="Trending now"
-        seeAllHref={`/${locale}/discover?tab=sparks`}
-        seeAllLabel="Discover →"
-      >
-        {trending.length === 0 ? (
-          <p
-            className="text-[12px] py-1"
-            style={{ color: 'var(--canvas-dark-ink-muted)' }}
-          >
-            Nothing trending right now.
-          </p>
-        ) : (
-          trending.map((s, i) => (
-            <Link
-              key={s.id}
-              href={`/${locale}/discover/spark/${s.id}`}
-              className="block py-2"
-              style={{
-                borderTop: i === 0 ? 'none' : '1px solid rgba(255,255,255,0.04)',
-              }}
-            >
-              <div
-                className="text-[12px] font-bold leading-snug mb-1"
-                style={{ color: 'var(--canvas-dark-ink-strong)' }}
-              >
-                {s.title}
-              </div>
-              <div
-                className="text-[10px] uppercase tracking-[0.06em]"
-                style={{ color: 'var(--canvas-dark-ink-muted)', fontFamily: 'var(--font-mono)' }}
-              >
-                {s.status === 'VOTING' ? '🗳️ VOTING' : '⚡ OPEN'} · {s.entryCount} entries
-                {s.deadline ? ` · ${formatLeft(s.deadline)}` : ''}
-              </div>
-            </Link>
-          ))
-        )}
-      </RailPanel>
-
-      <RailPanel title="Your spark stats">
-        <div className="grid grid-cols-2 gap-3 pt-1">
-          <StatTile value={stats.created} label="Created" emphasize />
-          <StatTile value={stats.entered} label="Entered" />
-          <StatTile value={stats.entriesReceived} label="Entries received" />
-          <StatTile value={stats.wins} label="Wins" />
-        </div>
-      </RailPanel>
     </aside>
   )
 }

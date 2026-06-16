@@ -27,9 +27,9 @@ export type CommunitySparksTab =
 
 export type CommunitySparksSort = 'recent' | 'ending' | 'entries' | 'status'
 
-const PAGE_SIZE = 12
-const ALL_TAB_BUCKET_CAP = PAGE_SIZE * 4 // 48
-const SINGLE_BUCKET_CAP = PAGE_SIZE * 10 // 120
+const PAGE_SIZE = 9
+const ALL_TAB_BUCKET_CAP = PAGE_SIZE * 6 // 54
+const SINGLE_BUCKET_CAP = PAGE_SIZE * 14 // 126
 
 // ─── Bucket id fetchers ───────────────────────────────────────────────────────
 

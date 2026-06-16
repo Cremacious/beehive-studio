@@ -318,6 +318,8 @@ export const bookClubs = pgTable(
     ownerId: text('owner_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
     name: text('name').notNull(),
     description: text('description'),
+    // Clubs hub redesign: nullable Cloudinary URL for the club's cover image.
+    coverImageUrl: text('cover_image_url'),
     rules: text('rules'),
     tags: text('tags').array().notNull().default(sql`'{}'::text[]`),
     visibility: bookVisibilityEnum('visibility').notNull().default('PUBLIC'),

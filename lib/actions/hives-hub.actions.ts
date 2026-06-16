@@ -3,14 +3,16 @@
 import { requireAuth, AuthError } from '@/lib/require-auth'
 import {
   getUserHivesView,
-  getDiscoverableHivesAction,
   type UserHiveView,
-  type HiveSummary,
 } from './hive.actions'
+import {
+  getSuggestedHivesAction,
+  type SuggestedHive,
+} from './hives-suggested.actions'
 
-export type CommunityHivesTab = 'all' | 'yours' | 'member' | 'open'
+export type CommunityHivesTab = 'all' | 'yours' | 'member' | 'suggested'
 export type CommunityHivesSort = 'active' | 'newest' | 'a-z' | 'members'
-export type CommunityHiveSource = 'yours' | 'member' | 'open'
+export type CommunityHiveSource = 'yours' | 'member' | 'suggested'
 
 export type CommunityHiveRow = {
   id: string
@@ -23,10 +25,12 @@ export type CommunityHiveRow = {
   discoverable: boolean
   status: 'ACTIVE' | 'COMPLETED'
   memberCount: number
+  memberPreviews: Array<{ userId: string; avatarUrl: string | null }>
   lastActiveAt: Date | null
   createdAt: Date | null
   viewerRole: 'OWNER' | 'MODERATOR' | 'CONTRIBUTOR' | 'BETA_READER' | null
   source: CommunityHiveSource
+  suggestionReason: string | null
 }
 
 type ActionResult<T> =
@@ -39,16 +43,12 @@ const SINGLE_BUCKET_CAP = PAGE_SIZE * 14 // 126
 
 /**
  * Hives Hub canonical query. Aggregates `getUserHivesView` (member-hives,
- * with viewerRole) and `getDiscoverableHivesAction` (public + discoverable
- * open hives) into a 4-bucket source-tagged stream:
- *   yours  — viewer is OWNER
- *   member — viewer is non-OWNER member
- *   open   — discoverable hive the viewer is NOT in
- *
- * NOTE: `HiveSummary` (from getDiscoverableHivesAction) does NOT carry
- * `bookTitle`/`bookCoverUrl` and hardcodes `memberCount: 0`. Open-bucket
- * rows therefore have null book denorm + 0 member count until that
- * projection is widened (deferred follow-up).
+ * with viewerRole) and `getSuggestedHivesAction` (3-tier ranked
+ * friend > FoF > trending suggestions, viewer-not-in already filtered
+ * server-side) into a 4-bucket source-tagged stream:
+ *   yours     — viewer is OWNER
+ *   member    — viewer is non-OWNER member
+ *   suggested — recommended hive the viewer is NOT in (with reason)
  */
 export async function getCommunityHivesAction(input: {
   tab: CommunityHivesTab
@@ -58,7 +58,12 @@ export async function getCommunityHivesAction(input: {
   ActionResult<{
     hives: CommunityHiveRow[]
     totalCount: number
-    bucketCounts: { all: number; yours: number; member: number; open: number }
+    bucketCounts: {
+      all: number
+      yours: number
+      member: number
+      suggested: number
+    }
   }>
 > {
   try {
@@ -68,20 +73,20 @@ export async function getCommunityHivesAction(input: {
     throw e
   }
 
-  // Fetch both sources in parallel.
-  const [viewerR, openR] = await Promise.all([
+  // Fetch both sources in parallel. `getSuggestedHivesAction` already
+  // excludes hives the viewer is in (Tier queries embed the exclusion),
+  // so no post-fetch viewerHiveIds filter is needed.
+  const [viewerR, suggestedR] = await Promise.all([
     getUserHivesView(),
-    getDiscoverableHivesAction(),
+    getSuggestedHivesAction({ limit: SINGLE_BUCKET_CAP }),
   ])
 
   if (!viewerR.success) return { success: false, error: viewerR.error }
 
   const viewerHives = viewerR.data
-  const openHivesAll: HiveSummary[] = openR.success ? openR.data : []
-
-  // Filter out open hives the viewer is already in.
-  const viewerHiveIds = new Set(viewerHives.map((h) => h.id))
-  const openHives = openHivesAll.filter((h) => !viewerHiveIds.has(h.id))
+  const suggestedHives: SuggestedHive[] = suggestedR.success
+    ? suggestedR.data
+    : []
 
   // Convert viewer hives to CommunityHiveRow with source = yours/member.
   const yoursRows: CommunityHiveRow[] = viewerHives
@@ -90,13 +95,15 @@ export async function getCommunityHivesAction(input: {
   const memberRows: CommunityHiveRow[] = viewerHives
     .filter((h) => h.viewerRole !== 'OWNER')
     .map((h) => toCommunityRow(h, 'member'))
-  const openRows: CommunityHiveRow[] = openHives.map((h) => openSummaryToRow(h))
+  const suggestedRows: CommunityHiveRow[] = suggestedHives.map((h) =>
+    suggestedHiveToRow(h),
+  )
 
   const bucketCounts = {
-    all: yoursRows.length + memberRows.length + openRows.length,
+    all: yoursRows.length + memberRows.length + suggestedRows.length,
     yours: yoursRows.length,
     member: memberRows.length,
-    open: openRows.length,
+    suggested: suggestedRows.length,
   }
 
   let pool: CommunityHiveRow[]
@@ -107,12 +114,12 @@ export async function getCommunityHivesAction(input: {
     case 'member':
       pool = memberRows.slice(0, SINGLE_BUCKET_CAP)
       break
-    case 'open':
-      pool = openRows.slice(0, SINGLE_BUCKET_CAP)
+    case 'suggested':
+      pool = suggestedRows.slice(0, SINGLE_BUCKET_CAP)
       break
     case 'all':
     default:
-      pool = [...yoursRows, ...memberRows, ...openRows].slice(
+      pool = [...yoursRows, ...memberRows, ...suggestedRows].slice(
         0,
         ALL_TAB_BUCKET_CAP,
       )
@@ -145,36 +152,38 @@ function toCommunityRow(
     discoverable: h.discoverable,
     status: h.status,
     memberCount: h.memberCount,
+    memberPreviews: h.memberPreviews,
     lastActiveAt: h.lastActiveAt,
     // viewer view doesn't carry createdAt; 'newest' sort falls back to 0
     // for these rows. Sort by 'active' for richer ordering on member-hives.
     createdAt: null,
     viewerRole: h.viewerRole,
     source,
+    suggestionReason: null,
   }
 }
 
-function openSummaryToRow(h: HiveSummary): CommunityHiveRow {
-  // HiveSummary shape (verified at lib/actions/hive.actions.ts:19): id,
-  // bookId, name, description, visibility, status, ownerId, memberCount
-  // (always 0 — denorm not populated by getDiscoverableHivesAction),
-  // createdAt. `bookTitle`/`bookCoverUrl` are NOT projected so open rows
-  // render with null book denorm until the action's SELECT is widened.
+function suggestedHiveToRow(h: SuggestedHive): CommunityHiveRow {
+  // SuggestedHive = HiveSummary & { lastActiveAt, suggestionReason }.
+  // HiveSummary (post-T1 widening) carries bookTitle, bookCoverUrl, real
+  // memberCount, and memberPreviews — no more null/0 placeholders.
   return {
     id: h.id,
     name: h.name,
     description: h.description,
     bookId: h.bookId,
-    bookTitle: null,
-    bookCoverUrl: null,
+    bookTitle: h.bookTitle,
+    bookCoverUrl: h.bookCoverUrl,
     visibility: h.visibility,
     discoverable: true,
     status: h.status,
     memberCount: h.memberCount,
-    lastActiveAt: null,
+    memberPreviews: h.memberPreviews,
+    lastActiveAt: h.lastActiveAt,
     createdAt: h.createdAt,
     viewerRole: null,
-    source: 'open',
+    source: 'suggested',
+    suggestionReason: h.suggestionReason,
   }
 }
 

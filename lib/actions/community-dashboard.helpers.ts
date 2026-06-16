@@ -11,9 +11,10 @@ import { and, desc, eq, gte, inArray, isNotNull, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import {
   books, chapters, follows, sparks, sparkEntries, hives, hiveMembers,
-  userProfiles, bookLikes, bookComments,
+  userProfiles, bookLikes, bookComments, chapterReads,
 } from '@/db/schema';
-import type { HeroSignal } from './community-dashboard.shared';
+import type { HeroSignal, PulseStat, PulseStats } from './community-dashboard.shared';
+import { EMPTY_PULSE } from './community-dashboard.shared';
 
 const MS_HOUR = 60 * 60 * 1000;
 const MS_DAY  = 24 * MS_HOUR;
@@ -303,4 +304,171 @@ export async function resolveHeroSignal(viewerId: string): Promise<HeroSignal | 
     if (result) return result;
   }
   return null;
+}
+
+// =====================================================
+// T4 — Pulse stats with 7-day daily sparklines
+// =====================================================
+
+// Build a 7-element array of daily counts, oldest first.
+function pad7DaySeries(rows: { day: string; count: number }[]): number[] {
+  const days: string[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(Date.now() - i * MS_DAY);
+    days.push(d.toISOString().slice(0, 10));
+  }
+  const map = new Map(rows.map((r) => [r.day, r.count]));
+  return days.map((d) => map.get(d) ?? 0);
+}
+
+// Helper to normalize drizzle's execute return shape across versions.
+function executeRows<T>(result: unknown): T[] {
+  if (Array.isArray(result)) return result as T[];
+  if (result && typeof result === 'object' && 'rows' in result) return (result as { rows: T[] }).rows;
+  return [];
+}
+
+async function pulseWords(viewerId: string): Promise<PulseStat> {
+  const rows = executeRows<{ day: string; count: number }>(await db.execute(sql`
+    SELECT to_char(date_trunc('day', ${chapters.updatedAt}), 'YYYY-MM-DD') AS day,
+           COALESCE(SUM(${chapters.wordCount}), 0)::int AS count
+    FROM ${chapters}
+    INNER JOIN ${books} ON ${books.id} = ${chapters.bookId}
+    WHERE ${books.userId} = ${viewerId}
+      AND ${chapters.updatedAt} >= NOW() - INTERVAL '7 days'
+    GROUP BY day
+    ORDER BY day ASC
+  `));
+  const series = pad7DaySeries(rows);
+  const total = series.reduce((a, b) => a + b, 0);
+  if (total === 0) return EMPTY_PULSE.words;
+  const priorRows = executeRows<{ s: number }>(await db.execute(sql`
+    SELECT COALESCE(SUM(${chapters.wordCount}), 0)::int AS s
+    FROM ${chapters}
+    INNER JOIN ${books} ON ${books.id} = ${chapters.bookId}
+    WHERE ${books.userId} = ${viewerId}
+      AND ${chapters.updatedAt} >= NOW() - INTERVAL '14 days'
+      AND ${chapters.updatedAt} <  NOW() - INTERVAL '7 days'
+  `));
+  const prior = priorRows[0]?.s ?? 0;
+  const pct = prior > 0 ? Math.round(((total - prior) / prior) * 100) : 100;
+  return {
+    value: total,
+    delta: `↑ ${pct}%`,
+    deltaTone: 'green',
+    sparkline: series,
+    hint: null,
+  };
+}
+
+async function pulseFollowers(viewerId: string): Promise<PulseStat> {
+  const rows = executeRows<{ day: string; count: number }>(await db.execute(sql`
+    SELECT to_char(date_trunc('day', ${follows.createdAt}), 'YYYY-MM-DD') AS day,
+           COUNT(*)::int AS count
+    FROM ${follows}
+    WHERE ${follows.followeeId} = ${viewerId}
+      AND ${follows.createdAt} >= NOW() - INTERVAL '7 days'
+    GROUP BY day
+    ORDER BY day ASC
+  `));
+  const series = pad7DaySeries(rows);
+  const total = series.reduce((a, b) => a + b, 0);
+  if (total === 0) return EMPTY_PULSE.followers;
+  const today = series[6] ?? 0;
+  return {
+    value: total,
+    delta: `↑ ${today} today`,
+    deltaTone: 'green',
+    sparkline: series,
+    hint: null,
+  };
+}
+
+async function pulseReads(viewerId: string): Promise<PulseStat & { chapterNumber: number | null }> {
+  // Find viewer's latest reader-visible chapter (REVISED or FINAL).
+  // Schema reality: no chapters.publishedAt — use updatedAt + status filter.
+  const latest = await db
+    .select({
+      chapterId: chapters.id,
+      binderItemId: chapters.binderItemId,
+      updatedAt: chapters.updatedAt,
+      bookId: chapters.bookId,
+      chapterIdx: sql<number>`COALESCE((SELECT COUNT(*)::int FROM ${chapters} c2 WHERE c2.book_id = ${chapters.bookId} AND c2.status IN ('REVISED', 'FINAL') AND c2.updated_at <= ${chapters.updatedAt}), 1)`,
+    })
+    .from(chapters)
+    .innerJoin(books, eq(books.id, chapters.bookId))
+    .where(and(
+      eq(books.userId, viewerId),
+      inArray(chapters.status, ['REVISED', 'FINAL']),
+    ))
+    .orderBy(desc(chapters.updatedAt))
+    .limit(1);
+  if (latest.length === 0) return { ...EMPTY_PULSE.reads, chapterNumber: null };
+  const l = latest[0];
+  const readsRows = executeRows<{ day: string; count: number }>(await db.execute(sql`
+    SELECT to_char(date_trunc('day', ${chapterReads.readAt}), 'YYYY-MM-DD') AS day,
+           COUNT(*)::int AS count
+    FROM ${chapterReads}
+    WHERE ${chapterReads.chapterBinderItemId} = ${l.binderItemId}
+      AND ${chapterReads.readAt} >= NOW() - INTERVAL '7 days'
+    GROUP BY day
+    ORDER BY day ASC
+  `));
+  const series = pad7DaySeries(readsRows);
+  const total = series.reduce((a, b) => a + b, 0);
+  const hours = Math.max(1, Math.floor((Date.now() - new Date(l.updatedAt!).getTime()) / MS_HOUR));
+  return {
+    value: total,
+    delta: `${hours}h since`,
+    deltaTone: 'dim',
+    sparkline: series,
+    hint: null,
+    chapterNumber: l.chapterIdx,
+  };
+}
+
+async function pulseEngagement(viewerId: string): Promise<PulseStat> {
+  const likeRows = executeRows<{ day: string; count: number }>(await db.execute(sql`
+    SELECT to_char(date_trunc('day', ${bookLikes.createdAt}), 'YYYY-MM-DD') AS day,
+           COUNT(*)::int AS count
+    FROM ${bookLikes}
+    INNER JOIN ${books} ON ${books.id} = ${bookLikes.bookId}
+    WHERE ${books.userId} = ${viewerId}
+      AND ${bookLikes.createdAt} >= NOW() - INTERVAL '7 days'
+    GROUP BY day
+  `));
+  const commentRows = executeRows<{ day: string; count: number }>(await db.execute(sql`
+    SELECT to_char(date_trunc('day', ${bookComments.createdAt}), 'YYYY-MM-DD') AS day,
+           COUNT(*)::int AS count
+    FROM ${bookComments}
+    INNER JOIN ${books} ON ${books.id} = ${bookComments.bookId}
+    WHERE ${books.userId} = ${viewerId}
+      AND ${bookComments.createdAt} >= NOW() - INTERVAL '7 days'
+    GROUP BY day
+  `));
+  const likeMap = new Map(likeRows.map((r) => [r.day, r.count]));
+  const cmtMap  = new Map(commentRows.map((r) => [r.day, r.count]));
+  const days: string[] = [];
+  for (let i = 6; i >= 0; i--) days.push(new Date(Date.now() - i * MS_DAY).toISOString().slice(0, 10));
+  const series = days.map((d) => (likeMap.get(d) ?? 0) + (cmtMap.get(d) ?? 0));
+  const total = series.reduce((a, b) => a + b, 0);
+  if (total === 0) return EMPTY_PULSE.engagement;
+  const today = series[6] ?? 0;
+  return {
+    value: total,
+    delta: `↑ ${today} today`,
+    deltaTone: 'green',
+    sparkline: series,
+    hint: null,
+  };
+}
+
+export async function getViewerPulseStats(viewerId: string): Promise<PulseStats> {
+  const [words, followers, reads, engagement] = await Promise.all([
+    pulseWords(viewerId),
+    pulseFollowers(viewerId),
+    pulseReads(viewerId),
+    pulseEngagement(viewerId),
+  ]);
+  return { words, followers, reads, engagement };
 }

@@ -1,11 +1,9 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { useSortable } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
 import { cn } from '@/lib/utils'
 import { useBookEditor } from '../book-editor-provider'
-import { useBinderTree, renderTreeWithSlots, type TreeNode } from './binder-tree'
+import { useBinderTree, renderTree, type TreeNode } from './binder-tree'
 import { BinderItemMenu } from './binder-item-menu'
 import { updateBinderItemAction } from '@/lib/actions/binder.actions'
 import type { BinderItemRow } from '@/lib/actions/binder.actions'
@@ -20,7 +18,8 @@ import {
   User as UserIcon,
   Layout as LayoutIcon,
   ChevronRight,
-  GripVertical,
+  ChevronUp,
+  ChevronDown,
   Pin,
   Star,
   type LucideIcon,
@@ -102,12 +101,7 @@ type Props = {
 
 export function BinderItem({ node, depth }: Props) {
   const { activeItemId, setActiveItemId, updateBinderItem, pendingRenameId, setPendingRenameId } = useBookEditor()
-  const { collapsed, toggleCollapsed, dropZone, draggingItemId, visibleSlotIds } =
-    useBinderTree()
-  // Slot model (2026-06-10 v2): rows themselves only get one visual state —
-  // nest target (folder being hovered for nest). Insertion is handled by
-  // Slot droppables between rows, NOT by lines drawn on the row.
-  const isNestTarget = dropZone?.kind === 'nest' && dropZone.folderId === node.id
+  const { collapsed, toggleCollapsed, canMoveUp, canMoveDown, moveItem } = useBinderTree()
 
   const [isRenaming, setIsRenaming] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -118,13 +112,8 @@ export function BinderItem({ node, depth }: Props) {
   const Icon = ICONS[node.type]
   const iconTint = ICON_TINTS[node.type]
 
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: node.id })
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.4 : 1,
-  }
+  const canUp = canMoveUp(node.id)
+  const canDown = canMoveDown(node.id)
 
   useEffect(() => {
     if (isRenaming) {
@@ -164,59 +153,74 @@ export function BinderItem({ node, depth }: Props) {
     commitRename()
   }, [commitRename])
 
-  // Whole row is the drag handle. Skip listeners while renaming so text
-  // selection inside the input doesn't trigger a sortable drag (the input's
-  // pointer moves would otherwise hit the 8px activation threshold).
-  const dragListeners = isRenaming ? {} : listeners
-  const dragAttributes = isRenaming ? {} : attributes
+  // Arrow stack reserves the same fixed 28px slot the old grip handle did,
+  // so titles don't shift left/right when hover reveals or hides the arrows.
+  // Always visible on the active row (keyboard-only path works without mousemove).
+  const showArrows = isActive
 
-  // dnd-kit's `setNodeRef` MUST sit on just the row — not on a wrapper that
-  // also contains rendered children. closestCenter collision detection uses
-  // the ref'd element's geometric center; if children render inside the
-  // ref'd wrapper, an expanded folder's center sinks into its subtree and
-  // child rows steal the `over` event, making it impossible to drop onto
-  // the folder itself. Layout wrapper (for children) stays outside ref scope.
   return (
     <div>
       <div
-        ref={setNodeRef}
         style={{
-          ...style,
           paddingLeft: `${depth * 12}px`,
           borderRadius: 'var(--r-row)',
           background: isActive
             ? 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))'
             : undefined,
-          // Nest target highlight: solid brand ring + tinted halo.
-          boxShadow: isNestTarget
-            ? '0 0 0 2px var(--brand), 0 0 0 6px oklch(from var(--brand) l c h / 0.22)'
-            : isActive
-              ? 'var(--sh-tile)'
-              : undefined,
+          boxShadow: isActive ? 'var(--sh-tile)' : undefined,
         }}
-        {...dragAttributes}
-        {...dragListeners}
         className={cn(
-          'group flex items-center gap-2 h-8 pr-2 select-none transition-colors relative',
+          'group flex items-center gap-2 h-9 pr-2 select-none transition-colors relative',
           'text-foreground',
           !isActive && 'hover:bg-[linear-gradient(180deg,var(--canvas-dark-250),var(--canvas-dark-200))]',
-          isRenaming ? 'cursor-text' : 'cursor-grab',
+          isRenaming ? 'cursor-text' : 'cursor-pointer',
           isRenaming && !isActive && 'bg-[linear-gradient(180deg,var(--canvas-dark-250),var(--canvas-dark-200))]',
-          isNestTarget && 'bg-brand/15',
         )}
         onClick={() => setActiveItemId(node.id)}
-        aria-label={isRenaming ? undefined : 'Drag to reorder'}
       >
-        {/* Grip handle is absolutely positioned so it doesn't eat layout space
-            when hidden — without this, every row gets a ~20px invisible gutter
-            on the left (12px icon + 8px gap), making icon + title look
-            center-shifted instead of flush against the indent edge. */}
+        {/* Reorder arrows. Fixed 28px slot keeps the title column stable
+            whether arrows are visible or not. Visible on hover (group-hover)
+            and always visible on the active row. */}
         <span
-          className="absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 text-muted-foreground pointer-events-none"
-          style={{ left: `${8 + depth * 12}px` }}
-          aria-hidden
+          className={cn(
+            'flex-shrink-0 flex flex-col items-center justify-center transition-opacity',
+            showArrows
+              ? 'opacity-100'
+              : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100',
+          )}
+          style={{ width: 24, height: 32 }}
+          onClick={e => e.stopPropagation()}
         >
-          <GripVertical size={12} />
+          <button
+            type="button"
+            onClick={e => { e.stopPropagation(); if (canUp) moveItem(node.id, 'up') }}
+            disabled={!canUp}
+            aria-label="Move up"
+            title={canUp ? 'Move up' : 'Already at top'}
+            className={cn(
+              'w-6 h-[15px] flex items-center justify-center rounded-t-[6px] border border-b-0 transition-colors',
+              canUp
+                ? 'border-white/10 bg-[linear-gradient(180deg,var(--canvas-dark-400),var(--canvas-dark-350))] text-foreground hover:bg-[linear-gradient(180deg,var(--brand),oklch(0.78_0.16_86))] hover:text-[var(--brand-ink)] cursor-pointer'
+                : 'border-white/5 bg-[linear-gradient(180deg,var(--canvas-dark-300),var(--canvas-dark-250))] text-muted-foreground/40 cursor-not-allowed',
+            )}
+          >
+            <ChevronUp size={11} strokeWidth={2.5} />
+          </button>
+          <button
+            type="button"
+            onClick={e => { e.stopPropagation(); if (canDown) moveItem(node.id, 'down') }}
+            disabled={!canDown}
+            aria-label="Move down"
+            title={canDown ? 'Move down' : 'Already at bottom'}
+            className={cn(
+              'w-6 h-[15px] flex items-center justify-center rounded-b-[6px] border transition-colors',
+              canDown
+                ? 'border-white/10 bg-[linear-gradient(180deg,var(--canvas-dark-400),var(--canvas-dark-350))] text-foreground hover:bg-[linear-gradient(180deg,var(--brand),oklch(0.78_0.16_86))] hover:text-[var(--brand-ink)] cursor-pointer'
+                : 'border-white/5 bg-[linear-gradient(180deg,var(--canvas-dark-300),var(--canvas-dark-250))] text-muted-foreground/40 cursor-not-allowed',
+            )}
+          >
+            <ChevronDown size={11} strokeWidth={2.5} />
+          </button>
         </span>
 
         {isCollapsible ? (
@@ -304,13 +308,7 @@ export function BinderItem({ node, depth }: Props) {
 
       {isCollapsible && !isCollapsed && (
         <>
-          {renderTreeWithSlots(
-            node.children,
-            node.id,
-            depth + 1,
-            draggingItemId,
-            visibleSlotIds,
-          )}
+          {renderTree(node.children, depth + 1)}
         </>
       )}
     </div>

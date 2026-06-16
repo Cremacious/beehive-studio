@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import Link from 'next/link'
 import {
   getViewerHiveStatsAction,
@@ -9,7 +10,7 @@ type Props = { locale: string }
 export async function HivesRightRail({ locale }: Props) {
   const [statsR, trendingR] = await Promise.all([
     getViewerHiveStatsAction(),
-    getTrendingHivesForRailAction({ limit: 3 }),
+    getTrendingHivesForRailAction({ limit: 12 }),
   ])
 
   const stats = statsR.success
@@ -20,7 +21,13 @@ export async function HivesRightRail({ locale }: Props) {
   return (
     <aside
       className="hidden xl:flex flex-col gap-4"
-      style={{ position: 'sticky', top: 80, width: 300, alignSelf: 'start' }}
+      style={{
+        position: 'sticky',
+        top: 80,
+        width: 300,
+        height: 'calc(100vh - 100px)',
+        alignSelf: 'start',
+      }}
       aria-label="Hives suggestions"
     >
       <RailPanel title="Your hive stats">
@@ -36,6 +43,21 @@ export async function HivesRightRail({ locale }: Props) {
         title="Trending hives"
         seeAllHref={`/${locale}/discover?tab=hives`}
         seeAllLabel="Discover →"
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          minHeight: 0,
+          padding: 0,
+        }}
+        headerStyle={{ padding: '16px 16px 0 16px', marginBottom: 12 }}
+        bodyStyle={{
+          flex: 1,
+          overflowY: 'auto',
+          minHeight: 0,
+          padding: '0 16px 16px 16px',
+        }}
       >
         {trending.length === 0 ? (
           <p
@@ -83,23 +105,34 @@ function RailPanel({
   seeAllHref,
   seeAllLabel,
   children,
+  style,
+  headerStyle,
+  bodyStyle,
 }: {
   title: string
   seeAllHref?: string
   seeAllLabel?: string
   children: React.ReactNode
+  style?: CSSProperties
+  headerStyle?: CSSProperties
+  bodyStyle?: CSSProperties
 }) {
   return (
     <div
-      className="rounded-2xl p-4"
+      className="rounded-2xl"
       style={{
+        padding: 16,
         background:
           'linear-gradient(180deg, var(--canvas-dark-200), var(--canvas-dark-150))',
         boxShadow:
           '0 2px 8px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.04)',
+        ...style,
       }}
     >
-      <div className="flex justify-between items-center mb-3">
+      <div
+        className="flex justify-between items-center mb-3"
+        style={headerStyle}
+      >
         <h2
           className="text-[10px] font-bold uppercase tracking-[0.1em]"
           style={{
@@ -119,7 +152,7 @@ function RailPanel({
           </Link>
         ) : null}
       </div>
-      {children}
+      {bodyStyle ? <div style={bodyStyle}>{children}</div> : children}
     </div>
   )
 }

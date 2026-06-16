@@ -19,6 +19,7 @@ export type RailTrendingHive = {
   bookCoverUrl: string | null
   memberCount: number
   activity7d: number
+  memberPreviews: Array<{ userId: string; avatarUrl: string | null }>
 }
 
 type ActionResult<T> = { success: true; data: T } | { success: false; error: string }
@@ -72,7 +73,7 @@ export async function getViewerHiveStatsAction(): Promise<ActionResult<ViewerHiv
 export async function getTrendingHivesForRailAction(
   args: { limit?: number } = {},
 ): Promise<ActionResult<RailTrendingHive[]>> {
-  const limit = Math.min(args.limit ?? 3, 10)
+  const limit = Math.min(args.limit ?? 12, 30)
   const windowStart = new Date(Date.now() - TRENDING_WINDOW_MS)
 
   try {
@@ -83,7 +84,18 @@ export async function getTrendingHivesForRailAction(
         b.title AS "bookTitle",
         b.cover_url AS "bookCoverUrl",
         COALESCE(mc.member_count, 0) AS "memberCount",
-        COALESCE(ac.activity_7d, 0) AS "activity7d"
+        COALESCE(ac.activity_7d, 0) AS "activity7d",
+        COALESCE((
+          SELECT json_agg(json_build_object('userId', sub.user_id, 'avatarUrl', sub.avatar_url))
+          FROM (
+            SELECT hm2.user_id, up2.avatar_url
+            FROM hive_members hm2
+            LEFT JOIN user_profiles up2 ON up2.user_id = hm2.user_id
+            WHERE hm2.hive_id = h.id
+            ORDER BY hm2.joined_at DESC
+            LIMIT 4
+          ) sub
+        ), '[]'::json) AS "memberPreviews"
       FROM hives h
       LEFT JOIN books b ON b.id = h.book_id
       LEFT JOIN (
@@ -109,6 +121,7 @@ export async function getTrendingHivesForRailAction(
       bookCoverUrl: string | null
       memberCount: number
       activity7d: number
+      memberPreviews: Array<{ userId: string; avatarUrl: string | null }>
     }
 
     return {

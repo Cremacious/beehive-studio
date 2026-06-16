@@ -12,6 +12,7 @@ import { SparksSortDropdown } from './_components/sparks-sort-dropdown'
 import { SparksHubPagination } from './_components/sparks-hub-pagination'
 import { SparksRightRail } from './_components/sparks-right-rail'
 import { SparksGrid } from './_components/sparks-grid'
+import { BackToCommunity } from '@/components/community/back-to-community'
 
 type SP = Record<string, string | string[] | undefined>
 type Props = {
@@ -83,6 +84,7 @@ export default async function SparksHubPage({ params, searchParams }: Props) {
     >
       <div className="grid items-start xl:grid-cols-[minmax(0,1fr)_300px] grid-cols-1 gap-8">
         <div className="min-w-0">
+          <BackToCommunity href={`/${locale}/community`} />
           <header className="flex items-start justify-between gap-4 mb-6">
             <div>
               <h1

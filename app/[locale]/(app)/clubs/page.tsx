@@ -10,6 +10,7 @@ import { ClubsHubPagination } from './_components/clubs-hub-pagination'
 import { ClubsRightRail } from './_components/clubs-right-rail'
 import { ClubsGrid } from './_components/clubs-grid'
 import { CreateClubButton } from './_components/create-club-button'
+import { BackToCommunity } from '@/components/community/back-to-community'
 
 type SP = Record<string, string | string[] | undefined>
 type Props = {
@@ -100,6 +101,7 @@ export default async function ClubsHubPage({ params, searchParams }: Props) {
     >
       <div className="grid items-start xl:grid-cols-[minmax(0,1fr)_300px] grid-cols-1 gap-8">
         <div className="min-w-0">
+          <BackToCommunity href={`/${locale}/community`} />
           <header className="flex items-start justify-between gap-4 mb-6">
             <div>
               <h1

@@ -12,7 +12,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-16 (Community Hub Dashboard T1-T4 ✅ CODE-COMPLETE — 4 commits, T5 smoke on Chris. Inline execution.)
+> **Last updated:** 2026-06-16 (Community Hub Dashboard T1-T4 ✅ CODE-COMPLETE + smoke crash fix — 5 commits + 1 fix, reload smoke on Chris. Inline execution.)
+>
+> **Smoke crash fix ([a1853f3](https://github.com/Cremacious/beehive-studio/commit/a1853f3)):** `npm run dev` crashed at module-load on `/en/community` with `'A "use server" file can only export async functions, found object'` — the T1 aggregator file was exporting `EMPTY_HIGHLIGHTS` (object constant) alongside the async action. Moved types + constant to NEW sibling `lib/actions/community-hub.shared.ts` (same precedent as `lib/actions/discover-shared.ts` + `discover-lists-shared.ts`). Page imports `EMPTY_HIGHLIGHTS` from `.shared`; highlights-rail imports types from `.shared`. Actions file now only exports the async function. **Pattern is documented in AGENTS.md** under H2 (`patchDocWithMark`) and D3a (`loadCoverPreviewsMap`); I missed it on the first pass — should be reflexive going forward. tsc clean after fix.
 >
 > **Community Hub Dashboard T1-T4 ✅ CODE-COMPLETE.** Feed-centric `/community` rewrite ships: full-height activity feed (left) + 300px sticky right rail of 5 highlight panels (Hives · Sparks · Lists · Clubs · Friends). Each panel caps at 3 highlight rows surfacing items users miss in notifications/feed; empty panel falls back to per-category CTA. Feed column never collapses — empty state shows centered brand-yellow ✨ hero with Try a Spark / Find friends CTAs. NO DB changes. 883/883 tests, tsc clean throughout.
 >

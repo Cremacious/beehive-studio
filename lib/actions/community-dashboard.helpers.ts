@@ -17,7 +17,7 @@ import {
   bookClubs, bookClubBooks, bookClubMembers, bookClubDiscussions,
   socialActivity,
 } from '@/db/schema';
-import type { HeroSignal, PanelRow, PulseStat, PulseStats } from './community-dashboard.shared';
+import type { DashboardFallbacks, HeroSignal, PanelRow, PulseStat, PulseStats } from './community-dashboard.shared';
 import { EMPTY_PULSE } from './community-dashboard.shared';
 
 const MS_HOUR = 60 * 60 * 1000;
@@ -783,4 +783,85 @@ export async function getFriendsDeskRows(viewerId: string, limit = 6, cursor?: s
   });
   const nextCursor = hasMore ? slice[slice.length - 1].createdAt.toISOString() : null;
   return { rows, nextCursor };
+}
+
+// =====================================================
+// T6 — Dashboard fallbacks (pre-fetched data for empty panels)
+// =====================================================
+
+export async function loadDashboardFallbacks(_viewerId: string): Promise<DashboardFallbacks> {
+  const [
+    todaysSparkRow,
+    trendingHiveRow,
+    votingSparkRow,
+    trendingListRow,
+    topClubRows,
+    openHivesCountRows,
+    openClubsCountRows,
+  ] = await Promise.all([
+    db.select({
+      id: sparks.id,
+      prompt: sparks.prompt,
+      wordLimit: sparks.wordLimit,
+      deadline: sparks.deadline,
+      entries: sql<number>`(SELECT COUNT(*)::int FROM ${sparkEntries} WHERE ${sparkEntries.sparkId} = ${sparks.id})`,
+    }).from(sparks).where(and(eq(sparks.status, 'OPEN'), eq(sparks.visibility, 'PUBLIC'))).orderBy(desc(sparks.createdAt)).limit(1),
+
+    db.select({
+      id: hives.id,
+      name: hives.name,
+      memberCount: hives.memberCount,
+    }).from(hives).where(and(eq(hives.visibility, 'PUBLIC'), eq(hives.discoverable, true))).orderBy(desc(hives.lastActivityAt)).limit(1),
+
+    db.select({
+      id: sparks.id,
+      title: sparks.title,
+      entries: sql<number>`(SELECT COUNT(*)::int FROM ${sparkEntries} WHERE ${sparkEntries.sparkId} = ${sparks.id})`,
+    }).from(sparks).where(and(eq(sparks.status, 'VOTING'), eq(sparks.visibility, 'PUBLIC'))).orderBy(desc(sparks.createdAt)).limit(1),
+
+    db.select({
+      id: readingLists.id,
+      title: readingLists.title,
+      covers: sql<{ coverUrl: string | null; title: string }[]>`COALESCE((
+        SELECT json_agg(json_build_object('coverUrl', cover_url, 'title', title))
+        FROM (
+          SELECT cover_url, title FROM ${readingListBooks}
+          WHERE list_id = ${readingLists.id}
+          ORDER BY added_at DESC LIMIT 3
+        ) sub
+      ), '[]'::json)`,
+    }).from(readingLists).where(and(eq(readingLists.kind, 'CUSTOM'), eq(readingLists.visibility, 'PUBLIC'))).orderBy(desc(readingLists.followerCount)).limit(1),
+
+    db.select({
+      id: bookClubs.id,
+      name: bookClubs.name,
+      bookTitle: bookClubBooks.title,
+      coverUrl: bookClubBooks.coverUrl,
+      memberCount: sql<number>`(SELECT COUNT(*)::int FROM ${bookClubMembers} WHERE ${bookClubMembers.clubId} = ${bookClubs.id})`,
+    }).from(bookClubs).leftJoin(bookClubBooks, eq(bookClubBooks.id, bookClubs.currentBookId)).where(eq(bookClubs.openJoin, true)).orderBy(desc(bookClubs.lastActivityAt)).limit(3),
+
+    db.execute(sql`SELECT COUNT(*)::int AS count FROM ${hives} WHERE ${hives.visibility} = 'PUBLIC' AND ${hives.discoverable} = true`),
+    db.execute(sql`SELECT COUNT(*)::int AS count FROM ${bookClubs} WHERE ${bookClubs.openJoin} = true`),
+  ]);
+
+  const ts = todaysSparkRow[0];
+  const th = trendingHiveRow[0];
+  const vs = votingSparkRow[0];
+  const tl = trendingListRow[0];
+  const openHivesCount = executeRows<{ count: number }>(openHivesCountRows)[0]?.count ?? 0;
+  const openClubsCount = executeRows<{ count: number }>(openClubsCountRows)[0]?.count ?? 0;
+
+  return {
+    todaysSpark: ts ? {
+      id: ts.id, prompt: ts.prompt, wordLimit: ts.wordLimit,
+      entriesCount: ts.entries,
+      deadlineLabel: ts.deadline ? `${Math.max(1, Math.floor((new Date(ts.deadline).getTime() - Date.now()) / MS_HOUR))}h` : 'open',
+    } : null,
+    trendingHive: th ?? null,
+    votingSpark: vs ? { id: vs.id, title: vs.title, entriesCount: vs.entries } : null,
+    trendingList: tl ? { id: tl.id, title: tl.title, covers: tl.covers ?? [] } : null,
+    topClubs: topClubRows,
+    openHivesCount,
+    openClubsCount,
+  };
 }

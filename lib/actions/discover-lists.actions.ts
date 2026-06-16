@@ -31,6 +31,7 @@ import {
   normalizeGenre,
 } from '@/lib/discover/genres'
 import { applyBackfill } from '@/lib/discover/backfill'
+import type { CoverPreview } from './discover-lists-shared'
 
 import type { ActionResult } from './book.actions'
 
@@ -66,6 +67,12 @@ export type ListCard = {
     coverUrl: string | null
     title: string
   }>
+  /**
+   * Hub-redesign additive projection. Mirrors `bookCoverPreviews` but with
+   * the lean {bookId, coverUrl} shape used by the shared `<ListCard>` V2.
+   * Populated from the same `reading_list_books` rows.
+   */
+  coverPreviews: CoverPreview[]
 }
 
 export type RailResult<T = ListCard> = {
@@ -251,6 +258,10 @@ async function projectToListCards(
       createdAt: r.createdAt,
       firstPubliclyDiscoverableAt: r.firstPubliclyDiscoverableAt,
       bookCoverPreviews: bookCoverPreviewsMap.get(r.id) ?? [],
+      coverPreviews: (bookCoverPreviewsMap.get(r.id) ?? []).map((c) => ({
+        bookId: c.bookId,
+        coverUrl: c.coverUrl,
+      })),
     }
   })
 

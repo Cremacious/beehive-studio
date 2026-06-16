@@ -34,6 +34,7 @@ import {
   bookRowIdSchema,
   reorderBooksSchema,
 } from '@/lib/validations/reading-list'
+import { loadCoverPreviewsMap } from './discover-lists-shared'
 import type { ActionResult } from './book.actions'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -62,6 +63,12 @@ export type ListSummary = {
   updatedAt: Date
   owner: ListOwner
   isFollowing: boolean
+  /**
+   * Hub-redesign additive projection. Top 3 covers from the list via the
+   * shared `loadCoverPreviewsMap` helper. Empty array for lists with no
+   * books. Used by the shared `<ListCard>` V2 surface.
+   */
+  coverPreviews: { bookId: string | null; coverUrl: string | null }[]
 }
 
 export type ListBookRow = {
@@ -376,6 +383,8 @@ export async function getListsAction(input: {
       ? encodeCursor({ createdAt: last.createdAt.toISOString(), id: last.id })
       : null
 
+  const coverPreviewsMap = await loadCoverPreviewsMap(page.map((r) => r.id))
+
   const result: ListSummary[] = page.map((r) => ({
     id: r.id,
     userId: r.userId,
@@ -397,6 +406,7 @@ export async function getListsAction(input: {
     },
     isFollowing:
       input.filter === 'following' ? true : r.isFollowingRaw !== null,
+    coverPreviews: coverPreviewsMap.get(r.id) ?? [],
   }))
 
   return { success: true, data: { rows: result, nextCursor } }
@@ -513,6 +523,8 @@ export async function getListAction(
     updatedAt: list.updatedAt,
     owner: resolvedOwner,
     isFollowing,
+    // Detail surface uses `books` directly; coverPreviews left empty.
+    coverPreviews: [],
   }
 
   return {
@@ -1055,8 +1067,17 @@ export async function getUserPublicListsAction(
         avatarUrl: row.ownerAvatarUrl,
       },
       isFollowing: false,
+      coverPreviews: [],
     })
     if (visible.length >= cap) break
+  }
+
+  // Hydrate coverPreviews for the visible slice via the shared helper.
+  if (visible.length > 0) {
+    const coverMap = await loadCoverPreviewsMap(visible.map((v) => v.id))
+    for (const v of visible) {
+      v.coverPreviews = coverMap.get(v.id) ?? []
+    }
   }
 
   return { success: true, data: visible }

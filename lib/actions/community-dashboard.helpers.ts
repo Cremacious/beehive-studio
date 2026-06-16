@@ -7,13 +7,17 @@
 // - books has no publishedAt either; recency = books.createdAt for "new book"
 //   semantics (book row creation), books.updatedAt for "published" surface.
 
-import { and, desc, eq, gte, inArray, isNotNull, sql } from 'drizzle-orm';
+import { and, desc, eq, gt, gte, inArray, isNotNull, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import {
   books, chapters, follows, sparks, sparkEntries, hives, hiveMembers,
   userProfiles, bookLikes, bookComments, chapterReads,
+  hiveSubmissions, hiveAnnotations,
+  readingLists, readingListFollows, readingListBooks,
+  bookClubs, bookClubBooks, bookClubMembers, bookClubDiscussions,
+  socialActivity,
 } from '@/db/schema';
-import type { HeroSignal, PulseStat, PulseStats } from './community-dashboard.shared';
+import type { HeroSignal, PanelRow, PulseStat, PulseStats } from './community-dashboard.shared';
 import { EMPTY_PULSE } from './community-dashboard.shared';
 
 const MS_HOUR = 60 * 60 * 1000;
@@ -471,4 +475,312 @@ export async function getViewerPulseStats(viewerId: string): Promise<PulseStats>
     pulseEngagement(viewerId),
   ]);
   return { words, followers, reads, engagement };
+}
+
+// =====================================================
+// T5 — Panel-row projection helpers
+// =====================================================
+
+const initialFor = (s: string | null): string => (s ?? '?').trim().charAt(0).toUpperCase() || '?';
+
+// --- HIVES ---
+export async function getHivesPanelRows(viewerId: string): Promise<PanelRow[]> {
+  const rows: PanelRow[] = [];
+  const viewerHiveIdRows = await db.select({ id: hiveMembers.hiveId }).from(hiveMembers).where(eq(hiveMembers.userId, viewerId));
+  const ids = viewerHiveIdRows.map((r) => r.id);
+  if (ids.length === 0) return [];
+
+  // Pending submissions where viewer is OWNER/MODERATOR
+  const subs = await db
+    .select({
+      id: hiveSubmissions.id,
+      hiveName: hives.name,
+      hiveId: hives.id,
+      authorUsername: userProfiles.username,
+      title: hiveSubmissions.title,
+      createdAt: hiveSubmissions.createdAt,
+    })
+    .from(hiveSubmissions)
+    .innerJoin(hives, eq(hives.id, hiveSubmissions.hiveId))
+    .innerJoin(userProfiles, eq(userProfiles.userId, hiveSubmissions.userId))
+    .innerJoin(hiveMembers, and(
+      eq(hiveMembers.hiveId, hives.id),
+      eq(hiveMembers.userId, viewerId),
+      inArray(hiveMembers.role, ['OWNER', 'MODERATOR']),
+    ))
+    .where(and(
+      inArray(hiveSubmissions.hiveId, ids),
+      eq(hiveSubmissions.draftStatus, 'PENDING'),
+    ))
+    .orderBy(desc(hiveSubmissions.createdAt))
+    .limit(3);
+
+  for (const s of subs) {
+    rows.push({
+      id: `sub:${s.id}`,
+      leading: { kind: 'avatar', avatarUrl: null, fallbackInitial: initialFor(s.authorUsername) },
+      t1: `@${s.authorUsername} submitted ${s.title}`,
+      t2: `${s.hiveName} · ${relTime(s.createdAt)}`,
+      trailingPill: { label: 'REVIEW', tone: 'brand' },
+      href: `/hive/${s.hiveId}/submissions/${s.id}`,
+    });
+    if (rows.length === 3) return rows;
+  }
+  // Backfill with recent annotations
+  const annos = await db
+    .select({
+      id: hiveAnnotations.id,
+      hiveId: hives.id,
+      hiveName: hives.name,
+      authorUsername: userProfiles.username,
+      chapterId: hiveAnnotations.chapterId,
+      createdAt: hiveAnnotations.createdAt,
+    })
+    .from(hiveAnnotations)
+    .innerJoin(chapters, eq(chapters.id, hiveAnnotations.chapterId))
+    .innerJoin(books, eq(books.id, chapters.bookId))
+    .innerJoin(hives, eq(hives.bookId, books.id))
+    .innerJoin(userProfiles, eq(userProfiles.userId, hiveAnnotations.authorId))
+    .where(inArray(hives.id, ids))
+    .orderBy(desc(hiveAnnotations.createdAt))
+    .limit(3 - rows.length);
+  for (const a of annos) {
+    rows.push({
+      id: `anno:${a.id}`,
+      leading: { kind: 'avatar', avatarUrl: null, fallbackInitial: initialFor(a.authorUsername) },
+      t1: `@${a.authorUsername} left an annotation`,
+      t2: `${a.hiveName} · ${relTime(a.createdAt)}`,
+      trailingPill: null,
+      href: `/hive/${a.hiveId}/chapters/${a.chapterId}`,
+    });
+    if (rows.length === 3) return rows;
+  }
+  return rows;
+}
+
+// --- SPARKS ---
+export async function getSparksPanelRows(viewerId: string): Promise<PanelRow[]> {
+  const rows: PanelRow[] = [];
+  const yours = await db
+    .select({
+      id: sparks.id,
+      title: sparks.title,
+      newEntries: sql<number>`(SELECT COUNT(*)::int FROM ${sparkEntries} WHERE ${sparkEntries.sparkId} = ${sparks.id} AND ${sparkEntries.createdAt} >= NOW() - INTERVAL '7 days')`,
+      status: sparks.status,
+    })
+    .from(sparks)
+    .where(eq(sparks.creatorId, viewerId))
+    .orderBy(desc(sparks.createdAt))
+    .limit(3);
+  for (const s of yours) {
+    if (s.newEntries === 0) continue;
+    rows.push({
+      id: `myspark:${s.id}`,
+      leading: { kind: 'icon', glyph: '★', tone: 'purple' },
+      t1: `Your spark "${s.title}"`,
+      t2: `${s.newEntries} new entries · ${s.status === 'VOTING' ? 'voting' : 'open'}`,
+      trailingPill: { label: 'YOURS', tone: 'purple' },
+      href: `/sparks/${s.id}`,
+    });
+    if (rows.length === 3) return rows;
+  }
+  // Sparks ending in next 12h
+  const ending = await db
+    .select({
+      id: sparks.id,
+      title: sparks.title,
+      deadline: sparks.deadline,
+      entries: sql<number>`(SELECT COUNT(*)::int FROM ${sparkEntries} WHERE ${sparkEntries.sparkId} = ${sparks.id})`,
+    })
+    .from(sparks)
+    .where(and(
+      eq(sparks.status, 'OPEN'),
+      eq(sparks.visibility, 'PUBLIC'),
+      isNotNull(sparks.deadline),
+      gt(sparks.deadline, new Date()),
+      sql`${sparks.deadline} <= NOW() + INTERVAL '12 hours'`,
+    ))
+    .orderBy(sparks.deadline)
+    .limit(3 - rows.length);
+  for (const s of ending) {
+    const hrs = Math.max(1, Math.floor((new Date(s.deadline!).getTime() - Date.now()) / MS_HOUR));
+    rows.push({
+      id: `endsoon:${s.id}`,
+      leading: { kind: 'icon', glyph: '✨', tone: 'brand' },
+      t1: s.title,
+      t2: `${s.entries} entries · ends ${hrs}h`,
+      trailingPill: { label: `${hrs}H`, tone: 'mono' },
+      href: `/sparks/${s.id}`,
+    });
+    if (rows.length === 3) return rows;
+  }
+  return rows;
+}
+
+// --- LISTS ---
+export async function getListsPanelRows(viewerId: string): Promise<PanelRow[]> {
+  const ids = await followedUserIds(viewerId);
+  if (ids.length === 0) return [];
+  const lists = await db
+    .select({
+      id: readingLists.id,
+      title: readingLists.title,
+      ownerUsername: userProfiles.username,
+      followers7d: sql<number>`(SELECT COUNT(*)::int FROM ${readingListFollows} WHERE ${readingListFollows.listId} = ${readingLists.id} AND ${readingListFollows.createdAt} >= NOW() - INTERVAL '7 days')`,
+      covers: sql<{ coverUrl: string | null; title: string }[]>`COALESCE((
+        SELECT json_agg(json_build_object('coverUrl', cover_url, 'title', title))
+        FROM (
+          SELECT cover_url, title
+          FROM ${readingListBooks}
+          WHERE list_id = ${readingLists.id}
+          ORDER BY added_at DESC
+          LIMIT 3
+        ) sub
+      ), '[]'::json)`,
+    })
+    .from(readingLists)
+    .innerJoin(userProfiles, eq(userProfiles.userId, readingLists.userId))
+    .where(and(
+      eq(readingLists.kind, 'CUSTOM'),
+      eq(readingLists.visibility, 'PUBLIC'),
+      inArray(readingLists.userId, ids),
+    ))
+    .orderBy(desc(sql`(SELECT COUNT(*) FROM ${readingListFollows} WHERE ${readingListFollows.listId} = ${readingLists.id} AND ${readingListFollows.createdAt} >= NOW() - INTERVAL '7 days')`))
+    .limit(3);
+  return lists.filter((l) => l.followers7d > 0).slice(0, 3).map((l) => ({
+    id: `list:${l.id}`,
+    leading: { kind: 'cover-stack' as const, covers: (l.covers ?? []).slice(0, 3) },
+    t1: l.title,
+    t2: `@${l.ownerUsername} · +${l.followers7d} followers`,
+    trailingPill: null,
+    href: `/reading-lists/${l.id}`,
+  }));
+}
+
+// --- CLUBS ---
+// NOTE: Schema reality — there's no `bookClubDiscussionPosts`; the discussions
+// table is `bookClubDiscussions` with `clubId` + `createdAt` (same fields needed).
+export async function getClubsPanelRows(viewerId: string): Promise<PanelRow[]> {
+  const memberClubs = await db
+    .select({
+      id: bookClubs.id,
+      name: bookClubs.name,
+      currentBookId: bookClubs.currentBookId,
+      currentBookTitle: bookClubBooks.title,
+      currentBookCover: bookClubBooks.coverUrl,
+      newDiscussions7d: sql<number>`(SELECT COUNT(*)::int FROM ${bookClubDiscussions} WHERE ${bookClubDiscussions.clubId} = ${bookClubs.id} AND ${bookClubDiscussions.createdAt} >= NOW() - INTERVAL '7 days')`,
+    })
+    .from(bookClubs)
+    .innerJoin(bookClubMembers, and(
+      eq(bookClubMembers.clubId, bookClubs.id),
+      eq(bookClubMembers.userId, viewerId),
+    ))
+    .leftJoin(bookClubBooks, eq(bookClubBooks.id, bookClubs.currentBookId))
+    .orderBy(desc(sql`(SELECT MAX(created_at) FROM ${bookClubDiscussions} WHERE ${bookClubDiscussions.clubId} = ${bookClubs.id})`))
+    .limit(3);
+  return memberClubs.map((c) => ({
+    id: `club:${c.id}`,
+    leading: {
+      kind: 'cover' as const,
+      coverUrl: c.currentBookCover,
+      fallbackInitial: initialFor(c.name),
+    },
+    t1: c.name,
+    t2: c.currentBookTitle
+      ? `Reading ${c.currentBookTitle}${c.newDiscussions7d > 0 ? ` · ${c.newDiscussions7d} new posts` : ''}`
+      : 'No current book set',
+    trailingPill: c.newDiscussions7d > 0
+      ? { label: `${c.newDiscussions7d} NEW`, tone: 'blue' }
+      : null,
+    href: `/clubs/${c.id}`,
+  }));
+}
+
+// --- FRIENDS' DESK (chronological river) ---
+// NOTE: Schema reality — socialActivityTypeEnum values differ from the plan code:
+//   - 'chapter_posted' (not 'chapter_published')
+//   - 'spark_won_community' + 'spark_won_creator_choice' (not 'spark_won')
+//   - no 'spark_created' event (sparks have no creation event in social_activity)
+//   - no 'follow' event
+// Switch branches reworked to use the real enum values; unknown/unmapped types
+// fall through to a generic "did <type>" rendering.
+export async function getFriendsDeskRows(viewerId: string, limit = 6, cursor?: string): Promise<{ rows: PanelRow[]; nextCursor: string | null }> {
+  const ids = await followedUserIds(viewerId);
+  if (ids.length === 0) return { rows: [], nextCursor: null };
+
+  const cursorClause = cursor ? sql`AND ${socialActivity.createdAt} < ${new Date(cursor)}` : sql``;
+  const events = await db
+    .select({
+      id: socialActivity.id,
+      type: socialActivity.type,
+      actorId: socialActivity.actorId,
+      subjectType: socialActivity.subjectType,
+      subjectId: socialActivity.subjectId,
+      payload: socialActivity.payload,
+      createdAt: socialActivity.createdAt,
+      actorUsername: userProfiles.username,
+    })
+    .from(socialActivity)
+    .innerJoin(userProfiles, eq(userProfiles.userId, socialActivity.actorId))
+    .where(and(inArray(socialActivity.actorId, ids), cursorClause))
+    .orderBy(desc(socialActivity.createdAt))
+    .limit(limit + 1);
+
+  const hasMore = events.length > limit;
+  const slice = events.slice(0, limit);
+  const rows: PanelRow[] = slice.map((e) => {
+    const p = (e.payload ?? {}) as Record<string, unknown>;
+    let t1 = `@${e.actorUsername} did something`;
+    let href = '/community';
+    let trailingPill: PanelRow['trailingPill'] = null;
+    switch (e.type) {
+      case 'chapter_posted':
+        t1 = `**@${e.actorUsername}** published Chapter ${p.chapterIdx ?? '?'} of *"${p.bookTitle ?? '?'}"*`;
+        href = `/books/${p.bookId}/read/${p.chapterId}`;
+        trailingPill = { label: '📝 WRITING', tone: 'mono' };
+        break;
+      case 'book_published':
+        t1 = `**@${e.actorUsername}** published *"${p.bookTitle ?? '?'}"*`;
+        href = `/books/${p.bookId}`;
+        break;
+      case 'spark_entry_submitted':
+        t1 = `**@${e.actorUsername}** entered *"${p.sparkTitle ?? '?'}"*`;
+        href = `/sparks/${p.sparkId}`;
+        break;
+      case 'spark_won_community':
+      case 'spark_won_creator_choice':
+        t1 = `**@${e.actorUsername}** won *"${p.sparkTitle ?? '?'}"*`;
+        href = `/sparks/${p.sparkId}`;
+        trailingPill = { label: '★ WON', tone: 'brand' };
+        break;
+      case 'hive_created':
+        t1 = `**@${e.actorUsername}** created hive *"${p.hiveName ?? '?'}"*`;
+        href = `/hive/${p.hiveId}`;
+        break;
+      case 'hive_joined':
+        t1 = `**@${e.actorUsername}** joined hive *"${p.hiveName ?? '?'}"*`;
+        href = `/hive/${p.hiveId}`;
+        break;
+      case 'reading_list_created':
+        t1 = `**@${e.actorUsername}** created list *"${p.listTitle ?? '?'}"*`;
+        href = `/reading-lists/${p.listId}`;
+        break;
+      case 'book_club_created':
+        t1 = `**@${e.actorUsername}** started book club *"${p.clubName ?? '?'}"*`;
+        href = `/clubs/${p.clubId}`;
+        break;
+      default:
+        t1 = `**@${e.actorUsername}** ${String(e.type).replace(/_/g, ' ')}`;
+    }
+    return {
+      id: `act:${e.id}`,
+      leading: { kind: 'avatar', avatarUrl: null, fallbackInitial: initialFor(e.actorUsername) },
+      t1,
+      t2: relTime(e.createdAt),
+      trailingPill,
+      href,
+    };
+  });
+  const nextCursor = hasMore ? slice[slice.length - 1].createdAt.toISOString() : null;
+  return { rows, nextCursor };
 }

@@ -1,0 +1,158 @@
+import Link from 'next/link'
+import {
+  getViewerHiveStatsAction,
+  getTrendingHivesForRailAction,
+} from '@/lib/actions/hives-rail.actions'
+
+type Props = { locale: string }
+
+export async function HivesRightRail({ locale }: Props) {
+  const [statsR, trendingR] = await Promise.all([
+    getViewerHiveStatsAction(),
+    getTrendingHivesForRailAction({ limit: 3 }),
+  ])
+
+  const stats = statsR.success
+    ? statsR.data
+    : { owned: 0, memberOf: 0, weeklyGoalPct: 0, activeGoals: 0 }
+  const trending = trendingR.success ? trendingR.data : []
+
+  return (
+    <aside
+      className="hidden xl:flex flex-col gap-4"
+      style={{ position: 'sticky', top: 80, width: 300, alignSelf: 'start' }}
+      aria-label="Hives suggestions"
+    >
+      <RailPanel title="Your hive stats">
+        <div className="grid grid-cols-2 gap-3 pt-1">
+          <StatTile value={stats.owned} label="Owned" emphasize />
+          <StatTile value={stats.memberOf} label="Member of" />
+          <StatTile value={stats.activeGoals} label="Active goals" />
+          <StatTile value={`${stats.weeklyGoalPct}%`} label="Weekly goal" />
+        </div>
+      </RailPanel>
+
+      <RailPanel
+        title="Trending hives"
+        seeAllHref={`/${locale}/discover?tab=hives`}
+        seeAllLabel="Discover →"
+      >
+        {trending.length === 0 ? (
+          <p
+            className="text-[12px] py-1"
+            style={{ color: 'var(--canvas-dark-ink-muted)' }}
+          >
+            Nothing trending right now.
+          </p>
+        ) : (
+          trending.map((h, i) => (
+            <Link
+              key={h.id}
+              href={`/${locale}/discover?tab=hives`}
+              className="block py-2"
+              style={{
+                borderTop: i === 0 ? 'none' : '1px solid rgba(255,255,255,0.04)',
+              }}
+            >
+              <div
+                className="text-[12px] font-bold leading-snug mb-1"
+                style={{ color: 'var(--canvas-dark-ink-strong)' }}
+              >
+                {h.name}
+              </div>
+              <div
+                className="text-[10px] uppercase tracking-[0.06em]"
+                style={{
+                  color: 'var(--canvas-dark-ink-muted)',
+                  fontFamily: 'var(--font-mono)',
+                }}
+              >
+                {h.memberCount} {h.memberCount === 1 ? 'member' : 'members'}
+                {h.bookTitle ? ` · around ${h.bookTitle}` : ' · standalone'}
+              </div>
+            </Link>
+          ))
+        )}
+      </RailPanel>
+    </aside>
+  )
+}
+
+function RailPanel({
+  title,
+  seeAllHref,
+  seeAllLabel,
+  children,
+}: {
+  title: string
+  seeAllHref?: string
+  seeAllLabel?: string
+  children: React.ReactNode
+}) {
+  return (
+    <div
+      className="rounded-2xl p-4"
+      style={{
+        background:
+          'linear-gradient(180deg, var(--canvas-dark-200), var(--canvas-dark-150))',
+        boxShadow:
+          '0 2px 8px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.04)',
+      }}
+    >
+      <div className="flex justify-between items-center mb-3">
+        <h2
+          className="text-[10px] font-bold uppercase tracking-[0.1em]"
+          style={{
+            color: 'var(--brand)',
+            fontFamily: 'var(--font-display)',
+          }}
+        >
+          {title}
+        </h2>
+        {seeAllHref ? (
+          <Link
+            href={seeAllHref}
+            className="text-[10px]"
+            style={{ color: 'var(--canvas-dark-ink-muted)' }}
+          >
+            {seeAllLabel}
+          </Link>
+        ) : null}
+      </div>
+      {children}
+    </div>
+  )
+}
+
+function StatTile({
+  value,
+  label,
+  emphasize,
+}: {
+  value: number | string
+  label: string
+  emphasize?: boolean
+}) {
+  return (
+    <div>
+      <div
+        className="text-[22px] font-bold leading-none"
+        style={{
+          color: emphasize ? 'var(--brand)' : 'var(--canvas-dark-ink-strong)',
+          fontFamily: 'var(--font-display)',
+        }}
+      >
+        {value}
+      </div>
+      <div
+        className="text-[10px] uppercase tracking-[0.08em] mt-1.5"
+        style={{
+          color: 'var(--canvas-dark-ink-muted)',
+          fontFamily: 'var(--font-mono)',
+        }}
+      >
+        {label}
+      </div>
+    </div>
+  )
+}

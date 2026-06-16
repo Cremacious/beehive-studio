@@ -12,9 +12,8 @@ import {
 } from './_components/friends-tab-strip'
 import { FriendsListTab } from './_components/friends-list-tab'
 import { PendingTab } from './_components/pending-tab'
-import { SuggestedTab } from './_components/suggested-tab'
-import { UserSearch } from './_components/user-search'
-import { InviteLinkDialog } from './_components/invite-link-dialog'
+import { FindTab } from './_components/find-tab'
+import { FriendsSuggestedRail } from './_components/friends-suggested-rail'
 
 type Props = {
   params: Promise<{ locale: string }>
@@ -23,7 +22,7 @@ type Props = {
 
 export const dynamic = 'force-dynamic'
 
-const VALID_TABS: FriendsTab[] = ['friends', 'pending', 'suggested']
+const VALID_TABS: FriendsTab[] = ['friends', 'pending', 'find']
 
 function parseTab(raw: string | undefined): FriendsTab {
   if (raw && (VALID_TABS as string[]).includes(raw)) return raw as FriendsTab
@@ -34,13 +33,16 @@ export default async function FriendsPage({ params, searchParams }: Props) {
   const { locale } = await params
   const { tab: rawTab } = await searchParams
 
-  // Backward-compat redirects for legacy 4-tab URL contracts.
-  // Q3 IA: requests → pending&seg=received; sent → pending&seg=sent.
+  // Backward-compat redirects for legacy URL contracts.
   if (rawTab === 'requests') {
     redirect(`/${locale}/friends?tab=pending&seg=received`)
   }
   if (rawTab === 'sent') {
     redirect(`/${locale}/friends?tab=pending&seg=sent`)
+  }
+  // Suggested moved to right rail; land on Friends.
+  if (rawTab === 'suggested') {
+    redirect(`/${locale}/friends?tab=friends`)
   }
 
   await requireAuth()
@@ -49,9 +51,7 @@ export default async function FriendsPage({ params, searchParams }: Props) {
   const [friendsResult, pendingResult, suggestedResult] = await Promise.all([
     listFriendsAction(),
     listPendingFriendRequestsAction(),
-    activeTab === 'suggested'
-      ? getSuggestedWritersAction({ limit: 20 })
-      : Promise.resolve({ success: true as const, data: [] }),
+    getSuggestedWritersAction({ limit: 20 }),
   ])
 
   const friends = friendsResult.success ? friendsResult.data : []
@@ -61,37 +61,35 @@ export default async function FriendsPage({ params, searchParams }: Props) {
   const pendingCount = incoming.length + outgoing.length
 
   return (
-    <main className="cm-main">
-      <div className="cm-wrap w-5xl">
-        <PageHead
-          title="Friends"
-          subtitle="Stay close with the people whose work you love."
-          back={{ href: `/${locale}/community`, label: 'community' }}
-          headerSlot={
-            <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
-              <UserSearch locale={locale} />
-              <InviteLinkDialog locale={locale} />
-            </div>
-          }
-        />
+    <main
+      className="mx-auto w-full px-6 pt-7 pb-6"
+      style={{ maxWidth: '1120px' }}
+    >
+      <div className="grid items-start xl:grid-cols-[minmax(0,1fr)_300px] grid-cols-1 gap-4">
+        <div className="min-w-0 w-full">
+          <PageHead
+            title="Friends"
+            back={{ href: `/${locale}/community`, label: 'community' }}
+          />
 
-        <FriendsTabStrip
-          locale={locale}
-          activeTab={activeTab}
-          friendsCount={friends.length}
-          pendingCount={pendingCount}
-          suggestedCount={activeTab === 'suggested' ? suggested.length : null}
-        />
+          <div style={{ marginBottom: 20 }}>
+            <FriendsTabStrip
+              locale={locale}
+              activeTab={activeTab}
+              friendsCount={friends.length}
+              pendingCount={pendingCount}
+            />
+          </div>
 
-        {activeTab === 'friends' && (
-          <FriendsListTab locale={locale} friends={friends} />
-        )}
-        {activeTab === 'pending' && (
-          <PendingTab locale={locale} incoming={incoming} outgoing={outgoing} />
-        )}
-        {activeTab === 'suggested' && (
-          <SuggestedTab locale={locale} suggested={suggested} />
-        )}
+          {activeTab === 'friends' && (
+            <FriendsListTab locale={locale} friends={friends} />
+          )}
+          {activeTab === 'pending' && (
+            <PendingTab locale={locale} incoming={incoming} outgoing={outgoing} />
+          )}
+          {activeTab === 'find' && <FindTab locale={locale} />}
+        </div>
+        <FriendsSuggestedRail locale={locale} suggested={suggested} />
       </div>
     </main>
   )

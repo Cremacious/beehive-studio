@@ -1,9 +1,7 @@
 import { requireAuth } from '@/lib/require-auth'
 import { getCommunityFeedAction } from '@/lib/actions/community.actions'
-import {
-  getCommunityHubHighlightsAction,
-  EMPTY_HIGHLIGHTS,
-} from '@/lib/actions/community-hub.actions'
+import { getCommunityHubHighlightsAction } from '@/lib/actions/community-hub.actions'
+import { EMPTY_HIGHLIGHTS } from '@/lib/actions/community-hub.shared'
 import { ActivityFeed } from './_components/activity-feed'
 import { HighlightsRail } from './_components/highlights-rail'
 

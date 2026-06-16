@@ -15,7 +15,7 @@ import type {
   ListsPanelData,
   ClubsPanelData,
   FriendsPanelData,
-} from '@/lib/actions/community-hub.actions'
+} from '@/lib/actions/community-hub.shared'
 
 // ─── Shared chrome ────────────────────────────────────────────────────────────
 

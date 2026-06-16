@@ -9,6 +9,7 @@ export const createClubSchema = z
     visibility: z.enum(['PUBLIC', 'FRIENDS', 'PRIVATE']).default('PUBLIC'),
     discoverable: z.boolean().optional().default(true),
     openJoin: z.boolean().optional().default(true),
+    coverImageUrl: z.string().url().max(500).optional().nullable(),
   })
   .transform((d) => ({
     ...d,
@@ -24,6 +25,7 @@ export const updateClubSchema = z.object({
   visibility: z.enum(['PUBLIC', 'FRIENDS', 'PRIVATE']).optional(),
   discoverable: z.boolean().optional(),
   openJoin: z.boolean().optional(),
+  coverImageUrl: z.string().url().max(500).nullable().optional(),
 })
 
 export const clubIdSchema = z.object({ clubId: z.string().min(1) })

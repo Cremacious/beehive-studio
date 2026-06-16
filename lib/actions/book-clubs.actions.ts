@@ -220,6 +220,7 @@ export async function createClubAction(
       visibility: parsed.data.visibility,
       discoverable: parsed.data.discoverable,
       openJoin: parsed.data.openJoin,
+      coverImageUrl: parsed.data.coverImageUrl ?? null,
       memberCount: 1,
       firstPubliclyDiscoverableAt: isInitialPublicDiscoverable ? now : null,
     })
@@ -622,6 +623,7 @@ export async function updateClubAction(
   if (parsed.data.tags !== undefined) updates.tags = parsed.data.tags
   if (parsed.data.visibility !== undefined) updates.visibility = parsed.data.visibility
   if (parsed.data.openJoin !== undefined) updates.openJoin = parsed.data.openJoin
+  if (parsed.data.coverImageUrl !== undefined) updates.coverImageUrl = parsed.data.coverImageUrl
 
   // 3-layer discoverable defense
   const effectiveVisibility = parsed.data.visibility ?? club.visibility

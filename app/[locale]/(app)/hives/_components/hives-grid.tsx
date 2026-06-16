@@ -6,13 +6,13 @@ import { pickHiveGhosts } from './pick-hive-ghosts'
 import { useDismissedHiveGhosts } from './use-dismissed-hive-ghosts'
 import type { CommunityHiveRow } from '@/lib/actions/hives-hub.actions'
 
-type HivesTab = 'all' | 'yours' | 'member' | 'open'
+type HivesTab = 'all' | 'yours' | 'member' | 'suggested'
 
 type Props = {
   hives: CommunityHiveRow[]
   tab: HivesTab
   locale: string
-  bucketCounts: { all: number; yours: number; member: number; open: number }
+  bucketCounts: { all: number; yours: number; member: number; suggested: number }
   ghostContext: {
     hasSoloHive: boolean
     hasActiveWordGoal: boolean

@@ -1,6 +1,6 @@
 import Link from 'next/link'
 
-export type HivesTab = 'all' | 'yours' | 'member' | 'open'
+export type HivesTab = 'all' | 'yours' | 'member' | 'suggested'
 
 type TabEntry = { id: HivesTab; label: string }
 
@@ -8,7 +8,7 @@ const TABS: TabEntry[] = [
   { id: 'all', label: 'All' },
   { id: 'yours', label: 'Yours' },
   { id: 'member', label: 'Member' },
-  { id: 'open', label: 'Open' },
+  { id: 'suggested', label: 'Suggested' },
 ]
 
 type Props = {
@@ -18,7 +18,7 @@ type Props = {
     all: number
     yours: number
     member: number
-    open: number
+    suggested: number
   }
   /** Other URL params to preserve on each tab link (no `tab`, no `page`). */
   baseParams: Record<string, string | string[] | undefined>
@@ -26,7 +26,7 @@ type Props = {
 
 /**
  * iOS segmented control for the /hives hub. Renders 4 tab pills
- * (All / Yours / Member / Open). Active tab is a brand-yellow rounded
+ * (All / Yours / Member / Suggested). Active tab is a brand-yellow rounded
  * pill; inactive tabs are bare label + count with a subtle hover tint.
  *
  * Each tab link sets `?tab=X` explicitly — we never collapse a tab to

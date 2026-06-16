@@ -33,9 +33,15 @@ export default async function HivesHubPage({ params, searchParams }: Props) {
     redirect(`/${locale}/sign-in?next=${encodeURIComponent(`/${locale}/hives`)}`)
   }
 
+  // Backward-compat: ?tab=open → ?tab=suggested (T5 rename).
+  const rawTab = pickRaw(sp, 'tab')
+  if (rawTab === 'open') {
+    redirect(`/${locale}/hives?tab=suggested`)
+  }
+
   const tab = parseRadio(
-    pickRaw(sp, 'tab'),
-    ['all', 'yours', 'member', 'open'] as const,
+    rawTab,
+    ['all', 'yours', 'member', 'suggested'] as const,
     'all',
   )
   const sort = parseRadio(

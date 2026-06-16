@@ -45,7 +45,7 @@ export function pickHiveGhosts(input: PickHiveGhostsInput): HiveGhostVariant[] {
         'set-word-goal',
       ]
       break
-    case 'open':
+    case 'suggested':
       priority = [
         'create-hive',
         'try-standalone',

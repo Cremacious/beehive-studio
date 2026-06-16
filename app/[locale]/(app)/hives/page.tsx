@@ -1,88 +1,168 @@
-import { Plus } from 'lucide-react'
-import { getUserHivesView } from '@/lib/actions/hive.actions'
-import { PageHead } from '@/components/community/page-head'
+import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
+import { auth } from '@/lib/auth'
+import { parseRadio, parseIntParam } from '@/lib/discover/url-state'
+import { getCommunityHivesAction } from '@/lib/actions/hives-hub.actions'
+import { getTrendingHivesForRailAction } from '@/lib/actions/hives-rail.actions'
 import { NewHiveButton } from './_components/new-hive-button'
-import { HiveIndexCard } from './_components/hive-index-card'
+import { HivesTabStrip } from './_components/hives-tab-strip'
+import { HivesSortDropdown } from './_components/hives-sort-dropdown'
+import { HivesHubPagination } from './_components/hives-hub-pagination'
+import { HivesRightRail } from './_components/hives-right-rail'
+import { HivesGrid } from './_components/hives-grid'
 
-export default async function HivesIndexPage({
-  params,
-}: {
+type SP = Record<string, string | string[] | undefined>
+type Props = {
   params: Promise<{ locale: string }>
-}) {
+  searchParams: Promise<SP>
+}
+
+const PAGE_SIZE = 9
+
+function pickRaw(sp: SP, key: string): string | undefined {
+  const v = sp[key]
+  return typeof v === 'string' ? v : undefined
+}
+
+export default async function HivesHubPage({ params, searchParams }: Props) {
   const { locale } = await params
-  const hivesResult = await getUserHivesView()
-  const hives = hivesResult.success ? hivesResult.data : []
+  const sp = await searchParams
+
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session?.user?.id) {
+    redirect(`/${locale}/sign-in?next=${encodeURIComponent(`/${locale}/hives`)}`)
+  }
+
+  const tab = parseRadio(
+    pickRaw(sp, 'tab'),
+    ['all', 'yours', 'member', 'open'] as const,
+    'all',
+  )
+  const sort = parseRadio(
+    pickRaw(sp, 'sort'),
+    ['active', 'newest', 'a-z', 'members'] as const,
+    'active',
+  )
+  const page = Math.max(1, parseIntParam(pickRaw(sp, 'page'), 1))
+
+  const [result, trendingR] = await Promise.all([
+    getCommunityHivesAction({ tab, sort, page }),
+    getTrendingHivesForRailAction({ limit: 1 }),
+  ])
+
+  if (!result.success) {
+    return (
+      <main
+        className="mx-auto w-full px-6 pt-7 pb-6"
+        style={{ maxWidth: '1680px' }}
+      >
+        <p className="text-red-400 text-sm">Failed to load hives.</p>
+      </main>
+    )
+  }
+
+  const { hives, totalCount, bucketCounts } = result.data
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
+
+  // Ghost context derivation — page-slice scoped (v1).
+  // `hasSoloHive` only checks the current page's hives. For accuracy across
+  // every owned hive a separate query would be needed; flagged as follow-up.
+  // `hasActiveWordGoal` + `hasRecentBuzz` are DEFERRED for v1 — hardcoded
+  // false so the set-word-goal / set-buzz-up ghosts can surface.
+  const ownedHives = hives.filter((h) => h.viewerRole === 'OWNER')
+  const hasSoloHive = ownedHives.some((h) => h.memberCount === 1)
+  const hasActiveWordGoal = false
+  const hasRecentBuzz = false
+  const smallestOwnedHiveId =
+    ownedHives.length > 0
+      ? ownedHives.reduce((min, h) =>
+          h.memberCount < min.memberCount ? h : min,
+        ).id
+      : null
+  const anyOwnedHiveId = ownedHives[0]?.id ?? null
+
+  const trendingHive =
+    trendingR.success && trendingR.data[0]
+      ? { id: trendingR.data[0].id, name: trendingR.data[0].name }
+      : null
 
   return (
-    <main className="cm-main">
-      <div className="cm-wrap w-5xl">
-        <PageHead
-          title="Hives"
-          subtitle="Your collaborative writing groups. Outlines, wikis, and chapters shared across members."
-          back={{ href: `/${locale}/community`, label: 'community' }}
-          headerSlot={<NewHiveButton />}
-        />
+    <main
+      className="mx-auto w-full px-6 pt-7 pb-6"
+      style={{ maxWidth: '1680px' }}
+    >
+      <div className="grid items-start xl:grid-cols-[minmax(0,1fr)_300px] grid-cols-1 gap-8">
+        <div className="min-w-0">
+          <header className="flex items-start justify-between gap-4 mb-6">
+            <div>
+              <h1
+                className="text-[32px] font-bold leading-tight"
+                style={{
+                  color: 'var(--canvas-dark-ink-strong)',
+                  fontFamily: 'var(--font-display)',
+                }}
+              >
+                Hives
+              </h1>
+              <p
+                className="text-[13px] mt-1.5"
+                style={{ color: 'var(--canvas-dark-ink-muted)' }}
+              >
+                Your collaborative writing groups, plus open hives across the
+                platform.
+              </p>
+            </div>
+            <NewHiveButton />
+          </header>
 
-        {hives.length === 0 ? (
-          <div
-            className="empty-hero"
-            style={{
-              borderRadius: 'var(--r-card)',
-              padding: '48px 24px',
-              textAlign: 'center',
-              border: 'var(--br-card)',
-              background:
-                'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
-              boxShadow: 'var(--sh-card)',
+          <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
+            <HivesTabStrip
+              locale={locale}
+              current={tab}
+              counts={bucketCounts}
+              baseParams={{
+                sort: sort !== 'active' ? sort : undefined,
+              }}
+            />
+            <div className="flex items-center gap-2">
+              <span
+                className="text-[10px] uppercase tracking-[0.08em]"
+                style={{ color: 'var(--canvas-dark-ink-muted)' }}
+              >
+                Sort
+              </span>
+              <HivesSortDropdown selected={sort} />
+            </div>
+          </div>
+
+          <HivesGrid
+            hives={hives}
+            tab={tab}
+            locale={locale}
+            bucketCounts={bucketCounts}
+            ghostContext={{
+              hasSoloHive,
+              hasActiveWordGoal,
+              hasRecentBuzz,
             }}
-          >
-            <h2
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontWeight: 700,
-                fontSize: '20px',
-                color: 'var(--canvas-dark-ink-strong)',
-                margin: '0 0 8px',
+            trendingHive={trendingHive}
+            smallestOwnedHiveId={smallestOwnedHiveId}
+            anyOwnedHiveId={anyOwnedHiveId}
+          />
+
+          {totalCount > PAGE_SIZE ? (
+            <HivesHubPagination
+              locale={locale}
+              page={page}
+              totalPages={totalPages}
+              baseParams={{
+                tab: tab !== 'all' ? tab : undefined,
+                sort: sort !== 'active' ? sort : undefined,
               }}
-            >
-              You&apos;re not in any hives yet
-            </h2>
-            <p
-              style={{
-                color: 'var(--canvas-dark-ink-muted)',
-                fontSize: '14px',
-                margin: '0 0 20px',
-                maxWidth: '46ch',
-                marginLeft: 'auto',
-                marginRight: 'auto',
-              }}
-            >
-              Hives let you collaborate on a book with other writers. Shared
-              outlines, wikis, and chapter submissions.
-            </p>
-            <NewHiveButton>
-              {(onTrigger) => (
-                <button
-                  type="button"
-                  onClick={onTrigger}
-                  className="inline-flex items-center gap-2 px-5 h-9 rounded-[var(--r-pill)] text-[13px] font-semibold"
-                  style={{ background: 'var(--brand)', color: 'var(--brand-ink)' }}
-                >
-                  <Plus size={15} /> Create Your First Hive
-                </button>
-              )}
-            </NewHiveButton>
-          </div>
-        ) : (
-          <div
-            className="grid gap-4"
-            style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
-          >
-            {hives.map((hive) => (
-              <HiveIndexCard key={hive.id} hive={hive} />
-            ))}
-          </div>
-        )}
+            />
+          ) : null}
+        </div>
+        <HivesRightRail locale={locale} />
       </div>
     </main>
   )

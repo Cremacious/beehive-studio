@@ -89,12 +89,6 @@ function renderSuggestionReason(reason: string): React.ReactNode[] {
   return parts
 }
 
-function firstInitial(name: string): string {
-  const trimmed = name.trim()
-  if (!trimmed) return '?'
-  return trimmed.charAt(0).toUpperCase()
-}
-
 export function ClubCard({ club, locale }: Props) {
   const href = `/${locale}/clubs/${club.id}`
   const isSuggested = club.source === 'suggested'
@@ -167,25 +161,9 @@ export function ClubCard({ club, locale }: Props) {
               : {
                   background:
                     'linear-gradient(135deg, oklch(0.4 0.1 200), oklch(0.25 0.06 220))',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
                 }),
           }}
         >
-          {!club.coverImageUrl && (
-            <span
-              style={{
-                fontFamily: 'var(--font-comfortaa)',
-                fontSize: 56,
-                fontWeight: 700,
-                color: 'rgba(255,255,255,0.45)',
-              }}
-            >
-              {firstInitial(club.name)}
-            </span>
-          )}
-
           {showRolePill && (
             <span
               style={{

@@ -139,7 +139,7 @@ export function ClubGhostCard({
 
   return (
     <div
-      className="relative rounded-2xl p-[18px] flex flex-col gap-3 justify-between overflow-hidden"
+      className="relative rounded-2xl p-[18px] flex flex-col justify-center gap-3 overflow-hidden"
       style={{
         width: 340,
         height: 360,
@@ -168,45 +168,43 @@ export function ClubGhostCard({
         {copy.labelNote}
       </div>
 
-      <div className="pt-6 flex-1 flex flex-col">
-        <div
-          className="inline-flex items-center justify-center rounded-xl text-lg"
-          style={{ width: 36, height: 36, background: copy.iconTint }}
-          aria-hidden="true"
-        >
-          {copy.icon}
-        </div>
-        <div
-          className="text-[9px] font-bold uppercase tracking-[0.1em] mt-3"
-          style={{
-            color: 'var(--canvas-dark-ink-faint)',
-            fontFamily: 'var(--font-mono)',
-          }}
-        >
-          {copy.eyebrow}
-        </div>
-        <div
-          className="text-[15px] font-bold mt-2 leading-tight"
-          style={{
-            color: 'var(--canvas-dark-ink-strong)',
-            fontFamily: 'var(--font-display)',
-          }}
-        >
-          {title}
-        </div>
-        {body ? (
-          <div
-            className="text-[12px] mt-1.5 leading-snug"
-            style={{ color: 'var(--canvas-dark-ink-muted)' }}
-          >
-            {body}
-          </div>
-        ) : null}
+      <div
+        className="inline-flex items-center justify-center rounded-xl text-lg"
+        style={{ width: 36, height: 36, background: copy.iconTint }}
+        aria-hidden="true"
+      >
+        {copy.icon}
       </div>
+      <div
+        className="text-[9px] font-bold uppercase tracking-[0.1em]"
+        style={{
+          color: 'var(--canvas-dark-ink-faint)',
+          fontFamily: 'var(--font-mono)',
+        }}
+      >
+        {copy.eyebrow}
+      </div>
+      <div
+        className="text-[15px] font-bold leading-tight -mt-1"
+        style={{
+          color: 'var(--canvas-dark-ink-strong)',
+          fontFamily: 'var(--font-display)',
+        }}
+      >
+        {title}
+      </div>
+      {body ? (
+        <div
+          className="text-[12px] leading-snug -mt-1"
+          style={{ color: 'var(--canvas-dark-ink-muted)' }}
+        >
+          {body}
+        </div>
+      ) : null}
 
       <Link
         href={href}
-        className="text-[12px] font-bold inline-flex items-center"
+        className="text-[12px] font-bold inline-flex items-center mt-1 self-start"
         style={{ color: 'var(--brand)' }}
       >
         {copy.ctaLabel}

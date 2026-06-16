@@ -2,6 +2,7 @@ import { HeroPanel } from './hero-panel';
 import { PulsePanel } from './pulse-panel';
 import { MidTilePanel } from './mid-tile-panel';
 import { FriendsDeskPanel } from './friends-desk-panel';
+import { CommunityNavStrip } from './community-nav-strip';
 import type { CommunityDashboardData } from '@/lib/actions/community-dashboard.shared';
 import type { NudgeRow } from './mid-tile-panel';
 
@@ -156,6 +157,8 @@ export function CommunityDashboardGrid({ data, locale }: Props) {
           </div>
         </div>
       </div>
+
+      <CommunityNavStrip locale={locale} />
 
       <div
         style={{

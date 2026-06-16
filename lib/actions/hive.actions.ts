@@ -26,6 +26,9 @@ export type HiveSummary = {
   ownerId: string
   memberCount: number
   createdAt: Date
+  bookTitle: string | null
+  bookCoverUrl: string | null
+  memberPreviews: Array<{ userId: string; avatarUrl: string | null }>
 }
 
 export type HiveMemberRow = {
@@ -463,23 +466,75 @@ export async function getDiscoverableHivesAction(): Promise<ActionResult<HiveSum
     r.requesterId === viewerUserId ? r.recipientId : r.requesterId,
   )
 
-  const rows = await db.query.hives.findMany({
-    where: and(
-      eq(hives.discoverable, true),
-      friendIds.length > 0
-        ? or(
-            eq(hives.visibility, 'PUBLIC'),
-            and(eq(hives.visibility, 'FRIENDS'), inArray(hives.ownerId, friendIds)),
-          )
-        : eq(hives.visibility, 'PUBLIC'),
-    ),
-    orderBy: (t, { desc }) => [desc(t.createdAt)],
-    limit: 50,
-  })
-  const summaries: HiveSummary[] = rows.map(h => ({
-    id: h.id, bookId: h.bookId, name: h.name, description: h.description,
-    visibility: h.visibility, status: h.status, ownerId: h.ownerId,
-    memberCount: 0, createdAt: h.createdAt,
+  // Build visibility filter as raw SQL. friendIds may be empty.
+  const visibilityFilter =
+    friendIds.length > 0
+      ? sql`(h.visibility = 'PUBLIC' OR (h.visibility = 'FRIENDS' AND h.owner_id IN (${sql.join(
+          friendIds.map((id) => sql`${id}`),
+          sql`, `,
+        )})))`
+      : sql`h.visibility = 'PUBLIC'`
+
+  const result = await db.execute(sql`
+    SELECT
+      h.id,
+      h.book_id          AS "bookId",
+      h.name,
+      h.description,
+      h.visibility,
+      h.status,
+      h.owner_id         AS "ownerId",
+      h.created_at       AS "createdAt",
+      b.title            AS "bookTitle",
+      b.cover_url        AS "bookCoverUrl",
+      (SELECT COUNT(*)::int FROM hive_members WHERE hive_id = h.id) AS "memberCount",
+      COALESCE((
+        SELECT json_agg(json_build_object('userId', sub.user_id, 'avatarUrl', sub.avatar_url))
+        FROM (
+          SELECT hm2.user_id, up2.avatar_url
+          FROM hive_members hm2
+          LEFT JOIN user_profiles up2 ON up2.user_id = hm2.user_id
+          WHERE hm2.hive_id = h.id
+          ORDER BY hm2.joined_at DESC
+          LIMIT 4
+        ) sub
+      ), '[]'::json) AS "memberPreviews"
+    FROM hives h
+    LEFT JOIN books b ON b.id = h.book_id
+    WHERE h.discoverable = true
+      AND ${visibilityFilter}
+    ORDER BY h.created_at DESC
+    LIMIT 50
+  `)
+
+  type RawRow = {
+    id: string
+    bookId: string | null
+    name: string
+    description: string | null
+    visibility: 'PRIVATE' | 'PUBLIC' | 'FRIENDS'
+    status: 'ACTIVE' | 'COMPLETED'
+    ownerId: string
+    createdAt: string | Date
+    bookTitle: string | null
+    bookCoverUrl: string | null
+    memberCount: number
+    memberPreviews: Array<{ userId: string; avatarUrl: string | null }>
+  }
+
+  const summaries: HiveSummary[] = (result.rows as RawRow[]).map((row) => ({
+    id: row.id,
+    bookId: row.bookId,
+    name: row.name,
+    description: row.description,
+    visibility: row.visibility,
+    status: row.status,
+    ownerId: row.ownerId,
+    memberCount: row.memberCount,
+    createdAt: row.createdAt instanceof Date ? row.createdAt : new Date(row.createdAt),
+    bookTitle: row.bookTitle,
+    bookCoverUrl: row.bookCoverUrl,
+    memberPreviews: row.memberPreviews,
   }))
   return { success: true, data: summaries }
 }
@@ -497,6 +552,7 @@ export type UserHiveView = {
   memberCount: number
   lastActiveAt: Date | null
   viewerRole: 'OWNER' | 'MODERATOR' | 'CONTRIBUTOR' | 'BETA_READER'
+  memberPreviews: Array<{ userId: string; avatarUrl: string | null }>
 }
 
 /**
@@ -520,7 +576,18 @@ export async function getUserHivesView(): Promise<ActionResult<UserHiveView[]>> 
         h.status,
         (SELECT COUNT(*)::int FROM hive_members WHERE hive_id = h.id) AS "memberCount",
         (SELECT MAX(created_at) FROM hive_activity WHERE hive_id = h.id) AS "lastActiveAt",
-        m.role::text       AS "viewerRole"
+        m.role::text       AS "viewerRole",
+        COALESCE((
+          SELECT json_agg(json_build_object('userId', sub.user_id, 'avatarUrl', sub.avatar_url))
+          FROM (
+            SELECT hm2.user_id, up2.avatar_url
+            FROM hive_members hm2
+            LEFT JOIN user_profiles up2 ON up2.user_id = hm2.user_id
+            WHERE hm2.hive_id = h.id
+            ORDER BY hm2.joined_at DESC
+            LIMIT 4
+          ) sub
+        ), '[]'::json) AS "memberPreviews"
       FROM hives h
       INNER JOIN hive_members m ON m.hive_id = h.id AND m.user_id = ${userId}
       LEFT JOIN books b ON b.id = h.book_id
@@ -543,6 +610,7 @@ export async function getUserHivesView(): Promise<ActionResult<UserHiveView[]>> 
       memberCount: number
       lastActiveAt: string | Date | null
       viewerRole: 'OWNER' | 'MODERATOR' | 'CONTRIBUTOR' | 'BETA_READER'
+      memberPreviews: Array<{ userId: string; avatarUrl: string | null }>
     }
 
     const data: UserHiveView[] = (result.rows as RawRow[]).map((row) => ({

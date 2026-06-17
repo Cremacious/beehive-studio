@@ -24,12 +24,17 @@ export function CommunityNavStrip({ locale }: Props) {
         flexWrap: 'wrap',
       }}
     >
+      <style>{`
+        .community-nav-pill { color: var(--canvas-dark-ink-strong); transition: color 120ms; }
+        .community-nav-pill:hover { color: var(--brand); }
+      `}</style>
       {ENTRIES.map((e) => {
         const Icon = e.icon;
         return (
           <Link
             key={e.href}
             href={`/${locale}${e.href}`}
+            className="community-nav-pill"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -39,13 +44,11 @@ export function CommunityNavStrip({ locale }: Props) {
               borderRadius: 999,
               boxShadow: 'var(--sh-tile, 0 4px 12px rgba(0,0,0,0.3))',
               textDecoration: 'none',
-              color: 'var(--canvas-dark-ink-strong)',
               fontSize: 12,
               fontFamily: 'var(--font-mono, monospace)',
               textTransform: 'uppercase',
               letterSpacing: '0.06em',
               fontWeight: 700,
-              transition: 'color 120ms',
             }}
           >
             <Icon size={14} strokeWidth={2} color="var(--brand)" aria-hidden />

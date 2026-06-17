@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { LogOut, User as UserIcon, Users, Settings as SettingsIcon } from 'lucide-react'
+import { Camera, LogOut, User as UserIcon, Users, Settings as SettingsIcon } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -95,6 +95,11 @@ export function UserMenuDropdown({
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator style={{ background: 'var(--canvas-dark-300)' }} />
+        <DropdownMenuItem asChild>
+          <Link href={`/${locale}/settings/account`} className="cursor-pointer no-underline">
+            <Camera size={14} /> Change photo
+          </Link>
+        </DropdownMenuItem>
         {username && (
           <DropdownMenuItem asChild>
             <Link href={`/${locale}/u/${username}`} className="cursor-pointer no-underline">

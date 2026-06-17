@@ -47,17 +47,6 @@ function isItemPinned(item: BinderItemRow): boolean {
   return (c as { pinned?: boolean }).pinned === true
 }
 
-// Maps each binder item type to a logical section. Arrow reorder is only
-// allowed within the same section. Only front_matter and back_matter get
-// dedicated sections — swapping them across manuscript items looks wrong
-// (a title page jumping below Chapter 1). Everything else (chapters, parts,
-// outlines, wiki entries, characters, research notes/folders) is grouped as
-// 'other' so they can freely reorder among themselves at the same parent level.
-function getTypeSection(type: BinderItemRow['type']): string {
-  if (type === 'front_matter') return 'front_matter'
-  if (type === 'back_matter') return 'back_matter'
-  return 'other'
-}
 
 function compareSiblings(a: BinderItemRow, b: BinderItemRow): number {
   const aPin = isItemPinned(a) ? 1 : 0
@@ -140,10 +129,6 @@ export function BinderTree() {
     return byParent
   }, [binderItems])
 
-  // Boundary checks treat pin-class boundaries as boundary too — swapping
-  // orders across pin classes wouldn't change visible position (the
-  // pinned-first sort overrides `order`), so the click would silently
-  // no-op. Better to disable cleanly.
   const findNeighborInfo = useCallback(
     (id: string): { siblings: BinderItemRow[]; index: number; self: BinderItemRow } | null => {
       const self = binderItems.find(i => i.id === id)
@@ -159,13 +144,7 @@ export function BinderTree() {
   const canMoveUp = useCallback(
     (id: string): boolean => {
       const info = findNeighborInfo(id)
-      if (!info) return false
-      if (info.index === 0) return false
-      const prev = info.siblings[info.index - 1]
-      return (
-        isItemPinned(prev) === isItemPinned(info.self) &&
-        getTypeSection(prev.type) === getTypeSection(info.self.type)
-      )
+      return !!info && info.index > 0
     },
     [findNeighborInfo],
   )
@@ -173,13 +152,7 @@ export function BinderTree() {
   const canMoveDown = useCallback(
     (id: string): boolean => {
       const info = findNeighborInfo(id)
-      if (!info) return false
-      if (info.index === info.siblings.length - 1) return false
-      const next = info.siblings[info.index + 1]
-      return (
-        isItemPinned(next) === isItemPinned(info.self) &&
-        getTypeSection(next.type) === getTypeSection(info.self.type)
-      )
+      return !!info && info.index < info.siblings.length - 1
     },
     [findNeighborInfo],
   )
@@ -191,8 +164,6 @@ export function BinderTree() {
       const neighborIdx = direction === 'up' ? info.index - 1 : info.index + 1
       if (neighborIdx < 0 || neighborIdx >= info.siblings.length) return
       const neighbor = info.siblings[neighborIdx]
-      if (isItemPinned(neighbor) !== isItemPinned(info.self)) return
-      if (getTypeSection(neighbor.type) !== getTypeSection(info.self.type)) return
 
       const selfNewOrder = neighbor.order
       const neighborNewOrder = info.self.order

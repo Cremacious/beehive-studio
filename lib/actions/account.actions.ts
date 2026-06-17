@@ -1,9 +1,10 @@
 'use server'
 
 import { db } from '@/db'
-import { users, userBilling } from '@/db/schema'
+import { users, userBilling, userProfiles } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
+import { deleteCloudinaryImage, getCloudinaryPublicId } from '@/lib/cloudinary'
 
 /**
  * Permanently deletes the authenticated user's own account.
@@ -41,6 +42,21 @@ export async function deleteOwnAccountAction(): Promise<{
     }
   } catch {
     // Non-fatal: proceed with deletion even if Stripe cancellation fails.
+  }
+
+  // Delete Cloudinary avatar asset before cascade-deleting the profile row.
+  // Best-effort: failure must not block account deletion.
+  try {
+    const profile = await db.query.userProfiles.findFirst({
+      where: eq(userProfiles.userId, userId),
+      columns: { avatarUrl: true },
+    })
+    if (profile?.avatarUrl) {
+      const publicId = getCloudinaryPublicId(profile.avatarUrl)
+      if (publicId) await deleteCloudinaryImage(publicId)
+    }
+  } catch {
+    // Non-fatal
   }
 
   // Cascade delete — all FK constraints on `users.id` (WITH CASCADE DELETE)

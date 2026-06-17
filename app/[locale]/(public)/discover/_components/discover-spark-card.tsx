@@ -69,7 +69,7 @@ export function DiscoverSparkCard({ spark, locale, variant = 'grid' }: Props) {
 
   return (
     <Link
-      href={`/${locale}/sparks/${spark.id}`}
+      href={`/${locale}/community/sparks/${spark.id}`}
       className={`block no-underline ${widthClass}`}
       aria-label={`Open Spark: ${spark.title}`}
     >

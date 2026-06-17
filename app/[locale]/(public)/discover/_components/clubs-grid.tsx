@@ -213,7 +213,7 @@ export async function ClubsGrid({ sp, locale }: Props) {
           caption: featuredRes.data.currentBookTitle
             ? `reading ${featuredRes.data.currentBookTitle}`
             : `${featuredRes.data.memberCount} members`,
-          href: `/${locale}/clubs/${featuredRes.data.id}`,
+          href: `/${locale}/community/clubs/${featuredRes.data.id}`,
         }
       : null
 

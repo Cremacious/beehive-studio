@@ -42,8 +42,8 @@ function todaysSparkHero(f: DashboardFallbacks['todaysSpark']): HeroSignal | nul
     coverUrl: null,
     coverAuthor: null,
     coverTitle: null,
-    primaryCta: { label: 'Write now →', href: `/sparks/new?prompt=${f.id}` },
-    secondaryCta: { label: 'See prompt', href: `/sparks/${f.id}` },
+    primaryCta: { label: 'Write now →', href: `/community/sparks/new?prompt=${f.id}` },
+    secondaryCta: { label: 'See prompt', href: `/community/sparks/${f.id}` },
   };
 }
 

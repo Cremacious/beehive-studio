@@ -90,7 +90,7 @@ function renderSuggestionReason(reason: string): React.ReactNode[] {
 }
 
 export function ClubCard({ club, locale }: Props) {
-  const href = `/${locale}/clubs/${club.id}`
+  const href = `/${locale}/community/clubs/${club.id}`
   const isSuggested = club.source === 'suggested'
   const showRolePill = club.showRolePill !== false
   const pill = rolePillStyle(club)

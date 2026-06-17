@@ -34,7 +34,6 @@ export default async function DiscoverPage({ params, searchParams }: Props) {
       style={{ maxWidth: '1920px' }}
     >
       <PageHead
-        eyebrow="Find your next read & your next circle"
         title="Discover"
         subtitle="Books, sparks, lists, clubs, and hives from across the community."
       />

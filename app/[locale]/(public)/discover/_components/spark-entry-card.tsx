@@ -110,7 +110,7 @@ export function SparkEntryCard({
         )}
         <div className="flex-1" />
         <Link
-          href={`/${locale}/sparks/${sparkId}/entry/${entry.id}`}
+          href={`/${locale}/community/sparks/${sparkId}/entry/${entry.id}`}
           className="inline-flex items-center text-[11px] h-7 px-3 rounded-[var(--r-pill)] transition-colors"
           style={{
             background: 'var(--canvas-dark-200)',

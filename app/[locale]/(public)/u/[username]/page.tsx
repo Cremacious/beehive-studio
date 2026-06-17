@@ -21,9 +21,9 @@ import { isBlocked } from '@/lib/social/is-blocked'
 import { getMutualFriends } from '@/lib/social/get-mutual-friends'
 import { getFriendCountAction } from '@/lib/actions/friendships.actions'
 import { getUserPublicListsAction } from '@/lib/actions/reading-lists.actions'
-import { ListCard } from '@/app/[locale]/(app)/reading-lists/_components/list-card'
+import { ListCard } from '@/app/[locale]/(app)/community/reading-lists/_components/list-card'
 import { RenderMentionsInText } from '@/components/mentions/render-mentions-in-text'
-import { ClubCard } from '@/app/[locale]/(app)/clubs/_components/club-card'
+import { ClubCard } from '@/app/[locale]/(app)/community/clubs/_components/club-card'
 import { InviteClaimedToast } from '@/components/invite-claimed-toast'
 import { StatStrip } from '@/components/community/stat-strip'
 
@@ -339,7 +339,7 @@ export default async function AuthorProfilePage({ params }: Props) {
                       const pillLabel = isClosed ? 'Closed' : isVoting ? 'Voting' : 'Open'
                       return (
                         <li key={spark.id} className="tile tile-pad is-interactive">
-                          <Link href={`/${locale}/sparks/${spark.id}`} style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none' }}>
+                          <Link href={`/${locale}/community/sparks/${spark.id}`} style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none' }}>
                             <span className={pillClass}><span className="dot" />{pillLabel}</span>
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div className="font-display" style={{

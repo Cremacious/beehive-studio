@@ -39,13 +39,13 @@ export async function resolveMentionDeepLink(
   switch (resourceType) {
     case 'book_club_discussion': {
       const r = await getDiscussionClubIdAction(resourceId)
-      if (!r.success) return `/${locale}/clubs`
-      return `/${locale}/clubs/${r.data.clubId}/discussions/${resourceId}`
+      if (!r.success) return `/${locale}/community/clubs`
+      return `/${locale}/community/clubs/${r.data.clubId}/discussions/${resourceId}`
     }
     case 'book_club_discussion_reply': {
       const r = await getReplyDiscussionAndClubIdAction(resourceId)
-      if (!r.success) return `/${locale}/clubs`
-      return `/${locale}/clubs/${r.data.clubId}/discussions/${r.data.discussionId}`
+      if (!r.success) return `/${locale}/community/clubs`
+      return `/${locale}/community/clubs/${r.data.clubId}/discussions/${r.data.discussionId}`
     }
     case 'hive_discussion': {
       const r = await getHiveDiscussionParentsAction(resourceId)
@@ -80,21 +80,21 @@ export async function resolveMentionDeepLink(
     case 'spark_entry_comment':
     case 'spark_entry_comment_reply': {
       const r = await getSparkEntryCommentParentsAction(resourceId)
-      if (!r.success) return `/${locale}/sparks`
-      return `/${locale}/sparks/${r.data.sparkId}/entry/${r.data.entryId}`
+      if (!r.success) return `/${locale}/community/sparks`
+      return `/${locale}/community/sparks/${r.data.sparkId}/entry/${r.data.entryId}`
     }
     case 'reading_list_description':
       // resourceId IS the listId for description mentions.
-      return `/${locale}/reading-lists/${resourceId}`
+      return `/${locale}/community/reading-lists/${resourceId}`
     case 'reading_list_book_commentary': {
       const r = await getListBookCommentaryListIdAction(resourceId)
-      if (!r.success) return `/${locale}/reading-lists`
-      return `/${locale}/reading-lists/${r.data.listId}`
+      if (!r.success) return `/${locale}/community/reading-lists`
+      return `/${locale}/community/reading-lists/${r.data.listId}`
     }
     case 'book_club_description':
     case 'book_club_rules':
       // resourceId IS the clubId for metadata mentions.
-      return `/${locale}/clubs/${resourceId}`
+      return `/${locale}/community/clubs/${resourceId}`
     default:
       return `/${locale}/community`
   }

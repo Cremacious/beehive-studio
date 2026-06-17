@@ -168,7 +168,7 @@ export function FriendStatusSection({
             className="border-[var(--canvas-dark-300)] bg-[var(--canvas-dark-100)] text-[var(--canvas-dark-ink)]"
           >
             <DropdownMenuItem asChild className="cursor-pointer">
-              <Link href={`/${locale}/friends`}>
+              <Link href={`/${locale}/community/friends`}>
                 <ExternalLink size={14} /> View on Friends
               </Link>
             </DropdownMenuItem>

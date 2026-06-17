@@ -133,8 +133,8 @@ async function tryFriendSparkWin(viewerId: string): Promise<HeroSignal | null> {
     coverUrl: null,
     coverAuthor: `@${r.authorUsername}`,
     coverTitle: r.sparkTitle,
-    primaryCta: { label: 'Read entry →', href: `/sparks/${r.sparkId}/entry/${r.entryId}` },
-    secondaryCta: { label: 'See entry', href: `/sparks/${r.sparkId}/entry/${r.entryId}` },
+    primaryCta: { label: 'Read entry →', href: `/community/sparks/${r.sparkId}/entry/${r.entryId}` },
+    secondaryCta: { label: 'See entry', href: `/community/sparks/${r.sparkId}/entry/${r.entryId}` },
   };
 }
 
@@ -250,8 +250,8 @@ async function tryTodaysSpark(): Promise<HeroSignal | null> {
     coverUrl: null,
     coverAuthor: null,
     coverTitle: r.title,
-    primaryCta: { label: 'Write now →', href: `/sparks/new?prompt=${r.id}` },
-    secondaryCta: { label: 'See prompt', href: `/sparks/${r.id}` },
+    primaryCta: { label: 'Write now →', href: `/community/sparks/new?prompt=${r.id}` },
+    secondaryCta: { label: 'See prompt', href: `/community/sparks/${r.id}` },
   };
 }
 
@@ -580,7 +580,7 @@ export async function getSparksPanelRows(viewerId: string): Promise<PanelRow[]> 
       t1: `Your spark "${s.title}"`,
       t2: `${s.newEntries} new entries · ${s.status === 'VOTING' ? 'voting' : 'open'}`,
       trailingPill: { label: 'YOURS', tone: 'purple' },
-      href: `/sparks/${s.id}`,
+      href: `/community/sparks/${s.id}`,
     });
     if (rows.length === 3) return rows;
   }
@@ -610,7 +610,7 @@ export async function getSparksPanelRows(viewerId: string): Promise<PanelRow[]> 
       t1: s.title,
       t2: `${s.entries} entries · ends ${hrs}h`,
       trailingPill: { label: `${hrs}H`, tone: 'mono' },
-      href: `/sparks/${s.id}`,
+      href: `/community/sparks/${s.id}`,
     });
     if (rows.length === 3) return rows;
   }
@@ -653,7 +653,7 @@ export async function getListsPanelRows(viewerId: string): Promise<PanelRow[]> {
     t1: l.title,
     t2: `@${l.ownerUsername} · +${l.followers7d} followers`,
     trailingPill: null,
-    href: `/reading-lists/${l.id}`,
+    href: `/community/reading-lists/${l.id}`,
   }));
 }
 
@@ -692,7 +692,7 @@ export async function getClubsPanelRows(viewerId: string): Promise<PanelRow[]> {
     trailingPill: c.newDiscussions7d > 0
       ? { label: `${c.newDiscussions7d} NEW`, tone: 'blue' }
       : null,
-    href: `/clubs/${c.id}`,
+    href: `/community/clubs/${c.id}`,
   }));
 }
 
@@ -745,12 +745,12 @@ export async function getFriendsDeskRows(viewerId: string, limit = 6, cursor?: s
         break;
       case 'spark_entry_submitted':
         t1 = `**@${e.actorUsername}** entered *"${p.sparkTitle ?? '?'}"*`;
-        href = `/sparks/${p.sparkId}`;
+        href = `/community/sparks/${p.sparkId}`;
         break;
       case 'spark_won_community':
       case 'spark_won_creator_choice':
         t1 = `**@${e.actorUsername}** won *"${p.sparkTitle ?? '?'}"*`;
-        href = `/sparks/${p.sparkId}`;
+        href = `/community/sparks/${p.sparkId}`;
         trailingPill = { label: '★ WON', tone: 'brand' };
         break;
       case 'hive_created':
@@ -763,11 +763,11 @@ export async function getFriendsDeskRows(viewerId: string, limit = 6, cursor?: s
         break;
       case 'reading_list_created':
         t1 = `**@${e.actorUsername}** created list *"${p.listTitle ?? '?'}"*`;
-        href = `/reading-lists/${p.listId}`;
+        href = `/community/reading-lists/${p.listId}`;
         break;
       case 'book_club_created':
         t1 = `**@${e.actorUsername}** started book club *"${p.clubName ?? '?'}"*`;
-        href = `/clubs/${p.clubId}`;
+        href = `/community/clubs/${p.clubId}`;
         break;
       default:
         t1 = `**@${e.actorUsername}** ${String(e.type).replace(/_/g, ' ')}`;

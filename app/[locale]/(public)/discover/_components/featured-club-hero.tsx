@@ -165,7 +165,7 @@ export function FeaturedClubHero({ club, locale }: Props) {
           </div>
 
           <Link
-            href={`/${locale}/clubs/${club.id}`}
+            href={`/${locale}/community/clubs/${club.id}`}
             className="inline-flex items-center gap-1.5 mt-1 no-underline"
             style={{
               background: 'var(--brand)',

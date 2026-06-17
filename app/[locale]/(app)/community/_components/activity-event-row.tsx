@@ -44,9 +44,9 @@ function subjectHref(row: FeedRow, locale: string): string | null {
     case 'hive':
       return `/${locale}/hive/${subject.id}`
     case 'reading_list':
-      return `/${locale}/reading-lists/${subject.id}`
+      return `/${locale}/community/reading-lists/${subject.id}`
     case 'book_club':
-      return `/${locale}/clubs/${subject.id}`
+      return `/${locale}/community/clubs/${subject.id}`
     default:
       return null
   }

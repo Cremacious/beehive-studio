@@ -38,11 +38,11 @@ const buildDashboardData = cache(async (viewerId: string): Promise<CommunityDash
   return {
     hero,
     pulse,
-    hives:  { label: `🐝 HIVES${hivesRows.length > 0 ? ` · ${hivesRows.length} ACTIVE` : ''}`, seeAllHref: '/hives',         rows: hivesRows,  isEmpty: hivesRows.length === 0 },
-    sparks: { label: `✨ SPARKS · LIVE NOW`,                                                   seeAllHref: '/sparks',        rows: sparksRows, isEmpty: sparksRows.length === 0 },
-    lists:  { label: `📚 LISTS · TRENDING`,                                                    seeAllHref: '/reading-lists', rows: listsRows,  isEmpty: listsRows.length === 0 },
+    hives:  { label: `🐝 HIVES${hivesRows.length > 0 ? ` · ${hivesRows.length} ACTIVE` : ''}`, seeAllHref: '/community/hives',         rows: hivesRows,  isEmpty: hivesRows.length === 0 },
+    sparks: { label: `✨ SPARKS · LIVE NOW`,                                                   seeAllHref: '/community/sparks',        rows: sparksRows, isEmpty: sparksRows.length === 0 },
+    lists:  { label: `📚 LISTS · TRENDING`,                                                    seeAllHref: '/community/reading-lists', rows: listsRows,  isEmpty: listsRows.length === 0 },
     friends:{ label: `FRIENDS' DESKS · CHRONOLOGICAL`, seeAllHref: '/community/feed', rows: friends.rows, nextCursor: friends.nextCursor, isEmpty: friends.rows.length === 0 },
-    clubs:  { label: `📖 CLUBS · YOU'RE IN`,                                                   seeAllHref: '/clubs',         rows: clubsRows,  isEmpty: clubsRows.length === 0 },
+    clubs:  { label: `📖 CLUBS · YOU'RE IN`,                                                   seeAllHref: '/community/clubs',         rows: clubsRows,  isEmpty: clubsRows.length === 0 },
     fallbacks,
   };
 });

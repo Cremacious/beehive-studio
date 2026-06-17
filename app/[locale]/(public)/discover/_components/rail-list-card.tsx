@@ -38,7 +38,7 @@ export function RailListCard({ list, locale }: Props) {
       list={adapt(list)}
       size="sm"
       showSourceTag={false}
-      href={`/${locale}/reading-lists/${list.id}`}
+      href={`/${locale}/community/reading-lists/${list.id}`}
     />
   )
 }

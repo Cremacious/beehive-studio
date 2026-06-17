@@ -6,11 +6,11 @@ type Props = { locale: string };
 type Entry = { href: string; icon: LucideIcon; label: string };
 
 const ENTRIES: Entry[] = [
-  { href: '/friends',       icon: Users,      label: 'Friends' },
-  { href: '/hives',         icon: Hexagon,    label: 'Hives' },
-  { href: '/sparks',        icon: Sparkles,   label: 'Sparks' },
-  { href: '/reading-lists', icon: BookMarked, label: 'Reading Lists' },
-  { href: '/clubs',         icon: BookOpen,   label: 'Clubs' },
+  { href: '/community/friends',       icon: Users,      label: 'Friends' },
+  { href: '/community/hives',         icon: Hexagon,    label: 'Hives' },
+  { href: '/community/sparks',        icon: Sparkles,   label: 'Sparks' },
+  { href: '/community/reading-lists', icon: BookMarked, label: 'Reading Lists' },
+  { href: '/community/clubs',         icon: BookOpen,   label: 'Clubs' },
 ];
 
 export function CommunityNavStrip({ locale }: Props) {

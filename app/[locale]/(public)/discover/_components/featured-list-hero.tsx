@@ -144,7 +144,7 @@ export function FeaturedListHero({ list, locale }: Props) {
           ) : null}
 
           <Link
-            href={`/${locale}/reading-lists/${list.id}`}
+            href={`/${locale}/community/reading-lists/${list.id}`}
             className="inline-flex items-center gap-1.5 mt-1 no-underline"
             style={{
               background: 'var(--brand)',

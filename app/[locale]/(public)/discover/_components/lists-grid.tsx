@@ -221,7 +221,7 @@ export async function ListsGrid({ sp, locale }: Props) {
           caption: featuredRes.data.ownerUsername
             ? `by @${featuredRes.data.ownerUsername}`
             : `${featuredRes.data.bookCount} books`,
-          href: `/${locale}/reading-lists/${featuredRes.data.id}`,
+          href: `/${locale}/community/reading-lists/${featuredRes.data.id}`,
         }
       : null
 

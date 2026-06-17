@@ -67,7 +67,7 @@ export function CreateSparkModal({ locale }: { locale: string }) {
       })
       if (result.success) {
         setOpen(false)
-        router.push(`/${locale}/sparks/${result.data.sparkId}`)
+        router.push(`/${locale}/community/sparks/${result.data.sparkId}`)
       } else {
         setError(
           result.error === 'FREE_LIMIT_REACHED'

@@ -197,7 +197,7 @@ export async function SparksGrid({ sp, locale }: Props) {
           caption: featuredRes.data.creatorUsername
             ? `by @${featuredRes.data.creatorUsername}`
             : 'Live now',
-          href: `/${locale}/sparks/${featuredRes.data.id}`,
+          href: `/${locale}/community/sparks/${featuredRes.data.id}`,
         }
       : null
 

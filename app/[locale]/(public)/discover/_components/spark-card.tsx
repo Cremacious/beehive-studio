@@ -67,7 +67,7 @@ export function SparkCard({ spark, locale, size = 'md', sourceTag }: Props) {
 
   return (
     <Link
-      href={`/${locale}/sparks/${spark.id}`}
+      href={`/${locale}/community/sparks/${spark.id}`}
       className="block no-underline w-full h-full transition-transform hover:-translate-y-px"
       aria-label={`Open Spark: ${spark.title}`}
     >

@@ -39,7 +39,7 @@ export default async function HiveDashboardPage({ params }: { params: Promise<{ 
   return (
     <HivePageShell
       width="standard"
-      back={{ href: `/${locale}/hives`, label: 'hives' }}
+      back={{ href: `/${locale}/community/hives`, label: 'hives' }}
       title={`Welcome to ${hive.name}`}
       subtitle={hive.description ?? undefined}
     >

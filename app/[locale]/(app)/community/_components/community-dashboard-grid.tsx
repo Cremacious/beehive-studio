@@ -54,7 +54,7 @@ function buildSparksNudges(d: CommunityDashboardData): NudgeRow[] {
     leading: { kind: 'icon', glyph: '+', tone: 'brand' },
     t1: 'Run your own Spark',
     t2: 'Pick a prompt, set a deadline',
-    cta: { label: 'Create', href: '/sparks/new' },
+    cta: { label: 'Create', href: '/community/sparks/new' },
   });
   if (d.fallbacks.votingSpark) {
     out.push({
@@ -84,7 +84,7 @@ function buildListsNudges(d: CommunityDashboardData): NudgeRow[] {
     leading: { kind: 'icon', glyph: '+', tone: 'brand' },
     t1: 'Build your first list',
     t2: 'Curate books from your reading',
-    cta: { label: 'Create', href: '/reading-lists' },
+    cta: { label: 'Create', href: '/community/reading-lists' },
   });
   out.push({
     id: 'list-browse',
@@ -118,7 +118,7 @@ function buildClubsNudges(d: CommunityDashboardData): NudgeRow[] {
     leading: { kind: 'icon', glyph: '+', tone: 'brand' },
     t1: 'Start your own club',
     t2: 'Pick a book, invite readers',
-    cta: { label: 'Create', href: '/clubs' },
+    cta: { label: 'Create', href: '/community/clubs' },
   });
   return out.slice(0, 3);
 }

@@ -171,17 +171,17 @@ export function NotificationsBell() {
       // is handled inside that page via a short-circuit redirect.
       window.location.href = `/${locale}/hive/accept/${n.resourceId}`
     } else if (n.type === 'FRIEND_REQUEST') {
-      window.location.href = `/${locale}/friends?tab=requests`
+      window.location.href = `/${locale}/community/friends?tab=requests`
     } else if (n.type === 'FRIEND_ACCEPTED') {
-      window.location.href = `/${locale}/friends`
+      window.location.href = `/${locale}/community/friends`
     } else if (n.type === 'CLUB_JOIN_APPROVED' && n.resourceId) {
       // CLUB_JOIN_APPROVED.resourceId IS the clubId (see book-clubs.actions.ts).
-      window.location.href = `/${locale}/clubs/${n.resourceId}`
+      window.location.href = `/${locale}/community/clubs/${n.resourceId}`
     } else if (n.type === 'CLUB_INVITE' || n.type === 'CLUB_JOIN_REQUEST') {
       // CLUB_INVITE.resourceId = inviteId; CLUB_JOIN_REQUEST.resourceId =
       // joinRequestId. Neither carries the clubId directly, so route to the
       // clubs index — matches the FRIEND_REQUEST -> /friends precedent.
-      window.location.href = `/${locale}/clubs`
+      window.location.href = `/${locale}/community/clubs`
     } else if (n.type === 'MENTION') {
       setPendingRowId(n.id)
       try {
@@ -201,16 +201,16 @@ export function NotificationsBell() {
       // resourceType branches: 'book' → book reader; 'spark_entry' → entry.
       if (n.resourceType === 'spark_entry') {
         // We don't carry the parent sparkId — fall back to /sparks index.
-        window.location.href = `/${locale}/sparks`
+        window.location.href = `/${locale}/community/sparks`
       } else {
         window.location.href = `/${locale}/books/${n.resourceId}`
       }
     } else if (n.type === 'SPARK_WIN' && n.resourceId) {
-      window.location.href = `/${locale}/sparks/${n.resourceId}`
+      window.location.href = `/${locale}/community/sparks/${n.resourceId}`
     } else if (n.type === 'NEW_FOLLOWER') {
       // No actor.username on the row payload — approximate to /friends like
       // FRIEND_*. Widen NotificationRow.actor with username for precise routing.
-      window.location.href = `/${locale}/friends`
+      window.location.href = `/${locale}/community/friends`
     } else if (n.type === 'NEW_CHAPTER' && n.resourceId) {
       setPendingRowId(n.id)
       try {

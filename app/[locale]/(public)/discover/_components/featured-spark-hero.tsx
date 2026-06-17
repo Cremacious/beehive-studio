@@ -139,7 +139,7 @@ export function FeaturedSparkHero({ spark, locale }: Props) {
           so far
         </span>
         <Link
-          href={`/${locale}/sparks/${spark.id}`}
+          href={`/${locale}/community/sparks/${spark.id}`}
           className="inline-flex items-center gap-2 h-9 px-5 text-[13px] font-semibold whitespace-nowrap transition-colors"
           style={{
             background: 'var(--brand)',

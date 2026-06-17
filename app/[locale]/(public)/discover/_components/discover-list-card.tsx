@@ -29,7 +29,7 @@ export function DiscoverListCard({ list, locale, variant = 'grid' }: Props) {
 
   return (
     <Link
-      href={`/${locale}/reading-lists/${list.id}`}
+      href={`/${locale}/community/reading-lists/${list.id}`}
       className={`block no-underline ${widthClass}`}
       aria-label={`Open List: ${list.title}`}
     >

@@ -90,17 +90,17 @@ function ctaHref(
 ): string {
   switch (variant) {
     case 'create-list':
-      return `/${locale}/reading-lists`
+      return `/${locale}/community/reading-lists`
     case 'follow-curator':
       return `/${locale}/discover?tab=people`
     case 'themed-list-nudge':
-      return `/${locale}/reading-lists/${opts.smallestOwnedListId ?? ''}`
+      return `/${locale}/community/reading-lists/${opts.smallestOwnedListId ?? ''}`
     case 'trending-from-network':
       return `/${locale}/discover?tab=lists`
     case 'like-a-book':
       return `/${locale}/discover?tab=books`
     case 'share-list-link':
-      return `/${locale}/reading-lists/${opts.highestFollowerListId ?? ''}`
+      return `/${locale}/community/reading-lists/${opts.highestFollowerListId ?? ''}`
   }
 }
 

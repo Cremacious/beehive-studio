@@ -12,15 +12,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-17 (Issue #19 complete — FM/BM typography scale + About the Author Cloudinary image upload.)
+> **Last updated:** 2026-06-17 (Issue #25 complete — community routing refactor, all 5 hub routes nested under /community/.)
 >
-> **Last commit:** [3491144](https://github.com/Cremacious/beehive-studio/commit/3491144) — fix(fmbm): issue #19 — FM/BM typography scale + About the Author image upload. Closes #19.
+> **Last commit:** TBD — refactor(routing): issue #25 — move hub routes under /community/. Closes #25.
+>
+> **Prior — Last commit:** [3491144](https://github.com/Cremacious/beehive-studio/commit/3491144) — fix(fmbm): issue #19 — FM/BM typography scale + About the Author image upload. Closes #19.
 >
 > **Prior — Last commit:** [c75a1c7](https://github.com/Cremacious/beehive-studio/commit/c75a1c7) — fix(hub): tile-chrome tab strips + Radix Select sort dropdowns across all 5 hubs. Closes #26.
 >
-> **Prior — Last commit:** [8b9cd97](https://github.com/Cremacious/beehive-studio/commit/8b9cd97) — fix(email): rename Beehive Studio -> Beehive Books throughout email templates.
->
-> **Next concrete step:** Smoke #19 in the studio editor: open a book, add a front_matter/back_matter binder item, cycle through all 5 subtypes — Title Page title should be 28px (not 40), Dedication body 15px italic (not 24), Copyright 11.5px left-aligned, Acknowledgments 18px heading left-aligned, About the Author mono label + 96px avatar with hover camera overlay and working Change/Remove controls. Then push to remote.
+> **Next concrete step:** Push to remote (`git push origin main`). Then smoke test: visit `/en/community/hives`, `/en/community/friends`, `/en/community/sparks`, `/en/community/reading-lists`, `/en/community/clubs` — all should load. Visit `/en/hives` — should 308-redirect to `/en/community/hives`. The community nav strip pills should all link to the new /community/... paths.
 >
 > **GitHub Issues — Ordered Execution Queue:**
 > - ~~#31 Auth audit~~ ✅
@@ -29,7 +29,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 > - ~~#33 Password reset email design~~ ✅
 > - ~~#26 Tab strip + sort dropdown visibility~~ ✅
 > - ~~#19 FM/BM typography + About the Author image~~ ✅
-> - #25 Community routing refactor (/community/hives etc.)
+> - ~~#25 Community routing refactor (/community/hives etc.)~~ ✅
 > - #17 Avatar upload (Cloudinary)
 > - #27 View own profile (nav entry point)
 > - #20 Book details page redesign (mockup-first)

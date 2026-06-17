@@ -103,7 +103,7 @@ export function UserMenuDropdown({
           </DropdownMenuItem>
         )}
         <DropdownMenuItem asChild>
-          <Link href={`/${locale}/friends`} className="cursor-pointer no-underline">
+          <Link href={`/${locale}/community/friends`} className="cursor-pointer no-underline">
             <Users size={14} /> Friends
           </Link>
         </DropdownMenuItem>

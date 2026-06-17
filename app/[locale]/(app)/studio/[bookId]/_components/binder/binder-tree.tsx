@@ -47,6 +47,21 @@ function isItemPinned(item: BinderItemRow): boolean {
   return (c as { pinned?: boolean }).pinned === true
 }
 
+// Maps each binder item type to a logical section. Arrow reorder is only
+// allowed within the same section — front matter stays with front matter,
+// back matter with back matter, chapters/parts with each other, etc.
+// Cross-section swaps look wrong (FM jumping below a chapter) and are
+// prevented by treating section boundaries the same way pin-class
+// boundaries are treated.
+function getTypeSection(type: BinderItemRow['type']): string {
+  if (type === 'front_matter') return 'front_matter'
+  if (type === 'back_matter') return 'back_matter'
+  if (type === 'chapter' || type === 'part') return 'manuscript'
+  if (type === 'wiki_entry' || type === 'wiki_folder') return 'wiki'
+  // character, outline, research_note, research_folder each in their own section
+  return type
+}
+
 function compareSiblings(a: BinderItemRow, b: BinderItemRow): number {
   const aPin = isItemPinned(a) ? 1 : 0
   const bPin = isItemPinned(b) ? 1 : 0
@@ -150,7 +165,10 @@ export function BinderTree() {
       if (!info) return false
       if (info.index === 0) return false
       const prev = info.siblings[info.index - 1]
-      return isItemPinned(prev) === isItemPinned(info.self)
+      return (
+        isItemPinned(prev) === isItemPinned(info.self) &&
+        getTypeSection(prev.type) === getTypeSection(info.self.type)
+      )
     },
     [findNeighborInfo],
   )
@@ -161,7 +179,10 @@ export function BinderTree() {
       if (!info) return false
       if (info.index === info.siblings.length - 1) return false
       const next = info.siblings[info.index + 1]
-      return isItemPinned(next) === isItemPinned(info.self)
+      return (
+        isItemPinned(next) === isItemPinned(info.self) &&
+        getTypeSection(next.type) === getTypeSection(info.self.type)
+      )
     },
     [findNeighborInfo],
   )
@@ -174,6 +195,7 @@ export function BinderTree() {
       if (neighborIdx < 0 || neighborIdx >= info.siblings.length) return
       const neighbor = info.siblings[neighborIdx]
       if (isItemPinned(neighbor) !== isItemPinned(info.self)) return
+      if (getTypeSection(neighbor.type) !== getTypeSection(info.self.type)) return
 
       const selfNewOrder = neighbor.order
       const neighborNewOrder = info.self.order

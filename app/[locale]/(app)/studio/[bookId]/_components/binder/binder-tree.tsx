@@ -48,18 +48,15 @@ function isItemPinned(item: BinderItemRow): boolean {
 }
 
 // Maps each binder item type to a logical section. Arrow reorder is only
-// allowed within the same section — front matter stays with front matter,
-// back matter with back matter, chapters/parts with each other, etc.
-// Cross-section swaps look wrong (FM jumping below a chapter) and are
-// prevented by treating section boundaries the same way pin-class
-// boundaries are treated.
+// allowed within the same section. Only front_matter and back_matter get
+// dedicated sections — swapping them across manuscript items looks wrong
+// (a title page jumping below Chapter 1). Everything else (chapters, parts,
+// outlines, wiki entries, characters, research notes/folders) is grouped as
+// 'other' so they can freely reorder among themselves at the same parent level.
 function getTypeSection(type: BinderItemRow['type']): string {
   if (type === 'front_matter') return 'front_matter'
   if (type === 'back_matter') return 'back_matter'
-  if (type === 'chapter' || type === 'part') return 'manuscript'
-  if (type === 'wiki_entry' || type === 'wiki_folder') return 'wiki'
-  // character, outline, research_note, research_folder each in their own section
-  return type
+  return 'other'
 }
 
 function compareSiblings(a: BinderItemRow, b: BinderItemRow): number {

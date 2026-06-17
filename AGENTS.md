@@ -12,15 +12,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-17 (Issue #17 complete — avatar upload, replace, and delete in account settings.)
+> **Last updated:** 2026-06-17 (Issue #17 complete + discoverability fix — avatar upload in account settings + "Change photo" in nav dropdown.)
 >
-> **Last commit:** [29e49dd](https://github.com/Cremacious/beehive-studio/commit/29e49dd) — feat(avatar): issue #17 — avatar upload, replace, and delete in account settings. Closes #17.
+> **Last commit:** [b3c28fc](https://github.com/Cremacious/beehive-studio/commit/b3c28fc) — fix(nav): add Change photo entry to user menu dropdown.
+>
+> **Prior — Last commit:** [29e49dd](https://github.com/Cremacious/beehive-studio/commit/29e49dd) — feat(avatar): issue #17 — avatar upload, replace, and delete in account settings. Closes #17.
 >
 > **Prior — Last commit:** [78c25a9](https://github.com/Cremacious/beehive-studio/commit/78c25a9) — refactor(routing): issue #25 — move hub routes under /community/. Closes #25.
 >
-> **Prior — Last commit:** [3491144](https://github.com/Cremacious/beehive-studio/commit/3491144) — fix(fmbm): issue #19 — FM/BM typography scale + About the Author image upload. Closes #19.
->
-> **Next concrete step:** Push to remote (`git push origin main`). Then smoke test at `/en/settings/account`: (1) avatar section renders above Danger Zone with current avatar or initials placeholder; (2) clicking the avatar circle or "Upload photo" opens the file picker; (3) selecting a valid image shows an immediate local preview then uploads to Cloudinary and persists; (4) the Remove button appears only when an avatar exists and clears it back to initials; (5) invalid file type or >5 MB shows a sonner error toast. Also verify the updated avatar propagates to `/en/u/[username]` profile page, community feed rows, and comment avatars. **Prerequisite:** ensure the Cloudinary unsigned upload preset `beehive_avatars` exists (folder = `avatars`).
+> **Next concrete step:** Push to remote (`git push origin main`). Then smoke test: (1) click avatar in nav — dropdown shows "Change photo" as first item; (2) click it — lands on `/en/settings/account` with avatar uploader above Danger Zone; (3) upload a valid image — immediate preview, uploads to Cloudinary, persists; (4) Remove button clears back to initials; (5) invalid file type or >5 MB shows sonner error toast; (6) updated avatar appears in nav dropdown, profile page, community feed, comments. **Prerequisite:** Cloudinary unsigned upload preset `beehive_avatars` (folder = `avatars`) must exist.
 >
 > **GitHub Issues — Ordered Execution Queue:**
 > - ~~#31 Auth audit~~ ✅

@@ -12,13 +12,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-17 (Discover grid alignment pass — all 4 entity tabs on `/discover` now match their hub-page golden standards. 1 commit.)
+> **Last updated:** 2026-06-17 (Discover mode toggle + search redesign spec written and committed. Awaiting Chris's spec review before implementation plan.)
 >
-> **Last commit:** [1f47092](https://github.com/Cremacious/beehive-studio/commit/1f47092) — style(discover): align grid cards with hub-page golden standards. Sparks: minmax 260→280px + alignItems:stretch. Hives: source='suggested'→'member' (removes spurious dashed green border). Lists: alignItems:stretch. Clubs: source='suggested'→'member' + minmax 280→340px + alignItems:stretch.
+> **Last commit:** [f73e094](https://github.com/Cremacious/beehive-studio/commit/f73e094) — docs(spec): discover mode toggle + search header redesign. Spec at `docs/superpowers/specs/2026-06-17-discover-mode-toggle-and-search-redesign.md`. Awaiting review + approval before writing-plans.
+>
+> **Next concrete step:** Chris reviews the spec (especially mode semantics per tab, sort dropdown visibility, search input width). On approval, invoke writing-plans to create the implementation plan.
+>
+> **Prior — Last commit:** [1f47092](https://github.com/Cremacious/beehive-studio/commit/1f47092) — style(discover): align grid cards with hub-page golden standards. Sparks: minmax 260→280px + alignItems:stretch. Hives: source='suggested'→'member' (removes spurious dashed green border). Lists: alignItems:stretch. Clubs: source='suggested'→'member' + minmax 280→340px + alignItems:stretch.
 >
 > **Prior — Last commit:** [9637698](https://github.com/Cremacious/beehive-studio/commit/9637698) — style(community-dashboard): brand-yellow hover on nav strip pills. Scoped `.community-nav-pill` class with `color` transition (`--canvas-dark-ink-strong` → `--brand`) on hover, inline `<style>` tag inside the component (self-contained, no globals.css edit).
->
-> **Prior — Last commit:** [ce458a2](https://github.com/Cremacious/beehive-studio/commit/ce458a2) — style(community-dashboard): swap emoji glyphs for lucide icons in nav strip (Users / Hexagon / Sparkles / BookMarked / BookOpen, brand-yellow, 14px, stroke 2). Matches lucide convention used elsewhere in app chrome.
 >
 > **Prior — Last commit:** [b13a603](https://github.com/Cremacious/beehive-studio/commit/b13a603) — chore(community-dashboard): T15 delete superseded T1-T4 files. 4 files deleted (highlights-rail.tsx, activity-feed.tsx, community-hub.actions.ts, community-hub.shared.ts), 1515 LOC removed.
 >

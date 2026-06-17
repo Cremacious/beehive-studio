@@ -12,15 +12,21 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-17 (Issue #17 complete + discoverability fix — avatar upload in account settings + "Change photo" in nav dropdown.)
+> **Last updated:** 2026-06-17 (Issue #17 fully complete — avatar upload + nav "Change photo" + camera icon on own profile + Cloudinary folder fix for clubs.)
 >
-> **Last commit:** [b3c28fc](https://github.com/Cremacious/beehive-studio/commit/b3c28fc) — fix(nav): add Change photo entry to user menu dropdown.
+> **Last commit:** [36d75cd](https://github.com/Cremacious/beehive-studio/commit/36d75cd) — fix(profile+clubs): camera icon on own avatar + club images to correct folder.
+>
+> **Prior — Last commit:** [b3c28fc](https://github.com/Cremacious/beehive-studio/commit/b3c28fc) — fix(nav): add Change photo entry to user menu dropdown.
 >
 > **Prior — Last commit:** [29e49dd](https://github.com/Cremacious/beehive-studio/commit/29e49dd) — feat(avatar): issue #17 — avatar upload, replace, and delete in account settings. Closes #17.
 >
-> **Prior — Last commit:** [78c25a9](https://github.com/Cremacious/beehive-studio/commit/78c25a9) — refactor(routing): issue #25 — move hub routes under /community/. Closes #25.
+> **Next concrete step:** Push to remote (`git push origin main`). Smoke test: (1) visit own profile `/en/u/[username]` — hover avatar shows camera icon overlay; click it lands on `/en/settings/account`; (2) upload avatar there — immediate preview, Cloudinary persists to `avatars/` folder; (3) nav avatar and "Change photo" in dropdown both work; (4) create a club with a cover image — asset lands in `clubs/` folder not `covers/`. **Prerequisite:** create Cloudinary unsigned upload presets `beehive_avatars` (folder=`avatars`) and `beehive_clubs` (folder=`clubs`) to match the `covers` preset that already exists.
 >
-> **Next concrete step:** Push to remote (`git push origin main`). Then smoke test: (1) click avatar in nav — dropdown shows "Change photo" as first item; (2) click it — lands on `/en/settings/account` with avatar uploader above Danger Zone; (3) upload a valid image — immediate preview, uploads to Cloudinary, persists; (4) Remove button clears back to initials; (5) invalid file type or >5 MB shows sonner error toast; (6) updated avatar appears in nav dropdown, profile page, community feed, comments. **Prerequisite:** Cloudinary unsigned upload preset `beehive_avatars` (folder = `avatars`) must exist.
+> **Cloudinary folder layout (load-bearing):**
+> - `covers/` — book covers (`CoverPicker`, `book-details-form`) — preset `beehive_covers`
+> - `clubs/` — club cover images (`create-club-modal`) — preset `beehive_clubs`
+> - `avatars/` — user profile photos (`avatar-uploader`) — preset `beehive_avatars`
+> - `about-author/` — FM/BM author photo (`about-author-preview`) — preset `beehive_about-author`
 >
 > **GitHub Issues — Ordered Execution Queue:**
 > - ~~#31 Auth audit~~ ✅

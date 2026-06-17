@@ -37,7 +37,7 @@ const ctaStyle: React.CSSProperties = {
 const fieldClass =
   'w-full px-4 py-3.5 text-[15px] placeholder:opacity-40 focus:outline-none focus:ring-[3px] focus:ring-[oklch(from_var(--brand)_l_c_h_/_0.18)] transition-all'
 
-export function SignInForm({ locale }: { locale: string }) {
+export function SignInForm({ locale, destination }: { locale: string; destination: string }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -45,8 +45,6 @@ export function SignInForm({ locale }: { locale: string }) {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  const callbackURL = `/${locale}/studio`
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -57,14 +55,16 @@ export function SignInForm({ locale }: { locale: string }) {
       setError(result.error.message ?? 'Invalid email or password.')
       setLoading(false)
     } else {
-      window.location.href = callbackURL
+      window.location.href = destination
     }
   }
 
   async function handleGoogle() {
     setError(null)
     setGoogleLoading(true)
-    await signIn.social({ provider: 'google', callbackURL })
+    // Pass `destination` as the callbackURL so Google OAuth also respects
+    // the original page the user was trying to reach.
+    await signIn.social({ provider: 'google', callbackURL: destination })
   }
 
   return (

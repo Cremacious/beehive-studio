@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { getNotificationPreferencesAction } from '@/lib/notifications/get-preferences'
 import { PageHead } from '@/components/community/page-head'
 import { NotificationPreferencesForm } from './_components/notification-preferences-form'
@@ -21,6 +22,16 @@ export default async function Page({
       <NotificationPreferencesForm
         initialOptedOutTypes={result.data.optedOutTypes}
       />
+
+      <div className="mt-8 pt-6" style={{ borderTop: '1px solid oklch(1 0 0 / 0.06)' }}>
+        <Link
+          href={`/${locale}/settings/account`}
+          className="text-[13.5px] hover:underline underline-offset-4 transition-colors"
+          style={{ color: 'var(--canvas-dark-ink-muted)' }}
+        >
+          Account settings (danger zone)
+        </Link>
+      </div>
     </main>
   )
 }

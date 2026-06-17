@@ -89,6 +89,10 @@ export function SignUpForm({ locale }: { locale: string }) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (password !== confirm) return
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.')
+      return
+    }
     setError(null)
     setLoading(true)
     const result = await signUp.email({ email, password, name: email })
@@ -315,7 +319,7 @@ export function SignUpForm({ locale }: { locale: string }) {
 
           <button
             type="submit"
-            disabled={loading || googleLoading || passwordsMismatch}
+            disabled={loading || googleLoading || passwordsMismatch || strength === 0}
             className="mainFont font-bold w-full px-5 py-3.5 text-[15px] inline-flex items-center justify-center gap-2 mt-2 hover:-translate-y-px disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none transition-all"
             style={ctaStyle}
           >

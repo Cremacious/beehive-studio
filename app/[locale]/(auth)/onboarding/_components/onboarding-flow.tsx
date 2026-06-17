@@ -328,7 +328,7 @@ export function OnboardingFlow({ locale }: { locale: string }) {
                         autoComplete="username"
                         spellCheck={false}
                         autoCapitalize="off"
-                        maxLength={24}
+                        maxLength={20}
                         placeholder="mayavance"
                         value={username}
                         onChange={e => handleUsernameInput(e.target.value)}
@@ -370,7 +370,7 @@ export function OnboardingFlow({ locale }: { locale: string }) {
                 </form>
 
                 <p className="text-[12px] mt-5 leading-relaxed text-center" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
-                  3–24 characters. Letters, numbers, underscores only.
+                  3–20 characters. Letters, numbers, underscores only.
                 </p>
               </div>
             )}

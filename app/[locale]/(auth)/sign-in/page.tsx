@@ -1,10 +1,31 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
+import { auth } from '@/lib/auth'
+import { safeNextPath } from '@/lib/utils'
 import { SignInForm } from './_components/sign-in-form'
 
 export const metadata = { title: 'Sign in · Beehive Studio' }
 
-export default async function SignInPage({ params }: { params: Promise<{ locale: string }> }) {
+type Props = {
+  params: Promise<{ locale: string }>
+  searchParams: Promise<{ from?: string; next?: string }>
+}
+
+export default async function SignInPage({ params, searchParams }: Props) {
   const { locale } = await params
+  const { from, next } = await searchParams
+
+  // Resolve the post-auth destination. Middleware sets `?from=` when
+  // redirecting unauthenticated users; some callers use `?next=` instead.
+  // `safeNextPath` rejects external URLs to prevent open-redirect attacks.
+  const destination = safeNextPath(from ?? next ?? null, `/${locale}/studio`)
+
+  // Already-authenticated users with completed onboarding skip the form.
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (session?.user) {
+    redirect(destination)
+  }
 
   return (
     <div
@@ -34,7 +55,7 @@ export default async function SignInPage({ params }: { params: Promise<{ locale:
 
       {/* Main */}
       <main className="relative z-10 flex-1 flex items-center justify-center px-6 py-10">
-        <SignInForm locale={locale} />
+        <SignInForm locale={locale} destination={destination} />
       </main>
 
       {/* Footer */}

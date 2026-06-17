@@ -1,6 +1,5 @@
 import { FilterSidebar } from './filter-sidebar'
 import { FilterSection } from './filter-section'
-import { FilterSearchInput } from './filter-search-input'
 import { FilterCheckboxGroup } from './filter-checkbox-group'
 import { FilterRadioGroup } from './filter-radio-group'
 import {
@@ -55,26 +54,21 @@ export function ClubsFilters({ sp, locale }: Props) {
   )
   const currentBook = parseMultiSelect(pickRaw(sp, 'currentBook'))
 
+  const modeParam = pickRaw(sp, 'mode')
   const activeCount =
-    (q ? 1 : 0) +
     (genres.length > 0 ? 1 : 0) +
     (size !== 'any' ? 1 : 0) +
     (access.length > 0 ? 1 : 0) +
     (activity !== 'any' ? 1 : 0) +
     (currentBook.length > 0 ? 1 : 0)
 
+  const clearHref =
+    `/${locale}/discover?tab=clubs` +
+    (modeParam ? `&mode=${encodeURIComponent(modeParam)}` : '') +
+    (q ? `&q=${encodeURIComponent(q)}` : '')
+
   return (
-    <FilterSidebar
-      activeCount={activeCount}
-      clearHref={`/${locale}/discover?tab=clubs`}
-    >
-      <FilterSection label="Search" defaultOpen>
-        <FilterSearchInput
-          name="q"
-          placeholder="Club, current book…"
-          initialValue={q ?? ''}
-        />
-      </FilterSection>
+    <FilterSidebar activeCount={activeCount} clearHref={clearHref}>
       <FilterSection label="Genre">
         <FilterCheckboxGroup
           name="genres"

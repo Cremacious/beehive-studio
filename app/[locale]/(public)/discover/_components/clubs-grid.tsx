@@ -8,9 +8,16 @@ import {
   parseMultiSelect,
   parseRadio,
   parseIntParam,
+  parseMode,
   buildUrl,
+  type ModeId,
 } from '@/lib/discover/url-state'
+import { resolveDefaultMode } from '@/lib/discover/resolve-default-mode'
+import { getOptionalUserId } from '@/lib/require-auth'
+import { hasAnyDiscoverySignalAction } from '@/lib/actions/discover-for-you-books.actions'
 import { GENRE_LABEL, isValidGenre, type GenreSlug } from '@/lib/discover/genres'
+import { DiscoveryModeToggle } from './discovery-mode-toggle'
+import { FilterSearchInput } from './filter-search-input'
 import { SlimFeaturedStrip } from './slim-featured-strip'
 import { SortHeader } from './sort-header'
 import { ActiveFilterChips, type ActiveFilterChip } from './active-filter-chips'
@@ -120,6 +127,9 @@ function buildChips(sp: SP, locale: string): ActiveFilterChip[] {
 }
 
 export async function ClubsGrid({ sp, locale }: Props) {
+  const viewerId = await getOptionalUserId()
+  const isAuthed = viewerId !== null
+
   const q = parseStringParam(pickRaw(sp, 'q'))
   const genres = parseMultiSelect(pickRaw(sp, 'genres'))
   const size = parseRadio(pickRaw(sp, 'size'), SIZES, 'any')
@@ -132,16 +142,64 @@ export async function ClubsGrid({ sp, locale }: Props) {
   const sort = parseRadio(pickRaw(sp, 'sort'), SORTS, 'most-active')
   const page = Math.max(1, parseIntParam(pickRaw(sp, 'page'), 1))
 
+  // Resolve active discovery mode.
+  const parsedMode = parseMode(pickRaw(sp, 'mode'))
+  let resolvedMode: ModeId
+  if (parsedMode) {
+    resolvedMode = parsedMode === 'for-you' && !isAuthed ? 'trending' : parsedMode
+  } else {
+    const hasSignal = isAuthed ? await hasAnyDiscoverySignalAction(viewerId!) : false
+    resolvedMode = resolveDefaultMode({ isAuthed, hasSignal })
+  }
+
   const [resultsRes, featuredRes] = await Promise.all([
-    searchClubsDiscoverAction({
-      q,
-      genres,
-      size,
-      accessStates: access,
-      currentBook,
-      sort,
-      page,
-    }),
+    (() => {
+      switch (resolvedMode) {
+        case 'for-you':
+          return searchClubsDiscoverAction({
+            q,
+            genres,
+            size,
+            accessStates: access,
+            currentBook,
+            sort: 'most-active',
+            source: 'following',
+            viewerId: viewerId ?? undefined,
+            page,
+          })
+        case 'trending':
+          return searchClubsDiscoverAction({
+            q,
+            genres,
+            size,
+            accessStates: access,
+            currentBook,
+            sort: 'most-active',
+            page,
+          })
+        case 'popular':
+          return searchClubsDiscoverAction({
+            q,
+            genres,
+            size,
+            accessStates: access,
+            currentBook,
+            sort: 'most-members',
+            page,
+          })
+        case 'all':
+        default:
+          return searchClubsDiscoverAction({
+            q,
+            genres,
+            size,
+            accessStates: access,
+            currentBook,
+            sort,
+            page,
+          })
+      }
+    })(),
     getFeaturedClubAction({}),
   ])
 
@@ -159,8 +217,29 @@ export async function ClubsGrid({ sp, locale }: Props) {
         }
       : null
 
+  const toggleBaseParams: Record<string, string | string[] | undefined> = {
+    q,
+    genres: genres.length ? genres : undefined,
+    size: size !== 'any' ? size : undefined,
+    accessStates: access.length ? access : undefined,
+    currentBook: currentBook.length ? currentBook : undefined,
+    sort: sort !== 'most-active' ? sort : undefined,
+  }
+
   return (
     <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between gap-4">
+        <DiscoveryModeToggle
+          tab="clubs"
+          locale={locale}
+          current={resolvedMode}
+          isAuthed={isAuthed}
+          baseParams={toggleBaseParams}
+        />
+        <div style={{ width: 192 }}>
+          <FilterSearchInput name="q" placeholder="Club name…" initialValue={q ?? ''} />
+        </div>
+      </div>
       <SlimFeaturedStrip kind="club" featured={featured} />
       <SortHeader
         count={totalCount}
@@ -192,12 +271,8 @@ export async function ClubsGrid({ sp, locale }: Props) {
             page={page}
             totalPages={totalPages}
             baseParams={{
-              q,
-              genres: genres.length ? genres : undefined,
-              size: size !== 'any' ? size : undefined,
-              accessStates: access.length ? access : undefined,
-              currentBook: currentBook.length ? currentBook : undefined,
-              sort: sort !== 'most-active' ? sort : undefined,
+              ...toggleBaseParams,
+              mode: resolvedMode === 'trending' ? undefined : resolvedMode,
             }}
           />
         </>

@@ -6,11 +6,17 @@ import {
 import {
   parseStringParam,
   parseMultiSelect,
-  parseRadio,
   buildUrl,
+  parseMode,
+  type ModeId,
 } from '@/lib/discover/url-state'
+import { resolveDefaultMode } from '@/lib/discover/resolve-default-mode'
+import { getOptionalUserId } from '@/lib/require-auth'
+import { hasAnyDiscoverySignalAction } from '@/lib/actions/discover-for-you-books.actions'
 import { GENRE_LABEL, isValidGenre, type GenreSlug } from '@/lib/discover/genres'
 import { ActiveFilterChips, type ActiveFilterChip } from './active-filter-chips'
+import { DiscoveryModeToggle } from './discovery-mode-toggle'
+import { FilterSearchInput } from './filter-search-input'
 import { BookGridCard } from './book-grid-card'
 import { SparkGridCard } from './spark-grid-card'
 import { HiveGridCard } from './hive-grid-card'
@@ -28,7 +34,6 @@ const SHOW_LABEL: Record<EntityKind, string> = {
   lists: 'Lists',
   clubs: 'Clubs',
 }
-const FROM_LABEL = { anyone: 'Anyone', following: 'Following' } as const
 
 function pickRaw(sp: SP, key: string): string | undefined {
   const v = sp[key]
@@ -49,13 +54,13 @@ function buildChips(sp: SP, locale: string): ActiveFilterChip[] {
   const genres = parseMultiSelect(pickRaw(sp, 'genres'))
   const show = parseShow(sp)
   const isShowNarrowed = show.length < 5
-  const from = parseRadio(pickRaw(sp, 'from'), ['anyone', 'following'], 'anyone')
+  const modeRaw = pickRaw(sp, 'mode')
 
   const all: Record<string, string | string[] | undefined> = {
     q,
     genres: genres.length ? genres : undefined,
     show: isShowNarrowed ? show : undefined,
-    from: from !== 'anyone' ? from : undefined,
+    mode: modeRaw,
   }
   const without = (key: string) =>
     buildUrl('home', { ...all, [key]: undefined }, `/${locale}/discover`)
@@ -83,9 +88,6 @@ function buildChips(sp: SP, locale: string): ActiveFilterChip[] {
       removeHref: without('show'),
     })
   }
-  if (from === 'following') {
-    chips.push({ label: FROM_LABEL.following, removeHref: without('from') })
-  }
   return chips
 }
 
@@ -109,10 +111,23 @@ function itemKey(item: HomeMixedItem): string {
 }
 
 export async function HomeGrid({ sp, locale }: Props) {
+  const viewerId = await getOptionalUserId()
+  const isAuthed = viewerId !== null
+  const parsedMode = parseMode(pickRaw(sp, 'mode'))
+  let resolvedMode: ModeId
+  if (parsedMode) {
+    resolvedMode = parsedMode === 'for-you' && !isAuthed ? 'trending' : parsedMode
+  } else {
+    const hasSignal = isAuthed ? await hasAnyDiscoverySignalAction(viewerId!) : false
+    resolvedMode = resolveDefaultMode({ isAuthed, hasSignal })
+  }
+
   const q = parseStringParam(pickRaw(sp, 'q'))
   const genres = parseMultiSelect(pickRaw(sp, 'genres'))
   const show = parseShow(sp)
-  const from = parseRadio(pickRaw(sp, 'from'), ['anyone', 'following'], 'anyone')
+
+  // Derive `from` from the resolved mode rather than from URL params.
+  const from = resolvedMode === 'for-you' ? 'following' : 'anyone'
 
   const res = await searchHomeMixedAction({
     q,
@@ -124,8 +139,27 @@ export async function HomeGrid({ sp, locale }: Props) {
 
   const chips = buildChips(sp, locale)
 
+  // baseParams for DiscoveryModeToggle (no mode, no from, no sort, no page).
+  const toggleBaseParams: Record<string, string | string[] | undefined> = {
+    q,
+    genres: genres.length ? genres : undefined,
+    show: show.length < 5 ? show : undefined,
+  }
+
   return (
     <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between gap-4">
+        <DiscoveryModeToggle
+          tab="home"
+          locale={locale}
+          current={resolvedMode}
+          isAuthed={isAuthed}
+          baseParams={toggleBaseParams}
+        />
+        <div style={{ width: 192 }}>
+          <FilterSearchInput name="q" placeholder="Anything…" initialValue={q ?? ''} />
+        </div>
+      </div>
       <div className="text-[12px] text-[var(--canvas-dark-ink-muted)]">
         <strong className="text-[var(--canvas-dark-ink)]">
           {items.length.toLocaleString()}

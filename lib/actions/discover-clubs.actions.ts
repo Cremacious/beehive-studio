@@ -884,6 +884,10 @@ export async function searchClubsDiscoverAction(args: {
   cursor?: string | null
   /** 1-indexed page number for numbered pagination. */
   page?: number
+  /** Filter to clubs owned by users the viewer follows. v1 impl; proper algorithm TODO. */
+  source?: 'following'
+  /** Required when source='following'; ignored otherwise. */
+  viewerId?: string
 }): Promise<
   ActionResult<{
     books: ClubCard[]

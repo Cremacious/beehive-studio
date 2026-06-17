@@ -1,6 +1,5 @@
 import { FilterSidebar } from './filter-sidebar'
 import { FilterSection } from './filter-section'
-import { FilterSearchInput } from './filter-search-input'
 import { FilterCheckboxGroup } from './filter-checkbox-group'
 import { FilterRadioGroup } from './filter-radio-group'
 import {
@@ -56,25 +55,20 @@ export function HivesFilters({ sp, locale }: Props) {
   const linked = parseMultiSelect(pickRaw(sp, 'linked'))
 
   const activeCount =
-    (q ? 1 : 0) +
     (genres.length > 0 ? 1 : 0) +
     (size !== 'any' ? 1 : 0) +
     (openStates.length > 0 ? 1 : 0) +
     (activity !== 'any' ? 1 : 0) +
     (linked.length > 0 ? 1 : 0)
 
+  const modeParam = pickRaw(sp, 'mode')
+  const clearHref =
+    `/${locale}/discover?tab=hives` +
+    (modeParam ? `&mode=${encodeURIComponent(modeParam)}` : '') +
+    (q ? `&q=${encodeURIComponent(q)}` : '')
+
   return (
-    <FilterSidebar
-      activeCount={activeCount}
-      clearHref={`/${locale}/discover?tab=hives`}
-    >
-      <FilterSection label="Search" defaultOpen>
-        <FilterSearchInput
-          name="q"
-          placeholder="Hive, linked book…"
-          initialValue={q ?? ''}
-        />
-      </FilterSection>
+    <FilterSidebar activeCount={activeCount} clearHref={clearHref}>
       <FilterSection label="Genre">
         <FilterCheckboxGroup
           name="genres"

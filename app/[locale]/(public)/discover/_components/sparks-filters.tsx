@@ -1,6 +1,5 @@
 import { FilterSidebar } from './filter-sidebar'
 import { FilterSection } from './filter-section'
-import { FilterSearchInput } from './filter-search-input'
 import { FilterCheckboxGroup } from './filter-checkbox-group'
 import { FilterRadioGroup } from './filter-radio-group'
 import {
@@ -66,8 +65,13 @@ export function SparksFilters({ sp, locale }: Props) {
     'anyone',
   )
 
+  const modeParam = pickRaw(sp, 'mode')
+  const clearHref =
+    `/${locale}/discover?tab=sparks` +
+    (modeParam ? `&mode=${encodeURIComponent(modeParam)}` : '') +
+    (q ? `&q=${encodeURIComponent(q)}` : '')
+
   const activeCount =
-    (q ? 1 : 0) +
     (genres.length > 0 ? 1 : 0) +
     (state !== 'all' ? 1 : 0) +
     (wordLimit !== 'any' ? 1 : 0) +
@@ -77,15 +81,8 @@ export function SparksFilters({ sp, locale }: Props) {
   return (
     <FilterSidebar
       activeCount={activeCount}
-      clearHref={`/${locale}/discover?tab=sparks`}
+      clearHref={clearHref}
     >
-      <FilterSection label="Search" defaultOpen>
-        <FilterSearchInput
-          name="q"
-          placeholder="Prompt, creator…"
-          initialValue={q ?? ''}
-        />
-      </FilterSection>
       <FilterSection label="State">
         <FilterRadioGroup
           name="state"

@@ -8,9 +8,16 @@ import {
   parseMultiSelect,
   parseRadio,
   parseIntParam,
+  parseMode,
   buildUrl,
+  type ModeId,
 } from '@/lib/discover/url-state'
+import { resolveDefaultMode } from '@/lib/discover/resolve-default-mode'
+import { getOptionalUserId } from '@/lib/require-auth'
+import { hasAnyDiscoverySignalAction } from '@/lib/actions/discover-for-you-books.actions'
 import { GENRE_LABEL, isValidGenre, type GenreSlug } from '@/lib/discover/genres'
+import { DiscoveryModeToggle } from './discovery-mode-toggle'
+import { FilterSearchInput } from './filter-search-input'
 import { SlimFeaturedStrip } from './slim-featured-strip'
 import { SortHeader } from './sort-header'
 import { ActiveFilterChips, type ActiveFilterChip } from './active-filter-chips'
@@ -116,6 +123,17 @@ function buildChips(sp: SP, locale: string): ActiveFilterChip[] {
 }
 
 export async function ListsGrid({ sp, locale }: Props) {
+  const viewerId = await getOptionalUserId()
+  const isAuthed = viewerId !== null
+  const parsedMode = parseMode(pickRaw(sp, 'mode'))
+  let resolvedMode: ModeId
+  if (parsedMode) {
+    resolvedMode = parsedMode === 'for-you' && !isAuthed ? 'trending' : parsedMode
+  } else {
+    const hasSignal = isAuthed ? await hasAnyDiscoverySignalAction(viewerId!) : false
+    resolvedMode = resolveDefaultMode({ isAuthed, hasSignal })
+  }
+
   const q = parseStringParam(pickRaw(sp, 'q'))
   const genres = parseMultiSelect(pickRaw(sp, 'genres'))
   const size = parseRadio(pickRaw(sp, 'size'), SIZES, 'any')
@@ -130,22 +148,72 @@ export async function ListsGrid({ sp, locale }: Props) {
   const page = Math.max(1, parseIntParam(pickRaw(sp, 'page'), 1))
 
   const [resultsRes, featuredRes] = await Promise.all([
-    searchListsDiscoverAction({
-      q,
-      genres,
-      size,
-      popularity,
-      updated,
-      curator,
-      sort,
-      page,
-    }),
+    (() => {
+      switch (resolvedMode) {
+        case 'for-you':
+          return searchListsDiscoverAction({
+            q,
+            genres,
+            size,
+            popularity,
+            updated,
+            curator: 'following',
+            sort: 'most-followed',
+            page,
+          })
+        case 'trending':
+          return searchListsDiscoverAction({
+            q,
+            genres,
+            size,
+            popularity,
+            updated,
+            curator,
+            sort: 'recent',
+            page,
+          })
+        case 'popular':
+          return searchListsDiscoverAction({
+            q,
+            genres,
+            size,
+            popularity,
+            updated,
+            curator,
+            sort: 'most-followed',
+            page,
+          })
+        case 'all':
+        default:
+          return searchListsDiscoverAction({
+            q,
+            genres,
+            size,
+            popularity,
+            updated,
+            curator,
+            sort,
+            page,
+          })
+      }
+    })(),
     getFeaturedListAction({}),
   ])
 
   const lists: ListCard[] = resultsRes.success ? resultsRes.data.books : []
   const totalCount: number = resultsRes.success ? resultsRes.data.totalCount : 0
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
+
+  const toggleBaseParams: Record<string, string | string[] | undefined> = {
+    q,
+    genres: genres.length ? genres : undefined,
+    size: size !== 'any' ? size : undefined,
+    popularity: popularity !== 'any' ? popularity : undefined,
+    updated: updated !== 'anytime' ? updated : undefined,
+    curator: curator !== 'anyone' ? curator : undefined,
+    sort: sort !== 'most-followed' ? sort : undefined,
+  }
+
   const featured =
     featuredRes.success && featuredRes.data
       ? {
@@ -159,6 +227,22 @@ export async function ListsGrid({ sp, locale }: Props) {
 
   return (
     <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between gap-4">
+        <DiscoveryModeToggle
+          tab="lists"
+          locale={locale}
+          current={resolvedMode}
+          isAuthed={isAuthed}
+          baseParams={toggleBaseParams}
+        />
+        <div style={{ width: 192 }}>
+          <FilterSearchInput
+            name="q"
+            placeholder="List title, curator…"
+            initialValue={q ?? ''}
+          />
+        </div>
+      </div>
       <SlimFeaturedStrip kind="list" featured={featured} />
       <SortHeader
         count={totalCount}

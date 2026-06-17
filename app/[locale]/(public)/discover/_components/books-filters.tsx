@@ -1,6 +1,5 @@
 import { FilterSidebar } from './filter-sidebar'
 import { FilterSection } from './filter-section'
-import { FilterSearchInput } from './filter-search-input'
 import { FilterCheckboxGroup } from './filter-checkbox-group'
 import { FilterRadioGroup } from './filter-radio-group'
 import {
@@ -75,7 +74,6 @@ export function BooksFilters({ sp, locale }: Props) {
   )
 
   const activeCount =
-    (q ? 1 : 0) +
     (genres.length > 0 ? 1 : 0) +
     (length !== 'any' ? 1 : 0) +
     (status !== 'any' ? 1 : 0) +
@@ -85,18 +83,11 @@ export function BooksFilters({ sp, locale }: Props) {
   const mode = pickRaw(sp, 'mode')
   const clearHref =
     `/${locale}/discover?tab=books` +
-    (mode ? `&mode=${encodeURIComponent(mode)}` : '')
+    (mode ? `&mode=${encodeURIComponent(mode)}` : '') +
+    (q ? `&q=${encodeURIComponent(q)}` : '')
 
   return (
     <FilterSidebar activeCount={activeCount} clearHref={clearHref}>
-      <FilterSection label="Search" defaultOpen>
-        <FilterSearchInput
-          name="q"
-          placeholder="Title, author, tag…"
-          initialValue={q ?? ''}
-        />
-      </FilterSection>
-
       <FilterSection label="Genre">
         <FilterCheckboxGroup
           name="genres"

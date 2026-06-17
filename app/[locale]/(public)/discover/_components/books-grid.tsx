@@ -21,6 +21,7 @@ import { resolveDefaultMode } from '@/lib/discover/resolve-default-mode'
 import { getOptionalUserId } from '@/lib/require-auth'
 import { GENRE_LABEL, isValidGenre, type GenreSlug } from '@/lib/discover/genres'
 import { DiscoveryModeToggle } from './discovery-mode-toggle'
+import { FilterSearchInput } from './filter-search-input'
 import { SortHeader } from './sort-header'
 import { ActiveFilterChips, type ActiveFilterChip } from './active-filter-chips'
 import { BookGridCard } from './book-grid-card'
@@ -229,13 +230,22 @@ export async function BooksGrid({ sp, locale }: Props) {
 
   return (
     <div className="flex flex-col gap-4">
-      <DiscoveryModeToggle
-        tab="books"
-        locale={locale}
-        current={resolvedMode}
-        isAuthed={isAuthed}
-        baseParams={toggleBaseParams}
-      />
+      <div className="flex items-center justify-between gap-4">
+        <DiscoveryModeToggle
+          tab="books"
+          locale={locale}
+          current={resolvedMode}
+          isAuthed={isAuthed}
+          baseParams={toggleBaseParams}
+        />
+        <div style={{ width: 192 }}>
+          <FilterSearchInput
+            name="q"
+            placeholder="Title, author, tag…"
+            initialValue={q ?? ''}
+          />
+        </div>
+      </div>
       <SortHeader
         count={totalCount}
         entityNoun={totalCount === 1 ? 'book' : 'books'}

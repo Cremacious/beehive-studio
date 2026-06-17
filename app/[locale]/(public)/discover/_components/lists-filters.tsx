@@ -1,6 +1,5 @@
 import { FilterSidebar } from './filter-sidebar'
 import { FilterSection } from './filter-section'
-import { FilterSearchInput } from './filter-search-input'
 import { FilterCheckboxGroup } from './filter-checkbox-group'
 import { FilterRadioGroup } from './filter-radio-group'
 import {
@@ -64,25 +63,23 @@ export function ListsFilters({ sp, locale }: Props) {
   )
 
   const activeCount =
-    (q ? 1 : 0) +
     (genres.length > 0 ? 1 : 0) +
     (size !== 'any' ? 1 : 0) +
     (popularity !== 'any' ? 1 : 0) +
     (updated !== 'anytime' ? 1 : 0) +
     (curator !== 'anyone' ? 1 : 0)
 
+  const modeParam = pickRaw(sp, 'mode')
+  const clearHref =
+    `/${locale}/discover?tab=lists` +
+    (modeParam ? `&mode=${encodeURIComponent(modeParam)}` : '') +
+    (q ? `&q=${encodeURIComponent(q)}` : '')
+
   return (
     <FilterSidebar
       activeCount={activeCount}
-      clearHref={`/${locale}/discover?tab=lists`}
+      clearHref={clearHref}
     >
-      <FilterSection label="Search" defaultOpen>
-        <FilterSearchInput
-          name="q"
-          placeholder="List title, curator…"
-          initialValue={q ?? ''}
-        />
-      </FilterSection>
       <FilterSection label="Genre">
         <FilterCheckboxGroup
           name="genres"

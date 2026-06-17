@@ -12,15 +12,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-17 (Issue #26 complete — tab strip tile chrome + Radix Select sort dropdowns across all 5 community hub pages.)
+> **Last updated:** 2026-06-17 (Issue #19 complete — FM/BM typography scale + About the Author Cloudinary image upload.)
 >
-> **Last commit:** [c75a1c7](https://github.com/Cremacious/beehive-studio/commit/c75a1c7) — fix(hub): tile-chrome tab strips + Radix Select sort dropdowns across all 5 hubs. Closes #26.
+> **Last commit:** [3491144](https://github.com/Cremacious/beehive-studio/commit/3491144) — fix(fmbm): issue #19 — FM/BM typography scale + About the Author image upload. Closes #19.
+>
+> **Prior — Last commit:** [c75a1c7](https://github.com/Cremacious/beehive-studio/commit/c75a1c7) — fix(hub): tile-chrome tab strips + Radix Select sort dropdowns across all 5 hubs. Closes #26.
 >
 > **Prior — Last commit:** [8b9cd97](https://github.com/Cremacious/beehive-studio/commit/8b9cd97) — fix(email): rename Beehive Studio -> Beehive Books throughout email templates.
 >
-> **Prior — Last commit:** [32c192a](https://github.com/Cremacious/beehive-studio/commit/32c192a) — feat(email): branded password-reset email template with plain-text fallback. Closes #33.
->
-> **Next concrete step:** Proceed to #19 FM/BM typography + About the Author image, or smoke #26 first: visit /en/sparks, /en/hives, /en/reading-lists, /en/clubs, /en/friends — confirm tab strip container is visibly raised (tile chrome), counts show as pill badges (omitted when 0), and sort trigger shows an ArrowUpDown icon + label + ChevronDown that opens a styled panel dropdown. Then push to remote.
+> **Next concrete step:** Smoke #19 in the studio editor: open a book, add a front_matter/back_matter binder item, cycle through all 5 subtypes — Title Page title should be 28px (not 40), Dedication body 15px italic (not 24), Copyright 11.5px left-aligned, Acknowledgments 18px heading left-aligned, About the Author mono label + 96px avatar with hover camera overlay and working Change/Remove controls. Then push to remote.
 >
 > **GitHub Issues — Ordered Execution Queue:**
 > - ~~#31 Auth audit~~ ✅
@@ -28,7 +28,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 > - ~~#16 Binder reorder arrows~~ ✅
 > - ~~#33 Password reset email design~~ ✅
 > - ~~#26 Tab strip + sort dropdown visibility~~ ✅
-> - #19 FM/BM typography + About the Author image
+> - ~~#19 FM/BM typography + About the Author image~~ ✅
 > - #25 Community routing refactor (/community/hives etc.)
 > - #17 Avatar upload (Cloudinary)
 > - #27 View own profile (nav entry point)

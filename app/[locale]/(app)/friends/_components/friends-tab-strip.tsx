@@ -34,14 +34,18 @@ export function FriendsTabStrip({
 
   return (
     <nav
-      className="inline-flex items-center gap-0.5 rounded-xl p-1 self-start"
-      style={{ background: 'rgba(255, 255, 255, 0.04)' }}
+      className="inline-flex items-center gap-0.5 p-1 self-start"
+      style={{
+        background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+        borderRadius: 'var(--r-row)',
+        boxShadow: 'var(--sh-tile)',
+      }}
       aria-label="Friends tabs"
     >
       {TABS.map((t) => {
         const isActive = activeTab === t.id
         const count = counts[t.id]
-        const showCount = !t.hideCount && count !== null
+        const showCount = !t.hideCount && count !== null && count > 0
         if (isActive) {
           return (
             <span
@@ -55,10 +59,12 @@ export function FriendsTabStrip({
             >
               <span>{t.label}</span>
               {showCount ? (
-                <>
-                  <span aria-hidden="true">·</span>
-                  <span>{count}</span>
-                </>
+                <span
+                  className="inline-flex items-center justify-center px-1.5 min-w-[18px] h-4 text-[10px] font-bold rounded-full"
+                  style={{ background: 'rgba(0,0,0,0.18)', color: 'var(--brand-ink)' }}
+                >
+                  {count}
+                </span>
               ) : null}
             </span>
           )
@@ -71,12 +77,12 @@ export function FriendsTabStrip({
           >
             <span>{t.label}</span>
             {showCount ? (
-              <>
-                <span aria-hidden="true" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
-                  ·
-                </span>
-                <span style={{ color: 'var(--canvas-dark-ink-muted)' }}>{count}</span>
-              </>
+              <span
+                className="inline-flex items-center justify-center px-1.5 min-w-[18px] h-4 text-[10px] font-medium rounded-full"
+                style={{ background: 'rgba(255,255,255,0.10)', color: 'var(--canvas-dark-ink)' }}
+              >
+                {count}
+              </span>
             ) : null}
           </Link>
         )

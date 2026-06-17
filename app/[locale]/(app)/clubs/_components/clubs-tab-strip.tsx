@@ -58,8 +58,12 @@ export function ClubsTabStrip({ locale, current, counts, baseParams }: Props) {
 
   return (
     <nav
-      className="inline-flex items-center gap-0.5 rounded-xl p-1 self-start"
-      style={{ background: 'rgba(255, 255, 255, 0.04)' }}
+      className="inline-flex items-center gap-0.5 p-1 self-start"
+      style={{
+        background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+        borderRadius: 'var(--r-row)',
+        boxShadow: 'var(--sh-tile)',
+      }}
       aria-label="Clubs tabs"
     >
       {TABS.map((t) => {
@@ -77,8 +81,14 @@ export function ClubsTabStrip({ locale, current, counts, baseParams }: Props) {
               aria-current="page"
             >
               <span>{t.label}</span>
-              <span aria-hidden="true">·</span>
-              <span>{count}</span>
+              {count > 0 && (
+                <span
+                  className="inline-flex items-center justify-center px-1.5 min-w-[18px] h-4 text-[10px] font-bold rounded-full"
+                  style={{ background: 'rgba(0,0,0,0.18)', color: 'var(--brand-ink)' }}
+                >
+                  {count}
+                </span>
+              )}
             </span>
           )
         }
@@ -89,10 +99,14 @@ export function ClubsTabStrip({ locale, current, counts, baseParams }: Props) {
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[12px] text-[var(--canvas-dark-ink)] hover:text-[var(--brand)] transition-colors rounded-lg"
           >
             <span>{t.label}</span>
-            <span aria-hidden="true" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
-              ·
-            </span>
-            <span style={{ color: 'var(--canvas-dark-ink-muted)' }}>{count}</span>
+            {count > 0 && (
+              <span
+                className="inline-flex items-center justify-center px-1.5 min-w-[18px] h-4 text-[10px] font-medium rounded-full"
+                style={{ background: 'rgba(255,255,255,0.10)', color: 'var(--canvas-dark-ink)' }}
+              >
+                {count}
+              </span>
+            )}
           </Link>
         )
       })}

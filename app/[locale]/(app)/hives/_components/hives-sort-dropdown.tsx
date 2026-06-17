@@ -1,5 +1,5 @@
 'use client'
-import { FilterDropdown } from '@/app/[locale]/(public)/discover/_components/filter-dropdown'
+import { HubSortDropdown } from '@/components/hub/hub-sort-dropdown'
 
 const SORT_OPTIONS = [
   { value: 'active', label: 'Most active' },
@@ -14,21 +14,14 @@ type Props = {
   selected: HivesSort
 }
 
-/**
- * Thin client wrapper around <FilterDropdown> for the /hives hub's
- * header sort control. FilterDropdown handles URL state via useFilterNav
- * (writes `?sort=X` and drops the param when value equals the fallback
- * `'active'`).
- */
 export function HivesSortDropdown({ selected }: Props) {
   return (
-    <FilterDropdown
+    <HubSortDropdown
       name="sort"
       options={SORT_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
       selected={selected}
       fallback="active"
       ariaLabel="Sort hives"
-      variant="header"
     />
   )
 }

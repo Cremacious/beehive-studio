@@ -1,6 +1,6 @@
 import { auth } from '@/lib/auth'
 import { toNextJsHandler } from 'better-auth/next-js'
-import { signUpLimiter, signInLimiter } from '@/lib/rate-limit'
+import { signUpLimiter, signInLimiter, forgotPasswordLimiter } from '@/lib/rate-limit'
 import { NextRequest, NextResponse } from 'next/server'
 
 const authHandler = toNextJsHandler(auth)
@@ -51,6 +51,17 @@ export async function POST(req: NextRequest) {
     if (!success) {
       return NextResponse.json(
         { message: 'Too many sign-in attempts. Please try again later.' },
+        { status: 429 },
+      )
+    }
+  }
+
+  if (authPath === 'request-password-reset') {
+    const ip = getClientIp(req)
+    const { success } = await forgotPasswordLimiter.limit(ip)
+    if (!success) {
+      return NextResponse.json(
+        { message: 'Too many reset requests. Please wait 15 minutes and try again.' },
         { status: 429 },
       )
     }

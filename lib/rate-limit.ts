@@ -22,6 +22,7 @@ function makeRatelimit(prefix: string, limiter: ReturnType<typeof Ratelimit.slid
 
 export const signUpLimiter = makeRatelimit('rl:signup', Ratelimit.slidingWindow(20, '1 h'))
 export const signInLimiter = makeRatelimit('rl:signin', Ratelimit.slidingWindow(10, '15 m'))
+export const forgotPasswordLimiter = makeRatelimit('rl:forgot-pw', Ratelimit.slidingWindow(5, '15 m'))
 export const actionLimiter = makeRatelimit('rl:action', Ratelimit.slidingWindow(20, '1 m'))
 export const searchLimiter = makeRatelimit('rl:search', Ratelimit.slidingWindow(60, '1 m'))
 export const pageLimiter = makeRatelimit('rl:page', Ratelimit.slidingWindow(200, '1 m'))

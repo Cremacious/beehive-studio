@@ -12,17 +12,17 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-17 (Issue #16 binder arrow fix ✅ COMPLETE. Arrow reorder is now fully unrestricted: any item can be placed in any position.)
+> **Last updated:** 2026-06-17 (Issue #33 branded password-reset email ✅ COMPLETE. Table-based HTML template with plain-text fallback, username personalisation, and raw-URL fallback below the CTA button.)
 >
-> **Last commit:** [c094030](https://github.com/Cremacious/beehive-studio/commit/c094030) — fix(binder): remove pin-class boundary from arrow reorder logic. `canMoveUp`/`canMoveDown` are now purely index-based (first/last only); no pin or type restrictions. Closes #16.
+> **Last commit:** [32c192a](https://github.com/Cremacious/beehive-studio/commit/32c192a) — feat(email): branded password-reset email template with plain-text fallback. New `lib/email/templates/password-reset.ts` exports `passwordResetEmailHtml` + `passwordResetEmailText` (both accept `{ url, username }`). `lib/email.ts` gains a `lookupUsername` DB helper and wires `sendPasswordResetEmail` to the new template with both `html` and `text` Resend fields. Closes #33.
+>
+> **Prior — Last commit:** [c094030](https://github.com/Cremacious/beehive-studio/commit/c094030) — fix(binder): remove pin-class boundary from arrow reorder logic. `canMoveUp`/`canMoveDown` are now purely index-based (first/last only); no pin or type restrictions. Closes #16.
 >
 > **Prior — Last commit:** [b8ad586](https://github.com/Cremacious/beehive-studio/commit/b8ad586) — fix(email): read FROM address from RESEND_FROM_EMAIL env var.
 >
 > **Prior — Last commit:** [f61650b](https://github.com/Cremacious/beehive-studio/commit/f61650b) — fix(auth): add forgotPasswordLimiter and wire to forgot-password endpoint.
 >
-> **Prior — Last commit:** [017620c](https://github.com/Cremacious/beehive-studio/commit/017620c) — fix(auth): security audit — rate limiting, ?from= redirect, account deletion, env vars. 6 bugs fixed: (1) signUpLimiter/signInLimiter wired to auth API route; (2) sign-in ?from= redirect restored; (3) password minlength enforced client-side; (4) username maxLength mismatch fixed (was 24, schema says 20); (5) self-service account deletion added at /settings/account with Stripe subscription cancellation; (6) .env.example completed with all required vars.
->
-> **Next concrete step:** Chris smokes the password recovery flow (still pending from prior session) — (1) go to `/en/forgot-password`, enter an email associated with an email/password account, confirm email arrives from `noreply@code-mack.dev` within 30 seconds; (2) click reset link, confirm landing on `/en/reset-password?token=...`; (3) set a new password, confirm redirect to sign-in and new password works; (4) test invalid token URL — confirm "Link expired" panel; (5) test Google-only account email — confirm generic success message (no email sent). Also smoke binder arrow fix: add 2+ front matter items to a book in the studio, confirm up/down arrows reorder them among themselves; confirm arrows are disabled at section boundaries (no swapping FM with chapters). Then smoke `/en/discover` on all 6 tabs (prior pending).
+> **Next concrete step:** Chris smokes the password recovery flow — (1) go to `/en/forgot-password`, enter an email associated with an email/password account, confirm email arrives from `noreply@code-mack.dev` within 30 seconds; (2) confirm the email has a light background, dark header with brand-yellow "Beehive Studio" wordmark, personalised `Hi @username,` greeting, brand-yellow "Reset my password" pill CTA, and the raw URL printed below the button; (3) click reset link, confirm landing on `/en/reset-password?token=...`; (4) set a new password, confirm redirect to sign-in and new password works; (5) test invalid token URL — confirm "Link expired" panel; (6) test Google-only account email — confirm generic success message (no email sent). Also still pending: smoke binder arrow fix and `/en/discover` on all 6 tabs.
 >
 > **Prior — Last commit:** [ab1f610](https://github.com/Cremacious/beehive-studio/commit/ab1f610) — docs(plan): discover mode toggle + search header — 7-task implementation plan.
 >

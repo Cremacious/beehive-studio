@@ -12,17 +12,35 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-17 (Issue #33 branded password-reset email ✅ COMPLETE + renamed to Beehive Books throughout.)
+> **Last updated:** 2026-06-17 (Issue tracking session — 18 GitHub issues created (#16-#33) and a prioritised execution order established. Issues #31 (auth audit), #29 (password recovery), #16 (binder arrows), #33 (email design) all closed as complete. Issue #26 (tab strip + sort dropdown visibility) is currently in progress.)
 >
-> **Last commit:** [8b9cd97](https://github.com/Cremacious/beehive-studio/commit/8b9cd97) — fix(email): rename Beehive Studio -> Beehive Books throughout email templates. All user-facing strings in `lib/email/templates/password-reset.ts` + `lib/email.ts` updated (wordmark, body copy, subjects, plain-text footer, FROM display name). Also adds `.claude/launch.json` for the email-preview static server.
+> **Last commit:** [8b9cd97](https://github.com/Cremacious/beehive-studio/commit/8b9cd97) — fix(email): rename Beehive Studio -> Beehive Books throughout email templates.
 >
-> **Prior — Last commit:** [32c192a](https://github.com/Cremacious/beehive-studio/commit/32c192a) — feat(email): branded password-reset email template with plain-text fallback. New `lib/email/templates/password-reset.ts` exports `passwordResetEmailHtml` + `passwordResetEmailText` (both accept `{ url, username }`). `lib/email.ts` gains a `lookupUsername` DB helper and wires `sendPasswordResetEmail` to the new template with both `html` and `text` Resend fields. Closes #33.
+> **Prior — Last commit:** [32c192a](https://github.com/Cremacious/beehive-studio/commit/32c192a) — feat(email): branded password-reset email template with plain-text fallback. Closes #33.
 >
-> **Prior — Last commit:** [c094030](https://github.com/Cremacious/beehive-studio/commit/c094030) — fix(binder): remove pin-class boundary from arrow reorder logic. `canMoveUp`/`canMoveDown` are now purely index-based (first/last only); no pin or type restrictions. Closes #16.
+> **Prior — Last commit:** [c094030](https://github.com/Cremacious/beehive-studio/commit/c094030) — fix(binder): remove pin-class boundary from arrow reorder logic. Closes #16.
 >
-> **Prior — Last commit:** [b8ad586](https://github.com/Cremacious/beehive-studio/commit/b8ad586) — fix(email): read FROM address from RESEND_FROM_EMAIL env var.
+> **Next concrete step:** Issue #26 in progress — fix tab strip contrast and replace native sort dropdown with styled custom component across all 5 community hub pages (Hives, Sparks, Friends, Reading Lists, Clubs). After that proceed through the ordered queue below.
 >
-> **Next concrete step:** Chris smokes the password recovery flow — (1) go to `/en/forgot-password`, enter an email associated with an email/password account, confirm email arrives from `noreply@code-mack.dev` within 30 seconds; (2) confirm the email has a light background, dark header with brand-yellow "Beehive Books" wordmark, personalised `Hi @username,` greeting, brand-yellow "Reset my password" pill CTA, and the raw URL printed below the button; (3) click reset link, confirm landing on `/en/reset-password?token=...`; (4) set a new password, confirm redirect to sign-in and new password works; (5) test invalid token URL — confirm "Link expired" panel; (6) test Google-only account email — confirm generic success message (no email sent). Also still pending: smoke binder arrow fix and `/en/discover` on all 6 tabs.
+> **GitHub Issues — Ordered Execution Queue:**
+> - ~~#31 Auth audit~~ ✅
+> - ~~#29 Password recovery~~ ✅
+> - ~~#16 Binder reorder arrows~~ ✅
+> - ~~#33 Password reset email design~~ ✅
+> - **#26 Tab strip + sort dropdown visibility** ← IN PROGRESS
+> - #19 FM/BM typography + About the Author image
+> - #25 Community routing refactor (/community/hives etc.)
+> - #17 Avatar upload (Cloudinary)
+> - #27 View own profile (nav entry point)
+> - #20 Book details page redesign (mockup-first)
+> - #23 Create/edit forms redesign — Clubs + Lists (mockup-first)
+> - #24 /sparks/new redesign + edit route (mockup-first)
+> - #28 Notifications settings redesign (mockup-first)
+> - #30 Book club page redesign (mockup-first)
+> - #21 Likes + bookmarks expansion
+> - #22 Reading list tags
+> - #32 Trending/Popular algorithms + remove featured banner
+> - #18 For You recommendation system (last — depends on #21, #22, #32)
 >
 > **Prior — Last commit:** [ab1f610](https://github.com/Cremacious/beehive-studio/commit/ab1f610) — docs(plan): discover mode toggle + search header — 7-task implementation plan.
 >

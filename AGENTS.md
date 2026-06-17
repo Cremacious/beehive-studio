@@ -12,15 +12,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-17 (Discover mode toggle + search redesign spec written and committed. Awaiting Chris's spec review before implementation plan.)
+> **Last updated:** 2026-06-17 (Discover mode toggle + search header redesign — spec + plan complete. 7-task plan ready to execute.)
 >
-> **Last commit:** [f73e094](https://github.com/Cremacious/beehive-studio/commit/f73e094) — docs(spec): discover mode toggle + search header redesign. Spec at `docs/superpowers/specs/2026-06-17-discover-mode-toggle-and-search-redesign.md`. Awaiting review + approval before writing-plans.
+> **Last commit:** [ab1f610](https://github.com/Cremacious/beehive-studio/commit/ab1f610) — docs(plan): discover mode toggle + search header — 7-task implementation plan. Wave 1: server action extensions (hives + clubs `source:'following'`). Wave 2: 6 grid/filter file pairs in parallel (books, sparks, hives, lists, clubs, home).
 >
-> **Next concrete step:** Chris reviews the spec (especially mode semantics per tab, sort dropdown visibility, search input width). On approval, invoke writing-plans to create the implementation plan.
+> **Next concrete step:** Execute the plan. Say "execute" and subagents will run T1 (server actions) then T2–T7 (all 6 tab grid/filter rewrites in parallel). Spec at `docs/superpowers/specs/2026-06-17-discover-mode-toggle-and-search-redesign.md`. Plan at `docs/superpowers/plans/2026-06-17-discover-mode-toggle-and-search.md`.
 >
-> **Prior — Last commit:** [1f47092](https://github.com/Cremacious/beehive-studio/commit/1f47092) — style(discover): align grid cards with hub-page golden standards. Sparks: minmax 260→280px + alignItems:stretch. Hives: source='suggested'→'member' (removes spurious dashed green border). Lists: alignItems:stretch. Clubs: source='suggested'→'member' + minmax 280→340px + alignItems:stretch.
+> **Prior — Last commit:** [f73e094](https://github.com/Cremacious/beehive-studio/commit/f73e094) — docs(spec): discover mode toggle + search header redesign spec.
 >
-> **Prior — Last commit:** [9637698](https://github.com/Cremacious/beehive-studio/commit/9637698) — style(community-dashboard): brand-yellow hover on nav strip pills. Scoped `.community-nav-pill` class with `color` transition (`--canvas-dark-ink-strong` → `--brand`) on hover, inline `<style>` tag inside the component (self-contained, no globals.css edit).
+> **Prior — Last commit:** [1f47092](https://github.com/Cremacious/beehive-studio/commit/1f47092) — style(discover): align grid cards with hub-page golden standards. Sparks: minmax 260→280px + alignItems:stretch. Hives: source='suggested'→'member'. Lists: alignItems:stretch. Clubs: source='suggested'→'member' + minmax 280→340px + alignItems:stretch.
 >
 > **Prior — Last commit:** [b13a603](https://github.com/Cremacious/beehive-studio/commit/b13a603) — chore(community-dashboard): T15 delete superseded T1-T4 files. 4 files deleted (highlights-rail.tsx, activity-feed.tsx, community-hub.actions.ts, community-hub.shared.ts), 1515 LOC removed.
 >

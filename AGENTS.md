@@ -12,22 +12,22 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-17 (Issue tracking session — 18 GitHub issues created (#16-#33) and a prioritised execution order established. Issues #31 (auth audit), #29 (password recovery), #16 (binder arrows), #33 (email design) all closed as complete. Issue #26 (tab strip + sort dropdown visibility) is currently in progress.)
+> **Last updated:** 2026-06-17 (Issue #26 complete — tab strip tile chrome + Radix Select sort dropdowns across all 5 community hub pages.)
 >
-> **Last commit:** [8b9cd97](https://github.com/Cremacious/beehive-studio/commit/8b9cd97) — fix(email): rename Beehive Studio -> Beehive Books throughout email templates.
+> **Last commit:** [c75a1c7](https://github.com/Cremacious/beehive-studio/commit/c75a1c7) — fix(hub): tile-chrome tab strips + Radix Select sort dropdowns across all 5 hubs. Closes #26.
+>
+> **Prior — Last commit:** [8b9cd97](https://github.com/Cremacious/beehive-studio/commit/8b9cd97) — fix(email): rename Beehive Studio -> Beehive Books throughout email templates.
 >
 > **Prior — Last commit:** [32c192a](https://github.com/Cremacious/beehive-studio/commit/32c192a) — feat(email): branded password-reset email template with plain-text fallback. Closes #33.
 >
-> **Prior — Last commit:** [c094030](https://github.com/Cremacious/beehive-studio/commit/c094030) — fix(binder): remove pin-class boundary from arrow reorder logic. Closes #16.
->
-> **Next concrete step:** Issue #26 in progress — fix tab strip contrast and replace native sort dropdown with styled custom component across all 5 community hub pages (Hives, Sparks, Friends, Reading Lists, Clubs). After that proceed through the ordered queue below.
+> **Next concrete step:** Proceed to #19 FM/BM typography + About the Author image, or smoke #26 first: visit /en/sparks, /en/hives, /en/reading-lists, /en/clubs, /en/friends — confirm tab strip container is visibly raised (tile chrome), counts show as pill badges (omitted when 0), and sort trigger shows an ArrowUpDown icon + label + ChevronDown that opens a styled panel dropdown. Then push to remote.
 >
 > **GitHub Issues — Ordered Execution Queue:**
 > - ~~#31 Auth audit~~ ✅
 > - ~~#29 Password recovery~~ ✅
 > - ~~#16 Binder reorder arrows~~ ✅
 > - ~~#33 Password reset email design~~ ✅
-> - **#26 Tab strip + sort dropdown visibility** ← IN PROGRESS
+> - ~~#26 Tab strip + sort dropdown visibility~~ ✅
 > - #19 FM/BM typography + About the Author image
 > - #25 Community routing refactor (/community/hives etc.)
 > - #17 Avatar upload (Cloudinary)

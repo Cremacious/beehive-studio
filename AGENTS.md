@@ -12,17 +12,17 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-17 (Issue #33 branded password-reset email ✅ COMPLETE. Table-based HTML template with plain-text fallback, username personalisation, and raw-URL fallback below the CTA button.)
+> **Last updated:** 2026-06-17 (Issue #33 branded password-reset email ✅ COMPLETE + renamed to Beehive Books throughout.)
 >
-> **Last commit:** [32c192a](https://github.com/Cremacious/beehive-studio/commit/32c192a) — feat(email): branded password-reset email template with plain-text fallback. New `lib/email/templates/password-reset.ts` exports `passwordResetEmailHtml` + `passwordResetEmailText` (both accept `{ url, username }`). `lib/email.ts` gains a `lookupUsername` DB helper and wires `sendPasswordResetEmail` to the new template with both `html` and `text` Resend fields. Closes #33.
+> **Last commit:** [8b9cd97](https://github.com/Cremacious/beehive-studio/commit/8b9cd97) — fix(email): rename Beehive Studio -> Beehive Books throughout email templates. All user-facing strings in `lib/email/templates/password-reset.ts` + `lib/email.ts` updated (wordmark, body copy, subjects, plain-text footer, FROM display name). Also adds `.claude/launch.json` for the email-preview static server.
+>
+> **Prior — Last commit:** [32c192a](https://github.com/Cremacious/beehive-studio/commit/32c192a) — feat(email): branded password-reset email template with plain-text fallback. New `lib/email/templates/password-reset.ts` exports `passwordResetEmailHtml` + `passwordResetEmailText` (both accept `{ url, username }`). `lib/email.ts` gains a `lookupUsername` DB helper and wires `sendPasswordResetEmail` to the new template with both `html` and `text` Resend fields. Closes #33.
 >
 > **Prior — Last commit:** [c094030](https://github.com/Cremacious/beehive-studio/commit/c094030) — fix(binder): remove pin-class boundary from arrow reorder logic. `canMoveUp`/`canMoveDown` are now purely index-based (first/last only); no pin or type restrictions. Closes #16.
 >
 > **Prior — Last commit:** [b8ad586](https://github.com/Cremacious/beehive-studio/commit/b8ad586) — fix(email): read FROM address from RESEND_FROM_EMAIL env var.
 >
-> **Prior — Last commit:** [f61650b](https://github.com/Cremacious/beehive-studio/commit/f61650b) — fix(auth): add forgotPasswordLimiter and wire to forgot-password endpoint.
->
-> **Next concrete step:** Chris smokes the password recovery flow — (1) go to `/en/forgot-password`, enter an email associated with an email/password account, confirm email arrives from `noreply@code-mack.dev` within 30 seconds; (2) confirm the email has a light background, dark header with brand-yellow "Beehive Studio" wordmark, personalised `Hi @username,` greeting, brand-yellow "Reset my password" pill CTA, and the raw URL printed below the button; (3) click reset link, confirm landing on `/en/reset-password?token=...`; (4) set a new password, confirm redirect to sign-in and new password works; (5) test invalid token URL — confirm "Link expired" panel; (6) test Google-only account email — confirm generic success message (no email sent). Also still pending: smoke binder arrow fix and `/en/discover` on all 6 tabs.
+> **Next concrete step:** Chris smokes the password recovery flow — (1) go to `/en/forgot-password`, enter an email associated with an email/password account, confirm email arrives from `noreply@code-mack.dev` within 30 seconds; (2) confirm the email has a light background, dark header with brand-yellow "Beehive Books" wordmark, personalised `Hi @username,` greeting, brand-yellow "Reset my password" pill CTA, and the raw URL printed below the button; (3) click reset link, confirm landing on `/en/reset-password?token=...`; (4) set a new password, confirm redirect to sign-in and new password works; (5) test invalid token URL — confirm "Link expired" panel; (6) test Google-only account email — confirm generic success message (no email sent). Also still pending: smoke binder arrow fix and `/en/discover` on all 6 tabs.
 >
 > **Prior — Last commit:** [ab1f610](https://github.com/Cremacious/beehive-studio/commit/ab1f610) — docs(plan): discover mode toggle + search header — 7-task implementation plan.
 >

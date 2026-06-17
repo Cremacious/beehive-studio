@@ -56,12 +56,12 @@ export function TitlePagePreview({ itemId, initialFields }: Props) {
           className="bp-field"
           style={{
             fontFamily: 'var(--font-display)',
-            fontSize: 40,
+            fontSize: 28,
             fontWeight: 700,
-            letterSpacing: '-0.02em',
-            lineHeight: 1.05,
+            letterSpacing: '-0.01em',
+            lineHeight: 1.1,
             color: 'var(--paper-ink-strong)',
-            margin: '0 0 14px',
+            margin: '0 0 10px',
             textWrap: 'balance',
           }}
           data-placeholder="Book Title"
@@ -75,10 +75,10 @@ export function TitlePagePreview({ itemId, initialFields }: Props) {
           className="bp-field"
           style={{
             fontFamily: 'var(--font-prose)',
-            fontSize: 20,
+            fontSize: 15,
             fontStyle: 'italic',
             fontWeight: 400,
-            lineHeight: 1.35,
+            lineHeight: 1.4,
             color: 'var(--paper-ink-muted)',
             margin: 0,
             textWrap: 'balance',
@@ -92,26 +92,26 @@ export function TitlePagePreview({ itemId, initialFields }: Props) {
       <div
         style={{
           fontFamily: 'var(--font-mono)',
-          fontSize: 11,
+          fontSize: 10,
           letterSpacing: '0.24em',
           textTransform: 'uppercase',
           color: 'var(--paper-400)',
-          margin: '64px 0 14px',
+          margin: '64px 0 10px',
           textAlign: 'center',
         }}
       >
         a novel by
       </div>
-      <h2
+      <p
         contentEditable
         suppressContentEditableWarning
         onBlur={e => commit('authorName', e.currentTarget.textContent ?? '')}
         className="bp-field"
         style={{
-          fontFamily: 'var(--font-display)',
-          fontSize: 22,
-          fontWeight: 500,
-          letterSpacing: '0.02em',
+          fontFamily: 'var(--font-prose)',
+          fontSize: 16,
+          fontStyle: 'italic',
+          fontWeight: 400,
           color: 'var(--paper-ink-strong)',
           textAlign: 'center',
           margin: 0,
@@ -119,7 +119,7 @@ export function TitlePagePreview({ itemId, initialFields }: Props) {
         data-placeholder="Author Name"
       >
         {f.authorName}
-      </h2>
+      </p>
 
       <div
         aria-hidden

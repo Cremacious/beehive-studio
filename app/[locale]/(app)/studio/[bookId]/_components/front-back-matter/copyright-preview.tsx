@@ -67,11 +67,11 @@ export function CopyrightPreview({ itemId, initialFields }: Props) {
   const f = fieldsRef.current
   const blockStyle = {
     fontFamily: 'var(--font-prose)',
-    fontSize: 13,
-    lineHeight: 1.7,
+    fontSize: 11.5,
+    lineHeight: 1.75,
     color: 'var(--paper-ink)',
-    margin: '240px 0 0',
-    textAlign: 'center' as const,
+    margin: '120px 0 0',
+    textAlign: 'left' as const,
   }
 
   return (

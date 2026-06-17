@@ -66,8 +66,8 @@ export function AcknowledgmentsPreview({ itemId, initialFields }: Props) {
           class: 'ProseMirror bp-body outline-none',
           style: [
             'font-family: var(--font-prose)',
-            'font-size: 16px',
-            'line-height: 1.78',
+            'font-size: 13px',
+            'line-height: 1.72',
             'color: var(--paper-ink-strong)',
             'min-height: 12em',
           ].join('; '),
@@ -83,13 +83,12 @@ export function AcknowledgmentsPreview({ itemId, initialFields }: Props) {
       <h2
         style={{
           fontFamily: 'var(--font-display)',
-          fontSize: 28,
+          fontSize: 18,
           fontWeight: 700,
-          letterSpacing: '0.16em',
-          textTransform: 'uppercase',
+          letterSpacing: '0.04em',
           color: 'var(--paper-ink-strong)',
-          textAlign: 'center',
-          margin: '0 0 12px',
+          textAlign: 'left',
+          margin: '0 0 8px',
         }}
       >
         Acknowledgments
@@ -97,10 +96,10 @@ export function AcknowledgmentsPreview({ itemId, initialFields }: Props) {
       <div
         aria-hidden
         style={{
-          width: 36,
+          width: 28,
           height: 1,
           background: 'var(--paper-400)',
-          margin: '0 auto 36px',
+          margin: '0 0 24px',
         }}
       />
       <EditorContent editor={editor} />

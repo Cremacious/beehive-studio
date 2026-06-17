@@ -6,18 +6,10 @@ import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import { updateBinderItemAction } from '@/lib/actions/binder.actions'
 import { useBookEditor } from '../book-editor-provider'
+import { useCloudinaryUpload } from '@/hooks/use-cloudinary-upload'
 import type { AboutAuthorFields } from '@/lib/front-back-matter/types'
 import { SaveStatusBadge, type FormSaveStatus } from './save-status-badge'
 import { PageWrapper } from './page-wrapper'
-
-// DP3 Task 3 — WYSIWYG About-the-Author page.
-//
-// Avatar (TODO(avatar-upload): same Cloudinary upload as
-// useCloudinaryUpload('author-photos') used by the old about-author-form;
-// reinstate once Task-3 visual port is shipped. Placeholder initials only
-// for now per plan §Step 7 — matches Task 2 character avatar pattern.) +
-// heading + TipTap mini-editor for bio (paragraph + bold + italic only) +
-// optional links list.
 
 type Props = {
   itemId: string
@@ -41,8 +33,12 @@ export function AboutAuthorPreview({ itemId, initialFields }: Props) {
   const [links, setLinks] = useState<Array<{ label: string; url: string }>>(
     initialFields.links ?? [],
   )
+  const [photoUrl, setPhotoUrl] = useState<string | undefined>(initialFields.photoUrl)
+  const [avatarHovered, setAvatarHovered] = useState(false)
   const [saveStatus, setSaveStatus] = useState<FormSaveStatus>('idle')
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const { upload, uploading } = useCloudinaryUpload('about-author')
 
   function schedule(next: AboutAuthorFields) {
     fieldsRef.current = next
@@ -55,6 +51,41 @@ export function AboutAuthorPreview({ itemId, initialFields }: Props) {
       const result = await updateBinderItemAction(itemId, { content: newContent })
       setSaveStatus(result.success ? 'saved' : 'unsaved')
     }, 1500)
+  }
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp']
+    if (!ACCEPTED.includes(file.type)) return
+    if (file.size > 5 * 1024 * 1024) return
+
+    if (process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME) {
+      const res = await upload(file)
+      if (res?.url) {
+        setPhotoUrl(res.url)
+        schedule({ ...fieldsRef.current, photoUrl: res.url })
+      }
+    } else {
+      // Fallback: embed as data URL when Cloudinary isn't configured
+      const fields = fieldsRef.current
+      const reader = new FileReader()
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          setPhotoUrl(reader.result)
+          schedule({ ...fields, photoUrl: reader.result })
+        }
+      }
+      reader.readAsDataURL(file)
+    }
+
+    e.target.value = ''
+  }
+
+  function removePhoto() {
+    setPhotoUrl(undefined)
+    schedule({ ...fieldsRef.current, photoUrl: undefined })
   }
 
   const editor = useEditor(
@@ -82,8 +113,8 @@ export function AboutAuthorPreview({ itemId, initialFields }: Props) {
           class: 'ProseMirror bp-body outline-none',
           style: [
             'font-family: var(--font-prose)',
-            'font-size: 16px',
-            'line-height: 1.78',
+            'font-size: 13px',
+            'line-height: 1.72',
             'color: var(--paper-ink-strong)',
             'min-height: 8em',
           ].join('; '),
@@ -116,59 +147,155 @@ export function AboutAuthorPreview({ itemId, initialFields }: Props) {
   }
 
   const initials = getInitials(bookTitle)
-  const hasPhoto = !!fieldsRef.current.photoUrl
+  const hasPhoto = !!photoUrl
 
   return (
     <PageWrapper saveStatusBadge={<SaveStatusBadge status={saveStatus} />}>
-      {/* Avatar — placeholder initials. */}
+      {/* Compact section label above the avatar */}
       <div
-        aria-label="Author photo (placeholder initials)"
         style={{
-          width: 132,
-          height: 132,
-          borderRadius: '50%',
-          margin: '0 auto 24px',
-          background: hasPhoto
-            ? `center / cover no-repeat url(${JSON.stringify(fieldsRef.current.photoUrl)})`
-            : 'linear-gradient(135deg, oklch(0.78 0.05 60), oklch(0.62 0.08 35))',
-          border: '4px solid var(--paper-50)',
-          boxShadow: '0 1px 0 rgba(255,255,255,0.6) inset, 0 2px 6px rgba(60,40,20,0.25)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontFamily: 'var(--font-display)',
-          fontWeight: 700,
-          fontSize: 40,
-          color: 'var(--paper-100)',
-          letterSpacing: '-0.03em',
-        }}
-      >
-        {hasPhoto ? null : initials}
-      </div>
-
-      <h2
-        style={{
-          fontFamily: 'var(--font-display)',
-          fontSize: 28,
-          fontWeight: 700,
-          letterSpacing: '0.16em',
+          fontFamily: 'var(--font-mono)',
+          fontSize: 10,
+          letterSpacing: '0.2em',
           textTransform: 'uppercase',
-          color: 'var(--paper-ink-strong)',
+          color: 'var(--paper-ink-muted)',
           textAlign: 'center',
-          margin: '0 0 12px',
+          marginBottom: 12,
         }}
       >
         About the Author
-      </h2>
-      <div
-        aria-hidden
-        style={{
-          width: 36,
-          height: 1,
-          background: 'var(--paper-400)',
-          margin: '0 auto 36px',
-        }}
-      />
+      </div>
+
+      {/* Avatar — upload zone with hover overlay */}
+      <div style={{ textAlign: 'center' }}>
+        <div
+          role="button"
+          aria-label={hasPhoto ? 'Change author photo' : 'Add author photo'}
+          tabIndex={0}
+          onMouseEnter={() => setAvatarHovered(true)}
+          onMouseLeave={() => setAvatarHovered(false)}
+          onClick={() => fileInputRef.current?.click()}
+          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click() }}
+          style={{
+            position: 'relative',
+            width: 96,
+            height: 96,
+            borderRadius: '50%',
+            margin: '0 auto',
+            cursor: uploading ? 'wait' : 'pointer',
+            display: 'inline-block',
+          }}
+        >
+          {/* Circle */}
+          <div
+            style={{
+              width: 96,
+              height: 96,
+              borderRadius: '50%',
+              background: hasPhoto
+                ? `center / cover no-repeat url(${JSON.stringify(photoUrl)})`
+                : 'linear-gradient(135deg, oklch(0.78 0.05 60), oklch(0.62 0.08 35))',
+              border: '3px solid var(--paper-50)',
+              boxShadow: '0 1px 0 rgba(255,255,255,0.6) inset, 0 2px 6px rgba(60,40,20,0.25)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontFamily: 'var(--font-display)',
+              fontWeight: 700,
+              fontSize: 28,
+              color: 'var(--paper-100)',
+              letterSpacing: '-0.03em',
+              userSelect: 'none',
+            }}
+          >
+            {hasPhoto ? null : (uploading ? '…' : initials)}
+          </div>
+
+          {/* Hover overlay */}
+          <div
+            aria-hidden
+            style={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: '50%',
+              background: 'rgba(0,0,0,0.45)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 3,
+              opacity: avatarHovered && !uploading ? 1 : 0,
+              transition: 'opacity 0.15s',
+              pointerEvents: 'none',
+            }}
+          >
+            <span style={{ fontSize: 18, lineHeight: 1 }}>📷</span>
+            <span
+              style={{
+                fontSize: 9,
+                fontFamily: 'var(--font-mono)',
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: 'white',
+              }}
+            >
+              {hasPhoto ? 'Change' : 'Add photo'}
+            </span>
+          </div>
+        </div>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          style={{ display: 'none' }}
+          onChange={handleFileChange}
+        />
+
+        {/* Change / Remove controls, visible only when a photo is set */}
+        {hasPhoto && (
+          <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginTop: 8, marginBottom: 6 }}>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 10,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                padding: '3px 10px',
+                borderRadius: 999,
+                border: '1px solid var(--paper-400)',
+                background: 'transparent',
+                color: 'var(--paper-ink-muted)',
+                cursor: 'pointer',
+              }}
+            >
+              Change
+            </button>
+            <button
+              type="button"
+              onClick={removePhoto}
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 10,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                padding: '3px 10px',
+                borderRadius: 999,
+                border: '1px solid oklch(0.55 0.12 25)',
+                background: 'transparent',
+                color: 'oklch(0.55 0.12 25)',
+                cursor: 'pointer',
+              }}
+            >
+              Remove
+            </button>
+          </div>
+        )}
+
+        {!hasPhoto && <div style={{ marginBottom: 14 }} />}
+      </div>
 
       <EditorContent editor={editor} />
 

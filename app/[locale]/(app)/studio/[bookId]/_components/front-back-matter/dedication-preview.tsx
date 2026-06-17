@@ -50,7 +50,7 @@ export function DedicationPreview({ itemId, initialFields }: Props) {
           margin: '36% auto 0',
           textAlign: 'center',
           fontFamily: 'var(--font-prose)',
-          fontSize: 24,
+          fontSize: 15,
           fontStyle: 'italic',
           fontWeight: 400,
           lineHeight: 1.4,

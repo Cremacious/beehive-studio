@@ -56,11 +56,11 @@ export function TitlePageDisplay({ f }: { f: Partial<TitlePageFields> }) {
       <h1
         style={{
           fontFamily: 'var(--font-display)',
-          fontSize: 36,
+          fontSize: 28,
           fontWeight: 700,
           letterSpacing: '-0.01em',
           color: 'var(--brand)',
-          margin: '0 0 18px',
+          margin: '0 0 14px',
         }}
       >
         {f.bookTitle ?? 'Untitled'}
@@ -158,17 +158,28 @@ export function AcknowledgmentsDisplay({ f }: { f: Partial<AcknowledgmentsFields
   const ps = paragraphs(text)
   return (
     <div style={{ ...sharedSection, textAlign: 'left' }}>
-      <h1
+      <h2
         style={{
           fontFamily: 'var(--font-display)',
-          fontSize: 28,
+          fontSize: 18,
           fontWeight: 700,
-          color: 'var(--brand)',
-          margin: '0 0 24px',
+          letterSpacing: '0.04em',
+          color: 'var(--canvas-dark-ink-strong)',
+          margin: '0 0 8px',
         }}
       >
         Acknowledgments
-      </h1>
+      </h2>
+      <div
+        aria-hidden
+        style={{
+          width: 24,
+          height: 1,
+          background: 'var(--canvas-dark-ink-muted)',
+          opacity: 0.35,
+          margin: '0 0 20px',
+        }}
+      />
       {ps.length === 0 ? (
         <p style={{ fontStyle: 'italic', color: 'var(--canvas-dark-ink-muted)' }}>
           The author hasn&apos;t written acknowledgments yet.
@@ -179,10 +190,10 @@ export function AcknowledgmentsDisplay({ f }: { f: Partial<AcknowledgmentsFields
             key={i}
             style={{
               fontFamily: 'var(--font-prose)',
-              fontSize: 16,
-              lineHeight: 1.65,
+              fontSize: 14,
+              lineHeight: 1.7,
               color: 'var(--canvas-dark-ink)',
-              margin: '0 0 14px',
+              margin: '0 0 12px',
             }}
           >
             {p}
@@ -198,26 +209,29 @@ export function AboutAuthorDisplay({ f }: { f: Partial<AboutAuthorFields> }) {
   const ps = paragraphs(text)
   return (
     <div style={{ ...sharedSection, textAlign: 'left' }}>
-      <h1
+      <div
         style={{
-          fontFamily: 'var(--font-display)',
-          fontSize: 28,
-          fontWeight: 700,
-          color: 'var(--brand)',
-          margin: '0 0 24px',
+          fontFamily: 'var(--font-mono)',
+          fontSize: 10,
+          letterSpacing: '0.2em',
+          textTransform: 'uppercase',
+          color: 'var(--canvas-dark-ink-muted)',
+          margin: '0 0 16px',
         }}
       >
         About the Author
-      </h1>
+      </div>
       {f.photoUrl && (
         <img
           src={f.photoUrl}
-          alt=""
+          alt="Author photo"
           style={{
             float: 'left',
-            maxWidth: 144,
-            borderRadius: 8,
-            marginRight: 18,
+            width: 72,
+            height: 72,
+            borderRadius: '50%',
+            objectFit: 'cover',
+            marginRight: 16,
             marginBottom: 8,
           }}
         />
@@ -232,10 +246,10 @@ export function AboutAuthorDisplay({ f }: { f: Partial<AboutAuthorFields> }) {
             key={i}
             style={{
               fontFamily: 'var(--font-prose)',
-              fontSize: 16,
-              lineHeight: 1.65,
+              fontSize: 14,
+              lineHeight: 1.7,
               color: 'var(--canvas-dark-ink)',
-              margin: '0 0 14px',
+              margin: '0 0 12px',
             }}
           >
             {p}

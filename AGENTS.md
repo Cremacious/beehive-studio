@@ -12,13 +12,17 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-17 (Discover hero search panel ✅ SHIPPED. All 6 /discover tabs now have a raised panel with prominent 44px search input on top + mode toggle below. Smoke on Chris.)
+> **Last updated:** 2026-06-17 (Auth flow QA + security audit ✅ COMPLETE. Issue #31 closed with written sign-off. 6 bugs fixed, tsc clean, 883/883 tests.)
 >
-> **Last commit:** [82b5b25](https://github.com/Cremacious/beehive-studio/commit/82b5b25) — style(discover): hero search panel on all tabs (option C). FilterSearchInput gains variant='hero' (44px, brand-yellow icon, border ring). All 6 grid files wrap search + mode toggle in a raised canvas-dark panel card.
+> **Last commit:** [f61650b](https://github.com/Cremacious/beehive-studio/commit/f61650b) — fix(auth): add forgotPasswordLimiter and wire to forgot-password endpoint.
 >
-> **Prior — Last commit:** [fda6d58](https://github.com/Cremacious/beehive-studio/commit/fda6d58) — feat(discover): mode toggle + search header on all tabs. All 6 tabs get All/For You/Trending/Popular toggle. For You v1 = items from followed creators/curators. searchHivesDiscoverAction + searchClubsDiscoverAction gain source:'following' + viewerId.
+> **Prior — Last commit:** [a435376](https://github.com/Cremacious/beehive-studio/commit/a435376) — chore(env): add RESEND_FROM_EMAIL to .env.example.
 >
-> **Next concrete step:** Chris smokes `/en/discover` on all 6 tabs — confirm hero search panel is visible and prominent, mode toggle sits below it, sidebar has no search section, For You works for authed users with follows, guest sees no For You button.
+> **Prior — Last commit:** [017620c](https://github.com/Cremacious/beehive-studio/commit/017620c) — fix(auth): security audit — rate limiting, ?from= redirect, account deletion, env vars. 6 bugs fixed: (1) signUpLimiter/signInLimiter wired to auth API route; (2) sign-in ?from= redirect restored; (3) password minlength enforced client-side; (4) username maxLength mismatch fixed (was 24, schema says 20); (5) self-service account deletion added at /settings/account with Stripe subscription cancellation; (6) .env.example completed with all required vars.
+>
+> **Prior — Last commit:** [82b5b25](https://github.com/Cremacious/beehive-studio/commit/82b5b25) — style(discover): hero search panel on all tabs (option C).
+>
+> **Next concrete step:** Chris smokes `/en/discover` on all 6 tabs (prior pending smoke) — confirm hero search panel is visible and prominent, mode toggle sits below it, For You works for authed users with follows, guest sees no For You button. Auth audit is complete and ready for beta testers.
 >
 > **Prior — Last commit:** [ab1f610](https://github.com/Cremacious/beehive-studio/commit/ab1f610) — docs(plan): discover mode toggle + search header — 7-task implementation plan.
 >

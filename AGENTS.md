@@ -12,15 +12,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-17 (Issue #25 complete — community routing refactor, all 5 hub routes nested under /community/.)
+> **Last updated:** 2026-06-17 (Issue #17 complete — avatar upload, replace, and delete in account settings.)
 >
-> **Last commit:** TBD — refactor(routing): issue #25 — move hub routes under /community/. Closes #25.
+> **Last commit:** [29e49dd](https://github.com/Cremacious/beehive-studio/commit/29e49dd) — feat(avatar): issue #17 — avatar upload, replace, and delete in account settings. Closes #17.
+>
+> **Prior — Last commit:** [78c25a9](https://github.com/Cremacious/beehive-studio/commit/78c25a9) — refactor(routing): issue #25 — move hub routes under /community/. Closes #25.
 >
 > **Prior — Last commit:** [3491144](https://github.com/Cremacious/beehive-studio/commit/3491144) — fix(fmbm): issue #19 — FM/BM typography scale + About the Author image upload. Closes #19.
 >
-> **Prior — Last commit:** [c75a1c7](https://github.com/Cremacious/beehive-studio/commit/c75a1c7) — fix(hub): tile-chrome tab strips + Radix Select sort dropdowns across all 5 hubs. Closes #26.
->
-> **Next concrete step:** Push to remote (`git push origin main`). Then smoke test: visit `/en/community/hives`, `/en/community/friends`, `/en/community/sparks`, `/en/community/reading-lists`, `/en/community/clubs` — all should load. Visit `/en/hives` — should 308-redirect to `/en/community/hives`. The community nav strip pills should all link to the new /community/... paths.
+> **Next concrete step:** Push to remote (`git push origin main`). Then smoke test at `/en/settings/account`: (1) avatar section renders above Danger Zone with current avatar or initials placeholder; (2) clicking the avatar circle or "Upload photo" opens the file picker; (3) selecting a valid image shows an immediate local preview then uploads to Cloudinary and persists; (4) the Remove button appears only when an avatar exists and clears it back to initials; (5) invalid file type or >5 MB shows a sonner error toast. Also verify the updated avatar propagates to `/en/u/[username]` profile page, community feed rows, and comment avatars. **Prerequisite:** ensure the Cloudinary unsigned upload preset `beehive_avatars` exists (folder = `avatars`).
 >
 > **GitHub Issues — Ordered Execution Queue:**
 > - ~~#31 Auth audit~~ ✅
@@ -30,7 +30,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 > - ~~#26 Tab strip + sort dropdown visibility~~ ✅
 > - ~~#19 FM/BM typography + About the Author image~~ ✅
 > - ~~#25 Community routing refactor (/community/hives etc.)~~ ✅
-> - #17 Avatar upload (Cloudinary)
+> - ~~#17 Avatar upload (Cloudinary)~~ ✅
 > - #27 View own profile (nav entry point)
 > - #20 Book details page redesign (mockup-first)
 > - #23 Create/edit forms redesign — Clubs + Lists (mockup-first)

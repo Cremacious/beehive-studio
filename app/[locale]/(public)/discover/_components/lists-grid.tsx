@@ -227,7 +227,19 @@ export async function ListsGrid({ sp, locale }: Props) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-4">
+      <div
+        style={{
+          background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+          borderRadius: 14,
+          border: '1px solid rgba(255,255,255,0.06)',
+          boxShadow: 'var(--sh-card)',
+          padding: '14px 16px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 12,
+        }}
+      >
+        <FilterSearchInput name="q" placeholder="List title, curator…" initialValue={q ?? ''} variant="hero" />
         <DiscoveryModeToggle
           tab="lists"
           locale={locale}
@@ -235,13 +247,6 @@ export async function ListsGrid({ sp, locale }: Props) {
           isAuthed={isAuthed}
           baseParams={toggleBaseParams}
         />
-        <div style={{ width: 192 }}>
-          <FilterSearchInput
-            name="q"
-            placeholder="List title, curator…"
-            initialValue={q ?? ''}
-          />
-        </div>
       </div>
       <SlimFeaturedStrip kind="list" featured={featured} />
       <SortHeader

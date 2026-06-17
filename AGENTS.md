@@ -12,11 +12,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-17 (Issue #16 binder arrow fix ✅ COMPLETE. Front/back matter reorder arrows now respect type-section boundaries; section grouping corrected to avoid disabling non-FM/BM items.)
+> **Last updated:** 2026-06-17 (Issue #16 binder arrow fix ✅ COMPLETE. Arrow reorder is now fully unrestricted: any item can be placed in any position.)
 >
-> **Last commit:** [bda1efe](https://github.com/Cremacious/beehive-studio/commit/bda1efe) — fix(binder): loosen type-section grouping — only FM/BM are isolated. Collapses outline/wiki/character/research all into 'other' so they reorder freely; only front_matter and back_matter get dedicated sections.
->
-> **Prior — Last commit:** [f4b39d9](https://github.com/Cremacious/beehive-studio/commit/f4b39d9) — fix(binder): front/back matter arrows respect type-section boundaries. Added `getTypeSection()` to `binder-tree.tsx`; `canMoveUp`, `canMoveDown`, and `moveItem` now require neighbor to be in the same logical section. Closes #16.
+> **Last commit:** [c094030](https://github.com/Cremacious/beehive-studio/commit/c094030) — fix(binder): remove pin-class boundary from arrow reorder logic. `canMoveUp`/`canMoveDown` are now purely index-based (first/last only); no pin or type restrictions. Closes #16.
 >
 > **Prior — Last commit:** [b8ad586](https://github.com/Cremacious/beehive-studio/commit/b8ad586) — fix(email): read FROM address from RESEND_FROM_EMAIL env var.
 >

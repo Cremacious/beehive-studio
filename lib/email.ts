@@ -1,4 +1,11 @@
 import { Resend } from 'resend'
+import { eq } from 'drizzle-orm'
+import { db } from '@/db'
+import { users, userProfiles } from '@/db/schema/auth'
+import {
+  passwordResetEmailHtml,
+  passwordResetEmailText,
+} from './email/templates/password-reset'
 
 let _resend: Resend | null = null
 function getResend(): Resend {
@@ -7,6 +14,20 @@ function getResend(): Resend {
   }
   if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY)
   return _resend
+}
+
+async function lookupUsername(email: string): Promise<string> {
+  try {
+    const rows = await db
+      .select({ username: userProfiles.username })
+      .from(userProfiles)
+      .innerJoin(users, eq(users.id, userProfiles.userId))
+      .where(eq(users.email, email))
+      .limit(1)
+    return rows[0]?.username ?? ''
+  } catch {
+    return ''
+  }
 }
 
 const FROM =
@@ -52,16 +73,13 @@ export async function sendVerificationEmail(email: string, url: string) {
 }
 
 export async function sendPasswordResetEmail(email: string, url: string) {
+  const username = await lookupUsername(email)
   const { error } = await getResend().emails.send({
     from: FROM,
     to: email,
     subject: 'Reset your Beehive Studio password',
-    html: brandedEmail(
-      'Reset your password',
-      'Click the button below to reset your password. This link expires in 1 hour.',
-      'Reset password',
-      url,
-    ),
+    html: passwordResetEmailHtml({ url, username }),
+    text: passwordResetEmailText({ url, username }),
   })
   if (error) throw new Error(`Failed to send email: ${error.message}`)
 }

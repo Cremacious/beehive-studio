@@ -31,7 +31,7 @@ async function lookupUsername(email: string): Promise<string> {
 }
 
 const FROM =
-  process.env.RESEND_FROM_EMAIL ?? 'Beehive Studio <noreply@beehive-studio.app>'
+  process.env.RESEND_FROM_EMAIL ?? 'Beehive Books <noreply@beehive-studio.app>'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
 function brandedEmail(heading: string, body: string, ctaLabel: string, ctaUrl: string): string {
@@ -40,7 +40,7 @@ function brandedEmail(heading: string, body: string, ctaLabel: string, ctaUrl: s
     <html>
     <body style="background:#141414;color:#ffffff;font-family:Arial,sans-serif;margin:0;padding:32px;">
       <div style="max-width:520px;margin:0 auto;">
-        <div style="font-size:24px;font-weight:700;color:#FFC300;margin-bottom:24px;">🐝 Beehive Studio</div>
+        <div style="font-size:24px;font-weight:700;color:#FFC300;margin-bottom:24px;">🐝 Beehive Books</div>
         <h1 style="font-size:22px;font-weight:700;margin-bottom:12px;">${heading}</h1>
         <p style="color:#cccccc;line-height:1.6;margin-bottom:24px;">${body}</p>
         <a href="${ctaUrl}"
@@ -61,7 +61,7 @@ export async function sendVerificationEmail(email: string, url: string) {
   const { error } = await getResend().emails.send({
     from: FROM,
     to: email,
-    subject: 'Verify your Beehive Studio email',
+    subject: 'Verify your Beehive Books email',
     html: brandedEmail(
       'Verify your email',
       'Click the button below to verify your email address and start writing.',
@@ -77,7 +77,7 @@ export async function sendPasswordResetEmail(email: string, url: string) {
   const { error } = await getResend().emails.send({
     from: FROM,
     to: email,
-    subject: 'Reset your Beehive Studio password',
+    subject: 'Reset your Beehive Books password',
     html: passwordResetEmailHtml({ url, username }),
     text: passwordResetEmailText({ url, username }),
   })

@@ -11,7 +11,7 @@ export function passwordResetEmailHtml({ url, username }: PasswordResetEmailOpti
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reset your Beehive Studio password</title>
+<title>Reset your Beehive Books password</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f4f4f5;font-family:Arial,Helvetica,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f4f4f5;">
@@ -27,7 +27,7 @@ export function passwordResetEmailHtml({ url, username }: PasswordResetEmailOpti
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td>
-                    <span style="font-size:22px;font-weight:700;color:#FFC300;font-family:Arial,Helvetica,sans-serif;letter-spacing:-0.3px;">Beehive Studio</span>
+                    <span style="font-size:22px;font-weight:700;color:#FFC300;font-family:Arial,Helvetica,sans-serif;letter-spacing:-0.3px;">Beehive Books</span>
                   </td>
                 </tr>
               </table>
@@ -42,7 +42,7 @@ export function passwordResetEmailHtml({ url, username }: PasswordResetEmailOpti
 
               <p style="margin:16px 0 0 0;font-size:15px;color:#444444;line-height:1.6;">${greeting}</p>
               <p style="margin:12px 0 0 0;font-size:15px;color:#444444;line-height:1.6;">
-                We received a request to reset your Beehive Studio password. Click the button below to choose a new one.
+                We received a request to reset your Beehive Books password. Click the button below to choose a new one.
               </p>
               <p style="margin:6px 0 0 0;font-size:14px;color:#888888;line-height:1.6;">This link expires in 1 hour.</p>
 
@@ -76,7 +76,7 @@ export function passwordResetEmailHtml({ url, username }: PasswordResetEmailOpti
                 If you did not request a password reset, you can safely ignore this email. Your password will not change.
               </p>
               <p style="margin:8px 0 0 0;font-size:12px;color:#cccccc;line-height:1.6;">
-                Beehive Studio
+                Beehive Books
               </p>
             </td>
           </tr>
@@ -96,7 +96,7 @@ export function passwordResetEmailText({ url, username }: PasswordResetEmailOpti
 
   return `${greeting}
 
-We received a request to reset your Beehive Studio password.
+We received a request to reset your Beehive Books password.
 
 Reset your password by visiting the link below. This link expires in 1 hour.
 
@@ -104,5 +104,5 @@ ${url}
 
 If you did not request a password reset, you can safely ignore this email. Your password will not change.
 
--- Beehive Studio`
+-- Beehive Books`
 }

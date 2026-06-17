@@ -12,15 +12,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-17 (Discover mode toggle + search header redesign — spec + plan complete. 7-task plan ready to execute.)
+> **Last updated:** 2026-06-17 (Discover mode toggle + search header ✅ CODE-COMPLETE. All 6 tabs now have All/For You/Trending/Popular toggle + search in header row. 14 files, tsc clean. T16 smoke on Chris.)
 >
-> **Last commit:** [ab1f610](https://github.com/Cremacious/beehive-studio/commit/ab1f610) — docs(plan): discover mode toggle + search header — 7-task implementation plan. Wave 1: server action extensions (hives + clubs `source:'following'`). Wave 2: 6 grid/filter file pairs in parallel (books, sparks, hives, lists, clubs, home).
+> **Last commit:** [fda6d58](https://github.com/Cremacious/beehive-studio/commit/fda6d58) — feat(discover): mode toggle + search header on all tabs. All 6 /discover tabs (home/books/sparks/hives/lists/clubs) now have the mode toggle left + search right in a shared header row. Search removed from all sidebars. For You v1 = items from followed creators/curators. searchHivesDiscoverAction + searchClubsDiscoverAction gain source:'following' + viewerId params. tsc clean.
 >
-> **Next concrete step:** Execute the plan. Say "execute" and subagents will run T1 (server actions) then T2–T7 (all 6 tab grid/filter rewrites in parallel). Spec at `docs/superpowers/specs/2026-06-17-discover-mode-toggle-and-search-redesign.md`. Plan at `docs/superpowers/plans/2026-06-17-discover-mode-toggle-and-search.md`.
+> **Next concrete step:** Chris smokes at `/en/discover` — 10-point checklist per plan §Smoke: (1) all 6 tabs show mode toggle left + search right in header; (2) sidebar has no search section on any tab; (3) sparks For You shows only followed-creator sparks; (4) hives/clubs For You shows only hives/clubs owned by followed users; (5) lists For You shows only followed-curator lists; (6) home For You passes from=following to mixed action; (7) guest sees All/Trending/Popular only (no For You button); (8) authed user with no follows defaults to Trending; (9) authed user with follows defaults to For You; (10) clearing sidebar filters preserves search term + mode in URL. After smoke → push any fixes then update AGENTS.md.
 >
-> **Prior — Last commit:** [f73e094](https://github.com/Cremacious/beehive-studio/commit/f73e094) — docs(spec): discover mode toggle + search header redesign spec.
+> **Prior — Last commit:** [ab1f610](https://github.com/Cremacious/beehive-studio/commit/ab1f610) — docs(plan): discover mode toggle + search header — 7-task implementation plan.
 >
-> **Prior — Last commit:** [1f47092](https://github.com/Cremacious/beehive-studio/commit/1f47092) — style(discover): align grid cards with hub-page golden standards. Sparks: minmax 260→280px + alignItems:stretch. Hives: source='suggested'→'member'. Lists: alignItems:stretch. Clubs: source='suggested'→'member' + minmax 280→340px + alignItems:stretch.
+> **Prior — Last commit:** [1f47092](https://github.com/Cremacious/beehive-studio/commit/1f47092) — style(discover): align grid cards with hub-page golden standards.
 >
 > **Prior — Last commit:** [b13a603](https://github.com/Cremacious/beehive-studio/commit/b13a603) — chore(community-dashboard): T15 delete superseded T1-T4 files. 4 files deleted (highlights-rail.tsx, activity-feed.tsx, community-hub.actions.ts, community-hub.shared.ts), 1515 LOC removed.
 >

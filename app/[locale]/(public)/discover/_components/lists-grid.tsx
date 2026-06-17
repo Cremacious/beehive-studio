@@ -177,7 +177,7 @@ export async function ListsGrid({ sp, locale }: Props) {
             className="grid gap-4"
             style={{
               gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-              justifyItems: 'start',
+              alignItems: 'stretch',
             }}
           >
             {lists.map((list) => (

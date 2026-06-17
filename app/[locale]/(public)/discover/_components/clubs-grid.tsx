@@ -178,8 +178,8 @@ export async function ClubsGrid({ sp, locale }: Props) {
           <div
             className="grid gap-4"
             style={{
-              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-              justifyItems: 'start',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
+              alignItems: 'stretch',
             }}
           >
             {clubs.map((club) => (

@@ -1,8 +1,9 @@
 // T6 of hive-card-redesign — thin re-export of the shared <HiveCard>.
 // /discover hive surfaces (rail + grid + for-you) now render the canonical
 // V2 card. SUGGESTED pill suppressed via showRolePill=false since the
-// discoverable-hives tab itself signals join-ability; dashed-green border
-// still applies (source='suggested') for visual consistency with the hub.
+// discoverable-hives tab itself signals join-ability. source='member' so
+// the dashed-green suggested border does not appear (that border is for
+// ghost/fill cards on the /hives hub, not for real discoverable hives).
 import { HiveCard, type HiveCardData } from '@/components/hive/hive-card'
 import type { HiveCard as DiscoverHiveCardRow } from '@/lib/actions/discover-hives.actions'
 
@@ -16,7 +17,7 @@ export function RailHiveCard({ hive, locale }: Props) {
     id: hive.id,
     name: hive.name,
     bookTitle: hive.bookTitle ?? null,
-    source: 'suggested',
+    source: 'member',
     viewerRole: null,
     memberCount: hive.memberCount,
     memberPreviews: hive.memberPreviews,

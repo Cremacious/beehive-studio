@@ -18,7 +18,7 @@ export function RailClubCard({ club, locale }: Props) {
     name: club.name,
     description: club.description ?? null,
     coverImageUrl: club.coverImageUrl ?? null,
-    source: 'suggested',
+    source: 'member',
     viewerRole: null,
     openJoin: club.openJoin ?? true,
     memberCount: club.memberCount,

@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { Camera } from 'lucide-react'
 import { auth } from '@/lib/auth'
 import { headers } from 'next/headers'
 import {
@@ -156,17 +157,45 @@ export default async function AuthorProfilePage({ params }: Props) {
           <div style={{ padding: '0 28px 22px' }}>
             {/* Top row: avatar + identity + follow/friend CTAs */}
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: 18, marginTop: 28, position: 'relative', zIndex: 2 }}>
-              <span
-                className={`avatar s80 ${avatarAccent}`}
-                style={{ border: '3px solid var(--canvas-dark-200)', overflow: 'hidden' }}
-              >
-                {profile.avatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={profile.avatarUrl} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  avatarInitials
-                )}
-              </span>
+              {isSelf ? (
+                <Link
+                  href={`/${locale}/settings/account`}
+                  className="group relative inline-block"
+                  style={{ borderRadius: '50%', flexShrink: 0 }}
+                  aria-label="Change profile photo"
+                >
+                  <span
+                    className={`avatar s80 ${avatarAccent}`}
+                    style={{ border: '3px solid var(--canvas-dark-200)', overflow: 'hidden', display: 'block' }}
+                  >
+                    {profile.avatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={profile.avatarUrl} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      avatarInitials
+                    )}
+                  </span>
+                  <span
+                    className="absolute inset-0 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                    style={{ background: 'oklch(0 0 0 / 0.50)' }}
+                    aria-hidden
+                  >
+                    <Camera size={22} color="white" />
+                  </span>
+                </Link>
+              ) : (
+                <span
+                  className={`avatar s80 ${avatarAccent}`}
+                  style={{ border: '3px solid var(--canvas-dark-200)', overflow: 'hidden' }}
+                >
+                  {profile.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={profile.avatarUrl} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    avatarInitials
+                  )}
+                </span>
+              )}
               <div style={{ flex: 1, paddingBottom: 4, minWidth: 0 }}>
                 <h1 className="font-display" style={{
                   fontWeight: 700,

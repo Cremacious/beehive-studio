@@ -41,7 +41,7 @@ export function CreateClubModal({ locale, open, onOpenChange }: Props) {
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
   const { upload: uploadCover, uploading: uploadingCover } =
-    useCloudinaryUpload('covers')
+    useCloudinaryUpload('clubs')
   const coverFileRef = useRef<HTMLInputElement>(null)
 
   // Reset form when closed.

@@ -9,7 +9,8 @@ function getResend(): Resend {
   return _resend
 }
 
-const FROM = 'Beehive Studio <noreply@beehive-studio.app>'
+const FROM =
+  process.env.RESEND_FROM_EMAIL ?? 'Beehive Studio <noreply@beehive-studio.app>'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
 function brandedEmail(heading: string, body: string, ctaLabel: string, ctaUrl: string): string {

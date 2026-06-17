@@ -12,19 +12,17 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-17 (Issue #29 password recovery flow ✅ COMPLETE. RESEND_FROM_EMAIL env var wired; full forgot/reset flow ships. Smoke on Chris.)
+> **Last updated:** 2026-06-17 (Issue #16 binder arrow fix ✅ COMPLETE. Front/back matter reorder arrows now respect type-section boundaries.)
 >
-> **Last commit:** [TBD] — fix(email): read FROM address from RESEND_FROM_EMAIL env var.
+> **Last commit:** [f4b39d9](https://github.com/Cremacious/beehive-studio/commit/f4b39d9) — fix(binder): front/back matter arrows respect type-section boundaries. Added `getTypeSection()` to `binder-tree.tsx`; `canMoveUp`, `canMoveDown`, and `moveItem` now require neighbor to be in the same logical section (front_matter, back_matter, manuscript=chapter+part, wiki, etc.). Closes #16.
+>
+> **Prior — Last commit:** [b8ad586](https://github.com/Cremacious/beehive-studio/commit/b8ad586) — fix(email): read FROM address from RESEND_FROM_EMAIL env var.
 >
 > **Prior — Last commit:** [f61650b](https://github.com/Cremacious/beehive-studio/commit/f61650b) — fix(auth): add forgotPasswordLimiter and wire to forgot-password endpoint.
 >
-> **Prior — Last commit:** [a435376](https://github.com/Cremacious/beehive-studio/commit/a435376) — chore(env): add RESEND_FROM_EMAIL to .env.example.
->
 > **Prior — Last commit:** [017620c](https://github.com/Cremacious/beehive-studio/commit/017620c) — fix(auth): security audit — rate limiting, ?from= redirect, account deletion, env vars. 6 bugs fixed: (1) signUpLimiter/signInLimiter wired to auth API route; (2) sign-in ?from= redirect restored; (3) password minlength enforced client-side; (4) username maxLength mismatch fixed (was 24, schema says 20); (5) self-service account deletion added at /settings/account with Stripe subscription cancellation; (6) .env.example completed with all required vars.
 >
-> **Prior — Last commit:** [82b5b25](https://github.com/Cremacious/beehive-studio/commit/82b5b25) — style(discover): hero search panel on all tabs (option C).
->
-> **Next concrete step:** Chris smokes the password recovery flow — (1) go to `/en/forgot-password`, enter an email associated with an email/password account, confirm email arrives from `noreply@code-mack.dev` within 30 seconds; (2) click reset link, confirm landing on `/en/reset-password?token=...`; (3) set a new password, confirm redirect to sign-in and new password works; (4) test invalid token URL — confirm "Link expired" panel; (5) test Google-only account email — confirm generic success message (no email sent). Then smoke `/en/discover` on all 6 tabs (prior pending).
+> **Next concrete step:** Chris smokes the password recovery flow (still pending from prior session) — (1) go to `/en/forgot-password`, enter an email associated with an email/password account, confirm email arrives from `noreply@code-mack.dev` within 30 seconds; (2) click reset link, confirm landing on `/en/reset-password?token=...`; (3) set a new password, confirm redirect to sign-in and new password works; (4) test invalid token URL — confirm "Link expired" panel; (5) test Google-only account email — confirm generic success message (no email sent). Also smoke binder arrow fix: add 2+ front matter items to a book in the studio, confirm up/down arrows reorder them among themselves; confirm arrows are disabled at section boundaries (no swapping FM with chapters). Then smoke `/en/discover` on all 6 tabs (prior pending).
 >
 > **Prior — Last commit:** [ab1f610](https://github.com/Cremacious/beehive-studio/commit/ab1f610) — docs(plan): discover mode toggle + search header — 7-task implementation plan.
 >

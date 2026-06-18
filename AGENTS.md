@@ -12,7 +12,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-18 (Issue #34 complete — full settings redesign: navbar account dropdown, settings layout with sidebar, account/privacy/preferences pages, DB migration.)
+> **Last updated:** 2026-06-18 (Issue #34 complete — full settings redesign: navbar account dropdown, settings layout with sidebar, account/privacy/preferences pages, DB migration. Issue #35 Community nav dropdown in progress.)
 >
 > **Last commit:** [de6fac8](https://github.com/Cremacious/beehive-studio/commit/de6fac8) — feat(settings): issue #34 — full settings redesign + navbar account dropdown.
 >
@@ -20,7 +20,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 >
 > **Prior — Last commit:** [4dd5d76](https://github.com/Cremacious/beehive-studio/commit/4dd5d76) — feat(nav+settings+profile): issue #27 — profile discoverability entry points.
 >
-> **Next concrete step:** Smoke test issue #34: (1) navbar avatar dropdown shows identity row (40px avatar, name, @username, email) + grouped links for all 5 settings sections; (2) `/en/settings/account` loads with profile form (display name, username, bio, website, location), password change section, and danger zone; (3) `/en/settings/privacy` shows 5 auto-saving toggles; (4) `/en/settings/preferences` shows writing defaults + genre interest chips; (5) `/en/settings/billing` uses new dark iOS chrome; (6) settings sidebar nav highlights active section with brand-yellow. **Prerequisite from #17 still open:** create Cloudinary unsigned upload presets `beehive_avatars` (folder=`avatars`) and `beehive_clubs` (folder=`clubs`).
+> **Next concrete step:** Complete issue #35 — Community nav dropdown ("Community" text stays a link to /community, ChevronDown beside it opens a dropdown to all /community/* sub-pages: Sparks, Hives, Friends, Reading Lists, Clubs, Activity Feed). After #35: #20 Book details page redesign (mockup-first). **Prerequisite from #17 still open:** create Cloudinary unsigned upload presets `beehive_avatars` (folder=`avatars`) and `beehive_clubs` (folder=`clubs`).
 >
 > **Cloudinary folder layout (load-bearing):**
 > - `covers/` — book covers (`CoverPicker`, `book-details-form`) — preset `beehive_covers`
@@ -39,6 +39,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 > - ~~#17 Avatar upload (Cloudinary)~~ ✅
 > - ~~#27 View own profile (nav entry point)~~ ✅
 > - ~~#34 Full settings redesign (navbar dropdown + account/privacy/preferences pages)~~ ✅
+> - #35 Community nav dropdown (split link + sub-page dropdown) ← IN PROGRESS
 > - #20 Book details page redesign (mockup-first)
 > - #23 Create/edit forms redesign — Clubs + Lists (mockup-first)
 > - #24 /sparks/new redesign + edit route (mockup-first)

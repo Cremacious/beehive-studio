@@ -14,7 +14,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Last updated:** 2026-06-18 (Issue #23 complete — Reading List + Book Club create/edit form redesign. Variant C (section headers): brand-yellow dot + mono label + hairline rule dividers separate Content/Identity from Sharing in all 4 modals. Edit dialogs fully redesigned to match create modals — consistent recessed inputs, mono labels, styled checkbox rows, dialog-ios chrome. tsc clean.)
 >
-> **Last commit:** feat(forms): issue #23 — Reading List + Book Club create/edit redesign (Variant C).
+> **Last commit:** [3905311](https://github.com/Cremacious/beehive-studio/commit/3905311) — feat(forms): issue #23 — Reading List + Book Club create/edit redesign (Variant C).
 >
 > **Prior — Last commit:** [861f470](https://github.com/Cremacious/beehive-studio/commit/861f470) — feat(details): issue #20 — sidebar cover, at-a-glance stats, brand-yellow section headings, proper panel chrome.
 >

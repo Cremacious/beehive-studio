@@ -12,13 +12,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-18 (Issue #27 complete — profile discoverability: "My Profile" in nav dropdown, profile summary card in settings, "Edit profile" button on own profile page.)
+> **Last updated:** 2026-06-18 (Issue #27 fully complete — profile discoverability: "Profile" top navlink + "My Profile" dropdown + settings summary card + "Edit profile" on own profile page.)
 >
-> **Last commit:** (this commit) — feat(nav+settings+profile): issue #27 — profile discoverability entry points.
+> **Last commit:** [0520665](https://github.com/Cremacious/beehive-studio/commit/0520665) — feat(nav): add Profile navlink to top navbar for authenticated users.
+>
+> **Prior — Last commit:** [4dd5d76](https://github.com/Cremacious/beehive-studio/commit/4dd5d76) — feat(nav+settings+profile): issue #27 — profile discoverability entry points.
 >
 > **Prior — Last commit:** [36d75cd](https://github.com/Cremacious/beehive-studio/commit/36d75cd) — fix(profile+clubs): camera icon on own avatar + club images to correct folder.
 >
-> **Next concrete step:** Push to remote (`git push origin main`). Smoke test: (1) open user menu — see "My Profile" link (or disabled nudge if no username); (2) click "My Profile" — lands on own `/en/u/[username]`; (3) on own profile — "Edit profile" button (pencil icon) is visible in the header CTA area, links to `/en/settings/account`; (4) visit `/en/settings/notifications` (default settings landing) — profile summary card shows avatar, display name, @username, and "View public profile" link; (5) guest: no "My Profile" entry point visible. **Prerequisite from #17 still open:** create Cloudinary unsigned upload presets `beehive_avatars` and `beehive_clubs`.
+> **Next concrete step:** Push to remote (`git push origin main`). Smoke test: (1) top navbar shows Studio / Community / Discover / Profile (Profile only visible when username set); (2) Profile navlink lights up brand-yellow when on own profile page; (3) user dropdown shows "My Profile" link (or disabled nudge when no username); (4) visiting `/en/settings/notifications` shows the profile summary card with "View public profile" link; (5) on own profile page, "Edit profile" button (pencil icon) appears in header CTA area instead of Follow/Friend buttons; (6) guest: no Profile navlink, no "My Profile" in dropdown. **Prerequisite from #17 still open:** create Cloudinary unsigned upload presets `beehive_avatars` (folder=`avatars`) and `beehive_clubs` (folder=`clubs`).
 >
 > **Cloudinary folder layout (load-bearing):**
 > - `covers/` — book covers (`CoverPicker`, `book-details-form`) — preset `beehive_covers`

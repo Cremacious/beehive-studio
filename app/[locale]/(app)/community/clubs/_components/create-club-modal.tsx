@@ -29,6 +29,37 @@ type Props = {
   onOpenChange: (open: boolean) => void
 }
 
+const inputStyle = {
+  background: '#1E1E1E',
+  boxShadow: 'var(--sh-inset)',
+  color: 'var(--canvas-dark-ink)',
+} as const
+
+const labelClass = 'text-[10px] font-mono uppercase tracking-[0.14em]'
+const labelStyle = { color: 'var(--canvas-dark-ink-muted)' } as const
+
+function SectionDivider({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span
+        style={{
+          width: 4, height: 4, borderRadius: '50%',
+          background: 'var(--brand)', display: 'inline-block', flexShrink: 0,
+        }}
+      />
+      <span
+        style={{
+          fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 600,
+          textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--brand)',
+        }}
+      >
+        {label}
+      </span>
+      <span style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
+    </div>
+  )
+}
+
 export function CreateClubModal({ locale, open, onOpenChange }: Props) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -40,11 +71,9 @@ export function CreateClubModal({ locale, open, onOpenChange }: Props) {
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
-  const { upload: uploadCover, uploading: uploadingCover } =
-    useCloudinaryUpload('clubs')
+  const { upload: uploadCover, uploading: uploadingCover } = useCloudinaryUpload('clubs')
   const coverFileRef = useRef<HTMLInputElement>(null)
 
-  // Reset form when closed.
   useEffect(() => {
     if (!open) {
       setName('')
@@ -76,7 +105,6 @@ export function CreateClubModal({ locale, open, onOpenChange }: Props) {
     else toast.error('Upload failed. Try again.')
   }
 
-  // Force-clear discoverable when visibility leaves PUBLIC (3-layer defense).
   useEffect(() => {
     if (visibility !== 'PUBLIC') setDiscoverable(false)
   }, [visibility])
@@ -104,48 +132,29 @@ export function CreateClubModal({ locale, open, onOpenChange }: Props) {
     })
   }
 
-  const inputStyle = {
-    background: '#1E1E1E',
-    boxShadow: 'var(--sh-inset)',
-    color: 'var(--canvas-dark-ink)',
-  } as const
-
-  const labelClass =
-    'text-[10px] font-mono uppercase tracking-[0.14em]'
-  const labelStyle = { color: 'var(--canvas-dark-ink-muted)' } as const
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[560px] p-7 gap-6 dialog-ios">
         <DialogHeader>
           <DialogTitle
             className="font-display"
-            style={{
-              fontSize: '20px',
-              fontWeight: 700,
-              letterSpacing: '-0.01em',
-              color: 'var(--canvas-dark-ink-strong)',
-            }}
+            style={{ fontSize: '20px', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--canvas-dark-ink-strong)' }}
           >
             New book club
           </DialogTitle>
-          <p
-            className="text-[13px] mt-1"
-            style={{ color: 'var(--canvas-dark-ink-muted)' }}
-          >
+          <p className="text-[13px] mt-1" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
             Read together. You can change these later.
           </p>
         </DialogHeader>
 
-        <div className="flex flex-col gap-5 max-h-[62vh] overflow-y-auto pr-1 -mr-1">
-          {/* Cover image (optional) */}
+        <div className="flex flex-col gap-4 max-h-[62vh] overflow-y-auto pr-1 -mr-1">
+          <SectionDivider label="Identity" />
+
+          {/* Cover image */}
           <div className="flex flex-col gap-2">
             <label className={labelClass} style={labelStyle}>
               Cover image
-              <span
-                className="ml-2 normal-case tracking-normal"
-                style={{ color: 'var(--canvas-dark-ink-faint)' }}
-              >
+              <span className="ml-2 normal-case tracking-normal" style={{ color: 'var(--canvas-dark-ink-faint)' }}>
                 optional
               </span>
             </label>
@@ -162,11 +171,7 @@ export function CreateClubModal({ locale, open, onOpenChange }: Props) {
                   type="button"
                   onClick={() => setCoverImageUrl(null)}
                   className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-1 rounded-[var(--r-pill)] text-[11px] font-medium"
-                  style={{
-                    background: 'rgba(0,0,0,0.55)',
-                    color: 'white',
-                    backdropFilter: 'blur(6px)',
-                  }}
+                  style={{ background: 'rgba(0,0,0,0.55)', color: 'white', backdropFilter: 'blur(6px)' }}
                   aria-label="Remove cover image"
                 >
                   <X size={12} aria-hidden="true" /> Remove
@@ -187,10 +192,7 @@ export function CreateClubModal({ locale, open, onOpenChange }: Props) {
               >
                 <UploadCloud size={20} aria-hidden="true" />
                 {uploadingCover ? 'Uploading…' : 'Upload cover image'}
-                <span
-                  className="text-[10px]"
-                  style={{ color: 'var(--canvas-dark-ink-faint)' }}
-                >
+                <span className="text-[10px]" style={{ color: 'var(--canvas-dark-ink-faint)' }}>
                   PNG, JPG, or WEBP up to 5 MB. Recommended 1200x600 or wider.
                 </span>
               </button>
@@ -243,10 +245,7 @@ export function CreateClubModal({ locale, open, onOpenChange }: Props) {
           <div className="flex flex-col gap-2">
             <label className={labelClass} style={labelStyle}>
               Rules
-              <span
-                className="ml-2 normal-case tracking-normal"
-                style={{ color: 'var(--canvas-dark-ink-faint)' }}
-              >
+              <span className="ml-2 normal-case tracking-normal" style={{ color: 'var(--canvas-dark-ink-faint)' }}>
                 optional
               </span>
             </label>
@@ -254,8 +253,8 @@ export function CreateClubModal({ locale, open, onOpenChange }: Props) {
               value={rules}
               onChange={(next) => setRules(next.slice(0, 2000))}
               maxLength={2000}
-              rows={4}
-              placeholder="House rules, code of conduct, etc."
+              rows={3}
+              placeholder="House rules, code of conduct…"
               className="w-full px-3.5 py-2.5 rounded-[var(--r-row)] text-[14px] resize-none outline-none focus:ring-2 focus:ring-[oklch(from_var(--brand)_l_c_h_/_0.35)]"
               style={inputStyle}
             />
@@ -264,17 +263,16 @@ export function CreateClubModal({ locale, open, onOpenChange }: Props) {
           <div className="flex flex-col gap-2">
             <label className={labelClass} style={labelStyle}>
               Tags
-              <span
-                className="ml-2 normal-case tracking-normal"
-                style={{ color: 'var(--canvas-dark-ink-faint)' }}
-              >
+              <span className="ml-2 normal-case tracking-normal" style={{ color: 'var(--canvas-dark-ink-faint)' }}>
                 up to 5
               </span>
             </label>
             <TagInput value={tags} onChange={setTags} max={5} maxChars={20} />
           </div>
 
-          <div className="flex flex-col gap-2.5">
+          <SectionDivider label="Sharing" />
+
+          <div className="flex flex-col gap-2">
             <label className={labelClass} style={labelStyle}>
               Visibility
             </label>
@@ -286,11 +284,8 @@ export function CreateClubModal({ locale, open, onOpenChange }: Props) {
           </div>
 
           <label
-            className="flex items-center gap-2.5 text-[13px] py-2 px-3 rounded-[var(--r-row)] cursor-pointer select-none"
-            style={{
-              background: 'oklch(1 0 0 / 0.025)',
-              border: 'var(--br-card)',
-            }}
+            className="flex items-center gap-2.5 text-[13px] py-2.5 px-3 rounded-[var(--r-row)] cursor-pointer select-none"
+            style={{ background: 'oklch(1 0 0 / 0.025)', border: 'var(--br-card)' }}
           >
             <input
               type="checkbox"
@@ -299,14 +294,9 @@ export function CreateClubModal({ locale, open, onOpenChange }: Props) {
               onChange={(e) => setDiscoverable(e.target.checked)}
               className="h-4 w-4 accent-[var(--brand)] disabled:opacity-40"
             />
-            <span style={{ color: 'var(--canvas-dark-ink)' }}>
-              Show in Discover
-            </span>
+            <span style={{ color: 'var(--canvas-dark-ink)' }}>Show in Discover</span>
             {visibility !== 'PUBLIC' && (
-              <span
-                className="text-[11px] ml-auto"
-                style={{ color: 'var(--canvas-dark-ink-faint)' }}
-              >
+              <span className="text-[11px] ml-auto" style={{ color: 'var(--canvas-dark-ink-faint)' }}>
                 public clubs only
               </span>
             )}
@@ -314,10 +304,7 @@ export function CreateClubModal({ locale, open, onOpenChange }: Props) {
 
           <label
             className="flex items-start gap-2.5 text-[13px] py-2.5 px-3 rounded-[var(--r-row)] cursor-pointer select-none"
-            style={{
-              background: 'oklch(1 0 0 / 0.025)',
-              border: 'var(--br-card)',
-            }}
+            style={{ background: 'oklch(1 0 0 / 0.025)', border: 'var(--br-card)' }}
           >
             <input
               type="checkbox"
@@ -326,18 +313,9 @@ export function CreateClubModal({ locale, open, onOpenChange }: Props) {
               className="h-4 w-4 accent-[var(--brand)] mt-0.5"
             />
             <span className="flex-1">
-              <span
-                className="block"
-                style={{ color: 'var(--canvas-dark-ink)' }}
-              >
-                Open join
-              </span>
-              <span
-                className="block text-[11px] mt-0.5 leading-snug"
-                style={{ color: 'var(--canvas-dark-ink-muted)' }}
-              >
-                Anyone who can see this club can join with one click. Otherwise
-                new members request to join and an owner or moderator approves.
+              <span className="block" style={{ color: 'var(--canvas-dark-ink)' }}>Open join</span>
+              <span className="block text-[11px] mt-0.5 leading-snug" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
+                Anyone who can see this club can join with one click. Otherwise new members request to join and an owner or moderator approves.
               </span>
             </span>
           </label>

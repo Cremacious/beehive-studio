@@ -24,20 +24,48 @@ type Props = {
   onOpenChange: (open: boolean) => void
 }
 
+const inputStyle = {
+  background: '#1E1E1E',
+  boxShadow: 'var(--sh-inset)',
+  color: 'var(--canvas-dark-ink)',
+} as const
+
+const labelClass = 'text-[10px] font-mono uppercase tracking-[0.14em]'
+const labelStyle = { color: 'var(--canvas-dark-ink-muted)' } as const
+
+function SectionDivider({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span
+        style={{
+          width: 4, height: 4, borderRadius: '50%',
+          background: 'var(--brand)', display: 'inline-block', flexShrink: 0,
+        }}
+      />
+      <span
+        style={{
+          fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 600,
+          textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--brand)',
+        }}
+      >
+        {label}
+      </span>
+      <span style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
+    </div>
+  )
+}
+
 export function EditListMetadataDialog({ initialList, open, onOpenChange }: Props) {
   const [title, setTitle] = useState(initialList.title)
   const [description, setDescription] = useState(initialList.description ?? '')
   const [tags, setTags] = useState<string[]>(initialList.tags ?? [])
-  const [visibility, setVisibility] = useState<Visibility>(
-    initialList.visibility as Visibility,
-  )
+  const [visibility, setVisibility] = useState<Visibility>(initialList.visibility as Visibility)
   const [discoverable, setDiscoverable] = useState(initialList.discoverable)
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
 
   const isLiked = initialList.kind === 'LIKED'
 
-  // Reset form to initial when reopened.
   useEffect(() => {
     if (open) {
       setTitle(initialList.title)
@@ -48,7 +76,6 @@ export function EditListMetadataDialog({ initialList, open, onOpenChange }: Prop
     }
   }, [open, initialList])
 
-  // Force-clear discoverable when visibility leaves PUBLIC (3-layer defense).
   useEffect(() => {
     if (visibility !== 'PUBLIC') setDiscoverable(false)
   }, [visibility])
@@ -76,30 +103,40 @@ export function EditListMetadataDialog({ initialList, open, onOpenChange }: Prop
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="sm:max-w-[560px] p-7 gap-6 dialog-ios">
         <DialogHeader>
-          <DialogTitle>Edit list details</DialogTitle>
+          <DialogTitle
+            className="font-display"
+            style={{ fontSize: '20px', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--canvas-dark-ink-strong)' }}
+          >
+            Edit list details
+          </DialogTitle>
+          <p className="text-[13px] mt-1" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
+            Changes are visible to anyone who can see this list.
+          </p>
         </DialogHeader>
+
         <div className="flex flex-col gap-4">
-          <div>
-            <label className="text-[11px] font-mono uppercase tracking-wider mb-1.5 block text-[var(--canvas-dark-ink-muted)]">
-              Title *
+          <SectionDivider label="Content" />
+
+          <div className="flex flex-col gap-2">
+            <label htmlFor="el-title" className={labelClass} style={labelStyle}>
+              Title <span style={{ color: 'var(--brand)' }}>*</span>
             </label>
             <input
+              id="el-title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value.slice(0, 100))}
               maxLength={100}
               autoFocus
-              className="w-full px-3 py-2 rounded-[var(--r-row)] border text-sm text-[var(--canvas-dark-ink)] outline-none focus:border-[var(--canvas-dark-ink-muted)]"
-              style={{
-                background: 'var(--canvas-dark-100)',
-                borderColor: 'var(--br-card)',
-              }}
+              className="w-full h-10 px-3.5 rounded-[var(--r-row)] text-[14px] outline-none focus:ring-2 focus:ring-[oklch(from_var(--brand)_l_c_h_/_0.35)]"
+              style={inputStyle}
             />
           </div>
-          <div>
-            <label className="text-[11px] font-mono uppercase tracking-wider mb-1.5 block text-[var(--canvas-dark-ink-muted)]">
+
+          <div className="flex flex-col gap-2">
+            <label htmlFor="el-desc" className={labelClass} style={labelStyle}>
               Description
             </label>
             <MentionableTextarea
@@ -107,21 +144,26 @@ export function EditListMetadataDialog({ initialList, open, onOpenChange }: Prop
               onChange={(next) => setDescription(next.slice(0, 500))}
               maxLength={500}
               rows={3}
-              className="w-full px-3 py-2 rounded-[var(--r-row)] border text-sm text-[var(--canvas-dark-ink)] resize-none outline-none focus:border-[var(--canvas-dark-ink-muted)]"
-              style={{
-                background: 'var(--canvas-dark-100)',
-                borderColor: 'var(--br-card)',
-              }}
+              placeholder="What ties this list together?"
+              className="w-full px-3.5 py-2.5 rounded-[var(--r-row)] text-[14px] resize-none outline-none focus:ring-2 focus:ring-[oklch(from_var(--brand)_l_c_h_/_0.35)]"
+              style={inputStyle}
             />
           </div>
-          <div>
-            <label className="text-[11px] font-mono uppercase tracking-wider mb-1.5 block text-[var(--canvas-dark-ink-muted)]">
-              Tags (up to 5)
+
+          <div className="flex flex-col gap-2">
+            <label className={labelClass} style={labelStyle}>
+              Tags
+              <span className="ml-2 normal-case tracking-normal" style={{ color: 'var(--canvas-dark-ink-faint)' }}>
+                up to 5
+              </span>
             </label>
             <TagInput value={tags} onChange={setTags} max={5} maxChars={20} />
           </div>
-          <div>
-            <label className="text-[11px] font-mono uppercase tracking-wider mb-2 block text-[var(--canvas-dark-ink-muted)]">
+
+          <SectionDivider label="Sharing" />
+
+          <div className="flex flex-col gap-2">
+            <label className={labelClass} style={labelStyle}>
               Visibility
             </label>
             <VisibilityPicker
@@ -130,32 +172,38 @@ export function EditListMetadataDialog({ initialList, open, onOpenChange }: Prop
               options={PUBLIC_FRIENDS_PRIVATE_OPTIONS}
             />
           </div>
-          <label className="flex items-center gap-2 text-sm">
+
+          <label
+            className="flex items-center gap-2.5 text-[13px] py-2.5 px-3 rounded-[var(--r-row)] cursor-pointer select-none"
+            style={{ background: 'oklch(1 0 0 / 0.025)', border: 'var(--br-card)' }}
+          >
             <input
               type="checkbox"
               checked={discoverable}
               disabled={visibility !== 'PUBLIC' || isLiked}
               onChange={(e) => setDiscoverable(e.target.checked)}
-              className="rounded"
+              className="h-4 w-4 accent-[var(--brand)] disabled:opacity-40"
             />
-            <span>Show in Discover</span>
+            <span style={{ color: 'var(--canvas-dark-ink)' }}>Show in Discover</span>
             {isLiked && (
-              <span className="text-xs text-[var(--canvas-dark-ink-muted)]">
-                (Liked lists are never discoverable)
+              <span className="text-[11px] ml-auto" style={{ color: 'var(--canvas-dark-ink-faint)' }}>
+                liked lists only
               </span>
             )}
             {!isLiked && visibility !== 'PUBLIC' && (
-              <span className="text-xs text-[var(--canvas-dark-ink-muted)]">
-                (only PUBLIC lists can be discoverable)
+              <span className="text-[11px] ml-auto" style={{ color: 'var(--canvas-dark-ink-faint)' }}>
+                public lists only
               </span>
             )}
           </label>
         </div>
-        <DialogFooter>
+
+        <DialogFooter className="dialog-ios-footer">
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="px-4 py-2 text-sm text-[var(--canvas-dark-ink-muted)] hover:text-[var(--canvas-dark-ink)]"
+            className="h-9 px-4 rounded-[var(--r-pill)] text-[13px] font-medium transition-colors"
+            style={{ color: 'var(--canvas-dark-ink-muted)' }}
           >
             Cancel
           </button>
@@ -163,7 +211,7 @@ export function EditListMetadataDialog({ initialList, open, onOpenChange }: Prop
             type="button"
             onClick={submit}
             disabled={isPending || !title.trim()}
-            className="px-5 py-2 rounded-[var(--r-pill)] text-sm font-semibold disabled:opacity-40"
+            className="h-9 px-5 rounded-[var(--r-pill)] text-[13px] font-semibold disabled:opacity-40"
             style={{ background: 'var(--brand)', color: 'var(--brand-ink)' }}
           >
             {isPending ? 'Saving…' : 'Save changes'}

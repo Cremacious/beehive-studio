@@ -23,6 +23,37 @@ type Props = {
   onOpenChange: (open: boolean) => void
 }
 
+const inputStyle = {
+  background: '#1E1E1E',
+  boxShadow: 'var(--sh-inset)',
+  color: 'var(--canvas-dark-ink)',
+} as const
+
+const labelClass = 'text-[10px] font-mono uppercase tracking-[0.14em]'
+const labelStyle = { color: 'var(--canvas-dark-ink-muted)' } as const
+
+function SectionDivider({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span
+        style={{
+          width: 4, height: 4, borderRadius: '50%',
+          background: 'var(--brand)', display: 'inline-block', flexShrink: 0,
+        }}
+      />
+      <span
+        style={{
+          fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 600,
+          textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--brand)',
+        }}
+      >
+        {label}
+      </span>
+      <span style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
+    </div>
+  )
+}
+
 export function CreateListModal({ locale, open, onOpenChange }: Props) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -32,7 +63,6 @@ export function CreateListModal({ locale, open, onOpenChange }: Props) {
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
 
-  // Reset form when closed.
   useEffect(() => {
     if (!open) {
       setTitle('')
@@ -43,7 +73,6 @@ export function CreateListModal({ locale, open, onOpenChange }: Props) {
     }
   }, [open])
 
-  // Force-clear discoverable when visibility leaves PUBLIC (3-layer defense).
   useEffect(() => {
     if (visibility !== 'PUBLIC') setDiscoverable(false)
   }, [visibility])
@@ -68,42 +97,26 @@ export function CreateListModal({ locale, open, onOpenChange }: Props) {
     })
   }
 
-  const inputStyle = {
-    background: '#1E1E1E',
-    boxShadow: 'var(--sh-inset)',
-    color: 'var(--canvas-dark-ink)',
-  } as const
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[560px] p-7 gap-6 dialog-ios">
         <DialogHeader>
           <DialogTitle
             className="font-display"
-            style={{
-              fontSize: '20px',
-              fontWeight: 700,
-              letterSpacing: '-0.01em',
-              color: 'var(--canvas-dark-ink-strong)',
-            }}
+            style={{ fontSize: '20px', fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--canvas-dark-ink-strong)' }}
           >
             New reading list
           </DialogTitle>
-          <p
-            className="text-[13px] mt-1"
-            style={{ color: 'var(--canvas-dark-ink-muted)' }}
-          >
+          <p className="text-[13px] mt-1" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
             Curate books worth sharing. You can change these later.
           </p>
         </DialogHeader>
 
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-4">
+          <SectionDivider label="Content" />
+
           <div className="flex flex-col gap-2">
-            <label
-              htmlFor="cl-title"
-              className="text-[10px] font-mono uppercase tracking-[0.14em]"
-              style={{ color: 'var(--canvas-dark-ink-muted)' }}
-            >
+            <label htmlFor="cl-title" className={labelClass} style={labelStyle}>
               Title <span style={{ color: 'var(--brand)' }}>*</span>
             </label>
             <input
@@ -120,11 +133,7 @@ export function CreateListModal({ locale, open, onOpenChange }: Props) {
           </div>
 
           <div className="flex flex-col gap-2">
-            <label
-              htmlFor="cl-desc"
-              className="text-[10px] font-mono uppercase tracking-[0.14em]"
-              style={{ color: 'var(--canvas-dark-ink-muted)' }}
-            >
+            <label htmlFor="cl-desc" className={labelClass} style={labelStyle}>
               Description
             </label>
             <MentionableTextarea
@@ -139,26 +148,19 @@ export function CreateListModal({ locale, open, onOpenChange }: Props) {
           </div>
 
           <div className="flex flex-col gap-2">
-            <label
-              className="text-[10px] font-mono uppercase tracking-[0.14em]"
-              style={{ color: 'var(--canvas-dark-ink-muted)' }}
-            >
+            <label className={labelClass} style={labelStyle}>
               Tags
-              <span
-                className="ml-2 normal-case tracking-normal"
-                style={{ color: 'var(--canvas-dark-ink-faint)' }}
-              >
+              <span className="ml-2 normal-case tracking-normal" style={{ color: 'var(--canvas-dark-ink-faint)' }}>
                 up to 5
               </span>
             </label>
             <TagInput value={tags} onChange={setTags} max={5} maxChars={20} />
           </div>
 
-          <div className="flex flex-col gap-2.5">
-            <label
-              className="text-[10px] font-mono uppercase tracking-[0.14em]"
-              style={{ color: 'var(--canvas-dark-ink-muted)' }}
-            >
+          <SectionDivider label="Sharing" />
+
+          <div className="flex flex-col gap-2">
+            <label className={labelClass} style={labelStyle}>
               Visibility
             </label>
             <VisibilityPicker
@@ -169,11 +171,8 @@ export function CreateListModal({ locale, open, onOpenChange }: Props) {
           </div>
 
           <label
-            className="flex items-center gap-2.5 text-[13px] py-2 px-3 rounded-[var(--r-row)] cursor-pointer select-none"
-            style={{
-              background: 'oklch(1 0 0 / 0.025)',
-              border: 'var(--br-card)',
-            }}
+            className="flex items-center gap-2.5 text-[13px] py-2.5 px-3 rounded-[var(--r-row)] cursor-pointer select-none"
+            style={{ background: 'oklch(1 0 0 / 0.025)', border: 'var(--br-card)' }}
           >
             <input
               type="checkbox"
@@ -182,14 +181,9 @@ export function CreateListModal({ locale, open, onOpenChange }: Props) {
               onChange={(e) => setDiscoverable(e.target.checked)}
               className="h-4 w-4 accent-[var(--brand)] disabled:opacity-40"
             />
-            <span style={{ color: 'var(--canvas-dark-ink)' }}>
-              Show in Discover
-            </span>
+            <span style={{ color: 'var(--canvas-dark-ink)' }}>Show in Discover</span>
             {visibility !== 'PUBLIC' && (
-              <span
-                className="text-[11px] ml-auto"
-                style={{ color: 'var(--canvas-dark-ink-faint)' }}
-              >
+              <span className="text-[11px] ml-auto" style={{ color: 'var(--canvas-dark-ink-faint)' }}>
                 public lists only
               </span>
             )}

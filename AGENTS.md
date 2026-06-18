@@ -12,15 +12,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-18 (Issue #20 complete — Book details page redesign: Variant C (sidebar cover + compact sections). Sticky 200px sidebar holds cover editor + at-a-glance stats card. All sections always-open with proper panel chrome + brand-yellow headings. Danger Zone soft at rest. tsc clean.)
+> **Last updated:** 2026-06-18 (Issue #23 complete — Reading List + Book Club create/edit form redesign. Variant C (section headers): brand-yellow dot + mono label + hairline rule dividers separate Content/Identity from Sharing in all 4 modals. Edit dialogs fully redesigned to match create modals — consistent recessed inputs, mono labels, styled checkbox rows, dialog-ios chrome. tsc clean.)
 >
-> **Last commit:** feat(details): issue #20 — sidebar cover, at-a-glance stats, brand-yellow section headings, proper panel chrome.
+> **Last commit:** feat(forms): issue #23 — Reading List + Book Club create/edit redesign (Variant C).
+>
+> **Prior — Last commit:** [861f470](https://github.com/Cremacious/beehive-studio/commit/861f470) — feat(details): issue #20 — sidebar cover, at-a-glance stats, brand-yellow section headings, proper panel chrome.
 >
 > **Prior — Last commit:** [c1375ae](https://github.com/Cremacious/beehive-studio/commit/c1375ae) — feat(nav): issue #35 — community dropdown with click-to-open and 6 items.
 >
-> **Prior — Last commit:** [de6fac8](https://github.com/Cremacious/beehive-studio/commit/de6fac8) — feat(settings): issue #34 — full settings redesign + navbar account dropdown.
->
-> **Next concrete step:** #23 Create/edit forms redesign — Clubs + Lists (mockup-first). **Prerequisite from #17 still open:** create Cloudinary unsigned upload presets `beehive_avatars` (folder=`avatars`) and `beehive_clubs` (folder=`clubs`).
+> **Next concrete step:** #24 /sparks/new redesign + edit route (mockup-first). **Prerequisite from #17 still open:** create Cloudinary unsigned upload presets `beehive_avatars` (folder=`avatars`) and `beehive_clubs` (folder=`clubs`).
 >
 > **Cloudinary folder layout (load-bearing):**
 > - `covers/` — book covers (`CoverPicker`, `book-details-form`) — preset `beehive_covers`
@@ -41,7 +41,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 > - ~~#34 Full settings redesign (navbar dropdown + account/privacy/preferences pages)~~ ✅
 > - ~~#35 Community nav dropdown~~ ✅
 > - ~~#20 Book details page redesign~~ ✅
-> - #23 Create/edit forms redesign — Clubs + Lists (mockup-first)
+> - ~~#23 Create/edit forms redesign — Clubs + Lists~~ ✅
 > - #24 /sparks/new redesign + edit route (mockup-first)
 > - #28 Notifications settings redesign (mockup-first)
 > - #30 Book club page redesign (mockup-first)

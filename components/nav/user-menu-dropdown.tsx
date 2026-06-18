@@ -100,11 +100,22 @@ export function UserMenuDropdown({
             <Camera size={14} /> Change photo
           </Link>
         </DropdownMenuItem>
-        {username && (
+        {username ? (
           <DropdownMenuItem asChild>
             <Link href={`/${locale}/u/${username}`} className="cursor-pointer no-underline">
-              <UserIcon size={14} /> View profile
+              <UserIcon size={14} /> My Profile
             </Link>
+          </DropdownMenuItem>
+        ) : (
+          <DropdownMenuItem disabled className="cursor-default">
+            <UserIcon size={14} />
+            <span>My Profile</span>
+            <span
+              className="ml-auto text-[10px] tracking-wide uppercase"
+              style={{ color: 'var(--canvas-dark-ink-muted)' }}
+            >
+              set username first
+            </span>
           </DropdownMenuItem>
         )}
         <DropdownMenuItem asChild>

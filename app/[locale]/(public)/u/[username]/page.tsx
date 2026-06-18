@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { Camera } from 'lucide-react'
+import { Camera, Pencil } from 'lucide-react'
 import { auth } from '@/lib/auth'
 import { headers } from 'next/headers'
 import {
@@ -209,20 +209,32 @@ export default async function AuthorProfilePage({ params }: Props) {
                 <div className="meta-mono" style={{ marginTop: 3 }}>@{profile.username}</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBottom: 6, flexWrap: 'wrap' }}>
-                <FollowButton
-                  targetUserId={profile.userId}
-                  locale={locale}
-                  initialFollowing={profile.isFollowing}
-                  isAuthenticated={!!userId}
-                />
-                <FriendButton
-                  targetUserId={profile.userId}
-                  locale={locale}
-                  initialStatus={friendshipStatus}
-                  initialFriendshipId={friendshipId}
-                  isAuthenticated={!!userId}
-                  isSelf={isSelf}
-                />
+                {isSelf ? (
+                  <Link
+                    href={`/${locale}/settings/account`}
+                    className="btn-tile btn-sm flex items-center gap-1.5 no-underline"
+                  >
+                    <Pencil size={13} />
+                    Edit profile
+                  </Link>
+                ) : (
+                  <>
+                    <FollowButton
+                      targetUserId={profile.userId}
+                      locale={locale}
+                      initialFollowing={profile.isFollowing}
+                      isAuthenticated={!!userId}
+                    />
+                    <FriendButton
+                      targetUserId={profile.userId}
+                      locale={locale}
+                      initialStatus={friendshipStatus}
+                      initialFriendshipId={friendshipId}
+                      isAuthenticated={!!userId}
+                      isSelf={isSelf}
+                    />
+                  </>
+                )}
               </div>
             </div>
 

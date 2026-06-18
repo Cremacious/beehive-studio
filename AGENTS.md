@@ -12,15 +12,13 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-17 (Issue #17 fully complete — avatar upload + nav "Change photo" + camera icon on own profile + Cloudinary folder fix for clubs.)
+> **Last updated:** 2026-06-18 (Issue #27 complete — profile discoverability: "My Profile" in nav dropdown, profile summary card in settings, "Edit profile" button on own profile page.)
 >
-> **Last commit:** [36d75cd](https://github.com/Cremacious/beehive-studio/commit/36d75cd) — fix(profile+clubs): camera icon on own avatar + club images to correct folder.
+> **Last commit:** (this commit) — feat(nav+settings+profile): issue #27 — profile discoverability entry points.
 >
-> **Prior — Last commit:** [b3c28fc](https://github.com/Cremacious/beehive-studio/commit/b3c28fc) — fix(nav): add Change photo entry to user menu dropdown.
+> **Prior — Last commit:** [36d75cd](https://github.com/Cremacious/beehive-studio/commit/36d75cd) — fix(profile+clubs): camera icon on own avatar + club images to correct folder.
 >
-> **Prior — Last commit:** [29e49dd](https://github.com/Cremacious/beehive-studio/commit/29e49dd) — feat(avatar): issue #17 — avatar upload, replace, and delete in account settings. Closes #17.
->
-> **Next concrete step:** Push to remote (`git push origin main`). Smoke test: (1) visit own profile `/en/u/[username]` — hover avatar shows camera icon overlay; click it lands on `/en/settings/account`; (2) upload avatar there — immediate preview, Cloudinary persists to `avatars/` folder; (3) nav avatar and "Change photo" in dropdown both work; (4) create a club with a cover image — asset lands in `clubs/` folder not `covers/`. **Prerequisite:** create Cloudinary unsigned upload presets `beehive_avatars` (folder=`avatars`) and `beehive_clubs` (folder=`clubs`) to match the `covers` preset that already exists.
+> **Next concrete step:** Push to remote (`git push origin main`). Smoke test: (1) open user menu — see "My Profile" link (or disabled nudge if no username); (2) click "My Profile" — lands on own `/en/u/[username]`; (3) on own profile — "Edit profile" button (pencil icon) is visible in the header CTA area, links to `/en/settings/account`; (4) visit `/en/settings/notifications` (default settings landing) — profile summary card shows avatar, display name, @username, and "View public profile" link; (5) guest: no "My Profile" entry point visible. **Prerequisite from #17 still open:** create Cloudinary unsigned upload presets `beehive_avatars` and `beehive_clubs`.
 >
 > **Cloudinary folder layout (load-bearing):**
 > - `covers/` — book covers (`CoverPicker`, `book-details-form`) — preset `beehive_covers`
@@ -37,7 +35,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 > - ~~#19 FM/BM typography + About the Author image~~ ✅
 > - ~~#25 Community routing refactor (/community/hives etc.)~~ ✅
 > - ~~#17 Avatar upload (Cloudinary)~~ ✅
-> - #27 View own profile (nav entry point)
+> - ~~#27 View own profile (nav entry point)~~ ✅
 > - #20 Book details page redesign (mockup-first)
 > - #23 Create/edit forms redesign — Clubs + Lists (mockup-first)
 > - #24 /sparks/new redesign + edit route (mockup-first)

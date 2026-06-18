@@ -12,15 +12,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-18 (Issue #27 fully complete — profile discoverability: "Profile" top navlink + "My Profile" dropdown + settings summary card + "Edit profile" on own profile page.)
+> **Last updated:** 2026-06-18 (Issue #34 complete — full settings redesign: navbar account dropdown, settings layout with sidebar, account/privacy/preferences pages, DB migration.)
 >
-> **Last commit:** [0520665](https://github.com/Cremacious/beehive-studio/commit/0520665) — feat(nav): add Profile navlink to top navbar for authenticated users.
+> **Last commit:** [de6fac8](https://github.com/Cremacious/beehive-studio/commit/de6fac8) — feat(settings): issue #34 — full settings redesign + navbar account dropdown.
+>
+> **Prior — Last commit:** [0520665](https://github.com/Cremacious/beehive-studio/commit/0520665) — feat(nav): add Profile navlink to top navbar for authenticated users.
 >
 > **Prior — Last commit:** [4dd5d76](https://github.com/Cremacious/beehive-studio/commit/4dd5d76) — feat(nav+settings+profile): issue #27 — profile discoverability entry points.
 >
-> **Prior — Last commit:** [36d75cd](https://github.com/Cremacious/beehive-studio/commit/36d75cd) — fix(profile+clubs): camera icon on own avatar + club images to correct folder.
->
-> **Next concrete step:** Push to remote (`git push origin main`). Smoke test: (1) top navbar shows Studio / Community / Discover / Profile (Profile only visible when username set); (2) Profile navlink lights up brand-yellow when on own profile page; (3) user dropdown shows "My Profile" link (or disabled nudge when no username); (4) visiting `/en/settings/notifications` shows the profile summary card with "View public profile" link; (5) on own profile page, "Edit profile" button (pencil icon) appears in header CTA area instead of Follow/Friend buttons; (6) guest: no Profile navlink, no "My Profile" in dropdown. **Prerequisite from #17 still open:** create Cloudinary unsigned upload presets `beehive_avatars` (folder=`avatars`) and `beehive_clubs` (folder=`clubs`).
+> **Next concrete step:** Smoke test issue #34: (1) navbar avatar dropdown shows identity row (40px avatar, name, @username, email) + grouped links for all 5 settings sections; (2) `/en/settings/account` loads with profile form (display name, username, bio, website, location), password change section, and danger zone; (3) `/en/settings/privacy` shows 5 auto-saving toggles; (4) `/en/settings/preferences` shows writing defaults + genre interest chips; (5) `/en/settings/billing` uses new dark iOS chrome; (6) settings sidebar nav highlights active section with brand-yellow. **Prerequisite from #17 still open:** create Cloudinary unsigned upload presets `beehive_avatars` (folder=`avatars`) and `beehive_clubs` (folder=`clubs`).
 >
 > **Cloudinary folder layout (load-bearing):**
 > - `covers/` — book covers (`CoverPicker`, `book-details-form`) — preset `beehive_covers`
@@ -38,6 +38,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 > - ~~#25 Community routing refactor (/community/hives etc.)~~ ✅
 > - ~~#17 Avatar upload (Cloudinary)~~ ✅
 > - ~~#27 View own profile (nav entry point)~~ ✅
+> - ~~#34 Full settings redesign (navbar dropdown + account/privacy/preferences pages)~~ ✅
 > - #20 Book details page redesign (mockup-first)
 > - #23 Create/edit forms redesign — Clubs + Lists (mockup-first)
 > - #24 /sparks/new redesign + edit route (mockup-first)

@@ -32,7 +32,7 @@ import { resolveMentionedUsers } from '@/lib/mentions/resolve-mentions'
 import { recordMentionNotificationsTx } from '@/lib/mentions/record-mention-notifications'
 import { shouldSkipNotification } from '@/lib/notifications/check-preferences'
 import { GENRES } from '@/lib/discover/genres'
-import { createSparkSchema, type CreateSparkInput } from '@/lib/validations/spark'
+import { createSparkSchema, updateSparkSchema, type CreateSparkInput, type UpdateSparkInput } from '@/lib/validations/spark'
 import type { SparkStatus, SparkVisibility } from '@/db/schema/social'
 import type { ActionResult } from './book.actions'
 
@@ -65,6 +65,21 @@ export type SparkDetail = SparkSummary & {
   creatorUserId: string
   creatorChoiceEntryId: string | null
   winnerEntryId: string | null
+}
+
+export type SparkEditData = {
+  id: string
+  title: string
+  prompt: string
+  description: string | null
+  rules: string | null
+  wordLimit: number | null
+  genre: string | null
+  deadline: Date
+  visibility: SparkVisibility
+  discoverable: boolean
+  status: SparkStatus
+  votingEndsAt: Date | null
 }
 
 export type SparkEntrySummary = {
@@ -510,6 +525,129 @@ export async function createSparkAction(
     .returning({ id: sparks.id })
 
   return { success: true, data: { sparkId: created.id, id: created.id } }
+}
+
+/**
+ * Fetch a spark's raw fields for the creator's edit form.
+ * Returns NOT_FOUND for non-owners (ownership masquerade).
+ */
+export async function getSparkForEditAction(
+  sparkId: string,
+): Promise<ActionResult<SparkEditData>> {
+  const userId = await requireAuth()
+
+  const [spark] = await db
+    .select()
+    .from(sparks)
+    .where(eq(sparks.id, sparkId))
+    .limit(1)
+
+  if (!spark) return { success: false, error: 'NOT_FOUND' }
+  if (spark.creatorId !== userId) return { success: false, error: 'NOT_FOUND' }
+
+  return {
+    success: true,
+    data: {
+      id: spark.id,
+      title: spark.title,
+      prompt: spark.prompt || '',
+      description: spark.description ?? null,
+      rules: spark.rules ?? null,
+      wordLimit: spark.wordLimit ?? null,
+      genre: spark.genre ?? null,
+      deadline: spark.deadline ?? new Date(Date.now() + 7 * 24 * 3600_000),
+      visibility: spark.visibility,
+      discoverable: spark.discoverable,
+      status: spark.status,
+      votingEndsAt: spark.votingEndsAt ?? null,
+    },
+  }
+}
+
+/**
+ * Update an existing spark (creator only).
+ *
+ * Rules:
+ * - CLOSED sparks cannot be edited.
+ * - Deadline can only be changed when status is OPEN.
+ * - All other fields (title, prompt, description, rules, wordLimit, genre,
+ *   visibility, discoverable) can be updated when OPEN or VOTING.
+ * - discoverable is coerced to false when visibility is not PUBLIC.
+ * - votingEndsAt is recomputed when deadline changes.
+ */
+export async function updateSparkAction(
+  input: UpdateSparkInput & { votingDurationHours?: number },
+): Promise<ActionResult<{ id: string }>> {
+  const userId = await requireAuth()
+
+  const parsed = updateSparkSchema.safeParse(input)
+  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+
+  const { id, ...fields } = parsed.data
+
+  const [spark] = await db
+    .select()
+    .from(sparks)
+    .where(eq(sparks.id, id))
+    .limit(1)
+
+  if (!spark) return { success: false, error: 'NOT_FOUND' }
+  if (spark.creatorId !== userId) return { success: false, error: 'NOT_AUTHORIZED' }
+  if (spark.status === 'CLOSED') return { success: false, error: 'NOT_AUTHORIZED' }
+
+  // Deadline changes only allowed while OPEN
+  if (fields.deadline !== undefined && spark.status !== 'OPEN') {
+    return { success: false, error: 'INVALID_INPUT' }
+  }
+
+  // New deadline must be at least 1 hour from now
+  if (fields.deadline !== undefined) {
+    if (fields.deadline.getTime() <= Date.now() + 60 * 60 * 1000) {
+      return { success: false, error: 'INVALID_INPUT' }
+    }
+  }
+
+  if (fields.genre != null && !(GENRES as readonly string[]).includes(fields.genre)) {
+    return { success: false, error: 'INVALID_INPUT' }
+  }
+
+  // Discoverable coercion: false when not PUBLIC
+  const newVisibility = fields.visibility ?? spark.visibility
+  const rawDiscoverable =
+    fields.discoverable !== undefined ? fields.discoverable : spark.discoverable
+  const discoverable = newVisibility === 'PUBLIC' ? rawDiscoverable : false
+
+  // Recompute votingEndsAt when deadline changes
+  let votingEndsAt: Date | undefined
+  if (fields.deadline !== undefined) {
+    const votingDurationParsed = votingDurationHoursSchema.safeParse(
+      input.votingDurationHours,
+    )
+    if (!votingDurationParsed.success) return { success: false, error: 'INVALID_INPUT' }
+    votingEndsAt = new Date(
+      fields.deadline.getTime() + votingDurationParsed.data * 3600_000,
+    )
+  }
+
+  // Stamp firstPubliclyDiscoverableAt when transitioning to PUBLIC+discoverable
+  const isGoingPublic =
+    newVisibility === 'PUBLIC' && discoverable && !spark.firstPubliclyDiscoverableAt
+
+  const updates: Record<string, unknown> = { discoverable }
+  if (fields.title !== undefined) updates.title = fields.title
+  if (fields.prompt !== undefined) updates.prompt = fields.prompt
+  if (fields.description !== undefined) updates.description = fields.description || null
+  if (fields.rules !== undefined) updates.rules = fields.rules || null
+  if (fields.wordLimit !== undefined) updates.wordLimit = fields.wordLimit ?? null
+  if (fields.genre !== undefined) updates.genre = fields.genre || null
+  if (fields.deadline !== undefined) updates.deadline = fields.deadline
+  if (fields.visibility !== undefined) updates.visibility = fields.visibility
+  if (votingEndsAt) updates.votingEndsAt = votingEndsAt
+  if (isGoingPublic) updates.firstPubliclyDiscoverableAt = new Date()
+
+  await db.update(sparks).set(updates).where(eq(sparks.id, id))
+
+  return { success: true, data: { id } }
 }
 
 /**

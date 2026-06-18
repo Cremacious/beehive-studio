@@ -12,15 +12,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-18 (Issue #23 complete — Reading List + Book Club create/edit form redesign. Variant C (section headers): brand-yellow dot + mono label + hairline rule dividers separate Content/Identity from Sharing in all 4 modals. Edit dialogs fully redesigned to match create modals — consistent recessed inputs, mono labels, styled checkbox rows, dialog-ios chrome. tsc clean.)
+> **Last updated:** 2026-06-18 (Issue #24 complete — /sparks/new redesign (Variant C: section dividers + sticky CTA bar) + new /sparks/[id]/edit route. New `DateTimePicker` component replaces native datetime-local. `getSparkForEditAction` + `updateSparkAction` added to sparks.actions.ts. `?prompt=` and `?wordLimit=` query params pre-fill create form. tsc clean, 883/883 tests.)
 >
-> **Last commit:** [3905311](https://github.com/Cremacious/beehive-studio/commit/3905311) — feat(forms): issue #23 — Reading List + Book Club create/edit redesign (Variant C).
+> **Last commit:** pending user approval
+>
+> **Prior — Last commit:** [3905311](https://github.com/Cremacious/beehive-studio/commit/3905311) — feat(forms): issue #23 — Reading List + Book Club create/edit redesign (Variant C).
 >
 > **Prior — Last commit:** [861f470](https://github.com/Cremacious/beehive-studio/commit/861f470) — feat(details): issue #20 — sidebar cover, at-a-glance stats, brand-yellow section headings, proper panel chrome.
 >
-> **Prior — Last commit:** [c1375ae](https://github.com/Cremacious/beehive-studio/commit/c1375ae) — feat(nav): issue #35 — community dropdown with click-to-open and 6 items.
->
-> **Next concrete step:** #24 /sparks/new redesign + edit route (mockup-first). **Prerequisite from #17 still open:** create Cloudinary unsigned upload presets `beehive_avatars` (folder=`avatars`) and `beehive_clubs` (folder=`clubs`).
+> **Next concrete step:** #28 Notifications settings redesign (mockup-first). **Prerequisite from #17 still open:** create Cloudinary unsigned upload presets `beehive_avatars` (folder=`avatars`) and `beehive_clubs` (folder=`clubs`).
 >
 > **Cloudinary folder layout (load-bearing):**
 > - `covers/` — book covers (`CoverPicker`, `book-details-form`) — preset `beehive_covers`
@@ -42,7 +42,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 > - ~~#35 Community nav dropdown~~ ✅
 > - ~~#20 Book details page redesign~~ ✅
 > - ~~#23 Create/edit forms redesign — Clubs + Lists~~ ✅
-> - #24 /sparks/new redesign + edit route (mockup-first)
+> - ~~#24 /sparks/new redesign + edit route~~ ✅
 > - #28 Notifications settings redesign (mockup-first)
 > - #30 Book club page redesign (mockup-first)
 > - #21 Likes + bookmarks expansion

@@ -6,6 +6,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["serve", ".preview", "--listen", "4444", "--no-clipboard"],
       "port": 4444
+    },
+    {
+      "name": "beehive-app",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--port", "3001"],
+      "port": 3001
     }
   ]
 }

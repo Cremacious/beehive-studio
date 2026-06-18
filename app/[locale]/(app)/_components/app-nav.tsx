@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { NotificationsBell } from './notifications-bell'
 import { UserMenuDropdown } from '@/components/nav/user-menu-dropdown'
+import { CommunityNavDropdown } from '@/components/nav/community-nav-dropdown'
 
 interface AppNavProps {
   locale: string
@@ -74,26 +75,37 @@ export function AppNav({ locale, user, username }: AppNavProps) {
 
         {/* CENTER — nav (absolutely positioned on desktop, inline-flex on mobile) */}
         <nav className="sm:absolute sm:left-1/2 sm:-translate-x-1/2 flex gap-1">
-          {navItems.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              className="px-2.5 sm:px-3.5 py-1.5 rounded-full text-[12px] sm:text-[13px] font-medium transition-colors no-underline whitespace-nowrap"
-              style={
-                item.active
-                  ? { color: 'var(--brand)' }
-                  : { color: 'var(--canvas-dark-ink)' }
-              }
-              onMouseEnter={(e) => {
-                if (!item.active) e.currentTarget.style.color = 'var(--canvas-dark-ink-strong)'
-              }}
-              onMouseLeave={(e) => {
-                if (!item.active) e.currentTarget.style.color = 'var(--canvas-dark-ink)'
-              }}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            if (item.label === 'Community') {
+              return (
+                <CommunityNavDropdown
+                  key="Community"
+                  locale={locale}
+                  active={item.active}
+                />
+              )
+            }
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                className="px-2.5 sm:px-3.5 py-1.5 rounded-full text-[12px] sm:text-[13px] font-medium transition-colors no-underline whitespace-nowrap"
+                style={
+                  item.active
+                    ? { color: 'var(--brand)' }
+                    : { color: 'var(--canvas-dark-ink)' }
+                }
+                onMouseEnter={(e) => {
+                  if (!item.active) e.currentTarget.style.color = 'var(--canvas-dark-ink-strong)'
+                }}
+                onMouseLeave={(e) => {
+                  if (!item.active) e.currentTarget.style.color = 'var(--canvas-dark-ink)'
+                }}
+              >
+                {item.label}
+              </Link>
+            )
+          })}
         </nav>
 
         {/* RIGHT — notifications + avatar */}

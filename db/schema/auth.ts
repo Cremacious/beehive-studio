@@ -1,4 +1,5 @@
 import { pgTable, text, boolean, timestamp, pgEnum } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
 import { createId } from '@paralleldrive/cuid2'
 import { relations } from 'drizzle-orm'
 
@@ -33,10 +34,32 @@ export const userProfiles = pgTable('user_profiles', {
   username: text('username').unique(),
   displayName: text('display_name'),
   bio: text('bio'),
+  website: text('website'),
+  location: text('location'),
   avatarUrl: text('avatar_url'),
   onboardingComplete: boolean('onboarding_complete').default(false).notNull(),
   role: userRoleEnum('role').default('member').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+export const userPrivacySettings = pgTable('user_privacy_settings', {
+  userId: text('user_id').primaryKey().references(() => users.id, { onDelete: 'cascade' }),
+  allowFollow: boolean('allow_follow').notNull().default(true),
+  showLikedBooks: boolean('show_liked_books').notNull().default(true),
+  showActivityFeed: boolean('show_activity_feed').notNull().default(true),
+  appearInSuggested: boolean('appear_in_suggested').notNull().default(true),
+  findableByEmail: boolean('findable_by_email').notNull().default(false),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+export const userPreferences = pgTable('user_preferences', {
+  userId: text('user_id').primaryKey().references(() => users.id, { onDelete: 'cascade' }),
+  defaultBookVisibility: text('default_book_visibility').notNull().default('PRIVATE'),
+  defaultGenre: text('default_genre'),
+  defaultSparkWordLimit: text('default_spark_word_limit'),
+  editorTheme: text('editor_theme').notNull().default('light'),
+  genreInterests: text('genre_interests').array().notNull().default(sql`'{}'::text[]`),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
 
@@ -90,6 +113,8 @@ export const verifications = pgTable('verifications', {
 export const usersRelations = relations(users, ({ one }) => ({
   profile: one(userProfiles, { fields: [users.id], references: [userProfiles.userId] }),
   billing: one(userBilling, { fields: [users.id], references: [userBilling.userId] }),
+  privacySettings: one(userPrivacySettings, { fields: [users.id], references: [userPrivacySettings.userId] }),
+  preferences: one(userPreferences, { fields: [users.id], references: [userPreferences.userId] }),
 }))
 
 export const userProfilesRelations = relations(userProfiles, ({ one }) => ({

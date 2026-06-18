@@ -2,12 +2,13 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ExternalLink } from 'lucide-react'
 import { getNotificationPreferencesAction } from '@/lib/notifications/get-preferences'
-import { PageHead } from '@/components/community/page-head'
 import { NotificationPreferencesForm } from './_components/notification-preferences-form'
 import { getOptionalUserId } from '@/lib/require-auth'
 import { db } from '@/db'
 import { userProfiles } from '@/db/schema'
 import { eq } from 'drizzle-orm'
+
+export const metadata = { title: 'Notifications · Settings · Beehive Studio' }
 
 function pickAvatarAccent(seed: string): string {
   const accents = ['a-mint', 'a-blue', 'a-coral', 'a-lilac', 'a-slate'] as const
@@ -23,7 +24,7 @@ function initialsOf(displayName: string | null, username: string | null): string
   return parts.map((p) => p.charAt(0).toUpperCase()).join('') || src.charAt(0).toUpperCase()
 }
 
-export default async function Page({
+export default async function NotificationsSettingsPage({
   params,
 }: {
   params: Promise<{ locale: string }>
@@ -46,7 +47,19 @@ export default async function Page({
   const avatarInitials = initialsOf(profile?.displayName ?? null, profile?.username ?? null)
 
   return (
-    <main className="cm-wrap w-3xl">
+    <>
+      <header className="mb-6">
+        <h1
+          className="text-[22px] font-bold"
+          style={{ color: 'var(--canvas-dark-ink-strong)', fontFamily: 'var(--font-display)' }}
+        >
+          Notifications
+        </h1>
+        <p className="text-[13px] mt-1" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
+          Choose what reaches you. Toggles save the moment you flip them.
+        </p>
+      </header>
+
       {/* Profile summary card */}
       {profile && (
         <div
@@ -100,23 +113,9 @@ export default async function Page({
         </div>
       )}
 
-      <PageHead
-        title="Notification preferences"
-        subtitle="Choose what reaches you. Toggles save the moment you flip them. On means you're receiving."
-      />
       <NotificationPreferencesForm
         initialOptedOutTypes={result.data.optedOutTypes}
       />
-
-      <div className="mt-8 pt-6" style={{ borderTop: '1px solid oklch(1 0 0 / 0.06)' }}>
-        <Link
-          href={`/${locale}/settings/account`}
-          className="text-[13.5px] hover:underline underline-offset-4 transition-colors"
-          style={{ color: 'var(--canvas-dark-ink-muted)' }}
-        >
-          Account settings (danger zone)
-        </Link>
-      </div>
-    </main>
+    </>
   )
 }

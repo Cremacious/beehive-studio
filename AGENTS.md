@@ -12,15 +12,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-18 (Issue #35 complete — Community nav dropdown: click "Community" to open dropdown with Overview + 5 category links.)
+> **Last updated:** 2026-06-18 (Issue #20 complete — Book details page redesign: Variant C (sidebar cover + compact sections). Sticky 200px sidebar holds cover editor + at-a-glance stats card. All sections always-open with proper panel chrome + brand-yellow headings. Danger Zone soft at rest. tsc clean.)
 >
-> **Last commit:** [c1375ae](https://github.com/Cremacious/beehive-studio/commit/c1375ae) — feat(nav): issue #35 — community dropdown with click-to-open and 6 items.
+> **Last commit:** feat(details): issue #20 — sidebar cover, at-a-glance stats, brand-yellow section headings, proper panel chrome.
+>
+> **Prior — Last commit:** [c1375ae](https://github.com/Cremacious/beehive-studio/commit/c1375ae) — feat(nav): issue #35 — community dropdown with click-to-open and 6 items.
 >
 > **Prior — Last commit:** [de6fac8](https://github.com/Cremacious/beehive-studio/commit/de6fac8) — feat(settings): issue #34 — full settings redesign + navbar account dropdown.
 >
-> **Prior — Last commit:** [0520665](https://github.com/Cremacious/beehive-studio/commit/0520665) — feat(nav): add Profile navlink to top navbar for authenticated users.
->
-> **Next concrete step:** Complete issue #20 — Book details page redesign (mockup-first, in progress). Generate 2-3 HTML mockups, present to Chris, lock design, implement. After #20: #23 Create/edit forms redesign (Clubs + Lists). **Prerequisite from #17 still open:** create Cloudinary unsigned upload presets `beehive_avatars` (folder=`avatars`) and `beehive_clubs` (folder=`clubs`).
+> **Next concrete step:** #23 Create/edit forms redesign — Clubs + Lists (mockup-first). **Prerequisite from #17 still open:** create Cloudinary unsigned upload presets `beehive_avatars` (folder=`avatars`) and `beehive_clubs` (folder=`clubs`).
 >
 > **Cloudinary folder layout (load-bearing):**
 > - `covers/` — book covers (`CoverPicker`, `book-details-form`) — preset `beehive_covers`
@@ -40,7 +40,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 > - ~~#27 View own profile (nav entry point)~~ ✅
 > - ~~#34 Full settings redesign (navbar dropdown + account/privacy/preferences pages)~~ ✅
 > - ~~#35 Community nav dropdown~~ ✅
-> - #20 Book details page redesign (mockup-first) ← IN PROGRESS
+> - ~~#20 Book details page redesign~~ ✅
 > - #23 Create/edit forms redesign — Clubs + Lists (mockup-first)
 > - #24 /sparks/new redesign + edit route (mockup-first)
 > - #28 Notifications settings redesign (mockup-first)

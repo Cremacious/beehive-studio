@@ -3,14 +3,13 @@
 import { useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ChevronDown, ChevronRight, Sparkles, Trash2, X } from 'lucide-react'
+import { Globe, Lock, Sparkles, Trash2, Upload, Users, X } from 'lucide-react'
 import {
   updateBookDetailsAction,
   type BookDetails,
 } from '@/lib/actions/book.actions'
 import { SharingControls, type Visibility } from '@/components/book/sharing-controls'
 import { DeleteBookButton } from '@/components/book/delete-book-button'
-import { Button } from '@/components/ui/button'
 import { useCloudinaryUpload } from '@/hooks/use-cloudinary-upload'
 import {
   GENRES,
@@ -71,7 +70,6 @@ function toggleItem<T>(arr: T[], item: T): T[] {
   return arr.includes(item) ? arr.filter(x => x !== item) : [...arr, item]
 }
 
-// Deep-ish equality for dirty tracking — fields are scalars or string[] only.
 function isClean(a: FormState, b: FormState): boolean {
   if (a.title !== b.title) return false
   if (a.subtitle !== b.subtitle) return false
@@ -94,133 +92,93 @@ function isClean(a: FormState, b: FormState): boolean {
 
 const cloudinaryConfigured = !!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
 
-// ─── Shared field styles (iOS modal recipe — matches CreateListModal etc.) ──
+// ─── Shared field styles ──────────────────────────────────────────────────────
 
-const fieldClass =
-  'w-full rounded-[var(--r-row)] px-3.5 py-2.5 text-[14px] outline-none focus:ring-2 focus:ring-[oklch(from_var(--brand)_l_c_h_/_0.35)] transition-shadow'
 const fieldStyle = {
-  background: '#1E1E1E',
+  background: 'var(--canvas-dark-100)',
   boxShadow: 'var(--sh-inset)',
   color: 'var(--canvas-dark-ink)',
+  border: 'none',
+  borderRadius: 'var(--r-row)',
+  width: '100%',
+  padding: '10px 14px',
+  fontSize: 14,
+  outline: 'none',
 } as const
-const labelClass =
-  'block text-[10px] font-mono uppercase tracking-[0.14em] mb-2 text-[var(--canvas-dark-ink-muted)]'
-const selectClass = `${fieldClass} appearance-none cursor-pointer`
 
-// ─── Section shell ────────────────────────────────────────────────────────────
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  fontSize: 10,
+  fontFamily: 'var(--font-mono)',
+  textTransform: 'uppercase',
+  letterSpacing: '0.14em',
+  color: 'var(--canvas-dark-ink-muted)',
+  marginBottom: 6,
+  opacity: 0.75,
+}
 
-function Section({
-  title,
-  subtitle,
-  defaultOpen = true,
-  premium = false,
-  children,
-}: {
-  title: string
-  subtitle?: string
-  defaultOpen?: boolean
-  premium?: boolean
-  children: React.ReactNode
-}) {
-  const [open, setOpen] = useState(defaultOpen)
-  return (
-    <section
-      style={{
-        background: 'var(--canvas-dark-100, #1a1a1a)',
-        border: '1px solid var(--canvas-dark-300, #2a2a2a)',
-        borderRadius: 16,
-        overflow: 'hidden',
-      }}
-    >
-      <button
-        type="button"
-        onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between gap-4 px-6 py-4 cursor-pointer text-left"
-        aria-expanded={open}
-      >
-        <div className="min-w-0 flex items-center gap-3">
-          {open ? <ChevronDown size={16} className="text-white/40" /> : <ChevronRight size={16} className="text-white/40" />}
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <h2
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: 17,
-                  fontWeight: 700,
-                  letterSpacing: '-0.01em',
-                  color: 'var(--canvas-dark-ink-strong, #fff)',
-                }}
-              >
-                {title}
-              </h2>
-              {premium && (
-                <span
-                  className="inline-flex items-center gap-1 uppercase"
-                  style={{
-                    padding: '2px 8px',
-                    borderRadius: 999,
-                    background: 'var(--brand, #FFC300)',
-                    color: 'var(--brand-ink, #0a0a0a)',
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: 10,
-                    letterSpacing: '0.06em',
-                    fontWeight: 700,
-                  }}
-                >
-                  <Sparkles size={10} /> Premium
-                </span>
-              )}
-            </div>
-            {subtitle && (
-              <p
-                style={{
-                  fontFamily: 'var(--font-prose)',
-                  fontSize: 13,
-                  color: 'var(--canvas-dark-ink-muted, #999)',
-                  marginTop: 4,
-                }}
-              >
-                {subtitle}
-              </p>
-            )}
-          </div>
-        </div>
-      </button>
-      {open && <div className="px-6 pb-6 pt-1">{children}</div>}
-    </section>
-  )
+// ─── Panel chrome ─────────────────────────────────────────────────────────────
+
+const panelStyle: React.CSSProperties = {
+  background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+  borderRadius: 'var(--r-card)',
+  borderTop: 'var(--br-card)',
+  boxShadow: 'var(--sh-card)',
 }
 
 // ─── Chip ─────────────────────────────────────────────────────────────────────
 
-function Chip({
-  label,
-  active,
-  onClick,
-  disabled = false,
-}: {
-  label: string
-  active: boolean
-  onClick: () => void
-  disabled?: boolean
+function Chip({ label, active, onClick, disabled = false }: {
+  label: string; active: boolean; onClick: () => void; disabled?: boolean
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`inline-flex items-center px-3 h-7 rounded-[var(--r-pill)] text-[12px] font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-        active
-          ? 'bg-[var(--brand)] text-[var(--brand-ink)]'
-          : 'bg-[var(--canvas-dark-300)] text-[var(--canvas-dark-ink-muted)] hover:text-[var(--canvas-dark-ink-strong)]'
-      }`}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        padding: '4px 12px',
+        height: 28,
+        borderRadius: 'var(--r-pill)',
+        border: 'none',
+        fontSize: 12,
+        fontWeight: 600,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.4 : 1,
+        background: active ? 'var(--brand)' : 'var(--canvas-dark-300)',
+        color: active ? 'var(--brand-ink)' : 'var(--canvas-dark-ink-muted)',
+        transition: 'background 0.12s, color 0.12s',
+      }}
     >
       {label}
     </button>
   )
 }
 
-// ─── The form ─────────────────────────────────────────────────────────────────
+// ─── Section heading ──────────────────────────────────────────────────────────
+
+function SectionHeading({ title, badge }: { title: string; badge?: React.ReactNode }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+      <h2 style={{
+        fontFamily: 'var(--font-display)',
+        fontSize: 15,
+        fontWeight: 700,
+        color: 'var(--brand)',
+        letterSpacing: '-0.01em',
+        margin: 0,
+      }}>
+        {title}
+      </h2>
+      {badge}
+      <div style={{ flex: 1, height: 1, background: 'oklch(1 0 0 / 0.06)' }} />
+    </div>
+  )
+}
+
+// ─── Props ───────────────────────────────────────────────────────────────────
 
 type Props = {
   locale: string
@@ -228,6 +186,8 @@ type Props = {
   initial: BookDetails
   isPremium: boolean
 }
+
+// ─── The form ─────────────────────────────────────────────────────────────────
 
 export function BookDetailsForm({ locale, bookId, initial, isPremium }: Props) {
   const router = useRouter()
@@ -238,7 +198,6 @@ export function BookDetailsForm({ locale, bookId, initial, isPremium }: Props) {
   const [saving, setSaving] = useState(false)
   const [savedFlash, setSavedFlash] = useState(false)
 
-  // Cover upload
   const { upload, uploading } = useCloudinaryUpload('covers')
   const [preview, setPreview] = useState<string | null>(form.coverUrl)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -258,6 +217,13 @@ export function BookDetailsForm({ locale, bookId, initial, isPremium }: Props) {
     if (cloudinaryConfigured) {
       const result = await upload(file)
       if (result) update({ coverUrl: result.url })
+    } else {
+      // fallback: data URL preview only
+      const reader = new FileReader()
+      reader.onload = ev => {
+        if (typeof ev.target?.result === 'string') update({ coverUrl: ev.target.result })
+      }
+      reader.readAsDataURL(file)
     }
   }
 
@@ -302,83 +268,77 @@ export function BookDetailsForm({ locale, bookId, initial, isPremium }: Props) {
         visibility: form.visibility,
         discoverable: form.discoverable,
       })
-
-      if (!result.success) {
-        setError(result.error)
-        return
-      }
-
+      if (!result.success) { setError(result.error); return }
       setSavedFlash(true)
       setTimeout(() => setSavedFlash(false), 2200)
-      // Refresh so the studio page picks up new title/cover/etc.
       router.refresh()
     } finally {
       setSaving(false)
     }
   }
 
+  const visibilityMeta: Record<Visibility, { icon: React.ReactNode; label: string }> = {
+    PRIVATE: { icon: <Lock size={12} />, label: 'Private' },
+    FRIENDS: { icon: <Users size={12} />, label: 'Friends' },
+    PUBLIC:  { icon: <Globe size={12} />, label: 'Public'  },
+  }
+
   return (
-    <div
-      className="flex flex-col"
-      style={{
-        minHeight: 'calc(100vh - 56px)',
-        background: 'var(--canvas-dark-50, #141414)',
-        color: 'var(--canvas-dark-ink-strong, #fff)',
-      }}
-    >
-      {/* ── Top bar ── */}
+    <div style={{
+      minHeight: 'calc(100vh - 56px)',
+      background: 'var(--canvas-dark-100)',
+      color: 'var(--canvas-dark-ink-strong)',
+      display: 'flex',
+      flexDirection: 'column',
+    }}>
+      {/* ── Topbar ─────────────────────────────────────────────────────────── */}
       <header
-        className="sticky top-0 z-10 flex items-center gap-6 px-6 sm:px-10 backdrop-blur"
+        className="sticky top-0 z-10 flex items-center gap-4 px-6 sm:px-8 backdrop-blur"
         style={{
-          height: 64,
-          borderBottom: '1px solid var(--canvas-dark-300, #2a2a2a)',
-          background: 'oklch(0.18 0.003 256 / 0.85)',
+          height: 60,
+          borderBottom: '0.5px solid oklch(1 0 0 / 0.07)',
+          background: 'oklch(0.18 0.003 256 / 0.92)',
         }}
       >
-        <div className="min-w-0 flex flex-col">
-          <div
-            className="uppercase"
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 10,
-              letterSpacing: '0.18em',
-              color: 'var(--canvas-dark-ink-muted, #777)',
-            }}
-          >
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 9,
+            textTransform: 'uppercase',
+            letterSpacing: '0.18em',
+            color: 'var(--canvas-dark-ink-muted)',
+            opacity: 0.6,
+          }}>
             Book details
           </div>
-          <div
-            className="truncate"
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: 16,
-              fontWeight: 700,
-              color: 'var(--canvas-dark-ink-strong, #fff)',
-            }}
-          >
+          <div style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: 15,
+            fontWeight: 700,
+            color: 'var(--canvas-dark-ink-strong)',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}>
             {initial.title}
           </div>
         </div>
 
-        <div className="flex-1" />
-
         {savedFlash && (
-          <span
-            className="uppercase"
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 11,
-              letterSpacing: '0.10em',
-              color: 'var(--brand, #FFC300)',
-            }}
-          >
+          <span style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 11,
+            letterSpacing: '0.10em',
+            textTransform: 'uppercase',
+            color: 'var(--brand)',
+          }}>
             Saved
           </span>
         )}
 
         <Link
           href={`/${locale}/studio/${bookId}`}
-          className="text-[13px] text-white/50 hover:text-white/80 transition-colors"
+          style={{ fontSize: 13, color: 'var(--canvas-dark-ink-muted)', opacity: 0.6, textDecoration: 'none' }}
         >
           Cancel
         </Link>
@@ -386,474 +346,750 @@ export function BookDetailsForm({ locale, bookId, initial, isPremium }: Props) {
           type="button"
           onClick={handleSave}
           disabled={!dirty || saving}
-          className="inline-flex items-center justify-center h-9 px-5 rounded-[var(--r-pill)] text-[13px] font-bold font-comfortaa disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          style={{ background: 'var(--brand)', color: 'var(--brand-ink)' }}
+          style={{
+            background: 'var(--brand)',
+            color: 'var(--brand-ink)',
+            border: 'none',
+            borderRadius: 'var(--r-pill)',
+            padding: '8px 20px',
+            fontSize: 13,
+            fontWeight: 700,
+            fontFamily: 'var(--font-display)',
+            cursor: (!dirty || saving) ? 'not-allowed' : 'pointer',
+            opacity: (!dirty || saving) ? 0.4 : 1,
+            transition: 'opacity 0.12s',
+          }}
         >
-          {saving ? 'Saving…' : 'Save changes'}
+          {saving ? 'Saving...' : 'Save changes'}
         </button>
 
         <Link
           href={`/${locale}/studio/${bookId}`}
           aria-label="Close"
-          className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-[var(--canvas-dark-300,#2a2a2a)] text-white/60 hover:text-white transition-colors"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 34,
+            height: 34,
+            borderRadius: '50%',
+            border: '1px solid oklch(1 0 0 / 0.10)',
+            color: 'var(--canvas-dark-ink-muted)',
+            textDecoration: 'none',
+            flexShrink: 0,
+          }}
         >
-          <X size={16} />
+          <X size={15} />
         </Link>
       </header>
 
-      {/* ── Body ── */}
-      <div className="flex-1">
-        <div
-          className="mx-auto w-full flex flex-col gap-5"
-          style={{ maxWidth: 760, padding: '40px 24px 120px' }}
-        >
-          {/* ── BASICS ── */}
-          <Section
-            title="Basics"
-            subtitle="The cover, title, and synopsis your readers see first."
-          >
-            <div className="space-y-4">
-              <div>
-                <label className={labelClass}>Title <span className="text-brand">*</span></label>
-                <input
-                  type="text"
-                  value={form.title}
-                  onChange={e => update({ title: e.target.value })}
-                  className={`${fieldClass} ${titleError ? 'ring-2 ring-red-400/50' : ''}`}
-                  style={fieldStyle}
-                />
-                {titleError && <p className="text-[12px] text-red-400 mt-1">{titleError}</p>}
-              </div>
+      {/* ── Body ───────────────────────────────────────────────────────────── */}
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        <div style={{
+          maxWidth: 980,
+          margin: '0 auto',
+          padding: '36px 24px 120px',
+          display: 'grid',
+          gridTemplateColumns: '200px 1fr',
+          gap: 24,
+          alignItems: 'start',
+        }}>
+          {/* ── Sidebar ─────────────────────────────────────────────────── */}
+          <aside style={{ position: 'sticky', top: 76, display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-              <div>
-                <label className={labelClass}>
-                  Subtitle <span className="text-white/30 font-normal">optional</span>
-                </label>
-                <input
-                  type="text"
-                  value={form.subtitle}
-                  onChange={e => update({ subtitle: e.target.value })}
-                  placeholder="A subtitle or tagline"
-                  className={fieldClass}
-                  style={fieldStyle}
-                />
-              </div>
+            {/* Cover card */}
+            <div style={{ ...panelStyle, padding: 16 }}>
+              {/* Cover image */}
+              <div
+                onClick={() => fileRef.current?.click()}
+                style={{
+                  width: '100%',
+                  aspectRatio: '2/3',
+                  borderRadius: 12,
+                  overflow: 'hidden',
+                  position: 'relative',
+                  cursor: 'pointer',
+                  background: preview
+                    ? undefined
+                    : 'linear-gradient(160deg, var(--canvas-dark-350) 0%, var(--canvas-dark-200) 100%)',
+                  border: preview ? undefined : '1.5px dashed oklch(1 0 0 / 0.12)',
+                  display: 'flex',
+                  alignItems: preview ? undefined : 'center',
+                  justifyContent: preview ? undefined : 'center',
+                }}
+              >
+                {preview ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={preview} alt="Cover" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '0 12px' }}>
+                    <Upload size={20} style={{ color: 'var(--canvas-dark-ink-muted)', opacity: 0.4, margin: '0 auto 8px' }} />
+                    <p style={{ fontSize: 11, color: 'var(--canvas-dark-ink-muted)', opacity: 0.5, lineHeight: 1.4 }}>
+                      {cloudinaryConfigured ? (uploading ? 'Uploading...' : 'Click to upload') : 'Cover upload unavailable'}
+                    </p>
+                    {cloudinaryConfigured && (
+                      <p style={{ fontSize: 10, color: 'var(--canvas-dark-ink-muted)', opacity: 0.3, marginTop: 4 }}>Portrait ratio</p>
+                    )}
+                  </div>
+                )}
 
-              <div>
-                <label className={labelClass}>
-                  Synopsis <span className="text-white/30 font-normal">optional</span>
-                </label>
-                <textarea
-                  value={form.synopsis}
-                  onChange={e => update({ synopsis: e.target.value })}
-                  rows={5}
-                  maxLength={2000}
-                  className={`${fieldClass} resize-none`}
-                  style={fieldStyle}
-                  placeholder="Back-cover blurb or a brief summary…"
-                />
-                <p className="text-[11px] text-white/25 mt-1 text-right">{form.synopsis.length}/2000</p>
-              </div>
+                {/* Hover overlay when image present */}
+                {preview && (
+                  <div style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'oklch(0 0 0 / 0)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'background 0.15s',
+                  }}
+                  className="cover-hover-overlay"
+                  >
+                    <span style={{
+                      background: 'oklch(0 0 0 / 0.55)',
+                      color: '#fff',
+                      borderRadius: 'var(--r-pill)',
+                      padding: '5px 14px',
+                      fontSize: 11,
+                      fontWeight: 600,
+                      opacity: 0,
+                    }} className="cover-hover-label">
+                      Change cover
+                    </span>
+                  </div>
+                )}
 
-              <div>
-                <label className={labelClass}>
-                  Cover image <span className="text-white/30 font-normal">optional</span>
-                </label>
-                <div
-                  onClick={() => cloudinaryConfigured && fileRef.current?.click()}
-                  className={`relative border border-dashed border-border rounded-xl overflow-hidden flex items-center justify-center
-                    ${cloudinaryConfigured ? 'cursor-pointer hover:border-brand/40 transition-colors' : 'opacity-40 cursor-not-allowed'}
-                    ${preview ? 'h-48' : 'h-28'}`}
+                {uploading && (
+                  <div style={{
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'oklch(0 0 0 / 0.55)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    <div style={{
+                      width: 22,
+                      height: 22,
+                      border: '2px solid var(--brand)',
+                      borderTopColor: 'transparent',
+                      borderRadius: '50%',
+                      animation: 'spin 0.7s linear infinite',
+                    }} />
+                  </div>
+                )}
+              </div>
+              <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleFile} />
+
+              {/* Cover action buttons */}
+              <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  style={{
+                    background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+                    border: 'none',
+                    borderTop: 'var(--br-card)',
+                    borderRadius: 'var(--r-row)',
+                    boxShadow: 'var(--sh-tile)',
+                    padding: '7px 12px',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: 'var(--canvas-dark-ink)',
+                    cursor: 'pointer',
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                  }}
                 >
-                  {preview ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={preview} alt="Cover" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="text-center">
-                      <p className="text-[13px] text-white/40">
-                        {cloudinaryConfigured ? (uploading ? 'Uploading…' : 'Click to upload cover') : 'Cover upload unavailable'}
-                      </p>
-                      {cloudinaryConfigured && <p className="text-[11px] text-white/25 mt-1">Portrait ratio · PNG or JPG</p>}
-                    </div>
-                  )}
-                  {uploading && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                      <div className="w-6 h-6 border-2 border-brand border-t-transparent rounded-full animate-spin" />
-                    </div>
-                  )}
-                </div>
-                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
-                {preview && cloudinaryConfigured && (
+                  <Upload size={12} />
+                  {preview ? 'Change cover' : 'Upload cover'}
+                </button>
+                {preview && (
                   <button
                     type="button"
                     onClick={() => { setPreview(null); update({ coverUrl: null }) }}
-                    className="text-[11px] text-white/35 hover:text-white/60 mt-1 transition-colors"
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      fontSize: 11,
+                      color: 'var(--canvas-dark-ink-muted)',
+                      opacity: 0.45,
+                      cursor: 'pointer',
+                      padding: '4px 0',
+                      textAlign: 'center',
+                      width: '100%',
+                    }}
                   >
                     Remove cover
                   </button>
                 )}
               </div>
             </div>
-          </Section>
 
-          {/* ── DISCOVERY ── */}
-          <Section
-            title="Discovery"
-            subtitle="How readers find your book: genre, audience, tags, comp titles."
-          >
-            <div className="space-y-5">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={labelClass}>Genre</label>
-                  <select
-                    value={form.genre}
-                    onChange={e => update({ genre: e.target.value, subgenre: '' })}
-                    className={selectClass}
-                    style={fieldStyle}
-                  >
-                    <option value="">Select genre…</option>
-                    {GENRE_NAMES.map(g => <option key={g} value={g}>{g}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className={labelClass}>Subgenre</label>
-                  <select
-                    value={form.subgenre}
-                    onChange={e => update({ subgenre: e.target.value })}
-                    disabled={!form.genre || subgenres.length === 0}
-                    className={`${selectClass} disabled:opacity-40 disabled:cursor-not-allowed`}
-                    style={fieldStyle}
-                  >
-                    <option value="">Select subgenre…</option>
-                    {subgenres.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </div>
+            {/* At a glance card */}
+            <div style={{ ...panelStyle, padding: 14 }}>
+              <div style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 9,
+                textTransform: 'uppercase',
+                letterSpacing: '0.14em',
+                color: 'var(--brand)',
+                opacity: 0.8,
+                marginBottom: 10,
+              }}>
+                At a glance
               </div>
-
-              <div>
-                <label className={labelClass}>Target audience</label>
-                <div className="flex flex-wrap gap-2">
-                  {TARGET_AUDIENCES.map(a => (
-                    <Chip
-                      key={a}
-                      label={a}
-                      active={form.targetAudience === a}
-                      onClick={() => update({ targetAudience: form.targetAudience === a ? '' : a })}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className={labelClass}>
-                  Tags <span className="text-white/30 font-normal">({form.tags.length}/10)</span>
-                </label>
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                  {PREDEFINED_TAGS.map(t => (
-                    <Chip
-                      key={t}
-                      label={t}
-                      active={form.tags.includes(t)}
-                      onClick={() => {
-                        if (form.tags.length >= 10 && !form.tags.includes(t)) return
-                        update({ tags: toggleItem(form.tags, t) })
-                      }}
-                    />
-                  ))}
-                </div>
-                {form.tags.filter(t => !(PREDEFINED_TAGS as readonly string[]).includes(t)).map(t => (
-                  <span key={t} className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[12px] bg-brand/15 border border-brand/40 text-brand mr-1.5 mb-1.5">
-                    {t}
-                    <button
-                      type="button"
-                      onClick={() => update({ tags: form.tags.filter(x => x !== t) })}
-                      className="text-brand/60 hover:text-brand ml-0.5"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-                {form.tags.length < 10 && (
-                  <div className="flex gap-2 mt-2">
-                    <input
-                      type="text"
-                      value={tagInput}
-                      onChange={e => setTagInput(e.target.value)}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter' || e.key === ',') {
-                          e.preventDefault()
-                          addCustomTag(tagInput)
-                        }
-                      }}
-                      placeholder="Add custom tag…"
-                      className="flex-1 rounded-[var(--r-row)] px-3 py-2 text-[13px] outline-none focus:ring-2 focus:ring-[oklch(from_var(--brand)_l_c_h_/_0.35)] transition-shadow"
-                      style={fieldStyle}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => addCustomTag(tagInput)}
-                      className="inline-flex items-center text-[12px] font-semibold h-9 px-3 rounded-[var(--r-pill)] transition-colors"
-                      style={{
-                        background: 'var(--brand-soft)',
-                        color: 'var(--brand)',
-                      }}
-                    >
-                      Add
-                    </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                {[
+                  {
+                    label: 'Visibility',
+                    value: (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--brand)', fontWeight: 700, fontSize: 12 }}>
+                        {visibilityMeta[form.visibility].icon}
+                        {visibilityMeta[form.visibility].label}
+                      </span>
+                    ),
+                  },
+                  {
+                    label: 'Discover',
+                    value: <span style={{ fontSize: 12, fontWeight: 700, color: form.discoverable ? 'var(--canvas-dark-ink-strong)' : 'var(--canvas-dark-ink-muted)' }}>
+                      {form.discoverable ? 'On' : 'Off'}
+                    </span>,
+                  },
+                  {
+                    label: 'Genre',
+                    value: <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--canvas-dark-ink-strong)' }}>
+                      {form.genre || <span style={{ opacity: 0.35, fontWeight: 400 }}>Not set</span>}
+                    </span>,
+                  },
+                ].map(row => (
+                  <div key={row.label} style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '6px 8px',
+                    borderRadius: 'var(--r-btn)',
+                    background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+                    boxShadow: 'var(--sh-tile)',
+                  }}>
+                    <span style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: 9,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.10em',
+                      color: 'var(--canvas-dark-ink-muted)',
+                      opacity: 0.7,
+                    }}>
+                      {row.label}
+                    </span>
+                    {row.value}
                   </div>
-                )}
-              </div>
-
-              <div>
-                <label className={labelClass}>Content warnings</label>
-                <div className="flex flex-wrap gap-1.5">
-                  {CONTENT_WARNINGS.map(w => (
-                    <Chip
-                      key={w}
-                      label={w}
-                      active={form.contentWarnings.includes(w)}
-                      onClick={() => update({ contentWarnings: toggleItem(form.contentWarnings, w) })}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className={labelClass}>
-                  Comparable titles <span className="text-white/30 font-normal">optional · up to 5</span>
-                </label>
-                <div className="space-y-2">
-                  {form.compTitles.map((t, i) => (
-                    <div key={i} className="flex gap-2">
-                      <input
-                        type="text"
-                        placeholder="Readers who liked…"
-                        value={t}
-                        onChange={e => handleCompTitle(i, e.target.value)}
-                        className="flex-1 rounded-[var(--r-row)] px-3.5 py-2.5 text-[14px] outline-none focus:ring-2 focus:ring-[oklch(from_var(--brand)_l_c_h_/_0.35)] transition-shadow"
-                        style={fieldStyle}
-                      />
-                      {form.compTitles.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => update({ compTitles: form.compTitles.filter((_, idx) => idx !== i) })}
-                          className="text-white/30 hover:text-white/60 px-2 transition-colors text-[18px] leading-none"
-                        >
-                          ×
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                  {form.compTitles.length < 5 && form.compTitles[form.compTitles.length - 1] !== '' && (
-                    <button
-                      type="button"
-                      onClick={() => update({ compTitles: [...form.compTitles, ''] })}
-                      className="text-[12px] text-brand/70 hover:text-brand transition-colors"
-                    >
-                      + Add another title
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <label className={labelClass}>Language</label>
-                <select
-                  value={form.language}
-                  onChange={e => update({ language: e.target.value })}
-                  className={selectClass}
-                  style={fieldStyle}
-                >
-                  <option value="">Select language…</option>
-                  {LANGUAGES.map(l => <option key={l} value={l}>{l}</option>)}
-                </select>
+                ))}
               </div>
             </div>
-          </Section>
 
-          {/* ── STRUCTURE ── */}
-          <Section
-            title="Structure"
-            subtitle="Standalone or part of a series."
-          >
-            <p className="text-[12px] text-muted-foreground leading-relaxed mb-3">
-              Is this book part of a series? If so, the series name and number will appear on your book&apos;s reader page, library card, and any discoverable surface, and readers will be able to jump between books in the series.
-            </p>
-            <div className="flex gap-2 mb-3">
-              {(['Standalone', 'Series'] as const).map(opt => (
-                <button
-                  key={opt}
-                  type="button"
-                  onClick={() => update({ isSeriesBook: opt === 'Series' })}
-                  className={`flex-1 py-2.5 rounded-xl border text-[13px] font-medium transition-colors
-                    ${(opt === 'Series') === form.isSeriesBook
-                      ? 'border-[oklch(from_var(--brand)_l_c_h_/_0.35)] bg-[var(--brand-soft)] text-[var(--brand)]'
-                      : 'border-transparent bg-[var(--canvas-dark-300)] text-[var(--canvas-dark-ink-muted)] hover:text-[var(--canvas-dark-ink-strong)]'
-                    }`}
-                >
-                  {opt}
-                </button>
-              ))}
-            </div>
-            {form.isSeriesBook && (
-              <div className="grid grid-cols-3 gap-3">
-                <div className="col-span-2">
-                  <label className={labelClass}>Series name</label>
+          </aside>
+
+          {/* ── Main sections ────────────────────────────────────────────── */}
+          <main style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+            {/* BASICS */}
+            <section style={{ ...panelStyle, padding: '22px 24px' }}>
+              <SectionHeading title="Basics" />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div>
+                  <label style={labelStyle}>Title <span style={{ color: 'var(--brand)' }}>*</span></label>
                   <input
                     type="text"
-                    placeholder="e.g. The Stormlight Archive"
-                    value={form.seriesName}
-                    onChange={e => update({ seriesName: e.target.value })}
-                    className={fieldClass}
+                    value={form.title}
+                    onChange={e => update({ title: e.target.value })}
+                    style={{
+                      ...fieldStyle,
+                      outline: titleError ? '2px solid oklch(0.55 0.15 25 / 0.55)' : undefined,
+                    }}
+                  />
+                  {titleError && <p style={{ fontSize: 12, color: 'oklch(0.65 0.15 25)', marginTop: 4 }}>{titleError}</p>}
+                </div>
+                <div>
+                  <label style={labelStyle}>
+                    Subtitle <span style={{ opacity: 0.4, fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>optional</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={form.subtitle}
+                    onChange={e => update({ subtitle: e.target.value })}
+                    placeholder="A subtitle or tagline"
+                    style={fieldStyle}
                   />
                 </div>
                 <div>
-                  <label className={labelClass}>Book #</label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={9999}
-                    placeholder="1"
-                    value={form.seriesNumber}
-                    onChange={e => update({ seriesNumber: e.target.value })}
-                    className={fieldClass}
+                  <label style={labelStyle}>
+                    Synopsis <span style={{ opacity: 0.4, fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>optional</span>
+                  </label>
+                  <textarea
+                    value={form.synopsis}
+                    onChange={e => update({ synopsis: e.target.value })}
+                    rows={5}
+                    maxLength={2000}
+                    placeholder="Back-cover blurb or a brief summary..."
+                    style={{ ...fieldStyle, resize: 'none' }}
                   />
+                  <p style={{ fontSize: 11, color: 'var(--canvas-dark-ink-muted)', opacity: 0.3, marginTop: 4, textAlign: 'right' }}>
+                    {form.synopsis.length}/2000
+                  </p>
                 </div>
               </div>
-            )}
-            <p className="text-[11px] text-white/30 mt-4">
-              The template you picked at creation seeded your binder once. It isn’t a current
-              setting to change. Reorganize chapters directly from the binder instead.
-            </p>
-          </Section>
+            </section>
 
-          {/* ── PUBLISHING ── */}
-          <Section
-            title="Publishing"
-            subtitle="Imprint, trim size, ISBN, dedication. Appears in your front/back matter."
-            premium
-          >
-            {!isPremium && (
+            {/* DISCOVERY */}
+            <section style={{ ...panelStyle, padding: '22px 24px' }}>
+              <SectionHeading title="Discovery" />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div>
+                    <label style={labelStyle}>Genre</label>
+                    <select
+                      value={form.genre}
+                      onChange={e => update({ genre: e.target.value, subgenre: '' })}
+                      style={{ ...fieldStyle, appearance: 'none', cursor: 'pointer' }}
+                    >
+                      <option value="">Select genre...</option>
+                      {GENRE_NAMES.map(g => <option key={g} value={g}>{g}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Subgenre</label>
+                    <select
+                      value={form.subgenre}
+                      onChange={e => update({ subgenre: e.target.value })}
+                      disabled={!form.genre || subgenres.length === 0}
+                      style={{ ...fieldStyle, appearance: 'none', cursor: (!form.genre || subgenres.length === 0) ? 'not-allowed' : 'pointer', opacity: (!form.genre || subgenres.length === 0) ? 0.4 : 1 }}
+                    >
+                      <option value="">Select subgenre...</option>
+                      {subgenres.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={labelStyle}>Target audience</label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+                    {TARGET_AUDIENCES.map(a => (
+                      <Chip
+                        key={a}
+                        label={a}
+                        active={form.targetAudience === a}
+                        onClick={() => update({ targetAudience: form.targetAudience === a ? '' : a })}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label style={labelStyle}>
+                    Tags{' '}
+                    <span style={{ opacity: 0.4, fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>({form.tags.length}/10)</span>
+                  </label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4, marginBottom: 8 }}>
+                    {PREDEFINED_TAGS.map(t => (
+                      <Chip
+                        key={t}
+                        label={t}
+                        active={form.tags.includes(t)}
+                        disabled={form.tags.length >= 10 && !form.tags.includes(t)}
+                        onClick={() => {
+                          if (form.tags.length >= 10 && !form.tags.includes(t)) return
+                          update({ tags: toggleItem(form.tags, t) })
+                        }}
+                      />
+                    ))}
+                  </div>
+                  {/* Custom tags */}
+                  {form.tags.filter(t => !(PREDEFINED_TAGS as readonly string[]).includes(t)).map(t => (
+                    <span key={t} style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      padding: '3px 10px',
+                      borderRadius: 'var(--r-pill)',
+                      fontSize: 12,
+                      background: 'oklch(from var(--brand) l c h / 0.15)',
+                      border: '1px solid oklch(from var(--brand) l c h / 0.35)',
+                      color: 'var(--brand)',
+                      marginRight: 6,
+                      marginBottom: 4,
+                    }}>
+                      {t}
+                      <button
+                        type="button"
+                        onClick={() => update({ tags: form.tags.filter(x => x !== t) })}
+                        style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', opacity: 0.6, padding: 0, fontSize: 14, lineHeight: 1 }}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                  {form.tags.length < 10 && (
+                    <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+                      <input
+                        type="text"
+                        value={tagInput}
+                        onChange={e => setTagInput(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addCustomTag(tagInput) }
+                        }}
+                        placeholder="Add custom tag..."
+                        style={{ ...fieldStyle, flex: 1, fontSize: 13 }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => addCustomTag(tagInput)}
+                        style={{
+                          background: 'var(--brand-soft)',
+                          border: 'none',
+                          borderRadius: 'var(--r-pill)',
+                          padding: '0 14px',
+                          fontSize: 12,
+                          fontWeight: 600,
+                          color: 'var(--brand)',
+                          cursor: 'pointer',
+                          height: 38,
+                          flexShrink: 0,
+                        }}
+                      >
+                        Add
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label style={labelStyle}>Content warnings</label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+                    {CONTENT_WARNINGS.map(w => (
+                      <Chip
+                        key={w}
+                        label={w}
+                        active={form.contentWarnings.includes(w)}
+                        onClick={() => update({ contentWarnings: toggleItem(form.contentWarnings, w) })}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label style={labelStyle}>
+                    Comparable titles{' '}
+                    <span style={{ opacity: 0.4, fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>optional, up to 5</span>
+                  </label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {form.compTitles.map((t, i) => (
+                      <div key={i} style={{ display: 'flex', gap: 8 }}>
+                        <input
+                          type="text"
+                          placeholder="Readers who liked..."
+                          value={t}
+                          onChange={e => handleCompTitle(i, e.target.value)}
+                          style={{ ...fieldStyle, flex: 1 }}
+                        />
+                        {form.compTitles.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => update({ compTitles: form.compTitles.filter((_, idx) => idx !== i) })}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: 'var(--canvas-dark-ink-muted)',
+                              opacity: 0.4,
+                              cursor: 'pointer',
+                              fontSize: 18,
+                              padding: '0 8px',
+                              lineHeight: 1,
+                            }}
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    {form.compTitles.length < 5 && form.compTitles[form.compTitles.length - 1] !== '' && (
+                      <button
+                        type="button"
+                        onClick={() => update({ compTitles: [...form.compTitles, ''] })}
+                        style={{ background: 'none', border: 'none', fontSize: 12, color: 'var(--brand)', opacity: 0.7, cursor: 'pointer', textAlign: 'left', padding: 0 }}
+                      >
+                        + Add another title
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div style={{ maxWidth: 220 }}>
+                  <label style={labelStyle}>Language</label>
+                  <select
+                    value={form.language}
+                    onChange={e => update({ language: e.target.value })}
+                    style={{ ...fieldStyle, appearance: 'none', cursor: 'pointer' }}
+                  >
+                    <option value="">Select language...</option>
+                    {LANGUAGES.map(l => <option key={l} value={l}>{l}</option>)}
+                  </select>
+                </div>
+              </div>
+            </section>
+
+            {/* STRUCTURE */}
+            <section style={{ ...panelStyle, padding: '22px 24px' }}>
+              <SectionHeading title="Structure" />
+              <p style={{ fontSize: 12, color: 'var(--canvas-dark-ink-muted)', opacity: 0.65, lineHeight: 1.65, marginBottom: 14 }}>
+                Series metadata appears on your reader page, library card, and any discoverable surface. Readers can jump between books in the series.
+              </p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, maxWidth: 340 }}>
+                {(['Standalone', 'Series'] as const).map(opt => {
+                  const active = (opt === 'Series') === form.isSeriesBook
+                  return (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => update({ isSeriesBook: opt === 'Series' })}
+                      style={{
+                        padding: '9px',
+                        borderRadius: 'var(--r-row)',
+                        border: active ? '1.5px solid oklch(from var(--brand) l c h / 0.40)' : '1px solid transparent',
+                        background: active ? 'var(--brand-soft)' : 'var(--canvas-dark-300)',
+                        color: active ? 'var(--brand)' : 'var(--canvas-dark-ink-muted)',
+                        fontSize: 13,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.12s',
+                      }}
+                    >
+                      {opt}
+                    </button>
+                  )
+                })}
+              </div>
+              {form.isSeriesBook && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, marginTop: 14 }}>
+                  <div>
+                    <label style={labelStyle}>Series name</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. The Stormlight Archive"
+                      value={form.seriesName}
+                      onChange={e => update({ seriesName: e.target.value })}
+                      style={fieldStyle}
+                    />
+                  </div>
+                  <div style={{ width: 90 }}>
+                    <label style={labelStyle}>Book #</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={9999}
+                      placeholder="1"
+                      value={form.seriesNumber}
+                      onChange={e => update({ seriesNumber: e.target.value })}
+                      style={fieldStyle}
+                    />
+                  </div>
+                </div>
+              )}
+              <p style={{ fontSize: 11, color: 'var(--canvas-dark-ink-muted)', opacity: 0.3, marginTop: 16, lineHeight: 1.5 }}>
+                The template you picked at creation seeded your binder once. Reorganize chapters directly from the binder.
+              </p>
+            </section>
+
+            {/* SHARING */}
+            <section style={{ ...panelStyle, padding: '22px 24px' }}>
+              <SectionHeading title="Sharing" />
+              <SharingControls
+                visibility={form.visibility}
+                discoverable={form.discoverable}
+                onChange={({ visibility, discoverable }) => {
+                  const patch: Partial<FormState> = {}
+                  if (visibility !== undefined) {
+                    patch.visibility = visibility
+                    if (visibility !== 'PUBLIC') patch.discoverable = false
+                  }
+                  if (discoverable !== undefined) patch.discoverable = discoverable
+                  update(patch)
+                }}
+              />
+            </section>
+
+            {/* PUBLISHING */}
+            <section style={{ ...panelStyle, padding: '22px 24px' }}>
+              <SectionHeading
+                title="Publishing"
+                badge={
+                  <span style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    background: 'var(--brand)',
+                    color: 'var(--brand-ink)',
+                    borderRadius: 'var(--r-pill)',
+                    padding: '2px 8px',
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                  }}>
+                    <Sparkles size={10} />
+                    Premium
+                  </span>
+                }
+              />
+              {!isPremium && (
+                <div style={{
+                  background: 'oklch(from var(--brand) l c h / 0.08)',
+                  border: '1px solid oklch(from var(--brand) l c h / 0.20)',
+                  borderRadius: 'var(--r-row)',
+                  padding: '12px 14px',
+                  fontSize: 12,
+                  color: 'var(--canvas-dark-ink-muted)',
+                  lineHeight: 1.65,
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 10,
+                  marginBottom: 16,
+                }}>
+                  <Sparkles size={14} style={{ color: 'var(--brand)', flexShrink: 0, marginTop: 1 }} />
+                  <span>
+                    Publishing details are a Premium feature. Unlock imprint, ISBN, trim size, author bio, and dedication.{' '}
+                    <Link href={`/${locale}/pricing`} style={{ color: 'var(--brand)', textDecoration: 'none' }}>
+                      Upgrade →
+                    </Link>
+                  </span>
+                </div>
+              )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <ReadonlyField label="Publisher name" value={initial.publisherName} />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <ReadonlyField label="Trim size" value={initial.trimSize} />
+                  <ReadonlyField label="Edition" value={initial.edition} />
+                </div>
+                <ReadonlyField label="ISBN" value={initial.isbn} />
+                <ReadonlyField label="Author bio" value={initial.authorBio} multiline />
+                <ReadonlyField label="Dedication" value={initial.dedication} multiline />
+                <p style={{ fontSize: 11, color: 'var(--canvas-dark-ink-muted)', opacity: 0.3, lineHeight: 1.5, marginTop: 4 }}>
+                  {isPremium
+                    ? 'To edit these, open the Publishing details expander in the metadata panel inside the editor.'
+                    : 'Subtitle is editable above in Basics. Other publishing fields require Premium.'}
+                </p>
+              </div>
+            </section>
+
+            {/* Error banner */}
+            {error && (
               <div
-                className="mb-4 p-3 rounded-lg flex items-start gap-3"
+                role="alert"
                 style={{
-                  background: 'oklch(from var(--color-brand) l c h / 0.10)',
-                  border: '1px solid oklch(from var(--color-brand) l c h / 0.30)',
+                  padding: '12px 14px',
+                  borderRadius: 'var(--r-row)',
+                  background: 'oklch(0.30 0.10 25 / 0.20)',
+                  border: '1px solid oklch(0.55 0.15 25 / 0.45)',
+                  color: 'oklch(0.85 0.12 25)',
+                  fontSize: 13,
                 }}
               >
-                <Sparkles size={16} className="mt-0.5 text-brand flex-shrink-0" />
-                <div className="text-[12px] leading-relaxed text-white/70">
-                  Publishing details are a Premium feature. You can view what you entered at creation,
-                  but you need Premium to edit publisher, trim size, edition, ISBN, author bio, or dedication.
-                  <Link href={`/${locale}/pricing`} className="text-brand hover:underline ml-1">
-                    Upgrade →
-                  </Link>
-                </div>
+                {error}
               </div>
             )}
 
-            <div className="space-y-3">
-              <ReadonlyField label="Publisher name" value={initial.publisherName} />
-              <div className="grid grid-cols-2 gap-3">
-                <ReadonlyField label="Trim size" value={initial.trimSize} />
-                <ReadonlyField label="Edition" value={initial.edition} />
-              </div>
-              <ReadonlyField label="ISBN" value={initial.isbn} />
-              <ReadonlyField label="Author bio" value={initial.authorBio} multiline />
-              <ReadonlyField label="Dedication" value={initial.dedication} multiline />
-              <p className="text-[11px] text-white/30 mt-2">
-                {isPremium
-                  ? 'To edit these, open the Publishing details expander in the metadata panel inside the editor.'
-                  : 'Subtitle is editable above in Basics. Other publishing fields require Premium.'}
-              </p>
-            </div>
-          </Section>
-
-          {/* ── SHARING ── */}
-          <Section
-            title="Sharing"
-            subtitle="Who can read this book, and whether it appears on Discover."
-          >
-            <SharingControls
-              visibility={form.visibility}
-              discoverable={form.discoverable}
-              onChange={({ visibility, discoverable }) => {
-                const patch: Partial<FormState> = {}
-                if (visibility !== undefined) {
-                  patch.visibility = visibility
-                  if (visibility !== 'PUBLIC') patch.discoverable = false
-                }
-                if (discoverable !== undefined) patch.discoverable = discoverable
-                update(patch)
-              }}
-            />
-          </Section>
-
-          {/* ── Error banner ── */}
-          {error && (
-            <div
-              role="alert"
-              className="p-3 rounded-lg"
-              style={{
-                background: 'oklch(0.30 0.10 25 / 0.20)',
-                border: '1px solid oklch(0.55 0.15 25 / 0.45)',
-                color: 'oklch(0.85 0.12 25)',
+            {/* DANGER ZONE */}
+            <section style={{
+              ...panelStyle,
+              padding: '20px 24px',
+              marginTop: 8,
+            }}>
+              <h2 style={{
+                fontFamily: 'var(--font-display)',
                 fontSize: 13,
-              }}
-            >
-              {error}
-            </div>
-          )}
+                fontWeight: 700,
+                color: 'var(--canvas-dark-ink-muted)',
+                marginBottom: 6,
+                opacity: 0.7,
+              }}>
+                Danger Zone
+              </h2>
+              <p style={{ fontSize: 12, color: 'var(--canvas-dark-ink-muted)', opacity: 0.5, marginBottom: 14, lineHeight: 1.5 }}>
+                Permanently delete this book and everything in it.
+              </p>
+              <DeleteBookButton bookId={bookId} bookTitle={initial.title} locale={locale}>
+                {(onTrigger) => (
+                  <button
+                    type="button"
+                    onClick={onTrigger}
+                    style={{
+                      background: 'none',
+                      border: '1px solid oklch(0.55 0.15 25 / 0.28)',
+                      borderRadius: 'var(--r-row)',
+                      padding: '7px 16px',
+                      fontSize: 12,
+                      color: 'oklch(0.65 0.12 25)',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      transition: 'background 0.15s, border-color 0.15s',
+                    }}
+                    onMouseEnter={e => {
+                      const el = e.currentTarget
+                      el.style.background = 'oklch(0.55 0.15 25 / 0.10)'
+                      el.style.borderColor = 'oklch(0.55 0.15 25 / 0.55)'
+                    }}
+                    onMouseLeave={e => {
+                      const el = e.currentTarget
+                      el.style.background = 'none'
+                      el.style.borderColor = 'oklch(0.55 0.15 25 / 0.28)'
+                    }}
+                  >
+                    <Trash2 size={13} />
+                    Delete this book
+                  </button>
+                )}
+              </DeleteBookButton>
+            </section>
 
-          {/* ── DANGER ZONE ── (intentionally outside any form element) */}
-          <section className="rounded-lg border border-destructive/30 p-5 mt-6">
-            <h2 className="text-destructive text-[15px] font-semibold mb-1">Danger Zone</h2>
-            <p className="text-foreground/65 text-[13px] mb-4">
-              Permanently delete this book and everything in it.
-            </p>
-            <DeleteBookButton bookId={bookId} bookTitle={initial.title} locale={locale}>
-              {(onTrigger) => (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={onTrigger}
-                  className="text-destructive border-destructive/40 hover:bg-destructive/10"
-                >
-                  <Trash2 size={14} className="mr-2" />
-                  Delete this book
-                </Button>
-              )}
-            </DeleteBookButton>
-          </section>
+          </main>
         </div>
       </div>
+
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .cover-hover-overlay:hover { background: oklch(0 0 0 / 0.35) !important; }
+        .cover-hover-overlay:hover .cover-hover-label { opacity: 1 !important; }
+      `}</style>
     </div>
   )
 }
 
 // ─── Readonly subcomponent ────────────────────────────────────────────────────
 
-function ReadonlyField({
-  label,
-  value,
-  multiline = false,
-}: {
-  label: string
-  value: string | null
-  multiline?: boolean
+function ReadonlyField({ label, value, multiline = false }: {
+  label: string; value: string | null; multiline?: boolean
 }) {
   return (
     <div>
-      <div className={labelClass}>{label}</div>
-      <div
-        className={`rounded-[var(--r-row)] px-3.5 py-2.5 text-[14px] ${multiline ? 'min-h-[80px] whitespace-pre-wrap' : ''}`}
-        style={{
-          background: '#1E1E1E',
-          boxShadow: 'var(--sh-inset)',
-          color: 'var(--canvas-dark-ink-muted)',
-        }}
-      >
-        {value || <span className="text-white/25 italic">Not set</span>}
+      <div style={labelStyle}>{label}</div>
+      <div style={{
+        background: 'var(--canvas-dark-100)',
+        boxShadow: 'var(--sh-inset)',
+        borderRadius: 'var(--r-row)',
+        padding: '10px 14px',
+        fontSize: 14,
+        minHeight: multiline ? 80 : undefined,
+        whiteSpace: multiline ? 'pre-wrap' : undefined,
+        color: 'var(--canvas-dark-ink-muted)',
+      }}>
+        {value || <span style={{ opacity: 0.3, fontStyle: 'italic' }}>Not set</span>}
       </div>
     </div>
   )

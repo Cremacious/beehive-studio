@@ -29,6 +29,16 @@ export function AppNav({ locale, user, username }: AppNavProps) {
     isActive('sparks') ||
     isActive('reading-lists') ||
     isActive('clubs')
+  const profileActive = username ? pathname === `/${locale}/u/${username}` : false
+
+  const navItems = [
+    { label: 'Studio', href: `/${locale}/studio`, active: studioActive },
+    { label: 'Community', href: `/${locale}/community`, active: communityActive },
+    { label: 'Discover', href: `/${locale}/discover`, active: isActive('discover') },
+    ...(username
+      ? [{ label: 'Profile', href: `/${locale}/u/${username}`, active: profileActive }]
+      : []),
+  ]
 
   return (
     <header
@@ -64,11 +74,7 @@ export function AppNav({ locale, user, username }: AppNavProps) {
 
         {/* CENTER — nav (absolutely positioned on desktop, inline-flex on mobile) */}
         <nav className="sm:absolute sm:left-1/2 sm:-translate-x-1/2 flex gap-1">
-          {[
-            { label: 'Studio', href: `/${locale}/studio`, active: studioActive },
-            { label: 'Community', href: `/${locale}/community`, active: communityActive },
-            { label: 'Discover', href: `/${locale}/discover`, active: isActive('discover') },
-          ].map((item) => (
+          {navItems.map((item) => (
             <Link
               key={item.label}
               href={item.href}

@@ -20,7 +20,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 >
 > **Prior — Last commit:** [0520665](https://github.com/Cremacious/beehive-studio/commit/0520665) — feat(nav): add Profile navlink to top navbar for authenticated users.
 >
-> **Next concrete step:** #20 Book details page redesign (mockup-first). **Prerequisite from #17 still open:** create Cloudinary unsigned upload presets `beehive_avatars` (folder=`avatars`) and `beehive_clubs` (folder=`clubs`).
+> **Next concrete step:** Complete issue #20 — Book details page redesign (mockup-first, in progress). Generate 2-3 HTML mockups, present to Chris, lock design, implement. After #20: #23 Create/edit forms redesign (Clubs + Lists). **Prerequisite from #17 still open:** create Cloudinary unsigned upload presets `beehive_avatars` (folder=`avatars`) and `beehive_clubs` (folder=`clubs`).
 >
 > **Cloudinary folder layout (load-bearing):**
 > - `covers/` — book covers (`CoverPicker`, `book-details-form`) — preset `beehive_covers`
@@ -40,7 +40,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 > - ~~#27 View own profile (nav entry point)~~ ✅
 > - ~~#34 Full settings redesign (navbar dropdown + account/privacy/preferences pages)~~ ✅
 > - ~~#35 Community nav dropdown~~ ✅
-> - #20 Book details page redesign (mockup-first)
+> - #20 Book details page redesign (mockup-first) ← IN PROGRESS
 > - #23 Create/edit forms redesign — Clubs + Lists (mockup-first)
 > - #24 /sparks/new redesign + edit route (mockup-first)
 > - #28 Notifications settings redesign (mockup-first)

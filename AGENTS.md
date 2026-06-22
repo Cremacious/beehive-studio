@@ -64,6 +64,12 @@ This version has breaking changes — APIs, conventions, and file structure may 
 > - ~~#22 Reading list tags~~ ✅
 > - #32 Trending/Popular algorithms + remove featured banner
 > - #18 For You recommendation system (last — depends on #21, #22, #32)
+> - #39 Club cover image update
+> - #40 Image upload QA + optimization
+> - #41 Homepage + auth redesign
+> - #38 Monetization model + premium UX path
+> - #36 Resizable editor side panels
+> - #37 App performance optimization
 >
 > **Prior — Last commit:** [ab1f610](https://github.com/Cremacious/beehive-studio/commit/ab1f610) — docs(plan): discover mode toggle + search header — 7-task implementation plan.
 >

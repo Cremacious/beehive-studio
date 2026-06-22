@@ -12,17 +12,15 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-22 (Issue #30 complete — Book Club Page redesign. Single-shot commit bundles pre-existing #30 scaffolding (schema migrate-i30, club-progress actions, app-nav entry) with this session's full UI build: bento (Currently Reading + Discussions cell + Up Next 2×2 with skeleton placeholders + Rules+About merged sidebar; Members and About cells removed), /queue route (drag-reorder + Make-current + Edit + Remove kebab + client paginate + Past reads accordion, flat-dark no-gradient), /discussions list route (pinned + chronological with Load older + StarterZone prompt chips), /discussions/[id] forum-style thread rewrite (hive-style cards + thread line + @mention pseudo-threading + PageHead back button), settings overhaul (stacked SettingsCard sections + RulesEditor numbered list builder with live preview + Privacy 3-card visibility picker + iOS toggles + type-to-confirm delete), JoinRequestsBadge in club header (brand-yellow pill + modal Accept/Decline). 40 files / 9066 insertions / 123 deletions. tsc clean throughout.)
+> **Last updated:** 2026-06-22 (Issue #21 complete — spark entry likes + bookmarks shelf. spark_entry_likes table + toggleSparkEntryLikeAction. /community/bookmarks page (Variant A) with sort. Liked tab on reading lists wired to real bookLikes query. Discussion likes verified end-to-end. Optimistic updates with rollback throughout. tsc clean.)
 >
-> **Last commit:** [6f8662d](https://github.com/Cremacious/beehive-studio/commit/6f8662d) — feat(clubs): issue #30 — book club page redesign.
+> **Last commit:** [690e02a](https://github.com/Cremacious/beehive-studio/commit/690e02a) — feat(likes/bookmarks): issue #21 — spark likes + bookmarks shelf (Variant A).
+>
+> **Prior — Last commit:** [6f8662d](https://github.com/Cremacious/beehive-studio/commit/6f8662d) — feat(clubs): issue #30 — book club page redesign.
 >
 > **Prior — Last commit:** [24e486f](https://github.com/Cremacious/beehive-studio/commit/24e486f) — feat(sparks): issue #24 — /sparks/new redesign + /sparks/[id]/edit route (Variant C).
 >
-> **Prior — Last commit:** [3905311](https://github.com/Cremacious/beehive-studio/commit/3905311) — feat(forms): issue #23 — Reading List + Book Club create/edit redesign (Variant C).
->
-> **Prior — Last commit:** [861f470](https://github.com/Cremacious/beehive-studio/commit/861f470) — feat(details): issue #20 — sidebar cover, at-a-glance stats, brand-yellow section headings, proper panel chrome.
->
-> **Next concrete step:** #21 Likes + bookmarks expansion. **Prerequisite from #17 still open:** create Cloudinary unsigned upload presets `beehive_avatars` (folder=`avatars`) and `beehive_clubs` (folder=`clubs`).
+> **Next concrete step:** #22 Reading list tags — make tags functional (browsable chip strip, filter param, tag search, card pills). **Prerequisite from #17 still open:** create Cloudinary unsigned upload presets `beehive_avatars` (folder=`avatars`) and `beehive_clubs` (folder=`clubs`).
 >
 > **Cloudinary folder layout (load-bearing):**
 > - `covers/` — book covers (`CoverPicker`, `book-details-form`) — preset `beehive_covers`
@@ -47,7 +45,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 > - ~~#24 /sparks/new redesign + edit route~~ ✅
 > - ~~#28 Notifications settings redesign~~ ✅
 > - ~~#30 Book club page redesign~~ ✅
-> - #21 Likes + bookmarks expansion
+> - ~~#21 Likes + bookmarks expansion~~ ✅
 > - #22 Reading list tags
 > - #32 Trending/Popular algorithms + remove featured banner
 > - #18 For You recommendation system (last — depends on #21, #22, #32)

@@ -1,5 +1,6 @@
 'use server'
 
+import { unstable_cache } from 'next/cache'
 import { db } from '@/db'
 import { requireAuth } from '@/lib/require-auth'
 import { bookClubMembers } from '@/db/schema/social'
@@ -99,16 +100,11 @@ export async function getViewerClubStatsAction(): Promise<
  * Issue #32: Top discoverable PUBLIC clubs ranked by time-decayed engagement.
  * memberCount feeds `likeCount`; discussionCount feeds `commentCount`;
  * hoursAgo from created_at. last_activity_at is still projected for display
- * but no longer dictates ordering.
- * TODO(#32): wrap in unstable_cache (5min TTL, key on limit).
+ * but no longer dictates ordering. Cached 5min via unstable_cache; viewer-agnostic.
  */
-export async function getTrendingClubsForRailAction(
-  args: { limit?: number } = {},
-): Promise<ActionResult<RailTrendingClub[]>> {
-  const limit = Math.min(args.limit ?? 12, 30)
-  const CANDIDATE_LIMIT = 60
-
-  try {
+const CANDIDATE_LIMIT_CLUBS = 60
+const computeTrendingClubs = unstable_cache(
+  async (limit: number): Promise<RailTrendingClub[]> => {
     const rows = await db.execute(sql`
       SELECT
         c.id,
@@ -140,7 +136,7 @@ export async function getTrendingClubsForRailAction(
         ), '[]'::json) AS "memberPreviews"
       FROM book_clubs c
       WHERE c.visibility = 'PUBLIC' AND c.discoverable = true
-      LIMIT ${CANDIDATE_LIMIT}
+      LIMIT ${CANDIDATE_LIMIT_CLUBS}
     `)
 
     type Row = {
@@ -174,24 +170,33 @@ export async function getTrendingClubsForRailAction(
       return b.row.id.localeCompare(a.row.id)
     })
 
-    return {
-      success: true,
-      data: scored.slice(0, limit).map(({ row }) => ({
-        id: row.id,
-        name: row.name,
-        coverImageUrl: row.coverImageUrl,
-        currentBookTitle: row.currentBookTitle,
-        memberCount: Number(row.memberCount ?? 0),
-        lastActivityAt:
-          row.lastActivityAt == null
-            ? null
-            : row.lastActivityAt instanceof Date
-              ? row.lastActivityAt
-              : new Date(row.lastActivityAt),
-        openJoin: row.openJoin,
-        memberPreviews: row.memberPreviews,
-      })),
-    }
+    return scored.slice(0, limit).map(({ row }) => ({
+      id: row.id,
+      name: row.name,
+      coverImageUrl: row.coverImageUrl,
+      currentBookTitle: row.currentBookTitle,
+      memberCount: Number(row.memberCount ?? 0),
+      lastActivityAt:
+        row.lastActivityAt == null
+          ? null
+          : row.lastActivityAt instanceof Date
+            ? row.lastActivityAt
+            : new Date(row.lastActivityAt),
+      openJoin: row.openJoin,
+      memberPreviews: row.memberPreviews,
+    }))
+  },
+  ['trending-clubs-rail'],
+  { revalidate: 300, tags: ['trending-clubs'] },
+)
+
+export async function getTrendingClubsForRailAction(
+  args: { limit?: number } = {},
+): Promise<ActionResult<RailTrendingClub[]>> {
+  const limit = Math.min(args.limit ?? 12, 30)
+  try {
+    const data = await computeTrendingClubs(limit)
+    return { success: true, data }
   } catch {
     return { success: false, error: 'FETCH_FAILED' }
   }

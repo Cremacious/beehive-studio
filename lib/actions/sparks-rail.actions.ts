@@ -1,9 +1,10 @@
 'use server'
 
+import { unstable_cache } from 'next/cache'
 import { db } from '@/db'
 import { sparks, sparkEntries } from '@/db/schema/social'
 import { requireAuth } from '@/lib/require-auth'
-import { and, desc, eq, isNotNull, sql } from 'drizzle-orm'
+import { and, eq, isNotNull, sql } from 'drizzle-orm'
 import { computeTrendingScore } from '@/lib/discover/scoring'
 
 export type RailTrendingSpark = {
@@ -29,14 +30,10 @@ const CANDIDATE_LIMIT = 60
  * Issue #32: Top sparks ranked by time-decayed engagement (cumulative entry
  * count as the primary signal, divided by age decay). Sparks have no
  * likes/comments/bookmarks; entryCount feeds `likeCount` in computeTrendingScore.
- * TODO(#32): wrap in unstable_cache (5min TTL, key on limit).
+ * Cached 5min via unstable_cache; viewer-agnostic.
  */
-export async function getTrendingSparksForRailAction(
-  args: { limit?: number } = {},
-): Promise<ActionResult<RailTrendingSpark[]>> {
-  const limit = Math.min(args.limit ?? 3, 10)
-
-  try {
+const computeTrendingSparks = unstable_cache(
+  async (limit: number): Promise<RailTrendingSpark[]> => {
     const rows = await db
       .select({
         id: sparks.id,
@@ -80,16 +77,25 @@ export async function getTrendingSparksForRailAction(
       return b.row.id.localeCompare(a.row.id)
     })
 
-    return {
-      success: true,
-      data: scored.slice(0, limit).map(({ row: r }) => ({
-        id: r.id,
-        title: r.title,
-        status: r.status as RailTrendingSpark['status'],
-        entryCount: r.entryCount,
-        deadline: r.deadline,
-      })),
-    }
+    return scored.slice(0, limit).map(({ row: r }) => ({
+      id: r.id,
+      title: r.title,
+      status: r.status as RailTrendingSpark['status'],
+      entryCount: r.entryCount,
+      deadline: r.deadline,
+    }))
+  },
+  ['trending-sparks-rail'],
+  { revalidate: 300, tags: ['trending-sparks'] },
+)
+
+export async function getTrendingSparksForRailAction(
+  args: { limit?: number } = {},
+): Promise<ActionResult<RailTrendingSpark[]>> {
+  const limit = Math.min(args.limit ?? 3, 10)
+  try {
+    const data = await computeTrendingSparks(limit)
+    return { success: true, data }
   } catch {
     return { success: false, error: 'FETCH_FAILED' }
   }

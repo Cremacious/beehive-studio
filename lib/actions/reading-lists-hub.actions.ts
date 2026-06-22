@@ -1,6 +1,7 @@
 'use server'
 
 import { cache } from 'react'
+import { unstable_cache } from 'next/cache'
 import { db } from '@/db'
 import {
   readingLists,
@@ -436,15 +437,11 @@ export type RailTrendingList = {
  * Issue #32: Top discoverable PUBLIC CUSTOM lists ranked by time-decayed
  * engagement. Cumulative follower_count feeds `likeCount`; hoursAgo from
  * first_publicly_discoverable_at (falls back to created_at).
- * TODO(#32): wrap in unstable_cache (5min TTL, key on limit).
+ * Cached 5min via unstable_cache; viewer-agnostic.
  */
-export async function getTrendingListsForRailAction(
-  args: { limit?: number } = {},
-): Promise<ActionResult<RailTrendingList[]>> {
-  const limit = Math.min(args.limit ?? 4, 30)
-  const CANDIDATE_LIMIT = 60
-
-  try {
+const CANDIDATE_LIMIT_LISTS = 60
+const computeTrendingLists = unstable_cache(
+  async (limit: number): Promise<RailTrendingList[]> => {
     const result = await db.execute<{
       id: string
       title: string
@@ -465,7 +462,7 @@ export async function getTrendingListsForRailAction(
       WHERE l.visibility = 'PUBLIC'
         AND l.discoverable = true
         AND l.kind = 'CUSTOM'
-      LIMIT ${CANDIDATE_LIMIT}
+      LIMIT ${CANDIDATE_LIMIT_LISTS}
     `)
 
     const rows =
@@ -514,6 +511,18 @@ export async function getTrendingListsForRailAction(
       newFollowersThisWeek: Number(r.follower_count),
     }))
 
+    return data
+  },
+  ['trending-lists-rail'],
+  { revalidate: 300, tags: ['trending-lists'] },
+)
+
+export async function getTrendingListsForRailAction(
+  args: { limit?: number } = {},
+): Promise<ActionResult<RailTrendingList[]>> {
+  const limit = Math.min(args.limit ?? 4, 30)
+  try {
+    const data = await computeTrendingLists(limit)
     return { success: true, data }
   } catch {
     return { success: false, error: 'FETCH_FAILED' }

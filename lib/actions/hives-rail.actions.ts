@@ -1,5 +1,6 @@
 'use server'
 
+import { unstable_cache } from 'next/cache'
 import { db } from '@/db'
 import { requireAuth } from '@/lib/require-auth'
 import { hiveMembers } from '@/db/schema/hive'
@@ -71,15 +72,10 @@ export async function getViewerHiveStatsAction(): Promise<ActionResult<ViewerHiv
  * Issue #32: Top discoverable PUBLIC hives ranked by time-decayed engagement.
  * activityCount (cumulative all-time hive_activity rows) feeds `likeCount`;
  * memberCount feeds `bookmarkCount` so larger hives get a small bonus.
- * hoursAgo from hives.created_at. Sorted by score DESC.
- * TODO(#32): wrap in unstable_cache (5min TTL, key on limit).
+ * hoursAgo from hives.created_at. Cached 5min via unstable_cache; viewer-agnostic.
  */
-export async function getTrendingHivesForRailAction(
-  args: { limit?: number } = {},
-): Promise<ActionResult<RailTrendingHive[]>> {
-  const limit = Math.min(args.limit ?? 12, 30)
-
-  try {
+const computeTrendingHives = unstable_cache(
+  async (limit: number): Promise<RailTrendingHive[]> => {
     const rows = await db.execute(sql`
       SELECT
         h.id,
@@ -145,18 +141,27 @@ export async function getTrendingHivesForRailAction(
       return b.row.id.localeCompare(a.row.id)
     })
 
-    return {
-      success: true,
-      data: scored.slice(0, limit).map(({ row: r }) => ({
-        id: r.id,
-        name: r.name,
-        bookTitle: r.bookTitle,
-        bookCoverUrl: r.bookCoverUrl,
-        memberCount: Number(r.memberCount),
-        activity7d: Number(r.activityCount),
-        memberPreviews: r.memberPreviews,
-      })),
-    }
+    return scored.slice(0, limit).map(({ row: r }) => ({
+      id: r.id,
+      name: r.name,
+      bookTitle: r.bookTitle,
+      bookCoverUrl: r.bookCoverUrl,
+      memberCount: Number(r.memberCount),
+      activity7d: Number(r.activityCount),
+      memberPreviews: r.memberPreviews,
+    }))
+  },
+  ['trending-hives-rail'],
+  { revalidate: 300, tags: ['trending-hives'] },
+)
+
+export async function getTrendingHivesForRailAction(
+  args: { limit?: number } = {},
+): Promise<ActionResult<RailTrendingHive[]>> {
+  const limit = Math.min(args.limit ?? 12, 30)
+  try {
+    const data = await computeTrendingHives(limit)
+    return { success: true, data }
   } catch {
     return { success: false, error: 'FETCH_FAILED' }
   }

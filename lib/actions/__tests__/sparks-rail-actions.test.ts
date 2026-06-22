@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+vi.mock('next/cache', () => ({
+  unstable_cache: <T extends (...args: unknown[]) => unknown>(fn: T): T => fn,
+}))
+
 vi.mock('@/lib/require-auth', () => ({
   requireAuth: vi.fn(async () => 'viewer-1'),
   AuthError: class extends Error {},

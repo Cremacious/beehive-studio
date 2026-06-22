@@ -12,9 +12,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## 📍 Resume Here
 
-> **Last updated:** 2026-06-18 (Issue #24 complete — /sparks/new redesign (Variant C: section dividers + sticky CTA bar) + new /sparks/[id]/edit route. New `DateTimePicker` component replaces native datetime-local. `getSparkForEditAction` + `updateSparkAction` added to sparks.actions.ts. `?prompt=` and `?wordLimit=` query params pre-fill create form. tsc clean, 883/883 tests.)
+> **Last updated:** 2026-06-22 (Issue #30 complete — Book Club Page redesign. Single-shot commit bundles pre-existing #30 scaffolding (schema migrate-i30, club-progress actions, app-nav entry) with this session's full UI build: bento (Currently Reading + Discussions cell + Up Next 2×2 with skeleton placeholders + Rules+About merged sidebar; Members and About cells removed), /queue route (drag-reorder + Make-current + Edit + Remove kebab + client paginate + Past reads accordion, flat-dark no-gradient), /discussions list route (pinned + chronological with Load older + StarterZone prompt chips), /discussions/[id] forum-style thread rewrite (hive-style cards + thread line + @mention pseudo-threading + PageHead back button), settings overhaul (stacked SettingsCard sections + RulesEditor numbered list builder with live preview + Privacy 3-card visibility picker + iOS toggles + type-to-confirm delete), JoinRequestsBadge in club header (brand-yellow pill + modal Accept/Decline). 40 files / 9066 insertions / 123 deletions. tsc clean throughout.)
 >
-> **Last commit:** pending user approval
+> **Last commit:** [6f8662d](https://github.com/Cremacious/beehive-studio/commit/6f8662d) — feat(clubs): issue #30 — book club page redesign.
+>
+> **Prior — Last commit:** [24e486f](https://github.com/Cremacious/beehive-studio/commit/24e486f) — feat(sparks): issue #24 — /sparks/new redesign + /sparks/[id]/edit route (Variant C).
 >
 > **Prior — Last commit:** [3905311](https://github.com/Cremacious/beehive-studio/commit/3905311) — feat(forms): issue #23 — Reading List + Book Club create/edit redesign (Variant C).
 >
@@ -43,8 +45,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 > - ~~#20 Book details page redesign~~ ✅
 > - ~~#23 Create/edit forms redesign — Clubs + Lists~~ ✅
 > - ~~#24 /sparks/new redesign + edit route~~ ✅
+> - ~~#30 Book club page redesign~~ ✅
 > - #28 Notifications settings redesign (mockup-first)
-> - #30 Book club page redesign (mockup-first)
 > - #21 Likes + bookmarks expansion
 > - #22 Reading list tags
 > - #32 Trending/Popular algorithms + remove featured banner

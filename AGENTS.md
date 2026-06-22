@@ -22,7 +22,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 >
 > **Prior — Last commit:** [861f470](https://github.com/Cremacious/beehive-studio/commit/861f470) — feat(details): issue #20 — sidebar cover, at-a-glance stats, brand-yellow section headings, proper panel chrome.
 >
-> **Next concrete step:** #28 Notifications settings redesign (mockup-first). **Prerequisite from #17 still open:** create Cloudinary unsigned upload presets `beehive_avatars` (folder=`avatars`) and `beehive_clubs` (folder=`clubs`).
+> **Next concrete step:** #21 Likes + bookmarks expansion. **Prerequisite from #17 still open:** create Cloudinary unsigned upload presets `beehive_avatars` (folder=`avatars`) and `beehive_clubs` (folder=`clubs`).
 >
 > **Cloudinary folder layout (load-bearing):**
 > - `covers/` — book covers (`CoverPicker`, `book-details-form`) — preset `beehive_covers`
@@ -45,8 +45,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 > - ~~#20 Book details page redesign~~ ✅
 > - ~~#23 Create/edit forms redesign — Clubs + Lists~~ ✅
 > - ~~#24 /sparks/new redesign + edit route~~ ✅
+> - ~~#28 Notifications settings redesign~~ ✅
 > - ~~#30 Book club page redesign~~ ✅
-> - #28 Notifications settings redesign (mockup-first)
 > - #21 Likes + bookmarks expansion
 > - #22 Reading list tags
 > - #32 Trending/Popular algorithms + remove featured banner

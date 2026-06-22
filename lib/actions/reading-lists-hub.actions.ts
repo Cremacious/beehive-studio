@@ -484,6 +484,8 @@ const computeTrendingLists = unstable_cache(
           ? r.reference_at
           : new Date(r.reference_at)
       const hoursAgo = Math.max(0, (now - ref.getTime()) / 3_600_000)
+      // TODO(#32): swap to computeListTrendingScore from lib/discover/trending-scores
+      // for parity with the per-entity formal trending weights (rail surfaces only).
       const score = computeTrendingScore({
         likeCount: Number(r.follower_count),
         commentCount: 0,

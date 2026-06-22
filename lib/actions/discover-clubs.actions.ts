@@ -346,6 +346,14 @@ async function loadActivityScoreMap(
       }),
     )
   }
+  if (process.env.NODE_ENV !== 'production' && scoreMap.size > 0) {
+    const xs = Array.from(scoreMap.values())
+    const min = Math.min(...xs)
+    const max = Math.max(...xs)
+    const mean = xs.reduce((a, b) => a + b, 0) / xs.length
+    // eslint-disable-next-line no-console
+    console.log(`[#32 trending clubs] n=${xs.length} min=${min} max=${max} mean=${mean.toFixed(2)}`)
+  }
   return scoreMap
 }
 
@@ -397,8 +405,51 @@ async function loadMemberPreviewsMap(
   return map
 }
 
-// Issue #32: `getFeaturedClubAction` removed — the discovery mode toggle
-// replaces the featured banner.
+// ─── 1. Featured Club hero ────────────────────────────────────────────────────
+
+/**
+ * Issue #32: restored. "Open + active": openJoin=true AND activityScore7d > 0
+ * AND last_activity_at >= 14d. Sort score DESC, lastActivityAt DESC, id DESC.
+ * Banner displays only on All + For You.
+ */
+export async function getFeaturedClubAction(args: {
+  genre?: GenreSlug
+}): Promise<ActionResult<ClubCard | null>> {
+  const viewerId = await getOptionalUserId()
+  const blocked = await getBlockedClubOwnerIdsForViewer(viewerId)
+
+  const baseFilters = buildPublicClubFilters(args.genre, blocked)
+  baseFilters.push(eq(bookClubs.openJoin, true))
+  baseFilters.push(isNotNull(bookClubs.lastActivityAt))
+  baseFilters.push(
+    gte(
+      bookClubs.lastActivityAt,
+      sql`now() - interval '${sql.raw(String(FEATURED_ACTIVITY_WINDOW_DAYS))} days'`,
+    ),
+  )
+
+  const candidates = await db
+    .select({ id: bookClubs.id })
+    .from(bookClubs)
+    .where(and(...baseFilters))
+    .orderBy(desc(bookClubs.lastActivityAt), desc(bookClubs.id))
+    .limit(200)
+
+  if (candidates.length === 0) return { success: true, data: null }
+
+  const ids = candidates.map((r) => r.id)
+  const scoreMap = await loadActivityScoreMap(ids)
+  const qualified = ids
+    .map((id) => ({ id, score: scoreMap.get(id) ?? 0 }))
+    .filter((r) => r.score > 0)
+    .sort((a, b) => b.score - a.score)
+  if (qualified.length === 0) return { success: true, data: null }
+
+  const projected = await projectToClubCards([qualified[0]!], {
+    computeActivityScore: true,
+  })
+  return { success: true, data: projected[0] ?? null }
+}
 
 // ─── Rail args ────────────────────────────────────────────────────────────────
 

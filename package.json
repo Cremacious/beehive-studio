@@ -17,6 +17,7 @@
     "migrate:i30": "dotenv -e .env.local -- tsx scripts/migrate-i30.ts",
     "seed:smoketest": "dotenv -e .env.local -- tsx scripts/seed-smoketest.ts",
     "seed:discover": "dotenv -e .env.local -- tsx scripts/seed-discover.ts",
+    "seed:ranking-test": "dotenv -e .env.local -- tsx scripts/seed-ranking-test-data.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },

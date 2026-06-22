@@ -411,6 +411,8 @@ export async function rankByTrendingScore(
     const hoursAgo = Math.max(0, (now - ref.getTime()) / 3_600_000)
     return {
       row: c,
+      // TODO(#32): For You orchestrator currently uses time-decay; swap to
+      // computeBookTrendingScore over loadTrendingSignals for parity.
       score: computeTrendingScore({
         likeCount: cc.likes,
         commentCount: cc.comments,

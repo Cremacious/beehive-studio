@@ -263,8 +263,73 @@ async function railWithBackfill(
   }
 }
 
-// Issue #32: `getFeaturedFreshBookAction` removed — the discovery mode toggle
-// replaces the featured banner.
+// ─── 1. Featured Fresh hero ───────────────────────────────────────────────────
+
+/**
+ * Issue #32: restored. Featured "fresh" book — newly discoverable in the past
+ * 7 days, ranked by 7d trending score. Banner displays only on All + For You.
+ */
+export async function getFeaturedFreshBookAction(args: {
+  genre?: string
+}): Promise<ActionResult<BookCard | null>> {
+  const viewerId = await getOptionalUserId()
+  const blockedAuthorIds = await getBlockedAuthorIdsForViewer(viewerId)
+  const genre =
+    args.genre && isValidGenre(args.genre) ? (args.genre as GenreSlug) : undefined
+
+  const sevenDaysAgo = new Date(Date.now() - SEVEN_DAYS_MS)
+  const filters = buildPublicBookFilters(genre, blockedAuthorIds)
+  filters.push(gte(books.firstPubliclyDiscoverableAt, sevenDaysAgo))
+
+  const candidates = await db
+    .select({
+      id: books.id,
+      title: books.title,
+      authorUserId: books.userId,
+      coverUrl: books.coverUrl,
+      synopsis: books.synopsis,
+      genre: books.genre,
+      tags: books.tags,
+      updatedAt: books.updatedAt,
+      firstPubliclyDiscoverableAt: books.firstPubliclyDiscoverableAt,
+    })
+    .from(books)
+    .where(and(...filters))
+    .orderBy(desc(books.firstPubliclyDiscoverableAt))
+    .limit(40)
+
+  if (candidates.length === 0) return { success: true, data: null }
+
+  const candidateIds = candidates.map((c) => c.id)
+  const signals = await loadTrendingSignals(candidateIds, SEVEN_DAYS_MS)
+
+  // Issue #32: use new per-entity book trending formula.
+  const { computeBookTrendingScore } = await import('@/lib/discover/trending-scores')
+  let bestId: string | null = null
+  let bestScore = -1
+  for (const c of candidates) {
+    const s = signals.get(c.id) ?? { likes: 0, comments: 0, reads: 0, follows: 0 }
+    const score = computeBookTrendingScore({
+      newLikes7d: s.likes,
+      newChapterReads7d: s.reads,
+      newBookmarks7d: 0, // bookmarks not in loadTrendingSignals; use 0
+      newFollowsOfAuthor7d: s.follows,
+    })
+    if (score > bestScore) {
+      bestScore = score
+      bestId = c.id
+    }
+  }
+
+  if (!bestId) {
+    const cards = await projectToBookCards([candidates[0] as RawBookRow])
+    return { success: true, data: cards[0] ?? null }
+  }
+
+  const winner = candidates.find((c) => c.id === bestId)!
+  const cards = await projectToBookCards([winner as RawBookRow])
+  return { success: true, data: cards[0] ?? null }
+}
 
 // ─── Trending signal loader (shared by Trending + Rising Stars) ───────────────
 // `loadTrendingSignals` + `TrendingSignalCounts` live in `./discover-shared`
@@ -388,24 +453,32 @@ export async function getTrendingBooksAction(args: {
   }
 
   const candidateIds = candidates.map((c) => c.id)
-  // Issue #32: cumulative all-time counts + age decay (was: 7d-windowed signals).
-  const counts = await loadCumulativeBookCounts(candidateIds)
-  const now = Date.now()
+  // Issue #32 (re-do): formal 7-day windowed weighted sum per ranking-weights.ts.
+  // new_likes_7d*4 + new_chapter_reads_7d*3 + new_bookmarks_7d*2 + new_follows_of_author_7d*1.
+  // TODO(#32): loadTrendingSignals does not yet project new_bookmarks_7d — passes 0 today.
+  const signals = await loadTrendingSignals(candidateIds, SEVEN_DAYS_MS)
+  const { computeBookTrendingScore } = await import('@/lib/discover/trending-scores')
 
   const scored = candidates.map((c) => {
-    const cc = counts.get(c.id) ?? { likes: 0, comments: 0, bookmarks: 0 }
-    const ref = c.firstPubliclyDiscoverableAt ?? c.updatedAt
-    const hoursAgo = Math.max(0, (now - ref.getTime()) / 3_600_000)
+    const s = signals.get(c.id) ?? { likes: 0, comments: 0, reads: 0, follows: 0 }
     return {
       row: c,
-      score: computeTrendingScore({
-        likeCount: cc.likes,
-        commentCount: cc.comments,
-        bookmarkCount: cc.bookmarks,
-        hoursAgo,
+      score: computeBookTrendingScore({
+        newLikes7d: s.likes,
+        newChapterReads7d: s.reads,
+        newBookmarks7d: 0,
+        newFollowsOfAuthor7d: s.follows,
       }),
     }
   })
+
+  if (process.env.NODE_ENV !== 'production' && scored.length > 0) {
+    const xs = scored.map((s) => s.score)
+    const min = Math.min(...xs)
+    const max = Math.max(...xs)
+    const mean = xs.reduce((a, b) => a + b, 0) / xs.length
+    console.log(`[#32 trending books] n=${xs.length} min=${min} max=${max} mean=${mean.toFixed(2)}`)
+  }
   // Sort: score DESC, updatedAt DESC, id DESC.
   scored.sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score

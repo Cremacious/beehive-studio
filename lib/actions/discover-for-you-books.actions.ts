@@ -77,14 +77,15 @@ export async function getPopularBooksAction(args: {
   const filters = buildPublicBookFilters(undefined, blocked)
   if (args.filters) applyBookFilterInputs(filters, args.filters)
 
-  // Issue #32: popularity = likes + bookmarks (was: likes only). Cumulative
-  // all-time signal sum, no time decay (that's Trending's job).
+  // Issue #32 (re-do): formal popularity = likes*3 + chapter_reads*2 + bookmarks*1.
+  // Cumulative all-time totals, no time decay (that is Trending's job).
   // TODO(#32): wrap in `unstable_cache` (15min TTL, key on (filters, page)).
   // Skipped today because viewer-blocked-author set is interleaved with the
   // query; clean cache requires extracting the candidate-projection inner step.
   const popularityExpr = sql<number>`(
-    (SELECT COUNT(*) FROM ${bookLikes} WHERE ${bookLikes.bookId} = ${books.id}) +
-    (SELECT COUNT(*) FROM ${bookmarks} WHERE ${bookmarks.bookId} = ${books.id})
+    (SELECT COUNT(*) FROM ${bookLikes} WHERE ${bookLikes.bookId} = ${books.id}) * 3 +
+    (SELECT COUNT(*) FROM ${chapterReads} WHERE ${chapterReads.bookId} = ${books.id}) * 2 +
+    (SELECT COUNT(*) FROM ${bookmarks} WHERE ${bookmarks.bookId} = ${books.id}) * 1
   )`
 
   const [totalCountRows, pageRows] = await Promise.all([

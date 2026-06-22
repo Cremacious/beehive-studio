@@ -1,7 +1,10 @@
 import {
   searchSparksDiscoverAction,
+  getFeaturedSparkAction,
   type SparkCard,
 } from '@/lib/actions/discover-sparks.actions'
+import { SlimFeaturedStrip } from './slim-featured-strip'
+import { ModeDescriptor } from './mode-descriptor'
 import {
   parseStringParam,
   parseMultiSelect,
@@ -186,6 +189,20 @@ export async function SparksGrid({ sp, locale }: Props) {
   const totalCount: number = resultsRes.success ? resultsRes.data.totalCount : 0
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
 
+  const showFeatured = resolvedMode === 'all' || resolvedMode === 'for-you'
+  const featuredGenre = genres.find((g): g is GenreSlug => isValidGenre(g))
+  const featuredRes = showFeatured
+    ? await getFeaturedSparkAction({ genre: featuredGenre })
+    : null
+  const featured =
+    featuredRes && featuredRes.success && featuredRes.data
+      ? {
+          title: featuredRes.data.title,
+          caption: 'Open spark, deadline coming soon',
+          href: `/${locale}/sparks/${featuredRes.data.id}`,
+        }
+      : null
+
   return (
     <div className="flex flex-col gap-4">
       <div
@@ -208,6 +225,8 @@ export async function SparksGrid({ sp, locale }: Props) {
           isAuthed={isAuthed}
           baseParams={toggleBaseParams}
         />
+        <ModeDescriptor mode={resolvedMode} tab="sparks" />
+        {showFeatured ? <SlimFeaturedStrip kind="spark" featured={featured} /> : null}
       </div>
       <SortHeader
         count={totalCount}

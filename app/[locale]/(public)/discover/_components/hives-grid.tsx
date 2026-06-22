@@ -1,8 +1,11 @@
 import {
   searchHivesDiscoverAction,
+  getFeaturedHiveAction,
   type HiveCard,
   type SizeBucket,
 } from '@/lib/actions/discover-hives.actions'
+import { SlimFeaturedStrip } from './slim-featured-strip'
+import { ModeDescriptor } from './mode-descriptor'
 import { hasAnyDiscoverySignalAction } from '@/lib/actions/discover-for-you-books.actions'
 import {
   parseStringParam,
@@ -197,6 +200,20 @@ export async function HivesGrid({ sp, locale }: Props) {
   const totalCount: number = resultsRes.success ? resultsRes.data.totalCount : 0
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
 
+  const showFeatured = resolvedMode === 'all' || resolvedMode === 'for-you'
+  const featuredGenre = genres.find((g): g is GenreSlug => isValidGenre(g))
+  const featuredRes = showFeatured
+    ? await getFeaturedHiveAction({ genre: featuredGenre })
+    : null
+  const featured =
+    featuredRes && featuredRes.success && featuredRes.data
+      ? {
+          title: featuredRes.data.name,
+          caption: 'Hidden gem, small + active',
+          href: `/${locale}/hive/${featuredRes.data.id}`,
+        }
+      : null
+
   const toggleBaseParams: Record<string, string | string[] | undefined> = {
     q,
     genres: genres.length ? genres : undefined,
@@ -228,6 +245,8 @@ export async function HivesGrid({ sp, locale }: Props) {
           isAuthed={isAuthed}
           baseParams={toggleBaseParams}
         />
+        <ModeDescriptor mode={resolvedMode} tab="hives" />
+        {showFeatured ? <SlimFeaturedStrip kind="hive" featured={featured} /> : null}
       </div>
       <SortHeader
         count={totalCount}

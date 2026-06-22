@@ -1,7 +1,10 @@
 import {
   searchClubsDiscoverAction,
+  getFeaturedClubAction,
   type ClubCard,
 } from '@/lib/actions/discover-clubs.actions'
+import { SlimFeaturedStrip } from './slim-featured-strip'
+import { ModeDescriptor } from './mode-descriptor'
 import {
   parseStringParam,
   parseMultiSelect,
@@ -202,6 +205,20 @@ export async function ClubsGrid({ sp, locale }: Props) {
   const totalCount: number = resultsRes.success ? resultsRes.data.totalCount : 0
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
 
+  const showFeatured = resolvedMode === 'all' || resolvedMode === 'for-you'
+  const featuredGenre = genres.find((g): g is GenreSlug => isValidGenre(g))
+  const featuredRes = showFeatured
+    ? await getFeaturedClubAction({ genre: featuredGenre })
+    : null
+  const featured =
+    featuredRes && featuredRes.success && featuredRes.data
+      ? {
+          title: featuredRes.data.name,
+          caption: 'Open + active',
+          href: `/${locale}/clubs/${featuredRes.data.id}`,
+        }
+      : null
+
   const toggleBaseParams: Record<string, string | string[] | undefined> = {
     q,
     genres: genres.length ? genres : undefined,
@@ -233,6 +250,8 @@ export async function ClubsGrid({ sp, locale }: Props) {
           isAuthed={isAuthed}
           baseParams={toggleBaseParams}
         />
+        <ModeDescriptor mode={resolvedMode} tab="clubs" />
+        {showFeatured ? <SlimFeaturedStrip kind="club" featured={featured} /> : null}
       </div>
       <SortHeader
         count={totalCount}

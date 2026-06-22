@@ -63,10 +63,8 @@ describe('discover actions surface', () => {
     expect(typeof discoverActions.getGenreBookCountsAction).toBe('function')
   })
 
-  it('no longer exports getFeaturedFreshBookAction (issue #32)', () => {
-    expect(
-      (discoverActions as Record<string, unknown>).getFeaturedFreshBookAction,
-    ).toBeUndefined()
+  it('exports getFeaturedFreshBookAction (issue #32 redo — featured banner restored on All + For You)', () => {
+    expect(typeof discoverActions.getFeaturedFreshBookAction).toBe('function')
   })
 
   it('no longer exports legacy getDiscoverFeedAction / getDiscoverWritersAction', () => {

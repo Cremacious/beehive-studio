@@ -64,6 +64,8 @@ const computeTrendingSparks = unstable_cache(
     const now = Date.now()
     const scored = rows.map((r) => {
       const hoursAgo = Math.max(0, (now - r.createdAt.getTime()) / 3_600_000)
+      // TODO(#32): swap to computeSparkTrendingScore from lib/discover/trending-scores
+      // for parity with the per-entity formal trending weights (rail surfaces only).
       const score = computeTrendingScore({
         likeCount: r.entryCount,
         commentCount: 0,

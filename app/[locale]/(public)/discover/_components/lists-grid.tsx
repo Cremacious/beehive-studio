@@ -1,7 +1,10 @@
 import {
   searchListsDiscoverAction,
+  getFeaturedListAction,
   type ListCard,
 } from '@/lib/actions/discover-lists.actions'
+import { SlimFeaturedStrip } from './slim-featured-strip'
+import { ModeDescriptor } from './mode-descriptor'
 import {
   parseStringParam,
   parseMultiSelect,
@@ -221,6 +224,20 @@ export async function ListsGrid({ sp, locale }: Props) {
   const totalCount: number = resultsRes.success ? resultsRes.data.totalCount : 0
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
 
+  const showFeatured = resolvedMode === 'all' || resolvedMode === 'for-you'
+  const featuredGenre = genres.find((g): g is GenreSlug => isValidGenre(g))
+  const featuredRes = showFeatured
+    ? await getFeaturedListAction({ genre: featuredGenre })
+    : null
+  const featured =
+    featuredRes && featuredRes.success && featuredRes.data
+      ? {
+          title: featuredRes.data.title,
+          caption: 'Rising curator',
+          href: `/${locale}/reading-lists/${featuredRes.data.id}`,
+        }
+      : null
+
   const toggleBaseParams: Record<string, string | string[] | undefined> = {
     q,
     genres: genres.length ? genres : undefined,
@@ -269,6 +286,8 @@ export async function ListsGrid({ sp, locale }: Props) {
           isAuthed={isAuthed}
           baseParams={toggleBaseParams}
         />
+        <ModeDescriptor mode={resolvedMode} tab="lists" />
+        {showFeatured ? <SlimFeaturedStrip kind="list" featured={featured} /> : null}
       </div>
       <SortHeader
         count={totalCount}

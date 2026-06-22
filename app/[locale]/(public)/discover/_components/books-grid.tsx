@@ -1,6 +1,7 @@
 import {
   searchBooksDiscoverAction,
   getTrendingBooksAction,
+  getFeaturedFreshBookAction,
   type BookCard,
 } from '@/lib/actions/discover.actions'
 import {
@@ -8,6 +9,8 @@ import {
   getPopularBooksAction,
   hasAnyDiscoverySignalAction,
 } from '@/lib/actions/discover-for-you-books.actions'
+import { SlimFeaturedStrip } from './slim-featured-strip'
+import { ModeDescriptor } from './mode-descriptor'
 import {
   parseStringParam,
   parseMultiSelect,
@@ -215,6 +218,22 @@ export async function BooksGrid({ sp, locale }: Props) {
   const totalCount: number = resultsRes.success ? resultsRes.data.totalCount : 0
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
 
+  // Featured banner shows only on All + For You modes.
+  const showFeatured = resolvedMode === 'all' || resolvedMode === 'for-you'
+  const featuredRes = showFeatured
+    ? await getFeaturedFreshBookAction({ genre: genres[0] })
+    : null
+  const featured =
+    featuredRes && featuredRes.success && featuredRes.data
+      ? {
+          title: featuredRes.data.title,
+          caption: featuredRes.data.authorDisplayName
+            ? `by ${featuredRes.data.authorDisplayName}`
+            : 'Fresh on Beehive',
+          href: `/${locale}/books/${featuredRes.data.id}`,
+        }
+      : null
+
   const chips = buildChips(sp, locale)
 
   // baseParams for DiscoveryModeToggle (no mode, no page).
@@ -250,6 +269,8 @@ export async function BooksGrid({ sp, locale }: Props) {
           isAuthed={isAuthed}
           baseParams={toggleBaseParams}
         />
+        <ModeDescriptor mode={resolvedMode} tab="books" />
+        {showFeatured ? <SlimFeaturedStrip kind="book" featured={featured} /> : null}
       </div>
       <SortHeader
         count={totalCount}

@@ -157,6 +157,8 @@ const computeTrendingClubs = unstable_cache(
       const created =
         r.createdAt instanceof Date ? r.createdAt : new Date(r.createdAt)
       const hoursAgo = Math.max(0, (now - created.getTime()) / 3_600_000)
+      // TODO(#32): swap to computeClubActivityScore7d from lib/discover/trending-scores
+      // for parity with the per-entity formal trending weights (rail surfaces only).
       const score = computeTrendingScore({
         likeCount: Number(r.memberCount ?? 0),
         commentCount: Number(r.discussionCount ?? 0),

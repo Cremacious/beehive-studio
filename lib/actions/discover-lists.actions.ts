@@ -354,8 +354,42 @@ async function loadBookCoverPreviewsMap(
   return map
 }
 
-// Issue #32: `getFeaturedListAction` removed — the discovery mode toggle
-// replaces the featured banner.
+// ─── 1. Featured List hero ────────────────────────────────────────────────────
+
+/**
+ * Issue #32: restored. "Rising curator": kind='CUSTOM' AND first_publicly
+ * _discoverable_at >= now() - FEATURED_FIRST_PUBLIC_WINDOW_DAYS, sorted by
+ * followerCount DESC. Banner displays only on All + For You.
+ */
+export async function getFeaturedListAction(args: {
+  genre?: GenreSlug
+}): Promise<ActionResult<ListCard | null>> {
+  const viewerId = await getOptionalUserId()
+  const blocked = await getBlockedListOwnerIdsForViewer(viewerId)
+
+  const conds = [
+    ...buildPublicListFilters(args.genre, blocked),
+    isNotNull(readingLists.firstPubliclyDiscoverableAt),
+    gte(
+      readingLists.firstPubliclyDiscoverableAt,
+      sql`now() - interval '${sql.raw(String(FEATURED_FIRST_PUBLIC_WINDOW_DAYS))} days'`,
+    ),
+  ]
+
+  const candidates = await db
+    .select({ id: readingLists.id })
+    .from(readingLists)
+    .where(and(...conds))
+    .orderBy(desc(readingLists.followerCount), desc(readingLists.id))
+    .limit(1)
+
+  if (candidates.length === 0) return { success: true, data: null }
+
+  const projected = await projectToListCards([candidates[0]!], {
+    computeFollowersGained: false,
+  })
+  return { success: true, data: projected[0] ?? null }
+}
 
 // ─── Rail args ────────────────────────────────────────────────────────────────
 
@@ -392,6 +426,8 @@ export async function getTrendingListsAction(
   const ids = candidates.map((r) => r.id)
   const followersMap =
     ids.length > 0 ? await loadFollowersGained7dMap(ids) : new Map<string, number>()
+  // TODO(#32): incorporate newBooksAdded7d signal via computeListTrendingScore;
+  // current path uses followers-gained as the sole signal (newBooksAdded=0 implied).
   let ranked = ids
     .map((id) => ({ id, score: followersMap.get(id) ?? 0 }))
     .filter((r) => r.score > 0)
@@ -405,6 +441,15 @@ export async function getTrendingListsAction(
     ranked = ranked.filter(
       (r) => r.score < sk || (r.score === sk && r.id < cursor.id),
     )
+  }
+
+  if (process.env.NODE_ENV !== 'production' && ranked.length > 0) {
+    const xs = ranked.map((r) => r.score)
+    const min = Math.min(...xs)
+    const max = Math.max(...xs)
+    const mean = xs.reduce((a, b) => a + b, 0) / xs.length
+    // eslint-disable-next-line no-console
+    console.log(`[#32 trending lists] n=${xs.length} min=${min} max=${max} mean=${mean.toFixed(2)}`)
   }
 
   const hasMore = ranked.length > PAGE_SIZE

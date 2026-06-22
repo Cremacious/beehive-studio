@@ -78,7 +78,8 @@ export type RailResult<T = SparkCard> = {
 const PAGE_SIZE = 12
 // FALLBACK_WINDOW: widen to 180 if dev shows the Recently Won rail persistently empty.
 const RECENTLY_WON_WINDOW_DAYS = 90
-// Issue #32: HERO_DEADLINE_WINDOW_HOURS removed with getFeaturedSparkAction.
+// Issue #32: HERO_DEADLINE_WINDOW_HOURS restored for getFeaturedSparkAction.
+const HERO_DEADLINE_WINDOW_HOURS = 72
 
 // ─── Cursor helpers ───────────────────────────────────────────────────────────
 
@@ -288,6 +289,43 @@ export async function projectToSparkCards(
   return cards
 }
 
+// ─── 1. Featured Spark hero ───────────────────────────────────────────────────
+
+/**
+ * Issue #32: restored. Featured spark — OPEN status, deadline within the next
+ * HERO_DEADLINE_WINDOW_HOURS hours, ranked by entry count (most activity first).
+ * Banner displays only on All + For You.
+ */
+export async function getFeaturedSparkAction(args: {
+  genre?: GenreSlug
+}): Promise<ActionResult<SparkCard | null>> {
+  const viewerId = await getOptionalUserId()
+  const blocked = await getBlockedSparkCreatorIdsForViewer(viewerId)
+  const genre = args.genre
+
+  const rows = await db
+    .select({ id: sparks.id })
+    .from(sparks)
+    .where(
+      and(
+        ...buildPublicSparkFilters(genre, blocked),
+        eq(sparks.status, 'OPEN'),
+        isNotNull(sparks.deadline),
+        gt(sparks.deadline, sql`now()`),
+        sql`${sparks.deadline} <= now() + interval '${sql.raw(String(HERO_DEADLINE_WINDOW_HOURS))} hours'`,
+      ),
+    )
+    .orderBy(desc(sparks.entryCount), asc(sparks.deadline))
+    .limit(1)
+
+  if (rows.length === 0) return { success: true, data: null }
+  const projected = await projectToSparkCards(rows, {
+    computeVoteTotal: false,
+    computeWinner: false,
+  })
+  return { success: true, data: projected[0] ?? null }
+}
+
 // Issue #32: `getFeaturedSparkAction` removed — the discovery mode toggle
 // replaces the featured banner.
 
@@ -468,6 +506,17 @@ export async function getHeatingUpSparksAction(
     .where(and(...conds))
     .orderBy(desc(sparks.entryCount), desc(sparks.id))
     .limit(PAGE_SIZE + 1)
+
+  if (process.env.NODE_ENV !== 'production' && strict.length > 0) {
+    // TODO(#32): swap denorm entryCount sort for computeSparkTrendingScore over
+    // 7-day windowed signals (newEntries7d*5 + newVotes7d*3 + newLikes7d*2).
+    const xs = strict.map((s) => s.entryCount ?? 0)
+    const min = Math.min(...xs)
+    const max = Math.max(...xs)
+    const mean = xs.reduce((a, b) => a + b, 0) / xs.length
+    // eslint-disable-next-line no-console
+    console.log(`[#32 trending sparks] n=${xs.length} min=${min} max=${max} mean=${mean.toFixed(2)}`)
+  }
 
   const hasMore = strict.length > PAGE_SIZE
   const strictPage = strict.slice(0, PAGE_SIZE)

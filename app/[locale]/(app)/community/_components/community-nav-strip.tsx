@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Users, Hexagon, Sparkles, BookMarked, BookOpen, type LucideIcon } from 'lucide-react';
+import { Users, Hexagon, Sparkles, BookMarked, BookOpen, Bookmark, type LucideIcon } from 'lucide-react';
 
 type Props = { locale: string };
 
@@ -11,6 +11,7 @@ const ENTRIES: Entry[] = [
   { href: '/community/sparks',        icon: Sparkles,   label: 'Sparks' },
   { href: '/community/reading-lists', icon: BookMarked, label: 'Reading Lists' },
   { href: '/community/clubs',         icon: BookOpen,   label: 'Clubs' },
+  { href: '/community/bookmarks',     icon: Bookmark,   label: 'Bookmarks' },
 ];
 
 export function CommunityNavStrip({ locale }: Props) {

@@ -60,6 +60,15 @@ export const bookLikes = pgTable('book_likes', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (t) => [primaryKey({ columns: [t.userId, t.bookId] })])
 
+export const sparkLikes = pgTable('spark_likes', {
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  sparkId: text('spark_id').notNull().references((): AnyPgColumn => sparks.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (t) => [
+  primaryKey({ columns: [t.userId, t.sparkId] }),
+  index('spark_likes_spark_idx').on(t.sparkId),
+])
+
 export const bookComments = pgTable('book_comments', {
   id: text('id').primaryKey().$defaultFn(() => createId()),
   bookId: text('book_id').notNull().references(() => books.id, { onDelete: 'cascade' }),
@@ -143,6 +152,7 @@ export const sparks = pgTable('sparks', {
   genre: text('genre'),
   firstPubliclyDiscoverableAt: timestamp('first_publicly_discoverable_at'),
   entryCount: integer('entry_count').notNull().default(0),
+  likeCount: integer('like_count').notNull().default(0),
 }, (t) => [
   index('sparks_discoverable_visibility_idx').on(t.discoverable, t.visibility),
   index('sparks_status_deadline_idx').on(t.status, t.deadline),

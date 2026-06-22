@@ -1,9 +1,9 @@
 'use server'
 
 import { db } from '@/db'
-import { bookLikes, bookmarks, books, follows, bookComments, notifications, userProfiles } from '@/db/schema'
-import { and, eq } from 'drizzle-orm'
-import { requireAuth } from '@/lib/require-auth'
+import { bookLikes, bookmarks, books, follows, bookComments, notifications, userProfiles, sparkLikes, sparks } from '@/db/schema'
+import { and, eq, sql } from 'drizzle-orm'
+import { requireAuth, getOptionalUserId } from '@/lib/require-auth'
 import { canReadBook } from '@/lib/books/can-read'
 import { z } from 'zod'
 import { recordSocialActivityTx } from '@/lib/social/record-activity'
@@ -71,6 +71,67 @@ export async function toggleBookLikeAction(bookId: string): Promise<ActionResult
   await ensureLikedListAction(userId)
 
   return { success: true, data: { liked: true } }
+}
+
+export async function toggleSparkLikeAction(sparkId: string): Promise<ActionResult<{ liked: boolean; likeCount: number }>> {
+  const userId = await getOptionalUserId()
+  if (!userId) return { success: false, error: 'AUTH_REQUIRED' }
+
+  const existing = await db
+    .select()
+    .from(sparkLikes)
+    .where(and(eq(sparkLikes.userId, userId), eq(sparkLikes.sparkId, sparkId)))
+    .limit(1)
+
+  if (existing.length > 0) {
+    const [row] = await db.transaction(async (tx) => {
+      await tx
+        .delete(sparkLikes)
+        .where(and(eq(sparkLikes.userId, userId), eq(sparkLikes.sparkId, sparkId)))
+      return await tx
+        .update(sparks)
+        .set({ likeCount: sql`GREATEST(${sparks.likeCount} - 1, 0)` })
+        .where(eq(sparks.id, sparkId))
+        .returning({ likeCount: sparks.likeCount })
+    })
+    return { success: true, data: { liked: false, likeCount: row?.likeCount ?? 0 } }
+  }
+
+  const result = await db.transaction(async (tx) => {
+    await tx.insert(sparkLikes).values({ userId, sparkId })
+
+    const [updated] = await tx
+      .update(sparks)
+      .set({ likeCount: sql`${sparks.likeCount} + 1` })
+      .where(eq(sparks.id, sparkId))
+      .returning({ likeCount: sparks.likeCount, creatorId: sparks.creatorId })
+
+    if (updated && updated.creatorId !== userId) {
+      if (!(await shouldSkipNotification(updated.creatorId, 'NEW_LIKE'))) {
+        await tx.insert(notifications).values({
+          userId: updated.creatorId,
+          type: 'NEW_LIKE',
+          actorId: userId,
+          resourceType: 'spark',
+          resourceId: sparkId,
+        })
+      }
+    }
+
+    return updated
+  })
+
+  return { success: true, data: { liked: true, likeCount: result?.likeCount ?? 1 } }
+}
+
+export async function getSparkLikeStateAction(sparkId: string): Promise<ActionResult<{ liked: boolean }>> {
+  const userId = await requireAuth()
+  const row = await db
+    .select()
+    .from(sparkLikes)
+    .where(and(eq(sparkLikes.userId, userId), eq(sparkLikes.sparkId, sparkId)))
+    .limit(1)
+  return { success: true, data: { liked: row.length > 0 } }
 }
 
 export async function toggleBookmarkAction(bookId: string): Promise<ActionResult<{ bookmarked: boolean }>> {

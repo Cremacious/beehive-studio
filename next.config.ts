@@ -10,6 +10,7 @@ const COMMUNITY_ROUTES = [
   ['/sparks', '/community/sparks'],
   ['/reading-lists', '/community/reading-lists'],
   ['/clubs', '/community/clubs'],
+  ['/bookmarks', '/community/bookmarks'],
 ]
 
 const nextConfig: NextConfig = {

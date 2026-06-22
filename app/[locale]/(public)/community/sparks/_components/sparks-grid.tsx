@@ -15,10 +15,23 @@ type Props = {
   bucketCounts: { all: number; yours: number; following: number; friends: number; entered: number }
   promptTemplate: PromptTemplate
   trendingSpark: { id: string; title: string; entryCount: number; deadline: Date | string | null } | null
+  /** IDs of sparks the viewer has liked. Serialized as array for RSC boundary. */
+  viewerLikedSparkIds?: string[]
+  isAuthenticated?: boolean
 }
 
-export function SparksGrid({ sparks, tab, locale, bucketCounts, promptTemplate, trendingSpark }: Props) {
+export function SparksGrid({
+  sparks,
+  tab,
+  locale,
+  bucketCounts,
+  promptTemplate,
+  trendingSpark,
+  viewerLikedSparkIds = [],
+  isAuthenticated = false,
+}: Props) {
   const { dismissed, dismiss } = useDismissedGhosts()
+  const likedSet = new Set(viewerLikedSparkIds)
 
   const ghosts = pickGhosts({
     tab,
@@ -39,7 +52,15 @@ export function SparksGrid({ sparks, tab, locale, bucketCounts, promptTemplate, 
       }}
     >
       {sparks.map(s => (
-        <SparkCard key={s.id} spark={s} locale={locale} sourceTag={s.source} size="md" />
+        <SparkCard
+          key={s.id}
+          spark={s}
+          locale={locale}
+          sourceTag={s.source}
+          size="md"
+          isAuthenticated={isAuthenticated}
+          viewerLiked={likedSet.has(s.id)}
+        />
       ))}
       {ghosts.map((variant, i) => (
         <GhostCard

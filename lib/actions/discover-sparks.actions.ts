@@ -62,6 +62,7 @@ export type SparkCard = {
   winnerDisplayName: string | null
   createdAt: Date
   firstPubliclyDiscoverableAt: Date | null
+  likeCount: number
 }
 
 export type RailResult<T = SparkCard> = {
@@ -186,6 +187,7 @@ export async function projectToSparkCards(
       winnerEntryId: sparks.winnerEntryId,
       createdAt: sparks.createdAt,
       firstPubliclyDiscoverableAt: sparks.firstPubliclyDiscoverableAt,
+      likeCount: sparks.likeCount,
     })
     .from(sparks)
     .where(inArray(sparks.id, ids))
@@ -275,6 +277,7 @@ export async function projectToSparkCards(
       winnerDisplayName: w?.displayName ?? null,
       createdAt: r.createdAt,
       firstPubliclyDiscoverableAt: r.firstPubliclyDiscoverableAt,
+      likeCount: r.likeCount,
     }
   })
 

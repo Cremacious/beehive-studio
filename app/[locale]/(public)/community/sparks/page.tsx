@@ -13,6 +13,9 @@ import { SparksHubPagination } from './_components/sparks-hub-pagination'
 import { SparksRightRail } from './_components/sparks-right-rail'
 import { SparksGrid } from './_components/sparks-grid'
 import { BackToCommunity } from '@/components/community/back-to-community'
+import { db } from '@/db'
+import { sparkLikes } from '@/db/schema'
+import { and, eq, inArray } from 'drizzle-orm'
 
 type SP = Record<string, string | string[] | undefined>
 type Props = {
@@ -65,6 +68,22 @@ export default async function SparksHubPage({ params, searchParams }: Props) {
   }
   const { sparks, totalCount, bucketCounts } = result.data
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
+
+  // Batched viewer-liked lookup for the visible page so each card renders the
+  // correct filled-heart state on first paint.
+  const visibleSparkIds = sparks.map((s) => s.id)
+  const likedRows = visibleSparkIds.length > 0
+    ? await db
+        .select({ sparkId: sparkLikes.sparkId })
+        .from(sparkLikes)
+        .where(
+          and(
+            eq(sparkLikes.userId, viewerId),
+            inArray(sparkLikes.sparkId, visibleSparkIds),
+          ),
+        )
+    : []
+  const viewerLikedSparkIds = new Set(likedRows.map((r) => r.sparkId))
 
   const trendingSpark =
     trendingR.success && trendingR.data[0]
@@ -140,6 +159,8 @@ export default async function SparksHubPage({ params, searchParams }: Props) {
             bucketCounts={bucketCounts}
             promptTemplate={promptTemplate}
             trendingSpark={trendingSpark}
+            viewerLikedSparkIds={Array.from(viewerLikedSparkIds)}
+            isAuthenticated={true}
           />
 
           {totalCount > PAGE_SIZE ? (

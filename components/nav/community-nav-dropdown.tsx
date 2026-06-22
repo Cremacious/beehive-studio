@@ -12,6 +12,7 @@ import {
   Users,
   BookMarked,
   BookOpen,
+  Bookmark,
 } from 'lucide-react'
 
 interface Props {
@@ -31,6 +32,7 @@ const MENU: NavEntry[] = [
   { kind: 'item', label: 'Friends',       icon: Users,      segment: 'friends' },
   { kind: 'item', label: 'Reading Lists', icon: BookMarked, segment: 'reading-lists' },
   { kind: 'item', label: 'Clubs',         icon: BookOpen,   segment: 'clubs' },
+  { kind: 'item', label: 'Bookmarks',     icon: Bookmark,   segment: 'bookmarks' },
 ]
 
 const NAV_ITEMS = MENU.filter((e): e is NavItem => e.kind === 'item')

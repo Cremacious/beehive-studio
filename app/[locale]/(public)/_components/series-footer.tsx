@@ -30,7 +30,7 @@ function SeriesLink({
   return (
     <Link
       href={href}
-      className="flex items-center no-underline"
+      className="series-footer-link flex items-center no-underline hover:-translate-y-px transition-transform"
       style={{
         gap: '14px',
         padding: '14px 18px',
@@ -38,15 +38,8 @@ function SeriesLink({
         background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
         boxShadow: 'var(--sh-tile)',
         color: 'inherit',
-        transition: 'transform .14s',
         flexDirection: isNext ? 'row-reverse' : 'row',
         textAlign: isNext ? 'right' : 'left',
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-1px)'
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = ''
       }}
     >
       <span

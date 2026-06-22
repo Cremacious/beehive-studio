@@ -10,6 +10,7 @@ import { StatusPill } from '../../../discover/_components/status-pill'
 import { VisibilityPill } from '../../../discover/_components/visibility-pill'
 import { Countdown } from '../../../discover/_components/countdown'
 import { PageHead } from '@/components/community/page-head'
+import { SparkLikeButton } from '@/components/community/spark-like-button'
 
 type Props = { params: Promise<{ locale: string; sparkId: string }> }
 
@@ -82,6 +83,14 @@ export default async function SparkDetailPage({ params }: Props) {
               {spark.wordLimit ? (
                 <span className="meta-mono">max {spark.wordLimit} words</span>
               ) : null}
+              <SparkLikeButton
+                sparkId={spark.id}
+                initialLiked={spark.viewerLiked}
+                initialCount={spark.likeCount}
+                isAuthenticated={!!userId}
+                locale={locale}
+                size="md"
+              />
             </span>
           }
         />

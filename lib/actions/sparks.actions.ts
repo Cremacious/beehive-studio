@@ -6,6 +6,7 @@ import {
   sparkEntries,
   sparkVotes,
   sparkEntryComments,
+  sparkLikes,
   notifications,
   userProfiles,
 } from '@/db/schema'
@@ -65,6 +66,8 @@ export type SparkDetail = SparkSummary & {
   creatorUserId: string
   creatorChoiceEntryId: string | null
   winnerEntryId: string | null
+  likeCount: number
+  viewerLiked: boolean
 }
 
 export type SparkEditData = {
@@ -436,6 +439,14 @@ export async function getSparkAction(
     creatorUserId: spark.creatorId,
     creatorChoiceEntryId: spark.creatorChoiceEntryId ?? null,
     winnerEntryId: winnerEntryId ?? null,
+    likeCount: spark.likeCount,
+    viewerLiked: viewerId
+      ? (await db
+          .select({ s: sparkLikes.sparkId })
+          .from(sparkLikes)
+          .where(and(eq(sparkLikes.userId, viewerId), eq(sparkLikes.sparkId, sparkId)))
+          .limit(1)).length > 0
+      : false,
   }
 
   return { success: true, data: detail }

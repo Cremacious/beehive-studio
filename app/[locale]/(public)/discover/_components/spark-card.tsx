@@ -9,6 +9,7 @@ import {
   statusToken,
   statusLabel,
 } from '@/lib/sparks/spark-card-helpers'
+import { SparkLikeButton } from '@/components/community/spark-like-button'
 
 type Props = {
   spark: SparkCardData
@@ -16,6 +17,11 @@ type Props = {
   /** sm = 240px target width, md = 280px target (default). */
   size?: 'sm' | 'md'
   sourceTag?: CommunitySparkSource | null
+  /** Viewer auth state for like button affordance. Defaults to false (guest). */
+  isAuthenticated?: boolean
+  /** Whether the viewer has already liked this spark. Pass in via a batched
+   *  query at the page level; defaults to false. */
+  viewerLiked?: boolean
 }
 
 const TEASER_MAX = 80
@@ -46,7 +52,14 @@ const SOURCE_TAG_STYLE: Record<
   },
 }
 
-export function SparkCard({ spark, locale, size = 'md', sourceTag }: Props) {
+export function SparkCard({
+  spark,
+  locale,
+  size = 'md',
+  sourceTag,
+  isAuthenticated = false,
+  viewerLiked = false,
+}: Props) {
   const isOpen = spark.status === 'OPEN'
   const isVoting = spark.status === 'VOTING'
   const isClosed = spark.status === 'CLOSED'
@@ -186,14 +199,23 @@ export function SparkCard({ spark, locale, size = 'md', sourceTag }: Props) {
                 @{spark.creatorUsername ?? 'unknown'}
               </span>
             </div>
-            <div
-              className="text-[10px] flex-shrink-0"
-              style={{
-                color: 'var(--canvas-dark-ink-muted)',
-                fontFamily: 'var(--font-mono)',
-              }}
-            >
-              {spark.entryCount} {spark.entryCount === 1 ? 'entry' : 'entries'}
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <SparkLikeButton
+                sparkId={spark.id}
+                initialLiked={viewerLiked}
+                initialCount={spark.likeCount}
+                isAuthenticated={isAuthenticated}
+                locale={locale}
+              />
+              <div
+                className="text-[10px]"
+                style={{
+                  color: 'var(--canvas-dark-ink-muted)',
+                  fontFamily: 'var(--font-mono)',
+                }}
+              >
+                {spark.entryCount} {spark.entryCount === 1 ? 'entry' : 'entries'}
+              </div>
             </div>
           </div>
         </div>

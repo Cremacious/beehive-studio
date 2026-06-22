@@ -1,6 +1,5 @@
 import {
   searchListsDiscoverAction,
-  getFeaturedListAction,
   type ListCard,
 } from '@/lib/actions/discover-lists.actions'
 import {
@@ -18,7 +17,6 @@ import { hasAnyDiscoverySignalAction } from '@/lib/actions/discover-for-you-book
 import { GENRE_LABEL, isValidGenre, type GenreSlug } from '@/lib/discover/genres'
 import { DiscoveryModeToggle } from './discovery-mode-toggle'
 import { FilterSearchInput } from './filter-search-input'
-import { SlimFeaturedStrip } from './slim-featured-strip'
 import { SortHeader } from './sort-header'
 import { ActiveFilterChips, type ActiveFilterChip } from './active-filter-chips'
 import { ListGridCard } from './list-grid-card'
@@ -165,62 +163,59 @@ export async function ListsGrid({ sp, locale }: Props) {
   const sort = parseRadio(pickRaw(sp, 'sort'), SORTS, 'most-followed')
   const page = Math.max(1, parseIntParam(pickRaw(sp, 'page'), 1))
 
-  const [resultsRes, featuredRes] = await Promise.all([
-    (() => {
-      switch (resolvedMode) {
-        case 'for-you':
-          return searchListsDiscoverAction({
-            q,
-            genres,
-            tags,
-            size,
-            popularity,
-            updated,
-            curator: 'following',
-            sort: 'most-followed',
-            page,
-          })
-        case 'trending':
-          return searchListsDiscoverAction({
-            q,
-            genres,
-            tags,
-            size,
-            popularity,
-            updated,
-            curator,
-            sort: 'recent',
-            page,
-          })
-        case 'popular':
-          return searchListsDiscoverAction({
-            q,
-            genres,
-            tags,
-            size,
-            popularity,
-            updated,
-            curator,
-            sort: 'most-followed',
-            page,
-          })
-        case 'all':
-        default:
-          return searchListsDiscoverAction({
-            q,
-            genres,
-            tags,
-            size,
-            popularity,
-            updated,
-            curator,
-            sort,
-            page,
-          })
-      }
-    })(),
-    getFeaturedListAction({}),
-  ])
+  const resultsRes = await (async () => {
+    switch (resolvedMode) {
+      case 'for-you':
+        return searchListsDiscoverAction({
+          q,
+          genres,
+          tags,
+          size,
+          popularity,
+          updated,
+          curator: 'following',
+          sort: 'most-followed',
+          page,
+        })
+      case 'trending':
+        return searchListsDiscoverAction({
+          q,
+          genres,
+          tags,
+          size,
+          popularity,
+          updated,
+          curator,
+          sort: 'recent',
+          page,
+        })
+      case 'popular':
+        return searchListsDiscoverAction({
+          q,
+          genres,
+          tags,
+          size,
+          popularity,
+          updated,
+          curator,
+          sort: 'most-followed',
+          page,
+        })
+      case 'all':
+      default:
+        return searchListsDiscoverAction({
+          q,
+          genres,
+          tags,
+          size,
+          popularity,
+          updated,
+          curator,
+          sort,
+          page,
+        })
+    }
+  })()
 
   const lists: ListCard[] = resultsRes.success ? resultsRes.data.books : []
   const totalCount: number = resultsRes.success ? resultsRes.data.totalCount : 0
@@ -252,17 +247,6 @@ export async function ListsGrid({ sp, locale }: Props) {
     )
   }
 
-  const featured =
-    featuredRes.success && featuredRes.data
-      ? {
-          title: featuredRes.data.title,
-          caption: featuredRes.data.ownerUsername
-            ? `by @${featuredRes.data.ownerUsername}`
-            : `${featuredRes.data.bookCount} books`,
-          href: `/${locale}/community/reading-lists/${featuredRes.data.id}`,
-        }
-      : null
-
   return (
     <div className="flex flex-col gap-4">
       <div
@@ -286,7 +270,6 @@ export async function ListsGrid({ sp, locale }: Props) {
           baseParams={toggleBaseParams}
         />
       </div>
-      <SlimFeaturedStrip kind="list" featured={featured} />
       <SortHeader
         count={totalCount}
         entityNoun={totalCount === 1 ? 'list' : 'lists'}

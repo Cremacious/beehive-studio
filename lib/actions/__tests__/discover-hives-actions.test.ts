@@ -42,8 +42,7 @@ vi.mock('@/db', () => {
 import * as discoverHivesActions from '@/lib/actions/discover-hives.actions'
 
 describe('discover-hives actions surface', () => {
-  it('exports all 9 D2b actions', () => {
-    expect(typeof discoverHivesActions.getFeaturedHiveAction).toBe('function')
+  it('exports the post-#32 D2b action surface (Featured Hive removed)', () => {
     expect(typeof discoverHivesActions.getTrendingHivesAction).toBe('function')
     expect(typeof discoverHivesActions.getRecentlyActiveHivesAction).toBe(
       'function',

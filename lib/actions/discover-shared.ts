@@ -393,34 +393,29 @@ export async function loadTrendingSignals(
 }
 
 /**
- * Ranks a candidate window of book rows by 7-day trending score
- * (likes×1 + comments×2 + reads×1 + follows×3). Loads the 7d signal
- * counts in parallel via GROUP BY queries against bookLikes, bookComments,
- * chapterReads, follows. Returns rows sorted by score desc with id desc
- * tiebreak (so the ordering is deterministic).
+ * Issue #32: Ranks a candidate window of book rows by time-decayed trending
+ * score using cumulative all-time counts (likes * 3 + comments * 2 + bookmarks)
+ * divided by (hoursAgo + 2)^1.5. Loads cumulative counts in parallel via GROUP
+ * BY queries against bookLikes, bookComments, bookmarks. Returns rows sorted by
+ * score desc with id desc tiebreak.
  */
 export async function rankByTrendingScore(
   candidates: RawBookRow[],
 ): Promise<RawBookRow[]> {
   if (candidates.length === 0) return []
-  const signals = await loadTrendingSignals(
-    candidates.map((c) => c.id),
-    SEVEN_DAYS_MS_SHARED,
-  )
+  const counts = await loadCumulativeBookCounts(candidates.map((c) => c.id))
+  const now = Date.now()
   const scored = candidates.map((c) => {
-    const s = signals.get(c.id) ?? {
-      likes: 0,
-      comments: 0,
-      reads: 0,
-      follows: 0,
-    }
+    const cc = counts.get(c.id) ?? { likes: 0, comments: 0, bookmarks: 0 }
+    const ref = c.firstPubliclyDiscoverableAt ?? c.updatedAt
+    const hoursAgo = Math.max(0, (now - ref.getTime()) / 3_600_000)
     return {
       row: c,
       score: computeTrendingScore({
-        likes7d: s.likes,
-        comments7d: s.comments,
-        reads7d: s.reads,
-        follows7d: s.follows,
+        likeCount: cc.likes,
+        commentCount: cc.comments,
+        bookmarkCount: cc.bookmarks,
+        hoursAgo,
       }),
     }
   })
@@ -429,5 +424,59 @@ export async function rankByTrendingScore(
     return b.row.id.localeCompare(a.row.id)
   })
   return scored.map((s) => s.row)
+}
+
+/** Issue #32: cumulative all-time engagement counts per book id. */
+export type CumulativeBookCounts = {
+  likes: number
+  comments: number
+  bookmarks: number
+}
+
+/**
+ * Issue #32: Load cumulative all-time engagement counts for a set of book ids.
+ * Runs 3 GROUP BY queries in parallel and stitches into a Map. Used by the
+ * time-decayed trending ranker.
+ */
+export async function loadCumulativeBookCounts(
+  bookIds: string[],
+): Promise<Map<string, CumulativeBookCounts>> {
+  if (bookIds.length === 0) return new Map()
+
+  // Local imports to avoid circular issues — bookmarks isn't yet imported above.
+  const { bookmarks } = await import('@/db/schema')
+
+  const [likeRows, commentRows, bookmarkRows] = await Promise.all([
+    db
+      .select({ bookId: bookLikes.bookId, total: count() })
+      .from(bookLikes)
+      .where(inArray(bookLikes.bookId, bookIds))
+      .groupBy(bookLikes.bookId),
+    db
+      .select({ bookId: bookComments.bookId, total: count() })
+      .from(bookComments)
+      .where(inArray(bookComments.bookId, bookIds))
+      .groupBy(bookComments.bookId),
+    db
+      .select({ bookId: bookmarks.bookId, total: count() })
+      .from(bookmarks)
+      .where(inArray(bookmarks.bookId, bookIds))
+      .groupBy(bookmarks.bookId),
+  ])
+
+  const map = new Map<string, CumulativeBookCounts>()
+  function bump(
+    bookId: string,
+    key: keyof CumulativeBookCounts,
+    value: number,
+  ): void {
+    const existing = map.get(bookId) ?? { likes: 0, comments: 0, bookmarks: 0 }
+    existing[key] = value
+    map.set(bookId, existing)
+  }
+  for (const r of likeRows) bump(r.bookId, 'likes', Number(r.total))
+  for (const r of commentRows) bump(r.bookId, 'comments', Number(r.total))
+  for (const r of bookmarkRows) bump(r.bookId, 'bookmarks', Number(r.total))
+  return map
 }
 

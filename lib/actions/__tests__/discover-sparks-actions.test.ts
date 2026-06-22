@@ -41,8 +41,7 @@ vi.mock('@/db', () => {
 import * as discoverSparksActions from '@/lib/actions/discover-sparks.actions'
 
 describe('discover-sparks actions surface', () => {
-  it('exports all 10 D2a actions', () => {
-    expect(typeof discoverSparksActions.getFeaturedSparkAction).toBe('function')
+  it('exports the post-#32 D2a action surface (Featured Spark removed)', () => {
     expect(typeof discoverSparksActions.getLiveNowSparksAction).toBe('function')
     expect(typeof discoverSparksActions.getVotingNowSparksAction).toBe('function')
     expect(typeof discoverSparksActions.getHeatingUpSparksAction).toBe('function')

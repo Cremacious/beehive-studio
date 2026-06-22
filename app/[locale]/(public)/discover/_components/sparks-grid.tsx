@@ -1,6 +1,5 @@
 import {
   searchSparksDiscoverAction,
-  getFeaturedSparkAction,
   type SparkCard,
 } from '@/lib/actions/discover-sparks.actions'
 import {
@@ -18,7 +17,6 @@ import { hasAnyDiscoverySignalAction } from '@/lib/actions/discover-for-you-book
 import { GENRE_LABEL, isValidGenre, type GenreSlug } from '@/lib/discover/genres'
 import { DiscoveryModeToggle } from './discovery-mode-toggle'
 import { FilterSearchInput } from './filter-search-input'
-import { SlimFeaturedStrip } from './slim-featured-strip'
 import { SortHeader } from './sort-header'
 import { ActiveFilterChips, type ActiveFilterChip } from './active-filter-chips'
 import { SparkGridCard } from './spark-grid-card'
@@ -158,48 +156,35 @@ export async function SparksGrid({ sp, locale }: Props) {
     sort: sort !== 'urgent' ? sort : undefined,
   }
 
-  const [resultsRes, featuredRes] = await Promise.all([
-    (() => {
-      switch (resolvedMode) {
-        case 'for-you':
-          return searchSparksDiscoverAction({
-            q, genres, state, wordLimit, timeLeft,
-            creator: 'following', sort, page,
-          })
-        case 'trending':
-          return searchSparksDiscoverAction({
-            q, genres, state, wordLimit, timeLeft,
-            creator, sort: 'urgent', page,
-          })
-        case 'popular':
-          return searchSparksDiscoverAction({
-            q, genres, state, wordLimit, timeLeft,
-            creator, sort: 'most-entered', page,
-          })
-        case 'all':
-        default:
-          return searchSparksDiscoverAction({
-            q, genres, state, wordLimit, timeLeft,
-            creator, sort, page,
-          })
-      }
-    })(),
-    getFeaturedSparkAction({}),
-  ])
+  const resultsRes = await (async () => {
+    switch (resolvedMode) {
+      case 'for-you':
+        return searchSparksDiscoverAction({
+          q, genres, state, wordLimit, timeLeft,
+          creator: 'following', sort, page,
+        })
+      case 'trending':
+        return searchSparksDiscoverAction({
+          q, genres, state, wordLimit, timeLeft,
+          creator, sort: 'urgent', page,
+        })
+      case 'popular':
+        return searchSparksDiscoverAction({
+          q, genres, state, wordLimit, timeLeft,
+          creator, sort: 'most-entered', page,
+        })
+      case 'all':
+      default:
+        return searchSparksDiscoverAction({
+          q, genres, state, wordLimit, timeLeft,
+          creator, sort, page,
+        })
+    }
+  })()
 
   const sparks: SparkCard[] = resultsRes.success ? resultsRes.data.books : []
   const totalCount: number = resultsRes.success ? resultsRes.data.totalCount : 0
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
-  const featured =
-    featuredRes.success && featuredRes.data
-      ? {
-          title: featuredRes.data.title,
-          caption: featuredRes.data.creatorUsername
-            ? `by @${featuredRes.data.creatorUsername}`
-            : 'Live now',
-          href: `/${locale}/community/sparks/${featuredRes.data.id}`,
-        }
-      : null
 
   return (
     <div className="flex flex-col gap-4">
@@ -224,7 +209,6 @@ export async function SparksGrid({ sp, locale }: Props) {
           baseParams={toggleBaseParams}
         />
       </div>
-      <SlimFeaturedStrip kind="spark" featured={featured} />
       <SortHeader
         count={totalCount}
         entityNoun={totalCount === 1 ? 'spark' : 'sparks'}

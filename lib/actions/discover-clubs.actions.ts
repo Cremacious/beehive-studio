@@ -397,53 +397,8 @@ async function loadMemberPreviewsMap(
   return map
 }
 
-// ─── 1. Featured Club hero ────────────────────────────────────────────────────
-
-/**
- * "Open + active": openJoin=true AND activityScore7d > 0 AND
- * last_activity_at >= 14d. Sort score DESC, lastActivityAt DESC, id DESC.
- * LIMIT 1. Returns null when no qualifier (hero hides cleanly per spec §6 Q4).
- */
-export async function getFeaturedClubAction(args: {
-  genre?: GenreSlug
-}): Promise<ActionResult<ClubCard | null>> {
-  const viewerId = await getOptionalUserId()
-  const blocked = await getBlockedClubOwnerIdsForViewer(viewerId)
-
-  const baseFilters = buildPublicClubFilters(args.genre, blocked)
-  baseFilters.push(eq(bookClubs.openJoin, true))
-  baseFilters.push(isNotNull(bookClubs.lastActivityAt))
-  baseFilters.push(
-    gte(
-      bookClubs.lastActivityAt,
-      sql`now() - interval '${sql.raw(String(FEATURED_ACTIVITY_WINDOW_DAYS))} days'`,
-    ),
-  )
-
-  // Candidate window: top 200 by lastActivityAt DESC, then score in JS,
-  // filter score > 0, take top 1.
-  const candidates = await db
-    .select({ id: bookClubs.id })
-    .from(bookClubs)
-    .where(and(...baseFilters))
-    .orderBy(desc(bookClubs.lastActivityAt), desc(bookClubs.id))
-    .limit(200)
-
-  if (candidates.length === 0) return { success: true, data: null }
-
-  const ids = candidates.map((r) => r.id)
-  const scoreMap = await loadActivityScoreMap(ids)
-  const qualified = ids
-    .map((id) => ({ id, score: scoreMap.get(id) ?? 0 }))
-    .filter((r) => r.score > 0)
-    .sort((a, b) => b.score - a.score)
-  if (qualified.length === 0) return { success: true, data: null }
-
-  const projected = await projectToClubCards([qualified[0]!], {
-    computeActivityScore: true,
-  })
-  return { success: true, data: projected[0] ?? null }
-}
+// Issue #32: `getFeaturedClubAction` removed — the discovery mode toggle
+// replaces the featured banner.
 
 // ─── Rail args ────────────────────────────────────────────────────────────────
 

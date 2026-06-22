@@ -78,7 +78,7 @@ export type RailResult<T = SparkCard> = {
 const PAGE_SIZE = 12
 // FALLBACK_WINDOW: widen to 180 if dev shows the Recently Won rail persistently empty.
 const RECENTLY_WON_WINDOW_DAYS = 90
-const HERO_DEADLINE_WINDOW_HOURS = 72
+// Issue #32: HERO_DEADLINE_WINDOW_HOURS removed with getFeaturedSparkAction.
 
 // ─── Cursor helpers ───────────────────────────────────────────────────────────
 
@@ -288,41 +288,8 @@ export async function projectToSparkCards(
   return cards
 }
 
-// ─── 1. Featured Spark hero ───────────────────────────────────────────────────
-
-/**
- * OPEN spark with deadline within 72h, highest entryCount tiebroken by
- * earliest deadline. Returns null when no qualifier (hero hides cleanly per §15 Q3).
- */
-export async function getFeaturedSparkAction(args: {
-  genre?: GenreSlug
-}): Promise<ActionResult<SparkCard | null>> {
-  const viewerId = await getOptionalUserId()
-  const blocked = await getBlockedSparkCreatorIdsForViewer(viewerId)
-  const genre = args.genre
-
-  const rows = await db
-    .select({ id: sparks.id })
-    .from(sparks)
-    .where(
-      and(
-        ...buildPublicSparkFilters(genre, blocked),
-        eq(sparks.status, 'OPEN'),
-        isNotNull(sparks.deadline),
-        gt(sparks.deadline, sql`now()`),
-        sql`${sparks.deadline} <= now() + interval '${sql.raw(String(HERO_DEADLINE_WINDOW_HOURS))} hours'`,
-      ),
-    )
-    .orderBy(desc(sparks.entryCount), asc(sparks.deadline))
-    .limit(1)
-
-  if (rows.length === 0) return { success: true, data: null }
-  const projected = await projectToSparkCards(rows, {
-    computeVoteTotal: false,
-    computeWinner: false,
-  })
-  return { success: true, data: projected[0] ?? null }
-}
+// Issue #32: `getFeaturedSparkAction` removed — the discovery mode toggle
+// replaces the featured banner.
 
 // ─── Rail args type ───────────────────────────────────────────────────────────
 

@@ -1,6 +1,5 @@
 import {
   searchHivesDiscoverAction,
-  getFeaturedHiveAction,
   type HiveCard,
   type SizeBucket,
 } from '@/lib/actions/discover-hives.actions'
@@ -19,7 +18,6 @@ import { getOptionalUserId } from '@/lib/require-auth'
 import { GENRE_LABEL, isValidGenre, type GenreSlug } from '@/lib/discover/genres'
 import { DiscoveryModeToggle } from './discovery-mode-toggle'
 import { FilterSearchInput } from './filter-search-input'
-import { SlimFeaturedStrip } from './slim-featured-strip'
 import { SortHeader } from './sort-header'
 import { ActiveFilterChips, type ActiveFilterChip } from './active-filter-chips'
 import { HiveGridCard } from './hive-grid-card'
@@ -147,68 +145,57 @@ export async function HivesGrid({ sp, locale }: Props) {
   const sort = parseRadio(pickRaw(sp, 'sort'), SORTS, 'most-active')
   const page = Math.max(1, parseIntParam(pickRaw(sp, 'page'), 1))
 
-  const [resultsRes, featuredRes] = await Promise.all([
-    (() => {
-      switch (resolvedMode) {
-        case 'for-you':
-          return searchHivesDiscoverAction({
-            q,
-            genres,
-            size,
-            openStates,
-            linked,
-            sort: 'most-active',
-            source: 'following',
-            viewerId: viewerId ?? undefined,
-            page,
-          })
-        case 'trending':
-          return searchHivesDiscoverAction({
-            q,
-            genres,
-            size,
-            openStates,
-            linked,
-            sort: 'most-active',
-            page,
-          })
-        case 'popular':
-          return searchHivesDiscoverAction({
-            q,
-            genres,
-            size,
-            openStates,
-            linked,
-            sort: 'most-members',
-            page,
-          })
-        case 'all':
-        default:
-          return searchHivesDiscoverAction({
-            q,
-            genres,
-            size,
-            openStates,
-            linked,
-            sort,
-            page,
-          })
-      }
-    })(),
-    getFeaturedHiveAction({}),
-  ])
+  const resultsRes = await (async () => {
+    switch (resolvedMode) {
+      case 'for-you':
+        return searchHivesDiscoverAction({
+          q,
+          genres,
+          size,
+          openStates,
+          linked,
+          sort: 'most-active',
+          source: 'following',
+          viewerId: viewerId ?? undefined,
+          page,
+        })
+      case 'trending':
+        return searchHivesDiscoverAction({
+          q,
+          genres,
+          size,
+          openStates,
+          linked,
+          sort: 'most-active',
+          page,
+        })
+      case 'popular':
+        return searchHivesDiscoverAction({
+          q,
+          genres,
+          size,
+          openStates,
+          linked,
+          sort: 'most-members',
+          page,
+        })
+      case 'all':
+      default:
+        return searchHivesDiscoverAction({
+          q,
+          genres,
+          size,
+          openStates,
+          linked,
+          sort,
+          page,
+        })
+    }
+  })()
 
   const hives: HiveCard[] = resultsRes.success ? resultsRes.data.books : []
   const totalCount: number = resultsRes.success ? resultsRes.data.totalCount : 0
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
-  const featured =
-    featuredRes.success && featuredRes.data
-      ? {
-          title: featuredRes.data.name,
-          caption: `${featuredRes.data.memberCount} members`,
-          href: `/${locale}/hive/${featuredRes.data.id}`,
-        }
-      : null
 
   const toggleBaseParams: Record<string, string | string[] | undefined> = {
     q,
@@ -242,7 +229,6 @@ export async function HivesGrid({ sp, locale }: Props) {
           baseParams={toggleBaseParams}
         />
       </div>
-      <SlimFeaturedStrip kind="hive" featured={featured} />
       <SortHeader
         count={totalCount}
         entityNoun={totalCount === 1 ? 'hive' : 'hives'}

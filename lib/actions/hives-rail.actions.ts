@@ -4,6 +4,7 @@ import { db } from '@/db'
 import { requireAuth } from '@/lib/require-auth'
 import { hiveMembers } from '@/db/schema/hive'
 import { and, eq, sql } from 'drizzle-orm'
+import { computeTrendingScore } from '@/lib/discover/scoring'
 
 export type ViewerHiveStats = {
   owned: number
@@ -24,7 +25,7 @@ export type RailTrendingHive = {
 
 type ActionResult<T> = { success: true; data: T } | { success: false; error: string }
 
-const TRENDING_WINDOW_MS = 7 * 86_400_000
+const CANDIDATE_LIMIT = 60
 
 /**
  * Four counts for the viewer's "Your hive stats" rail panel.
@@ -67,24 +68,27 @@ export async function getViewerHiveStatsAction(): Promise<ActionResult<ViewerHiv
 }
 
 /**
- * Top discoverable PUBLIC hives ranked by 7-day activity count.
- * Used by the Hives Hub right rail.
+ * Issue #32: Top discoverable PUBLIC hives ranked by time-decayed engagement.
+ * activityCount (cumulative all-time hive_activity rows) feeds `likeCount`;
+ * memberCount feeds `bookmarkCount` so larger hives get a small bonus.
+ * hoursAgo from hives.created_at. Sorted by score DESC.
+ * TODO(#32): wrap in unstable_cache (5min TTL, key on limit).
  */
 export async function getTrendingHivesForRailAction(
   args: { limit?: number } = {},
 ): Promise<ActionResult<RailTrendingHive[]>> {
   const limit = Math.min(args.limit ?? 12, 30)
-  const windowStart = new Date(Date.now() - TRENDING_WINDOW_MS)
 
   try {
     const rows = await db.execute(sql`
       SELECT
         h.id,
         h.name,
+        h.created_at AS "createdAt",
         b.title AS "bookTitle",
         b.cover_url AS "bookCoverUrl",
         COALESCE(mc.member_count, 0) AS "memberCount",
-        COALESCE(ac.activity_7d, 0) AS "activity7d",
+        COALESCE(ac.activity_count, 0) AS "activityCount",
         COALESCE((
           SELECT json_agg(json_build_object('userId', sub.user_id, 'avatarUrl', sub.avatar_url))
           FROM (
@@ -99,9 +103,8 @@ export async function getTrendingHivesForRailAction(
       FROM hives h
       LEFT JOIN books b ON b.id = h.book_id
       LEFT JOIN (
-        SELECT hive_id, COUNT(*)::int AS activity_7d
+        SELECT hive_id, COUNT(*)::int AS activity_count
         FROM hive_activity
-        WHERE created_at >= ${windowStart}
         GROUP BY hive_id
       ) ac ON ac.hive_id = h.id
       LEFT JOIN (
@@ -110,23 +113,49 @@ export async function getTrendingHivesForRailAction(
         GROUP BY hive_id
       ) mc ON mc.hive_id = h.id
       WHERE h.visibility = 'PUBLIC' AND h.discoverable = true
-      ORDER BY COALESCE(ac.activity_7d, 0) DESC, h.created_at DESC
-      LIMIT ${limit}
+      LIMIT ${CANDIDATE_LIMIT}
     `)
 
-    type Row = {
+    type RawRow = {
       id: string
       name: string
+      createdAt: Date | string
       bookTitle: string | null
       bookCoverUrl: string | null
       memberCount: number
-      activity7d: number
+      activityCount: number
       memberPreviews: Array<{ userId: string; avatarUrl: string | null }>
     }
 
+    const now = Date.now()
+    const scored = (rows.rows as RawRow[]).map((r) => {
+      const created =
+        r.createdAt instanceof Date ? r.createdAt : new Date(r.createdAt)
+      const hoursAgo = Math.max(0, (now - created.getTime()) / 3_600_000)
+      const score = computeTrendingScore({
+        likeCount: Number(r.activityCount),
+        commentCount: 0,
+        bookmarkCount: Number(r.memberCount),
+        hoursAgo,
+      })
+      return { row: r, score }
+    })
+    scored.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score
+      return b.row.id.localeCompare(a.row.id)
+    })
+
     return {
       success: true,
-      data: rows.rows.map((r) => r as Row),
+      data: scored.slice(0, limit).map(({ row: r }) => ({
+        id: r.id,
+        name: r.name,
+        bookTitle: r.bookTitle,
+        bookCoverUrl: r.bookCoverUrl,
+        memberCount: Number(r.memberCount),
+        activity7d: Number(r.activityCount),
+        memberPreviews: r.memberPreviews,
+      })),
     }
   } catch {
     return { success: false, error: 'FETCH_FAILED' }

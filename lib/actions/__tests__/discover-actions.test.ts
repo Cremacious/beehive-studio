@@ -51,8 +51,7 @@ vi.mock('@/db', () => {
 import * as discoverActions from '@/lib/actions/discover.actions'
 
 describe('discover actions surface', () => {
-  it('exports all 10 new D1 actions', () => {
-    expect(typeof discoverActions.getFeaturedFreshBookAction).toBe('function')
+  it('exports the post-#32 D1 action surface (Featured Fresh removed)', () => {
     expect(typeof discoverActions.getTrendingBooksAction).toBe('function')
     expect(typeof discoverActions.getRisingStarsBooksAction).toBe('function')
     expect(typeof discoverActions.getRecentlyUpdatedBooksAction).toBe('function')
@@ -62,6 +61,12 @@ describe('discover actions surface', () => {
     expect(typeof discoverActions.getBackfillBooksAction).toBe('function')
     expect(typeof discoverActions.searchBooksDiscoverAction).toBe('function')
     expect(typeof discoverActions.getGenreBookCountsAction).toBe('function')
+  })
+
+  it('no longer exports getFeaturedFreshBookAction (issue #32)', () => {
+    expect(
+      (discoverActions as Record<string, unknown>).getFeaturedFreshBookAction,
+    ).toBeUndefined()
   })
 
   it('no longer exports legacy getDiscoverFeedAction / getDiscoverWritersAction', () => {

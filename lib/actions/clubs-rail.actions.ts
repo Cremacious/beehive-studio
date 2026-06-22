@@ -4,6 +4,7 @@ import { db } from '@/db'
 import { requireAuth } from '@/lib/require-auth'
 import { bookClubMembers } from '@/db/schema/social'
 import { and, eq, sql } from 'drizzle-orm'
+import { computeTrendingScore } from '@/lib/discover/scoring'
 
 export type ViewerClubStats = {
   owned: number
@@ -95,22 +96,24 @@ export async function getViewerClubStatsAction(): Promise<
 }
 
 /**
- * Top discoverable PUBLIC clubs sorted by last_activity_at DESC.
- * Projects coverImageUrl + currentBookTitle (per-row correlated subquery against
- * book_club_books since book_clubs.current_book_id references book_club_books.id,
- * NOT books.id) + memberPreviews (correlated subquery against book_club_members,
- * matches T2 pattern).
+ * Issue #32: Top discoverable PUBLIC clubs ranked by time-decayed engagement.
+ * memberCount feeds `likeCount`; discussionCount feeds `commentCount`;
+ * hoursAgo from created_at. last_activity_at is still projected for display
+ * but no longer dictates ordering.
+ * TODO(#32): wrap in unstable_cache (5min TTL, key on limit).
  */
 export async function getTrendingClubsForRailAction(
   args: { limit?: number } = {},
 ): Promise<ActionResult<RailTrendingClub[]>> {
   const limit = Math.min(args.limit ?? 12, 30)
+  const CANDIDATE_LIMIT = 60
 
   try {
     const rows = await db.execute(sql`
       SELECT
         c.id,
         c.name,
+        c.created_at AS "createdAt",
         c.cover_image_url AS "coverImageUrl",
         (
           SELECT bcb.title
@@ -121,6 +124,9 @@ export async function getTrendingClubsForRailAction(
         c.member_count AS "memberCount",
         c.last_activity_at AS "lastActivityAt",
         c.open_join AS "openJoin",
+        COALESCE((
+          SELECT COUNT(*)::int FROM book_club_discussions bcd WHERE bcd.club_id = c.id
+        ), 0) AS "discussionCount",
         COALESCE((
           SELECT json_agg(json_build_object('userId', sub.user_id, 'avatarUrl', sub.avatar_url))
           FROM (
@@ -134,41 +140,57 @@ export async function getTrendingClubsForRailAction(
         ), '[]'::json) AS "memberPreviews"
       FROM book_clubs c
       WHERE c.visibility = 'PUBLIC' AND c.discoverable = true
-      ORDER BY c.last_activity_at DESC NULLS LAST, c.created_at DESC
-      LIMIT ${limit}
+      LIMIT ${CANDIDATE_LIMIT}
     `)
 
     type Row = {
       id: string
       name: string
+      createdAt: Date | string
       coverImageUrl: string | null
       currentBookTitle: string | null
       memberCount: number
       lastActivityAt: Date | string | null
       openJoin: boolean
+      discussionCount: number
       memberPreviews: Array<{ userId: string; avatarUrl: string | null }>
     }
 
+    const now = Date.now()
+    const scored = (rows.rows as Row[]).map((r) => {
+      const created =
+        r.createdAt instanceof Date ? r.createdAt : new Date(r.createdAt)
+      const hoursAgo = Math.max(0, (now - created.getTime()) / 3_600_000)
+      const score = computeTrendingScore({
+        likeCount: Number(r.memberCount ?? 0),
+        commentCount: Number(r.discussionCount ?? 0),
+        bookmarkCount: 0,
+        hoursAgo,
+      })
+      return { row: r, score }
+    })
+    scored.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score
+      return b.row.id.localeCompare(a.row.id)
+    })
+
     return {
       success: true,
-      data: rows.rows.map((r) => {
-        const row = r as Row
-        return {
-          id: row.id,
-          name: row.name,
-          coverImageUrl: row.coverImageUrl,
-          currentBookTitle: row.currentBookTitle,
-          memberCount: row.memberCount,
-          lastActivityAt:
-            row.lastActivityAt == null
-              ? null
-              : row.lastActivityAt instanceof Date
-                ? row.lastActivityAt
-                : new Date(row.lastActivityAt),
-          openJoin: row.openJoin,
-          memberPreviews: row.memberPreviews,
-        }
-      }),
+      data: scored.slice(0, limit).map(({ row }) => ({
+        id: row.id,
+        name: row.name,
+        coverImageUrl: row.coverImageUrl,
+        currentBookTitle: row.currentBookTitle,
+        memberCount: Number(row.memberCount ?? 0),
+        lastActivityAt:
+          row.lastActivityAt == null
+            ? null
+            : row.lastActivityAt instanceof Date
+              ? row.lastActivityAt
+              : new Date(row.lastActivityAt),
+        openJoin: row.openJoin,
+        memberPreviews: row.memberPreviews,
+      })),
     }
   } catch {
     return { success: false, error: 'FETCH_FAILED' }

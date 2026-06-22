@@ -49,6 +49,7 @@ import {
   projectToBookCards,
   applyBookFilterInputs,
   loadTrendingSignals,
+  loadCumulativeBookCounts,
   type BookCard,
   type FilterInputs,
   type RawBookRow,
@@ -262,73 +263,8 @@ async function railWithBackfill(
   }
 }
 
-// ─── 1. Featured Fresh hero ───────────────────────────────────────────────────
-
-export async function getFeaturedFreshBookAction(args: {
-  genre?: string
-}): Promise<ActionResult<BookCard | null>> {
-  const viewerId = await getOptionalUserId()
-  const blockedAuthorIds = await getBlockedAuthorIdsForViewer(viewerId)
-  const genre =
-    args.genre && isValidGenre(args.genre) ? (args.genre as GenreSlug) : undefined
-
-  const sevenDaysAgo = new Date(Date.now() - SEVEN_DAYS_MS)
-  const filters = buildPublicBookFilters(genre, blockedAuthorIds)
-  filters.push(gte(books.firstPubliclyDiscoverableAt, sevenDaysAgo))
-
-  const candidates = await db
-    .select({
-      id: books.id,
-      title: books.title,
-      authorUserId: books.userId,
-      coverUrl: books.coverUrl,
-      synopsis: books.synopsis,
-      genre: books.genre,
-      tags: books.tags,
-      updatedAt: books.updatedAt,
-      firstPubliclyDiscoverableAt: books.firstPubliclyDiscoverableAt,
-    })
-    .from(books)
-    .where(and(...filters))
-    .orderBy(desc(books.firstPubliclyDiscoverableAt))
-    .limit(40)
-
-  if (candidates.length === 0) return { success: true, data: null }
-
-  const candidateIds = candidates.map((c) => c.id)
-  const signals = await loadTrendingSignals(candidateIds, SEVEN_DAYS_MS)
-
-  let bestId: string | null = null
-  let bestScore = -1
-  for (const c of candidates) {
-    const s = signals.get(c.id) ?? {
-      likes: 0,
-      comments: 0,
-      reads: 0,
-      follows: 0,
-    }
-    const score = computeTrendingScore({
-      likes7d: s.likes,
-      comments7d: s.comments,
-      reads7d: s.reads,
-      follows7d: s.follows,
-    })
-    if (score > bestScore) {
-      bestScore = score
-      bestId = c.id
-    }
-  }
-
-  if (!bestId) {
-    // No signal — fall back to the most recent qualifying row.
-    const cards = await projectToBookCards([candidates[0]])
-    return { success: true, data: cards[0] ?? null }
-  }
-
-  const winner = candidates.find((c) => c.id === bestId)!
-  const cards = await projectToBookCards([winner])
-  return { success: true, data: cards[0] ?? null }
-}
+// Issue #32: `getFeaturedFreshBookAction` removed — the discovery mode toggle
+// replaces the featured banner.
 
 // ─── Trending signal loader (shared by Trending + Rising Stars) ───────────────
 // `loadTrendingSignals` + `TrendingSignalCounts` live in `./discover-shared`
@@ -338,6 +274,12 @@ type SignalCounts = TrendingSignalCounts
 
 // ─── 2. Trending Now ──────────────────────────────────────────────────────────
 
+// TODO(#32): wrap the candidate-ranking inner body in `unstable_cache` (5min TTL)
+// keyed on (genre, filtersHash). Skipped today because the action body interleaves
+// viewer-state (blocked-author filter, optional auth) with the ranking math; a
+// clean cache wrap requires factoring the inner ranking out into a pure helper
+// that takes pre-filtered candidate ids. Cumulative-count queries + age-decay
+// math are cheap enough at current scale that this isn't blocking.
 export async function getTrendingBooksAction(args: {
   genre?: string
   cursor?: string | null
@@ -446,22 +388,21 @@ export async function getTrendingBooksAction(args: {
   }
 
   const candidateIds = candidates.map((c) => c.id)
-  const signals = await loadTrendingSignals(candidateIds, windowMs)
+  // Issue #32: cumulative all-time counts + age decay (was: 7d-windowed signals).
+  const counts = await loadCumulativeBookCounts(candidateIds)
+  const now = Date.now()
 
   const scored = candidates.map((c) => {
-    const s = signals.get(c.id) ?? {
-      likes: 0,
-      comments: 0,
-      reads: 0,
-      follows: 0,
-    }
+    const cc = counts.get(c.id) ?? { likes: 0, comments: 0, bookmarks: 0 }
+    const ref = c.firstPubliclyDiscoverableAt ?? c.updatedAt
+    const hoursAgo = Math.max(0, (now - ref.getTime()) / 3_600_000)
     return {
       row: c,
       score: computeTrendingScore({
-        likes7d: s.likes,
-        comments7d: s.comments,
-        reads7d: s.reads,
-        follows7d: s.follows,
+        likeCount: cc.likes,
+        commentCount: cc.comments,
+        bookmarkCount: cc.bookmarks,
+        hoursAgo,
       }),
     }
   })
@@ -591,13 +532,17 @@ export async function getRisingStarsBooksAction(args: {
     }
     const firstPub = c.firstPubliclyDiscoverableAt ?? c.updatedAt
     const ageDays = (now - firstPub.getTime()) / 86_400_000
+    const hoursAgo = Math.max(0, (now - firstPub.getTime()) / 3_600_000)
+    // Issue #32: RisingStarsInputs now extends TrendingInputs (likeCount/commentCount/
+    // bookmarkCount/hoursAgo). 7d signal counts feed the engagement slots — follows/reads
+    // get folded into bookmarkCount as a third signal channel to preserve their influence.
     return {
       row: c,
       score: computeRisingStarsScore({
-        likes7d: s.likes,
-        comments7d: s.comments,
-        reads7d: s.reads,
-        follows7d: s.follows,
+        likeCount: s.likes,
+        commentCount: s.comments,
+        bookmarkCount: s.reads + s.follows,
+        hoursAgo,
         totalLikesAllTime: allTimeMap.get(c.id) ?? 0,
         ageDays,
       }),

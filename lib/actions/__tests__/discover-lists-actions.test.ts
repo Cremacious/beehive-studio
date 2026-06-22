@@ -42,8 +42,7 @@ vi.mock('@/db', () => {
 import * as discoverListsActions from '@/lib/actions/discover-lists.actions'
 
 describe('discover-lists actions surface', () => {
-  it('exports all 9 D3a actions', () => {
-    expect(typeof discoverListsActions.getFeaturedListAction).toBe('function')
+  it('exports the post-#32 D3a action surface (Featured List removed)', () => {
     expect(typeof discoverListsActions.getTrendingListsAction).toBe('function')
     expect(typeof discoverListsActions.getRecentlyUpdatedListsAction).toBe(
       'function',

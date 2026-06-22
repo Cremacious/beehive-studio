@@ -1,6 +1,5 @@
 import {
   searchClubsDiscoverAction,
-  getFeaturedClubAction,
   type ClubCard,
 } from '@/lib/actions/discover-clubs.actions'
 import {
@@ -18,7 +17,6 @@ import { hasAnyDiscoverySignalAction } from '@/lib/actions/discover-for-you-book
 import { GENRE_LABEL, isValidGenre, type GenreSlug } from '@/lib/discover/genres'
 import { DiscoveryModeToggle } from './discovery-mode-toggle'
 import { FilterSearchInput } from './filter-search-input'
-import { SlimFeaturedStrip } from './slim-featured-strip'
 import { SortHeader } from './sort-header'
 import { ActiveFilterChips, type ActiveFilterChip } from './active-filter-chips'
 import { ClubGridCard } from './club-grid-card'
@@ -152,70 +150,57 @@ export async function ClubsGrid({ sp, locale }: Props) {
     resolvedMode = resolveDefaultMode({ isAuthed, hasSignal })
   }
 
-  const [resultsRes, featuredRes] = await Promise.all([
-    (() => {
-      switch (resolvedMode) {
-        case 'for-you':
-          return searchClubsDiscoverAction({
-            q,
-            genres,
-            size,
-            accessStates: access,
-            currentBook,
-            sort: 'most-active',
-            source: 'following',
-            viewerId: viewerId ?? undefined,
-            page,
-          })
-        case 'trending':
-          return searchClubsDiscoverAction({
-            q,
-            genres,
-            size,
-            accessStates: access,
-            currentBook,
-            sort: 'most-active',
-            page,
-          })
-        case 'popular':
-          return searchClubsDiscoverAction({
-            q,
-            genres,
-            size,
-            accessStates: access,
-            currentBook,
-            sort: 'most-members',
-            page,
-          })
-        case 'all':
-        default:
-          return searchClubsDiscoverAction({
-            q,
-            genres,
-            size,
-            accessStates: access,
-            currentBook,
-            sort,
-            page,
-          })
-      }
-    })(),
-    getFeaturedClubAction({}),
-  ])
+  const resultsRes = await (async () => {
+    switch (resolvedMode) {
+      case 'for-you':
+        return searchClubsDiscoverAction({
+          q,
+          genres,
+          size,
+          accessStates: access,
+          currentBook,
+          sort: 'most-active',
+          source: 'following',
+          viewerId: viewerId ?? undefined,
+          page,
+        })
+      case 'trending':
+        return searchClubsDiscoverAction({
+          q,
+          genres,
+          size,
+          accessStates: access,
+          currentBook,
+          sort: 'most-active',
+          page,
+        })
+      case 'popular':
+        return searchClubsDiscoverAction({
+          q,
+          genres,
+          size,
+          accessStates: access,
+          currentBook,
+          sort: 'most-members',
+          page,
+        })
+      case 'all':
+      default:
+        return searchClubsDiscoverAction({
+          q,
+          genres,
+          size,
+          accessStates: access,
+          currentBook,
+          sort,
+          page,
+        })
+    }
+  })()
 
   const clubs: ClubCard[] = resultsRes.success ? resultsRes.data.books : []
   const totalCount: number = resultsRes.success ? resultsRes.data.totalCount : 0
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
-  const featured =
-    featuredRes.success && featuredRes.data
-      ? {
-          title: featuredRes.data.name,
-          caption: featuredRes.data.currentBookTitle
-            ? `reading ${featuredRes.data.currentBookTitle}`
-            : `${featuredRes.data.memberCount} members`,
-          href: `/${locale}/community/clubs/${featuredRes.data.id}`,
-        }
-      : null
 
   const toggleBaseParams: Record<string, string | string[] | undefined> = {
     q,
@@ -249,7 +234,6 @@ export async function ClubsGrid({ sp, locale }: Props) {
           baseParams={toggleBaseParams}
         />
       </div>
-      <SlimFeaturedStrip kind="club" featured={featured} />
       <SortHeader
         count={totalCount}
         entityNoun={totalCount === 1 ? 'club' : 'clubs'}

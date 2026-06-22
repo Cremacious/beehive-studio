@@ -11,6 +11,7 @@ import { userProfiles } from '@/db/schema/auth'
 import { and, eq, inArray, sql } from 'drizzle-orm'
 import type { ActionResult } from './book.actions'
 import { loadCoverPreviewsMap, type CoverPreview } from './discover-lists-shared'
+import { computeTrendingScore } from '@/lib/discover/scoring'
 
 // ─── Public types ─────────────────────────────────────────────────────────────
 
@@ -432,13 +433,16 @@ export type RailTrendingList = {
 }
 
 /**
- * Top discoverable PUBLIC CUSTOM lists ranked by new followers in the last 7d.
- * Used by the Reading Lists Hub right rail.
+ * Issue #32: Top discoverable PUBLIC CUSTOM lists ranked by time-decayed
+ * engagement. Cumulative follower_count feeds `likeCount`; hoursAgo from
+ * first_publicly_discoverable_at (falls back to created_at).
+ * TODO(#32): wrap in unstable_cache (5min TTL, key on limit).
  */
 export async function getTrendingListsForRailAction(
   args: { limit?: number } = {},
 ): Promise<ActionResult<RailTrendingList[]>> {
   const limit = Math.min(args.limit ?? 4, 30)
+  const CANDIDATE_LIMIT = 60
 
   try {
     const result = await db.execute<{
@@ -446,27 +450,22 @@ export async function getTrendingListsForRailAction(
       title: string
       username: string | null
       avatar_url: string | null
-      new_followers: number
+      follower_count: number
+      reference_at: Date | string
     }>(sql`
       SELECT
         l.id,
         l.title,
         up.username AS username,
         up.avatar_url AS avatar_url,
-        COALESCE(rf.new_followers, 0)::int AS new_followers
+        COALESCE(l.follower_count, 0)::int AS follower_count,
+        COALESCE(l.first_publicly_discoverable_at, l.created_at) AS reference_at
       FROM reading_lists l
       LEFT JOIN user_profiles up ON up.user_id = l.user_id
-      LEFT JOIN (
-        SELECT list_id, COUNT(*)::int AS new_followers
-        FROM reading_list_follows
-        WHERE created_at >= now() - interval '7 days'
-        GROUP BY list_id
-      ) rf ON rf.list_id = l.id
       WHERE l.visibility = 'PUBLIC'
         AND l.discoverable = true
         AND l.kind = 'CUSTOM'
-      ORDER BY COALESCE(rf.new_followers, 0) DESC, l.created_at DESC
-      LIMIT ${limit}
+      LIMIT ${CANDIDATE_LIMIT}
     `)
 
     const rows =
@@ -477,20 +476,42 @@ export async function getTrendingListsForRailAction(
       title: string
       username: string | null
       avatar_url: string | null
-      new_followers: number
+      follower_count: number
+      reference_at: Date | string
     }>
 
-    const ids = typed.map((r) => r.id)
+    const now = Date.now()
+    const scored = typed.map((r) => {
+      const ref =
+        r.reference_at instanceof Date
+          ? r.reference_at
+          : new Date(r.reference_at)
+      const hoursAgo = Math.max(0, (now - ref.getTime()) / 3_600_000)
+      const score = computeTrendingScore({
+        likeCount: Number(r.follower_count),
+        commentCount: 0,
+        bookmarkCount: 0,
+        hoursAgo,
+      })
+      return { row: r, score }
+    })
+    scored.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score
+      return b.row.id.localeCompare(a.row.id)
+    })
+
+    const pageRows = scored.slice(0, limit).map((s) => s.row)
+    const ids = pageRows.map((r) => r.id)
     const coverPreviewsMap = await loadCoverPreviewsMap(ids)
 
-    const data: RailTrendingList[] = typed.map((r) => ({
+    const data: RailTrendingList[] = pageRows.map((r) => ({
       id: r.id,
       title: r.title,
       curator: { username: r.username, avatarUrl: r.avatar_url },
       coverPreviews: (coverPreviewsMap.get(r.id) ?? []).map((c) => ({
         coverUrl: c.coverUrl,
       })),
-      newFollowersThisWeek: Number(r.new_followers),
+      newFollowersThisWeek: Number(r.follower_count),
     }))
 
     return { success: true, data }

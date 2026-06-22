@@ -42,8 +42,7 @@ vi.mock('@/db', () => {
 import * as discoverClubsActions from '@/lib/actions/discover-clubs.actions'
 
 describe('discover-clubs actions surface', () => {
-  it('exports all 9 D3b actions', () => {
-    expect(typeof discoverClubsActions.getFeaturedClubAction).toBe('function')
+  it('exports the post-#32 D3b action surface (Featured Club removed)', () => {
     expect(typeof discoverClubsActions.getTrendingClubsAction).toBe('function')
     expect(typeof discoverClubsActions.getActiveClubsAction).toBe('function')
     expect(typeof discoverClubsActions.getNewClubsAction).toBe('function')

@@ -2,7 +2,7 @@
 
 import { cache } from 'react'
 import { db } from '@/db'
-import { books, bookLikes } from '@/db/schema'
+import { books, bookLikes, bookmarks } from '@/db/schema'
 import { follows, chapterReads } from '@/db/schema/social'
 import { and, count, desc, eq, inArray, notInArray, sql } from 'drizzle-orm'
 import { getOptionalUserId } from '@/lib/require-auth'
@@ -77,7 +77,15 @@ export async function getPopularBooksAction(args: {
   const filters = buildPublicBookFilters(undefined, blocked)
   if (args.filters) applyBookFilterInputs(filters, args.filters)
 
-  const likeCountExpr = sql<number>`(SELECT COUNT(*) FROM ${bookLikes} WHERE ${bookLikes.bookId} = ${books.id})`
+  // Issue #32: popularity = likes + bookmarks (was: likes only). Cumulative
+  // all-time signal sum, no time decay (that's Trending's job).
+  // TODO(#32): wrap in `unstable_cache` (15min TTL, key on (filters, page)).
+  // Skipped today because viewer-blocked-author set is interleaved with the
+  // query; clean cache requires extracting the candidate-projection inner step.
+  const popularityExpr = sql<number>`(
+    (SELECT COUNT(*) FROM ${bookLikes} WHERE ${bookLikes.bookId} = ${books.id}) +
+    (SELECT COUNT(*) FROM ${bookmarks} WHERE ${bookmarks.bookId} = ${books.id})
+  )`
 
   const [totalCountRows, pageRows] = await Promise.all([
     db.select({ total: count(books.id) }).from(books).where(and(...filters)),
@@ -95,7 +103,7 @@ export async function getPopularBooksAction(args: {
       })
       .from(books)
       .where(and(...filters))
-      .orderBy(desc(likeCountExpr), desc(books.id))
+      .orderBy(desc(popularityExpr), desc(books.id))
       .limit(PAGE_SIZE_BOOKS)
       .offset(offset),
   ])

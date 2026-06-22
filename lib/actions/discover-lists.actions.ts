@@ -354,42 +354,8 @@ async function loadBookCoverPreviewsMap(
   return map
 }
 
-// ─── 1. Featured List hero ────────────────────────────────────────────────────
-
-/**
- * "Rising curator": kind='CUSTOM' AND first_publicly_discoverable_at >= now() - 14d.
- * Sort: followerCount DESC, id DESC. LIMIT 1.
- * Returns null when no qualifier (hero hides cleanly per spec §6.4).
- */
-export async function getFeaturedListAction(args: {
-  genre?: GenreSlug
-}): Promise<ActionResult<ListCard | null>> {
-  const viewerId = await getOptionalUserId()
-  const blocked = await getBlockedListOwnerIdsForViewer(viewerId)
-
-  const conds = [
-    ...buildPublicListFilters(args.genre, blocked),
-    isNotNull(readingLists.firstPubliclyDiscoverableAt),
-    gte(
-      readingLists.firstPubliclyDiscoverableAt,
-      sql`now() - interval '${sql.raw(String(FEATURED_FIRST_PUBLIC_WINDOW_DAYS))} days'`,
-    ),
-  ]
-
-  const candidates = await db
-    .select({ id: readingLists.id })
-    .from(readingLists)
-    .where(and(...conds))
-    .orderBy(desc(readingLists.followerCount), desc(readingLists.id))
-    .limit(1)
-
-  if (candidates.length === 0) return { success: true, data: null }
-
-  const projected = await projectToListCards([candidates[0]!], {
-    computeFollowersGained: false,
-  })
-  return { success: true, data: projected[0] ?? null }
-}
+// Issue #32: `getFeaturedListAction` removed — the discovery mode toggle
+// replaces the featured banner.
 
 // ─── Rail args ────────────────────────────────────────────────────────────────
 

@@ -3,7 +3,8 @@
 import { db } from '@/db'
 import { sparks, sparkEntries } from '@/db/schema/social'
 import { requireAuth } from '@/lib/require-auth'
-import { and, desc, eq, gte, isNotNull, sql } from 'drizzle-orm'
+import { and, desc, eq, isNotNull, sql } from 'drizzle-orm'
+import { computeTrendingScore } from '@/lib/discover/scoring'
 
 export type RailTrendingSpark = {
   id: string
@@ -22,17 +23,18 @@ export type ViewerSparkStats = {
 
 type ActionResult<T> = { success: true; data: T } | { success: false; error: string }
 
-const TRENDING_WINDOW_MS = 7 * 86_400_000
+const CANDIDATE_LIMIT = 60
 
 /**
- * Top sparks ranked by entries-this-week across PUBLIC discoverable sparks
- * in OPEN/VOTING status. Used by the Sparks Hub right rail.
+ * Issue #32: Top sparks ranked by time-decayed engagement (cumulative entry
+ * count as the primary signal, divided by age decay). Sparks have no
+ * likes/comments/bookmarks; entryCount feeds `likeCount` in computeTrendingScore.
+ * TODO(#32): wrap in unstable_cache (5min TTL, key on limit).
  */
 export async function getTrendingSparksForRailAction(
   args: { limit?: number } = {},
 ): Promise<ActionResult<RailTrendingSpark[]>> {
   const limit = Math.min(args.limit ?? 3, 10)
-  const windowStart = new Date(Date.now() - TRENDING_WINDOW_MS)
 
   try {
     const rows = await db
@@ -41,16 +43,11 @@ export async function getTrendingSparksForRailAction(
         title: sparks.title,
         deadline: sparks.deadline,
         status: sparks.status,
+        createdAt: sparks.createdAt,
         entryCount: sql<number>`COUNT(${sparkEntries.id})::int`,
       })
       .from(sparks)
-      .leftJoin(
-        sparkEntries,
-        and(
-          eq(sparkEntries.sparkId, sparks.id),
-          gte(sparkEntries.createdAt, windowStart),
-        ),
-      )
+      .leftJoin(sparkEntries, eq(sparkEntries.sparkId, sparks.id))
       .where(
         and(
           eq(sparks.visibility, 'PUBLIC'),
@@ -58,13 +55,34 @@ export async function getTrendingSparksForRailAction(
           sql`${sparks.status} IN ('OPEN', 'VOTING')`,
         ),
       )
-      .groupBy(sparks.id, sparks.title, sparks.deadline, sparks.status)
-      .orderBy(desc(sql`COUNT(${sparkEntries.id})`))
-      .limit(limit)
+      .groupBy(
+        sparks.id,
+        sparks.title,
+        sparks.deadline,
+        sparks.status,
+        sparks.createdAt,
+      )
+      .limit(CANDIDATE_LIMIT)
+
+    const now = Date.now()
+    const scored = rows.map((r) => {
+      const hoursAgo = Math.max(0, (now - r.createdAt.getTime()) / 3_600_000)
+      const score = computeTrendingScore({
+        likeCount: r.entryCount,
+        commentCount: 0,
+        bookmarkCount: 0,
+        hoursAgo,
+      })
+      return { row: r, score }
+    })
+    scored.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score
+      return b.row.id.localeCompare(a.row.id)
+    })
 
     return {
       success: true,
-      data: rows.map((r) => ({
+      data: scored.slice(0, limit).map(({ row: r }) => ({
         id: r.id,
         title: r.title,
         status: r.status as RailTrendingSpark['status'],

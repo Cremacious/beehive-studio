@@ -510,58 +510,8 @@ const getPlatformActivityMedianCached = unstable_cache(
   { revalidate: 300, tags: ['discover-hives-platform-activity-median'] },
 )
 
-// ─── 1. Featured Hive hero ────────────────────────────────────────────────────
-
-/**
- * "Hidden gem": member_count <= 10 + activityScore7d > cached platform median.
- * Sort: activityScore DESC, lastActivityAt DESC, id DESC. LIMIT 1.
- * Returns null when no qualifier (hero hides cleanly per spec §6.4).
- */
-export async function getFeaturedHiveAction(args: {
-  genre?: GenreSlug
-}): Promise<ActionResult<HiveCard | null>> {
-  const viewerId = await getOptionalUserId()
-  const blocked = await getBlockedHiveOwnerIdsForViewer(viewerId)
-  const median = await getPlatformActivityMedianCached()
-
-  // Candidate set: small hives only (member_count <= 10). Pull ids, score them,
-  // then filter by > median in JS (median is a per-query value, not WHERE-able).
-  const baseFilters = buildPublicHiveFilters(args.genre, 'any', blocked)
-  baseFilters.push(lte(hives.memberCount, FEATURED_MEMBER_CAP))
-
-  const candidates = args.genre
-    ? await db
-        .select({ id: hives.id })
-        .from(hives)
-        .innerJoin(books, eq(books.id, hives.bookId))
-        .where(and(...baseFilters))
-        .orderBy(desc(hives.lastActivityAt), desc(hives.id))
-        .limit(200)
-    : await db
-        .select({ id: hives.id })
-        .from(hives)
-        .where(and(...baseFilters))
-        .orderBy(desc(hives.lastActivityAt), desc(hives.id))
-        .limit(200)
-
-  if (candidates.length === 0) return { success: true, data: null }
-
-  const ids = candidates.map((r) => r.id)
-  const scoreMap = await loadActivityScoreMap(ids)
-  // Filter by > median + sort by score DESC. Tiebreak last_activity_at DESC, id DESC.
-  // For raw-only data we don't have last_activity_at yet; refetch in projection.
-  const qualified = ids
-    .map((id) => ({ id, score: scoreMap.get(id) ?? 0 }))
-    .filter((r) => r.score > median)
-    .sort((a, b) => b.score - a.score)
-  if (qualified.length === 0) return { success: true, data: null }
-
-  const projected = await projectToHiveCards([qualified[0]!], {
-    computeActivityScore: true,
-    computeBuzzCount: true,
-  })
-  return { success: true, data: projected[0] ?? null }
-}
+// Issue #32: `getFeaturedHiveAction` removed — the discovery mode toggle
+// replaces the featured banner.
 
 // ─── Rail args ────────────────────────────────────────────────────────────────
 

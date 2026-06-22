@@ -334,6 +334,13 @@ export const bookClubs = pgTable(
     firstPubliclyDiscoverableAt: timestamp('first_publicly_discoverable_at'),
     // D3b: denorm of last activity-y event (discussion, join, current book change).
     lastActivityAt: timestamp('last_activity_at'),
+    // i30: reading goal set by owner/mod for the current book.
+    currentReadingGoalDescription: text('current_reading_goal_description'),
+    currentReadingGoalDeadline: timestamp('current_reading_goal_deadline'),
+    // i30: owner/mod-controlled group progress (page or chapter number).
+    currentProgressValue: integer('current_progress_value'),
+    totalProgressValue: integer('total_progress_value'),
+    progressUnit: text('progress_unit'), // 'page' | 'chapter'
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
   },
@@ -499,4 +506,24 @@ export const bookClubDiscussionReplyLikes = pgTable(
     createdAt: timestamp('created_at').notNull().defaultNow(),
   },
   (t) => [primaryKey({ columns: [t.userId, t.replyId] })],
+)
+
+// ── i30: Club member progress check-ins ──────────────────────────────────────
+// One row per (club, user, book). is_on_track is a simple binary: member
+// either marks themselves on track or behind the group pace. No page numbers
+// from members — the group pace lives on book_clubs.current_progress_value.
+export const clubMemberProgress = pgTable(
+  'club_member_progress',
+  {
+    id: text('id').primaryKey().$defaultFn(() => createId()),
+    clubId: text('club_id').notNull().references(() => bookClubs.id, { onDelete: 'cascade' }),
+    userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    bookId: text('book_id').notNull(),
+    isOnTrack: boolean('is_on_track').notNull().default(true),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex('club_member_progress_unique_idx').on(t.clubId, t.userId, t.bookId),
+    index('club_member_progress_club_book_idx').on(t.clubId, t.bookId),
+  ],
 )

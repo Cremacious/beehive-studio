@@ -18,6 +18,7 @@ type Props = {
   clubId: string
   open: boolean
   onOpenChange: (open: boolean) => void
+  defaultTarget?: 'QUEUE' | 'CURRENT'
 }
 
 type SearchHit = {
@@ -41,7 +42,7 @@ const EMPTY_PICK: PickedBook = {
   coverUrl: null,
 }
 
-export function AddBookToClubModal({ clubId, open, onOpenChange }: Props) {
+export function AddBookToClubModal({ clubId, open, onOpenChange, defaultTarget }: Props) {
   const router = useRouter()
   const [tab, setTab] = useState<'beehive' | 'external'>('beehive')
   const [query, setQuery] = useState('')
@@ -51,7 +52,7 @@ export function AddBookToClubModal({ clubId, open, onOpenChange }: Props) {
   const [extTitle, setExtTitle] = useState('')
   const [extAuthor, setExtAuthor] = useState('')
   const [extCoverUrl, setExtCoverUrl] = useState('')
-  const [target, setTarget] = useState<'QUEUE' | 'CURRENT'>('QUEUE')
+  const [target, setTarget] = useState<'QUEUE' | 'CURRENT'>(defaultTarget ?? 'QUEUE')
   const [isPending, startTransition] = useTransition()
 
   const reset = useCallback(() => {
@@ -62,8 +63,8 @@ export function AddBookToClubModal({ clubId, open, onOpenChange }: Props) {
     setExtTitle('')
     setExtAuthor('')
     setExtCoverUrl('')
-    setTarget('QUEUE')
-  }, [])
+    setTarget(defaultTarget ?? 'QUEUE')
+  }, [defaultTarget])
 
   // Debounced Beehive search (mirrors C3 AddBookModal).
   useEffect(() => {

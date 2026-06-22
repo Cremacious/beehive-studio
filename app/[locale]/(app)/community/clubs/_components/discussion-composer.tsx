@@ -17,12 +17,13 @@ type Props = {
   clubId: string
   open: boolean
   onOpenChange: (open: boolean) => void
+  initialTitle?: string
 }
 
 const TITLE_MAX = 120
 const CONTENT_MAX = 10000
 
-export function DiscussionComposer({ clubId, open, onOpenChange }: Props) {
+export function DiscussionComposer({ clubId, open, onOpenChange, initialTitle }: Props) {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [isPending, startTransition] = useTransition()
@@ -32,8 +33,10 @@ export function DiscussionComposer({ clubId, open, onOpenChange }: Props) {
     if (!open) {
       setTitle('')
       setContent('')
+    } else if (initialTitle) {
+      setTitle(initialTitle)
     }
-  }, [open])
+  }, [open, initialTitle])
 
   const submit = () => {
     const t = title.trim()

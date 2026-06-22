@@ -91,6 +91,12 @@ export type ClubSummary = {
   coverImageUrl: string | null
   memberPreviews: Array<{ userId: string; avatarUrl: string | null }>
   lastActivityAt: Date | null
+  // Issue #30: group reading progress (owner/mod controlled)
+  currentReadingGoalDescription: string | null
+  currentReadingGoalDeadline: Date | null
+  currentProgressValue: number | null
+  totalProgressValue: number | null
+  progressUnit: string | null
 }
 
 export type ClubDetail = {
@@ -338,6 +344,12 @@ export async function getClubsAction(input: {
     coverImageUrl: string | null
     lastActivityAt: Date | null
     memberPreviews: Array<{ userId: string; avatarUrl: string | null }>
+    // Issue #30: group reading progress
+    currentReadingGoalDescription: string | null
+    currentReadingGoalDeadline: Date | null
+    currentProgressValue: number | null
+    totalProgressValue: number | null
+    progressUnit: string | null
   }
 
   // Correlated subquery: top 4 most-recent members per club, each with avatar.
@@ -380,6 +392,11 @@ export async function getClubsAction(input: {
         coverImageUrl: bookClubs.coverImageUrl,
         lastActivityAt: bookClubs.lastActivityAt,
         memberPreviews: memberPreviewsSql,
+        currentReadingGoalDescription: bookClubs.currentReadingGoalDescription,
+        currentReadingGoalDeadline: bookClubs.currentReadingGoalDeadline,
+        currentProgressValue: bookClubs.currentProgressValue,
+        totalProgressValue: bookClubs.totalProgressValue,
+        progressUnit: bookClubs.progressUnit,
       })
       .from(bookClubs)
       .innerJoin(
@@ -421,6 +438,11 @@ export async function getClubsAction(input: {
         coverImageUrl: bookClubs.coverImageUrl,
         lastActivityAt: bookClubs.lastActivityAt,
         memberPreviews: memberPreviewsSql,
+        currentReadingGoalDescription: bookClubs.currentReadingGoalDescription,
+        currentReadingGoalDeadline: bookClubs.currentReadingGoalDeadline,
+        currentProgressValue: bookClubs.currentProgressValue,
+        totalProgressValue: bookClubs.totalProgressValue,
+        progressUnit: bookClubs.progressUnit,
       })
       .from(bookClubs)
       .leftJoin(userProfiles, eq(userProfiles.userId, bookClubs.ownerId))
@@ -497,6 +519,11 @@ export async function getClubsAction(input: {
     coverImageUrl: r.coverImageUrl,
     memberPreviews: r.memberPreviews ?? [],
     lastActivityAt: r.lastActivityAt,
+    currentReadingGoalDescription: r.currentReadingGoalDescription ?? null,
+    currentReadingGoalDeadline: r.currentReadingGoalDeadline ?? null,
+    currentProgressValue: r.currentProgressValue ?? null,
+    totalProgressValue: r.totalProgressValue ?? null,
+    progressUnit: r.progressUnit ?? null,
   }))
 
   return { success: true, data: { rows: result, nextCursor } }
@@ -583,6 +610,11 @@ export async function getClubAction(
       avatarUrl: m.avatarUrl,
     })),
     lastActivityAt: club.lastActivityAt,
+    currentReadingGoalDescription: club.currentReadingGoalDescription ?? null,
+    currentReadingGoalDeadline: club.currentReadingGoalDeadline ?? null,
+    currentProgressValue: club.currentProgressValue ?? null,
+    totalProgressValue: club.totalProgressValue ?? null,
+    progressUnit: club.progressUnit ?? null,
   }
 
   return {

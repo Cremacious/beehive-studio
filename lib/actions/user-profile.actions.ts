@@ -429,6 +429,11 @@ export async function getUserPublicClubsAction(
       coverImageUrl: bookClubs.coverImageUrl,
       lastActivityAt: bookClubs.lastActivityAt,
       memberPreviews: memberPreviewsSql,
+      currentReadingGoalDescription: bookClubs.currentReadingGoalDescription,
+      currentReadingGoalDeadline: bookClubs.currentReadingGoalDeadline,
+      currentProgressValue: bookClubs.currentProgressValue,
+      totalProgressValue: bookClubs.totalProgressValue,
+      progressUnit: bookClubs.progressUnit,
     })
     .from(bookClubs)
     .innerJoin(
@@ -504,6 +509,11 @@ export async function getUserPublicClubsAction(
     coverImageUrl: r.coverImageUrl,
     memberPreviews: r.memberPreviews ?? [],
     lastActivityAt: r.lastActivityAt,
+    currentReadingGoalDescription: r.currentReadingGoalDescription ?? null,
+    currentReadingGoalDeadline: r.currentReadingGoalDeadline ?? null,
+    currentProgressValue: r.currentProgressValue ?? null,
+    totalProgressValue: r.totalProgressValue ?? null,
+    progressUnit: r.progressUnit ?? null,
   }))
 
   return { success: true, data: result }

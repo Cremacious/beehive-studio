@@ -39,6 +39,7 @@ export function AppNav({ locale, user, username }: AppNavProps) {
     ...(username
       ? [{ label: 'Profile', href: `/${locale}/u/${username}`, active: profileActive }]
       : []),
+    { label: 'Settings', href: `/${locale}/settings/account`, active: isActive('settings') },
   ]
 
   return (

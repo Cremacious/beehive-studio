@@ -234,6 +234,10 @@ export async function HomeGrid({ sp, locale }: Props) {
 
   const q = parseStringParam(pickRaw(sp, 'q'))
   const genres = parseMultiSelect(pickRaw(sp, 'genres'))
+  // Tags only meaningfully filter the lists section — applied below.
+  const tags = parseMultiSelect(pickRaw(sp, 'tags')).map((t) =>
+    t.toLowerCase(),
+  )
   const show = parseShow(sp)
 
   // For books, "For You" mode surfaces followed-author content first.
@@ -256,7 +260,11 @@ export async function HomeGrid({ sp, locale }: Props) {
       ? searchHivesDiscoverAction({ ...sharedArgs, sort: 'most-active' })
       : null,
     show.includes('lists')
-      ? searchListsDiscoverAction({ ...sharedArgs, sort: 'most-followed' })
+      ? searchListsDiscoverAction({
+          ...sharedArgs,
+          tags: tags.length > 0 ? tags : undefined,
+          sort: 'most-followed',
+        })
       : null,
     show.includes('clubs')
       ? searchClubsDiscoverAction({ ...sharedArgs, sort: 'most-active' })

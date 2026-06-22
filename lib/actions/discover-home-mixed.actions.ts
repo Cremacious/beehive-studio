@@ -49,6 +49,8 @@ export async function searchHomeMixedAction(args: {
   q?: string
   show?: EntityKind[]
   genres?: string[]
+  /** Multi-tag filter — only meaningful for the Lists section (issue #22). */
+  tags?: string[]
   from?: 'anyone' | 'following'
 }): Promise<
   ActionResult<{ items: HomeMixedItem[]; totalCount: number }>
@@ -59,6 +61,9 @@ export async function searchHomeMixedAction(args: {
       : (['books', 'sparks', 'hives', 'lists', 'clubs'] as const),
   )
   const sharedGenres = args.genres ?? []
+  const sharedTags = (args.tags ?? [])
+    .map((t) => t.trim().toLowerCase())
+    .filter((t) => t.length > 0)
   const q = args.q
   const fromFollowing = args.from === 'following'
 
@@ -98,6 +103,7 @@ export async function searchHomeMixedAction(args: {
       ? searchListsDiscoverAction({
           q,
           genres: sharedGenres,
+          tags: sharedTags.length > 0 ? sharedTags : undefined,
           curator: fromFollowing ? 'following' : 'anyone',
           sort: 'most-followed',
         })

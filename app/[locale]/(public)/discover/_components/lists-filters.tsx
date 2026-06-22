@@ -7,7 +7,8 @@ import {
   parseMultiSelect,
   parseRadio,
 } from '@/lib/discover/url-state'
-import { GENRES, GENRE_LABEL } from '@/lib/discover/genres'
+import { GENRES, GENRE_LABEL, isValidGenre } from '@/lib/discover/genres'
+import { getTopDiscoverListTagsAction } from '@/lib/actions/discover-lists.actions'
 
 type SP = Record<string, string | string[] | undefined>
 type Props = { sp: SP; locale: string }
@@ -38,9 +39,12 @@ function pickRaw(sp: SP, key: string): string | undefined {
   return typeof v === 'string' ? v : undefined
 }
 
-export function ListsFilters({ sp, locale }: Props) {
+export async function ListsFilters({ sp, locale }: Props) {
   const q = parseStringParam(pickRaw(sp, 'q'))
   const genres = parseMultiSelect(pickRaw(sp, 'genres'))
+  const tags = parseMultiSelect(pickRaw(sp, 'tags')).map((t) =>
+    t.toLowerCase(),
+  )
   const size = parseRadio(
     pickRaw(sp, 'size'),
     SIZE_OPTIONS.map((o) => o.value),
@@ -62,8 +66,32 @@ export function ListsFilters({ sp, locale }: Props) {
     'anyone',
   )
 
+  // Tags filter section data. Scope-aware (Q4): if exactly one genre is
+  // selected, fetch tags scoped to that genre so users browsing "fantasy"
+  // see fantasy-relevant tags. Otherwise global top tags.
+  const tagScope =
+    genres.length === 1 && isValidGenre(genres[0]) ? genres[0] : undefined
+  const topTagsResult = await getTopDiscoverListTagsAction({
+    limit: 10,
+    genre: tagScope,
+  })
+  const topTags = topTagsResult.success ? topTagsResult.data : []
+  // Always include currently selected tags in the options list so the user
+  // can deselect even when the tag dropped out of the top 10.
+  const tagOptionsSet = new Map<string, string>(
+    topTags.map((t) => [t.tag, `${t.tag} (${t.count})`]),
+  )
+  for (const t of tags) {
+    if (!tagOptionsSet.has(t)) tagOptionsSet.set(t, t)
+  }
+  const TAG_OPTIONS = Array.from(tagOptionsSet, ([value, label]) => ({
+    value,
+    label,
+  }))
+
   const activeCount =
     (genres.length > 0 ? 1 : 0) +
+    (tags.length > 0 ? 1 : 0) +
     (size !== 'any' ? 1 : 0) +
     (popularity !== 'any' ? 1 : 0) +
     (updated !== 'anytime' ? 1 : 0) +
@@ -87,6 +115,15 @@ export function ListsFilters({ sp, locale }: Props) {
           selected={genres}
         />
       </FilterSection>
+      {TAG_OPTIONS.length > 0 && (
+        <FilterSection label="Tags">
+          <FilterCheckboxGroup
+            name="tags"
+            options={TAG_OPTIONS}
+            selected={tags}
+          />
+        </FilterSection>
+      )}
       <FilterSection label="Size">
         <FilterRadioGroup
           name="size"

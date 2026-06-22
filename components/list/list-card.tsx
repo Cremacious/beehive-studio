@@ -5,6 +5,7 @@ export type ListCardData = {
   title: string
   description: string | null
   genre: string | null
+  tags?: string[]
   bookCount: number
   followerCount: number
   sourceTag: 'yours' | 'following' | 'liked' | null
@@ -22,6 +23,9 @@ type Props = {
   size?: 'sm' | 'md'
   showSourceTag?: boolean
   href: string
+  /** When provided, each visible tag pill becomes a clickable Link to the
+   *  href returned by this builder. When omitted, tags render as static pills. */
+  tagHrefBuilder?: (tag: string) => string
 }
 
 type SourceTagStyle = { bg: string; color: string; label: string }
@@ -156,6 +160,7 @@ export function ListCard({
   size = 'md',
   showSourceTag = false,
   href,
+  tagHrefBuilder,
 }: Props) {
   const heroHeight = size === 'md' ? 170 : 130
   const coverW = size === 'md' ? 70 : 50
@@ -176,14 +181,21 @@ export function ListCard({
   const sourceTag =
     showSourceTag && list.sourceTag ? sourceTagStyle(list.sourceTag) : null
 
+  const allTags = list.tags ?? []
+  const visibleTags = allTags.slice(0, 3)
+  const overflowCount = Math.max(0, allTags.length - visibleTags.length)
+
   return (
-    <Link
-      href={href}
-      className="block no-underline w-full h-full group"
-      aria-label={`Open list: ${list.title}`}
-    >
+    <div className="relative block w-full h-full group">
+      {/* Card-wide click target — sits behind tag pills so they remain independently clickable */}
+      <Link
+        href={href}
+        aria-label={`Open list: ${list.title}`}
+        className="absolute inset-0 z-0 rounded-[20px]"
+        style={{ borderRadius: 'var(--r-card, 20px)' }}
+      />
       <div
-        className="h-full flex flex-col overflow-hidden transition-all duration-150 group-hover:-translate-y-0.5"
+        className="relative z-[1] h-full flex flex-col overflow-hidden transition-all duration-150 group-hover:-translate-y-0.5 pointer-events-none"
         style={{
           background:
             'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
@@ -340,6 +352,66 @@ export function ListCard({
             {blurb}
           </p>
 
+          {/* Tag row (issue #22) — up to 3 tags + overflow indicator */}
+          {visibleTags.length > 0 && (
+            <div
+              className="flex flex-wrap items-center"
+              style={{ gap: 6, marginBottom: 12, pointerEvents: 'auto' }}
+            >
+              {visibleTags.map((t) =>
+                tagHrefBuilder ? (
+                  <Link
+                    key={t}
+                    href={tagHrefBuilder(t)}
+                    className="inline-flex items-center no-underline relative z-[2] transition-colors hover:!bg-[rgba(255,195,0,0.12)] hover:!text-[var(--brand)]"
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: 10,
+                      letterSpacing: '0.04em',
+                      padding: '2px 8px',
+                      borderRadius: 'var(--r-pill, 999px)',
+                      background: 'rgba(255,255,255,0.06)',
+                      color: 'var(--canvas-dark-ink-muted)',
+                      fontWeight: 600,
+                    }}
+                  >
+                    #{t}
+                  </Link>
+                ) : (
+                  <span
+                    key={t}
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: 10,
+                      letterSpacing: '0.04em',
+                      padding: '2px 8px',
+                      borderRadius: 'var(--r-pill, 999px)',
+                      background: 'rgba(255,255,255,0.06)',
+                      color: 'var(--canvas-dark-ink-muted)',
+                      fontWeight: 600,
+                    }}
+                  >
+                    #{t}
+                  </span>
+                ),
+              )}
+              {overflowCount > 0 && (
+                <span
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: 10,
+                    letterSpacing: '0.04em',
+                    color: 'var(--canvas-dark-ink-muted)',
+                    fontWeight: 600,
+                    opacity: 0.7,
+                  }}
+                >
+                  +{overflowCount} more
+                </span>
+              )}
+            </div>
+          )}
+
           {/* Footer */}
           <div
             className="mt-auto flex justify-between items-center"
@@ -389,6 +461,6 @@ export function ListCard({
           </div>
         </div>
       </div>
-    </Link>
+    </div>
   )
 }

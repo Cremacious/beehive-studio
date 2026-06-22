@@ -26,6 +26,7 @@ export type ListCard = {
   title: string
   description: string | null
   genre: string | null
+  tags: string[]
   bookCount: number
   followerCount: number
   sourceTag: 'yours' | 'following' | 'liked' | null
@@ -113,6 +114,7 @@ async function projectToListCards(
       description: readingLists.description,
       userId: readingLists.userId,
       genre: readingLists.genre,
+      tags: readingLists.tags,
       bookCount: readingLists.bookCount,
       followerCount: readingLists.followerCount,
       updatedAt: readingLists.updatedAt,
@@ -153,6 +155,7 @@ async function projectToListCards(
       title: r.title,
       description: r.description,
       genre: r.genre,
+      tags: r.tags ?? [],
       bookCount: r.bookCount,
       followerCount: r.followerCount,
       sourceTag: sourceMap.get(r.id) ?? null,
@@ -199,6 +202,11 @@ export async function getCommunityListsAction(args: {
   tab?: CommunityListsTab
   sort?: CommunityListsSort
   page?: number
+  /** Multi-tag filter, AND semantics (issue #22). Each entry normalized
+   *  to lowercase before matching. Empty array = no filter. */
+  tags?: string[]
+  /** Free-text search — matches title OR tags (issue #22). */
+  q?: string
 }): Promise<
   ActionResult<{
     rows: ListCard[]
@@ -210,6 +218,10 @@ export async function getCommunityListsAction(args: {
   const tab: CommunityListsTab = args.tab ?? 'all'
   const sort: CommunityListsSort = args.sort ?? 'recent'
   const page = Math.max(1, Math.floor(args.page ?? 1))
+  const tagFilters = (args.tags ?? [])
+    .map((t) => t.trim().toLowerCase())
+    .filter((t) => t.length > 0)
+  const qFilter = args.q ? args.q.trim().toLowerCase() : null
 
   const [yoursIds, followingIds, likedIds] = await Promise.all([
     fetchYoursIds(
@@ -254,7 +266,23 @@ export async function getCommunityListsAction(args: {
   const sourceMap = new Map<string, 'yours' | 'following' | 'liked'>()
   for (const id of candidateIds) sourceMap.set(id, resolveSource(id))
 
-  const projected = await projectToListCards(candidateIds, sourceMap)
+  let projected = await projectToListCards(candidateIds, sourceMap)
+
+  // Apply tag + q filters in JS over the projected rows. Both inputs are
+  // already lowercase-normalized above. Tag filter is exact-match contains;
+  // search matches title (case-insensitive substring) OR any tag exact-match.
+  if (tagFilters.length > 0) {
+    projected = projected.filter((r) =>
+      tagFilters.every((t) => r.tags.includes(t)),
+    )
+  }
+  if (qFilter) {
+    projected = projected.filter((r) => {
+      const titleMatch = r.title.toLowerCase().includes(qFilter)
+      const tagMatch = r.tags.some((t) => t.includes(qFilter))
+      return titleMatch || tagMatch
+    })
+  }
 
   // Sort + slice in JS.
   projected.sort(compareBySort(sort))
@@ -345,6 +373,52 @@ export async function getViewerListStatsAction(
   args: { viewerId: string },
 ): Promise<ActionResult<ViewerListStats>> {
   return getViewerListStatsCached(args.viewerId)
+}
+
+// ─── Top tags (issue #22) ─────────────────────────────────────────────────────
+
+export type TopListTag = { tag: string; count: number }
+
+/**
+ * Top N most-used tags across PUBLIC discoverable CUSTOM lists. Unnests the
+ * text-array column, groups, and orders by occurrence count desc.
+ * Wrapped in React `cache()` so layout + filter strip share one query per
+ * request.
+ */
+async function getTopListTagsImpl(
+  limit: number,
+): Promise<ActionResult<TopListTag[]>> {
+  try {
+    const result = await db.execute<{ tag: string; count: number }>(sql`
+      SELECT tag, COUNT(*)::int AS count
+      FROM reading_lists l, UNNEST(l.tags) AS tag
+      WHERE l.visibility = 'PUBLIC'
+        AND l.discoverable = true
+        AND l.kind = 'CUSTOM'
+      GROUP BY tag
+      ORDER BY count DESC, tag ASC
+      LIMIT ${limit}
+    `)
+    const rows =
+      (result as unknown as { rows?: unknown[] }).rows ??
+      (result as unknown as unknown[])
+    const typed = rows as Array<{ tag: string; count: number }>
+    return {
+      success: true,
+      data: typed.map((r) => ({ tag: r.tag, count: Number(r.count) })),
+    }
+  } catch {
+    return { success: false, error: 'FETCH_FAILED' }
+  }
+}
+
+const getTopListTagsCached = cache(getTopListTagsImpl)
+
+export async function getTopListTagsAction(
+  args: { limit?: number } = {},
+): Promise<ActionResult<TopListTag[]>> {
+  const limit = Math.min(Math.max(1, args.limit ?? 20), 50)
+  return getTopListTagsCached(limit)
 }
 
 // ─── Trending rail ────────────────────────────────────────────────────────────

@@ -69,6 +69,9 @@ function buildChips(sp: SP, locale: string): ActiveFilterChip[] {
   const chips: ActiveFilterChip[] = []
   const q = parseStringParam(pickRaw(sp, 'q'))
   const genres = parseMultiSelect(pickRaw(sp, 'genres'))
+  const tags = parseMultiSelect(pickRaw(sp, 'tags')).map((t) =>
+    t.toLowerCase(),
+  )
   const size = parseRadio(pickRaw(sp, 'size'), SIZES, 'any')
   const popularity = parseRadio(
     pickRaw(sp, 'popularity'),
@@ -82,6 +85,7 @@ function buildChips(sp: SP, locale: string): ActiveFilterChip[] {
   const all: Record<string, string | string[] | undefined> = {
     q,
     genres: genres.length ? genres : undefined,
+    tags: tags.length ? tags : undefined,
     size: size !== 'any' ? size : undefined,
     popularity: popularity !== 'any' ? popularity : undefined,
     updated: updated !== 'anytime' ? updated : undefined,
@@ -98,6 +102,14 @@ function buildChips(sp: SP, locale: string): ActiveFilterChip[] {
       `/${locale}/discover`,
     )
   }
+  const withoutTag = (tag: string) => {
+    const next = tags.filter((t) => t !== tag)
+    return buildUrl(
+      'lists',
+      { ...all, tags: next.length ? next : undefined },
+      `/${locale}/discover`,
+    )
+  }
 
   if (q) chips.push({ label: `Search: ${q}`, removeHref: without('q') })
   for (const g of genres) {
@@ -107,6 +119,9 @@ function buildChips(sp: SP, locale: string): ActiveFilterChip[] {
         removeHref: withoutGenre(g),
       })
     }
+  }
+  for (const t of tags) {
+    chips.push({ label: `tag: ${t}`, removeHref: withoutTag(t) })
   }
   if (size !== 'any')
     chips.push({ label: SIZE_LABEL[size], removeHref: without('size') })
@@ -136,6 +151,9 @@ export async function ListsGrid({ sp, locale }: Props) {
 
   const q = parseStringParam(pickRaw(sp, 'q'))
   const genres = parseMultiSelect(pickRaw(sp, 'genres'))
+  const tags = parseMultiSelect(pickRaw(sp, 'tags')).map((t) =>
+    t.toLowerCase(),
+  )
   const size = parseRadio(pickRaw(sp, 'size'), SIZES, 'any')
   const popularity = parseRadio(
     pickRaw(sp, 'popularity'),
@@ -154,6 +172,7 @@ export async function ListsGrid({ sp, locale }: Props) {
           return searchListsDiscoverAction({
             q,
             genres,
+            tags,
             size,
             popularity,
             updated,
@@ -165,6 +184,7 @@ export async function ListsGrid({ sp, locale }: Props) {
           return searchListsDiscoverAction({
             q,
             genres,
+            tags,
             size,
             popularity,
             updated,
@@ -176,6 +196,7 @@ export async function ListsGrid({ sp, locale }: Props) {
           return searchListsDiscoverAction({
             q,
             genres,
+            tags,
             size,
             popularity,
             updated,
@@ -188,6 +209,7 @@ export async function ListsGrid({ sp, locale }: Props) {
           return searchListsDiscoverAction({
             q,
             genres,
+            tags,
             size,
             popularity,
             updated,
@@ -207,11 +229,27 @@ export async function ListsGrid({ sp, locale }: Props) {
   const toggleBaseParams: Record<string, string | string[] | undefined> = {
     q,
     genres: genres.length ? genres : undefined,
+    tags: tags.length ? tags : undefined,
     size: size !== 'any' ? size : undefined,
     popularity: popularity !== 'any' ? popularity : undefined,
     updated: updated !== 'anytime' ? updated : undefined,
     curator: curator !== 'anyone' ? curator : undefined,
     sort: sort !== 'most-followed' ? sort : undefined,
+  }
+
+  // Tag pills on cards toggle the tag in the current `?tags=` filter,
+  // preserving every other filter param. Adding a tag the viewer already has
+  // selected is a no-op (the toggle removes it instead).
+  const activeTagSet = new Set(tags)
+  const tagHrefBuilder = (tag: string): string => {
+    const next = activeTagSet.has(tag)
+      ? tags.filter((t) => t !== tag)
+      : [...tags, tag]
+    return buildUrl(
+      'lists',
+      { ...toggleBaseParams, tags: next.length ? next : undefined },
+      `/${locale}/discover`,
+    )
   }
 
   const featured =
@@ -270,7 +308,12 @@ export async function ListsGrid({ sp, locale }: Props) {
             }}
           >
             {lists.map((list) => (
-              <ListGridCard key={list.id} list={list} locale={locale} />
+              <ListGridCard
+                key={list.id}
+                list={list}
+                locale={locale}
+                tagHrefBuilder={tagHrefBuilder}
+              />
             ))}
           </div>
           <NumberedPagination
@@ -281,6 +324,7 @@ export async function ListsGrid({ sp, locale }: Props) {
             baseParams={{
               q,
               genres: genres.length ? genres : undefined,
+              tags: tags.length ? tags : undefined,
               size: size !== 'any' ? size : undefined,
               popularity: popularity !== 'any' ? popularity : undefined,
               updated: updated !== 'anytime' ? updated : undefined,

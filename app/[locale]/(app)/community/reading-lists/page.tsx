@@ -1,8 +1,13 @@
 import { redirect } from 'next/navigation'
 import { getOptionalUserId } from '@/lib/require-auth'
-import { parseRadio, parseIntParam } from '@/lib/discover/url-state'
+import {
+  parseRadio,
+  parseIntParam,
+  parseMultiSelect,
+} from '@/lib/discover/url-state'
 import {
   getCommunityListsAction,
+  getTopListTagsAction,
   type CommunityListsTab,
   type CommunityListsSort,
 } from '@/lib/actions/reading-lists-hub.actions'
@@ -12,7 +17,9 @@ import { ListsSortDropdown } from './_components/lists-sort-dropdown'
 import { ListsHubPagination } from './_components/lists-hub-pagination'
 import { ListsRightRail } from './_components/lists-right-rail'
 import { ListsGrid } from './_components/lists-grid'
+import { ListsTagFilterStrip } from './_components/lists-tag-filter-strip'
 import { BackToCommunity } from '@/components/community/back-to-community'
+import { ActiveFilterChips } from '@/app/[locale]/(public)/discover/_components/active-filter-chips'
 
 type SP = Record<string, string | string[] | undefined>
 type Props = {
@@ -53,6 +60,21 @@ export default async function ReadingListsHubPage({
     'recent',
   )
   const page = Math.max(1, parseIntParam(pickRaw(sp, 'page'), 1))
+  // Issue #22: canonical multi-tag URL is `?tags=a,b`. The legacy `?tag=X`
+  // single-tag form (from the earlier hub-only ship) is read transitionally
+  // and merged in so old links keep working; new clicks always emit `?tags=`.
+  const tagsFromMulti = parseMultiSelect(pickRaw(sp, 'tags')).map((t) =>
+    t.toLowerCase(),
+  )
+  const legacySingleTag = pickRaw(sp, 'tag')?.trim().toLowerCase()
+  const tagFilters = Array.from(
+    new Set<string>(
+      [
+        ...tagsFromMulti,
+        ...(legacySingleTag ? [legacySingleTag] : []),
+      ].filter((t) => t.length > 0),
+    ),
+  )
 
   // Parallel-fetch the visible page slice + the 3 other bucket totalCounts so
   // the tab strip can display per-tab counts. Each call is independently
@@ -60,18 +82,40 @@ export default async function ReadingListsHubPage({
   // Trade: 4 round-trips of an already-light aggregator vs one inline counts
   // helper. Per-bucket calls re-use the same projection, keep call sites
   // shape-aligned with /sparks and /hives, and avoid forking the action.
-  const [resultAll, resultYours, resultFollowing, resultLiked] =
+  const tagsArg = tagFilters.length > 0 ? tagFilters : undefined
+  const [resultAll, resultYours, resultFollowing, resultLiked, topTagsResult] =
     await Promise.all([
-      getCommunityListsAction({ viewerId, tab: 'all', sort, page: tab === 'all' ? page : 1 }),
-      getCommunityListsAction({ viewerId, tab: 'yours', sort, page: tab === 'yours' ? page : 1 }),
+      getCommunityListsAction({
+        viewerId,
+        tab: 'all',
+        sort,
+        page: tab === 'all' ? page : 1,
+        tags: tagsArg,
+      }),
+      getCommunityListsAction({
+        viewerId,
+        tab: 'yours',
+        sort,
+        page: tab === 'yours' ? page : 1,
+        tags: tagsArg,
+      }),
       getCommunityListsAction({
         viewerId,
         tab: 'following',
         sort,
         page: tab === 'following' ? page : 1,
+        tags: tagsArg,
       }),
-      getCommunityListsAction({ viewerId, tab: 'liked', sort, page: tab === 'liked' ? page : 1 }),
+      getCommunityListsAction({
+        viewerId,
+        tab: 'liked',
+        sort,
+        page: tab === 'liked' ? page : 1,
+        tags: tagsArg,
+      }),
+      getTopListTagsAction({ limit: 20 }),
     ])
+  const topTags = topTagsResult.success ? topTagsResult.data : []
 
   const bucketResults: Record<
     CommunityListsTab,
@@ -163,7 +207,35 @@ export default async function ReadingListsHubPage({
             <ListsSortDropdown selected={sort as CommunityListsSort} />
           </div>
 
+          <ListsTagFilterStrip
+            tags={topTags}
+            activeTags={tagFilters}
+            locale={locale}
+            preserve={{ tab, sort: sortForUrl }}
+          />
+
+          {tagFilters.length > 0 && (
+            <div className="mb-3">
+              <ActiveFilterChips
+                chips={tagFilters.map((t) => ({
+                  label: `tag: ${t}`,
+                  removeHref: (() => {
+                    const remaining = tagFilters.filter((x) => x !== t)
+                    const sp = new URLSearchParams()
+                    if (tab && tab !== 'all') sp.set('tab', tab)
+                    if (sortForUrl) sp.set('sort', sortForUrl)
+                    if (remaining.length > 0)
+                      sp.set('tags', remaining.join(','))
+                    const qs = sp.toString()
+                    return `/${locale}/community/reading-lists${qs ? `?${qs}` : ''}`
+                  })(),
+                }))}
+              />
+            </div>
+          )}
+
           <ListsGrid
+            tagFilters={tagFilters}
             rows={rows.map((r) => ({
               ...r,
               coverPreviews: r.coverPreviews
@@ -185,6 +257,7 @@ export default async function ReadingListsHubPage({
               locale={locale}
               tab={tab}
               sort={sortForUrl}
+              tags={tagFilters}
             />
           ) : null}
         </div>

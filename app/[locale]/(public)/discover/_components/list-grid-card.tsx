@@ -8,6 +8,7 @@ import { ListCard, type ListCardData } from '@/components/list/list-card'
 type Props = {
   list: DiscoverListCardData
   locale: string
+  tagHrefBuilder?: (tag: string) => string
 }
 
 function adapt(list: DiscoverListCardData): ListCardData {
@@ -17,6 +18,7 @@ function adapt(list: DiscoverListCardData): ListCardData {
     description: list.description,
     genre:
       list.genre && isValidGenre(list.genre) ? GENRE_LABEL[list.genre] : null,
+    tags: list.tags ?? [],
     bookCount: list.bookCount,
     followerCount: list.followerCount,
     sourceTag: null,
@@ -35,13 +37,14 @@ function adapt(list: DiscoverListCardData): ListCardData {
   }
 }
 
-export function ListGridCard({ list, locale }: Props) {
+export function ListGridCard({ list, locale, tagHrefBuilder }: Props) {
   return (
     <ListCard
       list={adapt(list)}
       size="md"
       showSourceTag={false}
       href={`/${locale}/community/reading-lists/${list.id}`}
+      tagHrefBuilder={tagHrefBuilder}
     />
   )
 }

@@ -15,6 +15,9 @@ type Props = {
   trendingHint: { title: string; curator: string } | null
   smallestOwnedListId: string | null
   highestFollowerListId: string | null
+  /** Currently active tag filters (lowercase, normalized). Clicking a tag pill
+   *  on a card toggles it in/out of this list. */
+  tagFilters?: string[]
 }
 
 /**
@@ -33,7 +36,18 @@ export function ListsGrid({
   trendingHint,
   smallestOwnedListId,
   highestFollowerListId,
+  tagFilters = [],
 }: Props) {
+  const activeSet = new Set(tagFilters)
+  function tagHrefBuilder(tag: string): string {
+    const next = activeSet.has(tag)
+      ? tagFilters.filter((t) => t !== tag)
+      : [...tagFilters, tag]
+    const sp = new URLSearchParams()
+    if (next.length > 0) sp.set('tags', next.join(','))
+    const qs = sp.toString()
+    return `/${locale}/community/reading-lists${qs ? `?${qs}` : ''}`
+  }
   const { dismissed, dismiss } = useDismissedListGhosts()
 
   const ghosts = pickListGhosts({
@@ -50,6 +64,7 @@ export function ListsGrid({
           size="md"
           showSourceTag={true}
           href={`/${locale}/community/reading-lists/${row.id}`}
+          tagHrefBuilder={tagHrefBuilder}
         />
       ))}
       {ghosts.map((variant, i) => (

@@ -7,7 +7,21 @@ export const createListSchema = z
     visibility: z.enum(['PUBLIC', 'FRIENDS', 'PRIVATE']).default('PUBLIC'),
     discoverable: z.boolean().optional().default(true),
     tags: z
-      .array(z.string().trim().toLowerCase().min(1).max(20))
+      .array(
+        z
+          .string()
+          .trim()
+          .toLowerCase()
+          .min(1)
+          .max(20)
+          // Issue #22: tags appear in URL filters (?tags=a,b) and tag-route
+          // slugs, so we reject literal hyphens (slug separator) + commas
+          // (multi-select separator) + slashes (path separator) + plus signs
+          // (URL space encoding).
+          .regex(/^[^,\-/+]+$/, {
+            message: 'Tags cannot contain , - / or +',
+          }),
+      )
       .max(5)
       .default([]),
   })
@@ -23,7 +37,17 @@ export const updateListSchema = z.object({
   visibility: z.enum(['PUBLIC', 'FRIENDS', 'PRIVATE']).optional(),
   discoverable: z.boolean().optional(),
   tags: z
-    .array(z.string().trim().toLowerCase().min(1).max(20))
+    .array(
+      z
+        .string()
+        .trim()
+        .toLowerCase()
+        .min(1)
+        .max(20)
+        .regex(/^[^,\-/+]+$/, {
+          message: 'Tags cannot contain , - / or +',
+        }),
+    )
     .max(5)
     .optional(),
 })

@@ -281,7 +281,7 @@ export async function ClubsGrid({ sp, locale }: Props) {
             totalPages={totalPages}
             baseParams={{
               ...toggleBaseParams,
-              mode: resolvedMode === 'trending' ? undefined : resolvedMode,
+              mode: resolvedMode === 'all' ? undefined : resolvedMode,
             }}
           />
         </>

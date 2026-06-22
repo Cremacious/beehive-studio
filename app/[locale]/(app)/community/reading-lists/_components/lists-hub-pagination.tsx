@@ -7,6 +7,7 @@ type Props = {
   locale: string
   tab: string
   sort: string
+  tags?: string[]
 }
 
 /**
@@ -22,6 +23,7 @@ export function ListsHubPagination({
   locale,
   tab,
   sort,
+  tags,
 }: Props) {
   if (totalPages <= 1) return null
 
@@ -30,6 +32,7 @@ export function ListsHubPagination({
     const sp = new URLSearchParams()
     if (tab && tab !== '') sp.set('tab', tab)
     if (sort && sort !== '') sp.set('sort', sort)
+    if (tags && tags.length > 0) sp.set('tags', tags.join(','))
     if (n !== 1) sp.set('page', String(n))
     const qs = sp.toString()
     return qs ? `${basePath}?${qs}` : basePath

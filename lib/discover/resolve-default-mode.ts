@@ -2,15 +2,13 @@ import type { ModeId } from './url-state'
 
 /**
  * Resolves the default mode for /discover when no `?mode=` URL param is set.
- * - Authed + has any discovery signal (≥1 follow, like, or own book) → 'for-you'
- * - Authed + zero signals (new account) → 'trending'
- * - Guest → 'trending'
+ * Always 'all' — the discovery surface defaults to the broadest view so users
+ * see the full catalog first. For You / Trending / Popular are opt-in via the
+ * mode toggle. (Was: 'for-you' for authed-with-signal users, 'trending' else.)
  */
-export function resolveDefaultMode(opts: {
+export function resolveDefaultMode(_opts: {
   isAuthed: boolean
   hasSignal: boolean
 }): ModeId {
-  if (!opts.isAuthed) return 'trending'
-  if (!opts.hasSignal) return 'trending'
-  return 'for-you'
+  return 'all'
 }

@@ -805,6 +805,9 @@ export async function searchListsDiscoverAction(args: {
   genre?: GenreSlug
   /** Multi-select genre; non-empty array takes precedence over single `genre`. */
   genres?: string[]
+  /** Multi-select tag filter, AND semantics (issue #22). Lowercased before
+   *  matching via the GIN-indexed `tags @> ARRAY[...]` operator. */
+  tags?: string[]
   /**
    * Book-count bucket — small (<=5), mid (6-20), large (>20).
    * 'any' (default) applies no filter.
@@ -852,13 +855,33 @@ export async function searchListsDiscoverAction(args: {
 
   if (trimmed.length > 0) {
     const pattern = `%${trimmed}%`
+    const qLower = trimmed.toLowerCase()
     const titleOr = or(
       sql`${readingLists.title} ILIKE ${pattern}`,
       sql`${readingLists.description} ILIKE ${pattern}`,
       sql`${userProfiles.username} ILIKE ${pattern}`,
       sql`${userProfiles.displayName} ILIKE ${pattern}`,
+      // Issue #22: q also matches when any tag contains the search string
+      // (case-insensitive substring via EXISTS+UNNEST since tags are stored
+      // as text[]). Tags themselves are already lowercase.
+      sql`EXISTS (SELECT 1 FROM UNNEST(${readingLists.tags}) AS t WHERE t LIKE ${`%${qLower}%`})`,
     )
     if (titleOr) conds.push(titleOr)
+  }
+
+  // Multi-tag filter, AND semantics — uses the reading_lists_tags_gin index.
+  // Bind each tag as its own param + build an explicit ARRAY[...]::text[]
+  // literal so postgres sees an array on the RHS (passing a JS array straight
+  // into `@>` makes drizzle/pg serialize it as a scalar string).
+  const tagFilters = (args.tags ?? [])
+    .map((t) => t.trim().toLowerCase())
+    .filter((t) => t.length > 0)
+  if (tagFilters.length > 0) {
+    const tagParams = sql.join(
+      tagFilters.map((t) => sql`${t}`),
+      sql`, `,
+    )
+    conds.push(sql`${readingLists.tags} @> ARRAY[${tagParams}]::text[]`)
   }
 
   // Size bucket on bookCount denorm column.
@@ -1065,5 +1088,76 @@ export async function getListGenreCountsAction(): Promise<
   ActionResult<Record<GenreSlug, number>>
 > {
   const data = await getListGenreCountsCached()
+  return { success: true, data }
+}
+
+// ─── Top tags for Discover sidebar (issue #22) ────────────────────────────────
+
+export type TopDiscoverListTag = { tag: string; count: number }
+
+/**
+ * Top N tags across PUBLIC + discoverable + CUSTOM reading lists. Optionally
+ * scoped to a single genre so the sidebar on `/discover/lists/genre/[slug]`
+ * shows tags relevant to that genre (per Q4 scope-aware decision).
+ *
+ * 5min revalidate (matches genre-count precedent). Two cache keys: one global,
+ * one per genre slug.
+ */
+const getTopDiscoverListTagsGlobalCached = unstable_cache(
+  async (limit: number): Promise<TopDiscoverListTag[]> => {
+    const result = await db.execute<{ tag: string; count: number }>(sql`
+      SELECT tag, COUNT(*)::int AS count
+      FROM reading_lists l, UNNEST(l.tags) AS tag
+      WHERE l.visibility = 'PUBLIC'
+        AND l.discoverable = true
+        AND l.kind = 'CUSTOM'
+      GROUP BY tag
+      ORDER BY count DESC, tag ASC
+      LIMIT ${limit}
+    `)
+    const rows =
+      (result as unknown as { rows?: unknown[] }).rows ??
+      (result as unknown as unknown[])
+    const typed = rows as Array<{ tag: string; count: number }>
+    return typed.map((r) => ({ tag: r.tag, count: Number(r.count) }))
+  },
+  ['discover-lists-top-tags-global'],
+  { revalidate: 300, tags: ['discover-lists-top-tags'] },
+)
+
+const getTopDiscoverListTagsByGenreCached = unstable_cache(
+  async (
+    genre: GenreSlug,
+    limit: number,
+  ): Promise<TopDiscoverListTag[]> => {
+    const result = await db.execute<{ tag: string; count: number }>(sql`
+      SELECT tag, COUNT(*)::int AS count
+      FROM reading_lists l, UNNEST(l.tags) AS tag
+      WHERE l.visibility = 'PUBLIC'
+        AND l.discoverable = true
+        AND l.kind = 'CUSTOM'
+        AND l.genre = ${genre}
+      GROUP BY tag
+      ORDER BY count DESC, tag ASC
+      LIMIT ${limit}
+    `)
+    const rows =
+      (result as unknown as { rows?: unknown[] }).rows ??
+      (result as unknown as unknown[])
+    const typed = rows as Array<{ tag: string; count: number }>
+    return typed.map((r) => ({ tag: r.tag, count: Number(r.count) }))
+  },
+  ['discover-lists-top-tags-by-genre'],
+  { revalidate: 300, tags: ['discover-lists-top-tags'] },
+)
+
+export async function getTopDiscoverListTagsAction(args: {
+  limit?: number
+  genre?: GenreSlug
+} = {}): Promise<ActionResult<TopDiscoverListTag[]>> {
+  const limit = Math.min(Math.max(1, args.limit ?? 10), 50)
+  const data = args.genre
+    ? await getTopDiscoverListTagsByGenreCached(args.genre, limit)
+    : await getTopDiscoverListTagsGlobalCached(limit)
   return { success: true, data }
 }

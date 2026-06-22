@@ -288,7 +288,7 @@ export async function BooksGrid({ sp, locale }: Props) {
               series: series !== 'any' ? series : undefined,
               updated: updated !== 'anytime' ? updated : undefined,
               sort: sort !== 'recent' ? sort : undefined,
-              mode: resolvedMode === 'trending' ? undefined : resolvedMode,
+              mode: resolvedMode === 'all' ? undefined : resolvedMode,
             }}
           />
         </>

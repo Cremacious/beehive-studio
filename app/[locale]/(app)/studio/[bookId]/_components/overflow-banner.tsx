@@ -1,10 +1,13 @@
 'use client'
 
-import Link from 'next/link'
+import { useState } from 'react'
 import { useParams } from 'next/navigation'
+import { UpgradeModal } from '@/components/upgrade/upgrade-modal'
+import { FEATURE_COPY } from '@/lib/upgrade/feature-registry'
 
 export function OverflowBanner() {
   const params = useParams<{ locale: string }>()
+  const [open, setOpen] = useState(false)
   return (
     <div
       data-slot="overflow-banner"
@@ -29,11 +32,11 @@ export function OverflowBanner() {
           className="text-xs"
           style={{ color: 'var(--canvas-dark-ink-muted)' }}
         >
-          Upgrade to keep editing all your books.
+          {FEATURE_COPY['overflow'].benefit}
         </p>
       </div>
-      <Link
-        href={`/${params.locale}/pricing`}
+      <button
+        onClick={() => setOpen(true)}
         className="text-sm font-semibold px-4 py-2 hover:bg-brand-hover transition-colors shrink-0"
         style={{
           background: 'var(--color-brand)',
@@ -42,7 +45,14 @@ export function OverflowBanner() {
         }}
       >
         Upgrade
-      </Link>
+      </button>
+      <UpgradeModal
+        feature="overflow"
+        locale={params.locale}
+        isAuthed
+        open={open}
+        onOpenChange={setOpen}
+      />
     </div>
   )
 }

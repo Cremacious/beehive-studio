@@ -121,7 +121,7 @@ export function ImportModal({ open, onClose }: Props) {
         {/* Body */}
         <div className="px-[22px] pb-[2px]">
           {!isPremium ? (
-            <ImportUpsell locale={locale} />
+            <ImportUpsell locale={locale} isAuthed />
           ) : imp.status === 'parsing' ? (
             <div className="flex items-center justify-center gap-3 py-10" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
               <Loader2 size={18} className="animate-spin" />

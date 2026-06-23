@@ -67,7 +67,7 @@ export function ImportWizardPanel({ locale, isPremium, onBack, onConfirm }: Prop
         {/* Body */}
         <div className="px-6 py-6">
           {!isPremium ? (
-            <ImportUpsell locale={locale} />
+            <ImportUpsell locale={locale} isAuthed />
           ) : imp.status === 'parsing' ? (
             <div className="flex items-center justify-center gap-3 py-12" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
               <Loader2 size={18} className="animate-spin" />

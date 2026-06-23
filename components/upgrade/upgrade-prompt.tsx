@@ -34,7 +34,7 @@ export function UpgradePrompt({
   }, [feature])
 
   function handleOpen() {
-    trackEvent('upgrade_modal_opened', { feature })
+    // upgrade_modal_opened is fired by UpgradeModal itself on open transition.
     setOpen(true)
   }
 

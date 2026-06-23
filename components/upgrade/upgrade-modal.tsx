@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Check, Sparkles } from 'lucide-react'
 import {
@@ -27,6 +27,16 @@ export function UpgradeModal({ feature, locale, isAuthed, open, onOpenChange }: 
   const copy = FEATURE_COPY[feature]
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const wasOpen = useRef(false)
+
+  // Fire once each time the modal transitions closed -> open, regardless of how
+  // it was opened (the prompt button OR a gate opening it directly).
+  useEffect(() => {
+    if (open && !wasOpen.current) {
+      trackEvent('upgrade_modal_opened', { feature })
+    }
+    wasOpen.current = open
+  }, [open, feature])
 
   async function handleUpgrade() {
     if (loading) return

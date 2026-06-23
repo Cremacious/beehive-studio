@@ -1,6 +1,6 @@
 import { headers } from 'next/headers'
 import { auth } from '@/lib/auth'
-import { stripe } from '@/lib/stripe/client'
+import { getPricingData } from '@/lib/upgrade/pricing-data'
 import { PlanCard } from './_components/plan-card'
 
 export const revalidate = 3600 // ISR — refresh Stripe prices hourly
@@ -10,43 +10,38 @@ type Props = { params: Promise<{ locale: string }> }
 export default async function PricingPage({ params }: Props) {
   const { locale } = await params
 
-  // Fetch Stripe prices in parallel.
-  let monthly: Awaited<ReturnType<typeof stripe.prices.retrieve>> | null = null
-  let annual: Awaited<ReturnType<typeof stripe.prices.retrieve>> | null = null
-  let priceError: string | null = null
-
-  try {
-    const monthlyId = process.env.STRIPE_PRICE_ID_MONTHLY
-    const annualId = process.env.STRIPE_PRICE_ID_ANNUAL
-    if (!monthlyId || !annualId) {
-      throw new Error('Stripe price IDs are not configured')
-    }
-    ;[monthly, annual] = await Promise.all([
-      stripe.prices.retrieve(monthlyId),
-      stripe.prices.retrieve(annualId),
-    ])
-  } catch (err) {
-    priceError = err instanceof Error ? err.message : 'Failed to load pricing'
-  }
+  const pricing = await getPricingData()
 
   const session = await auth.api.getSession({ headers: await headers() })
   const isAuthed = !!session?.user
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-4 py-12 gap-10">
+    <main className="min-h-screen flex flex-col items-center px-4 py-16 gap-10">
       <header className="text-center max-w-xl flex flex-col gap-3">
-        <h1
-          className="text-4xl font-bold text-foreground"
-          style={{ fontFamily: 'var(--font-display)', letterSpacing: '-0.02em' }}
+        <span
+          className="uppercase"
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 11,
+            fontWeight: 600,
+            letterSpacing: '0.12em',
+            color: 'var(--brand)',
+          }}
         >
-          Beehive Premium
+          Simple, honest pricing
+        </span>
+        <h1
+          className="text-4xl font-bold"
+          style={{ fontFamily: 'var(--font-display)', color: 'var(--brand)', letterSpacing: '-0.02em' }}
+        >
+          Write more. Worry less.
         </h1>
-        <p className="text-base text-muted-foreground leading-relaxed">
-          Unlimited books. Version history. The full writer&apos;s workshop.
+        <p className="text-base leading-relaxed" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
+          Start free. Upgrade when your writing demands it.
         </p>
       </header>
 
-      {priceError || !monthly || !annual ? (
+      {!pricing.ok ? (
         <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-center text-sm text-destructive max-w-md">
           Pricing is temporarily unavailable. Refresh in a moment, or
           <a href="mailto:support@beehive.studio" className="underline ml-1">
@@ -58,16 +53,9 @@ export default async function PricingPage({ params }: Props) {
         <PlanCard
           locale={locale}
           isAuthed={isAuthed}
-          monthly={{
-            id: monthly.id,
-            amount: monthly.unit_amount ?? 0,
-            currency: monthly.currency,
-          }}
-          annual={{
-            id: annual.id,
-            amount: annual.unit_amount ?? 0,
-            currency: annual.currency,
-          }}
+          monthly={pricing.monthly}
+          annual={pricing.annual}
+          savingsPct={pricing.savingsPct}
         />
       )}
     </main>

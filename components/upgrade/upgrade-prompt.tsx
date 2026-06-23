@@ -25,11 +25,11 @@ export function UpgradePrompt({
 }: Props) {
   const [open, setOpen] = useState(false)
   const copy = FEATURE_COPY[feature]
-  const shown = useRef(false)
+  const lastFired = useRef<GateKey | null>(null)
 
   useEffect(() => {
-    if (shown.current) return
-    shown.current = true
+    if (lastFired.current === feature) return
+    lastFired.current = feature
     trackEvent('upgrade_prompt_shown', { feature })
   }, [feature])
 

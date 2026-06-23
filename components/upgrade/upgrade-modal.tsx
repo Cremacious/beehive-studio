@@ -34,6 +34,7 @@ export function UpgradeModal({ feature, locale, isAuthed, open, onOpenChange }: 
     setLoading(true)
     trackEvent('checkout_started', { feature, cycle: 'monthly' })
     if (!isAuthed) {
+      setLoading(false)
       window.location.href = `/${locale}/sign-up?next=${encodeURIComponent(`/${locale}/pricing`)}`
       return
     }
@@ -53,7 +54,7 @@ export function UpgradeModal({ feature, locale, isAuthed, open, onOpenChange }: 
           <span
             className="inline-flex items-center gap-1 self-start px-2 py-0.5 rounded-sm uppercase"
             style={{
-              fontSize: 9.5,
+              fontSize: '9.5px',
               fontWeight: 700,
               letterSpacing: '0.12em',
               background: 'var(--brand)',

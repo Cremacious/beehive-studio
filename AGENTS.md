@@ -42,7 +42,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 >
 > **GitHub Issues — Ordered Execution Queue update:** #32 ✅. Next: **#18 For You recommendation system** (now unblocked — depends on #21, #22, #32 all of which have shipped).
 >
-> **Next concrete step:** Proceed to **#18 For You recommendation system** (now unblocked — depends on #21, #22, #32 all of which have shipped).
+> **Next concrete step:** Proceed to **#39 Club cover image update** (next in queue).
 >
 > **Smoke checklist for #32 if any regression surfaces:
 > 1. `/en/community/reading-lists` — top-tag strip below tab strip; click a chip → URL becomes `?tags=X` + grid filters + chip turns brand-yellow; click again → unselects.

@@ -146,4 +146,73 @@ describe('tiptapToHtml', () => {
     }
     expect(tiptapToHtml(doc)).toBe('<p></p>')
   })
+
+  it('converts inline code marks', () => {
+    const doc = {
+      type: 'doc',
+      content: [{
+        type: 'paragraph',
+        content: [{ type: 'text', text: 'const x = 1', marks: [{ type: 'code' }] }],
+      }],
+    }
+    expect(tiptapToHtml(doc)).toBe('<p><code>const x = 1</code></p>')
+  })
+
+  it('converts code blocks to <pre><code>', () => {
+    const doc = {
+      type: 'doc',
+      content: [{
+        type: 'codeBlock',
+        content: [{ type: 'text', text: 'line one\nline two' }],
+      }],
+    }
+    expect(tiptapToHtml(doc)).toBe('<pre><code>line one\nline two</code></pre>')
+  })
+
+  it('converts link marks with href', () => {
+    const doc = {
+      type: 'doc',
+      content: [{
+        type: 'paragraph',
+        content: [{ type: 'text', text: 'click', marks: [{ type: 'link', attrs: { href: 'https://example.com' } }] }],
+      }],
+    }
+    expect(tiptapToHtml(doc)).toBe('<p><a href="https://example.com">click</a></p>')
+  })
+
+  it('drops a link mark with no href rather than emitting a broken anchor', () => {
+    const doc = {
+      type: 'doc',
+      content: [{
+        type: 'paragraph',
+        content: [{ type: 'text', text: 'plain', marks: [{ type: 'link', attrs: {} }] }],
+      }],
+    }
+    expect(tiptapToHtml(doc)).toBe('<p>plain</p>')
+  })
+
+  it('honors text-align on paragraphs and headings', () => {
+    const doc = {
+      type: 'doc',
+      content: [
+        { type: 'heading', attrs: { level: 2, textAlign: 'center' }, content: [{ type: 'text', text: 'Centered' }] },
+        { type: 'paragraph', attrs: { textAlign: 'right' }, content: [{ type: 'text', text: 'Right' }] },
+        { type: 'paragraph', attrs: { textAlign: 'left' }, content: [{ type: 'text', text: 'Default' }] },
+      ],
+    }
+    expect(tiptapToHtml(doc)).toBe(
+      '<h2 style="text-align: center">Centered</h2><p style="text-align: right">Right</p><p>Default</p>',
+    )
+  })
+
+  it('renders a font-size span', () => {
+    const doc = {
+      type: 'doc',
+      content: [{
+        type: 'paragraph',
+        content: [{ type: 'text', text: 'big', marks: [{ type: 'fontSize', attrs: { size: '24px' } }] }],
+      }],
+    }
+    expect(tiptapToHtml(doc)).toBe('<p><span style="font-size: 24px">big</span></p>')
+  })
 })

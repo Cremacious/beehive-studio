@@ -1,11 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { FileText, BookOpen, Printer, X, Download } from 'lucide-react'
+import { FileText, BookOpen, Printer, X, Download, Check } from 'lucide-react'
 import { useBookEditor } from './book-editor-provider'
 
 type Format = 'docx' | 'epub' | 'pdf'
-type DocxStyle = 'manuscript' | 'basic'
+type StylePreset = 'manuscript' | 'basic'
+
+// DOCX and PDF share the manuscript/basic preset picker.
+const PRESET_FORMATS: Format[] = ['docx', 'pdf']
 
 type Props = {
   open: boolean
@@ -32,37 +35,50 @@ async function downloadFile(url: string, fallbackFilename: string) {
 type FormatDef = {
   value: Format
   label: string
-  meta: string
+  desc: string
   Icon: React.ComponentType<{ size?: number; className?: string }>
-  disabled?: boolean
 }
 
 const FORMATS: FormatDef[] = [
-  { value: 'docx', label: 'DOCX',  meta: 'Word document · agent-ready', Icon: FileText },
-  { value: 'epub', label: 'EPUB',  meta: 'For e-readers · self-publishing', Icon: BookOpen },
-  { value: 'pdf',  label: 'PDF',   meta: 'Coming soon', Icon: Printer, disabled: true },
+  { value: 'docx', label: 'DOCX', desc: 'Word document, agent-ready', Icon: FileText },
+  { value: 'epub', label: 'EPUB', desc: 'For e-readers and self-publishing', Icon: BookOpen },
+  { value: 'pdf', label: 'PDF', desc: 'Print-ready, with front and back matter', Icon: Printer },
 ]
+
+const PRESET_DESC: Record<StylePreset, (f: Format) => string> = {
+  manuscript: () => 'Double-spaced, Times New Roman, running header and page numbers',
+  basic: (f) =>
+    f === 'pdf'
+      ? 'Single-spaced, Helvetica, clean formatting'
+      : 'Single-spaced, Calibri, clean formatting',
+}
+
+// Shared token-driven surfaces (canonical --canvas-dark-* / --brand system).
+const TILE_BG = 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))'
+const BRAND_BORDER = 'oklch(0.85 0.18 90 / 0.5)'
+const CREAM_CHIP = 'linear-gradient(180deg, #fdf6e3, #f3e7c4)'
 
 export function ExportModal({ open, onClose }: Props) {
   const { bookId, bookTitle, wordCount } = useBookEditor()
   const [format, setFormat] = useState<Format>('docx')
-  const [docxStyle, setDocxStyle] = useState<DocxStyle>('manuscript')
+  const [stylePreset, setStylePreset] = useState<StylePreset>('manuscript')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   if (!open) return null
+
+  const showPreset = PRESET_FORMATS.includes(format)
 
   async function handleDownload() {
     setError(null)
     setLoading(true)
     try {
       if (format === 'docx') {
-        await downloadFile(
-          `/api/export/${bookId}/docx?style=${docxStyle}`,
-          `manuscript.docx`,
-        )
+        await downloadFile(`/api/export/${bookId}/docx?style=${stylePreset}`, 'manuscript.docx')
+      } else if (format === 'pdf') {
+        await downloadFile(`/api/export/${bookId}/pdf?style=${stylePreset}`, 'book.pdf')
       } else if (format === 'epub') {
-        await downloadFile(`/api/export/${bookId}/epub`, `book.epub`)
+        await downloadFile(`/api/export/${bookId}/epub`, 'book.epub')
       }
       onClose()
     } catch (e) {
@@ -82,17 +98,16 @@ export function ExportModal({ open, onClose }: Props) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="export-title"
-        className="w-[640px] max-w-[92vw]"
+        className="w-[560px] max-w-[92vw]"
         style={{
-          background:
-            'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+          background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
           borderRadius: 'var(--r-card)',
           boxShadow: 'var(--sh-card)',
           border: 'var(--br-card)',
         }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-[22px] pt-[18px] pb-[14px] gap-[18px]">
+        <div className="flex items-start justify-between gap-[18px] px-[22px] pt-[18px] pb-[14px]">
           <div>
             <h3
               id="export-title"
@@ -107,175 +122,174 @@ export function ExportModal({ open, onClose }: Props) {
             >
               Export {bookTitle}
             </h3>
-            <p
-              className="mt-0.5"
-              style={{ fontSize: 11, color: 'var(--canvas-dark-ink-muted)' }}
-            >
+            <p className="mt-[3px]" style={{ fontSize: 12, color: 'var(--canvas-dark-ink-muted)' }}>
               {wordCount.toLocaleString()} words
             </p>
           </div>
           <button
             onClick={onClose}
             aria-label="Close export"
-            className="inline-flex items-center justify-center rounded-md transition-colors hover:bg-surface-elevated"
+            className="inline-flex flex-none items-center justify-center rounded-md transition-colors"
             style={{ width: 30, height: 30, color: 'var(--canvas-dark-ink-muted)' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'oklch(1 0 0 / 0.06)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
           >
-            <X size={14} />
+            <X size={15} />
           </button>
         </div>
 
-        <div className="px-[22px] pb-[6px]">
-          {/* Format picker */}
+        <div className="px-[22px] pb-[2px]">
+          {/* Format label */}
           <div
             className="font-mono uppercase mb-3"
-            style={{
-              fontSize: 10,
-              letterSpacing: '0.16em',
-              color: 'var(--chrome-500)',
-            }}
+            style={{ fontSize: 11, letterSpacing: '0.16em', color: 'var(--canvas-dark-ink-muted)' }}
           >
             Format
           </div>
-          <div className="grid grid-cols-3 gap-2.5 mb-5">
+
+          {/* Format rows */}
+          <div role="radiogroup" aria-label="Export format" className="flex flex-col gap-2 mb-1">
             {FORMATS.map(f => {
               const isActive = format === f.value
               return (
                 <button
                   key={f.value}
-                  onClick={() => { if (!f.disabled) setFormat(f.value) }}
-                  disabled={f.disabled}
-                  className="text-left transition-colors relative"
+                  role="radio"
+                  aria-checked={isActive}
+                  onClick={() => setFormat(f.value)}
+                  className="flex items-center gap-[14px] text-left transition-colors"
                   style={{
-                    padding: '14px 14px 12px',
-                    borderRadius: 'var(--r-btn)',
-                    border: `1px solid ${isActive ? 'oklch(0.85 0.18 90 / 0.5)' : 'transparent'}`,
-                    background: isActive
-                      ? 'var(--brand-soft)'
-                      : 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+                    padding: '13px 14px',
+                    borderRadius: 'var(--r-row)',
+                    border: `1px solid ${isActive ? BRAND_BORDER : 'transparent'}`,
+                    background: isActive ? 'var(--brand-soft)' : TILE_BG,
                     boxShadow: isActive ? '0 0 0 1px oklch(0.85 0.18 90 / 0.25)' : 'var(--sh-tile)',
-                    cursor: f.disabled ? 'not-allowed' : 'pointer',
-                    opacity: f.disabled ? 0.5 : 1,
                   }}
                 >
-                  <div
-                    className="inline-flex items-center justify-center mb-2.5"
+                  <span
+                    className="inline-flex flex-none items-center justify-center"
                     style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: 6,
-                      background: isActive
-                        ? 'linear-gradient(180deg, var(--paper-100), oklch(0.92 0.020 82))'
-                        : 'linear-gradient(180deg, var(--chrome-900), var(--chrome-850))',
-                      border: `1px solid ${isActive ? 'oklch(0.82 0.020 78)' : 'var(--chrome-700)'}`,
-                      color: isActive ? 'var(--paper-ink-strong)' : 'var(--chrome-100)',
+                      width: 38,
+                      height: 38,
+                      borderRadius: 9,
+                      background: isActive ? CREAM_CHIP : 'var(--canvas-dark-100)',
+                      border: `1px solid ${isActive ? '#d8c48a' : 'oklch(1 0 0 / 0.06)'}`,
+                      color: isActive ? 'var(--brand-ink)' : 'var(--canvas-dark-ink)',
                     }}
                   >
-                    <f.Icon size={20} />
-                  </div>
-                  <div
+                    <f.Icon size={19} />
+                  </span>
+                  <span className="flex-1 min-w-0">
+                    <span
+                      className="block"
+                      style={{
+                        fontFamily: 'var(--font-display)',
+                        fontSize: 14,
+                        fontWeight: 700,
+                        letterSpacing: '-0.005em',
+                        color: isActive ? 'var(--brand)' : 'var(--canvas-dark-ink)',
+                      }}
+                    >
+                      {f.label}
+                    </span>
+                    <span
+                      className="block"
+                      style={{ fontSize: 12, lineHeight: 1.4, color: 'var(--canvas-dark-ink-muted)', marginTop: 1 }}
+                    >
+                      {f.desc}
+                    </span>
+                  </span>
+                  <span
+                    className="inline-flex flex-none items-center justify-center"
                     style={{
-                      fontFamily: 'var(--font-display)',
-                      fontSize: 13,
-                      fontWeight: 700,
-                      letterSpacing: '-0.005em',
-                      color: isActive ? 'var(--color-brand)' : 'var(--chrome-100)',
-                      marginBottom: 2,
+                      width: 20,
+                      height: 20,
+                      borderRadius: '50%',
+                      border: isActive ? 'none' : '2px solid oklch(1 0 0 / 0.18)',
+                      background: isActive ? 'var(--brand)' : 'transparent',
+                      color: 'var(--brand-ink)',
                     }}
                   >
-                    {f.label}
-                  </div>
-                  <div
-                    style={{ fontSize: 11, lineHeight: 1.4, color: 'var(--chrome-400)' }}
-                  >
-                    {f.meta}
-                  </div>
+                    {isActive && <Check size={13} strokeWidth={3} />}
+                  </span>
                 </button>
               )
             })}
           </div>
 
-          {/* DOCX style picker */}
-          {format === 'docx' && (
+          {/* Style preset — DOCX + PDF only */}
+          {showPreset && (
             <>
               <div
-                className="font-mono uppercase mb-3"
-                style={{
-                  fontSize: 10,
-                  letterSpacing: '0.16em',
-                  color: 'var(--chrome-500)',
-                }}
+                className="font-mono uppercase mb-3 mt-5"
+                style={{ fontSize: 11, letterSpacing: '0.16em', color: 'var(--canvas-dark-ink-muted)' }}
               >
                 Style preset
               </div>
-              <div className="grid grid-cols-2 gap-2.5 mb-5">
-                {(['manuscript', 'basic'] as DocxStyle[]).map(s => {
-                  const isActive = docxStyle === s
+              <div
+                role="radiogroup"
+                aria-label="Style preset"
+                className="flex gap-1 p-1 mb-2"
+                style={{
+                  background: 'var(--canvas-dark-100)',
+                  borderRadius: 'var(--r-btn)',
+                  boxShadow: 'var(--sh-tile)',
+                }}
+              >
+                {(['manuscript', 'basic'] as StylePreset[]).map(s => {
+                  const isActive = stylePreset === s
                   return (
                     <button
                       key={s}
-                      onClick={() => setDocxStyle(s)}
-                      className="text-left transition-colors"
+                      role="radio"
+                      aria-checked={isActive}
+                      onClick={() => setStylePreset(s)}
+                      className="flex-1 transition-colors"
                       style={{
-                        padding: '12px 14px',
-                        borderRadius: 'var(--r-btn)',
-                        border: `1px solid ${isActive ? 'oklch(0.85 0.18 90 / 0.5)' : 'transparent'}`,
-                        background: isActive
-                          ? 'var(--brand-soft)'
-                          : 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
-                        boxShadow: isActive ? '0 0 0 1px oklch(0.85 0.18 90 / 0.25)' : 'var(--sh-tile)',
+                        padding: '9px 0',
+                        borderRadius: 9,
+                        fontFamily: 'var(--font-display)',
+                        fontSize: 13,
+                        fontWeight: 700,
+                        letterSpacing: '-0.005em',
+                        background: isActive ? 'var(--brand-soft)' : 'transparent',
+                        boxShadow: isActive ? '0 0 0 1px oklch(0.85 0.18 90 / 0.3)' : 'none',
+                        color: isActive ? 'var(--brand)' : 'var(--canvas-dark-ink-muted)',
                       }}
                     >
-                      <div
-                        style={{
-                          fontFamily: 'var(--font-display)',
-                          fontSize: 12.5,
-                          fontWeight: 700,
-                          letterSpacing: '-0.005em',
-                          color: isActive ? 'var(--color-brand)' : 'var(--chrome-100)',
-                          marginBottom: 2,
-                        }}
-                      >
-                        {s === 'manuscript' ? 'Manuscript' : 'Basic'}
-                      </div>
-                      <div
-                        style={{ fontSize: 10.5, lineHeight: 1.4, color: 'var(--chrome-500)' }}
-                      >
-                        {s === 'manuscript'
-                          ? 'Double-spaced · Times New Roman · Agent-ready'
-                          : 'Single-spaced · Calibri · Clean formatting'}
-                      </div>
+                      {s === 'manuscript' ? 'Manuscript' : 'Basic'}
                     </button>
                   )
                 })}
               </div>
+              <p
+                className="mb-1"
+                style={{ fontSize: 11.5, lineHeight: 1.45, color: 'var(--canvas-dark-ink-muted)' }}
+              >
+                {PRESET_DESC[stylePreset](format)}
+              </p>
             </>
           )}
 
           {/* EPUB description */}
           {format === 'epub' && (
-            <div
-              className="mb-5 rounded-md px-4 py-3"
-              style={{
-                border: '1px solid var(--chrome-700)',
-                background: 'var(--chrome-800)',
-                fontSize: 12,
-                color: 'var(--chrome-300)',
-                lineHeight: 1.5,
-              }}
+            <p
+              className="mt-4 mb-1"
+              style={{ fontSize: 12, lineHeight: 1.5, color: 'var(--canvas-dark-ink-muted)' }}
             >
               For e-readers and self-publishing platforms. Includes a table of contents and chapter navigation.
-            </div>
+            </p>
           )}
 
           {/* Error */}
           {error && (
             <div
-              className="mb-4 rounded-md px-3 py-2"
+              className="mt-4 mb-1 rounded-md px-3 py-2"
               style={{
                 fontSize: 12,
                 border: '1px solid oklch(0.55 0.180 25 / 0.4)',
                 background: 'oklch(0.45 0.180 25 / 0.15)',
-                color: 'oklch(0.78 0.140 25)',
+                color: 'oklch(0.82 0.140 25)',
               }}
             >
               {error}
@@ -285,20 +299,26 @@ export function ExportModal({ open, onClose }: Props) {
 
         {/* Footer */}
         <div
-          className="flex items-center justify-end gap-2 px-[22px] py-[14px]"
-          style={{ borderTop: '1px solid var(--chrome-800)' }}
+          className="flex items-center justify-end gap-2 px-[22px] py-[14px] mt-2"
+          style={{ borderTop: '1px solid oklch(1 0 0 / 0.06)' }}
         >
           <button
             onClick={onClose}
             disabled={loading}
-            className="rounded-md px-4 py-2 text-sm transition-colors text-foreground/80 hover:text-foreground hover:bg-surface-elevated disabled:opacity-50"
+            className="rounded-md px-4 py-2 text-sm transition-colors disabled:opacity-50"
+            style={{ color: 'var(--canvas-dark-ink-muted)' }}
+            onMouseEnter={e => { if (!loading) { e.currentTarget.style.background = 'oklch(1 0 0 / 0.06)'; e.currentTarget.style.color = 'var(--canvas-dark-ink)' } }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--canvas-dark-ink-muted)' }}
           >
             Cancel
           </button>
           <button
             onClick={handleDownload}
             disabled={loading}
-            className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-colors bg-brand text-brand-ink hover:bg-brand-hover disabled:opacity-60 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-bold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            style={{ background: 'var(--brand)', color: 'var(--brand-ink)' }}
+            onMouseEnter={e => { if (!loading) e.currentTarget.style.background = 'var(--brand-hover)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'var(--brand)' }}
           >
             <Download size={14} />
             {loading ? 'Preparing…' : `Export ${format.toUpperCase()}`}

@@ -46,3 +46,4 @@ next-env.d.ts
 # scratch files
 push_err.txt
 push_out.txt
+tmp-export/

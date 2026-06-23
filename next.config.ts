@@ -14,6 +14,10 @@ const COMMUNITY_ROUTES = [
 ]
 
 const nextConfig: NextConfig = {
+  // pdfkit (PDF export) bundles fontkit, whose prebuilt ESM build imports an
+  // `@swc/helpers` export Turbopack can't resolve. Marking these external makes
+  // Node load their CommonJS builds at runtime instead of bundling them.
+  serverExternalPackages: ['pdfkit', 'fontkit'],
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'res.cloudinary.com' },

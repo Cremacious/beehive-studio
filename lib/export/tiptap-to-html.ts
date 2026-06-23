@@ -15,18 +15,32 @@ export function escapeHtml(text: string): string {
     .replace(/"/g, '&quot;')
 }
 
+// Render the `text-align` attr (set by the TextAlign extension on paragraphs
+// and headings) as an inline style attribute. Left alignment is the default,
+// so it's omitted to keep the markup lean.
+function alignAttr(node: TiptapNode): string {
+  const align = node.attrs?.textAlign
+  if (typeof align === 'string' && align !== 'left' && align.length > 0) {
+    return ` style="text-align: ${escapeHtml(align)}"`
+  }
+  return ''
+}
+
 function renderNode(node: TiptapNode): string {
   switch (node.type) {
     case 'doc':
       return (node.content ?? []).map(renderNode).join('')
 
     case 'paragraph':
-      return `<p>${(node.content ?? []).map(renderNode).join('')}</p>`
+      return `<p${alignAttr(node)}>${(node.content ?? []).map(renderNode).join('')}</p>`
 
     case 'heading': {
       const level = (node.attrs?.level as number) ?? 1
-      return `<h${level}>${(node.content ?? []).map(renderNode).join('')}</h${level}>`
+      return `<h${level}${alignAttr(node)}>${(node.content ?? []).map(renderNode).join('')}</h${level}>`
     }
+
+    case 'codeBlock':
+      return `<pre><code>${(node.content ?? []).map(renderNode).join('')}</code></pre>`
 
     case 'text': {
       let html = escapeHtml(node.text ?? '')
@@ -38,6 +52,14 @@ function renderNode(node: TiptapNode): string {
           case 'underline': html = `<u>${html}</u>`; break
           case 'strike':    html = `<s>${html}</s>`; break
           case 'highlight': html = `<mark>${html}</mark>`; break
+          case 'code':      html = `<code>${html}</code>`; break
+          case 'link': {
+            const href = mark.attrs?.href
+            if (typeof href === 'string' && href.length > 0) {
+              html = `<a href="${escapeHtml(href)}">${html}</a>`
+            }
+            break
+          }
           case 'fontSize': {
             const size = mark.attrs?.size
             if (typeof size === 'string' && size.length > 0) {

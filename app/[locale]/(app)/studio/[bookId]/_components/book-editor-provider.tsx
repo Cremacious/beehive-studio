@@ -77,6 +77,7 @@ type BookEditorContextValue = {
   bookOverflow: boolean
   bookHive: { hiveId: string } | null
   currentUserId: string | null
+  isPremium: boolean
   chapterContentVersion: number
   bumpChapterContentVersion: () => void
   gutterOpen: boolean
@@ -109,10 +110,11 @@ type Props = {
   bookOverflow?: boolean
   bookHive?: { hiveId: string } | null
   currentUserId?: string | null
+  isPremium?: boolean
   children: React.ReactNode
 }
 
-export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderItems, bookOverflow = false, bookHive = null, currentUserId = null, children }: Props) {
+export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderItems, bookOverflow = false, bookHive = null, currentUserId = null, isPremium = false, children }: Props) {
   const [binderItems, setBinderItems] = useState<BinderItemRow[]>(initialBinderItems)
   const [activeItemId, setActiveItemIdState] = useState<string | null>(null)
   const [chapterCache, setChapterCache] = useState<Map<string, ChapterData>>(new Map())
@@ -582,6 +584,7 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     bookOverflow,
     bookHive,
     currentUserId,
+    isPremium,
     chapterContentVersion,
     bumpChapterContentVersion,
     gutterOpen,
@@ -629,6 +632,7 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     bookOverflow,
     bookHive,
     currentUserId,
+    isPremium,
     chapterContentVersion,
     bumpChapterContentVersion,
     gutterOpen,

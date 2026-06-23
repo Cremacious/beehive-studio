@@ -13,6 +13,8 @@ import { createId } from '@paralleldrive/cuid2'
 import { revalidatePath } from 'next/cache'
 import { summarizeBookStatus, type BookSummaryStatus } from '@/lib/books/summarize-status'
 import { scopedBooksForUser } from '@/lib/books/scoped'
+import { extractWordCount } from '@/lib/tiptap-utils'
+import type { ImportedChapter } from '@/lib/import/types'
 import { recordSocialActivityTx } from '@/lib/social/record-activity'
 import { deleteCloudinaryImage, getCloudinaryPublicId } from '@/lib/cloudinary'
 
@@ -81,6 +83,10 @@ export async function createBookAction(input: {
   edition?: string
   visibility?: 'PRIVATE' | 'PUBLIC' | 'FRIENDS'
   discoverable?: boolean
+  // Optional parsed chapters from an import (premium "Import a manuscript" path).
+  // When present, they're inserted as root-level chapters in the SAME
+  // transaction that creates the book, so an imported book is fully atomic.
+  importedChapters?: ImportedChapter[]
 }): Promise<ActionResult<{ bookId: string }>> {
   const userId = await requireAuth()
 
@@ -95,6 +101,13 @@ export async function createBookAction(input: {
     if (currentCount >= FREE_BOOK_LIMIT) {
       return { success: false, error: 'FREE_LIMIT_REACHED' }
     }
+  }
+
+  // Importing a manuscript is premium-only — reject a free user who supplies a
+  // chapters payload directly, before any rows are written.
+  const importedChapters = (input.importedChapters ?? []).slice(0, 500)
+  if (importedChapters.length > 0 && !isPremium) {
+    return { success: false, error: 'PREMIUM_REQUIRED:import' }
   }
 
   const bookId = createId()
@@ -196,6 +209,33 @@ export async function createBookAction(input: {
     // The user creates their first chapter explicitly via the editor's empty
     // state CTA. Removed 2026-05-22 in SP2 — gives users naming agency from
     // the first keystroke.
+
+    // Imported chapters (premium "Import a manuscript" path). Inserted as
+    // root-level chapters in the same transaction so the book + its chapters
+    // land atomically. Import never combines with a template in the UI, so
+    // ordering from 0 is clean.
+    for (let i = 0; i < importedChapters.length; i++) {
+      const ch = importedChapters[i]
+      const chapterBinderId = createId()
+      const title = (ch.title ?? '').trim().slice(0, 200) || `Chapter ${i + 1}`
+      await tx.insert(binderItems).values({
+        id: chapterBinderId,
+        bookId,
+        parentId: null,
+        type: 'chapter',
+        title,
+        order: i,
+        authorId: userId,
+        lastEditedBy: userId,
+      })
+      await tx.insert(chapters).values({
+        id: createId(),
+        bookId,
+        binderItemId: chapterBinderId,
+        content: ch.content,
+        wordCount: extractWordCount(ch.content),
+      })
+    }
   })
 
   return { success: true, data: { bookId } }

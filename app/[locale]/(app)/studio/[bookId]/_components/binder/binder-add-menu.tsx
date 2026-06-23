@@ -9,6 +9,8 @@ import type { WikiCategory } from '@/lib/wiki/category-templates'
 import { createId } from '@paralleldrive/cuid2'
 import { WikiCategoryPicker } from './wiki-category-picker'
 import { FrontBackMatterPicker } from './front-back-matter-picker'
+import { ChapterSourcePicker } from './chapter-source-picker'
+import { ImportModal } from '../import/import-modal'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -34,11 +36,11 @@ type AddOption = {
   subtitle: string
   Icon: LucideIcon
   tint: string
-  special?: 'wiki-picker' | 'fm-bm-picker'
+  special?: 'wiki-picker' | 'fm-bm-picker' | 'chapter-source'
 }
 
 const MANUSCRIPT_OPTIONS: AddOption[] = [
-  { type: 'chapter',      label: 'Chapter',                  defaultTitle: 'Untitled Chapter', subtitle: 'The actual prose. Opens in the editor.',     Icon: FileText,   tint: 'var(--type-chapter)' },
+  { type: 'chapter',      label: 'Chapter',                  defaultTitle: 'Untitled Chapter', subtitle: 'Blank page, or import from a file.',         Icon: FileText,   tint: 'var(--type-chapter)', special: 'chapter-source' },
   { type: 'part',         label: 'Part (collection)',        defaultTitle: 'Untitled Part',    subtitle: 'A group of chapters (e.g., "Part One").',    Icon: BookOpen,   tint: 'var(--type-chapter)' },
   { type: 'front_matter', label: 'Front/Back matter ▸',      defaultTitle: '',                 subtitle: 'Title pages, dedication, acknowledgments…',  Icon: ScrollText, tint: 'var(--type-front-matter)', special: 'fm-bm-picker' },
 ]
@@ -88,47 +90,34 @@ function MenuItem({
 }
 
 export function BinderAddMenu() {
-  const { bookId, binderItems, addBinderItem, setActiveItemId, setPendingRenameId } = useBookEditor()
+  const { bookId, binderItems, addBinderItem, setActiveItemId, setPendingRenameId, isPremium } = useBookEditor()
   const [open, setOpen] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [fmBmPickerOpen, setFmBmPickerOpen] = useState(false)
+  const [chapterPickerOpen, setChapterPickerOpen] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
 
-  async function handleAdd(option: AddOption) {
-    setOpen(false)
-    if (option.special === 'wiki-picker') {
-      setPickerOpen(true)
-      return
-    }
-    if (option.special === 'fm-bm-picker') {
-      setFmBmPickerOpen(true)
-      return
-    }
+  // Create a root-level binder item (blank). Shared by the menu options and the
+  // "Blank chapter" choice in the chapter-source picker.
+  async function createRootItem(
+    type: BinderItemRow['type'],
+    title: string,
+    content: Record<string, unknown> | null,
+  ) {
     const rootItems = binderItems.filter(i => i.parentId === null)
     const maxOrder = rootItems.length > 0 ? Math.max(...rootItems.map(i => i.order)) : -1
     const order = maxOrder + 1
 
-    const initialContent =
-      option.type === 'front_matter' || option.type === 'back_matter'
-        ? { subtype: null, fields: {} }
-        : null
-
-    const result = await createBinderItemAction({
-      bookId,
-      parentId: null,
-      type: option.type,
-      title: option.defaultTitle,
-      order,
-      content: initialContent,
-    })
+    const result = await createBinderItemAction({ bookId, parentId: null, type, title, order, content })
     if (result.success) {
       addBinderItem({
         id: result.data.id,
         bookId,
         parentId: null,
-        type: option.type,
-        title: option.defaultTitle,
+        type,
+        title,
         order,
-        content: initialContent,
+        content,
         authorId: null,
         lastEditedBy: null,
         chapterId: result.data.chapterId,
@@ -140,6 +129,36 @@ export function BinderAddMenu() {
       setPendingRenameId(result.data.id)
     } else {
       console.error('createBinderItemAction failed:', result.error)
+    }
+  }
+
+  async function handleAdd(option: AddOption) {
+    setOpen(false)
+    if (option.special === 'wiki-picker') {
+      setPickerOpen(true)
+      return
+    }
+    if (option.special === 'fm-bm-picker') {
+      setFmBmPickerOpen(true)
+      return
+    }
+    if (option.special === 'chapter-source') {
+      setChapterPickerOpen(true)
+      return
+    }
+    const initialContent =
+      option.type === 'front_matter' || option.type === 'back_matter'
+        ? { subtype: null, fields: {} }
+        : null
+    await createRootItem(option.type, option.defaultTitle, initialContent)
+  }
+
+  function handleChapterSource(source: 'blank' | 'import') {
+    setChapterPickerOpen(false)
+    if (source === 'blank') {
+      void createRootItem('chapter', 'Untitled Chapter', null)
+    } else {
+      setImportOpen(true)
     }
   }
 
@@ -281,6 +300,13 @@ export function BinderAddMenu() {
       </DropdownMenu>
       <WikiCategoryPicker open={pickerOpen} onOpenChange={setPickerOpen} onPick={handlePickCategory} />
       <FrontBackMatterPicker open={fmBmPickerOpen} onOpenChange={setFmBmPickerOpen} onPick={handlePickFmBm} />
+      <ChapterSourcePicker
+        open={chapterPickerOpen}
+        onOpenChange={setChapterPickerOpen}
+        onPick={handleChapterSource}
+        isPremium={isPremium}
+      />
+      <ImportModal open={importOpen} onClose={() => setImportOpen(false)} />
     </>
   )
 }

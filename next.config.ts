@@ -17,7 +17,10 @@ const nextConfig: NextConfig = {
   // pdfkit (PDF export) bundles fontkit, whose prebuilt ESM build imports an
   // `@swc/helpers` export Turbopack can't resolve. Marking these external makes
   // Node load their CommonJS builds at runtime instead of bundling them.
-  serverExternalPackages: ['pdfkit', 'fontkit'],
+  // mammoth / pdfjs-dist (document import) are heavy Node-only parsers that are
+  // dynamic-imported inside server actions; externalizing keeps Turbopack from
+  // trying to bundle/transform them.
+  serverExternalPackages: ['pdfkit', 'fontkit', 'mammoth', 'pdfjs-dist'],
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'res.cloudinary.com' },

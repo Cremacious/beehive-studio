@@ -5,6 +5,7 @@ import { getBookAction } from '@/lib/actions/book.actions'
 import { getBinderTreeAction } from '@/lib/actions/binder.actions'
 import { getBookHive } from '@/lib/hive/get-book-hive'
 import { isBookOverflow } from '@/lib/billing/book-overflow'
+import { getUserPremiumStatus } from '@/lib/premium'
 import { BookEditorProvider } from './_components/book-editor-provider'
 import { StudioShell } from './_components/studio-shell'
 import { ErrorToasts } from './_components/error-toasts'
@@ -33,9 +34,12 @@ export default async function BookEditorPage({ params }: Props) {
   if (!bookResult!.success || !binderResult!.success) notFound()
 
   const session = await auth.api.getSession({ headers: await headers() })
-  const bookOverflow = session?.user
-    ? await isBookOverflow(session.user.id, bookId)
-    : false
+  const [bookOverflow, isPremium] = session?.user
+    ? await Promise.all([
+        isBookOverflow(session.user.id, bookId),
+        getUserPremiumStatus(session.user.id),
+      ])
+    : [false, false]
 
   return (
     <BookEditorProvider
@@ -46,6 +50,7 @@ export default async function BookEditorPage({ params }: Props) {
       bookOverflow={bookOverflow}
       bookHive={bookHive!}
       currentUserId={session?.user?.id ?? null}
+      isPremium={isPremium}
     >
       <StudioShell />
       <ErrorToasts />

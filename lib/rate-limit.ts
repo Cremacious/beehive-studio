@@ -28,3 +28,5 @@ export const searchLimiter = makeRatelimit('rl:search', Ratelimit.slidingWindow(
 export const pageLimiter = makeRatelimit('rl:page', Ratelimit.slidingWindow(200, '1 m'))
 export const apiLimiter = makeRatelimit('rl:api', Ratelimit.slidingWindow(60, '1 m'))
 export const checkoutLimiter = makeRatelimit('rl:checkout', Ratelimit.slidingWindow(5, '1 h'))
+// Import parsing is CPU-heavy (docx/pdf/epub extraction). Keep the window tight.
+export const importLimiter = makeRatelimit('rl:import', Ratelimit.slidingWindow(10, '1 h'))

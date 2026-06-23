@@ -13,6 +13,9 @@ import { StepThree, type BookTemplate } from '../../_components/create-book-wiza
 import { StepHeader } from '../../_components/create-book-wizard/step-header'
 import { WizardFooter } from '../../_components/create-book-wizard/wizard-field'
 import { SharingControls, type Visibility } from '@/components/book/sharing-controls'
+import { CreationPathLanding } from './creation-path-landing'
+import { ImportWizardPanel } from './import-wizard-panel'
+import type { ImportedChapter } from '@/lib/import/types'
 
 type Step = 1 | 2 | 3 | 4
 
@@ -69,12 +72,19 @@ const TOTAL_STEPS = 4
 type Props = {
   locale: string
   templates: BookTemplate[]
+  isPremium: boolean
 }
 
-export function BookCreationForm({ locale, templates }: Props) {
+type Path = 'choose' | 'import' | 'scratch'
+
+export function BookCreationForm({ locale, templates, isPremium }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const withHive = searchParams.get('withHive') === '1'
+  // Entry path: the landing choice (scratch vs import) shows first. Starting
+  // "with a hive" jumps straight into the scratch wizard.
+  const [path, setPath] = useState<Path>(withHive ? 'scratch' : 'choose')
+  const [importedChapters, setImportedChapters] = useState<ImportedChapter[]>([])
   const [step, setStep] = useState<Step>(1)
   const [direction, setDirection] = useState<'forward' | 'back'>('forward')
 
@@ -144,7 +154,9 @@ export function BookCreationForm({ locale, templates }: Props) {
         contentWarnings: form.contentWarnings.length ? form.contentWarnings : undefined,
         compTitles: form.compTitles.filter(Boolean).length ? form.compTitles.filter(Boolean) : undefined,
         language: form.language || undefined,
-        templateId: form.templateId || undefined,
+        // Imported chapters seed the binder directly, so skip any template
+        // structure to avoid colliding chapter orders.
+        templateId: importedChapters.length > 0 ? undefined : form.templateId || undefined,
         seriesName: form.isSeriesBook && form.seriesName ? form.seriesName : undefined,
         seriesNumber: form.isSeriesBook && form.seriesNumber ? parseInt(form.seriesNumber, 10) : undefined,
         publisherName: form.publisherName || undefined,
@@ -152,6 +164,7 @@ export function BookCreationForm({ locale, templates }: Props) {
         edition: form.edition || undefined,
         visibility: form.visibility,
         discoverable: form.discoverable,
+        importedChapters: importedChapters.length > 0 ? importedChapters : undefined,
       })
 
       if (!result.success) {
@@ -170,6 +183,35 @@ export function BookCreationForm({ locale, templates }: Props) {
   }
 
   const animClass = direction === 'forward' ? 'step-enter-forward' : 'step-enter-back'
+
+  if (path === 'choose') {
+    return (
+      <CreationPathLanding
+        locale={locale}
+        isPremium={isPremium}
+        onPickScratch={() => setPath('scratch')}
+        onPickImport={() => setPath('import')}
+      />
+    )
+  }
+
+  if (path === 'import') {
+    return (
+      <ImportWizardPanel
+        locale={locale}
+        isPremium={isPremium}
+        onBack={() => setPath('choose')}
+        onConfirm={(chapters, detectedTitle) => {
+          setImportedChapters(chapters)
+          // Pre-fill the title from the detected title (or filename) so the
+          // user lands in Basics with a sensible starting point (Option B).
+          if (detectedTitle && !form.title.trim()) update({ title: detectedTitle })
+          setPath('scratch')
+          setStep(1)
+        }}
+      />
+    )
+  }
 
   return (
     <div
@@ -304,6 +346,27 @@ export function BookCreationForm({ locale, templates }: Props) {
                   lede={STEP_LEDES[step - 1]}
                 />
               </div>
+
+              {importedChapters.length > 0 && (
+                <div
+                  className="flex items-center gap-2.5 mb-6"
+                  style={{
+                    padding: '10px 14px',
+                    borderRadius: 'var(--r-row)',
+                    background: 'var(--brand-soft)',
+                    border: '1px solid oklch(0.85 0.18 90 / 0.4)',
+                    fontSize: 12.5,
+                    color: 'var(--canvas-dark-ink)',
+                  }}
+                >
+                  <span style={{ fontWeight: 700, color: 'var(--brand)', fontFamily: 'var(--font-display)' }}>
+                    {importedChapters.length} {importedChapters.length === 1 ? 'chapter' : 'chapters'} ready to import
+                  </span>
+                  <span style={{ color: 'var(--canvas-dark-ink-muted)' }}>
+                    They&apos;ll be added when you create the book.
+                  </span>
+                </div>
+              )}
 
               {step === 1 && (
                 <StepOne

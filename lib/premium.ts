@@ -1,26 +1,27 @@
 import { db } from '@/db'
 import { userBilling } from '@/db/schema'
 import { eq } from 'drizzle-orm'
+import { PLAN_LIMITS } from '@/lib/plans/limits'
 
-export const FREE_BOOK_LIMIT = 3
-export const FREE_HIVE_LIMIT = 3
-export const FREE_HIVE_MEMBER_LIMIT = 5
+export const FREE_BOOK_LIMIT = PLAN_LIMITS.free.books
+export const FREE_HIVE_LIMIT = PLAN_LIMITS.free.hives
+export const FREE_HIVE_MEMBER_LIMIT = PLAN_LIMITS.free.hiveMembers
 
 const PREMIUM_STATUSES = new Set(['active', 'trialing', 'past_due'])
 
 /** Returns the max number of active books for the given tier. */
 export function getBookLimitForTier(isPremium: boolean): number {
-  return isPremium ? Infinity : FREE_BOOK_LIMIT
+  return (isPremium ? PLAN_LIMITS.premium : PLAN_LIMITS.free).books
 }
 
 /** Returns the max number of active hives for the given tier. */
 export function getHiveLimitForTier(isPremium: boolean): number {
-  return isPremium ? Infinity : FREE_HIVE_LIMIT
+  return (isPremium ? PLAN_LIMITS.premium : PLAN_LIMITS.free).hives
 }
 
 /** Returns the max number of members a hive can have for the given tier. */
 export function getHiveMemberLimitForTier(isPremium: boolean): number {
-  return isPremium ? Infinity : FREE_HIVE_MEMBER_LIMIT
+  return (isPremium ? PLAN_LIMITS.premium : PLAN_LIMITS.free).hiveMembers
 }
 
 /**

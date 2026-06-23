@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { Heart, BookOpen } from 'lucide-react'
 import type { BookCard } from '@/lib/actions/discover.actions'
+import { optimizeCloudinaryUrl, BOOK_COVER_TRANSFORMS } from '@/lib/upload/cloudinary-url'
 
 type Props = {
   book: BookCard
@@ -97,7 +98,7 @@ function CoverArt({
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={coverUrl}
+          src={optimizeCloudinaryUrl(coverUrl, BOOK_COVER_TRANSFORMS)}
           alt={title}
           className="absolute inset-0 w-full h-full object-cover"
         />

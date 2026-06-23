@@ -19,9 +19,9 @@ import {
 import { TagInput } from '@/app/[locale]/(app)/community/reading-lists/_components/tag-input'
 import { MentionableTextarea } from '@/components/mentions/mentionable-textarea'
 import { useCloudinaryUpload } from '@/hooks/use-cloudinary-upload'
+import { validateImageFile } from '@/lib/upload/validate-image'
+import { optimizeCloudinaryUrl, COVER_TRANSFORMS } from '@/lib/upload/cloudinary-url'
 
-const COVER_MAX_BYTES = 5 * 1024 * 1024
-const COVER_ALLOWED = ['image/png', 'image/jpeg', 'image/webp']
 const CLOUDINARY_CONFIGURED = !!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
 
 type Visibility = 'PUBLIC' | 'FRIENDS' | 'PRIVATE'
@@ -95,12 +95,9 @@ export function EditClubMetadataDialog({ initialClub, open, onOpenChange }: Prop
   }, [visibility])
 
   async function handleCoverFile(file: File) {
-    if (!COVER_ALLOWED.includes(file.type)) {
-      toast.error('Only PNG, JPG, and WEBP images are supported.')
-      return
-    }
-    if (file.size > COVER_MAX_BYTES) {
-      toast.error('Cover must be 5 MB or smaller.')
+    const err = validateImageFile(file, { label: 'Cover' })
+    if (err) {
+      toast.error(err)
       return
     }
     if (!CLOUDINARY_CONFIGURED) {
@@ -108,8 +105,8 @@ export function EditClubMetadataDialog({ initialClub, open, onOpenChange }: Prop
       return
     }
     const result = await uploadCover(file)
-    if (result) setCoverImageUrl(result.url)
-    else toast.error('Upload failed. Try again.')
+    if (result.url) setCoverImageUrl(result.url)
+    else toast.error(`Upload failed: ${result.error}`)
   }
 
   const submit = () => {
@@ -167,7 +164,7 @@ export function EditClubMetadataDialog({ initialClub, open, onOpenChange }: Prop
                 className="relative rounded-[var(--r-row)] overflow-hidden"
                 style={{
                   aspectRatio: '16/8',
-                  background: `url(${coverImageUrl}) center/cover`,
+                  background: `url(${optimizeCloudinaryUrl(coverImageUrl, COVER_TRANSFORMS)}) center/cover`,
                   border: 'var(--br-card)',
                 }}
               >

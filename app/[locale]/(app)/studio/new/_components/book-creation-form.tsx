@@ -4,7 +4,9 @@ import { useState, useEffect, type ReactNode } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Check, X } from 'lucide-react'
+import { toast } from 'sonner'
 import { createBookAction } from '@/lib/actions/book.actions'
+import { useCloudinaryUpload } from '@/hooks/use-cloudinary-upload'
 import { StepOne } from '../../_components/create-book-wizard/step-one'
 import { StepTwo } from '../../_components/create-book-wizard/step-two'
 import { StepThree, type BookTemplate } from '../../_components/create-book-wizard/step-three'
@@ -19,6 +21,7 @@ type FormData = {
   subtitle: string
   synopsis: string
   coverUrl: string | null
+  coverFile: File | null
   genre: string
   subgenre: string
   tags: string[]
@@ -38,7 +41,7 @@ type FormData = {
 }
 
 const initial: FormData = {
-  title: '', subtitle: '', synopsis: '', coverUrl: null,
+  title: '', subtitle: '', synopsis: '', coverUrl: null, coverFile: null,
   genre: '', subgenre: '', tags: [], targetAudience: '',
   contentWarnings: [], compTitles: [''], language: 'English',
   templateId: '', isSeriesBook: false, seriesName: '',
@@ -86,6 +89,7 @@ export function BookCreationForm({ locale, templates }: Props) {
   const [titleError, setTitleError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { upload: uploadCover } = useCloudinaryUpload('covers')
 
   function update(fields: Partial<FormData>) {
     setForm(prev => ({ ...prev, ...fields }))
@@ -114,11 +118,25 @@ export function BookCreationForm({ locale, templates }: Props) {
     setSubmitting(true)
     setError(null)
     try {
+      // Deferred cover upload: if the user picked a file during the wizard,
+      // upload it to Cloudinary now (just-in-time). If they pasted a URL,
+      // use it as-is. If neither, ship null.
+      let finalCoverUrl: string | null = form.coverUrl
+      if (form.coverFile) {
+        const result = await uploadCover(form.coverFile)
+        if (!result.url) {
+          toast.error(`Cover upload failed: ${result.error}`)
+          setError(`Cover upload failed: ${result.error}`)
+          return
+        }
+        finalCoverUrl = result.url
+      }
+
       const result = await createBookAction({
         title: form.title.trim(),
         subtitle: form.subtitle || undefined,
         synopsis: form.synopsis || undefined,
-        coverUrl: form.coverUrl,
+        coverUrl: finalCoverUrl,
         genre: form.genre || undefined,
         subgenre: form.subgenre || undefined,
         tags: form.tags.length ? form.tags : undefined,
@@ -293,6 +311,7 @@ export function BookCreationForm({ locale, templates }: Props) {
                   subtitle={form.subtitle}
                   synopsis={form.synopsis}
                   coverUrl={form.coverUrl}
+                  coverFile={form.coverFile}
                   onUpdate={update}
                   onNext={goNext}
                   onCancel={() => router.push(`/${locale}/studio`)}

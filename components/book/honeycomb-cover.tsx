@@ -6,6 +6,8 @@
  * without re-implementing the SVG pattern.
  */
 
+import { optimizeCloudinaryUrl, BOOK_COVER_TRANSFORMS } from '@/lib/upload/cloudinary-url'
+
 type Props = {
   /** Renders the uploaded cover when provided; otherwise the honeycomb default. */
   src?: string | null
@@ -24,7 +26,7 @@ export function HoneycombCover({ src, alt = '', uid }: Props) {
       {src ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={src}
+          src={optimizeCloudinaryUrl(src, BOOK_COVER_TRANSFORMS)}
           alt={alt}
           className="absolute inset-0 w-full h-full object-cover"
         />

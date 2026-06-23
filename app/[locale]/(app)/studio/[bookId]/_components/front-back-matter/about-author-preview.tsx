@@ -4,9 +4,13 @@ import { useRef, useState } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
+import { toast } from 'sonner'
 import { updateBinderItemAction } from '@/lib/actions/binder.actions'
 import { useBookEditor } from '../book-editor-provider'
 import { useCloudinaryUpload } from '@/hooks/use-cloudinary-upload'
+import { validateImageFile } from '@/lib/upload/validate-image'
+import { optimizeCloudinaryUrl, ABOUT_AUTHOR_TRANSFORMS } from '@/lib/upload/cloudinary-url'
+import { deleteCloudinaryAssetAction } from '@/lib/actions/cloudinary-cleanup.actions'
 import type { AboutAuthorFields } from '@/lib/front-back-matter/types'
 import { SaveStatusBadge, type FormSaveStatus } from './save-status-badge'
 import { PageWrapper } from './page-wrapper'
@@ -57,15 +61,26 @@ export function AboutAuthorPreview({ itemId, initialFields }: Props) {
     const file = e.target.files?.[0]
     if (!file) return
 
-    const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp']
-    if (!ACCEPTED.includes(file.type)) return
-    if (file.size > 5 * 1024 * 1024) return
+    const err = validateImageFile(file, { label: 'Photo' })
+    if (err) {
+      toast.error(err)
+      e.target.value = ''
+      return
+    }
+
+    const previousPhotoUrl = fieldsRef.current.photoUrl
 
     if (process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME) {
       const res = await upload(file)
-      if (res?.url) {
+      if (res.url) {
         setPhotoUrl(res.url)
         schedule({ ...fieldsRef.current, photoUrl: res.url })
+        if (previousPhotoUrl) {
+          // Best-effort cleanup of the prior Cloudinary asset
+          void deleteCloudinaryAssetAction(previousPhotoUrl, 'about-author/')
+        }
+      } else {
+        toast.error(`Upload failed: ${res.error}`)
       }
     } else {
       // Fallback: embed as data URL when Cloudinary isn't configured
@@ -84,8 +99,13 @@ export function AboutAuthorPreview({ itemId, initialFields }: Props) {
   }
 
   function removePhoto() {
+    const previousPhotoUrl = fieldsRef.current.photoUrl
     setPhotoUrl(undefined)
     schedule({ ...fieldsRef.current, photoUrl: undefined })
+    if (previousPhotoUrl) {
+      // Best-effort cleanup of the prior Cloudinary asset
+      void deleteCloudinaryAssetAction(previousPhotoUrl, 'about-author/')
+    }
   }
 
   const editor = useEditor(
@@ -192,8 +212,8 @@ export function AboutAuthorPreview({ itemId, initialFields }: Props) {
               width: 96,
               height: 96,
               borderRadius: '50%',
-              background: hasPhoto
-                ? `center / cover no-repeat url(${JSON.stringify(photoUrl)})`
+              background: hasPhoto && photoUrl
+                ? `center / cover no-repeat url(${JSON.stringify(photoUrl.startsWith('data:') ? photoUrl : optimizeCloudinaryUrl(photoUrl, ABOUT_AUTHOR_TRANSFORMS))})`
                 : 'linear-gradient(135deg, oklch(0.78 0.05 60), oklch(0.62 0.08 35))',
               border: '3px solid var(--paper-50)',
               boxShadow: '0 1px 0 rgba(255,255,255,0.6) inset, 0 2px 6px rgba(60,40,20,0.25)',

@@ -47,7 +47,7 @@ const sharedSection: React.CSSProperties = {
   margin: '0 auto',
   padding: '64px 24px',
   textAlign: 'center',
-  color: 'var(--canvas-dark-ink-strong)',
+  color: 'var(--prose-ink-strong)',
 }
 
 export function TitlePageDisplay({ f }: { f: Partial<TitlePageFields> }) {
@@ -71,7 +71,7 @@ export function TitlePageDisplay({ f }: { f: Partial<TitlePageFields> }) {
             fontFamily: 'var(--font-display)',
             fontSize: 18,
             fontStyle: 'italic',
-            color: 'var(--canvas-dark-ink-muted)',
+            color: 'var(--prose-ink-muted)',
             margin: '0 0 64px',
           }}
         >
@@ -81,7 +81,7 @@ export function TitlePageDisplay({ f }: { f: Partial<TitlePageFields> }) {
       <p
         style={{
           fontSize: 16,
-          color: 'var(--canvas-dark-ink)',
+          color: 'var(--prose-ink)',
           margin: '64px 0 0',
         }}
       >
@@ -91,7 +91,7 @@ export function TitlePageDisplay({ f }: { f: Partial<TitlePageFields> }) {
         <p
           style={{
             fontSize: 13,
-            color: 'var(--canvas-dark-ink-muted)',
+            color: 'var(--prose-ink-muted)',
             margin: '96px 0 0',
             fontFamily: 'var(--font-mono)',
             letterSpacing: '0.08em',
@@ -131,7 +131,7 @@ export function DedicationDisplay({ f }: { f: Partial<DedicationFields> }) {
   return (
     <div style={sharedSection}>
       {ps.length === 0 ? (
-        <p style={{ fontStyle: 'italic', color: 'var(--canvas-dark-ink-muted)' }}>—</p>
+        <p style={{ fontStyle: 'italic', color: 'var(--prose-ink-muted)' }}>—</p>
       ) : (
         ps.map((p, i) => (
           <p
@@ -140,7 +140,7 @@ export function DedicationDisplay({ f }: { f: Partial<DedicationFields> }) {
               fontSize: 17,
               fontStyle: 'italic',
               fontFamily: 'var(--font-prose)',
-              color: 'var(--canvas-dark-ink-strong)',
+              color: 'var(--prose-ink-strong)',
               margin: '12px 0',
               lineHeight: 1.5,
             }}
@@ -164,7 +164,7 @@ export function AcknowledgmentsDisplay({ f }: { f: Partial<AcknowledgmentsFields
           fontSize: 18,
           fontWeight: 700,
           letterSpacing: '0.04em',
-          color: 'var(--canvas-dark-ink-strong)',
+          color: 'var(--prose-ink-strong)',
           margin: '0 0 8px',
         }}
       >
@@ -175,13 +175,13 @@ export function AcknowledgmentsDisplay({ f }: { f: Partial<AcknowledgmentsFields
         style={{
           width: 24,
           height: 1,
-          background: 'var(--canvas-dark-ink-muted)',
+          background: 'var(--prose-ink-muted)',
           opacity: 0.35,
           margin: '0 0 20px',
         }}
       />
       {ps.length === 0 ? (
-        <p style={{ fontStyle: 'italic', color: 'var(--canvas-dark-ink-muted)' }}>
+        <p style={{ fontStyle: 'italic', color: 'var(--prose-ink-muted)' }}>
           The author hasn&apos;t written acknowledgments yet.
         </p>
       ) : (
@@ -192,7 +192,7 @@ export function AcknowledgmentsDisplay({ f }: { f: Partial<AcknowledgmentsFields
               fontFamily: 'var(--font-prose)',
               fontSize: 14,
               lineHeight: 1.7,
-              color: 'var(--canvas-dark-ink)',
+              color: 'var(--prose-ink)',
               margin: '0 0 12px',
             }}
           >
@@ -208,14 +208,14 @@ export function AboutAuthorDisplay({ f }: { f: Partial<AboutAuthorFields> }) {
   const text = tipTapToPlainText(f.bio)
   const ps = paragraphs(text)
   return (
-    <div style={{ ...sharedSection, textAlign: 'left' }}>
+    <div style={{ ...sharedSection, textAlign: 'center' }}>
       <div
         style={{
           fontFamily: 'var(--font-mono)',
           fontSize: 10,
           letterSpacing: '0.2em',
           textTransform: 'uppercase',
-          color: 'var(--canvas-dark-ink-muted)',
+          color: 'var(--prose-ink-muted)',
           margin: '0 0 16px',
         }}
       >
@@ -226,18 +226,17 @@ export function AboutAuthorDisplay({ f }: { f: Partial<AboutAuthorFields> }) {
           src={f.photoUrl}
           alt="Author photo"
           style={{
-            float: 'left',
-            width: 72,
-            height: 72,
+            display: 'block',
+            width: 96,
+            height: 96,
             borderRadius: '50%',
             objectFit: 'cover',
-            marginRight: 16,
-            marginBottom: 8,
+            margin: '0 auto 16px',
           }}
         />
       )}
       {ps.length === 0 ? (
-        <p style={{ fontStyle: 'italic', color: 'var(--canvas-dark-ink-muted)' }}>
+        <p style={{ fontStyle: 'italic', color: 'var(--prose-ink-muted)' }}>
           The author hasn&apos;t written a bio yet.
         </p>
       ) : (
@@ -248,26 +247,33 @@ export function AboutAuthorDisplay({ f }: { f: Partial<AboutAuthorFields> }) {
               fontFamily: 'var(--font-prose)',
               fontSize: 14,
               lineHeight: 1.7,
-              color: 'var(--canvas-dark-ink)',
-              margin: '0 0 12px',
+              color: 'var(--prose-ink)',
+              margin: '0 auto 12px',
+              maxWidth: '52ch',
             }}
           >
             {p}
           </p>
         ))
       )}
-      <div style={{ clear: 'both' }} />
       {f.links && f.links.length > 0 && (
         <ul
           style={{
+            listStyle: 'none',
             margin: '24px 0 0',
-            padding: '0 0 0 20px',
-            color: 'var(--canvas-dark-ink-muted)',
-            fontSize: 14,
+            padding: 0,
+            display: 'flex',
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+            gap: 16,
+            fontFamily: 'var(--font-mono)',
+            fontSize: 11.5,
+            letterSpacing: '0.04em',
+            color: 'var(--prose-ink-muted)',
           }}
         >
           {f.links.map((l, i) => (
-            <li key={i} style={{ margin: '4px 0' }}>
+            <li key={i}>
               <a
                 href={l.url}
                 target="_blank"

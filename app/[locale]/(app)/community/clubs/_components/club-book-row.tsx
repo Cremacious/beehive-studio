@@ -4,6 +4,7 @@ import { useState, useTransition, type ReactNode } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { BookOpen, MoreHorizontal, Star, Trash2, Pencil } from 'lucide-react'
+import { optimizeCloudinaryUrl, BOOK_COVER_TRANSFORMS } from '@/lib/upload/cloudinary-url'
 import { toast } from 'sonner'
 import {
   DropdownMenu,
@@ -103,7 +104,7 @@ export function ClubBookRow({ book, canManage, locale, handleSlot }: Props) {
   const thumb = book.coverUrl ? (
     /* eslint-disable-next-line @next/next/no-img-element */
     <img
-      src={book.coverUrl}
+      src={optimizeCloudinaryUrl(book.coverUrl, BOOK_COVER_TRANSFORMS)}
       alt=""
       className="br-thumb object-cover"
       style={{ width: 64, height: 96 }}

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { toggleBookLikeAction, toggleBookmarkAction } from '@/lib/actions/social.actions'
+import { optimizeCloudinaryUrl, BOOK_COVER_TRANSFORMS } from '@/lib/upload/cloudinary-url'
 import type { PublicBook } from '@/lib/actions/discover.actions'
 import { ShareBookDialog } from './share-book-dialog'
 
@@ -208,7 +209,7 @@ export function BookHero({
         >
           {book.coverUrl ? (
             <img
-              src={book.coverUrl}
+              src={optimizeCloudinaryUrl(book.coverUrl, BOOK_COVER_TRANSFORMS)}
               alt={book.title}
               className="h-full w-full object-cover"
             />

@@ -1,49 +1,62 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { UploadCloud } from 'lucide-react'
 import { toast } from 'sonner'
-import { useCloudinaryUpload } from '@/hooks/use-cloudinary-upload'
+import { validateImageFile } from '@/lib/upload/validate-image'
+import { optimizeCloudinaryUrl, BOOK_COVER_TRANSFORMS } from '@/lib/upload/cloudinary-url'
 import { HelperText, RECESSED_INPUT_STYLE, recessBlur, recessFocus } from './wizard-field'
+
+/**
+ * Wizard cover picker — DEFERRED upload.
+ *
+ * The selected file is held in parent state as a File. We render a local
+ * blob: URL preview during the wizard but DO NOT touch Cloudinary until
+ * the user confirms book creation in the final submit step. This avoids
+ * orphan assets when the user cancels mid-wizard or swaps the image
+ * multiple times.
+ *
+ * `coverUrl` is used for the "paste a URL" branch only — picking a file
+ * sets `coverFile` and clears `coverUrl`, and vice versa.
+ */
 
 type Props = {
   coverUrl: string | null
-  onChange: (next: string | null) => void
+  coverFile: File | null
+  onChange: (patch: { coverUrl?: string | null; coverFile?: File | null }) => void
 }
 
-const MAX_BYTES = 5 * 1024 * 1024
-const ALLOWED = ['image/png', 'image/jpeg', 'image/webp']
-const CLOUDINARY_CONFIGURED = !!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
-
-function validate(file: File): string | null {
-  if (!ALLOWED.includes(file.type)) return 'Only PNG, JPG, and WEBP images are supported.'
-  if (file.size > MAX_BYTES) return 'Cover image must be 5 MB or smaller.'
-  return null
-}
-
-export function CoverPicker({ coverUrl, onChange }: Props) {
-  const { upload, uploading } = useCloudinaryUpload('covers')
+export function CoverPicker({ coverUrl, coverFile, onChange }: Props) {
   const fileRef = useRef<HTMLInputElement>(null)
   const [dragOver, setDragOver] = useState(false)
-  const [localPreview, setLocalPreview] = useState<string | null>(coverUrl)
+  const [blobPreview, setBlobPreview] = useState<string | null>(null)
 
-  async function handleFile(file: File) {
-    const err = validate(file)
+  // Manage blob: URL lifecycle for the local file preview. Revoke the prior
+  // URL when the File changes or when the component unmounts so the browser
+  // can free the memory.
+  useEffect(() => {
+    if (!coverFile) {
+      setBlobPreview(null)
+      return
+    }
+    const url = URL.createObjectURL(coverFile)
+    setBlobPreview(url)
+    return () => URL.revokeObjectURL(url)
+  }, [coverFile])
+
+  function handleFile(file: File) {
+    const err = validateImageFile(file, { label: 'Cover image' })
     if (err) {
       toast.error(err)
       return
     }
-    setLocalPreview(URL.createObjectURL(file))
-    if (CLOUDINARY_CONFIGURED) {
-      const result = await upload(file)
-      if (result) onChange(result.url)
-      else toast.error('Upload failed. Try again or paste a URL below.')
-    } else {
-      const reader = new FileReader()
-      reader.onload = () => onChange(reader.result as string)
-      reader.readAsDataURL(file)
-    }
+    // Defer upload — just stash the File on the parent. Picking a file
+    // clears any pasted URL since the two inputs are mutually exclusive.
+    onChange({ coverFile: file, coverUrl: null })
   }
+
+  const previewSrc = blobPreview ?? coverUrl
+  const hasPreview = !!previewSrc
 
   return (
     <div className="flex flex-col gap-2">
@@ -76,7 +89,7 @@ export function CoverPicker({ coverUrl, onChange }: Props) {
         a paper-tone placeholder you can swap later.
       </HelperText>
 
-      {localPreview ? (
+      {hasPreview ? (
         <div
           style={{
             aspectRatio: '5 / 7',
@@ -87,7 +100,15 @@ export function CoverPicker({ coverUrl, onChange }: Props) {
           }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={localPreview} alt="Cover preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img
+            src={
+              previewSrc!.startsWith('blob:') || previewSrc!.startsWith('data:')
+                ? previewSrc!
+                : optimizeCloudinaryUrl(previewSrc!, BOOK_COVER_TRANSFORMS)
+            }
+            alt="Cover preview"
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
         </div>
       ) : (
         <div
@@ -141,16 +162,14 @@ export function CoverPicker({ coverUrl, onChange }: Props) {
               <UploadCloud size={16} />
             </div>
             <p style={{ fontFamily: 'var(--font-display)', fontSize: 13, fontWeight: 700, color: 'var(--canvas-dark-ink-strong)', margin: 0 }}>
-              {uploading ? 'Uploading…' : CLOUDINARY_CONFIGURED ? 'Drag & drop an image' : 'Drop a file to embed locally'}
+              Drag & drop an image
             </p>
             <p style={{ fontSize: 11, color: 'var(--canvas-dark-ink-muted)', margin: 0 }}>
               or click to browse · PNG, JPG, WEBP · up to 5&nbsp;MB
             </p>
-            {!CLOUDINARY_CONFIGURED && (
-              <p style={{ fontSize: 10, color: 'var(--canvas-dark-ink-muted)', margin: 0, fontStyle: 'italic' }}>
-                (Cloudinary not configured, upload disabled)
-              </p>
-            )}
+            <p style={{ fontSize: 10, color: 'var(--canvas-dark-ink-muted)', margin: 0, fontStyle: 'italic' }}>
+              Uploaded only when you create the book.
+            </p>
           </div>
         </div>
       )}
@@ -167,12 +186,11 @@ export function CoverPicker({ coverUrl, onChange }: Props) {
         }}
       />
 
-      {localPreview && (
+      {hasPreview && (
         <button
           type="button"
           onClick={() => {
-            setLocalPreview(null)
-            onChange(null)
+            onChange({ coverFile: null, coverUrl: null })
           }}
           style={{
             fontSize: 11,
@@ -209,8 +227,8 @@ export function CoverPicker({ coverUrl, onChange }: Props) {
         value={coverUrl?.startsWith('http') ? coverUrl : ''}
         onChange={e => {
           const v = e.target.value
-          onChange(v || null)
-          setLocalPreview(v || null)
+          // Pasting a URL clears any pending file selection.
+          onChange({ coverUrl: v || null, coverFile: null })
         }}
         onFocus={recessFocus}
         onBlur={recessBlur}

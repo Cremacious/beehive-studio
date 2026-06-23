@@ -11,6 +11,9 @@ import {
 import { SharingControls, type Visibility } from '@/components/book/sharing-controls'
 import { DeleteBookButton } from '@/components/book/delete-book-button'
 import { useCloudinaryUpload } from '@/hooks/use-cloudinary-upload'
+import { validateImageFile } from '@/lib/upload/validate-image'
+import { optimizeCloudinaryUrl, BOOK_COVER_TRANSFORMS } from '@/lib/upload/cloudinary-url'
+import { toast } from 'sonner'
 import {
   GENRES,
   GENRE_NAMES,
@@ -213,10 +216,21 @@ export function BookDetailsForm({ locale, bookId, initial, isPremium }: Props) {
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+    const err = validateImageFile(file, { label: 'Cover image' })
+    if (err) {
+      toast.error(err)
+      e.target.value = ''
+      return
+    }
     setPreview(URL.createObjectURL(file))
     if (cloudinaryConfigured) {
       const result = await upload(file)
-      if (result) update({ coverUrl: result.url })
+      if (result.url) {
+        update({ coverUrl: result.url })
+      } else {
+        toast.error(`Upload failed: ${result.error}`)
+        setPreview(form.coverUrl)
+      }
     } else {
       // fallback: data URL preview only
       const reader = new FileReader()
@@ -225,6 +239,7 @@ export function BookDetailsForm({ locale, bookId, initial, isPremium }: Props) {
       }
       reader.readAsDataURL(file)
     }
+    e.target.value = ''
   }
 
   function addCustomTag(value: string) {
@@ -420,7 +435,7 @@ export function BookDetailsForm({ locale, bookId, initial, isPremium }: Props) {
               >
                 {preview ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={preview} alt="Cover" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  <img src={preview.startsWith('blob:') || preview.startsWith('data:') ? preview : optimizeCloudinaryUrl(preview, BOOK_COVER_TRANSFORMS)} alt="Cover" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                 ) : (
                   <div style={{ textAlign: 'center', padding: '0 12px' }}>
                     <Upload size={20} style={{ color: 'var(--canvas-dark-ink-muted)', opacity: 0.4, margin: '0 auto 8px' }} />

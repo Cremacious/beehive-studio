@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { BookOpen, CheckCircle2, Clock } from 'lucide-react'
+import { optimizeCloudinaryUrl, BOOK_COVER_TRANSFORMS } from '@/lib/upload/cloudinary-url'
 import type { ClubCurrentBook } from '@/lib/actions/book-clubs.actions'
 import type {
   ClubProgressData,
@@ -122,7 +123,7 @@ export function ClubCurrentlyReading({
             {currentBook.coverUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={currentBook.coverUrl}
+                src={optimizeCloudinaryUrl(currentBook.coverUrl, BOOK_COVER_TRANSFORMS)}
                 alt=""
                 style={{
                   width: 72,

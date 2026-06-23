@@ -6,12 +6,12 @@ import { toast } from 'sonner'
 import { Settings, Info, Lock, X, Plus, Globe, Users, Image as ImageIcon, UploadCloud } from 'lucide-react'
 import { updateClubAction, type ClubSummary } from '@/lib/actions/book-clubs.actions'
 import { useCloudinaryUpload } from '@/hooks/use-cloudinary-upload'
+import { validateImageFile } from '@/lib/upload/validate-image'
+import { optimizeCloudinaryUrl, COVER_TRANSFORMS } from '@/lib/upload/cloudinary-url'
 import { SettingsCard } from './settings-card'
 
 const MAX_DESC = 500
 const MAX_TAGS = 6
-const COVER_MAX_BYTES = 5 * 1024 * 1024
-const COVER_ALLOWED = ['image/png', 'image/jpeg', 'image/webp']
 const CLOUDINARY_CONFIGURED = !!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
 
 /* ──────────────────── COVER IMAGE ──────────────────── */
@@ -32,12 +32,9 @@ export function CoverImageSection({
   const isDirty = coverImageUrl !== savedCoverImageUrl
 
   async function handleFile(file: File) {
-    if (!COVER_ALLOWED.includes(file.type)) {
-      toast.error('Only PNG, JPG, and WEBP images are supported.')
-      return
-    }
-    if (file.size > COVER_MAX_BYTES) {
-      toast.error('Cover must be 5 MB or smaller.')
+    const err = validateImageFile(file, { label: 'Cover' })
+    if (err) {
+      toast.error(err)
       return
     }
     if (!CLOUDINARY_CONFIGURED) {
@@ -45,8 +42,8 @@ export function CoverImageSection({
       return
     }
     const result = await uploadCover(file)
-    if (result) setCoverImageUrl(result.url)
-    else toast.error('Upload failed. Try again.')
+    if (result.url) setCoverImageUrl(result.url)
+    else toast.error(`Upload failed: ${result.error}`)
   }
 
   function save() {
@@ -75,7 +72,7 @@ export function CoverImageSection({
             aspectRatio: '16 / 8',
             borderRadius: 'var(--r-row)',
             overflow: 'hidden',
-            background: `url(${coverImageUrl}) center/cover`,
+            background: `url(${optimizeCloudinaryUrl(coverImageUrl, COVER_TRANSFORMS)}) center/cover`,
             border: 'var(--br-card)',
           }}
         >

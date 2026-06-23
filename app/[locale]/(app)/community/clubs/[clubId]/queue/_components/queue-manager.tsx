@@ -27,6 +27,7 @@ import {
   CheckCircle2,
   Pencil,
 } from 'lucide-react'
+import { optimizeCloudinaryUrl, BOOK_COVER_TRANSFORMS } from '@/lib/upload/cloudinary-url'
 import {
   reorderClubQueueAction,
   setCurrentBookAction,
@@ -302,7 +303,7 @@ function CurrentBlock({ current }: { current: ClubBookRowType | null }) {
       {current.coverUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={current.coverUrl}
+          src={optimizeCloudinaryUrl(current.coverUrl, BOOK_COVER_TRANSFORMS)}
           alt=""
           style={{
             width: 70,
@@ -593,7 +594,7 @@ function QueueRow({
       {book.coverUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={book.coverUrl}
+          src={optimizeCloudinaryUrl(book.coverUrl, BOOK_COVER_TRANSFORMS)}
           alt=""
           style={{
             width: 38,
@@ -883,7 +884,7 @@ function PastReadsAccordion({ past }: { past: ClubBookRowType[] }) {
             {book.coverUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={book.coverUrl}
+                src={optimizeCloudinaryUrl(book.coverUrl, BOOK_COVER_TRANSFORMS)}
                 alt=""
                 style={{
                   width: 22,

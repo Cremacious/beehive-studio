@@ -17,17 +17,18 @@ type Props = {
   subtitle: string
   synopsis: string
   coverUrl: string | null
-  onUpdate: (fields: Partial<{ title: string; subtitle: string; synopsis: string; coverUrl: string | null }>) => void
+  coverFile: File | null
+  onUpdate: (fields: Partial<{ title: string; subtitle: string; synopsis: string; coverUrl: string | null; coverFile: File | null }>) => void
   onNext: () => void
   onCancel: () => void
   titleError: string | null
 }
 
-export function StepOne({ title, subtitle, synopsis, coverUrl, onUpdate, onNext, onCancel, titleError }: Props) {
+export function StepOne({ title, subtitle, synopsis, coverUrl, coverFile, onUpdate, onNext, onCancel, titleError }: Props) {
   return (
     <div>
       <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '22px' }}>
-        <CoverPicker coverUrl={coverUrl} onChange={url => onUpdate({ coverUrl: url })} />
+        <CoverPicker coverUrl={coverUrl} coverFile={coverFile} onChange={patch => onUpdate(patch)} />
 
         <div className="flex flex-col gap-[18px]">
           <WizardField label="Title" required>

@@ -7,6 +7,7 @@ import { requireAuth } from '@/lib/require-auth'
 import { HivePageShell } from './_components/hive-page-shell'
 import { HiveSectionDivider } from './_components/hive-section-divider'
 import { HiveDashboardActivitySection } from './_components/hive-dashboard-activity-section'
+import { optimizeCloudinaryUrl, BOOK_COVER_TRANSFORMS } from '@/lib/upload/cloudinary-url'
 
 function relTime(d: Date): string {
   const seconds = Math.floor((Date.now() - new Date(d).getTime()) / 1000)
@@ -64,7 +65,7 @@ export default async function HiveDashboardPage({ params }: { params: Promise<{ 
               {book.coverUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={book.coverUrl}
+                  src={optimizeCloudinaryUrl(book.coverUrl, BOOK_COVER_TRANSFORMS)}
                   alt={book.title}
                   className="w-20 h-28 object-cover rounded border border-border"
                 />

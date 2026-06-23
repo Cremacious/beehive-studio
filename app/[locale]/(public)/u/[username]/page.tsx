@@ -14,6 +14,7 @@ import { FollowButton } from './_components/follow-button'
 import { FriendStatusSection } from './_components/friend-status-section'
 import { ProfileUnavailable } from './_components/profile-unavailable'
 import { SeriesLine } from '@/components/book/series-line'
+import { optimizeCloudinaryUrl, BOOK_COVER_TRANSFORMS, AVATAR_TRANSFORMS } from '@/lib/upload/cloudinary-url'
 import { FriendButton } from '@/components/friendship/friend-button'
 import { db } from '@/db'
 import { friendships, userMutes } from '@/db/schema'
@@ -330,7 +331,7 @@ export default async function AuthorProfilePage({ params }: Props) {
                     {book.coverUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={book.coverUrl}
+                        src={optimizeCloudinaryUrl(book.coverUrl, BOOK_COVER_TRANSFORMS)}
                         alt={book.title}
                         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                       />

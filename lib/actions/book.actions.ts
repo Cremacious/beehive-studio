@@ -14,6 +14,7 @@ import { revalidatePath } from 'next/cache'
 import { summarizeBookStatus, type BookSummaryStatus } from '@/lib/books/summarize-status'
 import { scopedBooksForUser } from '@/lib/books/scoped'
 import { recordSocialActivityTx } from '@/lib/social/record-activity'
+import { deleteCloudinaryImage, getCloudinaryPublicId } from '@/lib/cloudinary'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -515,7 +516,25 @@ export async function deleteBookAction(bookId: string, locale: string): Promise<
   const userId = await requireAuth()
   await assertBookOwner(bookId, userId)
 
+  // Capture cover URL before delete so we can clean up the Cloudinary asset.
+  const existing = await db.query.books.findFirst({
+    where: eq(books.id, bookId),
+    columns: { coverUrl: true },
+  })
+
   await db.delete(books).where(and(eq(books.id, bookId), scopedBooksForUser(userId)))
+
+  // Best-effort Cloudinary cleanup. Non-fatal.
+  if (existing?.coverUrl) {
+    try {
+      const publicId = getCloudinaryPublicId(existing.coverUrl)
+      if (publicId && publicId.startsWith('covers/')) {
+        await deleteCloudinaryImage(publicId)
+      }
+    } catch {
+      // Non-fatal
+    }
+  }
 
   revalidatePath(`/${locale}/studio`)
 
@@ -637,6 +656,15 @@ export async function updateBookDetailsAction(
   }
   const d = parsed.data
 
+  // Capture the existing cover URL so we can clean up the prior Cloudinary
+  // asset after a successful update. Mirrors the avatar / club cleanup
+  // pattern (lib/actions/avatar.actions.ts, lib/actions/book-clubs.actions.ts).
+  const existingCover = await db.query.books.findFirst({
+    where: eq(books.id, bookId),
+    columns: { coverUrl: true },
+  })
+  const previousCoverUrl = existingCover?.coverUrl ?? null
+
   await db.transaction(async (tx) => {
     // D1: stamp first_publicly_discoverable_at on first transition to
     // (PUBLIC + discoverable) when the column is still NULL.
@@ -691,6 +719,20 @@ export async function updateBookDetailsAction(
       })
     }
   })
+
+  // Best-effort cleanup of the prior Cloudinary cover when the URL changed
+  // (replace or clear). Non-fatal — Cloudinary failure must never block the
+  // user's save.
+  if (previousCoverUrl && previousCoverUrl !== d.coverUrl) {
+    try {
+      const publicId = getCloudinaryPublicId(previousCoverUrl)
+      if (publicId && publicId.startsWith('covers/')) {
+        await deleteCloudinaryImage(publicId)
+      }
+    } catch {
+      // Non-fatal
+    }
+  }
 
   return { success: true, data: undefined }
 }

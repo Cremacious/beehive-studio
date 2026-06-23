@@ -5,6 +5,8 @@ import { Camera, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCloudinaryUpload } from '@/hooks/use-cloudinary-upload'
 import { updateAvatarAction, deleteAvatarAction } from '@/lib/actions/avatar.actions'
+import { validateImageFile } from '@/lib/upload/validate-image'
+import { optimizeCloudinaryUrl, AVATAR_TRANSFORMS } from '@/lib/upload/cloudinary-url'
 
 type Props = {
   userId: string
@@ -13,8 +15,6 @@ type Props = {
   currentAvatarUrl: string | null
 }
 
-const MAX_BYTES = 5 * 1024 * 1024
-const ALLOWED = ['image/png', 'image/jpeg', 'image/webp']
 const CLOUDINARY_CONFIGURED = !!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
 
 function pickAccent(seed: string): string {
@@ -31,12 +31,6 @@ function initialsOf(displayName: string | null, username: string): string {
   return parts.map((p) => p.charAt(0).toUpperCase()).join('') || src.charAt(0).toUpperCase()
 }
 
-function validate(file: File): string | null {
-  if (!ALLOWED.includes(file.type)) return 'Only PNG, JPG, and WEBP images are supported.'
-  if (file.size > MAX_BYTES) return 'Image must be 5 MB or smaller.'
-  return null
-}
-
 export function AvatarUploader({ userId, displayName, username, currentAvatarUrl }: Props) {
   const { upload, uploading } = useCloudinaryUpload('avatars')
   const fileRef = useRef<HTMLInputElement>(null)
@@ -48,7 +42,7 @@ export function AvatarUploader({ userId, displayName, username, currentAvatarUrl
   const busy = uploading || isPending
 
   async function handleFile(file: File) {
-    const err = validate(file)
+    const err = validateImageFile(file)
     if (err) {
       toast.error(err)
       return
@@ -62,8 +56,8 @@ export function AvatarUploader({ userId, displayName, username, currentAvatarUrl
 
     if (CLOUDINARY_CONFIGURED) {
       const result = await upload(file)
-      if (!result) {
-        toast.error('Upload failed. Please try again.')
+      if (!result.url) {
+        toast.error(`Upload failed: ${result.error}`)
         setPreview(currentAvatarUrl)
         return
       }
@@ -127,7 +121,7 @@ export function AvatarUploader({ userId, displayName, username, currentAvatarUrl
           {preview ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={preview}
+              src={preview.startsWith('blob:') || preview.startsWith('data:') ? preview : optimizeCloudinaryUrl(preview, AVATAR_TRANSFORMS)}
               alt="Your avatar"
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />

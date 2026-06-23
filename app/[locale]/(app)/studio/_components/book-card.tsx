@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { BookCardMenu } from './book-card-menu'
 import type { BookSummary } from '@/lib/actions/book.actions'
+import { optimizeCloudinaryUrl, BOOK_COVER_TRANSFORMS } from '@/lib/upload/cloudinary-url'
 
 type Props = {
   book: BookSummary
@@ -28,7 +29,7 @@ export function BookCard({ book, locale, authorName }: Props) {
         <div className="bcv-cover">
           {book.coverUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={book.coverUrl} alt={book.title} />
+            <img src={optimizeCloudinaryUrl(book.coverUrl, BOOK_COVER_TRANSFORMS)} alt={book.title} />
           ) : (
             <svg
               className="honeycomb"

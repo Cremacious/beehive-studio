@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { relTime } from '@/lib/utils/rel-time'
+import { optimizeCloudinaryUrl, COVER_TRANSFORMS, AVATAR_TRANSFORMS } from '@/lib/upload/cloudinary-url'
 
 export type ClubCardData = {
   id: string
@@ -157,7 +158,7 @@ export function ClubCard({ club, locale }: Props) {
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             ...(club.coverImageUrl
-              ? { backgroundImage: `url(${club.coverImageUrl})` }
+              ? { backgroundImage: `url(${optimizeCloudinaryUrl(club.coverImageUrl, COVER_TRANSFORMS)})` }
               : {
                   background:
                     'linear-gradient(135deg, oklch(0.4 0.1 200), oklch(0.25 0.06 220))',
@@ -364,7 +365,7 @@ export function ClubCard({ club, locale }: Props) {
                   {p.avatarUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={p.avatarUrl}
+                      src={optimizeCloudinaryUrl(p.avatarUrl, AVATAR_TRANSFORMS)}
                       alt=""
                       width={24}
                       height={24}

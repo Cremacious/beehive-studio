@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { HeroSignal, DashboardFallbacks } from '@/lib/actions/community-dashboard.shared';
+import { optimizeCloudinaryUrl, BOOK_COVER_TRANSFORMS } from '@/lib/upload/cloudinary-url';
 
 type Props = { hero: HeroSignal | null; fallbacks: DashboardFallbacks; locale: string };
 
@@ -7,7 +8,7 @@ function Cover({ url, title, author }: { url: string | null; title: string | nul
   return (
     <div style={{
       width: 104, height: 148, padding: 7,
-      background: url ? `url(${url}) center / cover` : 'linear-gradient(135deg, #4c1d95, #1e1b4b)',
+      background: url ? `url(${optimizeCloudinaryUrl(url, BOOK_COVER_TRANSFORMS)}) center / cover` : 'linear-gradient(135deg, #4c1d95, #1e1b4b)',
       borderRadius: 6,
       boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
       display: 'flex', flexDirection: 'column', justifyContent: 'space-between',

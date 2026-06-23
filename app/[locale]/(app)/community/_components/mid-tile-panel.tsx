@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { PanelRow, RowLeading } from '@/lib/actions/community-dashboard.shared';
+import { optimizeCloudinaryUrl, BOOK_COVER_TRANSFORMS } from '@/lib/upload/cloudinary-url';
 
 type NudgeRow = {
   id: string;
@@ -58,7 +59,7 @@ function Leading({ leading }: { leading: RowLeading }) {
           <div key={i} style={{
             width: 28, height: 40, padding: 3,
             background: c.coverUrl
-              ? `url(${c.coverUrl}) center / cover`
+              ? `url(${optimizeCloudinaryUrl(c.coverUrl, BOOK_COVER_TRANSFORMS)}) center / cover`
               : 'linear-gradient(135deg, #4c1d95, #1e1b4b)',
             borderRadius: 4, color: '#f0e5d0',
             transform: i === 0 ? 'rotate(-3deg)' : i === 2 ? 'rotate(3deg)' : 'none',
@@ -75,7 +76,7 @@ function Leading({ leading }: { leading: RowLeading }) {
     <div style={{
       width: 36, height: 52, padding: 4,
       background: leading.coverUrl
-        ? `url(${leading.coverUrl}) center / cover`
+        ? `url(${optimizeCloudinaryUrl(leading.coverUrl, BOOK_COVER_TRANSFORMS)}) center / cover`
         : 'linear-gradient(135deg, #4c1d95, #1e1b4b)',
       borderRadius: 6, color: '#f0e5d0',
       fontFamily: 'Georgia, serif', fontSize: 11, lineHeight: 1.15,

@@ -1,8 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Clock, X, Sparkles } from 'lucide-react'
-import Link from 'next/link'
+import { Clock, X } from 'lucide-react'
 import { useParams } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useBookEditor } from '../book-editor-provider'
@@ -12,6 +11,7 @@ import {
   type SnapshotSummary,
 } from '@/lib/actions/snapshot.actions'
 import { EmptyState } from '../empty-state'
+import { UpgradePrompt } from '@/components/upgrade/upgrade-prompt'
 
 function formatSnapshotDate(d: Date): string {
   const now = new Date()
@@ -134,45 +134,7 @@ export function VersionHistoryDrawer() {
 
         {!loading && isFreeTier && (
           <div className="p-3.5">
-            <div
-              className="relative overflow-hidden rounded-lg p-4 flex flex-col gap-2.5"
-              style={{
-                background:
-                  'radial-gradient(120% 80% at 20% 10%, oklch(from var(--color-brand) l c h / 0.18), transparent 70%), linear-gradient(180deg, var(--chrome-800), var(--chrome-850))',
-                border: '1px solid oklch(from var(--color-brand) l c h / 0.30)',
-              }}
-            >
-              <span
-                className="inline-flex items-center gap-1 self-start px-2 py-0.5 rounded-sm text-[9.5px] font-bold uppercase tracking-widest"
-                style={{
-                  background: 'var(--color-brand)',
-                  color: 'var(--brand-ink)',
-                  fontFamily: 'var(--font-mono)',
-                }}
-              >
-                <Sparkles size={9} /> Premium
-              </span>
-              <h4
-                className="text-base font-bold text-foreground leading-tight"
-                style={{ fontFamily: 'var(--font-display)', letterSpacing: '-0.01em' }}
-              >
-                Never lose a version
-              </h4>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Version history lets you preview and restore any earlier draft of your chapter.
-              </p>
-              <Link
-                href={`/${locale}/pricing`}
-                className="inline-flex items-center justify-center gap-1.5 self-start mt-1 rounded-md px-3 py-1.5 text-xs font-bold transition-colors hover:bg-brand-hover"
-                style={{
-                  background: 'var(--color-brand)',
-                  color: 'var(--brand-ink)',
-                  fontFamily: 'var(--font-display)',
-                }}
-              >
-                Upgrade →
-              </Link>
-            </div>
+            <UpgradePrompt feature="version-history" locale={locale} isAuthed />
           </div>
         )}
 

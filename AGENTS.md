@@ -28,22 +28,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 >
 > **GitHub Issues — Ordered Execution Queue update:** #32 ✅. Next: **#18 For You recommendation system** (now unblocked — depends on #21, #22, #32 all of which have shipped).
 >
-> **Next concrete step:** Smoke #32 (corrected) + verify settings toggle theming at `npm run dev`:
-> - **Settings:** reload `/en/settings/notifications` — profile-summary avatar is now a tidy 56×56 chip (was rendering at natural Cloudinary resolution). Toggle any preference ON — track should be brand-yellow with dark thumb on the right. Toggle OFF — recessed dark track with muted-ink thumb on the left. Same on `/en/settings/privacy` (the other Switch consumer).
+> **Next concrete step:** Proceed to **#18 For You recommendation system** (now unblocked — depends on #21, #22, #32 all of which have shipped).
 >
-> **Then for #32:** smoke on `/en/discover`:
-> 1. Mode toggle shows For You / Trending / Popular / All (4 for authed, 3 for guest).
-> 2. **All + For You modes show the slim `★ FEATURED · {title}` strip** at top of grid (banner restored, was wrongly deleted in `eec9a93`).
-> 3. **Trending + Popular modes HIDE the banner** + show a 12px muted mono descriptor line directly under the mode toggle. Per-tab strings (e.g. Books Trending: "Updated or discovered most by readers in the past 7 days.").
-> 4. Trending mode items ranked by 7d-windowed weighted sum per the spec: books `likes7d*4 + reads7d*3 + bookmarks7d*2 + follows7d*1`, sparks `entries7d*5 + votes7d*3 + likes7d*2`, hives `computeHiveActivityScore7d`, lists `followers7d*5 + booksAdded7d*2`, clubs `computeClubActivityScore7d`.
-> 5. Popular mode items ranked by all-time totals: books `likes*3 + reads*2 + bookmarks*1`, sparks `entries*4 + votes*2 + likes*1`, hives/lists/clubs by denorm member-count/follower-count/member-count with `last_activity_at`/`last_updated_at` tiebreaker.
-> 6. For You still works for authed users with signal (3-tier hybrid unchanged).
-> 7. Reload Trending repeatedly — second+ paint should be cache hit on the 4 rail actions (sparks/hives/lists/clubs); books trending is uncached.
-> 8. Run `npm run seed:ranking-test` in dev: should create 5 test books and assert correct trending vs popular ordering. Throws on mismatch.
-> 9. In dev, watch the server log: each trending action emits a `[Trending <entity>] top=X bottom=Y n=N` line. Score range should show a spread, not all-zeros (a denorm-stale-column tell).
-> 10. 896/896 tests green; tsc clean.
->
-> **Then proceed to #18 For You.** Smoke checklist for #22 if any regression surfaces:
+> **Smoke checklist for #32 if any regression surfaces:
 > 1. `/en/community/reading-lists` — top-tag strip below tab strip; click a chip → URL becomes `?tags=X` + grid filters + chip turns brand-yellow; click again → unselects.
 > 2. Click a `#tag` pill on a list card → toggles into `?tags=` (multi-select with AND semantics if multiple).
 > 3. Active-filter chip row above grid; × on a chip strips just that tag.

@@ -48,6 +48,7 @@ import { extractMentionUsernamesFromText } from '@/lib/mentions/extract-mentions
 import { resolveMentionedUsers } from '@/lib/mentions/resolve-mentions'
 import { recordMentionNotificationsTx } from '@/lib/mentions/record-mention-notifications'
 import { shouldSkipNotification } from '@/lib/notifications/check-preferences'
+import { deleteCloudinaryImage, getCloudinaryPublicId } from '@/lib/cloudinary'
 import type { ActionResult } from './book.actions'
 
 const DEFAULT_PAGE_SIZE = 20
@@ -639,7 +640,7 @@ export async function updateClubAction(
 
   const club = await db.query.bookClubs.findFirst({
     where: eq(bookClubs.id, parsed.data.clubId),
-    columns: { id: true, visibility: true, discoverable: true },
+    columns: { id: true, visibility: true, discoverable: true, coverImageUrl: true },
   })
   if (!club) return { success: false, error: 'NOT_FOUND' }
 
@@ -656,6 +657,21 @@ export async function updateClubAction(
   if (parsed.data.visibility !== undefined) updates.visibility = parsed.data.visibility
   if (parsed.data.openJoin !== undefined) updates.openJoin = parsed.data.openJoin
   if (parsed.data.coverImageUrl !== undefined) updates.coverImageUrl = parsed.data.coverImageUrl
+
+  // Best-effort: delete prior Cloudinary asset when cover changes (replace OR clear).
+  // Mirrors updateAvatarAction pattern. Non-fatal on any failure.
+  if (
+    parsed.data.coverImageUrl !== undefined &&
+    club.coverImageUrl &&
+    club.coverImageUrl !== parsed.data.coverImageUrl
+  ) {
+    try {
+      const oldId = getCloudinaryPublicId(club.coverImageUrl)
+      if (oldId) await deleteCloudinaryImage(oldId)
+    } catch {
+      // Non-fatal
+    }
+  }
 
   // 3-layer discoverable defense
   const effectiveVisibility = parsed.data.visibility ?? club.visibility
@@ -771,6 +787,20 @@ export async function deleteClubAction(
   const membership = await getClubMembership(userId, parsed.data.clubId)
   if (!canDeleteClub(membership.role)) {
     return { success: false, error: 'NOT_ALLOWED' }
+  }
+
+  // Best-effort: clean up the Cloudinary asset before deleting the row. Non-fatal.
+  const existing = await db.query.bookClubs.findFirst({
+    where: eq(bookClubs.id, parsed.data.clubId),
+    columns: { coverImageUrl: true },
+  })
+  if (existing?.coverImageUrl) {
+    try {
+      const publicId = getCloudinaryPublicId(existing.coverImageUrl)
+      if (publicId) await deleteCloudinaryImage(publicId)
+    } catch {
+      // Non-fatal
+    }
   }
 
   await db.delete(bookClubs).where(eq(bookClubs.id, parsed.data.clubId))

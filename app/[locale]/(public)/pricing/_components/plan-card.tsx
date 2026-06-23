@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Check, type LucideIcon } from 'lucide-react'
+import { Check, Users, type LucideIcon } from 'lucide-react'
 import { createCheckoutSessionAction } from '@/lib/actions/billing.actions'
 import { trackEvent } from '@/lib/analytics/track-event'
 import { cn } from '@/lib/utils'
@@ -74,7 +74,7 @@ function buildRows(): ComparisonRow[] {
   // Hives row is not in PREMIUM_BENEFITS but worth showing in the table.
   rows.splice(1, 0, {
     title: 'Hives',
-    icon: PREMIUM_BENEFITS[2].icon, // Users
+    icon: Users,
     free: `Up to ${hives}`,
     premium: 'Unlimited',
   })

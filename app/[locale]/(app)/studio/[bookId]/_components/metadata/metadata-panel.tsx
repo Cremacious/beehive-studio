@@ -272,6 +272,7 @@ export function MetadataPanel() {
   const { activeItem, activeItemId, focusMode, historyOpen } = useBookEditor()
   const isChapterActive = !!activeItem && CHAPTER_TYPES.has(activeItem.type)
 
+  // Width + collapsed are owned by RightPanelSlot; this aside always fills it.
   const hidden = focusMode || historyOpen
 
   return (
@@ -289,11 +290,11 @@ export function MetadataPanel() {
             }
       }
       className={cn(
-        'flex-1 min-h-0 flex flex-col overflow-hidden',
-        'transition-[width,opacity,transform] duration-200 ease-out',
+        'w-full flex-1 min-h-0 flex flex-col overflow-hidden',
+        'transition-[opacity,transform] duration-200 ease-out',
         hidden
-          ? 'w-0 opacity-0 translate-x-2 pointer-events-none'
-          : 'w-60 opacity-100 translate-x-0',
+          ? 'opacity-0 translate-x-2 pointer-events-none'
+          : 'opacity-100 translate-x-0',
       )}
     >
       <div className="flex-1 overflow-y-auto">

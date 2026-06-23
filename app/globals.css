@@ -1659,3 +1659,24 @@ textarea.input { height: auto; min-height: 84px; padding: 12px 14px; resize: ver
 [data-slot="switch"][data-state="unchecked"] [data-slot="switch-thumb"] {
   background-color: var(--canvas-dark-ink-muted) !important;
 }
+
+/* ─────────────────────────────────────────────────────────────────
+   Studio panel resize (issue #36)
+   While the user drags a panel handle, body gets .is-resizing-panel.
+   - Force the resize cursor everywhere so it doesn't snap back on
+     fast pointer moves.
+   - Disable text selection across the page.
+   - Block pointer events on the TipTap surface so it can't steal
+     the drag or start a text selection.
+   ───────────────────────────────────────────────────────────────── */
+body.is-resizing-panel {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+body.is-resizing-panel * {
+  user-select: none !important;
+}
+body.is-resizing-panel .ProseMirror,
+body.is-resizing-panel [contenteditable="true"] {
+  pointer-events: none !important;
+}

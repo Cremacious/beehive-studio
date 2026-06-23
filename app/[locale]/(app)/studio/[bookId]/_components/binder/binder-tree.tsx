@@ -78,7 +78,8 @@ export function renderTree(nodes: TreeNode[], depth: number): React.ReactNode[] 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function BinderTree() {
-  const { bookId, bookTitle, binderItems, setBinderItems, focusMode } = useBookEditor()
+  const { bookId, bookTitle, binderItems, setBinderItems, focusMode, binderPanel } = useBookEditor()
+  const binderHidden = focusMode || binderPanel.collapsed
   const params = useParams<{ locale: string }>()
   const locale = params?.locale ?? 'en'
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
@@ -211,19 +212,24 @@ export function BinderTree() {
   return (
     <BinderTreeContext.Provider value={ctxValue}>
       <aside
-        aria-hidden={focusMode}
+        aria-hidden={binderHidden}
         style={{
           background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
           borderRadius: 'var(--r-card)',
           boxShadow: 'var(--sh-card)',
           border: 'var(--br-card)',
+          width: binderHidden ? 0 : binderPanel.width,
+          // Drag updates must feel instant — no transition while dragging.
+          // Collapse/uncollapse still animates smoothly.
+          transition: binderPanel.isDragging
+            ? 'none'
+            : 'width 200ms ease-out, opacity 200ms ease-out, transform 200ms ease-out',
         }}
         className={cn(
           'flex-shrink-0 flex flex-col overflow-hidden',
-          'transition-[width,opacity,transform] duration-200 ease-out',
-          focusMode
-            ? 'w-0 opacity-0 -translate-x-2 pointer-events-none'
-            : 'w-60 opacity-100 translate-x-0',
+          binderHidden
+            ? 'opacity-0 -translate-x-2 pointer-events-none'
+            : 'opacity-100 translate-x-0',
         )}
       >
         <div className="px-3.5 pt-4 pb-3">

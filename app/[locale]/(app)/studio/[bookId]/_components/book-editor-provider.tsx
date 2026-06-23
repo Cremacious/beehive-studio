@@ -17,6 +17,18 @@ import {
   updateChapterNotesAction,
   updateChapterStatusAction,
 } from '@/lib/actions/chapter.actions'
+import {
+  useResizablePanel,
+  type UseResizablePanelReturn,
+} from '@/lib/hooks/use-resizable-panel'
+
+// Panel size constants per spec (issue #36).
+export const BINDER_DEFAULT_WIDTH = 240
+export const BINDER_MIN_WIDTH = 180
+export const BINDER_MAX_WIDTH = 400
+export const METADATA_DEFAULT_WIDTH = 300
+export const METADATA_MIN_WIDTH = 240
+export const METADATA_MAX_WIDTH = 480
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -73,6 +85,8 @@ type BookEditorContextValue = {
   setLiveCollabCounts: (
     counts: { annotations: number; suggestions: number } | null,
   ) => void
+  binderPanel: UseResizablePanelReturn
+  metadataPanel: UseResizablePanelReturn
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
@@ -107,6 +121,23 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
   const [errors, setErrors] = useState<string[]>([])
   const [focusMode, setFocusMode] = useState(false)
   const toggleFocusMode = useCallback(() => setFocusMode(f => !f), [])
+
+  const binderPanel = useResizablePanel({
+    storageKey: 'studio:binder-width',
+    collapsedStorageKey: 'studio:binder-collapsed',
+    defaultWidth: BINDER_DEFAULT_WIDTH,
+    minWidth: BINDER_MIN_WIDTH,
+    maxWidth: BINDER_MAX_WIDTH,
+    side: 'left',
+  })
+  const metadataPanel = useResizablePanel({
+    storageKey: 'studio:metadata-width',
+    collapsedStorageKey: 'studio:metadata-collapsed',
+    defaultWidth: METADATA_DEFAULT_WIDTH,
+    minWidth: METADATA_MIN_WIDTH,
+    maxWidth: METADATA_MAX_WIDTH,
+    side: 'right',
+  })
   const [pendingRenameId, setPendingRenameId] = useState<string | null>(null)
   const [editorTheme, setEditorTheme] = useState<'dark' | 'light'>(() => {
     // Light is the default writing surface (cream paper). Users opt into dark
@@ -448,6 +479,34 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     setErrors(prev => prev.filter((_, i) => i !== index))
   }, [])
 
+  // Panel toggle keyboard shortcuts.
+  //   Cmd/Ctrl+B          → toggle left (binder) panel
+  //   Cmd/Ctrl+Shift+B    → toggle right (metadata) panel
+  // Skip when focus is in a contenteditable / input / textarea so we don't
+  // hijack TipTap's bold command on the active prose surface.
+  useEffect(() => {
+    function isEditableTarget(el: EventTarget | null): boolean {
+      if (!(el instanceof HTMLElement)) return false
+      if (el.isContentEditable) return true
+      const tag = el.tagName
+      return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT'
+    }
+    function handleKeyDown(e: KeyboardEvent) {
+      const mod = e.metaKey || e.ctrlKey
+      if (!mod) return
+      if (e.key !== 'b' && e.key !== 'B') return
+      if (isEditableTarget(e.target)) return
+      e.preventDefault()
+      if (e.shiftKey) {
+        metadataPanel.toggleCollapsed()
+      } else {
+        binderPanel.toggleCollapsed()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [binderPanel, metadataPanel])
+
   // Save-on-unload safety net: if there's a pending save when the user closes
   // the tab, fire it via sendBeacon (the only API that reliably completes
   // during unload) AND show the browser's native "Leave site?" prompt.
@@ -529,6 +588,8 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     toggleGutter,
     liveCollabCounts,
     setLiveCollabCounts,
+    binderPanel,
+    metadataPanel,
   }), [
     bookId,
     bookTitle,
@@ -573,6 +634,8 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     gutterOpen,
     toggleGutter,
     liveCollabCounts,
+    binderPanel,
+    metadataPanel,
   ])
 
   return <BookEditorContext.Provider value={value}>{children}</BookEditorContext.Provider>

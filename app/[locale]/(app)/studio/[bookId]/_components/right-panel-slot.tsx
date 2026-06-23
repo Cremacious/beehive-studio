@@ -9,9 +9,8 @@ import { EditorStatusBar } from './editor/editor-status-bar'
 //   1) EditorStatusBar — always visible (even with no chapter selected)
 //   2) Metadata panel OR Version history drawer (swap on historyOpen)
 //
-// Each child renders its own card chrome. The wrapper is just a flex column
-// providing the gap between them; width is owned by the panels themselves
-// (w-60 / w-64) so the column hugs the wider of the two.
+// Width + collapsed state are owned here (driven by metadataPanel from the
+// editor provider). Children stretch to fill via w-full.
 //
 // H3 T12 note: the collaboration gutter is NOT mounted here. It needs a
 // reference to the TipTap editor instance (for coordsAtPos anchoring),
@@ -19,18 +18,30 @@ import { EditorStatusBar } from './editor/editor-status-bar'
 // The gutter mounts inline inside ChapterEditor's chapter-render branch
 // as a sibling column, controlled by `gutterOpen` from the provider.
 export function RightPanelSlot() {
-  const { historyOpen, focusMode } = useBookEditor()
+  const { historyOpen, focusMode, metadataPanel } = useBookEditor()
+  const hidden = focusMode || metadataPanel.collapsed
+
   return (
     <div
+      style={{
+        width: hidden ? 0 : metadataPanel.width,
+        transition: metadataPanel.isDragging
+          ? 'none'
+          : 'width 200ms ease-out, opacity 200ms ease-out, transform 200ms ease-out',
+      }}
       className={
-        focusMode
-          ? 'pointer-events-none opacity-0 -translate-x-2 transition-[opacity,transform] duration-200 ease-out flex-shrink-0 w-0'
-          : 'flex flex-col gap-2 flex-shrink-0 h-full min-h-0 transition-[opacity,transform] duration-200 ease-out'
+        hidden
+          ? 'pointer-events-none opacity-0 -translate-x-2 flex-shrink-0 overflow-hidden'
+          : 'flex flex-col gap-2 flex-shrink-0 h-full min-h-0 overflow-hidden'
       }
-      aria-hidden={focusMode}
+      aria-hidden={hidden}
     >
-      <EditorStatusBar />
-      {historyOpen ? <VersionHistoryDrawer /> : <MetadataPanel />}
+      {!hidden && (
+        <>
+          <EditorStatusBar />
+          {historyOpen ? <VersionHistoryDrawer /> : <MetadataPanel />}
+        </>
+      )}
     </div>
   )
 }

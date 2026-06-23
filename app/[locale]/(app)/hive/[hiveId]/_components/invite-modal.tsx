@@ -26,6 +26,7 @@ import {
 } from '@/lib/actions/hive.actions'
 import type { FriendSummary } from '@/lib/actions/friendships.actions'
 import { FREE_HIVE_MEMBER_LIMIT } from '@/lib/premium'
+import { UpgradeModal } from '@/components/upgrade/upgrade-modal'
 
 const FRIEND_PAGE_SIZE = 5
 
@@ -94,6 +95,7 @@ export function InviteModal({
   memberCount,
 }: Props) {
   const [open, setOpen] = useState(false)
+  const [limitOpen, setLimitOpen] = useState(false)
 
   return (
     <>
@@ -144,11 +146,12 @@ export function InviteModal({
           <div className="flex flex-col gap-6">
             <InviteLinkBlock hiveId={hiveId} locale={locale} />
             <OrDivider />
-            <UsernameBlock hiveId={hiveId} />
+            <UsernameBlock hiveId={hiveId} onLimitReached={() => setLimitOpen(true)} />
             <FriendsBlock
               hiveId={hiveId}
               friends={friends}
               memberUserIds={memberUserIds}
+              onLimitReached={() => setLimitOpen(true)}
             />
           </div>
 
@@ -159,6 +162,14 @@ export function InviteModal({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <UpgradeModal
+        feature="hive-members"
+        locale={locale}
+        isAuthed
+        open={limitOpen}
+        onOpenChange={setLimitOpen}
+      />
     </>
   )
 }
@@ -360,7 +371,13 @@ function OrDivider() {
 
 // ─── Secondary: by username ─────────────────────────────────────────────────
 
-function UsernameBlock({ hiveId }: { hiveId: string }) {
+function UsernameBlock({
+  hiveId,
+  onLimitReached,
+}: {
+  hiveId: string
+  onLimitReached: () => void
+}) {
   const [username, setUsername] = useState('')
   const [, startTransition] = useTransition()
   const [submitting, setSubmitting] = useState(false)
@@ -377,6 +394,8 @@ function UsernameBlock({ hiveId }: { hiveId: string }) {
       if (result.success) {
         toast.success(`Invite sent to @${trimmed}`)
         setUsername('')
+      } else if (result.error === 'FREE_LIMIT_REACHED') {
+        onLimitReached()
       } else {
         toast.error(result.error || 'Could not send invite')
       }
@@ -450,10 +469,12 @@ function FriendsBlock({
   hiveId,
   friends,
   memberUserIds,
+  onLimitReached,
 }: {
   hiveId: string
   friends: FriendSummary[]
   memberUserIds: Set<string>
+  onLimitReached: () => void
 }) {
   const [query, setQuery] = useState('')
   const [visibleCount, setVisibleCount] = useState(FRIEND_PAGE_SIZE)
@@ -502,6 +523,8 @@ function FriendsBlock({
       if (result.success) {
         setInvitedUserIds((prev) => new Set(prev).add(friend.userId))
         toast.success(`Invite sent to @${friend.username}`)
+      } else if (result.error === 'FREE_LIMIT_REACHED') {
+        onLimitReached()
       } else {
         toast.error(result.error || 'Could not send invite')
       }

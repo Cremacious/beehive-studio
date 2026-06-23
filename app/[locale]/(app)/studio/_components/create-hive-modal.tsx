@@ -6,6 +6,7 @@ import { Link2, BookPlus, Sparkles, Lock, Users, Globe, ChevronRight, ChevronDow
 import { createHiveAction } from '@/lib/actions/hive.actions'
 import { getUserBooksAction } from '@/lib/actions/book.actions'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { UpgradeModal } from '@/components/upgrade/upgrade-modal'
 import { cn } from '@/lib/utils'
 
 type Path = 'link' | 'new' | 'standalone'
@@ -43,6 +44,7 @@ export function CreateHiveModal({
   const [bookId, setBookId] = useState<string | null>(lockedId)
   const [pending, start] = useTransition()
   const [err, setErr] = useState<string | null>(null)
+  const [limitOpen, setLimitOpen] = useState(false)
   const [form, setForm] = useState({
     name: '',
     description: '',
@@ -77,6 +79,10 @@ export function CreateHiveModal({
         discoverable: form.discoverable,
       })
       if (!result.success) {
+        if (result.error === 'FREE_LIMIT_REACHED') {
+          setLimitOpen(true)
+          return
+        }
         setErr(result.error)
         return
       }
@@ -86,6 +92,7 @@ export function CreateHiveModal({
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[560px] p-0 overflow-hidden dialog-ios">
         <div className="p-7">
@@ -114,6 +121,14 @@ export function CreateHiveModal({
         </div>
       </DialogContent>
     </Dialog>
+    <UpgradeModal
+      feature="hive-members"
+      locale={locale}
+      isAuthed
+      open={limitOpen}
+      onOpenChange={setLimitOpen}
+    />
+    </>
   )
 }
 

@@ -10,6 +10,7 @@ import {
 } from '@/lib/actions/book.actions'
 import { SharingControls, type Visibility } from '@/components/book/sharing-controls'
 import { DeleteBookButton } from '@/components/book/delete-book-button'
+import { UpgradePrompt } from '@/components/upgrade/upgrade-prompt'
 import { useCloudinaryUpload } from '@/hooks/use-cloudinary-upload'
 import { validateImageFile } from '@/lib/upload/validate-image'
 import { optimizeCloudinaryUrl, BOOK_COVER_TRANSFORMS } from '@/lib/upload/cloudinary-url'
@@ -962,26 +963,8 @@ export function BookDetailsForm({ locale, bookId, initial, isPremium }: Props) {
                 }
               />
               {!isPremium && (
-                <div style={{
-                  background: 'oklch(from var(--brand) l c h / 0.08)',
-                  border: '1px solid oklch(from var(--brand) l c h / 0.20)',
-                  borderRadius: 'var(--r-row)',
-                  padding: '12px 14px',
-                  fontSize: 12,
-                  color: 'var(--canvas-dark-ink-muted)',
-                  lineHeight: 1.65,
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: 10,
-                  marginBottom: 16,
-                }}>
-                  <Sparkles size={14} style={{ color: 'var(--brand)', flexShrink: 0, marginTop: 1 }} />
-                  <span>
-                    Publishing details are a Premium feature. Unlock imprint, ISBN, trim size, author bio, and dedication.{' '}
-                    <Link href={`/${locale}/pricing`} style={{ color: 'var(--brand)', textDecoration: 'none' }}>
-                      Upgrade →
-                    </Link>
-                  </span>
+                <div style={{ marginBottom: 16 }}>
+                  <UpgradePrompt feature="publishing" locale={locale} isAuthed />
                 </div>
               )}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

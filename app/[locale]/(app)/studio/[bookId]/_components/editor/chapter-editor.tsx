@@ -19,6 +19,7 @@ import { CollaborationGutter } from '@/components/hive/collab/collaboration-gutt
 import { useBookEditor } from '../book-editor-provider'
 import { EditorToolbar } from './editor-toolbar'
 import { WritingAnalysis, extractPlainText } from './writing-analysis'
+import { UpgradePrompt } from '@/components/upgrade/upgrade-prompt'
 import { createBinderItemAction } from '@/lib/actions/binder.actions'
 import { FindReplace } from './find-replace'
 import { PreviewBanner } from './preview-banner'
@@ -132,6 +133,8 @@ export function ChapterEditor() {
     editorTheme,
     setLiveWordCount,
     setLiveCollabCounts,
+    isPremium,
+    locale,
   } = useBookEditor()
 
   const [analysisOpen, setAnalysisOpen] = useState(false)
@@ -421,13 +424,18 @@ export function ChapterEditor() {
             onCountsChange={setLiveCollabCounts}
           />
         )}
-        {analysisOpen && (
-          <WritingAnalysis
-            editorText={editorText}
-            isOpen={analysisOpen}
-            onClose={() => setAnalysisOpen(false)}
-          />
-        )}
+        {analysisOpen &&
+          (isPremium ? (
+            <WritingAnalysis
+              editorText={editorText}
+              isOpen={analysisOpen}
+              onClose={() => setAnalysisOpen(false)}
+            />
+          ) : (
+            <div className="p-4">
+              <UpgradePrompt feature="writing-analysis" locale={locale} isAuthed />
+            </div>
+          ))}
       </div>
       <KeyboardCheatsheet />
     </main>

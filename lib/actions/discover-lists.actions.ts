@@ -31,6 +31,7 @@ import {
   normalizeGenre,
 } from '@/lib/discover/genres'
 import { applyBackfill } from '@/lib/discover/backfill'
+import { stitchTiers } from '@/lib/discover/stitch-tiers'
 import type { CoverPreview } from './discover-lists-shared'
 
 import type { ActionResult } from './book.actions'
@@ -1171,4 +1172,141 @@ export async function getTopDiscoverListTagsAction(args: {
     ? await getTopDiscoverListTagsByGenreCached(args.genre, limit)
     : await getTopDiscoverListTagsGlobalCached(limit)
   return { success: true, data }
+}
+
+// ─── For You (3-tier hybrid) — Issue #18 ──────────────────────────────────────
+
+const FOR_YOU_PAGE_SIZE = 10
+const FOR_YOU_TIER_FETCH_LIMIT = 50
+const FOR_YOU_QUOTAS = { tier1: 5, tier2: 3, tier3: 2 } as const
+
+/**
+ * Issue #18 For You for Reading Lists. 3-tier hybrid:
+ *   T1: CUSTOM lists owned by users the viewer follows. Ordered by
+ *       lastUpdatedAt DESC (createdAt fallback).
+ *   T2: CUSTOM lists whose `tags` overlap with the union of tags from the
+ *       viewer's own reading lists (uses GIN-indexed `&&` overlap operator).
+ *       Excludes T1. Ordered by followerCount DESC.
+ *   T3: Popular fallback — CUSTOM, discoverable, ORDER BY followerCount
+ *       DESC. Excludes T1∪T2.
+ *
+ * Stitched 5/3/2 per 10-card page. Always excludes kind=LIKED (auto-lists
+ * never appear in Discover). Guests early-return empty.
+ */
+export async function getForYouListsAction(args: {
+  viewerId: string
+  page?: number
+}): Promise<
+  ActionResult<{
+    lists: ListCard[]
+    totalCount: number
+    tierBreakdown: { tier1: number; tier2: number; tier3: number }
+  }>
+> {
+  if (!args.viewerId) {
+    return {
+      success: true,
+      data: {
+        lists: [],
+        totalCount: 0,
+        tierBreakdown: { tier1: 0, tier2: 0, tier3: 0 },
+      },
+    }
+  }
+  const page = Math.max(1, Math.floor(args.page ?? 1))
+  const viewerId = args.viewerId
+  const blocked = await getBlockedListOwnerIdsForViewer(viewerId)
+
+  // ── Tier 1: followed curators' CUSTOM lists.
+  const t1Conds = [
+    ...buildPublicListFilters(undefined, blocked),
+    sql`${readingLists.userId} IN (SELECT ${follows.followeeId} FROM ${follows} WHERE ${follows.followerId} = ${viewerId})`,
+  ]
+  const t1Rows = await db
+    .select({ id: readingLists.id })
+    .from(readingLists)
+    .where(and(...t1Conds))
+    .orderBy(
+      desc(readingLists.lastUpdatedAt),
+      desc(readingLists.createdAt),
+      desc(readingLists.id),
+    )
+    .limit(FOR_YOU_TIER_FETCH_LIMIT)
+  const t1Ids = new Set(t1Rows.map((r) => r.id))
+
+  // ── Tier 2: tag overlap with viewer's own lists.
+  // Aggregate the viewer's own list tags into a single distinct array; then
+  // use the GIN `&&` overlap operator against the lists table's `tags`.
+  const ownTagRows = await db
+    .select({ tags: readingLists.tags })
+    .from(readingLists)
+    .where(eq(readingLists.userId, viewerId))
+  const ownTagSet = new Set<string>()
+  for (const r of ownTagRows) {
+    for (const t of r.tags ?? []) {
+      const norm = String(t).trim().toLowerCase()
+      if (norm) ownTagSet.add(norm)
+    }
+  }
+  const ownTags = Array.from(ownTagSet)
+  let t2Rows: Array<{ id: string }> = []
+  if (ownTags.length > 0) {
+    const tagParams = sql.join(
+      ownTags.map((t) => sql`${t}`),
+      sql`, `,
+    )
+    const t2Conds = [
+      ...buildPublicListFilters(undefined, blocked),
+      sql`${readingLists.tags} && ARRAY[${tagParams}]::text[]`,
+    ]
+    if (t1Ids.size > 0) {
+      t2Conds.push(notInArray(readingLists.id, Array.from(t1Ids)))
+    }
+    t2Rows = await db
+      .select({ id: readingLists.id })
+      .from(readingLists)
+      .where(and(...t2Conds))
+      .orderBy(desc(readingLists.followerCount), desc(readingLists.id))
+      .limit(FOR_YOU_TIER_FETCH_LIMIT)
+  }
+  const t12Ids = new Set([...t1Ids, ...t2Rows.map((r) => r.id)])
+
+  // ── Tier 3: popular fallback.
+  const t3Conds = [...buildPublicListFilters(undefined, blocked)]
+  if (t12Ids.size > 0) {
+    t3Conds.push(notInArray(readingLists.id, Array.from(t12Ids)))
+  }
+  const t3Rows = await db
+    .select({ id: readingLists.id })
+    .from(readingLists)
+    .where(and(...t3Conds))
+    .orderBy(desc(readingLists.followerCount), desc(readingLists.id))
+    .limit(FOR_YOU_TIER_FETCH_LIMIT)
+
+  const totalCount = t1Rows.length + t2Rows.length + t3Rows.length
+  const stitched = stitchTiers({
+    t1: t1Rows,
+    t2: t2Rows,
+    t3: t3Rows,
+    page,
+    pageSize: FOR_YOU_PAGE_SIZE,
+    quotas: FOR_YOU_QUOTAS,
+  })
+
+  const projected = await projectToListCards(stitched, {
+    computeFollowersGained: false,
+  })
+
+  return {
+    success: true,
+    data: {
+      lists: projected,
+      totalCount,
+      tierBreakdown: {
+        tier1: t1Rows.length,
+        tier2: t2Rows.length,
+        tier3: t3Rows.length,
+      },
+    },
+  }
 }

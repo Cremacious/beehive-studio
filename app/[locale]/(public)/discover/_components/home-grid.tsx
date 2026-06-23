@@ -6,20 +6,25 @@ import {
 } from '@/lib/actions/discover.actions'
 import {
   searchSparksDiscoverAction,
+  getForYouSparksAction,
   type SparkCard,
 } from '@/lib/actions/discover-sparks.actions'
 import {
   searchHivesDiscoverAction,
+  getForYouHivesAction,
   type HiveCard,
 } from '@/lib/actions/discover-hives.actions'
 import {
   searchListsDiscoverAction,
+  getForYouListsAction,
   type ListCard,
 } from '@/lib/actions/discover-lists.actions'
 import {
   searchClubsDiscoverAction,
+  getForYouClubsAction,
   type ClubCard,
 } from '@/lib/actions/discover-clubs.actions'
+import { getForYouBooksAction } from '@/lib/actions/discover-for-you-books.actions'
 import {
   type EntityKind,
 } from '@/lib/actions/discover-home-mixed.actions'
@@ -240,9 +245,11 @@ export async function HomeGrid({ sp, locale }: Props) {
   )
   const show = parseShow(sp)
 
-  // For books, "For You" mode surfaces followed-author content first.
-  // Sparks, hives, lists, clubs always use their natural sort so their
-  // sections are never empty due to a follow-graph filter.
+  // For You mode dispatches to per-entity For You actions when the viewer
+  // is authed; otherwise falls through to the search-action sort defaults.
+  // Other modes keep their natural sort so sections never empty from a
+  // follow-graph filter.
+  const useForYou = resolvedMode === 'for-you' && !!viewerId
   const bookSort = resolvedMode === 'for-you' ? 'recent' : 'popular'
   const sharedArgs = {
     q,
@@ -251,23 +258,68 @@ export async function HomeGrid({ sp, locale }: Props) {
 
   const [booksRes, sparksRes, hivesRes, listsRes, clubsRes] = await Promise.all([
     show.includes('books')
-      ? searchBooksDiscoverAction({ ...sharedArgs, sort: bookSort })
+      ? useForYou
+        ? getForYouBooksAction({ viewerId: viewerId!, page: 1 }).then((r) =>
+            r.success
+              ? {
+                  success: true as const,
+                  data: { books: r.data.books, totalCount: r.data.totalCount },
+                }
+              : r,
+          )
+        : searchBooksDiscoverAction({ ...sharedArgs, sort: bookSort })
       : null,
     show.includes('sparks')
-      ? searchSparksDiscoverAction({ ...sharedArgs, sort: 'urgent' })
+      ? useForYou
+        ? getForYouSparksAction({ viewerId: viewerId!, page: 1 }).then((r) =>
+            r.success
+              ? {
+                  success: true as const,
+                  data: { books: r.data.sparks, totalCount: r.data.totalCount },
+                }
+              : r,
+          )
+        : searchSparksDiscoverAction({ ...sharedArgs, sort: 'urgent' })
       : null,
     show.includes('hives')
-      ? searchHivesDiscoverAction({ ...sharedArgs, sort: 'most-active' })
+      ? useForYou
+        ? getForYouHivesAction({ viewerId: viewerId!, page: 1 }).then((r) =>
+            r.success
+              ? {
+                  success: true as const,
+                  data: { books: r.data.hives, totalCount: r.data.totalCount },
+                }
+              : r,
+          )
+        : searchHivesDiscoverAction({ ...sharedArgs, sort: 'most-active' })
       : null,
     show.includes('lists')
-      ? searchListsDiscoverAction({
-          ...sharedArgs,
-          tags: tags.length > 0 ? tags : undefined,
-          sort: 'most-followed',
-        })
+      ? useForYou
+        ? getForYouListsAction({ viewerId: viewerId!, page: 1 }).then((r) =>
+            r.success
+              ? {
+                  success: true as const,
+                  data: { books: r.data.lists, totalCount: r.data.totalCount },
+                }
+              : r,
+          )
+        : searchListsDiscoverAction({
+            ...sharedArgs,
+            tags: tags.length > 0 ? tags : undefined,
+            sort: 'most-followed',
+          })
       : null,
     show.includes('clubs')
-      ? searchClubsDiscoverAction({ ...sharedArgs, sort: 'most-active' })
+      ? useForYou
+        ? getForYouClubsAction({ viewerId: viewerId!, page: 1 }).then((r) =>
+            r.success
+              ? {
+                  success: true as const,
+                  data: { books: r.data.clubs, totalCount: r.data.totalCount },
+                }
+              : r,
+          )
+        : searchClubsDiscoverAction({ ...sharedArgs, sort: 'most-active' })
       : null,
   ])
 

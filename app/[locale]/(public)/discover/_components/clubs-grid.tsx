@@ -1,6 +1,7 @@
 import {
   searchClubsDiscoverAction,
   getFeaturedClubAction,
+  getForYouClubsAction,
   type ClubCard,
 } from '@/lib/actions/discover-clubs.actions'
 import { SlimFeaturedStrip } from './slim-featured-strip'
@@ -155,18 +156,24 @@ export async function ClubsGrid({ sp, locale }: Props) {
 
   const resultsRes = await (async () => {
     switch (resolvedMode) {
-      case 'for-you':
-        return searchClubsDiscoverAction({
-          q,
-          genres,
-          size,
-          accessStates: access,
-          currentBook,
-          sort: 'most-active',
-          source: 'following',
-          viewerId: viewerId ?? undefined,
-          page,
-        })
+      case 'for-you': {
+        if (!viewerId) {
+          return searchClubsDiscoverAction({
+            q, genres, size, accessStates: access, currentBook,
+            sort: 'most-active', page,
+          })
+        }
+        const forYou = await getForYouClubsAction({ viewerId, page })
+        if (!forYou.success) return forYou
+        return {
+          success: true as const,
+          data: {
+            books: forYou.data.clubs,
+            totalCount: forYou.data.totalCount,
+            nextCursor: null as string | null,
+          },
+        }
+      }
       case 'trending':
         return searchClubsDiscoverAction({
           q,

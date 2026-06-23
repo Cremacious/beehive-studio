@@ -1,6 +1,7 @@
 import {
   searchHivesDiscoverAction,
   getFeaturedHiveAction,
+  getForYouHivesAction,
   type HiveCard,
   type SizeBucket,
 } from '@/lib/actions/discover-hives.actions'
@@ -150,18 +151,24 @@ export async function HivesGrid({ sp, locale }: Props) {
 
   const resultsRes = await (async () => {
     switch (resolvedMode) {
-      case 'for-you':
-        return searchHivesDiscoverAction({
-          q,
-          genres,
-          size,
-          openStates,
-          linked,
-          sort: 'most-active',
-          source: 'following',
-          viewerId: viewerId ?? undefined,
-          page,
-        })
+      case 'for-you': {
+        if (!viewerId) {
+          return searchHivesDiscoverAction({
+            q, genres, size, openStates, linked,
+            sort: 'most-active', page,
+          })
+        }
+        const forYou = await getForYouHivesAction({ viewerId, page })
+        if (!forYou.success) return forYou
+        return {
+          success: true as const,
+          data: {
+            books: forYou.data.hives,
+            totalCount: forYou.data.totalCount,
+            nextCursor: null as string | null,
+          },
+        }
+      }
       case 'trending':
         return searchHivesDiscoverAction({
           q,

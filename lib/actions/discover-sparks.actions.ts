@@ -28,6 +28,8 @@ import {
   normalizeGenre,
 } from '@/lib/discover/genres'
 import { applyBackfill } from '@/lib/discover/backfill'
+import { getViewerTopGenres } from '@/lib/discover/viewer-top-genres'
+import { stitchTiers } from '@/lib/discover/stitch-tiers'
 
 import type { ActionResult } from './book.actions'
 
@@ -1077,4 +1079,141 @@ export async function getSparkGenreCountsAction(): Promise<
 > {
   const data = await getSparkGenreCountsCached()
   return { success: true, data }
+}
+
+// ─── 11. For You (3-tier hybrid) — Issue #18 ──────────────────────────────────
+
+const FOR_YOU_PAGE_SIZE = 10
+const FOR_YOU_TIER_FETCH_LIMIT = 50
+const FOR_YOU_QUOTAS = { tier1: 5, tier2: 3, tier3: 2 } as const
+
+/**
+ * Issue #18 For You for Sparks. Mirrors the Books `getForYouBooksAction`
+ * 3-tier shape:
+ *   T1: Sparks created by users the viewer follows, status IN (OPEN, VOTING),
+ *       excluding sparks the viewer has already entered. Ordered by createdAt
+ *       DESC.
+ *   T2: Sparks whose genre is in the viewer's top 3 inferred genres (taste
+ *       vector via `getViewerTopGenres`), excluding T1, ranked by
+ *       entries-this-week DESC.
+ *   T3: Trending sparks fallback — OPEN sparks with entry_count >= 1, ranked
+ *       by entry_count DESC, excluding T1∪T2.
+ *
+ * Stitched 5/3/2 per 10-card page via `stitchTiers`.
+ * Guests (or missing viewerId) get an empty result rather than throwing.
+ */
+export async function getForYouSparksAction(args: {
+  viewerId: string
+  page?: number
+}): Promise<
+  ActionResult<{
+    sparks: SparkCard[]
+    totalCount: number
+    tierBreakdown: { tier1: number; tier2: number; tier3: number }
+  }>
+> {
+  // Safety net — guests/null IDs early-return cleanly.
+  if (!args.viewerId) {
+    return {
+      success: true,
+      data: {
+        sparks: [],
+        totalCount: 0,
+        tierBreakdown: { tier1: 0, tier2: 0, tier3: 0 },
+      },
+    }
+  }
+  const page = Math.max(1, Math.floor(args.page ?? 1))
+  const viewerId = args.viewerId
+  const blocked = await getBlockedSparkCreatorIdsForViewer(viewerId)
+
+  // ── Tier 1: followed creators, OPEN/VOTING, not already entered.
+  const t1Conds = [
+    ...buildPublicSparkFilters(undefined, blocked),
+    sql`${sparks.status} IN ('OPEN', 'VOTING')`,
+    sql`${sparks.creatorId} IN (SELECT ${follows.followeeId} FROM ${follows} WHERE ${follows.followerId} = ${viewerId})`,
+    sql`${sparks.id} NOT IN (SELECT ${sparkEntries.sparkId} FROM ${sparkEntries} WHERE ${sparkEntries.userId} = ${viewerId})`,
+  ]
+  const t1Rows = await db
+    .select({ id: sparks.id })
+    .from(sparks)
+    .where(and(...t1Conds))
+    .orderBy(desc(sparks.createdAt), desc(sparks.id))
+    .limit(FOR_YOU_TIER_FETCH_LIMIT)
+  const t1Ids = new Set(t1Rows.map((r) => r.id))
+
+  // ── Tier 2: viewer top-3 genres, ranked by entries-this-week DESC.
+  const top3 = await getViewerTopGenres(viewerId, 3)
+  let t2Rows: Array<{ id: string }> = []
+  if (top3.length > 0) {
+    const t2Conds = [
+      ...buildPublicSparkFilters(undefined, blocked),
+      sql`${sparks.status} IN ('OPEN', 'VOTING')`,
+      sql`${sparks.genre} IN (${sql.join(
+        top3.map((g) => sql`${g}`),
+        sql`, `,
+      )})`,
+    ]
+    if (t1Ids.size > 0) {
+      t2Conds.push(notInArray(sparks.id, Array.from(t1Ids)))
+    }
+    // entries-this-week via correlated subquery; ranked by that count DESC.
+    const entriesThisWeek = sql<number>`(
+      SELECT COUNT(*)::int FROM ${sparkEntries}
+      WHERE ${sparkEntries.sparkId} = ${sparks.id}
+        AND ${sparkEntries.createdAt} >= now() - interval '7 days'
+    )`
+    t2Rows = await db
+      .select({ id: sparks.id })
+      .from(sparks)
+      .where(and(...t2Conds))
+      .orderBy(desc(entriesThisWeek), desc(sparks.id))
+      .limit(FOR_YOU_TIER_FETCH_LIMIT)
+  }
+  const t12Ids = new Set([...t1Ids, ...t2Rows.map((r) => r.id)])
+
+  // ── Tier 3: trending fallback. Mirrors `getHeatingUpSparksAction` shape
+  // but without the entry_count >= 3 floor (we want this to populate even
+  // for low-traffic platforms).
+  const t3Conds = [
+    ...buildPublicSparkFilters(undefined, blocked),
+    sql`${sparks.status} IN ('OPEN', 'VOTING')`,
+  ]
+  if (t12Ids.size > 0) {
+    t3Conds.push(notInArray(sparks.id, Array.from(t12Ids)))
+  }
+  const t3Rows = await db
+    .select({ id: sparks.id })
+    .from(sparks)
+    .where(and(...t3Conds))
+    .orderBy(desc(sparks.entryCount), desc(sparks.id))
+    .limit(FOR_YOU_TIER_FETCH_LIMIT)
+
+  const totalCount = t1Rows.length + t2Rows.length + t3Rows.length
+  const stitched = stitchTiers({
+    t1: t1Rows,
+    t2: t2Rows,
+    t3: t3Rows,
+    page,
+    pageSize: FOR_YOU_PAGE_SIZE,
+    quotas: FOR_YOU_QUOTAS,
+  })
+
+  const projected = await projectToSparkCards(stitched, {
+    computeVoteTotal: true,
+    computeWinner: true,
+  })
+
+  return {
+    success: true,
+    data: {
+      sparks: projected,
+      totalCount,
+      tierBreakdown: {
+        tier1: t1Rows.length,
+        tier2: t2Rows.length,
+        tier3: t3Rows.length,
+      },
+    },
+  }
 }

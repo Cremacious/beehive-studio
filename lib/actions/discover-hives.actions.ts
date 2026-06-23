@@ -11,7 +11,7 @@ import {
   hiveSubmissions,
 } from '@/db/schema/hive'
 import { books, chapters } from '@/db/schema/books'
-import { follows, userBlocks } from '@/db/schema/social'
+import { follows, userBlocks, bookLikes, bookmarks } from '@/db/schema/social'
 import { userProfiles } from '@/db/schema/auth'
 import {
   and,
@@ -38,6 +38,8 @@ import {
 } from '@/lib/discover/genres'
 import { applyBackfill } from '@/lib/discover/backfill'
 import { computeHiveActivityScore7d } from '@/lib/discover/hive-activity-score'
+import { getViewerTopGenres } from '@/lib/discover/viewer-top-genres'
+import { stitchTiers } from '@/lib/discover/stitch-tiers'
 
 import type { ActionResult } from './book.actions'
 
@@ -1346,4 +1348,131 @@ export async function getHiveGenreCountsAction(): Promise<
 > {
   const data = await getHiveGenreCountsCached()
   return { success: true, data }
+}
+
+// ─── For You (3-tier hybrid) — Issue #18 ──────────────────────────────────────
+
+const FOR_YOU_PAGE_SIZE = 10
+const FOR_YOU_TIER_FETCH_LIMIT = 50
+const FOR_YOU_QUOTAS = { tier1: 4, tier2: 4, tier3: 2 } as const
+
+/**
+ * Issue #18 For You for Hives. 3-tier hybrid:
+ *   T1: Hives whose linked book is in the viewer's bookLikes ∪ bookmarks
+ *       set. Ordered by lastActivityAt DESC.
+ *   T2: Hives whose linked book's genre is in the viewer's top 3 inferred
+ *       genres (via `getViewerTopGenres`), excluding T1. Ranked by
+ *       lastActivityAt DESC.
+ *   T3: Trending fallback — most-active hives in last 7d (lastActivityAt
+ *       DESC proxy), excluding T1∪T2.
+ *
+ * Stitched 4/4/2 per 10-card page. Guests early-return empty.
+ */
+export async function getForYouHivesAction(args: {
+  viewerId: string
+  page?: number
+}): Promise<
+  ActionResult<{
+    hives: HiveCard[]
+    totalCount: number
+    tierBreakdown: { tier1: number; tier2: number; tier3: number }
+  }>
+> {
+  if (!args.viewerId) {
+    return {
+      success: true,
+      data: {
+        hives: [],
+        totalCount: 0,
+        tierBreakdown: { tier1: 0, tier2: 0, tier3: 0 },
+      },
+    }
+  }
+  const page = Math.max(1, Math.floor(args.page ?? 1))
+  const viewerId = args.viewerId
+  const blocked = await getBlockedHiveOwnerIdsForViewer(viewerId)
+
+  // ── Tier 1: hives linked to books the viewer likes or has bookmarked.
+  const baseFiltersT1 = buildPublicHiveFilters(undefined, 'any', blocked)
+  const t1Conds = [
+    ...baseFiltersT1,
+    sql`(
+      ${hives.bookId} IN (SELECT ${bookLikes.bookId} FROM ${bookLikes} WHERE ${bookLikes.userId} = ${viewerId})
+      OR ${hives.bookId} IN (SELECT ${bookmarks.bookId} FROM ${bookmarks} WHERE ${bookmarks.userId} = ${viewerId})
+    )`,
+  ]
+  const t1Rows = await db
+    .select({ id: hives.id })
+    .from(hives)
+    .innerJoin(books, eq(books.id, hives.bookId))
+    .where(and(...t1Conds))
+    .orderBy(desc(hives.lastActivityAt), desc(hives.id))
+    .limit(FOR_YOU_TIER_FETCH_LIMIT)
+  const t1Ids = new Set(t1Rows.map((r) => r.id))
+
+  // ── Tier 2: linked book's genre in viewer top-3.
+  const top3 = await getViewerTopGenres(viewerId, 3)
+  let t2Rows: Array<{ id: string }> = []
+  if (top3.length > 0) {
+    const baseFiltersT2 = buildPublicHiveFilters(undefined, 'any', blocked)
+    const t2Conds = [
+      ...baseFiltersT2,
+      inArray(books.genre, top3),
+    ]
+    if (t1Ids.size > 0) {
+      t2Conds.push(notInArray(hives.id, Array.from(t1Ids)))
+    }
+    t2Rows = await db
+      .select({ id: hives.id })
+      .from(hives)
+      .innerJoin(books, eq(books.id, hives.bookId))
+      .where(and(...t2Conds))
+      .orderBy(desc(hives.lastActivityAt), desc(hives.id))
+      .limit(FOR_YOU_TIER_FETCH_LIMIT)
+  }
+  const t12Ids = new Set([...t1Ids, ...t2Rows.map((r) => r.id)])
+
+  // ── Tier 3: trending fallback (lastActivityAt DESC proxy).
+  const baseFiltersT3 = buildPublicHiveFilters(undefined, 'any', blocked)
+  const t3Conds = [
+    ...baseFiltersT3,
+    isNotNull(hives.lastActivityAt),
+  ]
+  if (t12Ids.size > 0) {
+    t3Conds.push(notInArray(hives.id, Array.from(t12Ids)))
+  }
+  const t3Rows = await db
+    .select({ id: hives.id })
+    .from(hives)
+    .where(and(...t3Conds))
+    .orderBy(desc(hives.lastActivityAt), desc(hives.id))
+    .limit(FOR_YOU_TIER_FETCH_LIMIT)
+
+  const totalCount = t1Rows.length + t2Rows.length + t3Rows.length
+  const stitched = stitchTiers({
+    t1: t1Rows,
+    t2: t2Rows,
+    t3: t3Rows,
+    page,
+    pageSize: FOR_YOU_PAGE_SIZE,
+    quotas: FOR_YOU_QUOTAS,
+  })
+
+  const projected = await projectToHiveCards(stitched, {
+    computeActivityScore: false,
+    computeBuzzCount: false,
+  })
+
+  return {
+    success: true,
+    data: {
+      hives: projected,
+      totalCount,
+      tierBreakdown: {
+        tier1: t1Rows.length,
+        tier2: t2Rows.length,
+        tier3: t3Rows.length,
+      },
+    },
+  }
 }

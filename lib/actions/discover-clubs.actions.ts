@@ -33,6 +33,9 @@ import {
 } from '@/lib/discover/genres'
 import { applyBackfill } from '@/lib/discover/backfill'
 import { computeClubActivityScore7d } from '@/lib/discover/club-activity-score'
+import { getViewerTopGenres } from '@/lib/discover/viewer-top-genres'
+import { stitchTiers } from '@/lib/discover/stitch-tiers'
+import { books } from '@/db/schema/books'
 
 import type { ActionResult } from './book.actions'
 
@@ -1128,4 +1131,137 @@ export async function getClubGenreCountsAction(): Promise<
 > {
   const data = await getClubGenreCountsCached()
   return { success: true, data }
+}
+
+// ─── For You (3-tier hybrid) — Issue #18 ──────────────────────────────────────
+
+const FOR_YOU_PAGE_SIZE = 10
+const FOR_YOU_TIER_FETCH_LIMIT = 50
+const FOR_YOU_QUOTAS = { tier1: 4, tier2: 4, tier3: 2 } as const
+
+/**
+ * Issue #18 For You for Clubs. 3-tier hybrid:
+ *   T1: Clubs where any member is a mutual follow of the viewer (viewer
+ *       follows X AND X follows viewer). Ordered by lastActivityAt DESC.
+ *   T2: Clubs whose current book's underlying `books.genre` (via
+ *       book_clubs.currentBookId → book_club_books.id → book_club_books.bookId
+ *       → books.id) is in the viewer's top 3 inferred genres. Excludes T1.
+ *   T3: Trending fallback — lastActivityAt DESC. Excludes T1∪T2.
+ *
+ * Stitched 4/4/2 per 10-card page. Guests early-return empty.
+ */
+export async function getForYouClubsAction(args: {
+  viewerId: string
+  page?: number
+}): Promise<
+  ActionResult<{
+    clubs: ClubCard[]
+    totalCount: number
+    tierBreakdown: { tier1: number; tier2: number; tier3: number }
+  }>
+> {
+  if (!args.viewerId) {
+    return {
+      success: true,
+      data: {
+        clubs: [],
+        totalCount: 0,
+        tierBreakdown: { tier1: 0, tier2: 0, tier3: 0 },
+      },
+    }
+  }
+  const page = Math.max(1, Math.floor(args.page ?? 1))
+  const viewerId = args.viewerId
+  const blocked = await getBlockedClubOwnerIdsForViewer(viewerId)
+
+  // ── Tier 1: clubs containing a mutual-follow member.
+  // Mutual follow set: users X where viewer→X AND X→viewer.
+  const t1Conds = [
+    ...buildPublicClubFilters(undefined, blocked),
+    sql`${bookClubs.id} IN (
+      SELECT bcm.club_id FROM book_club_members bcm
+      WHERE bcm.user_id IN (
+        SELECT a.followee_id FROM follows a
+        INNER JOIN follows b
+          ON b.follower_id = a.followee_id
+         AND b.followee_id = a.follower_id
+        WHERE a.follower_id = ${viewerId}
+      )
+    )`,
+  ]
+  const t1Rows = await db
+    .select({ id: bookClubs.id })
+    .from(bookClubs)
+    .where(and(...t1Conds))
+    .orderBy(desc(bookClubs.lastActivityAt), desc(bookClubs.id))
+    .limit(FOR_YOU_TIER_FETCH_LIMIT)
+  const t1Ids = new Set(t1Rows.map((r) => r.id))
+
+  // ── Tier 2: current book's books.genre in viewer top-3.
+  const top3 = await getViewerTopGenres(viewerId, 3)
+  let t2Rows: Array<{ id: string }> = []
+  if (top3.length > 0) {
+    const t2Conds = [
+      ...buildPublicClubFilters(undefined, blocked),
+      isNotNull(bookClubs.currentBookId),
+      inArray(books.genre, top3),
+    ]
+    if (t1Ids.size > 0) {
+      t2Conds.push(notInArray(bookClubs.id, Array.from(t1Ids)))
+    }
+    t2Rows = await db
+      .select({ id: bookClubs.id })
+      .from(bookClubs)
+      .innerJoin(
+        bookClubBooks,
+        eq(bookClubBooks.id, bookClubs.currentBookId),
+      )
+      .innerJoin(books, eq(books.id, bookClubBooks.bookId))
+      .where(and(...t2Conds))
+      .orderBy(desc(bookClubs.lastActivityAt), desc(bookClubs.id))
+      .limit(FOR_YOU_TIER_FETCH_LIMIT)
+  }
+  const t12Ids = new Set([...t1Ids, ...t2Rows.map((r) => r.id)])
+
+  // ── Tier 3: trending fallback.
+  const t3Conds = [
+    ...buildPublicClubFilters(undefined, blocked),
+    isNotNull(bookClubs.lastActivityAt),
+  ]
+  if (t12Ids.size > 0) {
+    t3Conds.push(notInArray(bookClubs.id, Array.from(t12Ids)))
+  }
+  const t3Rows = await db
+    .select({ id: bookClubs.id })
+    .from(bookClubs)
+    .where(and(...t3Conds))
+    .orderBy(desc(bookClubs.lastActivityAt), desc(bookClubs.id))
+    .limit(FOR_YOU_TIER_FETCH_LIMIT)
+
+  const totalCount = t1Rows.length + t2Rows.length + t3Rows.length
+  const stitched = stitchTiers({
+    t1: t1Rows,
+    t2: t2Rows,
+    t3: t3Rows,
+    page,
+    pageSize: FOR_YOU_PAGE_SIZE,
+    quotas: FOR_YOU_QUOTAS,
+  })
+
+  const projected = await projectToClubCards(stitched, {
+    computeActivityScore: false,
+  })
+
+  return {
+    success: true,
+    data: {
+      clubs: projected,
+      totalCount,
+      tierBreakdown: {
+        tier1: t1Rows.length,
+        tier2: t2Rows.length,
+        tier3: t3Rows.length,
+      },
+    },
+  }
 }

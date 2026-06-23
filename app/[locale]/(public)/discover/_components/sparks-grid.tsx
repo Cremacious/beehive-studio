@@ -1,6 +1,7 @@
 import {
   searchSparksDiscoverAction,
   getFeaturedSparkAction,
+  getForYouSparksAction,
   type SparkCard,
 } from '@/lib/actions/discover-sparks.actions'
 import { SlimFeaturedStrip } from './slim-featured-strip'
@@ -161,11 +162,24 @@ export async function SparksGrid({ sp, locale }: Props) {
 
   const resultsRes = await (async () => {
     switch (resolvedMode) {
-      case 'for-you':
-        return searchSparksDiscoverAction({
-          q, genres, state, wordLimit, timeLeft,
-          creator: 'following', sort, page,
-        })
+      case 'for-you': {
+        if (!viewerId) {
+          return searchSparksDiscoverAction({
+            q, genres, state, wordLimit, timeLeft,
+            creator, sort: 'urgent', page,
+          })
+        }
+        const forYou = await getForYouSparksAction({ viewerId, page })
+        if (!forYou.success) return forYou
+        return {
+          success: true as const,
+          data: {
+            books: forYou.data.sparks,
+            totalCount: forYou.data.totalCount,
+            nextCursor: null as string | null,
+          },
+        }
+      }
       case 'trending':
         return searchSparksDiscoverAction({
           q, genres, state, wordLimit, timeLeft,

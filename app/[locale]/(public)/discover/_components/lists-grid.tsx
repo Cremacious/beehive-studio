@@ -1,6 +1,7 @@
 import {
   searchListsDiscoverAction,
   getFeaturedListAction,
+  getForYouListsAction,
   type ListCard,
 } from '@/lib/actions/discover-lists.actions'
 import { SlimFeaturedStrip } from './slim-featured-strip'
@@ -168,18 +169,24 @@ export async function ListsGrid({ sp, locale }: Props) {
 
   const resultsRes = await (async () => {
     switch (resolvedMode) {
-      case 'for-you':
-        return searchListsDiscoverAction({
-          q,
-          genres,
-          tags,
-          size,
-          popularity,
-          updated,
-          curator: 'following',
-          sort: 'most-followed',
-          page,
-        })
+      case 'for-you': {
+        if (!viewerId) {
+          return searchListsDiscoverAction({
+            q, genres, tags, size, popularity, updated, curator,
+            sort: 'most-followed', page,
+          })
+        }
+        const forYou = await getForYouListsAction({ viewerId, page })
+        if (!forYou.success) return forYou
+        return {
+          success: true as const,
+          data: {
+            books: forYou.data.lists,
+            totalCount: forYou.data.totalCount,
+            nextCursor: null as string | null,
+          },
+        }
+      }
       case 'trending':
         return searchListsDiscoverAction({
           q,

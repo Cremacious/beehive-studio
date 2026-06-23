@@ -15,6 +15,7 @@ import { WizardFooter } from '../../_components/create-book-wizard/wizard-field'
 import { SharingControls, type Visibility } from '@/components/book/sharing-controls'
 import { CreationPathLanding } from './creation-path-landing'
 import { ImportWizardPanel } from './import-wizard-panel'
+import { UpgradeModal } from '@/components/upgrade/upgrade-modal'
 import type { ImportedChapter } from '@/lib/import/types'
 
 type Step = 1 | 2 | 3 | 4
@@ -99,6 +100,7 @@ export function BookCreationForm({ locale, templates, isPremium }: Props) {
   const [titleError, setTitleError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [bookLimitOpen, setBookLimitOpen] = useState(false)
   const { upload: uploadCover } = useCloudinaryUpload('covers')
 
   function update(fields: Partial<FormData>) {
@@ -168,6 +170,10 @@ export function BookCreationForm({ locale, templates, isPremium }: Props) {
       })
 
       if (!result.success) {
+        if (result.error === 'FREE_LIMIT_REACHED') {
+          setBookLimitOpen(true)
+          return
+        }
         setError(result.error)
         return
       }
@@ -443,9 +449,7 @@ export function BookCreationForm({ locale, templates, isPremium }: Props) {
                         padding: '12px 16px',
                       }}
                     >
-                      {error === 'FREE_LIMIT_REACHED'
-                        ? "You've reached the free plan limit of 3 books. Upgrade to create more."
-                        : error}
+                      {error}
                     </p>
                   )}
 
@@ -476,6 +480,14 @@ export function BookCreationForm({ locale, templates, isPremium }: Props) {
           </div>
         </div>
       </div>
+
+      <UpgradeModal
+        feature="book-limit"
+        locale={locale}
+        isAuthed
+        open={bookLimitOpen}
+        onOpenChange={setBookLimitOpen}
+      />
 
       <style>{`
         @keyframes stepEnterForward {

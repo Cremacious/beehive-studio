@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { WelcomeTracker } from './_components/welcome-tracker'
 
 type Props = {
   params: Promise<{ locale: string }>
@@ -7,10 +8,11 @@ type Props = {
 
 export default async function WelcomePage({ params, searchParams }: Props) {
   const { locale } = await params
-  await searchParams // session_id accepted from Stripe but unused in v1; P8C will sync entitlement
+  const { session_id: sessionId } = await searchParams
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-4 gap-8">
+      <WelcomeTracker sessionId={sessionId} />
       <div className="text-center max-w-md flex flex-col items-center gap-4">
         <div
           className="w-16 h-16 rounded-full inline-flex items-center justify-center"

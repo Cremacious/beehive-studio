@@ -1,14 +1,200 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useRef, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Settings, Info, Lock, X, Plus, Globe, Users } from 'lucide-react'
+import { Settings, Info, Lock, X, Plus, Globe, Users, Image as ImageIcon, UploadCloud } from 'lucide-react'
 import { updateClubAction, type ClubSummary } from '@/lib/actions/book-clubs.actions'
+import { useCloudinaryUpload } from '@/hooks/use-cloudinary-upload'
 import { SettingsCard } from './settings-card'
 
 const MAX_DESC = 500
 const MAX_TAGS = 6
+const COVER_MAX_BYTES = 5 * 1024 * 1024
+const COVER_ALLOWED = ['image/png', 'image/jpeg', 'image/webp']
+const CLOUDINARY_CONFIGURED = !!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+
+/* ──────────────────── COVER IMAGE ──────────────────── */
+
+export function CoverImageSection({
+  clubId,
+  initialCoverImageUrl,
+}: {
+  clubId: string
+  initialCoverImageUrl: string | null
+}) {
+  const router = useRouter()
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(initialCoverImageUrl)
+  const [savedCoverImageUrl, setSavedCoverImageUrl] = useState<string | null>(initialCoverImageUrl)
+  const [pending, startSave] = useTransition()
+  const { upload: uploadCover, uploading: uploadingCover } = useCloudinaryUpload('clubs')
+  const fileRef = useRef<HTMLInputElement>(null)
+  const isDirty = coverImageUrl !== savedCoverImageUrl
+
+  async function handleFile(file: File) {
+    if (!COVER_ALLOWED.includes(file.type)) {
+      toast.error('Only PNG, JPG, and WEBP images are supported.')
+      return
+    }
+    if (file.size > COVER_MAX_BYTES) {
+      toast.error('Cover must be 5 MB or smaller.')
+      return
+    }
+    if (!CLOUDINARY_CONFIGURED) {
+      toast.error('Image upload is not configured.')
+      return
+    }
+    const result = await uploadCover(file)
+    if (result) setCoverImageUrl(result.url)
+    else toast.error('Upload failed. Try again.')
+  }
+
+  function save() {
+    startSave(async () => {
+      const result = await updateClubAction({ clubId, coverImageUrl })
+      if (!result.success) {
+        toast.error('Could not save cover image')
+        return
+      }
+      toast.success('Cover image saved')
+      setSavedCoverImageUrl(coverImageUrl)
+      router.refresh()
+    })
+  }
+
+  return (
+    <SettingsCard
+      title="Cover image"
+      icon={<ImageIcon size={16} />}
+      description="Shown on club cards across Discover and Clubs hub. Recommended 1200x600 or wider."
+    >
+      {coverImageUrl ? (
+        <div
+          style={{
+            position: 'relative',
+            aspectRatio: '16 / 8',
+            borderRadius: 'var(--r-row)',
+            overflow: 'hidden',
+            background: `url(${coverImageUrl}) center/cover`,
+            border: 'var(--br-card)',
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setCoverImageUrl(null)}
+            disabled={uploadingCover || pending}
+            aria-label="Remove cover image"
+            style={{
+              position: 'absolute',
+              top: 8,
+              right: 8,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+              padding: '4px 9px',
+              borderRadius: 999,
+              fontSize: 11,
+              fontWeight: 600,
+              background: 'rgba(0,0,0,0.55)',
+              color: 'white',
+              border: 'none',
+              cursor: 'pointer',
+              backdropFilter: 'blur(6px)',
+            }}
+          >
+            <X size={12} aria-hidden="true" /> Remove
+          </button>
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={uploadingCover || pending}
+            style={{
+              position: 'absolute',
+              bottom: 8,
+              right: 8,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+              padding: '4px 10px',
+              borderRadius: 999,
+              fontSize: 11,
+              fontWeight: 600,
+              background: 'rgba(0,0,0,0.55)',
+              color: 'white',
+              border: 'none',
+              cursor: 'pointer',
+              backdropFilter: 'blur(6px)',
+            }}
+          >
+            <UploadCloud size={12} aria-hidden="true" />
+            {uploadingCover ? 'Uploading…' : 'Replace'}
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={uploadingCover || pending}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            width: '100%',
+            padding: '28px 16px',
+            background: 'var(--canvas-dark-100)',
+            boxShadow: 'var(--sh-inset)',
+            border: '1.5px dashed rgba(255,255,255,0.10)',
+            borderRadius: 'var(--r-row)',
+            color: 'var(--canvas-dark-ink-muted)',
+            fontSize: 12,
+            cursor: uploadingCover || pending ? 'wait' : 'pointer',
+            opacity: uploadingCover || pending ? 0.6 : 1,
+          }}
+        >
+          <UploadCloud size={20} aria-hidden="true" />
+          {uploadingCover ? 'Uploading…' : 'Upload cover image'}
+          <span style={{ fontSize: 10, color: 'var(--canvas-dark-ink-faint)' }}>
+            PNG, JPG, or WEBP up to 5 MB.
+          </span>
+        </button>
+      )}
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        style={{ position: 'absolute', width: 1, height: 1, opacity: 0, pointerEvents: 'none' }}
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          if (file) void handleFile(file)
+          if (fileRef.current) fileRef.current.value = ''
+        }}
+      />
+
+      {isDirty && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12, gap: 8 }}>
+          <button
+            type="button"
+            onClick={() => setCoverImageUrl(savedCoverImageUrl)}
+            disabled={pending || uploadingCover}
+            style={ghostBtn}
+          >
+            Discard
+          </button>
+          <button
+            type="button"
+            onClick={save}
+            disabled={pending || uploadingCover}
+            style={brandBtn(pending)}
+          >
+            {pending ? 'Saving…' : 'Save cover'}
+          </button>
+        </div>
+      )}
+    </SettingsCard>
+  )
+}
 
 /* ──────────────────── DETAILS (name only) ──────────────────── */
 

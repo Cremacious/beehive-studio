@@ -16,6 +16,7 @@ import {
   DetailsSection,
   AboutSection,
   PrivacySection,
+  CoverImageSection,
   DangerSection,
 } from './_components/detail-sections'
 
@@ -76,6 +77,11 @@ export default async function ClubSettingsPage({
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <DetailsSection clubId={clubId} initialName={club.name} />
+
+        <CoverImageSection
+          clubId={clubId}
+          initialCoverImageUrl={club.coverImageUrl}
+        />
 
         <RulesEditor clubId={clubId} initialRules={club.rules ?? null} />
 

@@ -70,7 +70,7 @@ export default async function NotificationsSettingsPage({
           }}
         >
           <span
-            className={`avatar s44 ${avatarAccent} flex-shrink-0`}
+            className={`avatar s56 ${avatarAccent} flex-shrink-0`}
             style={{ border: '2px solid var(--canvas-dark-300)', overflow: 'hidden' }}
           >
             {profile.avatarUrl ? (

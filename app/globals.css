@@ -1640,3 +1640,22 @@ textarea.input { height: auto; min-height: 84px; padding: 12px 14px; resize: ver
 }
 .see-all svg { width: 13px; height: 13px; }
 .see-all:hover { color: var(--brand-hover); border-color: oklch(from var(--brand) l c h / 0.4); background: oklch(from var(--brand) l c h / 0.06); }
+
+/* SWITCH (settings toggles) — brand-yellow when ON */
+[data-slot="switch"][data-state="checked"] {
+  background-color: var(--brand) !important;
+}
+[data-slot="switch"][data-state="unchecked"] {
+  background-color: var(--canvas-dark-100) !important;
+  box-shadow: var(--sh-inset);
+}
+[data-slot="switch"]:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+[data-slot="switch"][data-state="checked"] [data-slot="switch-thumb"] {
+  background-color: var(--brand-ink) !important;
+}
+[data-slot="switch"][data-state="unchecked"] [data-slot="switch-thumb"] {
+  background-color: var(--canvas-dark-ink-muted) !important;
+}

@@ -20,6 +20,13 @@ const inputStyle: React.CSSProperties = {
   border: '1px solid transparent',
 }
 
+const inputErrorStyle: React.CSSProperties = {
+  ...inputStyle,
+  border: '1px solid oklch(0.62 0.18 25 / 0.55)',
+}
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 const tileStyle: React.CSSProperties = {
   background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
   boxShadow: 'var(--sh-tile)',
@@ -39,6 +46,7 @@ const fieldClass =
 
 export function SignInForm({ locale, destination }: { locale: string; destination: string }) {
   const [email, setEmail] = useState('')
+  const [emailTouched, setEmailTouched] = useState(false)
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
@@ -66,6 +74,8 @@ export function SignInForm({ locale, destination }: { locale: string; destinatio
     // the original page the user was trying to reach.
     await signIn.social({ provider: 'google', callbackURL: destination })
   }
+
+  const emailInvalid = emailTouched && email.length > 0 && !EMAIL_RE.test(email)
 
   return (
     <div className="w-full max-w-[440px]">
@@ -153,9 +163,17 @@ export function SignInForm({ locale, destination }: { locale: string; destinatio
               required
               value={email}
               onChange={e => setEmail(e.target.value)}
+              onBlur={() => setEmailTouched(true)}
+              aria-invalid={emailInvalid || undefined}
               className={fieldClass}
-              style={inputStyle}
+              style={emailInvalid ? inputErrorStyle : inputStyle}
             />
+            {emailInvalid && (
+              <p className="text-[12px] mt-1.5 flex items-center gap-1.5" style={{ color: 'oklch(0.72 0.16 25)' }}>
+                <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+                Enter a valid email address.
+              </p>
+            )}
           </div>
 
           <div>
@@ -261,6 +279,17 @@ export function SignInForm({ locale, destination }: { locale: string; destinatio
             )}
           </button>
         </form>
+
+        {/* Trust signal */}
+        <div
+          className="flex items-center justify-center gap-2 mt-6 text-[12.5px]"
+          style={{ color: 'var(--canvas-dark-ink-faint)' }}
+        >
+          <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 shrink-0" style={{ color: 'oklch(0.74 0.12 145)' }} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+          Your writing is private by default.
+        </div>
       </div>
 
       {/* Bottom link */}

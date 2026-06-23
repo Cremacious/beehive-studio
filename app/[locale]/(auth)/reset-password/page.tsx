@@ -32,7 +32,7 @@ export default async function ResetPasswordPage({
   return (
     <div
       className="min-h-screen flex flex-col"
-      style={{ background: '#262728', color: 'var(--canvas-dark-ink-strong, #fff)' }}
+      style={{ background: 'radial-gradient(ellipse 80% 55% at 50% 0%, oklch(from var(--brand) l c h / 0.07), transparent 60%), #262728', color: 'var(--canvas-dark-ink-strong, #fff)' }}
     >
       {/* Header */}
       <header className="relative z-10">

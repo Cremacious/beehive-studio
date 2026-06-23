@@ -19,6 +19,11 @@ export function AppFooter() {
   const isEditor = /^\/[^/]+\/studio\/[^/]+\/?$/.test(pathname)
   if (isEditor) return null
 
+  // Hide on the landing page (`/{locale}` exactly) — the marketing homepage
+  // renders its own full MarketingFooter, so the slim footer would double up.
+  const isLanding = /^\/[^/]+\/?$/.test(pathname)
+  if (isLanding) return null
+
   // Extract locale for link prefixes (defaults to 'en' when pathname is short).
   const localeFromPath = pathname.split('/')[1] || 'en'
 

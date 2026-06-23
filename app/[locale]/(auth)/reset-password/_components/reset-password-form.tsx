@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { authClient } from '@/lib/auth-client'
+import { AuthStepIndicator } from '../../_components/auth-step-indicator'
 
 const panelStyle: React.CSSProperties = {
   background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
@@ -126,6 +127,8 @@ export function ResetPasswordForm({ locale, token }: { locale: string; token: st
           </svg>
           Back to sign in
         </Link>
+
+        <AuthStepIndicator current={3} />
 
         <div className="mb-7">
           <h1 className="mainFont font-bold text-[22px] leading-tight" style={{ color: 'var(--brand)' }}>

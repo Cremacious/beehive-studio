@@ -44,6 +44,8 @@ const ctaStyle: React.CSSProperties = {
 const fieldClass =
   'w-full px-4 py-3.5 text-[15px] placeholder:opacity-40 focus:outline-none focus:ring-[3px] focus:ring-[oklch(from_var(--brand)_l_c_h_/_0.18)] transition-all'
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 function getStrength(pw: string): 0 | 1 | 2 | 3 {
   if (!pw) return 0
   let s = 0
@@ -74,6 +76,7 @@ export function SignUpForm({ locale }: { locale: string }) {
   const searchParams = useSearchParams()
   const next = safeNextPath(searchParams.get('next'), `/${locale}/studio`)
   const [email, setEmail] = useState('')
+  const [emailTouched, setEmailTouched] = useState(false)
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -85,6 +88,7 @@ export function SignUpForm({ locale }: { locale: string }) {
   const meta = strengthMeta[strength]
   const passwordsMatch = confirm !== '' && confirm === password
   const passwordsMismatch = confirm !== '' && confirm !== password
+  const emailInvalid = emailTouched && email.length > 0 && !EMAIL_RE.test(email)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -203,9 +207,17 @@ export function SignUpForm({ locale }: { locale: string }) {
               required
               value={email}
               onChange={e => setEmail(e.target.value)}
+              onBlur={() => setEmailTouched(true)}
+              aria-invalid={emailInvalid || undefined}
               className={fieldClass}
-              style={inputStyle}
+              style={emailInvalid ? inputErrorStyle : inputStyle}
             />
+            {emailInvalid && (
+              <p className="text-[12px] mt-1.5 flex items-center gap-1.5" style={{ color: 'oklch(0.72 0.16 25)' }}>
+                <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+                Enter a valid email address.
+              </p>
+            )}
           </div>
 
           <div>
@@ -340,6 +352,17 @@ export function SignUpForm({ locale }: { locale: string }) {
             {' '}and{' '}
             <Link href={`/${locale}/privacy`} className="hover:underline underline-offset-4" style={{ color: 'var(--brand)' }}>Privacy Policy</Link>.
           </p>
+
+          {/* Trust signal */}
+          <div
+            className="flex items-center justify-center gap-2 pt-1 text-[12.5px]"
+            style={{ color: 'var(--canvas-dark-ink-faint)' }}
+          >
+            <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 shrink-0" style={{ color: 'oklch(0.74 0.12 145)' }} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            Your writing is private by default.
+          </div>
         </form>
       </div>
 

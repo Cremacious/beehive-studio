@@ -7,7 +7,6 @@ import {
   binderItems,
   follows,
   sparks,
-  sparkEntries,
   sparkEntryComments,
   bookLikes,
   userProfiles,
@@ -21,8 +20,9 @@ import { canViewSpark } from '@/lib/sparks/predicates'
 import { canViewClub } from '@/lib/book-clubs/predicates'
 import { getClubMembership } from '@/lib/book-clubs/get-membership'
 import type { ActionResult } from './book.actions'
-import type { SparkSummary } from './sparks.actions'
 import type { ClubSummary, ClubCurrentBook } from './book-clubs.actions'
+import { projectToBookCards, type BookCard } from './discover-shared'
+import { projectToSparkCards, type SparkCard } from './discover-sparks.actions'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -48,28 +48,9 @@ export type ActivityEvent = {
   createdAt: Date
 }
 
-type ProfileBook = {
-  id: string
-  title: string
-  coverUrl: string | null
-  genre: string | null
-  wordCount: number
-  likeCount: number
-  seriesName: string | null
-  seriesNumber: number | null
-}
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const VOTING_WINDOW_MS = 48 * 60 * 60 * 1000
-
-function computeSparkStatus(deadline: Date): 'OPEN' | 'VOTING' | 'CLOSED' {
-  const now = Date.now()
-  const dl = deadline.getTime()
-  if (now < dl) return 'OPEN'
-  if (now < dl + VOTING_WINDOW_MS) return 'VOTING'
-  return 'CLOSED'
-}
 
 // ─── Actions ──────────────────────────────────────────────────────────────────
 
@@ -168,118 +149,83 @@ export async function getPublicProfileAction(
 }
 
 /**
- * Fetch the 12 most-liked published books for a user.
+ * Fetch the 12 most-liked published books for a user as canonical `BookCard`s
+ * so the profile renders the same card component as /discover and /community.
  */
 export async function getProfileBooksAction(
   userId: string
-): Promise<ActionResult<ProfileBook[]>> {
+): Promise<ActionResult<BookCard[]>> {
   const likeCountSq = db
     .select({ bookId: bookLikes.bookId, likeTotal: count().as('like_total') })
     .from(bookLikes)
     .groupBy(bookLikes.bookId)
     .as('like_counts')
 
-  const wordCountSq = db
-    .select({
-      bookId: chapters.bookId,
-      wordTotal: sql<number>`COALESCE(SUM(${chapters.wordCount}), 0)`.as('word_total'),
-    })
-    .from(chapters)
-    .groupBy(chapters.bookId)
-    .as('word_counts')
-
   const rows = await db
     .select({
       id: books.id,
       title: books.title,
+      authorUserId: books.userId,
       coverUrl: books.coverUrl,
+      synopsis: books.synopsis,
       genre: books.genre,
-      wordCount: sql<number>`COALESCE(${wordCountSq.wordTotal}, 0)`,
-      likeCount: sql<number>`COALESCE(${likeCountSq.likeTotal}, 0)`,
-      seriesName: books.seriesName,
-      seriesNumber: books.seriesNumber,
+      tags: books.tags,
+      updatedAt: books.updatedAt,
+      firstPubliclyDiscoverableAt: books.firstPubliclyDiscoverableAt,
     })
     .from(books)
     .leftJoin(likeCountSq, eq(books.id, likeCountSq.bookId))
-    .leftJoin(wordCountSq, eq(books.id, wordCountSq.bookId))
     // shadow books are excluded by the PUBLISHED filter
     .where(and(eq(books.userId, userId), eq(books.status, 'PUBLISHED')))
     .orderBy(desc(sql`COALESCE(${likeCountSq.likeTotal}, 0)`))
     .limit(12)
 
-  return { success: true, data: rows }
+  const cards = await projectToBookCards(rows)
+  return { success: true, data: cards }
 }
 
 /**
- * Fetch OPEN + VOTING sparks created by a user (deadline > now - 48h).
+ * Fetch OPEN + VOTING sparks created by a user (deadline > now - 48h) as
+ * canonical `SparkCard`s so the profile renders the same card component as
+ * /discover and /community.
  */
 export async function getProfileSparksAction(
   userId: string
-): Promise<ActionResult<SparkSummary[]>> {
+): Promise<ActionResult<SparkCard[]>> {
   const votingEnd = new Date(Date.now() - VOTING_WINDOW_MS)
   const viewerId = await getOptionalUserId()
 
   const rows = await db
     .select({
       id: sparks.id,
-      title: sparks.title,
-      deadline: sparks.deadline,
-      wordLimit: sparks.wordLimit,
-      winnerEntryId: sparks.winnerEntryId,
       creatorId: sparks.creatorId,
       visibility: sparks.visibility,
       status: sparks.status,
-      votingEndsAt: sparks.votingEndsAt,
-      creatorUsername: userProfiles.username,
-      creatorDisplayName: userProfiles.displayName,
-      entryCount: count(sparkEntries.id),
     })
     .from(sparks)
-    .leftJoin(userProfiles, eq(userProfiles.userId, sparks.creatorId))
-    .leftJoin(sparkEntries, eq(sparkEntries.sparkId, sparks.id))
     .where(and(eq(sparks.creatorId, userId), gt(sparks.deadline, votingEnd)))
-    .groupBy(
-      sparks.id,
-      sparks.title,
-      sparks.deadline,
-      sparks.wordLimit,
-      sparks.winnerEntryId,
-      sparks.creatorId,
-      sparks.visibility,
-      sparks.status,
-      sparks.votingEndsAt,
-      userProfiles.username,
-      userProfiles.displayName
-    )
     .orderBy(sparks.deadline)
 
   // Per-row canViewSpark gate — masquerade FRIENDS/PRIVATE sparks as absent for
   // non-friend / non-creator / blocked viewers. Mirrors getSparksAction pattern (T4).
-  const visible = (
-    await Promise.all(
-      rows.map(async (r) =>
-        (await canViewSpark(viewerId, { creatorId: r.creatorId, visibility: r.visibility, status: r.status }))
-          ? r
-          : null
-      )
-    )
-  ).filter((r): r is NonNullable<typeof r> => r !== null)
+  const visibleIds: Array<{ id: string }> = []
+  for (const r of rows) {
+    if (
+      await canViewSpark(viewerId, {
+        creatorId: r.creatorId,
+        visibility: r.visibility,
+        status: r.status,
+      })
+    ) {
+      visibleIds.push({ id: r.id })
+    }
+  }
 
-  const result: SparkSummary[] = visible.map((r) => ({
-    id: r.id,
-    prompt: r.title,
-    deadline: r.deadline ?? new Date(0),
-    wordLimit: r.wordLimit ?? null,
-    status: computeSparkStatus(r.deadline ?? new Date(0)),
-    visibility: r.visibility,
-    votingEndsAt: r.votingEndsAt ?? null,
-    entryCount: Number(r.entryCount),
-    creatorUsername: r.creatorUsername ?? null,
-    creatorDisplayName: r.creatorDisplayName ?? null,
-    winnerUsername: null,
-  }))
-
-  return { success: true, data: result }
+  const cards = await projectToSparkCards(visibleIds, {
+    computeVoteTotal: false,
+    computeWinner: false,
+  })
+  return { success: true, data: cards }
 }
 
 /**

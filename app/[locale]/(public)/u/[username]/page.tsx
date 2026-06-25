@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { Camera, Pencil } from 'lucide-react'
+import type { CSSProperties, ReactNode } from 'react'
+import { Camera, Pencil, BookOpen, List, Users, Zap, Plus } from 'lucide-react'
 import { auth } from '@/lib/auth'
 import { headers } from 'next/headers'
 import {
@@ -13,8 +14,7 @@ import {
 import { FollowButton } from './_components/follow-button'
 import { FriendStatusSection } from './_components/friend-status-section'
 import { ProfileUnavailable } from './_components/profile-unavailable'
-import { SeriesLine } from '@/components/book/series-line'
-import { optimizeCloudinaryUrl, BOOK_COVER_TRANSFORMS, AVATAR_TRANSFORMS } from '@/lib/upload/cloudinary-url'
+import { optimizeCloudinaryUrl, AVATAR_TRANSFORMS } from '@/lib/upload/cloudinary-url'
 import { FriendButton } from '@/components/friendship/friend-button'
 import { db } from '@/db'
 import { friendships, userMutes } from '@/db/schema'
@@ -24,19 +24,46 @@ import { getMutualFriends } from '@/lib/social/get-mutual-friends'
 import { getFriendCountAction } from '@/lib/actions/friendships.actions'
 import { getUserPublicListsAction } from '@/lib/actions/reading-lists.actions'
 import { ListCard } from '@/app/[locale]/(app)/community/reading-lists/_components/list-card'
-import { RenderMentionsInText } from '@/components/mentions/render-mentions-in-text'
 import { ClubCard } from '@/app/[locale]/(app)/community/clubs/_components/club-card'
+import { BookGridCard } from '@/app/[locale]/(public)/discover/_components/book-grid-card'
+import { SparkGridCard } from '@/app/[locale]/(public)/discover/_components/spark-grid-card'
+import { RenderMentionsInText } from '@/components/mentions/render-mentions-in-text'
 import { InviteClaimedToast } from '@/components/invite-claimed-toast'
-import { StatStrip } from '@/components/community/stat-strip'
 
 type Props = { params: Promise<{ locale: string; username: string }> }
 
-// Deterministic avatar accent class for the 5 a-* gradients in community.css
-function pickAvatarAccent(seed: string): string {
-  const accents = ['a-mint', 'a-blue', 'a-coral', 'a-lilac', 'a-slate'] as const
+// ─── Canonical chrome (matches the dark iOS design system) ────────────────────
+
+const PANEL: CSSProperties = {
+  background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+  borderRadius: 'var(--r-card)',
+  borderTop: 'var(--br-card)',
+  boxShadow: 'var(--sh-card)',
+}
+
+// Fluid grid for cards that fill their cell (books, sparks, lists).
+const GRID_FLUID: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+  gap: 14,
+}
+
+// Wrap layout for the fixed-width shared ClubCard (340px).
+const CLUBS_WRAP: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: 14 }
+
+// Deterministic avatar gradient (replaces the community.css a-* accent classes).
+const AVATAR_GRADIENTS = [
+  'linear-gradient(140deg, oklch(0.80 0.12 165), oklch(0.62 0.12 165))',
+  'linear-gradient(140deg, oklch(0.78 0.12 240), oklch(0.60 0.13 240))',
+  'linear-gradient(140deg, oklch(0.80 0.13 35), oklch(0.63 0.14 35))',
+  'linear-gradient(140deg, oklch(0.78 0.12 305), oklch(0.60 0.13 305))',
+  'linear-gradient(140deg, oklch(0.80 0.05 256), oklch(0.62 0.04 256))',
+] as const
+
+function avatarGradient(seed: string): string {
   let hash = 0
   for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) | 0
-  return accents[Math.abs(hash) % accents.length]
+  return AVATAR_GRADIENTS[Math.abs(hash) % AVATAR_GRADIENTS.length]
 }
 
 function initialsOf(displayName: string | null, username: string): string {
@@ -60,6 +87,138 @@ function relTime(date: Date): string {
   const mo = Math.floor(d / 30)
   if (mo < 12) return `${mo}mo ago`
   return `${Math.floor(d / 365)}y ago`
+}
+
+function formatCompact(n: number): string {
+  return n >= 1000 ? `${Math.round(n / 1000)}k` : String(n)
+}
+
+// ─── Presentational pieces ────────────────────────────────────────────────────
+
+function SectionHeader({ title, count }: { title: string; count?: number }) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'baseline',
+        justifyContent: 'space-between',
+        marginBottom: 14,
+      }}
+    >
+      <h2
+        style={{
+          fontFamily: 'var(--font-display)',
+          fontWeight: 700,
+          fontSize: 16,
+          color: 'var(--canvas-dark-ink-strong)',
+          margin: 0,
+        }}
+      >
+        {title}
+      </h2>
+      {typeof count === 'number' && count > 0 && (
+        <span
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 11,
+            color: 'var(--canvas-dark-ink-muted)',
+          }}
+        >
+          {count}
+        </span>
+      )}
+    </div>
+  )
+}
+
+// Owner empty card (E1): icon + line + a single CTA. Visitor empty: a quiet line.
+function EmptyCard({
+  isSelf,
+  icon,
+  ownLine,
+  visitorLine,
+  cta,
+}: {
+  isSelf: boolean
+  icon: ReactNode
+  ownLine: string
+  visitorLine: string
+  cta?: { label: string; href: string; brand?: boolean }
+}) {
+  if (!isSelf) {
+    return (
+      <section style={{ ...PANEL, padding: '20px 24px', textAlign: 'center' }}>
+        <p
+          style={{
+            margin: 0,
+            fontSize: 13,
+            fontStyle: 'italic',
+            color: 'var(--canvas-dark-ink-faint)',
+          }}
+        >
+          {visitorLine}
+        </p>
+      </section>
+    )
+  }
+  return (
+    <section style={{ ...PANEL, padding: '28px 24px', textAlign: 'center' }}>
+      <div
+        style={{
+          width: 44,
+          height: 44,
+          borderRadius: 13,
+          background: 'oklch(from var(--brand) l c h / 0.10)',
+          color: 'var(--brand)',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: 12,
+        }}
+      >
+        {icon}
+      </div>
+      <p
+        style={{
+          margin: '0 auto 14px',
+          maxWidth: '46ch',
+          fontSize: 13,
+          lineHeight: 1.55,
+          color: 'var(--canvas-dark-ink-faint)',
+        }}
+      >
+        {ownLine}
+      </p>
+      {cta && (
+        <Link
+          href={cta.href}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 7,
+            fontFamily: 'var(--font-display)',
+            fontWeight: cta.brand ? 700 : 600,
+            fontSize: 13,
+            textDecoration: 'none',
+            padding: '8px 16px',
+            borderRadius: 'var(--r-pill)',
+            ...(cta.brand
+              ? { background: 'var(--brand)', color: 'var(--brand-ink)' }
+              : {
+                  background:
+                    'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+                  color: 'var(--canvas-dark-ink)',
+                  borderTop: 'var(--br-card)',
+                  boxShadow: 'var(--sh-tile)',
+                }),
+          }}
+        >
+          {cta.brand && <Plus size={14} />}
+          {cta.label}
+        </Link>
+      )}
+    </section>
+  )
 }
 
 export default async function AuthorProfilePage({ params }: Props) {
@@ -89,8 +248,8 @@ export default async function AuthorProfilePage({ params }: Props) {
     getProfileSparksAction(profile.userId),
     getProfileActivityAction(profile.userId),
     getFriendCountAction(profile.userId),
-    getUserPublicListsAction(profile.userId, 5),
-    getUserPublicClubsAction(profile.userId, 5),
+    getUserPublicListsAction(profile.userId, 6),
+    getUserPublicClubsAction(profile.userId, 6),
   ])
 
   const books = booksResult.success ? booksResult.data : []
@@ -135,12 +294,13 @@ export default async function AuthorProfilePage({ params }: Props) {
     initialMuted = !!row
   }
 
-  const avatarAccent = pickAvatarAccent(profile.userId)
+  const gradient = avatarGradient(profile.userId)
   const avatarInitials = initialsOf(profile.displayName, profile.username)
+  const avatarSrc = profile.avatarUrl
+    ? optimizeCloudinaryUrl(profile.avatarUrl, AVATAR_TRANSFORMS)
+    : null
 
-  // Q3 4-stat strip — Followers / Following / Books / Clubs (Lists + Sparks get
-  // dedicated sections below; wordCount preserved on the projection but no
-  // longer shown in the strip).
+  // 4-stat strip — Followers / Following / Books / Clubs (Q3 lock).
   const statCells = [
     { value: profile.followerCount, label: 'Followers' },
     { value: profile.followingCount, label: 'Following' },
@@ -148,286 +308,440 @@ export default async function AuthorProfilePage({ params }: Props) {
     { value: profile.clubCount, label: 'Clubs' },
   ]
 
+  // Single clean meta line replaces the old hidden backward-compat row.
+  const metaBits: string[] = []
+  if (profile.wordCount > 0) metaBits.push(`${formatCompact(profile.wordCount)} words written`)
+  if (profile.sparkCount > 0) metaBits.push(`${profile.sparkCount} Sparks created`)
+  if (friendsCount > 0) metaBits.push(`${friendsCount} friends`)
+
+  const isEmpty =
+    books.length === 0 &&
+    lists.length === 0 &&
+    clubs.length === 0 &&
+    openSparks.length === 0 &&
+    activity.length === 0
+
+  const avatarBox: CSSProperties = {
+    width: 88,
+    height: 88,
+    borderRadius: '50%',
+    border: '3px solid var(--canvas-dark-300)',
+    overflow: 'hidden',
+    flexShrink: 0,
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontFamily: 'var(--font-display)',
+    fontWeight: 700,
+    fontSize: 30,
+    color: 'var(--brand-ink)',
+    background: gradient,
+  }
+
   return (
-    <main className="cm-main" style={{ background: 'var(--canvas-dark-100)', minHeight: '100vh' }}>
-      <div className="cm-wrap w-5xl">
+    <main style={{ background: 'var(--canvas-dark-100)', minHeight: '100vh' }}>
+      <div style={{ maxWidth: 1120, margin: '0 auto', padding: '28px 20px 80px' }}>
         <InviteClaimedToast copy={`You and @${profile.username} are now friends.`} />
 
-        {/* Header panel: avatar + name/handle + friendship cluster + bio + stat-strip */}
-        <header className="panel" style={{ overflow: 'hidden', marginBottom: 26 }}>
-          <div style={{ padding: '0 28px 22px' }}>
-            {/* Top row: avatar + identity + follow/friend CTAs */}
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 18, marginTop: 28, position: 'relative', zIndex: 2 }}>
-              {isSelf ? (
-                <Link
-                  href={`/${locale}/settings/account`}
-                  className="group relative inline-block"
-                  style={{ borderRadius: '50%', flexShrink: 0 }}
-                  aria-label="Change profile photo"
-                >
-                  <span
-                    className={`avatar s80 ${avatarAccent}`}
-                    style={{ border: '3px solid var(--canvas-dark-200)', overflow: 'hidden', display: 'block' }}
-                  >
-                    {profile.avatarUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={profile.avatarUrl} alt="" className="h-full w-full object-cover" />
-                    ) : (
-                      avatarInitials
-                    )}
-                  </span>
-                  <span
-                    className="absolute inset-0 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-150"
-                    style={{ background: 'oklch(0 0 0 / 0.50)' }}
-                    aria-hidden
-                  >
-                    <Camera size={22} color="white" />
-                  </span>
-                </Link>
-              ) : (
-                <span
-                  className={`avatar s80 ${avatarAccent}`}
-                  style={{ border: '3px solid var(--canvas-dark-200)', overflow: 'hidden' }}
-                >
-                  {profile.avatarUrl ? (
+        {/* ─── Header panel (flat) ─────────────────────────────────────────── */}
+        <header style={{ ...PANEL, padding: '24px 24px 22px', marginBottom: 26 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap' }}>
+            {isSelf ? (
+              <Link
+                href={`/${locale}/settings/account`}
+                className="group relative inline-block"
+                style={{ borderRadius: '50%', flexShrink: 0 }}
+                aria-label="Change profile photo"
+              >
+                <span style={avatarBox}>
+                  {avatarSrc ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={profile.avatarUrl} alt="" className="h-full w-full object-cover" />
+                    <img src={avatarSrc} alt="" className="h-full w-full object-cover" />
                   ) : (
                     avatarInitials
                   )}
                 </span>
-              )}
-              <div style={{ flex: 1, paddingBottom: 4, minWidth: 0 }}>
-                <h1 className="font-display" style={{
+                <span
+                  className="absolute inset-0 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                  style={{ background: 'oklch(0 0 0 / 0.50)' }}
+                  aria-hidden
+                >
+                  <Camera size={22} color="white" />
+                </span>
+              </Link>
+            ) : (
+              <span style={avatarBox}>
+                {avatarSrc ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={avatarSrc} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  avatarInitials
+                )}
+              </span>
+            )}
+
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h1
+                style={{
+                  fontFamily: 'var(--font-display)',
                   fontWeight: 700,
                   fontSize: 26,
                   letterSpacing: '-0.02em',
                   color: 'var(--canvas-dark-ink-strong)',
                   margin: 0,
-                }}>
-                  {profile.displayName ?? profile.username}
-                </h1>
-                <div className="meta-mono" style={{ marginTop: 3 }}>@{profile.username}</div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBottom: 6, flexWrap: 'wrap' }}>
-                {isSelf ? (
-                  <Link
-                    href={`/${locale}/settings/account`}
-                    className="btn-tile btn-sm flex items-center gap-1.5 no-underline"
-                  >
-                    <Pencil size={13} />
-                    Edit profile
-                  </Link>
-                ) : (
-                  <>
-                    <FollowButton
-                      targetUserId={profile.userId}
-                      locale={locale}
-                      initialFollowing={profile.isFollowing}
-                      isAuthenticated={!!userId}
-                    />
-                    <FriendButton
-                      targetUserId={profile.userId}
-                      locale={locale}
-                      initialStatus={friendshipStatus}
-                      initialFriendshipId={friendshipId}
-                      isAuthenticated={!!userId}
-                      isSelf={isSelf}
-                    />
-                  </>
-                )}
+                  wordBreak: 'break-word',
+                }}
+              >
+                {profile.displayName ?? profile.username}
+              </h1>
+              <div
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 12,
+                  color: 'var(--canvas-dark-ink-muted)',
+                  marginTop: 4,
+                }}
+              >
+                @{profile.username}
               </div>
             </div>
 
-            {/* Bio */}
-            {profile.bio && (
-              <p style={{
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              {isSelf ? (
+                <Link
+                  href={`/${locale}/settings/account`}
+                  className="btn-tile btn-sm flex items-center gap-1.5 no-underline"
+                >
+                  <Pencil size={13} />
+                  Edit profile
+                </Link>
+              ) : (
+                <>
+                  <FollowButton
+                    targetUserId={profile.userId}
+                    locale={locale}
+                    initialFollowing={profile.isFollowing}
+                    isAuthenticated={!!userId}
+                  />
+                  <FriendButton
+                    targetUserId={profile.userId}
+                    locale={locale}
+                    initialStatus={friendshipStatus}
+                    initialFriendshipId={friendshipId}
+                    isAuthenticated={!!userId}
+                    isSelf={isSelf}
+                  />
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Bio */}
+          {profile.bio && (
+            <p
+              style={{
                 fontFamily: 'var(--font-prose)',
                 fontSize: 15,
                 lineHeight: 1.55,
                 color: 'var(--canvas-dark-ink)',
                 margin: '16px 0 0',
                 maxWidth: '64ch',
-              }}>
-                <RenderMentionsInText text={profile.bio} />
-              </p>
-            )}
+              }}
+            >
+              <RenderMentionsInText text={profile.bio} />
+            </p>
+          )}
 
-            {/* Friendship UI: status pill + mutuals + kebab */}
-            <div style={{ marginTop: 16 }}>
-              <FriendStatusSection
-                status={friendshipStatus}
-                targetUserId={profile.userId}
-                targetUsername={profile.username}
-                mutuals={mutuals}
-                initialMuted={initialMuted}
-                viewerIsSelf={isSelf}
-                isAuthenticated={!!userId}
-                locale={locale}
-              />
-            </div>
-
-            {/* 4-stat strip — Q3 lock */}
-            <div style={{
-              marginTop: 18,
-              borderTop: '1px solid oklch(from var(--canvas-dark-300) l c h / 0.5)',
-            }}>
-              <StatStrip cells={statCells} />
-            </div>
-
-            {/* Hidden meta surface for backward-compat with friends count + words */}
-            <div className="meta-mono" style={{ marginTop: 8, display: 'flex', gap: 14, flexWrap: 'wrap' }}>
-              <span>{friendsCount} friends</span>
-              <span>· {profile.wordCount >= 1000 ? `${Math.round(profile.wordCount / 1000)}k` : profile.wordCount} words written</span>
-              <span>· {profile.sparkCount} Sparks created</span>
-            </div>
+          {/* Friendship UI: status pill + mutuals + kebab */}
+          <div style={{ marginTop: 16 }}>
+            <FriendStatusSection
+              status={friendshipStatus}
+              targetUserId={profile.userId}
+              targetUsername={profile.username}
+              mutuals={mutuals}
+              initialMuted={initialMuted}
+              viewerIsSelf={isSelf}
+              isAuthenticated={!!userId}
+              locale={locale}
+            />
           </div>
+
+          {/* 4-stat strip */}
+          <div
+            style={{
+              marginTop: 18,
+              paddingTop: 16,
+              borderTop: '1px solid oklch(from var(--canvas-dark-300) l c h / 0.5)',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+            }}
+          >
+            {statCells.map((cell, i) => (
+              <div
+                key={cell.label}
+                style={{
+                  textAlign: 'center',
+                  padding: '0 4px',
+                  borderLeft:
+                    i === 0
+                      ? undefined
+                      : '1px solid oklch(from var(--canvas-dark-300) l c h / 0.5)',
+                }}
+              >
+                <div
+                  style={{
+                    fontFamily: 'var(--font-display)',
+                    fontWeight: 700,
+                    fontSize: 19,
+                    color: 'var(--canvas-dark-ink-strong)',
+                  }}
+                >
+                  {cell.value}
+                </div>
+                <div
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: 10,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    color: 'var(--canvas-dark-ink-muted)',
+                    marginTop: 3,
+                  }}
+                >
+                  {cell.label}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Single clean meta line (replaces the old hidden backward-compat row) */}
+          {metaBits.length > 0 && (
+            <div
+              style={{
+                marginTop: 14,
+                display: 'flex',
+                gap: 14,
+                flexWrap: 'wrap',
+                fontFamily: 'var(--font-mono)',
+                fontSize: 11,
+                color: 'var(--canvas-dark-ink-muted)',
+              }}
+            >
+              {metaBits.map((bit, i) => (
+                <span key={i}>{i > 0 ? `· ${bit}` : bit}</span>
+              ))}
+            </div>
+          )}
         </header>
 
-        {/* (1) Lists */}
-        {lists.length > 0 && (
-          <div className="sec" style={{ marginBottom: 30 }}>
-            <div className="sec-label" style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
-              <h2 className="font-display" style={{ fontWeight: 700, fontSize: 16, color: 'var(--canvas-dark-ink-strong)', margin: 0 }}>Lists</h2>
-              <span className="meta-mono">{lists.length}</span>
+        {/* ─── Content ─────────────────────────────────────────────────────── */}
+        {isEmpty && !isSelf ? (
+          // Visitor viewing a fully empty profile: one calm, intentional block.
+          <section style={{ ...PANEL, padding: '48px 24px', textAlign: 'center' }}>
+            <div
+              style={{
+                width: 52,
+                height: 52,
+                borderRadius: 15,
+                background: 'oklch(1 0 0 / 0.04)',
+                color: 'var(--canvas-dark-ink-faint)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: 14,
+              }}
+            >
+              <BookOpen size={24} />
             </div>
-            <div className="grid-3">
-              {lists.map((list) => (
-                <ListCard key={list.id} list={list} locale={locale} />
-              ))}
+            <p
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontWeight: 700,
+                fontSize: 16,
+                color: 'var(--canvas-dark-ink-strong)',
+                margin: '0 0 6px',
+              }}
+            >
+              This writer hasn&apos;t shared anything yet
+            </p>
+            <p
+              style={{
+                margin: '0 auto',
+                maxWidth: '46ch',
+                fontSize: 13,
+                lineHeight: 1.55,
+                color: 'var(--canvas-dark-ink-faint)',
+              }}
+            >
+              When {profile.displayName ?? `@${profile.username}`} publishes books, builds lists, or
+              joins clubs, you&apos;ll see them here.
+            </p>
+          </section>
+        ) : (
+          <>
+            {/* Lists */}
+            <div style={{ marginTop: 4 }}>
+              <SectionHeader title="Lists" count={lists.length} />
+              {lists.length > 0 ? (
+                <div style={GRID_FLUID}>
+                  {lists.map((list) => (
+                    <ListCard key={list.id} list={list} locale={locale} />
+                  ))}
+                </div>
+              ) : (
+                <EmptyCard
+                  isSelf={isSelf}
+                  icon={<List size={20} />}
+                  ownLine="You haven't made any reading lists yet."
+                  visitorLine="No reading lists yet."
+                  cta={{ label: 'New list', href: `/${locale}/community/reading-lists`, brand: true }}
+                />
+              )}
             </div>
-          </div>
-        )}
 
-        {/* (2) Clubs */}
-        {clubs.length > 0 && (
-          <div className="sec" style={{ marginBottom: 30 }}>
-            <div className="sec-label" style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
-              <h2 className="font-display" style={{ fontWeight: 700, fontSize: 16, color: 'var(--canvas-dark-ink-strong)', margin: 0 }}>Clubs</h2>
-              <span className="meta-mono">{clubs.length}</span>
+            {/* Clubs */}
+            <div style={{ marginTop: 30 }}>
+              <SectionHeader title="Clubs" count={clubs.length} />
+              {clubs.length > 0 ? (
+                <div style={CLUBS_WRAP}>
+                  {clubs.map((club) => (
+                    <ClubCard key={club.id} club={club} locale={locale} />
+                  ))}
+                </div>
+              ) : (
+                <EmptyCard
+                  isSelf={isSelf}
+                  icon={<Users size={20} />}
+                  ownLine="You're not in any book clubs yet."
+                  visitorLine="Not in any book clubs yet."
+                  cta={{ label: 'Discover clubs', href: `/${locale}/community/clubs` }}
+                />
+              )}
             </div>
-            <div className="grid-3">
-              {clubs.map((club) => (
-                <ClubCard key={club.id} club={club} locale={locale} />
-              ))}
-            </div>
-          </div>
-        )}
 
-        {/* (3) Published books */}
-        {books.length > 0 && (
-          <div className="sec" style={{ marginBottom: 30 }}>
-            <div className="sec-label" style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
-              <h2 className="font-display" style={{ fontWeight: 700, fontSize: 16, color: 'var(--canvas-dark-ink-strong)', margin: 0 }}>Published books</h2>
-              <span className="meta-mono">{books.length}</span>
+            {/* Published books */}
+            <div style={{ marginTop: 30 }}>
+              <SectionHeader title="Published books" count={books.length} />
+              {books.length > 0 ? (
+                <div style={GRID_FLUID}>
+                  {books.map((book) => (
+                    <BookGridCard key={book.id} book={book} locale={locale} />
+                  ))}
+                </div>
+              ) : (
+                <EmptyCard
+                  isSelf={isSelf}
+                  icon={<BookOpen size={20} />}
+                  ownLine="Nothing published yet. Books you make public will appear here."
+                  visitorLine="No published books yet."
+                  cta={{ label: 'Go to Studio', href: `/${locale}/studio` }}
+                />
+              )}
             </div>
-            <div className="grid-3">
-              {books.map((book) => (
-                <Link key={book.id} href={`/${locale}/books/${book.id}`} className="ccard">
-                  <div
-                    className="cc-cover cover-paper tall"
-                    style={{ alignItems: 'center', justifyContent: 'center', display: 'flex' }}
+
+            {/* Sparks */}
+            <div style={{ marginTop: 30 }}>
+              <SectionHeader title="Sparks" count={openSparks.length} />
+              {openSparks.length > 0 ? (
+                <div style={GRID_FLUID}>
+                  {openSparks.map((spark) => (
+                    <SparkGridCard
+                      key={spark.id}
+                      spark={spark}
+                      locale={locale}
+                      isAuthenticated={!!userId}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <EmptyCard
+                  isSelf={isSelf}
+                  icon={<Zap size={20} />}
+                  ownLine="No active Sparks. Enter a Spark or start your own to get going."
+                  visitorLine="No active Sparks right now."
+                  cta={{ label: 'Browse Sparks', href: `/${locale}/community/sparks` }}
+                />
+              )}
+            </div>
+
+            {/* Recent activity */}
+            <div style={{ marginTop: 30 }}>
+              <SectionHeader title="Recent activity" />
+              {activity.length > 0 ? (
+                <section style={{ ...PANEL, padding: '20px 22px' }}>
+                  <ul
+                    style={{
+                      listStyle: 'none',
+                      margin: 0,
+                      padding: 0,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 16,
+                    }}
                   >
-                    {book.coverUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={optimizeCloudinaryUrl(book.coverUrl, BOOK_COVER_TRANSFORMS)}
-                        alt={book.title}
-                        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                    ) : (
-                      <div style={{ textAlign: 'center', padding: 12 }}>
-                        <div style={{
-                          fontFamily: 'var(--font-display)',
-                          fontWeight: 700,
-                          fontSize: 17,
-                          color: 'oklch(0.265 0.020 55)',
-                        }}>{book.title}</div>
-                      </div>
-                    )}
-                  </div>
-                  <div className="cc-body" style={{ padding: '13px 16px' }}>
-                    <div className="cc-title" title={book.title}>{book.title}</div>
-                    {book.seriesName && (
-                      <SeriesLine seriesName={book.seriesName} seriesNumber={book.seriesNumber} />
-                    )}
-                    <div className="cc-foot">
-                      {book.genre && <span className="cc-stat">{book.genre}</span>}
-                      <span className="cc-stat">♥ {book.likeCount}</span>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* (4) Sparks + activity merged into ONE panel — Sparks above, divider,
-            Recent activity below. Mirrors mockup 12-profile.html lines 90-107. */}
-        {(openSparks.length > 0 || activity.length > 0) && (
-          <div className="sec" style={{ marginBottom: 0 }}>
-            <div className="sec-label" style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
-              <h2 className="font-display" style={{ fontWeight: 700, fontSize: 16, color: 'var(--canvas-dark-ink-strong)', margin: 0 }}>Sparks &amp; activity</h2>
-            </div>
-            <section className="panel panel-pad">
-              {openSparks.length > 0 && (
-                <>
-                  <div className="eyebrow-mono" style={{ marginBottom: 12 }}>Sparks</div>
-                  <ul className="cstack" style={{ marginBottom: activity.length > 0 ? 20 : 0 }}>
-                    {openSparks.map((spark) => {
-                      const isVoting = spark.status === 'VOTING'
-                      const isClosed = spark.status === 'CLOSED'
-                      const pillClass = isClosed ? 'pill spark-closed' : isVoting ? 'pill spark-voting' : 'pill spark-open'
-                      const pillLabel = isClosed ? 'Closed' : isVoting ? 'Voting' : 'Open'
-                      return (
-                        <li key={spark.id} className="tile tile-pad is-interactive">
-                          <Link href={`/${locale}/community/sparks/${spark.id}`} style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none' }}>
-                            <span className={pillClass}><span className="dot" />{pillLabel}</span>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div className="font-display" style={{
-                                fontWeight: 700,
-                                fontSize: 14,
-                                color: 'var(--canvas-dark-ink-strong)',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                              }}>{spark.prompt}</div>
-                              <div className="meta-mono" style={{ marginTop: 2 }}>{spark.entryCount} entries</div>
-                            </div>
-                          </Link>
-                        </li>
-                      )
-                    })}
-                  </ul>
-                </>
-              )}
-
-              {openSparks.length > 0 && activity.length > 0 && (
-                <hr className="divider" style={{ margin: '0 0 18px' }} />
-              )}
-
-              {activity.length > 0 && (
-                <>
-                  <div className="eyebrow-mono" style={{ marginBottom: 14 }}>Recent activity</div>
-                  <ul className="cstack" style={{ gap: 16 }}>
                     {activity.map((event, i) => (
-                      <li key={i} style={{ display: 'grid', gridTemplateColumns: '32px 1fr', gap: 12 }}>
-                        <span className={`avatar s32 ${avatarAccent}`}>{avatarInitials}</span>
+                      <li
+                        key={i}
+                        style={{ display: 'grid', gridTemplateColumns: '32px 1fr', gap: 12 }}
+                      >
+                        <span
+                          style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: '50%',
+                            overflow: 'hidden',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontFamily: 'var(--font-display)',
+                            fontWeight: 700,
+                            fontSize: 13,
+                            color: 'var(--brand-ink)',
+                            background: gradient,
+                          }}
+                        >
+                          {avatarSrc ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={avatarSrc} alt="" className="h-full w-full object-cover" />
+                          ) : (
+                            avatarInitials
+                          )}
+                        </span>
                         <div>
-                          <div style={{
-                            fontSize: 13.5,
-                            lineHeight: 1.5,
-                            color: 'var(--canvas-dark-ink)',
-                          }}>{event.label}</div>
-                          <div className="meta-mono" style={{ marginTop: 4 }}>{relTime(event.createdAt)}</div>
+                          <div
+                            style={{
+                              fontSize: 13.5,
+                              lineHeight: 1.5,
+                              color: 'var(--canvas-dark-ink)',
+                            }}
+                          >
+                            {event.label}
+                          </div>
+                          <div
+                            style={{
+                              fontFamily: 'var(--font-mono)',
+                              fontSize: 10.5,
+                              color: 'var(--canvas-dark-ink-faint)',
+                              marginTop: 4,
+                            }}
+                          >
+                            {relTime(event.createdAt)}
+                          </div>
                         </div>
                       </li>
                     ))}
                   </ul>
-                </>
+                </section>
+              ) : (
+                <EmptyCard
+                  isSelf={isSelf}
+                  icon={<Zap size={20} />}
+                  ownLine="No activity yet. Enter a Spark or follow some writers to get started."
+                  visitorLine="No recent activity."
+                />
               )}
-            </section>
-          </div>
+            </div>
+          </>
         )}
       </div>
     </main>

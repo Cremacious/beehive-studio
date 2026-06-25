@@ -121,7 +121,7 @@ export function UserRow({ row }: { row: Row }) {
         </button>
         {open && (
           <div
-            className="absolute right-0 top-full mt-2 z-10 w-56 p-2 rounded-[var(--r-card)] text-left"
+            className="absolute right-0 top-full mt-2 z-20 w-56 p-2 rounded-[var(--r-card)] text-left"
             style={{
               background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
               boxShadow: 'var(--sh-card)',

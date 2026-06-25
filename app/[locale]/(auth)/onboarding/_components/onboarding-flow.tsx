@@ -2,8 +2,13 @@
 
 import { useState, useRef } from 'react'
 import Link from 'next/link'
+import { toast } from 'sonner'
 import { checkUsernameAvailableAction, completeOnboardingAction } from '@/lib/actions/onboarding.actions'
 import { MentionableTextarea } from '@/components/mentions/mentionable-textarea'
+import { useCloudinaryUpload } from '@/hooks/use-cloudinary-upload'
+import { validateImageFile } from '@/lib/upload/validate-image'
+
+const CLOUDINARY_CONFIGURED = !!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
 
 type Step = 1 | 2 | 3
 type UsernameStatus = 'idle' | 'checking' | 'valid' | 'error'
@@ -183,7 +188,9 @@ export function OnboardingFlow({ locale }: { locale: string }) {
 
   // Step 3
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { upload, uploading } = useCloudinaryUpload('avatars')
 
   // Submit
   const [submitting, setSubmitting] = useState(false)
@@ -231,6 +238,13 @@ export function OnboardingFlow({ locale }: { locale: string }) {
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+    const err = validateImageFile(file)
+    if (err) {
+      toast.error(err)
+      e.target.value = ''
+      return
+    }
+    setAvatarFile(file)
     const reader = new FileReader()
     reader.onload = (ev) => setAvatarPreview(ev.target?.result as string)
     reader.readAsDataURL(file)
@@ -238,15 +252,36 @@ export function OnboardingFlow({ locale }: { locale: string }) {
 
   function removeAvatar() {
     setAvatarPreview(null)
+    setAvatarFile(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
   async function handleFinish() {
     setSubmitting(true)
     setSubmitError(null)
+
+    // Upload the avatar (if one was picked) just before completing onboarding,
+    // so an abandoned flow never orphans a Cloudinary asset.
+    let avatarUrl: string | undefined
+    if (avatarFile) {
+      if (CLOUDINARY_CONFIGURED) {
+        const res = await upload(avatarFile)
+        if (!res.url) {
+          setSubmitError(`Photo upload failed: ${res.error}`)
+          setSubmitting(false)
+          return
+        }
+        avatarUrl = res.url
+      } else {
+        // Dev fallback: embed as data URL when Cloudinary isn't configured.
+        avatarUrl = avatarPreview ?? undefined
+      }
+    }
+
     const result = await completeOnboardingAction({
       username,
       bio: bio || undefined,
+      avatarUrl,
     })
     if (!result.success) {
       setSubmitError(result.error ?? 'Something went wrong.')

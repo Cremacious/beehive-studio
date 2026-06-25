@@ -112,7 +112,7 @@ export default async function AdminUsersPage({
       </form>
 
       <div
-        className="rounded-[var(--r-card)] overflow-hidden"
+        className="rounded-[var(--r-card)]"
         style={{
           background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
           boxShadow: 'var(--sh-card)',
@@ -120,7 +120,7 @@ export default async function AdminUsersPage({
         }}
       >
         <div
-          className="grid px-5 py-2.5 text-[10px] font-mono uppercase tracking-[0.14em]"
+          className="grid px-5 py-2.5 text-[10px] font-mono uppercase tracking-[0.14em] rounded-t-[var(--r-card)]"
           style={{
             gridTemplateColumns: '1.4fr 0.9fr 0.8fr 0.9fr 1fr',
             background: 'var(--canvas-dark-100)',

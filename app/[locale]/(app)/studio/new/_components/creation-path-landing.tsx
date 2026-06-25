@@ -55,10 +55,12 @@ export function CreationPathLanding({ locale, isPremium, onPickScratch, onPickIm
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-7">
-          <button
-            type="button"
+          <div
+            role="button"
+            tabIndex={0}
             onClick={onPickScratch}
-            className="flex flex-col items-start gap-3 p-5 text-left transition-[filter] hover:brightness-110"
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPickScratch() } }}
+            className="flex flex-col items-start gap-3 p-5 text-left cursor-pointer transition-[filter] hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
             style={CARD}
           >
             <span
@@ -73,12 +75,14 @@ export function CreationPathLanding({ locale, isPremium, onPickScratch, onPickIm
             <span style={{ fontSize: 13, lineHeight: 1.5, color: 'var(--canvas-dark-ink)' }}>
               Set up your book details and start writing with an empty binder.
             </span>
-          </button>
+          </div>
 
-          <button
-            type="button"
+          <div
+            role="button"
+            tabIndex={0}
             onClick={onPickImport}
-            className="flex flex-col items-start gap-3 p-5 text-left transition-[filter] hover:brightness-110"
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPickImport() } }}
+            className="flex flex-col items-start gap-3 p-5 text-left cursor-pointer transition-[filter] hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)]"
             style={CARD}
           >
             <span className="flex items-center gap-2 self-stretch justify-between">
@@ -106,7 +110,7 @@ export function CreationPathLanding({ locale, isPremium, onPickScratch, onPickIm
             <span style={{ fontSize: 13, lineHeight: 1.5, color: 'var(--canvas-dark-ink)' }}>
               Upload a DOCX, PDF, or EPUB and we&apos;ll turn it into editable chapters.
             </span>
-          </button>
+          </div>
         </div>
       </div>
     </div>

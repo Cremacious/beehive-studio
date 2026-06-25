@@ -17,7 +17,10 @@ export function WipeForm() {
       setResult(null)
       const r = await wipeDatabaseAction(confirm)
       if (!r.ok) setError(r.error ?? 'Failed.')
-      else setResult(`Wiped ${r.truncated?.length ?? 0} tables.`)
+      else
+        setResult(
+          `Wiped ${r.truncated?.length ?? 0} tables and ${r.imagesDeleted ?? 0} Cloudinary images.`,
+        )
     })
   }
 

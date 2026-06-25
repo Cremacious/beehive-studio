@@ -4,6 +4,7 @@ import { db } from '@/db'
 import { sql } from 'drizzle-orm'
 import { requireAdmin } from '@/lib/admin/require-admin'
 import { logAdminAction } from '@/lib/admin/log-action'
+import { deleteCloudinaryImage, getCloudinaryPublicId } from '@/lib/cloudinary'
 
 // Tables NOT truncated: drizzle migrations, admin_actions (we want to keep
 // the audit trail of the wipe action itself, and admins logging in won't
@@ -79,9 +80,94 @@ const APP_TABLES = [
   'users',
 ]
 
+// Cloudinary folders that hold user-uploaded assets. We only ever delete
+// public IDs under these prefixes so a stray external/pasted URL in the DB
+// can't make us touch something we didn't upload.
+const CLOUDINARY_FOLDER_PREFIXES = [
+  'avatars/',
+  'covers/',
+  'clubs/',
+  'about-author/',
+] as const
+
+/**
+ * Collects every Cloudinary-hosted image URL referenced by the app's data and
+ * deletes the underlying assets, so a full DB wipe also clears the user content
+ * stored in Cloudinary: avatars, book covers, club cover images, and the
+ * about-author photos embedded in front/back-matter binder items.
+ *
+ * Best-effort: any failure here is swallowed and reported so it never blocks
+ * the database wipe. Worst case is an orphaned Cloudinary asset.
+ */
+async function wipeCloudinaryAssets(): Promise<{ deleted: number; failed: number }> {
+  const urls = new Set<string>()
+
+  const collect = async (query: ReturnType<typeof sql.raw>, key: string) => {
+    try {
+      const result = await db.execute(query)
+      for (const row of result.rows as Record<string, unknown>[]) {
+        const value = row[key]
+        if (typeof value === 'string' && value.length > 0) urls.add(value)
+      }
+    } catch {
+      // Non-fatal: a missing/renamed column shouldn't abort the wipe.
+    }
+  }
+
+  await collect(
+    sql.raw(`SELECT avatar_url FROM "user_profiles" WHERE avatar_url IS NOT NULL`),
+    'avatar_url',
+  )
+  await collect(
+    sql.raw(`SELECT cover_url FROM "books" WHERE cover_url IS NOT NULL`),
+    'cover_url',
+  )
+  await collect(
+    sql.raw(`SELECT cover_image_url FROM "book_clubs" WHERE cover_image_url IS NOT NULL`),
+    'cover_image_url',
+  )
+  // About-author photos live inside the binder item's JSON content.
+  await collect(
+    sql.raw(
+      `SELECT content->'fields'->>'photoUrl' AS photo_url FROM "binder_items" ` +
+        `WHERE content->>'subtype' = 'about_author' ` +
+        `AND content->'fields'->>'photoUrl' IS NOT NULL`,
+    ),
+    'photo_url',
+  )
+
+  // Resolve to whitelisted Cloudinary public IDs (drops data: URLs, external
+  // URLs, and anything outside our upload folders).
+  const publicIds = new Set<string>()
+  for (const url of urls) {
+    const publicId = getCloudinaryPublicId(url)
+    if (!publicId) continue
+    if (!CLOUDINARY_FOLDER_PREFIXES.some((prefix) => publicId.startsWith(prefix))) continue
+    publicIds.add(publicId)
+  }
+
+  let deleted = 0
+  let failed = 0
+  for (const publicId of publicIds) {
+    try {
+      await deleteCloudinaryImage(publicId)
+      deleted++
+    } catch {
+      failed++
+    }
+  }
+
+  return { deleted, failed }
+}
+
 export async function wipeDatabaseAction(
   confirmation: string,
-): Promise<{ ok: boolean; error?: string; truncated?: string[] }> {
+): Promise<{
+  ok: boolean
+  error?: string
+  truncated?: string[]
+  imagesDeleted?: number
+}> {
   if (process.env.NODE_ENV === 'production') {
     return { ok: false, error: 'Disabled in production.' }
   }
@@ -94,6 +180,16 @@ export async function wipeDatabaseAction(
     adminEmail: admin.email,
     action: 'db.wipe.start',
     metadata: { tables: APP_TABLES.length },
+  })
+
+  // Delete user-uploaded Cloudinary assets (avatars, book covers, club covers,
+  // about-author photos) BEFORE truncating, while the URLs are still in the DB.
+  // Best-effort: never let a Cloudinary failure block the database wipe.
+  const cloudinary = await wipeCloudinaryAssets()
+  await logAdminAction({
+    adminEmail: admin.email,
+    action: 'db.wipe.cloudinary',
+    metadata: { deleted: cloudinary.deleted, failed: cloudinary.failed },
   })
 
   try {
@@ -116,5 +212,5 @@ export async function wipeDatabaseAction(
     metadata: { tables: APP_TABLES.length },
   })
 
-  return { ok: true, truncated: APP_TABLES }
+  return { ok: true, truncated: APP_TABLES, imagesDeleted: cloudinary.deleted }
 }

@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 import { MoreHorizontal, BellOff, Bell, Ban, ExternalLink } from 'lucide-react'
 import {
   DropdownMenu,
@@ -113,36 +114,44 @@ export function FriendStatusSection({
 
   function handleToggleMute() {
     startTransition(async () => {
-      if (muted) {
-        const result = await unmuteUserAction({ targetUserId })
-        if (!result.success) {
-          toast.error('Could not unmute')
-          return
+      try {
+        if (muted) {
+          const result = await unmuteUserAction({ targetUserId })
+          if (!result.success) {
+            toastActionError(result.error)
+            return
+          }
+          setMuted(false)
+          toast.success('Unmuted')
+        } else {
+          const result = await muteUserAction({ targetUserId })
+          if (!result.success) {
+            toastActionError(result.error)
+            return
+          }
+          setMuted(true)
+          toast.success(`Muted${targetUsername ? ` @${targetUsername}` : ''}`)
         }
-        setMuted(false)
-        toast.success('Unmuted')
-      } else {
-        const result = await muteUserAction({ targetUserId })
-        if (!result.success) {
-          toast.error('Could not mute')
-          return
-        }
-        setMuted(true)
-        toast.success(`Muted${targetUsername ? ` @${targetUsername}` : ''}`)
+      } catch {
+        toastNetworkError()
       }
     })
   }
 
   function handleBlock() {
     startTransition(async () => {
-      const result = await blockUserAction({ targetUserId })
-      if (!result.success) {
-        toast.error('Could not block')
-        return
+      try {
+        const result = await blockUserAction({ targetUserId })
+        if (!result.success) {
+          toastActionError(result.error)
+          return
+        }
+        toast.success(`Blocked${targetUsername ? ` @${targetUsername}` : ''}`)
+        router.push(`/${locale}/community`)
+        router.refresh()
+      } catch {
+        toastNetworkError()
       }
-      toast.success(`Blocked${targetUsername ? ` @${targetUsername}` : ''}`)
-      router.push(`/${locale}/community`)
-      router.refresh()
     })
   }
 

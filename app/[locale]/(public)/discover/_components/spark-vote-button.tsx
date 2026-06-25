@@ -1,5 +1,6 @@
 'use client'
 import { useState, useTransition } from 'react'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 import { voteSparkEntryAction } from '@/lib/actions/sparks.actions'
 import type { SparkStatus } from '@/db/schema/social'
 
@@ -36,8 +37,18 @@ export function SparkVoteButton({ entryId, initialVoted, initialCount, status, i
     setVoted(next)
     setCount(c => c + (next ? 1 : -1))
     startTransition(async () => {
-      const result = await voteSparkEntryAction(entryId)
-      if (!result.success) { setVoted(!next); setCount(c => c + (next ? -1 : 1)) }
+      try {
+        const result = await voteSparkEntryAction(entryId)
+        if (!result.success) {
+          setVoted(!next)
+          setCount(c => c + (next ? -1 : 1))
+          toastActionError(result.error)
+        }
+      } catch {
+        setVoted(!next)
+        setCount(c => c + (next ? -1 : 1))
+        toastNetworkError()
+      }
     })
   }
 

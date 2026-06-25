@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { toast } from 'sonner'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 import { addCommentAction } from '@/lib/actions/social.actions'
 import { getBookCommentsAction, type BookComment } from '@/lib/actions/discover.actions'
 import { RenderMentionsInText } from '@/components/mentions/render-mentions-in-text'
@@ -72,13 +72,18 @@ export function CommentsPanel({
     if (!trimmed || !isAuthenticated) return
     setDraft('')
     startTransition(async () => {
-      const result = await addCommentAction(bookId, trimmed)
-      if (result.success) {
-        setComments((prev) => [result.data, ...prev])
-        setCount((c) => c + 1)
-      } else {
+      try {
+        const result = await addCommentAction(bookId, trimmed)
+        if (result.success) {
+          setComments((prev) => [result.data, ...prev])
+          setCount((c) => c + 1)
+        } else {
+          setDraft(trimmed)
+          toastActionError(result.error)
+        }
+      } catch {
         setDraft(trimmed)
-        toast.error('Could not post comment')
+        toastNetworkError()
       }
     })
   }
@@ -86,13 +91,17 @@ export function CommentsPanel({
   const loadMore = () => {
     startTransition(async () => {
       const nextPage = page + 1
-      const result = await getBookCommentsAction(bookId, nextPage)
-      if (result.success) {
-        setComments((prev) => [...prev, ...result.data.comments])
-        setHasMore(result.data.hasMore)
-        setPage(nextPage)
-      } else {
-        toast.error('Could not load more comments')
+      try {
+        const result = await getBookCommentsAction(bookId, nextPage)
+        if (result.success) {
+          setComments((prev) => [...prev, ...result.data.comments])
+          setHasMore(result.data.hasMore)
+          setPage(nextPage)
+        } else {
+          toastActionError(result.error)
+        }
+      } catch {
+        toastNetworkError()
       }
     })
   }

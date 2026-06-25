@@ -18,6 +18,7 @@ import { updateBinderItemAction } from '@/lib/actions/binder.actions'
 import { useBookEditor } from '../book-editor-provider'
 import { EmptyState } from '../empty-state'
 import { SaveStatusBadge, type FormSaveStatus } from '../front-back-matter/save-status-badge'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 
 type WikiFolderContent = { description?: string }
 
@@ -56,9 +57,16 @@ export function WikiFolderRenderer({ item, readOnly = false }: { item: BinderIte
     saveTimer.current = setTimeout(async () => {
       setStatus('saving')
       const content = { description: next || undefined } as unknown as Record<string, unknown>
-      const r = await updateBinderItemAction(item.id, { content })
-      setStatus(r.success ? 'saved' : 'unsaved')
-      if (r.success) updateBinderItem(item.id, { content })
+      try {
+        const r = await updateBinderItemAction(item.id, { content })
+        // Keep the user's local description on failure; just surface the error.
+        setStatus(r.success ? 'saved' : 'unsaved')
+        if (r.success) updateBinderItem(item.id, { content })
+        else toastActionError(r.error)
+      } catch {
+        setStatus('unsaved')
+        toastNetworkError()
+      }
     }, 800)
   }, [item.id, readOnly, updateBinderItem])
 

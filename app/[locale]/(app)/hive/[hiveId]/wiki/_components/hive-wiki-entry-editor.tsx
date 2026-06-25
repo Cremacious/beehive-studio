@@ -13,6 +13,7 @@ import {
   type WikiSection as Section,
 } from '@/lib/wiki/sections'
 import { normalizeTags } from '@/lib/wiki/tags'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 import { TagChipStrip } from '@/app/[locale]/(app)/studio/[bookId]/_components/editor/tag-chip-strip'
 import { WikiSection } from '@/app/[locale]/(app)/studio/[bookId]/_components/editor/wiki-section'
 import { SaveStatusBadge, type FormSaveStatus } from '@/app/[locale]/(app)/studio/[bookId]/_components/front-back-matter/save-status-badge'
@@ -154,8 +155,16 @@ function HiveWikiEntryEditorInner({
     setStatus('unsaved')
     saveTimer.current = setTimeout(async () => {
       setStatus('saving')
-      const r = await updateBinderItemAction(item.id, { content: next as unknown as Record<string, unknown> })
-      setStatus(r.success ? 'saved' : 'unsaved')
+      try {
+        const r = await updateBinderItemAction(item.id, { content: next as unknown as Record<string, unknown> })
+        // Never discard the user's edits on failure: keep the unsaved status so
+        // the badge shows the save did not land, and surface the real error.
+        setStatus(r.success ? 'saved' : 'unsaved')
+        if (!r.success) toastActionError(r.error)
+      } catch {
+        setStatus('unsaved')
+        toastNetworkError()
+      }
     }, 800)
   }, [item.id, readOnly])
 
@@ -184,7 +193,12 @@ function HiveWikiEntryEditorInner({
   async function commitTitle(title: string) {
     const trimmed = title.trim()
     if (!trimmed || trimmed === item.title || readOnly) return
-    await updateBinderItemAction(item.id, { title: trimmed })
+    try {
+      const r = await updateBinderItemAction(item.id, { title: trimmed })
+      if (!r.success) toastActionError(r.error)
+    } catch {
+      toastNetworkError()
+    }
   }
 
   const IconComponent = template.icon

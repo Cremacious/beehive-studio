@@ -5,11 +5,13 @@ import { userBlocks, friendships, follows } from '@/db/schema/social'
 import { and, eq, or } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { userTargetSchema } from '@/lib/validations/social'
+import { runAction } from './safe-action'
 import type { ActionResult } from './book.actions'
 
 export async function blockUserAction(
   input: unknown,
 ): Promise<ActionResult<{ blocked: boolean }>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const parsed = userTargetSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
@@ -54,11 +56,13 @@ export async function blockUserAction(
   })
 
   return { success: true, data: { blocked: true } }
+  })
 }
 
 export async function unblockUserAction(
   input: unknown,
 ): Promise<ActionResult<{ removed: boolean }>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const parsed = userTargetSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
@@ -74,6 +78,7 @@ export async function unblockUserAction(
     )
 
   return { success: true, data: { removed: true } }
+  })
 }
 
 export async function getBlockedUsersAction(): Promise<ActionResult<string[]>> {

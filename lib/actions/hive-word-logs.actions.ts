@@ -10,6 +10,7 @@ import {
 import { and, desc, eq, lt, or } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { requireHiveMember } from '@/lib/hive/permissions'
+import { runAction } from './safe-action'
 import type { ActionResult } from './book.actions'
 
 export type RecentWordLogItem = {
@@ -44,6 +45,7 @@ export type GetRecentWordLogsInput = {
 export async function getRecentWordLogsAction(
   input: GetRecentWordLogsInput,
 ): Promise<ActionResult<RecentWordLogsPage>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const { hiveId } = input
   const limit = Math.min(Math.max(input.limit ?? 20, 1), 100)
@@ -121,4 +123,5 @@ export async function getRecentWordLogsAction(
     hasMore && last ? `${last.loggedAt.toISOString()}|${last.id}` : null
 
   return { success: true, data: { items, nextCursor } }
+  })
 }

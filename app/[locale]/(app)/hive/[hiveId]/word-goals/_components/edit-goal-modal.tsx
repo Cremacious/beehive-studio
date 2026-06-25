@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { updateWordGoalAction } from '@/lib/actions/hive-word-goals.actions'
 import type { WordGoalType } from '@/lib/hive/goal-progress'
+import { toastNetworkError } from '@/lib/errors/notify'
 
 type Props = {
   open: boolean
@@ -63,6 +64,8 @@ export function EditGoalModal({ open, onOpenChange, goal }: Props) {
       toast.success('Goal updated.')
       onOpenChange(false)
       router.refresh()
+    } catch {
+      toastNetworkError()
     } finally {
       setPending(false)
     }

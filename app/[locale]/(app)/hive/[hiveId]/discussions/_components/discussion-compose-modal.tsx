@@ -16,6 +16,7 @@ import { createDiscussionPostAction } from '@/lib/actions/hive-discussions.actio
 import type { DiscussionTopic } from '@/lib/validations/hive-discussion'
 import { TOPIC_META } from './discussion-row'
 import { MentionableTextarea } from '@/components/mentions/mentionable-textarea'
+import { toastNetworkError } from '@/lib/errors/notify'
 
 const TOPICS: DiscussionTopic[] = ['GENERAL', 'WORLDBUILDING', 'FEEDBACK', 'OFF_TOPIC']
 
@@ -60,6 +61,8 @@ export function DiscussionComposeModal({ open, onOpenChange, hiveId }: Props) {
       reset()
       onOpenChange(false)
       router.refresh()
+    } catch {
+      toastNetworkError()
     } finally {
       setSubmitting(false)
     }

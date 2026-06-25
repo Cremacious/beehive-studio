@@ -13,6 +13,7 @@ import { CATEGORY_TEMPLATES, type WikiCategory } from '@/lib/wiki/category-templ
 import { shouldSkipNotification } from '@/lib/notifications/check-preferences'
 import type { BinderItemRow } from './binder.actions'
 import type { ChapterStatus } from '@/lib/books/is-chapter-reader-visible'
+import { runAction } from './safe-action'
 import type { ActionResult } from './book.actions'
 
 // ── H2 T9: Hive content views (binder-backed) ─────────────────────────────────
@@ -72,6 +73,7 @@ function toBinderItemRow(
  * surfaced on the wiki. Folder binder items still exist but aren't returned.
  */
 export async function getHiveWikiView(hiveId: string): Promise<ActionResult<HiveWikiViewData>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const role = await requireHiveMember(hiveId, userId)
   const hive = await db.query.hives.findFirst({
@@ -108,6 +110,7 @@ export async function getHiveWikiView(hiveId: string): Promise<ActionResult<Hive
       authorUserId: hive.book.userId,
     },
   }
+  })
 }
 
 /**
@@ -122,6 +125,7 @@ export async function getHiveWikiEntriesByCategory(
   entries: HiveWikiEntry[]
   viewerRole: HiveRole
 }>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const role = await requireHiveMember(hiveId, userId)
   const hive = await db.query.hives.findFirst({
@@ -182,6 +186,7 @@ export async function getHiveWikiEntriesByCategory(
     success: true,
     data: { bookId: hive.bookId, entries, viewerRole: role },
   }
+  })
 }
 
 export type HiveOutlineEntry = {
@@ -196,6 +201,7 @@ export async function getHiveOutlineView(hiveId: string): Promise<ActionResult<{
   chapters: Array<{ id: string; title: string; order: number }>
   viewerRole: HiveRole
 }>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const role = await requireHiveMember(hiveId, userId)
   const hive = await db.query.hives.findFirst({
@@ -241,6 +247,7 @@ export async function getHiveOutlineView(hiveId: string): Promise<ActionResult<{
       viewerRole: role,
     },
   }
+  })
 }
 
 export async function getHiveOutlineByIdAction(
@@ -251,6 +258,7 @@ export async function getHiveOutlineByIdAction(
   chapters: Array<{ id: string; title: string; order: number }>
   viewerRole: HiveRole
 }>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const role = await requireHiveMember(hiveId, userId)
   const hive = await db.query.hives.findFirst({
@@ -295,6 +303,7 @@ export async function getHiveOutlineByIdAction(
       viewerRole: role,
     },
   }
+  })
 }
 
 export async function getHiveNotesView(hiveId: string): Promise<ActionResult<{
@@ -302,6 +311,7 @@ export async function getHiveNotesView(hiveId: string): Promise<ActionResult<{
   notes: Array<BinderItemRow & { authorUsername: string | null }>
   viewerRole: HiveRole
 }>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const role = await requireHiveMember(hiveId, userId)
   const hive = await db.query.hives.findFirst({
@@ -337,12 +347,14 @@ export async function getHiveNotesView(hiveId: string): Promise<ActionResult<{
       viewerRole: role,
     },
   }
+  })
 }
 
 export async function getBinderTreeForHiveAction(
   bookId: string,
   hiveId: string,
 ): Promise<ActionResult<BinderItemRow[]>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   await requireHiveMember(hiveId, userId)
 
@@ -374,6 +386,7 @@ export async function getBinderTreeForHiveAction(
   })
 
   return { success: true, data: rows }
+  })
 }
 
 // ── H3 T16: Hive chapter list (for submission target-order picker) ──────────
@@ -392,6 +405,7 @@ export async function getHiveChapterListAction(
     collectionTitle: string | null
   }>
 }>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   await requireHiveMember(hiveId, userId)
   const hive = await db.query.hives.findFirst({
@@ -471,6 +485,7 @@ export async function getHiveChapterListAction(
   walk(null, null, null)
 
   return { success: true, data: { bookId: hive.bookId, chapters: flat } }
+  })
 }
 
 // ── H3 T13: Hive chapter view ────────────────────────────────────────────────
@@ -518,6 +533,7 @@ export async function getHiveChapterView(
   hiveId: string,
   chapterId: string,
 ): Promise<ActionResult<HiveChapterViewData>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const viewerRole = await requireHiveMember(hiveId, userId)
 
@@ -618,6 +634,7 @@ export async function getHiveChapterView(
       viewerRole,
     },
   }
+  })
 }
 
 // ── Legacy CRUD (T10 deletes) ────────────────────────────────────────────────
@@ -637,6 +654,7 @@ export type TaskRow = {
 }
 
 export async function getTasksAction(hiveId: string): Promise<ActionResult<TaskRow[]>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   await assertHiveMember(hiveId, userId)
   const tasks = await db.query.hiveTasks.findMany({
@@ -645,6 +663,7 @@ export async function getTasksAction(hiveId: string): Promise<ActionResult<TaskR
     orderBy: (t, { asc }) => [asc(t.createdAt)],
   })
   return { success: true, data: tasks as TaskRow[] }
+  })
 }
 
 export async function createTaskAction(hiveId: string, input: {
@@ -652,6 +671,7 @@ export async function createTaskAction(hiveId: string, input: {
   description?: string
   assigneeId?: string
 }): Promise<ActionResult<{ taskId: string }>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   await assertHiveMember(hiveId, userId)
   const parsed = createTaskSchema.safeParse(input)
@@ -675,6 +695,7 @@ export async function createTaskAction(hiveId: string, input: {
   }
 
   return { success: true, data: { taskId: task.id } }
+  })
 }
 
 export async function updateTaskAction(taskId: string, input: {
@@ -683,6 +704,7 @@ export async function updateTaskAction(taskId: string, input: {
   assigneeId?: string | null
   status?: 'OPEN' | 'IN_PROGRESS' | 'DONE'
 }): Promise<ActionResult> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const task = await db.query.hiveTasks.findFirst({ where: eq(hiveTasks.id, taskId) })
   if (!task) return { success: false, error: 'Task not found' }
@@ -710,15 +732,18 @@ export async function updateTaskAction(taskId: string, input: {
   }
 
   return { success: true, data: undefined }
+  })
 }
 
 export async function deleteTaskAction(taskId: string): Promise<ActionResult> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const task = await db.query.hiveTasks.findFirst({ where: eq(hiveTasks.id, taskId) })
   if (!task) return { success: false, error: 'Task not found' }
   if (task.creatorId !== userId) await assertHiveAdmin(task.hiveId, userId)
   await db.delete(hiveTasks).where(eq(hiveTasks.id, taskId))
   return { success: true, data: undefined }
+  })
 }
 
 /**
@@ -732,6 +757,7 @@ export async function deleteTaskAction(taskId: string): Promise<ActionResult> {
 export async function createHiveOutlineAction(
   hiveId: string,
 ): Promise<ActionResult<{ outlineId: string }>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const role = await requireHiveMember(hiveId, userId)
   if (!canEditOutline(role)) return { success: false, error: 'NOT_AUTHORIZED' }
@@ -763,4 +789,5 @@ export async function createHiveOutlineAction(
   })
 
   return { success: true, data: { outlineId } }
+  })
 }

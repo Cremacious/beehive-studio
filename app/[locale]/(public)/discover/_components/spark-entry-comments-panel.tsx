@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 import {
   addSparkEntryCommentAction,
   replyToSparkCommentAction,
@@ -205,31 +206,41 @@ export function SparkEntryCommentsPanel({
     const content = draft.trim()
     setDraft('')
     startTransition(async () => {
-      const result = await addSparkEntryCommentAction(entryId, content)
-      if (result.success) {
-        setComments((prev) => [result.data, ...prev])
-      } else {
-        setError('Failed to post comment.')
+      try {
+        const result = await addSparkEntryCommentAction(entryId, content)
+        if (result.success) {
+          setComments((prev) => [result.data, ...prev])
+        } else {
+          setError('Failed to post comment.')
+          setDraft(content)
+          toastActionError(result.error)
+        }
+      } catch {
         setDraft(content)
+        toastNetworkError()
       }
     })
   }
 
   const submitReply = (parentId: string, content: string) => {
     startTransition(async () => {
-      const result = await replyToSparkCommentAction({ entryId, parentId, content })
-      if (result.success) {
-        setReplyingTo(null)
-        toast.success('Reply posted')
-        router.refresh()
-      } else {
-        const msg =
-          result.error === 'REPLY_DEPTH_EXCEEDED'
-            ? "Can't reply to a reply"
-            : result.error === 'BLOCKED'
-              ? 'You can no longer reply here.'
-              : 'Could not post reply'
-        toast.error(msg)
+      try {
+        const result = await replyToSparkCommentAction({ entryId, parentId, content })
+        if (result.success) {
+          setReplyingTo(null)
+          toast.success('Reply posted')
+          router.refresh()
+        } else {
+          const msg =
+            result.error === 'REPLY_DEPTH_EXCEEDED'
+              ? "Can't reply to a reply"
+              : result.error === 'BLOCKED'
+                ? 'You can no longer reply here.'
+                : 'Could not post reply'
+          toast.error(msg)
+        }
+      } catch {
+        toastNetworkError()
       }
     })
   }

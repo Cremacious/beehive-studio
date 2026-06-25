@@ -18,6 +18,7 @@ import {
 import { createId } from '@paralleldrive/cuid2'
 import type { ActionResult } from './book.actions'
 import type { ChapterStatus } from '@/lib/books/is-chapter-reader-visible'
+import { runAction } from './safe-action'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -135,6 +136,7 @@ export async function createBinderItemAction(input: {
   order?: number
   content?: Record<string, unknown> | null
 }): Promise<ActionResult<{ id: string; chapterId: string | null }>> {
+  return runAction(async () => {
   const userId = await requireAuth()
 
   const parsed = createBinderItemSchema.safeParse(input)
@@ -185,6 +187,7 @@ export async function createBinderItemAction(input: {
   })
 
   return { success: true, data: result }
+  })
 }
 
 /**
@@ -194,6 +197,7 @@ export async function updateBinderItemAction(
   id: string,
   input: { title?: string; content?: unknown; parentId?: string | null },
 ): Promise<ActionResult> {
+  return runAction(async () => {
   const userId = await requireAuth()
 
   const parsed = updateBinderItemSchema.safeParse(input)
@@ -221,6 +225,7 @@ export async function updateBinderItemAction(
   await db.update(binderItems).set({ ...updates, updatedAt: new Date() }).where(eq(binderItems.id, id))
 
   return { success: true, data: undefined }
+  })
 }
 
 /**
@@ -229,6 +234,7 @@ export async function updateBinderItemAction(
  * be deleted explicitly to avoid orphaned documents.
  */
 export async function deleteBinderItemAction(id: string): Promise<ActionResult> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const { bookId } = await getBinderItemBook(id)
   await requireBinderWritePermission(bookId, id, userId)
@@ -238,26 +244,30 @@ export async function deleteBinderItemAction(id: string): Promise<ActionResult> 
   }
 
   // Delete child binder items and their associated chapter documents
-  // (binder_items.parent_id uses onDelete: 'set null', not cascade)
+  // (binder_items.parent_id uses onDelete: 'set null', not cascade).
+  // Wrapped in a single transaction so a mid-loop failure can't orphan rows.
   const children = await db
     .select({ id: binderItems.id, type: binderItems.type })
     .from(binderItems)
     .where(and(eq(binderItems.parentId, id), eq(binderItems.bookId, bookId)))
 
-  for (const child of children) {
-    if (child.type === 'chapter') {
-      await db.delete(chapters).where(eq(chapters.binderItemId, child.id))
+  await db.transaction(async (tx) => {
+    for (const child of children) {
+      if (child.type === 'chapter') {
+        await tx.delete(chapters).where(eq(chapters.binderItemId, child.id))
+      }
+      await tx.delete(binderItems).where(eq(binderItems.id, child.id))
     }
-    await db.delete(binderItems).where(eq(binderItems.id, child.id))
-  }
 
-  // Delete the chapter document for this item if it's a chapter
-  await db.delete(chapters).where(eq(chapters.binderItemId, id))
+    // Delete the chapter document for this item if it's a chapter
+    await tx.delete(chapters).where(eq(chapters.binderItemId, id))
 
-  // Delete the item itself
-  await db.delete(binderItems).where(eq(binderItems.id, id))
+    // Delete the item itself
+    await tx.delete(binderItems).where(eq(binderItems.id, id))
+  })
 
   return { success: true, data: undefined }
+  })
 }
 
 /**
@@ -269,6 +279,7 @@ export async function reorderBinderItemsAction(
   bookId: string,
   updates: Array<{ id: string; order: number; parentId: string | null }>,
 ): Promise<ActionResult> {
+  return runAction(async () => {
   const userId = await requireAuth()
 
   const parsed = reorderBinderItemsSchema.safeParse(updates)
@@ -286,15 +297,17 @@ export async function reorderBinderItemsAction(
     return { success: false, error: 'FREE_LIMIT_REACHED' }
   }
 
-  // Run all updates in parallel within the same book scope
-  await Promise.all(
-    parsed.data.map(({ id, order, parentId }) =>
-      db
+  // Run all updates sequentially inside a single transaction so the reorder
+  // is atomic — a mid-batch failure can't leave a partially-reordered tree.
+  await db.transaction(async (tx) => {
+    for (const { id, order, parentId } of parsed.data) {
+      await tx
         .update(binderItems)
         .set({ order, parentId, updatedAt: new Date() })
-        .where(and(eq(binderItems.id, id), eq(binderItems.bookId, bookId))),
-    ),
-  )
+        .where(and(eq(binderItems.id, id), eq(binderItems.bookId, bookId)))
+    }
+  })
 
   return { success: true, data: undefined }
+  })
 }

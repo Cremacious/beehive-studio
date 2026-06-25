@@ -27,6 +27,7 @@ import {
 import type { FriendSummary } from '@/lib/actions/friendships.actions'
 import { FREE_HIVE_MEMBER_LIMIT } from '@/lib/premium'
 import { UpgradeModal } from '@/components/upgrade/upgrade-modal'
+import { toastNetworkError } from '@/lib/errors/notify'
 
 const FRIEND_PAGE_SIZE = 5
 
@@ -182,15 +183,20 @@ function InviteLinkBlock({ hiveId, locale }: { hiveId: string; locale: string })
 
   async function handleGenerate() {
     setGenerating(true)
-    const result = await generateInviteLinkAction(hiveId)
-    setGenerating(false)
-    if (result.success) {
-      setInviteLink(
-        `${window.location.origin}/${locale}/hive/invite/${result.data.token}`,
-      )
-      toast.success('Invite link generated')
-    } else {
-      toast.error(result.error || 'Could not generate link')
+    try {
+      const result = await generateInviteLinkAction(hiveId)
+      if (result.success) {
+        setInviteLink(
+          `${window.location.origin}/${locale}/hive/invite/${result.data.token}`,
+        )
+        toast.success('Invite link generated')
+      } else {
+        toast.error(result.error || 'Could not generate link')
+      }
+    } catch {
+      toastNetworkError()
+    } finally {
+      setGenerating(false)
     }
   }
 
@@ -389,15 +395,20 @@ function UsernameBlock({
     if (!canSend) return
     setSubmitting(true)
     startTransition(async () => {
-      const result = await inviteMemberByUsernameAction(hiveId, trimmed)
-      setSubmitting(false)
-      if (result.success) {
-        toast.success(`Invite sent to @${trimmed}`)
-        setUsername('')
-      } else if (result.error === 'FREE_LIMIT_REACHED') {
-        onLimitReached()
-      } else {
-        toast.error(result.error || 'Could not send invite')
+      try {
+        const result = await inviteMemberByUsernameAction(hiveId, trimmed)
+        if (result.success) {
+          toast.success(`Invite sent to @${trimmed}`)
+          setUsername('')
+        } else if (result.error === 'FREE_LIMIT_REACHED') {
+          onLimitReached()
+        } else {
+          toast.error(result.error || 'Could not send invite')
+        }
+      } catch {
+        toastNetworkError()
+      } finally {
+        setSubmitting(false)
       }
     })
   }
@@ -518,15 +529,20 @@ function FriendsBlock({
     }
     setPendingUserId(friend.userId)
     startTransition(async () => {
-      const result = await inviteMemberByUsernameAction(hiveId, friend.username!)
-      setPendingUserId(null)
-      if (result.success) {
-        setInvitedUserIds((prev) => new Set(prev).add(friend.userId))
-        toast.success(`Invite sent to @${friend.username}`)
-      } else if (result.error === 'FREE_LIMIT_REACHED') {
-        onLimitReached()
-      } else {
-        toast.error(result.error || 'Could not send invite')
+      try {
+        const result = await inviteMemberByUsernameAction(hiveId, friend.username!)
+        if (result.success) {
+          setInvitedUserIds((prev) => new Set(prev).add(friend.userId))
+          toast.success(`Invite sent to @${friend.username}`)
+        } else if (result.error === 'FREE_LIMIT_REACHED') {
+          onLimitReached()
+        } else {
+          toast.error(result.error || 'Could not send invite')
+        }
+      } catch {
+        toastNetworkError()
+      } finally {
+        setPendingUserId(null)
       }
     })
   }

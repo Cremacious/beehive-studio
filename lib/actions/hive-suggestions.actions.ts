@@ -42,6 +42,7 @@ import { stripMarkById } from '@/lib/tiptap-extensions/strip-mark'
 import { getUserPremiumStatus } from '@/lib/premium'
 import { extractWordCount } from '@/lib/tiptap-utils'
 import { desc } from 'drizzle-orm'
+import { runAction } from './safe-action'
 import type { ActionResult } from './book.actions'
 
 // ── Public types ─────────────────────────────────────────────────────────────
@@ -103,6 +104,7 @@ export type PendingSuggestionsByChapter = {
 export async function createSuggestionAction(
   input: CreateSuggestionInput,
 ): Promise<ActionResult<{ id: string }>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const parsed = createSuggestionSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: parsed.error.issues[0].message }
@@ -245,6 +247,7 @@ export async function createSuggestionAction(
   })
 
   return { success: true, data: { id: result } }
+  })
 }
 
 // ── replyToSuggestionAction ──────────────────────────────────────────────────
@@ -252,6 +255,7 @@ export async function createSuggestionAction(
 export async function replyToSuggestionAction(
   input: ReplyToSuggestionInput,
 ): Promise<ActionResult<{ id: string }>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const parsed = replyToSuggestionSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: parsed.error.issues[0].message }
@@ -295,6 +299,7 @@ export async function replyToSuggestionAction(
 
   // No activity event for replies.
   return { success: true, data: { id: inserted.id } }
+  })
 }
 
 // ── acceptSuggestionAction ───────────────────────────────────────────────────
@@ -302,6 +307,7 @@ export async function replyToSuggestionAction(
 export async function acceptSuggestionAction(
   suggestionId: string,
 ): Promise<ActionResult<{ acceptedAt: Date | null; newWordCount: number | null; orphan: boolean }>> {
+  return runAction<{ acceptedAt: Date | null; newWordCount: number | null; orphan: boolean }>(async () => {
   const userId = await requireAuth()
 
   const suggestion = await db.query.hiveSuggestions.findFirst({
@@ -444,6 +450,7 @@ export async function acceptSuggestionAction(
   }
 
   return { success: true, data: { acceptedAt, newWordCount, orphan: false } }
+  })
 }
 
 // ── rejectSuggestionAction ───────────────────────────────────────────────────
@@ -451,6 +458,7 @@ export async function acceptSuggestionAction(
 export async function rejectSuggestionAction(
   input: RejectSuggestionInput,
 ): Promise<ActionResult> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const parsed = rejectSuggestionSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: parsed.error.issues[0].message }
@@ -535,6 +543,7 @@ export async function rejectSuggestionAction(
   })
 
   return { success: true, data: undefined }
+  })
 }
 
 // ── getChapterSuggestionsAction ──────────────────────────────────────────────
@@ -542,6 +551,7 @@ export async function rejectSuggestionAction(
 export async function getChapterSuggestionsAction(
   args: { chapterId: string; hiveId: string },
 ): Promise<ActionResult<GetChapterSuggestionsData>> {
+  return runAction(async () => {
   const { chapterId, hiveId } = args
   const userId = await requireAuth()
   try {
@@ -629,6 +639,7 @@ export async function getChapterSuggestionsAction(
     success: true,
     data: { suggestions, orphanRowIds: orphanRows },
   }
+  })
 }
 
 // ── getPendingSuggestionsForHiveAction ───────────────────────────────────────
@@ -636,6 +647,7 @@ export async function getChapterSuggestionsAction(
 export async function getPendingSuggestionsForHiveAction(
   hiveId: string,
 ): Promise<ActionResult<PendingSuggestionsByChapter[]>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   try {
     await requireHiveMember(hiveId, userId)
@@ -711,6 +723,7 @@ export async function getPendingSuggestionsForHiveAction(
   }
 
   return { success: true, data: Array.from(byChapter.values()) }
+  })
 }
 
 // -----------------------------------------------------------------------------
@@ -723,6 +736,7 @@ export async function getSuggestionParentsAction(
   | { success: true; data: { hiveId: string; chapterId: string } }
   | { success: false; error: string }
 > {
+  return runAction(async () => {
   await requireAuth()
   const row = await db.query.hiveSuggestions.findFirst({
     where: eq(hiveSuggestions.id, suggestionId),
@@ -730,4 +744,5 @@ export async function getSuggestionParentsAction(
   })
   if (!row) return { success: false, error: 'NOT_FOUND' }
   return { success: true, data: { hiveId: row.hiveId, chapterId: row.chapterId } }
+  })
 }

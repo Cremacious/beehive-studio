@@ -33,6 +33,7 @@ import {
   type ApproveSubmissionInput,
   type RejectSubmissionInput,
 } from '@/lib/validations/hive-submission'
+import { runAction } from './safe-action'
 import type { ActionResult } from './book.actions'
 
 // ── Public types ────────────────────────────────────────────────────────────
@@ -82,6 +83,7 @@ export type ListHiveSubmissionsData = {
 export async function saveSubmissionDraftAction(
   input: SaveSubmissionDraftInput,
 ): Promise<ActionResult<{ id: string }>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const parsed = saveSubmissionDraftSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: parsed.error.issues[0].message }
@@ -136,6 +138,7 @@ export async function saveSubmissionDraftAction(
   })
 
   return { success: true, data: { id: newId } }
+  })
 }
 
 // ── submitSubmissionAction ──────────────────────────────────────────────────
@@ -143,6 +146,7 @@ export async function saveSubmissionDraftAction(
 export async function submitSubmissionAction(
   input: SubmitSubmissionInput,
 ): Promise<ActionResult> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const parsed = submitSubmissionSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: parsed.error.issues[0].message }
@@ -232,6 +236,7 @@ export async function submitSubmissionAction(
   })
 
   return { success: true, data: undefined }
+  })
 }
 
 // ── approveSubmissionAction ─────────────────────────────────────────────────
@@ -250,6 +255,7 @@ export async function submitSubmissionAction(
 export async function approveSubmissionAction(
   input: ApproveSubmissionInput,
 ): Promise<ActionResult<{ chapterId: string; binderItemId: string }>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const parsed = approveSubmissionSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: parsed.error.issues[0].message }
@@ -377,6 +383,7 @@ export async function approveSubmissionAction(
   })
 
   return { success: true, data: result }
+  })
 }
 
 // ── rejectSubmissionAction ──────────────────────────────────────────────────
@@ -384,6 +391,7 @@ export async function approveSubmissionAction(
 export async function rejectSubmissionAction(
   input: RejectSubmissionInput,
 ): Promise<ActionResult> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const parsed = rejectSubmissionSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: parsed.error.issues[0].message }
@@ -443,6 +451,7 @@ export async function rejectSubmissionAction(
   })
 
   return { success: true, data: undefined }
+  })
 }
 
 // ── getSubmissionAction ─────────────────────────────────────────────────────
@@ -450,6 +459,7 @@ export async function rejectSubmissionAction(
 export async function getSubmissionAction(
   id: string,
 ): Promise<ActionResult<GetSubmissionData>> {
+  return runAction(async () => {
   const userId = await requireAuth()
 
   const submission = await db.query.hiveSubmissions.findFirst({
@@ -513,6 +523,7 @@ export async function getSubmissionAction(
     book: { id: book.id, title: book.title },
   }
   return { success: true, data }
+  })
 }
 
 // ── listHiveSubmissionsAction ───────────────────────────────────────────────
@@ -520,6 +531,7 @@ export async function getSubmissionAction(
 export async function listHiveSubmissionsAction(
   hiveId: string,
 ): Promise<ActionResult<ListHiveSubmissionsData>> {
+  return runAction(async () => {
   const userId = await requireAuth()
 
   let role: HiveRole
@@ -610,4 +622,5 @@ export async function listHiveSubmissionsAction(
       allInHive: reviewer ? [...pending, ...reviewed] : [],
     },
   }
+  })
 }

@@ -21,6 +21,7 @@ import { EditorToolbar } from './editor-toolbar'
 import { WritingAnalysis, extractPlainText } from './writing-analysis'
 import { UpgradePrompt } from '@/components/upgrade/upgrade-prompt'
 import { createBinderItemAction } from '@/lib/actions/binder.actions'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 import { FindReplace } from './find-replace'
 import { PreviewBanner } from './preview-banner'
 import { OverflowBanner } from '../overflow-banner'
@@ -51,32 +52,39 @@ function EmptyStartChapter() {
     setCreating(true)
     const rootItems = binderItems.filter(i => i.parentId === null)
     const order = rootItems.length > 0 ? Math.max(...rootItems.map(i => i.order)) + 1 : 0
-    const result = await createBinderItemAction({
-      bookId,
-      parentId: null,
-      type: 'chapter',
-      title: 'Untitled Chapter',
-      order,
-    })
-    setCreating(false)
-    if (result.success) {
-      addBinderItem({
-        id: result.data.id,
+    try {
+      const result = await createBinderItemAction({
         bookId,
         parentId: null,
         type: 'chapter',
         title: 'Untitled Chapter',
         order,
-        content: null,
-        authorId: null,
-        lastEditedBy: null,
-        chapterId: result.data.chapterId,
-        chapterStatus: result.data.chapterId ? 'FIRST_DRAFT' : null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
       })
-      setActiveItemId(result.data.id)
-      setPendingRenameId(result.data.id)
+      setCreating(false)
+      if (result.success) {
+        addBinderItem({
+          id: result.data.id,
+          bookId,
+          parentId: null,
+          type: 'chapter',
+          title: 'Untitled Chapter',
+          order,
+          content: null,
+          authorId: null,
+          lastEditedBy: null,
+          chapterId: result.data.chapterId,
+          chapterStatus: result.data.chapterId ? 'FIRST_DRAFT' : null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        setActiveItemId(result.data.id)
+        setPendingRenameId(result.data.id)
+      } else {
+        toastActionError(result.error)
+      }
+    } catch {
+      setCreating(false)
+      toastNetworkError()
     }
   }
 

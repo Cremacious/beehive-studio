@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import { createWordGoalAction } from '@/lib/actions/hive-word-goals.actions'
+import { toastNetworkError } from '@/lib/errors/notify'
 import { computeGoalEndDate, type WordGoalType } from '@/lib/hive/goal-progress'
 
 type Props = {
@@ -118,6 +119,8 @@ export function NewGoalModal({
       toast.success(`${TYPE_OPTIONS.find((t) => t.value === type)?.label} goal created.`)
       setOpen(false)
       router.refresh()
+    } catch {
+      toastNetworkError()
     } finally {
       setPending(false)
     }

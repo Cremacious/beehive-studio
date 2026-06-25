@@ -12,6 +12,7 @@ import { extractMentionUsernamesFromText } from '@/lib/mentions/extract-mentions
 import { resolveMentionedUsers } from '@/lib/mentions/resolve-mentions'
 import { recordMentionNotificationsTx } from '@/lib/mentions/record-mention-notifications'
 import type { ActionResult } from './book.actions'
+import { runAction } from './safe-action'
 
 export type ChapterComment = {
   id: string
@@ -49,6 +50,7 @@ export async function getChapterCommentsAction(
   chapterId: string,
   page: number = 1,
 ): Promise<ActionResult<{ comments: ChapterComment[]; hasMore: boolean }>> {
+  return runAction(async () => {
   const userId = await getOptionalUserId()
 
   const ctx = await getChapterContext(chapterId)
@@ -87,6 +89,7 @@ export async function getChapterCommentsAction(
     success: true,
     data: { comments: rows.slice(0, COMMENTS_PAGE_SIZE), hasMore },
   }
+  })
 }
 
 const addChapterCommentSchema = z.object({
@@ -97,6 +100,7 @@ export async function addChapterCommentAction(
   chapterId: string,
   content: string,
 ): Promise<ActionResult<ChapterComment>> {
+  return runAction(async () => {
   const userId = await requireAuth()
 
   const ctx = await getChapterContext(chapterId)
@@ -192,12 +196,19 @@ export async function addChapterCommentAction(
       authorAvatarUrl: profile?.avatarUrl ?? null,
     },
   }
+  })
 }
 
 export async function getChapterCommentsCountAction(chapterId: string): Promise<number> {
-  const [row] = await db
-    .select({ total: count() })
-    .from(chapterComments)
-    .where(and(eq(chapterComments.chapterId, chapterId), isNull(chapterComments.parentId)))
-  return row?.total ?? 0
+  // Returns a bare number (not ActionResult), so a thrown DB error can't become
+  // a typed failure — fall back to 0 so the count badge degrades gracefully.
+  try {
+    const [row] = await db
+      .select({ total: count() })
+      .from(chapterComments)
+      .where(and(eq(chapterComments.chapterId, chapterId), isNull(chapterComments.parentId)))
+    return row?.total ?? 0
+  } catch {
+    return 0
+  }
 }

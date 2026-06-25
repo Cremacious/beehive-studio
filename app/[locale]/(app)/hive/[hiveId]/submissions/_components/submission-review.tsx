@@ -22,6 +22,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { HivePageShell } from '../../_components/hive-page-shell'
 import { HiveSectionDivider } from '../../_components/hive-section-divider'
 import { SubmissionMetaHeader, ReadOnlyBodyStyles } from './submission-shared'
+import { toastNetworkError } from '@/lib/errors/notify'
 
 type Props = {
   submission: GetSubmissionData['submission']
@@ -66,6 +67,8 @@ export function SubmissionReview({ submission, submitter, book, hiveId, locale }
       } else {
         toast.error(`Could not approve: ${r.error}`)
       }
+    } catch {
+      toastNetworkError()
     } finally {
       setApproving(false)
     }
@@ -88,6 +91,8 @@ export function SubmissionReview({ submission, submitter, book, hiveId, locale }
       } else {
         toast.error(`Could not reject: ${r.error}`)
       }
+    } catch {
+      toastNetworkError()
     } finally {
       setRejecting(false)
     }

@@ -10,6 +10,7 @@ import { createId } from '@paralleldrive/cuid2'
 import { canEditWiki, type HiveRole } from '@/lib/hive/permissions'
 import { CATEGORY_TEMPLATE_MAP, type WikiCategory } from '@/lib/wiki/category-templates'
 import type { HiveWikiEntry } from '@/lib/actions/hive-content.actions'
+import { toastNetworkError } from '@/lib/errors/notify'
 import { HivePageShell } from '../../_components/hive-page-shell'
 import { HiveSectionDivider } from '../../_components/hive-section-divider'
 
@@ -86,24 +87,28 @@ export function HiveWikiCategoryView({
       },
     ]
     startTransition(async () => {
-      const r = await createBinderItemAction({
-        bookId,
-        parentId: null,
-        type: 'wiki_entry',
-        title: `New ${template.label}`,
-        order: entries.length + 1,
-        content: {
-          category,
-          sections: seededSections,
-          tags: [],
-          hints: {},
-        } as unknown as Record<string, unknown>,
-      })
-      if (!r.success) {
-        toast.error(r.error)
-        return
+      try {
+        const r = await createBinderItemAction({
+          bookId,
+          parentId: null,
+          type: 'wiki_entry',
+          title: `New ${template.label}`,
+          order: entries.length + 1,
+          content: {
+            category,
+            sections: seededSections,
+            tags: [],
+            hints: {},
+          } as unknown as Record<string, unknown>,
+        })
+        if (!r.success) {
+          toast.error(r.error)
+          return
+        }
+        router.push(`/${locale}/hive/${hiveId}/wiki/entry/${r.data.id}`)
+      } catch {
+        toastNetworkError()
       }
-      router.push(`/${locale}/hive/${hiveId}/wiki/entry/${r.data.id}`)
     })
   }
 

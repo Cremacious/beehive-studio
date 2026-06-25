@@ -35,6 +35,7 @@ import {
   reorderBooksSchema,
 } from '@/lib/validations/reading-list'
 import { loadCoverPreviewsMap } from './discover-lists-shared'
+import { runAction } from './safe-action'
 import type { ActionResult } from './book.actions'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -122,74 +123,76 @@ function decodeCursor(s: string | undefined): CursorTuple | null {
 export async function createListAction(
   input: unknown,
 ): Promise<ActionResult<{ id: string }>> {
-  const userId = await requireAuth()
-  const parsed = createListSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = createListSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  // C5a: extract mentions from description; early cap check.
-  const descUsernames = extractMentionUsernamesFromText(
-    parsed.data.description ?? '',
-  )
-  if (descUsernames.length > 5) {
-    return { success: false, error: 'MENTION_CAP_EXCEEDED' }
-  }
-
-  const id = createId()
-  // D3a: stamp first-public if list is born PUBLIC+discoverable (kind=CUSTOM
-  // by construction here). last_updated_at seeded to now so denorm is
-  // populated from row birth.
-  const now = new Date()
-  const isInitialPublicDiscoverable =
-    parsed.data.visibility === 'PUBLIC' && parsed.data.discoverable === true
-  await db.transaction(async (tx) => {
-    await tx.insert(readingLists).values({
-      id,
-      userId,
-      kind: 'CUSTOM',
-      title: parsed.data.title,
-      description: parsed.data.description ?? null,
-      visibility: parsed.data.visibility,
-      discoverable: parsed.data.discoverable,
-      tags: parsed.data.tags,
-      firstPubliclyDiscoverableAt: isInitialPublicDiscoverable ? now : null,
-      lastUpdatedAt: now,
-    })
-    if (parsed.data.visibility === 'PUBLIC') {
-      await recordSocialActivityTx(tx, {
-        actorId: userId,
-        type: 'reading_list_created',
-        subjectType: 'reading_list',
-        subjectId: id,
-        payload: { title: parsed.data.title },
-      })
+    // C5a: extract mentions from description; early cap check.
+    const descUsernames = extractMentionUsernamesFromText(
+      parsed.data.description ?? '',
+    )
+    if (descUsernames.length > 5) {
+      return { success: false, error: 'MENTION_CAP_EXCEEDED' }
     }
 
-    // C5a: resolve + record mentions for description.
-    if (descUsernames.length > 0) {
-      const r = await resolveMentionedUsers({
-        tiptapUserIds: [],
-        textUsernames: descUsernames,
-        actorId: userId,
-        resourceType: 'reading_list_description',
-        resourceId: id,
+    const id = createId()
+    // D3a: stamp first-public if list is born PUBLIC+discoverable (kind=CUSTOM
+    // by construction here). last_updated_at seeded to now so denorm is
+    // populated from row birth.
+    const now = new Date()
+    const isInitialPublicDiscoverable =
+      parsed.data.visibility === 'PUBLIC' && parsed.data.discoverable === true
+    await db.transaction(async (tx) => {
+      await tx.insert(readingLists).values({
+        id,
+        userId,
+        kind: 'CUSTOM',
+        title: parsed.data.title,
+        description: parsed.data.description ?? null,
+        visibility: parsed.data.visibility,
+        discoverable: parsed.data.discoverable,
+        tags: parsed.data.tags,
+        firstPubliclyDiscoverableAt: isInitialPublicDiscoverable ? now : null,
+        lastUpdatedAt: now,
       })
-      if (r.ok && r.users.length > 0) {
-        const toNotify = r.users
-          .filter((u) => !r.alreadyNotified.has(u.userId))
-          .map((u) => u.userId)
-        if (toNotify.length > 0) {
-          await recordMentionNotificationsTx(tx, {
-            actorId: userId,
-            mentionedUserIds: toNotify,
-            resourceType: 'reading_list_description',
-            resourceId: id,
-          })
+      if (parsed.data.visibility === 'PUBLIC') {
+        await recordSocialActivityTx(tx, {
+          actorId: userId,
+          type: 'reading_list_created',
+          subjectType: 'reading_list',
+          subjectId: id,
+          payload: { title: parsed.data.title },
+        })
+      }
+
+      // C5a: resolve + record mentions for description.
+      if (descUsernames.length > 0) {
+        const r = await resolveMentionedUsers({
+          tiptapUserIds: [],
+          textUsernames: descUsernames,
+          actorId: userId,
+          resourceType: 'reading_list_description',
+          resourceId: id,
+        })
+        if (r.ok && r.users.length > 0) {
+          const toNotify = r.users
+            .filter((u) => !r.alreadyNotified.has(u.userId))
+            .map((u) => u.userId)
+          if (toNotify.length > 0) {
+            await recordMentionNotificationsTx(tx, {
+              actorId: userId,
+              mentionedUserIds: toNotify,
+              resourceType: 'reading_list_description',
+              resourceId: id,
+            })
+          }
         }
       }
-    }
-  })
+    })
 
-  return { success: true, data: { id } }
+    return { success: true, data: { id } }
+  })
 }
 
 export async function getListsAction(input: {
@@ -538,134 +541,138 @@ export async function getListAction(
 export async function updateListAction(
   input: unknown,
 ): Promise<ActionResult<{ updated: boolean }>> {
-  const userId = await requireAuth()
-  const parsed = updateListSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = updateListSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  const list = await db.query.readingLists.findFirst({
-    where: eq(readingLists.id, parsed.data.listId),
-    columns: { userId: true, visibility: true, kind: true },
-  })
-  if (!list) return { success: false, error: 'NOT_FOUND' }
-  if (!canEditList(userId, list)) return { success: false, error: 'NOT_ALLOWED' }
-
-  // C5a: extract mentions from description; early cap check.
-  const descUsernames =
-    parsed.data.description !== undefined
-      ? extractMentionUsernamesFromText(parsed.data.description ?? '')
-      : []
-  if (descUsernames.length > 5) {
-    return { success: false, error: 'MENTION_CAP_EXCEEDED' }
-  }
-
-  const updates: Partial<typeof readingLists.$inferInsert> = {}
-  if (parsed.data.title !== undefined) updates.title = parsed.data.title
-  if (parsed.data.description !== undefined)
-    updates.description = parsed.data.description
-  if (parsed.data.visibility !== undefined)
-    updates.visibility = parsed.data.visibility
-  if (parsed.data.tags !== undefined) updates.tags = parsed.data.tags
-
-  // 3-layer discoverable defense + Liked-list coercion.
-  const effectiveVisibility = parsed.data.visibility ?? list.visibility
-  if (parsed.data.discoverable !== undefined) {
-    if (list.kind === 'LIKED') {
-      updates.discoverable = false
-    } else {
-      updates.discoverable =
-        effectiveVisibility === 'PUBLIC' ? parsed.data.discoverable : false
-    }
-  } else if (
-    parsed.data.visibility !== undefined &&
-    effectiveVisibility !== 'PUBLIC'
-  ) {
-    updates.discoverable = false
-  }
-  const updateNow = new Date()
-  updates.updatedAt = updateNow
-  // D3a: bump last_updated_at denorm on any metadata edit.
-  updates.lastUpdatedAt = updateNow
-
-  await db.transaction(async (tx) => {
-    // D3a: first-public stamp gate. If this update transitions the list into
-    // PUBLIC + discoverable + kind=CUSTOM for the first time, stamp
-    // firstPubliclyDiscoverableAt. Mirrors D2b updateHiveAction.
-    const current = await tx.query.readingLists.findFirst({
+    const list = await db.query.readingLists.findFirst({
       where: eq(readingLists.id, parsed.data.listId),
-      columns: {
-        visibility: true,
-        discoverable: true,
-        kind: true,
-        firstPubliclyDiscoverableAt: true,
-      },
+      columns: { userId: true, visibility: true, kind: true },
     })
-    if (current) {
-      const nextVisibility = updates.visibility ?? current.visibility
-      const nextDiscoverable =
-        updates.discoverable !== undefined
-          ? updates.discoverable
-          : current.discoverable
-      const becomingPublic =
-        nextVisibility === 'PUBLIC' &&
-        nextDiscoverable === true &&
-        current.kind === 'CUSTOM' &&
-        current.firstPubliclyDiscoverableAt == null
-      if (becomingPublic) {
-        updates.firstPubliclyDiscoverableAt = updateNow
-      }
+    if (!list) return { success: false, error: 'NOT_FOUND' }
+    if (!canEditList(userId, list)) return { success: false, error: 'NOT_ALLOWED' }
+
+    // C5a: extract mentions from description; early cap check.
+    const descUsernames =
+      parsed.data.description !== undefined
+        ? extractMentionUsernamesFromText(parsed.data.description ?? '')
+        : []
+    if (descUsernames.length > 5) {
+      return { success: false, error: 'MENTION_CAP_EXCEEDED' }
     }
 
-    await tx
-      .update(readingLists)
-      .set(updates)
-      .where(eq(readingLists.id, parsed.data.listId))
+    const updates: Partial<typeof readingLists.$inferInsert> = {}
+    if (parsed.data.title !== undefined) updates.title = parsed.data.title
+    if (parsed.data.description !== undefined)
+      updates.description = parsed.data.description
+    if (parsed.data.visibility !== undefined)
+      updates.visibility = parsed.data.visibility
+    if (parsed.data.tags !== undefined) updates.tags = parsed.data.tags
 
-    // C5a: resolve + record mentions for description on edit.
-    if (descUsernames.length > 0) {
-      const r = await resolveMentionedUsers({
-        tiptapUserIds: [],
-        textUsernames: descUsernames,
-        actorId: userId,
-        resourceType: 'reading_list_description',
-        resourceId: parsed.data.listId,
+    // 3-layer discoverable defense + Liked-list coercion.
+    const effectiveVisibility = parsed.data.visibility ?? list.visibility
+    if (parsed.data.discoverable !== undefined) {
+      if (list.kind === 'LIKED') {
+        updates.discoverable = false
+      } else {
+        updates.discoverable =
+          effectiveVisibility === 'PUBLIC' ? parsed.data.discoverable : false
+      }
+    } else if (
+      parsed.data.visibility !== undefined &&
+      effectiveVisibility !== 'PUBLIC'
+    ) {
+      updates.discoverable = false
+    }
+    const updateNow = new Date()
+    updates.updatedAt = updateNow
+    // D3a: bump last_updated_at denorm on any metadata edit.
+    updates.lastUpdatedAt = updateNow
+
+    await db.transaction(async (tx) => {
+      // D3a: first-public stamp gate. If this update transitions the list into
+      // PUBLIC + discoverable + kind=CUSTOM for the first time, stamp
+      // firstPubliclyDiscoverableAt. Mirrors D2b updateHiveAction.
+      const current = await tx.query.readingLists.findFirst({
+        where: eq(readingLists.id, parsed.data.listId),
+        columns: {
+          visibility: true,
+          discoverable: true,
+          kind: true,
+          firstPubliclyDiscoverableAt: true,
+        },
       })
-      if (r.ok && r.users.length > 0) {
-        const toNotify = r.users
-          .filter((u) => !r.alreadyNotified.has(u.userId))
-          .map((u) => u.userId)
-        if (toNotify.length > 0) {
-          await recordMentionNotificationsTx(tx, {
-            actorId: userId,
-            mentionedUserIds: toNotify,
-            resourceType: 'reading_list_description',
-            resourceId: parsed.data.listId,
-          })
+      if (current) {
+        const nextVisibility = updates.visibility ?? current.visibility
+        const nextDiscoverable =
+          updates.discoverable !== undefined
+            ? updates.discoverable
+            : current.discoverable
+        const becomingPublic =
+          nextVisibility === 'PUBLIC' &&
+          nextDiscoverable === true &&
+          current.kind === 'CUSTOM' &&
+          current.firstPubliclyDiscoverableAt == null
+        if (becomingPublic) {
+          updates.firstPubliclyDiscoverableAt = updateNow
         }
       }
-    }
-  })
 
-  return { success: true, data: { updated: true } }
+      await tx
+        .update(readingLists)
+        .set(updates)
+        .where(eq(readingLists.id, parsed.data.listId))
+
+      // C5a: resolve + record mentions for description on edit.
+      if (descUsernames.length > 0) {
+        const r = await resolveMentionedUsers({
+          tiptapUserIds: [],
+          textUsernames: descUsernames,
+          actorId: userId,
+          resourceType: 'reading_list_description',
+          resourceId: parsed.data.listId,
+        })
+        if (r.ok && r.users.length > 0) {
+          const toNotify = r.users
+            .filter((u) => !r.alreadyNotified.has(u.userId))
+            .map((u) => u.userId)
+          if (toNotify.length > 0) {
+            await recordMentionNotificationsTx(tx, {
+              actorId: userId,
+              mentionedUserIds: toNotify,
+              resourceType: 'reading_list_description',
+              resourceId: parsed.data.listId,
+            })
+          }
+        }
+      }
+    })
+
+    return { success: true, data: { updated: true } }
+  })
 }
 
 export async function deleteListAction(
   input: unknown,
 ): Promise<ActionResult<{ deleted: boolean }>> {
-  const userId = await requireAuth()
-  const parsed = listIdSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = listIdSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  const list = await db.query.readingLists.findFirst({
-    where: eq(readingLists.id, parsed.data.listId),
-    columns: { userId: true, kind: true, visibility: true },
+    const list = await db.query.readingLists.findFirst({
+      where: eq(readingLists.id, parsed.data.listId),
+      columns: { userId: true, kind: true, visibility: true },
+    })
+    if (!list) return { success: false, error: 'NOT_FOUND' }
+    if (!canEditList(userId, list)) return { success: false, error: 'NOT_ALLOWED' }
+    if (list.kind === 'LIKED')
+      return { success: false, error: 'LIKED_LIST_UNDELETABLE' }
+
+    await db.delete(readingLists).where(eq(readingLists.id, parsed.data.listId))
+    return { success: true, data: { deleted: true } }
   })
-  if (!list) return { success: false, error: 'NOT_FOUND' }
-  if (!canEditList(userId, list)) return { success: false, error: 'NOT_ALLOWED' }
-  if (list.kind === 'LIKED')
-    return { success: false, error: 'LIKED_LIST_UNDELETABLE' }
-
-  await db.delete(readingLists).where(eq(readingLists.id, parsed.data.listId))
-  return { success: true, data: { deleted: true } }
 }
 
 // ─── T5: Book row CRUD ────────────────────────────────────────────────────────
@@ -673,237 +680,245 @@ export async function deleteListAction(
 export async function addBookToListAction(
   input: unknown,
 ): Promise<ActionResult<{ id: string }>> {
-  const userId = await requireAuth()
-  const parsed = addBookSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = addBookSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  const list = await db.query.readingLists.findFirst({
-    where: eq(readingLists.id, parsed.data.listId),
-    columns: { userId: true, kind: true, visibility: true, title: true },
-  })
-  if (!list) return { success: false, error: 'NOT_FOUND' }
-  if (!canEditList(userId, list)) return { success: false, error: 'NOT_ALLOWED' }
-  if (list.kind === 'LIKED')
-    return { success: false, error: 'LIKED_LIST_IMMUTABLE' }
+    const list = await db.query.readingLists.findFirst({
+      where: eq(readingLists.id, parsed.data.listId),
+      columns: { userId: true, kind: true, visibility: true, title: true },
+    })
+    if (!list) return { success: false, error: 'NOT_FOUND' }
+    if (!canEditList(userId, list)) return { success: false, error: 'NOT_ALLOWED' }
+    if (list.kind === 'LIKED')
+      return { success: false, error: 'LIKED_LIST_IMMUTABLE' }
 
-  // Validate bookId via canReadBook — privacy gate is load-bearing.
-  if (parsed.data.bookId) {
-    const access = await canReadBook(parsed.data.bookId, userId)
-    if (!access.ok) return { success: false, error: 'BOOK_NOT_FOUND' } // masquerade
-  }
+    // Validate bookId via canReadBook — privacy gate is load-bearing.
+    if (parsed.data.bookId) {
+      const access = await canReadBook(parsed.data.bookId, userId)
+      if (!access.ok) return { success: false, error: 'BOOK_NOT_FOUND' } // masquerade
+    }
 
-  const id = createId()
-  await db.transaction(async (tx) => {
-    // Compute next order.
-    const [orderRow] = await tx
-      .select({
-        maxOrder: sql<number>`COALESCE(MAX(${readingListBooks.order}), -1)::int`,
+    const id = createId()
+    await db.transaction(async (tx) => {
+      // Compute next order.
+      const [orderRow] = await tx
+        .select({
+          maxOrder: sql<number>`COALESCE(MAX(${readingListBooks.order}), -1)::int`,
+        })
+        .from(readingListBooks)
+        .where(eq(readingListBooks.listId, parsed.data.listId))
+      const maxOrder = orderRow?.maxOrder ?? -1
+
+      await tx.insert(readingListBooks).values({
+        id,
+        listId: parsed.data.listId,
+        bookId: parsed.data.bookId ?? null,
+        title: parsed.data.title,
+        author: parsed.data.author,
+        coverUrl: parsed.data.coverUrl ?? null,
+        isRead: parsed.data.isRead,
+        rating: parsed.data.rating ?? null,
+        commentary: parsed.data.commentary ?? null,
+        order: maxOrder + 1,
       })
-      .from(readingListBooks)
-      .where(eq(readingListBooks.listId, parsed.data.listId))
-    const maxOrder = orderRow?.maxOrder ?? -1
 
-    await tx.insert(readingListBooks).values({
-      id,
-      listId: parsed.data.listId,
-      bookId: parsed.data.bookId ?? null,
-      title: parsed.data.title,
-      author: parsed.data.author,
-      coverUrl: parsed.data.coverUrl ?? null,
-      isRead: parsed.data.isRead,
-      rating: parsed.data.rating ?? null,
-      commentary: parsed.data.commentary ?? null,
-      order: maxOrder + 1,
+      const addNow = new Date()
+      await tx
+        .update(readingLists)
+        .set({
+          bookCount: sql`${readingLists.bookCount} + 1`,
+          updatedAt: addNow,
+          // D3a: bump last_updated_at denorm on book add.
+          lastUpdatedAt: addNow,
+        })
+        .where(eq(readingLists.id, parsed.data.listId))
+
+      // Dedupe-with-increment activity hook (PUBLIC-only).
+      if (list.visibility === 'PUBLIC') {
+        const windowStart = new Date(Date.now() - 30 * 60 * 1000)
+        const existing = await tx.query.socialActivity.findFirst({
+          where: and(
+            eq(socialActivity.actorId, userId),
+            eq(socialActivity.type, 'books_added_batch'),
+            eq(socialActivity.subjectId, parsed.data.listId),
+            gte(socialActivity.createdAt, windowStart),
+          ),
+        })
+        if (existing) {
+          await tx
+            .update(socialActivity)
+            .set({
+              payload: sql`jsonb_set(${socialActivity.payload}, '{count}', ((${socialActivity.payload}->>'count')::int + 1)::text::jsonb)`,
+            })
+            .where(eq(socialActivity.id, existing.id))
+        } else {
+          await recordSocialActivityTx(tx, {
+            actorId: userId,
+            type: 'books_added_batch',
+            subjectType: 'reading_list',
+            subjectId: parsed.data.listId,
+            payload: { listTitle: list.title, count: 1 },
+          })
+        }
+      }
     })
 
-    const addNow = new Date()
-    await tx
-      .update(readingLists)
-      .set({
-        bookCount: sql`${readingLists.bookCount} + 1`,
-        updatedAt: addNow,
-        // D3a: bump last_updated_at denorm on book add.
-        lastUpdatedAt: addNow,
-      })
-      .where(eq(readingLists.id, parsed.data.listId))
-
-    // Dedupe-with-increment activity hook (PUBLIC-only).
-    if (list.visibility === 'PUBLIC') {
-      const windowStart = new Date(Date.now() - 30 * 60 * 1000)
-      const existing = await tx.query.socialActivity.findFirst({
-        where: and(
-          eq(socialActivity.actorId, userId),
-          eq(socialActivity.type, 'books_added_batch'),
-          eq(socialActivity.subjectId, parsed.data.listId),
-          gte(socialActivity.createdAt, windowStart),
-        ),
-      })
-      if (existing) {
-        await tx
-          .update(socialActivity)
-          .set({
-            payload: sql`jsonb_set(${socialActivity.payload}, '{count}', ((${socialActivity.payload}->>'count')::int + 1)::text::jsonb)`,
-          })
-          .where(eq(socialActivity.id, existing.id))
-      } else {
-        await recordSocialActivityTx(tx, {
-          actorId: userId,
-          type: 'books_added_batch',
-          subjectType: 'reading_list',
-          subjectId: parsed.data.listId,
-          payload: { listTitle: list.title, count: 1 },
-        })
-      }
-    }
+    return { success: true, data: { id } }
   })
-
-  return { success: true, data: { id } }
 }
 
 export async function updateListBookAction(
   input: unknown,
 ): Promise<ActionResult<{ updated: boolean }>> {
-  const userId = await requireAuth()
-  const parsed = updateListBookSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = updateListBookSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  const row = await db.query.readingListBooks.findFirst({
-    where: eq(readingListBooks.id, parsed.data.bookRowId),
-    columns: { listId: true },
-  })
-  if (!row) return { success: false, error: 'NOT_FOUND' }
+    const row = await db.query.readingListBooks.findFirst({
+      where: eq(readingListBooks.id, parsed.data.bookRowId),
+      columns: { listId: true },
+    })
+    if (!row) return { success: false, error: 'NOT_FOUND' }
 
-  const list = await db.query.readingLists.findFirst({
-    where: eq(readingLists.id, row.listId),
-    columns: { userId: true, kind: true, visibility: true },
-  })
-  if (!list) return { success: false, error: 'NOT_FOUND' }
-  if (!canEditList(userId, list)) return { success: false, error: 'NOT_ALLOWED' }
-  if (list.kind === 'LIKED')
-    return { success: false, error: 'LIKED_LIST_IMMUTABLE' }
+    const list = await db.query.readingLists.findFirst({
+      where: eq(readingLists.id, row.listId),
+      columns: { userId: true, kind: true, visibility: true },
+    })
+    if (!list) return { success: false, error: 'NOT_FOUND' }
+    if (!canEditList(userId, list)) return { success: false, error: 'NOT_ALLOWED' }
+    if (list.kind === 'LIKED')
+      return { success: false, error: 'LIKED_LIST_IMMUTABLE' }
 
-  // C5a: extract mentions from commentary; early cap check.
-  const commentaryUsernames =
-    parsed.data.commentary !== undefined
-      ? extractMentionUsernamesFromText(parsed.data.commentary ?? '')
-      : []
-  if (commentaryUsernames.length > 5) {
-    return { success: false, error: 'MENTION_CAP_EXCEEDED' }
-  }
+    // C5a: extract mentions from commentary; early cap check.
+    const commentaryUsernames =
+      parsed.data.commentary !== undefined
+        ? extractMentionUsernamesFromText(parsed.data.commentary ?? '')
+        : []
+    if (commentaryUsernames.length > 5) {
+      return { success: false, error: 'MENTION_CAP_EXCEEDED' }
+    }
 
-  const updates: Partial<typeof readingListBooks.$inferInsert> = {}
-  if (parsed.data.isRead !== undefined) updates.isRead = parsed.data.isRead
-  if (parsed.data.rating !== undefined) updates.rating = parsed.data.rating
-  if (parsed.data.commentary !== undefined)
-    updates.commentary = parsed.data.commentary
-  if (parsed.data.order !== undefined) updates.order = parsed.data.order
+    const updates: Partial<typeof readingListBooks.$inferInsert> = {}
+    if (parsed.data.isRead !== undefined) updates.isRead = parsed.data.isRead
+    if (parsed.data.rating !== undefined) updates.rating = parsed.data.rating
+    if (parsed.data.commentary !== undefined)
+      updates.commentary = parsed.data.commentary
+    if (parsed.data.order !== undefined) updates.order = parsed.data.order
 
-  await db.transaction(async (tx) => {
-    await tx
-      .update(readingListBooks)
-      .set(updates)
-      .where(eq(readingListBooks.id, parsed.data.bookRowId))
+    await db.transaction(async (tx) => {
+      await tx
+        .update(readingListBooks)
+        .set(updates)
+        .where(eq(readingListBooks.id, parsed.data.bookRowId))
 
-    // C5a: resolve + record mentions for commentary edit.
-    if (commentaryUsernames.length > 0) {
-      const r = await resolveMentionedUsers({
-        tiptapUserIds: [],
-        textUsernames: commentaryUsernames,
-        actorId: userId,
-        resourceType: 'reading_list_book_commentary',
-        resourceId: parsed.data.bookRowId,
-      })
-      if (r.ok && r.users.length > 0) {
-        const toNotify = r.users
-          .filter((u) => !r.alreadyNotified.has(u.userId))
-          .map((u) => u.userId)
-        if (toNotify.length > 0) {
-          await recordMentionNotificationsTx(tx, {
-            actorId: userId,
-            mentionedUserIds: toNotify,
-            resourceType: 'reading_list_book_commentary',
-            resourceId: parsed.data.bookRowId,
-          })
+      // C5a: resolve + record mentions for commentary edit.
+      if (commentaryUsernames.length > 0) {
+        const r = await resolveMentionedUsers({
+          tiptapUserIds: [],
+          textUsernames: commentaryUsernames,
+          actorId: userId,
+          resourceType: 'reading_list_book_commentary',
+          resourceId: parsed.data.bookRowId,
+        })
+        if (r.ok && r.users.length > 0) {
+          const toNotify = r.users
+            .filter((u) => !r.alreadyNotified.has(u.userId))
+            .map((u) => u.userId)
+          if (toNotify.length > 0) {
+            await recordMentionNotificationsTx(tx, {
+              actorId: userId,
+              mentionedUserIds: toNotify,
+              resourceType: 'reading_list_book_commentary',
+              resourceId: parsed.data.bookRowId,
+            })
+          }
         }
       }
-    }
-  })
+    })
 
-  return { success: true, data: { updated: true } }
+    return { success: true, data: { updated: true } }
+  })
 }
 
 export async function removeBookFromListAction(
   input: unknown,
 ): Promise<ActionResult<{ removed: boolean }>> {
-  const userId = await requireAuth()
-  const parsed = bookRowIdSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = bookRowIdSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  const row = await db.query.readingListBooks.findFirst({
-    where: eq(readingListBooks.id, parsed.data.bookRowId),
-    columns: { listId: true },
+    const row = await db.query.readingListBooks.findFirst({
+      where: eq(readingListBooks.id, parsed.data.bookRowId),
+      columns: { listId: true },
+    })
+    if (!row) return { success: false, error: 'NOT_FOUND' }
+
+    const list = await db.query.readingLists.findFirst({
+      where: eq(readingLists.id, row.listId),
+      columns: { userId: true, kind: true, visibility: true },
+    })
+    if (!list) return { success: false, error: 'NOT_FOUND' }
+    if (!canEditList(userId, list)) return { success: false, error: 'NOT_ALLOWED' }
+    if (list.kind === 'LIKED')
+      return { success: false, error: 'LIKED_LIST_IMMUTABLE' }
+
+    await db.transaction(async (tx) => {
+      await tx
+        .delete(readingListBooks)
+        .where(eq(readingListBooks.id, parsed.data.bookRowId))
+      const removeNow = new Date()
+      await tx
+        .update(readingLists)
+        .set({
+          bookCount: sql`GREATEST(${readingLists.bookCount} - 1, 0)`,
+          updatedAt: removeNow,
+          // D3a: bump last_updated_at denorm on book remove.
+          lastUpdatedAt: removeNow,
+        })
+        .where(eq(readingLists.id, row.listId))
+    })
+
+    return { success: true, data: { removed: true } }
   })
-  if (!row) return { success: false, error: 'NOT_FOUND' }
-
-  const list = await db.query.readingLists.findFirst({
-    where: eq(readingLists.id, row.listId),
-    columns: { userId: true, kind: true, visibility: true },
-  })
-  if (!list) return { success: false, error: 'NOT_FOUND' }
-  if (!canEditList(userId, list)) return { success: false, error: 'NOT_ALLOWED' }
-  if (list.kind === 'LIKED')
-    return { success: false, error: 'LIKED_LIST_IMMUTABLE' }
-
-  await db.transaction(async (tx) => {
-    await tx
-      .delete(readingListBooks)
-      .where(eq(readingListBooks.id, parsed.data.bookRowId))
-    const removeNow = new Date()
-    await tx
-      .update(readingLists)
-      .set({
-        bookCount: sql`GREATEST(${readingLists.bookCount} - 1, 0)`,
-        updatedAt: removeNow,
-        // D3a: bump last_updated_at denorm on book remove.
-        lastUpdatedAt: removeNow,
-      })
-      .where(eq(readingLists.id, row.listId))
-  })
-
-  return { success: true, data: { removed: true } }
 }
 
 export async function reorderListBooksAction(
   input: unknown,
 ): Promise<ActionResult<{ reordered: boolean }>> {
-  const userId = await requireAuth()
-  const parsed = reorderBooksSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = reorderBooksSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  const list = await db.query.readingLists.findFirst({
-    where: eq(readingLists.id, parsed.data.listId),
-    columns: { userId: true, kind: true, visibility: true },
+    const list = await db.query.readingLists.findFirst({
+      where: eq(readingLists.id, parsed.data.listId),
+      columns: { userId: true, kind: true, visibility: true },
+    })
+    if (!list) return { success: false, error: 'NOT_FOUND' }
+    if (!canEditList(userId, list)) return { success: false, error: 'NOT_ALLOWED' }
+    if (list.kind === 'LIKED')
+      return { success: false, error: 'LIKED_LIST_IMMUTABLE' }
+
+    await db.transaction(async (tx) => {
+      for (let i = 0; i < parsed.data.orderedIds.length; i++) {
+        await tx
+          .update(readingListBooks)
+          .set({ order: i })
+          .where(
+            and(
+              eq(readingListBooks.id, parsed.data.orderedIds[i]),
+              eq(readingListBooks.listId, parsed.data.listId),
+            ),
+          )
+      }
+    })
+
+    return { success: true, data: { reordered: true } }
   })
-  if (!list) return { success: false, error: 'NOT_FOUND' }
-  if (!canEditList(userId, list)) return { success: false, error: 'NOT_ALLOWED' }
-  if (list.kind === 'LIKED')
-    return { success: false, error: 'LIKED_LIST_IMMUTABLE' }
-
-  await db.transaction(async (tx) => {
-    for (let i = 0; i < parsed.data.orderedIds.length; i++) {
-      await tx
-        .update(readingListBooks)
-        .set({ order: i })
-        .where(
-          and(
-            eq(readingListBooks.id, parsed.data.orderedIds[i]),
-            eq(readingListBooks.listId, parsed.data.listId),
-          ),
-        )
-    }
-  })
-
-  return { success: true, data: { reordered: true } }
 }
 
 // ─── T6: Follow / unfollow / count / discover wrapper ────────────────────────
@@ -911,67 +926,71 @@ export async function reorderListBooksAction(
 export async function followListAction(
   input: unknown,
 ): Promise<ActionResult<{ followed: boolean }>> {
-  const userId = await requireAuth()
-  const parsed = listIdSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = listIdSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  const list = await db.query.readingLists.findFirst({
-    where: eq(readingLists.id, parsed.data.listId),
-    columns: { userId: true, visibility: true },
+    const list = await db.query.readingLists.findFirst({
+      where: eq(readingLists.id, parsed.data.listId),
+      columns: { userId: true, visibility: true },
+    })
+    if (!list) return { success: false, error: 'NOT_FOUND' }
+    if (!(await canFollowList(userId, list)))
+      return { success: false, error: 'NOT_ALLOWED' }
+
+    let followed = false
+    await db.transaction(async (tx) => {
+      const result = await tx
+        .insert(readingListFollows)
+        .values({ userId, listId: parsed.data.listId })
+        .onConflictDoNothing()
+        .returning({ userId: readingListFollows.userId })
+      if (result.length > 0) {
+        followed = true
+        await tx
+          .update(readingLists)
+          .set({ followerCount: sql`${readingLists.followerCount} + 1` })
+          .where(eq(readingLists.id, parsed.data.listId))
+      }
+    })
+
+    return { success: true, data: { followed } }
   })
-  if (!list) return { success: false, error: 'NOT_FOUND' }
-  if (!(await canFollowList(userId, list)))
-    return { success: false, error: 'NOT_ALLOWED' }
-
-  let followed = false
-  await db.transaction(async (tx) => {
-    const result = await tx
-      .insert(readingListFollows)
-      .values({ userId, listId: parsed.data.listId })
-      .onConflictDoNothing()
-      .returning({ userId: readingListFollows.userId })
-    if (result.length > 0) {
-      followed = true
-      await tx
-        .update(readingLists)
-        .set({ followerCount: sql`${readingLists.followerCount} + 1` })
-        .where(eq(readingLists.id, parsed.data.listId))
-    }
-  })
-
-  return { success: true, data: { followed } }
 }
 
 export async function unfollowListAction(
   input: unknown,
 ): Promise<ActionResult<{ removed: boolean }>> {
-  const userId = await requireAuth()
-  const parsed = listIdSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = listIdSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  let removed = false
-  await db.transaction(async (tx) => {
-    const result = await tx
-      .delete(readingListFollows)
-      .where(
-        and(
-          eq(readingListFollows.userId, userId),
-          eq(readingListFollows.listId, parsed.data.listId),
-        ),
-      )
-      .returning({ userId: readingListFollows.userId })
-    if (result.length > 0) {
-      removed = true
-      await tx
-        .update(readingLists)
-        .set({
-          followerCount: sql`GREATEST(${readingLists.followerCount} - 1, 0)`,
-        })
-        .where(eq(readingLists.id, parsed.data.listId))
-    }
+    let removed = false
+    await db.transaction(async (tx) => {
+      const result = await tx
+        .delete(readingListFollows)
+        .where(
+          and(
+            eq(readingListFollows.userId, userId),
+            eq(readingListFollows.listId, parsed.data.listId),
+          ),
+        )
+        .returning({ userId: readingListFollows.userId })
+      if (result.length > 0) {
+        removed = true
+        await tx
+          .update(readingLists)
+          .set({
+            followerCount: sql`GREATEST(${readingLists.followerCount} - 1, 0)`,
+          })
+          .where(eq(readingLists.id, parsed.data.listId))
+      }
+    })
+
+    return { success: true, data: { removed } }
   })
-
-  return { success: true, data: { removed } }
 }
 
 export async function getListFollowersCountAction(

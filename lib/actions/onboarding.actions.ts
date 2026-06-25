@@ -69,28 +69,37 @@ export async function completeOnboardingAction(data: {
     return { success: false, error: 'Username is already taken' }
   }
 
-  await db
-    .insert(userProfiles)
-    .values({
-      userId,
-      username: username.toLowerCase(),
-      bio: bio ?? null,
-      avatarUrl: avatarUrl ?? null,
-      onboardingComplete: true,
-    })
-    .onConflictDoUpdate({
-      target: userProfiles.userId,
-      set: {
-        username: username.toLowerCase(),
-        bio: bio ?? null,
-        avatarUrl: avatarUrl ?? null,
-        onboardingComplete: true,
-        updatedAt: new Date(),
-      },
-    })
+  // Profile upsert + the users.image sync must land together — wrap both in one
+  // transaction so a failure on the image update can't leave a profile written
+  // without the matching avatar (or vice versa).
+  try {
+    await db.transaction(async (tx) => {
+      await tx
+        .insert(userProfiles)
+        .values({
+          userId,
+          username: username.toLowerCase(),
+          bio: bio ?? null,
+          avatarUrl: avatarUrl ?? null,
+          onboardingComplete: true,
+        })
+        .onConflictDoUpdate({
+          target: userProfiles.userId,
+          set: {
+            username: username.toLowerCase(),
+            bio: bio ?? null,
+            avatarUrl: avatarUrl ?? null,
+            onboardingComplete: true,
+            updatedAt: new Date(),
+          },
+        })
 
-  if (avatarUrl) {
-    await db.update(users).set({ image: avatarUrl }).where(eq(users.id, userId))
+      if (avatarUrl) {
+        await tx.update(users).set({ image: avatarUrl }).where(eq(users.id, userId))
+      }
+    })
+  } catch {
+    return { success: false, error: 'Could not complete onboarding. Please try again.' }
   }
 
   return { success: true }

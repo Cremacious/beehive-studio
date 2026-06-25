@@ -35,6 +35,7 @@ import {
 import { findOrphanMarks, type PMNode } from '@/lib/tiptap-extensions/mark-scanning'
 import { patchDocWithMark } from '@/lib/tiptap-extensions/patch-mark'
 import { stripMarkById } from '@/lib/tiptap-extensions/strip-mark'
+import { runAction } from './safe-action'
 import type { ActionResult } from './book.actions'
 
 // ── Public types ─────────────────────────────────────────────────────────────
@@ -81,6 +82,7 @@ export type GetChapterAnnotationsData = {
 export async function createAnnotationAction(
   input: CreateAnnotationInput,
 ): Promise<ActionResult<{ id: string }>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const parsed = createAnnotationSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: parsed.error.issues[0].message }
@@ -215,6 +217,7 @@ export async function createAnnotationAction(
   })
 
   return { success: true, data: { id: result } }
+  })
 }
 
 // ── replyToAnnotationAction ──────────────────────────────────────────────────
@@ -222,6 +225,7 @@ export async function createAnnotationAction(
 export async function replyToAnnotationAction(
   input: ReplyToAnnotationInput,
 ): Promise<ActionResult<{ id: string }>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const parsed = replyToAnnotationSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: parsed.error.issues[0].message }
@@ -301,6 +305,7 @@ export async function replyToAnnotationAction(
 
   // No activity event for replies.
   return { success: true, data: { id: insertedId } }
+  })
 }
 
 // ── resolveAnnotationAction / unresolveAnnotationAction ─────────────────────
@@ -309,6 +314,7 @@ async function setAnnotationResolved(
   annotationId: string,
   resolved: boolean,
 ): Promise<ActionResult> {
+  return runAction(async () => {
   const userId = await requireAuth()
 
   const ann = await db.query.hiveAnnotations.findFirst({
@@ -370,6 +376,7 @@ async function setAnnotationResolved(
   }
 
   return { success: true, data: undefined }
+  })
 }
 
 export async function resolveAnnotationAction(annotationId: string): Promise<ActionResult> {
@@ -386,6 +393,7 @@ export async function getChapterAnnotationsAction(
   chapterId: string,
   hiveId: string,
 ): Promise<ActionResult<GetChapterAnnotationsData>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   try {
     await requireHiveMember(hiveId, userId)
@@ -471,6 +479,7 @@ export async function getChapterAnnotationsAction(
     success: true,
     data: { annotations, orphanRowIds: orphanRows },
   }
+  })
 }
 
 // ── getAnnotationsForHiveAction ──────────────────────────────────────────────
@@ -512,6 +521,7 @@ export async function getAnnotationsForHiveAction(
   hiveId: string,
   options: GetAnnotationsForHiveOptions = {},
 ): Promise<ActionResult<GetAnnotationsForHiveData>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   try {
     await requireHiveMember(hiveId, userId)
@@ -609,6 +619,7 @@ export async function getAnnotationsForHiveAction(
       totalCount: rows.length,
     },
   }
+  })
 }
 
 
@@ -622,6 +633,7 @@ export async function getAnnotationParentsAction(
   | { success: true; data: { hiveId: string; chapterId: string } }
   | { success: false; error: string }
 > {
+  return runAction(async () => {
   await requireAuth()
   const row = await db.query.hiveAnnotations.findFirst({
     where: eq(hiveAnnotations.id, annotationId),
@@ -629,4 +641,5 @@ export async function getAnnotationParentsAction(
   })
   if (!row) return { success: false, error: 'NOT_FOUND' }
   return { success: true, data: { hiveId: row.hiveId, chapterId: row.chapterId } }
+  })
 }

@@ -17,6 +17,7 @@ import {
   ChevronUp,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 import { toggleBookLikeAction, toggleBookmarkAction } from '@/lib/actions/social.actions'
 import { optimizeCloudinaryUrl, BOOK_COVER_TRANSFORMS } from '@/lib/upload/cloudinary-url'
 import type { PublicBook } from '@/lib/actions/discover.actions'
@@ -73,7 +74,7 @@ export function BookHero({
   const [liked, setLiked] = useState(initialLiked)
   const [bookmarked, setBookmarked] = useState(initialBookmarked)
   const [likeCount, setLikeCount] = useState(initialLikeCount)
-  const [, startTransition] = useTransition()
+  const [isPending, startTransition] = useTransition()
 
   // Synopsis "Read more" expand
   const synopsisRef = useRef<HTMLParagraphElement | null>(null)
@@ -115,11 +116,17 @@ export function BookHero({
     setLiked(next)
     setLikeCount((c) => c + (next ? 1 : -1))
     startTransition(async () => {
-      const result = await toggleBookLikeAction(book.id)
-      if (!result.success) {
+      try {
+        const result = await toggleBookLikeAction(book.id)
+        if (!result.success) {
+          setLiked(!next)
+          setLikeCount((c) => c + (next ? -1 : 1))
+          toastActionError(result.error)
+        }
+      } catch {
         setLiked(!next)
         setLikeCount((c) => c + (next ? -1 : 1))
-        toast.error('Could not update favorite')
+        toastNetworkError()
       }
     })
   }
@@ -132,10 +139,15 @@ export function BookHero({
     const next = !bookmarked
     setBookmarked(next)
     startTransition(async () => {
-      const result = await toggleBookmarkAction(book.id)
-      if (!result.success) {
+      try {
+        const result = await toggleBookmarkAction(book.id)
+        if (!result.success) {
+          setBookmarked(!next)
+          toastActionError(result.error)
+        }
+      } catch {
         setBookmarked(!next)
-        toast.error('Could not update bookmark')
+        toastNetworkError()
       }
     })
   }
@@ -581,6 +593,7 @@ export function BookHero({
             <button
               type="button"
               onClick={handleLike}
+              disabled={isPending}
               aria-pressed={liked}
               aria-label="Favorite"
               className="inline-flex items-center"
@@ -597,7 +610,8 @@ export function BookHero({
                 fontSize: '14px',
                 fontWeight: 500,
                 border: 0,
-                cursor: 'pointer',
+                cursor: isPending ? 'default' : 'pointer',
+                opacity: isPending ? 0.6 : 1,
               }}
             >
               <Heart
@@ -653,6 +667,7 @@ export function BookHero({
             <button
               type="button"
               onClick={handleBookmark}
+              disabled={isPending}
               aria-pressed={bookmarked}
               aria-label="Bookmark"
               className="inline-flex items-center justify-center"
@@ -667,7 +682,8 @@ export function BookHero({
                   '0 1px 0 0 oklch(1 0 0 / 0.05) inset, 0 4px 10px -6px oklch(0 0 0 / 0.5)',
                 color: 'var(--canvas-dark-ink)',
                 border: 0,
-                cursor: 'pointer',
+                cursor: isPending ? 'default' : 'pointer',
+                opacity: isPending ? 0.6 : 1,
               }}
             >
               <Bookmark

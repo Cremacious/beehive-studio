@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import type { BuzzPostSummary } from '@/lib/actions/hive-buzz.actions'
 import { canEditBuzz, type HiveRole } from '@/lib/hive/permissions'
 import { deleteBuzzPostAction } from '@/lib/actions/hive-buzz.actions'
+import { toastNetworkError } from '@/lib/errors/notify'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -104,13 +105,17 @@ export function BuzzPostCard({
   const [deleteOpen, setDeleteOpen] = useState(false)
 
   async function handleDelete() {
-    const res = await deleteBuzzPostAction(post.id)
-    if (!res.success) {
-      toast.error(res.error)
-      return
+    try {
+      const res = await deleteBuzzPostAction(post.id)
+      if (!res.success) {
+        toast.error(res.error)
+        return
+      }
+      toast.success('Post deleted')
+      router.refresh()
+    } catch {
+      toastNetworkError()
     }
-    toast.success('Post deleted')
-    router.refresh()
   }
 
   const edited =

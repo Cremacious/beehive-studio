@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { Circle, CheckCircle2, ChevronDown, Lock } from 'lucide-react'
 import { toast } from 'sonner'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 import {
   markChapterReadAction,
   unmarkChapterReadAction,
@@ -95,19 +96,27 @@ export function ChaptersPanel({
       onReadSetChange?.(next)
       return next
     })
+    const revert = () => {
+      setReadSet((prev) => {
+        const reverted = new Set(prev)
+        if (wasRead) reverted.add(binderItemId)
+        else reverted.delete(binderItemId)
+        onReadSetChange?.(reverted)
+        return reverted
+      })
+    }
     startTransition(async () => {
-      const result = wasRead
-        ? await unmarkChapterReadAction(bookId, binderItemId)
-        : await markChapterReadAction(bookId, binderItemId)
-      if (!result.success) {
-        setReadSet((prev) => {
-          const reverted = new Set(prev)
-          if (wasRead) reverted.add(binderItemId)
-          else reverted.delete(binderItemId)
-          onReadSetChange?.(reverted)
-          return reverted
-        })
-        toast.error(wasRead ? "Couldn't unmark" : "Couldn't mark as read")
+      try {
+        const result = wasRead
+          ? await unmarkChapterReadAction(bookId, binderItemId)
+          : await markChapterReadAction(bookId, binderItemId)
+        if (!result.success) {
+          revert()
+          toastActionError(result.error)
+        }
+      } catch {
+        revert()
+        toastNetworkError()
       }
     })
   }

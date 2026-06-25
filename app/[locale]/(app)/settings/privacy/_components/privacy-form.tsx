@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { toast } from 'sonner'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 import { updatePrivacySettingAction } from '@/lib/actions/settings.actions'
 import { Switch } from '@/components/ui/switch'
 
@@ -61,12 +61,18 @@ export function PrivacyForm({ initialValues }: PrivacyFormProps) {
     setValues((v) => ({ ...v, [key]: newValue }))
     setPending(key)
     startTransition(async () => {
-      const result = await updatePrivacySettingAction(key, newValue)
-      if (!result.success) {
+      try {
+        const result = await updatePrivacySettingAction(key, newValue)
+        if (!result.success) {
+          setValues((v) => ({ ...v, [key]: prev }))
+          toastActionError(result.error)
+        }
+      } catch {
         setValues((v) => ({ ...v, [key]: prev }))
-        toast.error('Could not save. Please try again.')
+        toastNetworkError()
+      } finally {
+        setPending(null)
       }
-      setPending(null)
     })
   }
 

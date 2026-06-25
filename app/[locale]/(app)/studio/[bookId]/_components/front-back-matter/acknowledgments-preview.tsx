@@ -5,6 +5,7 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import { updateBinderItemAction } from '@/lib/actions/binder.actions'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 import { useBookEditor } from '../book-editor-provider'
 import type { AcknowledgmentsFields } from '@/lib/front-back-matter/types'
 import { SaveStatusBadge, type FormSaveStatus } from './save-status-badge'
@@ -36,8 +37,15 @@ export function AcknowledgmentsPreview({ itemId, initialFields }: Props) {
         fields: { text: nextText } satisfies AcknowledgmentsFields,
       }
       updateBinderItem(itemId, { content: newContent })
-      const result = await updateBinderItemAction(itemId, { content: newContent })
-      setSaveStatus(result.success ? 'saved' : 'unsaved')
+      try {
+        const result = await updateBinderItemAction(itemId, { content: newContent })
+        // Keep the user's edits on failure; just surface the error.
+        setSaveStatus(result.success ? 'saved' : 'unsaved')
+        if (!result.success) toastActionError(result.error)
+      } catch {
+        setSaveStatus('unsaved')
+        toastNetworkError()
+      }
     }, 1500)
   }
 

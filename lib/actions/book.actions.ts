@@ -17,6 +17,7 @@ import { extractWordCount } from '@/lib/tiptap-utils'
 import type { ImportedChapter } from '@/lib/import/types'
 import { recordSocialActivityTx } from '@/lib/social/record-activity'
 import { deleteCloudinaryImage, getCloudinaryPublicId } from '@/lib/cloudinary'
+import { runAction } from './safe-action'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -88,6 +89,7 @@ export async function createBookAction(input: {
   // transaction that creates the book, so an imported book is fully atomic.
   importedChapters?: ImportedChapter[]
 }): Promise<ActionResult<{ bookId: string }>> {
+  return runAction(async () => {
   const userId = await requireAuth()
 
   const parsed = createBookSchema.safeParse(input)
@@ -239,6 +241,7 @@ export async function createBookAction(input: {
   })
 
   return { success: true, data: { bookId } }
+  })
 }
 
 /**
@@ -438,6 +441,7 @@ export async function updateBookAction(
     coverUrl?: string | null
   },
 ): Promise<ActionResult> {
+  return runAction(async () => {
   const userId = await requireAuth()
 
   const parsed = updateBookSchema.safeParse(input)
@@ -476,12 +480,14 @@ export async function updateBookAction(
     .where(eq(books.id, bookId))
 
   return { success: true, data: undefined }
+  })
 }
 
 /**
  * Publishes a book: sets visibility to PUBLIC and status to PUBLISHED.
  */
 export async function publishBookAction(bookId: string): Promise<ActionResult> {
+  return runAction(async () => {
   const userId = await requireAuth()
   await assertBookOwner(bookId, userId)
 
@@ -531,12 +537,14 @@ export async function publishBookAction(bookId: string): Promise<ActionResult> {
   })
 
   return { success: true, data: undefined }
+  })
 }
 
 /**
  * Unpublishes a book: sets visibility to PRIVATE and status to DRAFT.
  */
 export async function unpublishBookAction(bookId: string): Promise<ActionResult> {
+  return runAction(async () => {
   const userId = await requireAuth()
   await assertBookOwner(bookId, userId)
 
@@ -546,6 +554,7 @@ export async function unpublishBookAction(bookId: string): Promise<ActionResult>
     .where(eq(books.id, bookId))
 
   return { success: true, data: undefined }
+  })
 }
 
 /**
@@ -553,6 +562,7 @@ export async function unpublishBookAction(bookId: string): Promise<ActionResult>
  * binder_items, chapters, chapter_snapshots, etc.
  */
 export async function deleteBookAction(bookId: string, locale: string): Promise<ActionResult> {
+  return runAction(async () => {
   const userId = await requireAuth()
   await assertBookOwner(bookId, userId)
 
@@ -579,6 +589,7 @@ export async function deleteBookAction(bookId: string, locale: string): Promise<
   revalidatePath(`/${locale}/studio`)
 
   return { success: true, data: undefined }
+  })
 }
 
 // ─── Book details (full edit form) ────────────────────────────────────────────
@@ -687,6 +698,7 @@ export async function updateBookDetailsAction(
     discoverable: boolean
   },
 ): Promise<ActionResult> {
+  return runAction(async () => {
   const userId = await requireAuth()
   await assertBookOwner(bookId, userId)
 
@@ -775,4 +787,5 @@ export async function updateBookDetailsAction(
   }
 
   return { success: true, data: undefined }
+  })
 }

@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from 'react'
 import { toast } from 'sonner'
 import type { BuzzPostSummary } from '@/lib/actions/hive-buzz.actions'
 import { listBuzzPostsAction } from '@/lib/actions/hive-buzz.actions'
+import { toastNetworkError } from '@/lib/errors/notify'
 import { canPostBuzz, type HiveRole } from '@/lib/hive/permissions'
 import { BuzzPostCard } from './buzz-post-card'
 import { BuzzEmptyState } from './buzz-empty-state'
@@ -43,17 +44,21 @@ export function BuzzFeed({
   function loadOlder() {
     if (!cursor) return
     startLoadMore(async () => {
-      const res = await listBuzzPostsAction({
-        hiveId,
-        cursor: cursor!,
-        limit: 20,
-      })
-      if (!res.success) {
-        toast.error('Could not load more posts')
-        return
+      try {
+        const res = await listBuzzPostsAction({
+          hiveId,
+          cursor: cursor!,
+          limit: 20,
+        })
+        if (!res.success) {
+          toast.error('Could not load more posts')
+          return
+        }
+        setPosts((prev) => [...prev, ...res.data.posts])
+        setCursor(res.data.nextCursor)
+      } catch {
+        toastNetworkError()
       }
-      setPosts((prev) => [...prev, ...res.data.posts])
-      setCursor(res.data.nextCursor)
     })
   }
 

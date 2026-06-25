@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { toast } from 'sonner'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 import {
   grantCompPremiumAction,
   revokeCompPremiumAction,
@@ -50,35 +52,85 @@ export function UserRow({ row }: { row: Row }) {
 
   const onGrant = (kind: 'DAYS_30' | 'DAYS_90' | 'DAYS_365' | 'LIFETIME') => {
     startTransition(async () => {
-      await grantCompPremiumAction(row.id, kind)
-      setOpen(false)
+      try {
+        const res = await grantCompPremiumAction(row.id, kind)
+        if (!res.ok) {
+          toastActionError(res.error)
+          return
+        }
+        toast.success('Premium granted')
+      } catch {
+        toastNetworkError()
+      } finally {
+        setOpen(false)
+      }
     })
   }
   const onRevoke = () => {
     startTransition(async () => {
-      await revokeCompPremiumAction(row.id)
-      setOpen(false)
+      try {
+        const res = await revokeCompPremiumAction(row.id)
+        if (!res.ok) {
+          toastActionError(res.error)
+          return
+        }
+        toast.success('Comp premium revoked')
+      } catch {
+        toastNetworkError()
+      } finally {
+        setOpen(false)
+      }
     })
   }
   const onBan = () => {
     const reason = window.prompt('Reason for ban (optional):') ?? undefined
     startTransition(async () => {
-      await setBannedAction(row.id, true, reason)
-      setOpen(false)
+      try {
+        const res = await setBannedAction(row.id, true, reason)
+        if (!res.ok) {
+          toastActionError(res.error)
+          return
+        }
+        toast.success('User banned')
+      } catch {
+        toastNetworkError()
+      } finally {
+        setOpen(false)
+      }
     })
   }
   const onUnban = () => {
     startTransition(async () => {
-      await setBannedAction(row.id, false)
-      setOpen(false)
+      try {
+        const res = await setBannedAction(row.id, false)
+        if (!res.ok) {
+          toastActionError(res.error)
+          return
+        }
+        toast.success('User unbanned')
+      } catch {
+        toastNetworkError()
+      } finally {
+        setOpen(false)
+      }
     })
   }
   const onDelete = () => {
     if (!window.confirm(`Permanently delete user ${row.email}? This cascades and cannot be undone.`))
       return
     startTransition(async () => {
-      await deleteUserAction(row.id)
-      setOpen(false)
+      try {
+        const res = await deleteUserAction(row.id)
+        if (!res.ok) {
+          toastActionError(res.error)
+          return
+        }
+        toast.success('User deleted')
+      } catch {
+        toastNetworkError()
+      } finally {
+        setOpen(false)
+      }
     })
   }
 

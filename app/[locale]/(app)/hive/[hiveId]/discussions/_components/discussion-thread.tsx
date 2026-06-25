@@ -11,6 +11,7 @@ import {
   deleteDiscussionPostAction,
 } from '@/lib/actions/hive-discussions.actions'
 import { canEditDiscussionPost, type HiveRole } from '@/lib/hive/permissions'
+import { toastNetworkError } from '@/lib/errors/notify'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import {
@@ -106,6 +107,8 @@ export function DiscussionThread({
       toast.success('Reply posted')
       setReplyDraft('')
       router.refresh()
+    } catch {
+      toastNetworkError()
     } finally {
       setReplying(false)
     }
@@ -332,22 +335,28 @@ function PostBody({
       toast.success('Updated')
       setEditing(false)
       router.refresh()
+    } catch {
+      toastNetworkError()
     } finally {
       setSaving(false)
     }
   }
 
   async function confirmDeletePost() {
-    const r = await deleteDiscussionPostAction(post.id)
-    if (!r.success) {
-      toast.error(r.error)
-      return
-    }
-    toast.success('Deleted')
-    if (isTopLevel) {
-      router.push(`/${locale}/hive/${hiveId}/discussions`)
-    } else {
-      router.refresh()
+    try {
+      const r = await deleteDiscussionPostAction(post.id)
+      if (!r.success) {
+        toast.error(r.error)
+        return
+      }
+      toast.success('Deleted')
+      if (isTopLevel) {
+        router.push(`/${locale}/hive/${hiveId}/discussions`)
+      } else {
+        router.refresh()
+      }
+    } catch {
+      toastNetworkError()
     }
   }
 

@@ -9,6 +9,7 @@ import {
   updateMemberRoleAction,
 } from '@/lib/actions/hive.actions'
 import { HivePill } from './hive-pill'
+import { toastNetworkError } from '@/lib/errors/notify'
 
 type Role = 'OWNER' | 'MODERATOR' | 'CONTRIBUTOR' | 'BETA_READER'
 
@@ -64,24 +65,34 @@ export function HiveMembers({
   async function handleRemove(userId: string) {
     const prev = members
     setMembers(prev.filter((m) => m.userId !== userId))
-    const result = await removeMemberAction(hiveId, userId)
-    if (!result.success) {
+    try {
+      const result = await removeMemberAction(hiveId, userId)
+      if (!result.success) {
+        setMembers(prev)
+        toast.error(result.error || 'Could not remove member')
+      } else {
+        toast.success('Member removed')
+      }
+    } catch {
       setMembers(prev)
-      toast.error(result.error || 'Could not remove member')
-    } else {
-      toast.success('Member removed')
+      toastNetworkError()
     }
   }
 
   async function handleRoleChange(userId: string, role: Role) {
     const prev = members
     setMembers(prev.map((m) => (m.userId === userId ? { ...m, role } : m)))
-    const result = await updateMemberRoleAction(hiveId, userId, role)
-    if (!result.success) {
+    try {
+      const result = await updateMemberRoleAction(hiveId, userId, role)
+      if (!result.success) {
+        setMembers(prev)
+        toast.error(result.error || 'Could not update role')
+      } else {
+        toast.success('Role updated')
+      }
+    } catch {
       setMembers(prev)
-      toast.error(result.error || 'Could not update role')
-    } else {
-      toast.success('Role updated')
+      toastNetworkError()
     }
   }
 

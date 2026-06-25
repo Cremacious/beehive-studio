@@ -19,14 +19,33 @@ export interface RedeemResult {
 }
 
 export async function redeemPromoCodeAction(formData: FormData): Promise<RedeemResult> {
-  const userId = await requireAuth()
+  let userId: string
+  try {
+    userId = await requireAuth()
+  } catch {
+    return { ok: false, error: 'Please sign in to redeem a code.' }
+  }
   const raw = String(formData.get('code') ?? '').trim().toUpperCase()
   const code = raw.replace(/[^A-Z0-9\-_]/g, '')
   if (!code) return { ok: false, error: 'Enter a code.' }
 
-  const promo = await db.query.promoCodes.findFirst({
-    where: eq(promoCodes.code, code),
-  })
+  let promo: typeof promoCodes.$inferSelect | undefined
+  let already: typeof promoRedemptions.$inferSelect | undefined
+  try {
+    promo = await db.query.promoCodes.findFirst({
+      where: eq(promoCodes.code, code),
+    })
+    if (promo) {
+      already = await db.query.promoRedemptions.findFirst({
+        where: and(
+          eq(promoRedemptions.promoCodeId, promo.id),
+          eq(promoRedemptions.userId, userId),
+        ),
+      })
+    }
+  } catch {
+    return { ok: false, error: 'Could not redeem code. Please try again.' }
+  }
   if (!promo) return { ok: false, error: 'Invalid code.' }
   if (promo.isActive !== 'true') return { ok: false, error: 'This code is no longer active.' }
   if (promo.expiresAt && promo.expiresAt.getTime() < Date.now()) {
@@ -35,13 +54,6 @@ export async function redeemPromoCodeAction(formData: FormData): Promise<RedeemR
   if (promo.maxUses != null && promo.usesCount >= promo.maxUses) {
     return { ok: false, error: 'This code has been fully redeemed.' }
   }
-
-  const already = await db.query.promoRedemptions.findFirst({
-    where: and(
-      eq(promoRedemptions.promoCodeId, promo.id),
-      eq(promoRedemptions.userId, userId),
-    ),
-  })
   if (already) return { ok: false, error: 'You have already redeemed this code.' }
 
   const now = new Date()

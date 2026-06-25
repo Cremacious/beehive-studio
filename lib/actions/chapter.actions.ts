@@ -14,6 +14,7 @@ import { getBookHive } from '@/lib/hive/get-book-hive'
 import { recordSocialActivityTx } from '@/lib/social/record-activity'
 import { shouldSkipNotification } from '@/lib/notifications/check-preferences'
 import type { ActionResult } from './book.actions'
+import { runAction } from './safe-action'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -62,6 +63,7 @@ async function assertChapterOwner(chapterId: string, userId: string) {
 export async function getChapterAction(
   chapterId: string,
 ): Promise<ActionResult<ChapterData>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const { chapter } = await assertChapterOwner(chapterId, userId)
 
@@ -111,6 +113,7 @@ export async function getChapterAction(
       pendingSuggestionCount,
     },
   }
+  })
 }
 
 /**
@@ -122,6 +125,7 @@ export async function saveChapterAction(
   chapterId: string,
   content: unknown,
 ): Promise<ActionResult<{ wordCount: number }>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const { chapter } = await assertChapterOwner(chapterId, userId)
 
@@ -177,6 +181,7 @@ export async function saveChapterAction(
   })
 
   return { success: true, data: { wordCount } }
+  })
 }
 
 /**
@@ -186,6 +191,7 @@ export async function updateChapterStatusAction(
   chapterId: string,
   status: ChapterData['status'],
 ): Promise<ActionResult> {
+  return runAction(async () => {
   const userId = await requireAuth()
 
   const parsed = chapterStatusSchema.safeParse(status)
@@ -258,6 +264,7 @@ export async function updateChapterStatusAction(
   })
 
   return { success: true, data: undefined }
+  })
 }
 
 /**
@@ -267,6 +274,7 @@ export async function updateChapterNotesAction(
   chapterId: string,
   notes: string | null,
 ): Promise<ActionResult> {
+  return runAction(async () => {
   const userId = await requireAuth()
 
   const parsed = updateChapterNotesSchema.safeParse({ notes })
@@ -282,6 +290,7 @@ export async function updateChapterNotesAction(
     .where(eq(chapters.id, chapterId))
 
   return { success: true, data: undefined }
+  })
 }
 
 /**
@@ -292,6 +301,7 @@ export async function updateChapterWordGoalAction(
   chapterId: string,
   wordGoal: number,
 ): Promise<ActionResult> {
+  return runAction(async () => {
   const userId = await requireAuth()
 
   const parsed = updateChapterWordGoalSchema.safeParse({ wordGoal })
@@ -307,4 +317,5 @@ export async function updateChapterWordGoalAction(
     .where(eq(chapters.id, chapterId))
 
   return { success: true, data: undefined }
+  })
 }

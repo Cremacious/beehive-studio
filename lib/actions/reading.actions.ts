@@ -6,6 +6,7 @@ import { and, eq } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { canReadBook } from '@/lib/books/can-read'
 import type { ActionResult } from './book.actions'
+import { runAction } from './safe-action'
 
 export type ReadingProgressResult = {
   lastChapterId: string | null
@@ -16,6 +17,7 @@ export async function markChapterReadAction(
   bookId: string,
   chapterBinderItemId: string
 ): Promise<ActionResult<void>> {
+  return runAction(async () => {
   const userId = await requireAuth()
 
   const access = await canReadBook(bookId, userId)
@@ -53,12 +55,14 @@ export async function markChapterReadAction(
   }
 
   return { success: true, data: undefined }
+  })
 }
 
 export async function unmarkChapterReadAction(
   bookId: string,
   chapterBinderItemId: string
 ): Promise<ActionResult<void>> {
+  return runAction(async () => {
   const userId = await requireAuth()
 
   const access = await canReadBook(bookId, userId)
@@ -77,11 +81,13 @@ export async function unmarkChapterReadAction(
   // concern from the read set, and unmarking a chapter shouldn't reset
   // "Continue Reading".
   return { success: true, data: undefined }
+  })
 }
 
 export async function getReadingProgressAction(
   bookId: string
 ): Promise<ActionResult<ReadingProgressResult>> {
+  return runAction(async () => {
   const userId = await requireAuth()
 
   const access = await canReadBook(bookId, userId)
@@ -105,4 +111,5 @@ export async function getReadingProgressAction(
       readChapterBinderItemIds: reads.map((r) => r.chapterBinderItemId),
     },
   }
+  })
 }

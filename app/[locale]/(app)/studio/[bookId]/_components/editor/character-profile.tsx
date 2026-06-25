@@ -7,6 +7,7 @@ import { useBookEditor } from '../book-editor-provider'
 import { SaveStatusBadge, type FormSaveStatus } from '../front-back-matter/save-status-badge'
 import { TagChipStrip } from './tag-chip-strip'
 import { normalizeTags } from '@/lib/wiki/tags'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 
 // DP3 Task 2 — Character profile sheet-style rewrite.
 //
@@ -97,8 +98,16 @@ export function CharacterProfile({ item }: Props) {
     if (timerRef.current) clearTimeout(timerRef.current)
     timerRef.current = setTimeout(async () => {
       setSaveStatus('saving')
-      const result = await updateBinderItemAction(item.id, { content: next })
-      setSaveStatus(result.success ? 'saved' : 'unsaved')
+      try {
+        const result = await updateBinderItemAction(item.id, { content: next })
+        // Do NOT discard the user's edits on failure — leave local state as is,
+        // surface the error, and leave status 'unsaved' so the next edit retries.
+        setSaveStatus(result.success ? 'saved' : 'unsaved')
+        if (!result.success) toastActionError(result.error)
+      } catch {
+        setSaveStatus('unsaved')
+        toastNetworkError()
+      }
     }, 1500)
   }
 
@@ -114,8 +123,16 @@ export function CharacterProfile({ item }: Props) {
     }
     setLocalTitle(trimmed)
     updateBinderItem(item.id, { title: trimmed })
-    const result = await updateBinderItemAction(item.id, { title: trimmed })
-    if (!result.success) setLocalTitle(item.title)
+    try {
+      const result = await updateBinderItemAction(item.id, { title: trimmed })
+      if (!result.success) {
+        setLocalTitle(item.title)
+        toastActionError(result.error)
+      }
+    } catch {
+      setLocalTitle(item.title)
+      toastNetworkError()
+    }
   }
 
   function removeRelationship(idx: number) {

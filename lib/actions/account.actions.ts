@@ -60,8 +60,14 @@ export async function deleteOwnAccountAction(): Promise<{
   }
 
   // Cascade delete — all FK constraints on `users.id` (WITH CASCADE DELETE)
-  // handle the rest of the cleanup automatically.
-  await db.delete(users).where(eq(users.id, userId))
+  // handle the rest of the cleanup automatically. A failure here is the only
+  // fatal step, so surface it gracefully via the `error` field instead of
+  // letting a raw DB error propagate.
+  try {
+    await db.delete(users).where(eq(users.id, userId))
+  } catch {
+    return { success: false, error: 'Could not delete your account. Please try again.' }
+  }
 
   return { success: true }
 }

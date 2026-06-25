@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 import { createPromoCodeAction } from './actions'
 
 const fieldStyle: React.CSSProperties = {
@@ -30,9 +31,17 @@ export function CreateCodeForm() {
         startTransition(async () => {
           setError(null)
           setSuccess(null)
-          const result = await createPromoCodeAction(fd)
-          if (!result.ok) setError(result.error ?? 'Failed.')
-          else setSuccess('Code created.')
+          try {
+            const result = await createPromoCodeAction(fd)
+            if (!result.ok) {
+              setError(result.error ?? 'Failed.')
+              toastActionError(result.error)
+            } else {
+              setSuccess('Code created.')
+            }
+          } catch {
+            toastNetworkError()
+          }
         })
       }
       className="grid gap-4"

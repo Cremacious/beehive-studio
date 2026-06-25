@@ -28,6 +28,7 @@ import {
   type PendingSuggestionItem,
 } from '@/lib/actions/hive-suggestions.actions'
 import { relTime } from '@/components/hive/collab/rel-time'
+import { toastNetworkError } from '@/lib/errors/notify'
 import { HiveSectionDivider } from '../../_components/hive-section-divider'
 
 type Props = {
@@ -98,34 +99,42 @@ function SuggestionCard({
 
   function handleAccept() {
     startAccept(async () => {
-      const r = await acceptSuggestionAction(suggestion.id)
-      if (!r.success) {
-        toast.error(r.error || 'Failed to accept suggestion')
-        return
+      try {
+        const r = await acceptSuggestionAction(suggestion.id)
+        if (!r.success) {
+          toast.error(r.error || 'Failed to accept suggestion')
+          return
+        }
+        if (r.data.orphan) {
+          toast.warning("Suggestion was orphaned. Chapter wasn't updated.")
+        } else {
+          toast.success('Suggestion accepted')
+        }
+        router.refresh()
+      } catch {
+        toastNetworkError()
       }
-      if (r.data.orphan) {
-        toast.warning("Suggestion was orphaned. Chapter wasn't updated.")
-      } else {
-        toast.success('Suggestion accepted')
-      }
-      router.refresh()
     })
   }
 
   function handleReject() {
     startReject(async () => {
-      const r = await rejectSuggestionAction({
-        id: suggestion.id,
-        note: rejectNote.trim() || undefined,
-      })
-      if (!r.success) {
-        toast.error(r.error || 'Failed to reject suggestion')
-        return
+      try {
+        const r = await rejectSuggestionAction({
+          id: suggestion.id,
+          note: rejectNote.trim() || undefined,
+        })
+        if (!r.success) {
+          toast.error(r.error || 'Failed to reject suggestion')
+          return
+        }
+        toast.success('Suggestion rejected')
+        setRejectOpen(false)
+        setRejectNote('')
+        router.refresh()
+      } catch {
+        toastNetworkError()
       }
-      toast.success('Suggestion rejected')
-      setRejectOpen(false)
-      setRejectNote('')
-      router.refresh()
     })
   }
 

@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import { useBookEditor } from '../book-editor-provider'
 import { createBinderItemAction, deleteBinderItemAction, updateBinderItemAction } from '@/lib/actions/binder.actions'
 import type { BinderItemRow } from '@/lib/actions/binder.actions'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 import type { TreeNode } from './binder-tree'
 import {
   DropdownMenu,
@@ -69,10 +70,18 @@ export function BinderItemMenu({ node, onRenameStart }: Props) {
   async function handleMove(newParentId: string | null) {
     setOpen(false)
     setShowMoveTo(false)
+    const previousParentId = node.parentId
     updateBinderItem(node.id, { parentId: newParentId })
-    const result = await updateBinderItemAction(node.id, { parentId: newParentId })
-    if (!result.success) {
-      console.error('Move failed:', result.error)
+    try {
+      const result = await updateBinderItemAction(node.id, { parentId: newParentId })
+      if (!result.success) {
+        updateBinderItem(node.id, { parentId: previousParentId })
+        console.error('Move failed:', result.error)
+        toastActionError(result.error)
+      }
+    } catch {
+      updateBinderItem(node.id, { parentId: previousParentId })
+      toastNetworkError()
     }
   }
 
@@ -82,40 +91,50 @@ export function BinderItemMenu({ node, onRenameStart }: Props) {
   ) {
     setOpen(false)
     const order = node.children.length
-    const result = await createBinderItemAction({
-      bookId,
-      parentId: node.id,
-      type,
-      title,
-      order,
-    })
-    if (result.success) {
-      addBinderItem({
-        id: result.data.id,
+    try {
+      const result = await createBinderItemAction({
         bookId,
         parentId: node.id,
         type,
         title,
         order,
-        content: null,
-        authorId: null,
-        lastEditedBy: null,
-        chapterId: result.data.chapterId,
-        chapterStatus: result.data.chapterId ? 'FIRST_DRAFT' : null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
       })
-    } else {
-      console.error('createBinderItemAction failed:', result.error)
+      if (result.success) {
+        addBinderItem({
+          id: result.data.id,
+          bookId,
+          parentId: node.id,
+          type,
+          title,
+          order,
+          content: null,
+          authorId: null,
+          lastEditedBy: null,
+          chapterId: result.data.chapterId,
+          chapterStatus: result.data.chapterId ? 'FIRST_DRAFT' : null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+      } else {
+        console.error('createBinderItemAction failed:', result.error)
+        toastActionError(result.error)
+      }
+    } catch {
+      toastNetworkError()
     }
   }
 
   async function handleDeleteConfirm() {
-    const result = await deleteBinderItemAction(node.id)
-    if (result.success) {
-      removeBinderItem(node.id)
-    } else {
-      console.error('deleteBinderItemAction failed:', result.error)
+    try {
+      const result = await deleteBinderItemAction(node.id)
+      if (result.success) {
+        removeBinderItem(node.id)
+      } else {
+        console.error('deleteBinderItemAction failed:', result.error)
+        toastActionError(result.error)
+      }
+    } catch {
+      toastNetworkError()
     }
   }
 

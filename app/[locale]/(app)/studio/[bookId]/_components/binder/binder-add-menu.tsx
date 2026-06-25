@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useBookEditor } from '../book-editor-provider'
 import { createBinderItemAction } from '@/lib/actions/binder.actions'
 import type { BinderItemRow } from '@/lib/actions/binder.actions'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 import { CATEGORY_TEMPLATE_MAP } from '@/lib/wiki/category-templates'
 import type { WikiCategory } from '@/lib/wiki/category-templates'
 import { createId } from '@paralleldrive/cuid2'
@@ -108,27 +109,32 @@ export function BinderAddMenu() {
     const maxOrder = rootItems.length > 0 ? Math.max(...rootItems.map(i => i.order)) : -1
     const order = maxOrder + 1
 
-    const result = await createBinderItemAction({ bookId, parentId: null, type, title, order, content })
-    if (result.success) {
-      addBinderItem({
-        id: result.data.id,
-        bookId,
-        parentId: null,
-        type,
-        title,
-        order,
-        content,
-        authorId: null,
-        lastEditedBy: null,
-        chapterId: result.data.chapterId,
-        chapterStatus: result.data.chapterId ? 'FIRST_DRAFT' : null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-      setActiveItemId(result.data.id)
-      setPendingRenameId(result.data.id)
-    } else {
-      console.error('createBinderItemAction failed:', result.error)
+    try {
+      const result = await createBinderItemAction({ bookId, parentId: null, type, title, order, content })
+      if (result.success) {
+        addBinderItem({
+          id: result.data.id,
+          bookId,
+          parentId: null,
+          type,
+          title,
+          order,
+          content,
+          authorId: null,
+          lastEditedBy: null,
+          chapterId: result.data.chapterId,
+          chapterStatus: result.data.chapterId ? 'FIRST_DRAFT' : null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        setActiveItemId(result.data.id)
+        setPendingRenameId(result.data.id)
+      } else {
+        console.error('createBinderItemAction failed:', result.error)
+        toastActionError(result.error)
+      }
+    } catch {
+      toastNetworkError()
     }
   }
 
@@ -190,34 +196,39 @@ export function BinderAddMenu() {
           hints: {},
         }
 
-    const result = await createBinderItemAction({
-      bookId,
-      parentId: null,
-      type,
-      title,
-      order,
-      content,
-    })
-    if (result.success) {
-      addBinderItem({
-        id: result.data.id,
+    try {
+      const result = await createBinderItemAction({
         bookId,
         parentId: null,
         type,
         title,
         order,
         content,
-        authorId: null,
-        lastEditedBy: null,
-        chapterId: result.data.chapterId,
-        chapterStatus: result.data.chapterId ? 'FIRST_DRAFT' : null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
       })
-      setActiveItemId(result.data.id)
-      setPendingRenameId(result.data.id)
-    } else {
-      console.error('createBinderItemAction failed:', result.error)
+      if (result.success) {
+        addBinderItem({
+          id: result.data.id,
+          bookId,
+          parentId: null,
+          type,
+          title,
+          order,
+          content,
+          authorId: null,
+          lastEditedBy: null,
+          chapterId: result.data.chapterId,
+          chapterStatus: result.data.chapterId ? 'FIRST_DRAFT' : null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        setActiveItemId(result.data.id)
+        setPendingRenameId(result.data.id)
+      } else {
+        console.error('createBinderItemAction failed:', result.error)
+        toastActionError(result.error)
+      }
+    } catch {
+      toastNetworkError()
     }
   }
 
@@ -229,34 +240,39 @@ export function BinderAddMenu() {
     const title = kind === 'front_matter' ? 'Front matter' : 'Back matter'
     const initialContent = { subtype: null, fields: {} }
 
-    const result = await createBinderItemAction({
-      bookId,
-      parentId: null,
-      type: kind,
-      title,
-      order,
-      content: initialContent,
-    })
-    if (result.success) {
-      addBinderItem({
-        id: result.data.id,
+    try {
+      const result = await createBinderItemAction({
         bookId,
         parentId: null,
         type: kind,
         title,
         order,
         content: initialContent,
-        authorId: null,
-        lastEditedBy: null,
-        chapterId: result.data.chapterId,
-        chapterStatus: result.data.chapterId ? 'FIRST_DRAFT' : null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
       })
-      setActiveItemId(result.data.id)
-      setPendingRenameId(result.data.id)
-    } else {
-      console.error('createBinderItemAction failed:', result.error)
+      if (result.success) {
+        addBinderItem({
+          id: result.data.id,
+          bookId,
+          parentId: null,
+          type: kind,
+          title,
+          order,
+          content: initialContent,
+          authorId: null,
+          lastEditedBy: null,
+          chapterId: result.data.chapterId,
+          chapterStatus: result.data.chapterId ? 'FIRST_DRAFT' : null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        setActiveItemId(result.data.id)
+        setPendingRenameId(result.data.id)
+      } else {
+        console.error('createBinderItemAction failed:', result.error)
+        toastActionError(result.error)
+      }
+    } catch {
+      toastNetworkError()
     }
   }
 

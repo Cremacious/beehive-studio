@@ -34,6 +34,7 @@ import { recordMentionNotificationsTx } from '@/lib/mentions/record-mention-noti
 import { shouldSkipNotification } from '@/lib/notifications/check-preferences'
 import { GENRES } from '@/lib/discover/genres'
 import { createSparkSchema, updateSparkSchema, type CreateSparkInput, type UpdateSparkInput } from '@/lib/validations/spark'
+import { runAction } from './safe-action'
 import type { SparkStatus, SparkVisibility } from '@/db/schema/social'
 import type { ActionResult } from './book.actions'
 
@@ -463,6 +464,7 @@ export async function getSparkAction(
 export async function createSparkAction(
   input: CreateSparkInput & { votingDurationHours?: number },
 ): Promise<ActionResult<{ sparkId: string; id: string }>> {
+  return runAction(async () => {
   const userId = await requireAuth()
 
   const parsed = createSparkSchema.safeParse(input)
@@ -536,6 +538,7 @@ export async function createSparkAction(
     .returning({ id: sparks.id })
 
   return { success: true, data: { sparkId: created.id, id: created.id } }
+  })
 }
 
 /**
@@ -589,6 +592,7 @@ export async function getSparkForEditAction(
 export async function updateSparkAction(
   input: UpdateSparkInput & { votingDurationHours?: number },
 ): Promise<ActionResult<{ id: string }>> {
+  return runAction(async () => {
   const userId = await requireAuth()
 
   const parsed = updateSparkSchema.safeParse(input)
@@ -659,6 +663,7 @@ export async function updateSparkAction(
   await db.update(sparks).set(updates).where(eq(sparks.id, id))
 
   return { success: true, data: { id } }
+  })
 }
 
 /**
@@ -850,6 +855,7 @@ export async function submitSparkEntryAction(
   content: string,
   title?: string | null
 ): Promise<ActionResult<{ entryId: string }>> {
+  return runAction(async () => {
   const userId = await requireAuth()
 
   const parsed = submitEntrySchema.safeParse({ content, title })
@@ -930,6 +936,7 @@ export async function submitSparkEntryAction(
   })
 
   return { success: true, data: { entryId: created.id } }
+  })
 }
 
 /**
@@ -941,6 +948,7 @@ export async function updateSparkEntryAction(
   content: string,
   title?: string | null
 ): Promise<ActionResult<void>> {
+  return runAction(async () => {
   const userId = await requireAuth()
 
   const parsed = updateEntrySchema.safeParse({ content, title })
@@ -982,6 +990,7 @@ export async function updateSparkEntryAction(
     .where(eq(sparkEntries.id, entryId))
 
   return { success: true, data: undefined }
+  })
 }
 
 /**
@@ -994,6 +1003,7 @@ export async function updateSparkEntryAction(
 export async function voteSparkEntryAction(
   entryId: string
 ): Promise<ActionResult<{ voted: boolean }>> {
+  return runAction(async () => {
   const userId = await requireAuth()
 
   const [entry] = await db
@@ -1055,6 +1065,7 @@ export async function voteSparkEntryAction(
   })
 
   return { success: true, data: { voted } }
+  })
 }
 
 /**
@@ -1065,6 +1076,7 @@ export async function setCreatorChoiceAction(
   sparkId: string,
   entryId: string
 ): Promise<ActionResult<void>> {
+  return runAction(async () => {
   const userId = await requireAuth()
 
   const [spark] = await db
@@ -1129,6 +1141,7 @@ export async function setCreatorChoiceAction(
   })
 
   return { success: true, data: undefined }
+  })
 }
 
 /**
@@ -1184,6 +1197,7 @@ export async function addSparkEntryCommentAction(
   entryId: string,
   content: string
 ): Promise<ActionResult<EntryComment>> {
+  return runAction(async () => {
   const userId = await requireAuth()
 
   const parsed = addCommentSchema.safeParse({ content })
@@ -1282,6 +1296,7 @@ export async function addSparkEntryCommentAction(
   }
 
   return { success: true, data: comment }
+  })
 }
 
 /**
@@ -1296,6 +1311,7 @@ export async function replyToSparkCommentAction(input: {
   parentId: string
   content: string
 }): Promise<ActionResult<{ id: string }>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const parsed = replyToSparkCommentSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
@@ -1396,6 +1412,7 @@ export async function replyToSparkCommentAction(input: {
   })
 
   return { success: true, data: { id: inserted.id } }
+  })
 }
 
 // -----------------------------------------------------------------------------

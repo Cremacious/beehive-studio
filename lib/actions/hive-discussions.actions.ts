@@ -26,6 +26,7 @@ import {
   type ListDiscussionPostsInput,
   type DiscussionTopic,
 } from '@/lib/validations/hive-discussion'
+import { runAction } from './safe-action'
 import type { ActionResult } from './book.actions'
 
 // ── Public types ────────────────────────────────────────────────────────────
@@ -70,6 +71,7 @@ function deriveTitle(body: string): string {
 export async function createDiscussionPostAction(
   input: CreateDiscussionPostInput,
 ): Promise<ActionResult<{ id: string }>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const parsed = createDiscussionPostSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: parsed.error.issues[0].message }
@@ -139,6 +141,7 @@ export async function createDiscussionPostAction(
   })
 
   return { success: true, data: { id } }
+  })
 }
 
 // ── replyToDiscussionPostAction ─────────────────────────────────────────────
@@ -146,6 +149,7 @@ export async function createDiscussionPostAction(
 export async function replyToDiscussionPostAction(
   input: ReplyToDiscussionPostInput,
 ): Promise<ActionResult<{ id: string }>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const parsed = replyToDiscussionPostSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: parsed.error.issues[0].message }
@@ -215,6 +219,7 @@ export async function replyToDiscussionPostAction(
   })
 
   return { success: true, data: { id } }
+  })
 }
 
 // ── editDiscussionPostAction ────────────────────────────────────────────────
@@ -222,6 +227,7 @@ export async function replyToDiscussionPostAction(
 export async function editDiscussionPostAction(
   input: EditDiscussionPostInput,
 ): Promise<ActionResult> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const parsed = editDiscussionPostSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: parsed.error.issues[0].message }
@@ -290,6 +296,7 @@ export async function editDiscussionPostAction(
   })
 
   return { success: true, data: undefined }
+  })
 }
 
 // ── deleteDiscussionPostAction ──────────────────────────────────────────────
@@ -297,6 +304,7 @@ export async function editDiscussionPostAction(
 export async function deleteDiscussionPostAction(
   postId: string,
 ): Promise<ActionResult> {
+  return runAction(async () => {
   const userId = await requireAuth()
 
   const post = await db.query.hiveDiscussionPosts.findFirst({
@@ -319,6 +327,7 @@ export async function deleteDiscussionPostAction(
   await db.delete(hiveDiscussionPosts).where(eq(hiveDiscussionPosts.id, postId))
 
   return { success: true, data: undefined }
+  })
 }
 
 // ── listDiscussionPostsAction ───────────────────────────────────────────────
@@ -332,6 +341,7 @@ export async function deleteDiscussionPostAction(
 export async function listDiscussionPostsAction(
   input: ListDiscussionPostsInput,
 ): Promise<ActionResult<DiscussionPostSummary[]>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const parsed = listDiscussionPostsSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: parsed.error.issues[0].message }
@@ -418,6 +428,7 @@ export async function listDiscussionPostsAction(
   summaries.sort((a, b) => b.lastActivityAt.getTime() - a.lastActivityAt.getTime())
 
   return { success: true, data: summaries }
+  })
 }
 
 // ── getDiscussionThreadAction ───────────────────────────────────────────────
@@ -425,6 +436,7 @@ export async function listDiscussionPostsAction(
 export async function getDiscussionThreadAction(
   postId: string,
 ): Promise<ActionResult<DiscussionThreadData>> {
+  return runAction(async () => {
   const userId = await requireAuth()
 
   const post = await db.query.hiveDiscussionPosts.findFirst({
@@ -479,6 +491,7 @@ export async function getDiscussionThreadAction(
       replies: replies.map(toRow),
     },
   }
+  })
 }
 
 // -----------------------------------------------------------------------------
@@ -491,6 +504,7 @@ export async function getHiveDiscussionParentsAction(
   | { success: true; data: { hiveId: string } }
   | { success: false; error: string }
 > {
+  return runAction(async () => {
   await requireAuth()
   const row = await db.query.hiveDiscussionPosts.findFirst({
     where: eq(hiveDiscussionPosts.id, discussionId),
@@ -498,6 +512,7 @@ export async function getHiveDiscussionParentsAction(
   })
   if (!row || row.parentId !== null) return { success: false, error: 'NOT_FOUND' }
   return { success: true, data: { hiveId: row.hiveId } }
+  })
 }
 
 export async function getHiveReplyParentsAction(
@@ -506,6 +521,7 @@ export async function getHiveReplyParentsAction(
   | { success: true; data: { discussionId: string; hiveId: string } }
   | { success: false; error: string }
 > {
+  return runAction(async () => {
   await requireAuth()
   const reply = await db.query.hiveDiscussionPosts.findFirst({
     where: eq(hiveDiscussionPosts.id, replyId),
@@ -516,4 +532,5 @@ export async function getHiveReplyParentsAction(
     success: true,
     data: { discussionId: reply.parentId, hiveId: reply.hiveId },
   }
+  })
 }

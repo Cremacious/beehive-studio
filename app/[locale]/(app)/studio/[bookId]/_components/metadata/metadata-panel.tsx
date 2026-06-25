@@ -5,6 +5,7 @@ import { Check, ChevronDown, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useBookEditor } from '../book-editor-provider'
 import { updateBinderItemAction } from '@/lib/actions/binder.actions'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -68,8 +69,15 @@ function ChapterMetadata() {
     if (metaTimerRef.current) clearTimeout(metaTimerRef.current)
     const newMeta = { ...meta, ...patch }
     updateBinderItem(activeItem!.id, { content: newMeta })
+    const itemId = activeItem!.id
     metaTimerRef.current = setTimeout(async () => {
-      await updateBinderItemAction(activeItem!.id, { content: newMeta })
+      try {
+        // Keep the user's local edits on failure; just surface the error.
+        const result = await updateBinderItemAction(itemId, { content: newMeta })
+        if (!result.success) toastActionError(result.error)
+      } catch {
+        toastNetworkError()
+      }
     }, 1500)
   }
 
@@ -79,9 +87,21 @@ function ChapterMetadata() {
 
   async function commitTitle() {
     const title = titleInputRef.current!.value.trim() || activeItem!.title
-    await updateBinderItemAction(activeItem!.id, { title })
-    updateBinderItem(activeItem!.id, { title })
+    const itemId = activeItem!.id
+    const previousTitle = activeItem!.title
     setIsEditingTitle(false)
+    if (title === previousTitle) return
+    updateBinderItem(itemId, { title })
+    try {
+      const result = await updateBinderItemAction(itemId, { title })
+      if (!result.success) {
+        updateBinderItem(itemId, { title: previousTitle })
+        toastActionError(result.error)
+      }
+    } catch {
+      updateBinderItem(itemId, { title: previousTitle })
+      toastNetworkError()
+    }
   }
 
   function handleNotesChange(e: React.ChangeEvent<HTMLTextAreaElement>) {

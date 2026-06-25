@@ -13,6 +13,7 @@ import { userProfiles } from '@/db/schema/auth'
 import { requireAuth, getOptionalUserId } from '@/lib/require-auth'
 import { getClubMembership } from '@/lib/book-clubs/get-membership'
 import { canViewClub } from '@/lib/book-clubs/predicates'
+import { runAction } from './safe-action'
 import type { ActionResult } from './book.actions'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -126,107 +127,113 @@ export async function updateGroupProgressAction(input: {
   goalDescription?: string | null
   goalDeadline?: string | null
 }): Promise<ActionResult<{ updated: boolean }>> {
-  const userId = await requireAuth()
+  return runAction(async () => {
+    const userId = await requireAuth()
 
-  const club = await db.query.bookClubs.findFirst({
-    where: eq(bookClubs.id, input.clubId),
-  })
-  if (!club) return { success: false, error: 'NOT_FOUND' }
-
-  const membership = await getClubMembership(userId, input.clubId)
-  if (membership.role !== 'OWNER' && membership.role !== 'MODERATOR') {
-    return { success: false, error: 'NOT_AUTHORIZED' }
-  }
-
-  if (input.currentProgressValue < 0 || input.totalProgressValue < 1) {
-    return { success: false, error: 'INVALID_INPUT' }
-  }
-
-  await db
-    .update(bookClubs)
-    .set({
-      currentProgressValue: input.currentProgressValue,
-      totalProgressValue: input.totalProgressValue,
-      progressUnit: input.progressUnit,
-      ...(input.goalDescription !== undefined
-        ? { currentReadingGoalDescription: input.goalDescription }
-        : {}),
-      ...(input.goalDeadline !== undefined
-        ? {
-            currentReadingGoalDeadline: input.goalDeadline
-              ? new Date(input.goalDeadline)
-              : null,
-          }
-        : {}),
+    const club = await db.query.bookClubs.findFirst({
+      where: eq(bookClubs.id, input.clubId),
     })
-    .where(eq(bookClubs.id, input.clubId))
+    if (!club) return { success: false, error: 'NOT_FOUND' }
 
-  return { success: true, data: { updated: true } }
+    const membership = await getClubMembership(userId, input.clubId)
+    if (membership.role !== 'OWNER' && membership.role !== 'MODERATOR') {
+      return { success: false, error: 'NOT_AUTHORIZED' }
+    }
+
+    if (input.currentProgressValue < 0 || input.totalProgressValue < 1) {
+      return { success: false, error: 'INVALID_INPUT' }
+    }
+
+    await db
+      .update(bookClubs)
+      .set({
+        currentProgressValue: input.currentProgressValue,
+        totalProgressValue: input.totalProgressValue,
+        progressUnit: input.progressUnit,
+        ...(input.goalDescription !== undefined
+          ? { currentReadingGoalDescription: input.goalDescription }
+          : {}),
+        ...(input.goalDeadline !== undefined
+          ? {
+              currentReadingGoalDeadline: input.goalDeadline
+                ? new Date(input.goalDeadline)
+                : null,
+            }
+          : {}),
+      })
+      .where(eq(bookClubs.id, input.clubId))
+
+    return { success: true, data: { updated: true } }
+  })
 }
 
 export async function clearGroupProgressAction(input: {
   clubId: string
 }): Promise<ActionResult<{ updated: boolean }>> {
-  const userId = await requireAuth()
+  return runAction(async () => {
+    const userId = await requireAuth()
 
-  const membership = await getClubMembership(userId, input.clubId)
-  if (membership.role !== 'OWNER' && membership.role !== 'MODERATOR') {
-    return { success: false, error: 'NOT_AUTHORIZED' }
-  }
+    const membership = await getClubMembership(userId, input.clubId)
+    if (membership.role !== 'OWNER' && membership.role !== 'MODERATOR') {
+      return { success: false, error: 'NOT_AUTHORIZED' }
+    }
 
-  await db
-    .update(bookClubs)
-    .set({
-      currentProgressValue: null,
-      totalProgressValue: null,
-      progressUnit: null,
-      currentReadingGoalDescription: null,
-      currentReadingGoalDeadline: null,
-    })
-    .where(eq(bookClubs.id, input.clubId))
+    await db
+      .update(bookClubs)
+      .set({
+        currentProgressValue: null,
+        totalProgressValue: null,
+        progressUnit: null,
+        currentReadingGoalDescription: null,
+        currentReadingGoalDeadline: null,
+      })
+      .where(eq(bookClubs.id, input.clubId))
 
-  return { success: true, data: { updated: true } }
+    return { success: true, data: { updated: true } }
+  })
 }
 
 export async function toggleMemberOnTrackAction(input: {
   clubId: string
   isOnTrack: boolean
 }): Promise<ActionResult<{ isOnTrack: boolean }>> {
-  const userId = await requireAuth()
+  return runAction(async () => {
+    const userId = await requireAuth()
 
-  const club = await db.query.bookClubs.findFirst({
-    where: eq(bookClubs.id, input.clubId),
-  })
-  if (!club) return { success: false, error: 'NOT_FOUND' }
-  if (!club.currentBookId) return { success: false, error: 'NO_CURRENT_BOOK' }
-
-  const membership = await getClubMembership(userId, input.clubId)
-  if (membership.role === null) return { success: false, error: 'NOT_MEMBER' }
-
-  // Upsert
-  const existing = await db.query.clubMemberProgress.findFirst({
-    where: and(
-      eq(clubMemberProgress.clubId, input.clubId),
-      eq(clubMemberProgress.userId, userId),
-      eq(clubMemberProgress.bookId, club.currentBookId),
-    ),
-  })
-
-  if (existing) {
-    await db
-      .update(clubMemberProgress)
-      .set({ isOnTrack: input.isOnTrack, updatedAt: new Date() })
-      .where(eq(clubMemberProgress.id, existing.id))
-  } else {
-    await db.insert(clubMemberProgress).values({
-      id: createId(),
-      clubId: input.clubId,
-      userId,
-      bookId: club.currentBookId,
-      isOnTrack: input.isOnTrack,
-      updatedAt: new Date(),
+    const club = await db.query.bookClubs.findFirst({
+      where: eq(bookClubs.id, input.clubId),
     })
-  }
+    if (!club) return { success: false, error: 'NOT_FOUND' }
+    if (!club.currentBookId) return { success: false, error: 'NO_CURRENT_BOOK' }
 
-  return { success: true, data: { isOnTrack: input.isOnTrack } }
+    const membership = await getClubMembership(userId, input.clubId)
+    if (membership.role === null) return { success: false, error: 'NOT_MEMBER' }
+
+    // Upsert
+    const existing = await db.query.clubMemberProgress.findFirst({
+      where: and(
+        eq(clubMemberProgress.clubId, input.clubId),
+        eq(clubMemberProgress.userId, userId),
+        eq(clubMemberProgress.bookId, club.currentBookId),
+      ),
+    })
+
+    if (existing) {
+      await db
+        .update(clubMemberProgress)
+        .set({ isOnTrack: input.isOnTrack, updatedAt: new Date() })
+        .where(eq(clubMemberProgress.id, existing.id))
+    } else {
+      await db.insert(clubMemberProgress).values({
+        id: createId(),
+        clubId: input.clubId,
+        userId,
+        bookId: club.currentBookId,
+        isOnTrack: input.isOnTrack,
+        updatedAt: new Date(),
+      })
+    }
+
+    return { success: true, data: { isOnTrack: input.isOnTrack } }
+  })
 }

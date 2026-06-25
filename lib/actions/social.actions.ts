@@ -12,10 +12,12 @@ import { extractMentionUsernamesFromText } from '@/lib/mentions/extract-mentions
 import { resolveMentionedUsers } from '@/lib/mentions/resolve-mentions'
 import { recordMentionNotificationsTx } from '@/lib/mentions/record-mention-notifications'
 import { shouldSkipNotification } from '@/lib/notifications/check-preferences'
+import { runAction } from './safe-action'
 import type { ActionResult } from './book.actions'
 import type { BookComment } from './discover.actions'
 
 export async function toggleBookLikeAction(bookId: string): Promise<ActionResult<{ liked: boolean }>> {
+  return runAction<{ liked: boolean }>(async () => {
   const userId = await requireAuth()
 
   const existing = await db
@@ -71,9 +73,11 @@ export async function toggleBookLikeAction(bookId: string): Promise<ActionResult
   await ensureLikedListAction(userId)
 
   return { success: true, data: { liked: true } }
+  })
 }
 
 export async function toggleSparkLikeAction(sparkId: string): Promise<ActionResult<{ liked: boolean; likeCount: number }>> {
+  return runAction<{ liked: boolean; likeCount: number }>(async () => {
   const userId = await getOptionalUserId()
   if (!userId) return { success: false, error: 'AUTH_REQUIRED' }
 
@@ -122,6 +126,7 @@ export async function toggleSparkLikeAction(sparkId: string): Promise<ActionResu
   })
 
   return { success: true, data: { liked: true, likeCount: result?.likeCount ?? 1 } }
+  })
 }
 
 export async function getSparkLikeStateAction(sparkId: string): Promise<ActionResult<{ liked: boolean }>> {
@@ -135,6 +140,7 @@ export async function getSparkLikeStateAction(sparkId: string): Promise<ActionRe
 }
 
 export async function toggleBookmarkAction(bookId: string): Promise<ActionResult<{ bookmarked: boolean }>> {
+  return runAction<{ bookmarked: boolean }>(async () => {
   const userId = await requireAuth()
 
   const existing = await db
@@ -152,9 +158,11 @@ export async function toggleBookmarkAction(bookId: string): Promise<ActionResult
 
   await db.insert(bookmarks).values({ userId, bookId })
   return { success: true, data: { bookmarked: true } }
+  })
 }
 
 export async function toggleFollowAction(targetUserId: string): Promise<ActionResult<{ following: boolean }>> {
+  return runAction<{ following: boolean }>(async () => {
   const userId = await requireAuth()
 
   if (userId === targetUserId) return { success: false, error: 'CANNOT_FOLLOW_SELF' }
@@ -185,6 +193,7 @@ export async function toggleFollowAction(targetUserId: string): Promise<ActionRe
   }
 
   return { success: true, data: { following: true } }
+  })
 }
 
 const addCommentSchema = z.object({
@@ -195,6 +204,7 @@ export async function addCommentAction(
   bookId: string,
   content: string
 ): Promise<ActionResult<BookComment>> {
+  return runAction(async () => {
   const userId = await requireAuth()
 
   const access = await canReadBook(bookId, userId)
@@ -299,6 +309,7 @@ export async function addCommentAction(
       authorAvatarUrl: profile?.avatarUrl ?? null,
     },
   }
+  })
 }
 
 export async function getUserSocialStateAction(

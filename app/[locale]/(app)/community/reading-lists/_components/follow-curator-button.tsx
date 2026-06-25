@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { toggleFollowAction } from '@/lib/actions/social.actions'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 
 type Props = { userId: string }
 
@@ -13,11 +14,17 @@ export function FollowCuratorButton({ userId }: Props) {
     // Optimistic flip, rollback on failure.
     setFollowing(true)
     startTransition(async () => {
-      const result = await toggleFollowAction(userId)
-      if (!result.success) {
+      try {
+        const result = await toggleFollowAction(userId)
+        if (!result.success) {
+          setFollowing(false)
+          toastActionError(result.error)
+        } else {
+          setFollowing(result.data.following)
+        }
+      } catch {
         setFollowing(false)
-      } else {
-        setFollowing(result.data.following)
+        toastNetworkError()
       }
     })
   }

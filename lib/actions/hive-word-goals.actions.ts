@@ -22,6 +22,7 @@ import {
   type CreateWordGoalInput,
   type UpdateWordGoalInput,
 } from '@/lib/validations/hive-word-goals'
+import { runAction } from './safe-action'
 import type { ActionResult } from './book.actions'
 
 // ── Public types ────────────────────────────────────────────────────────────
@@ -87,6 +88,7 @@ function isUniqueViolation(err: unknown): boolean {
 export async function createWordGoalAction(
   input: CreateWordGoalInput,
 ): Promise<ActionResult<{ id: string }>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const parsed = createWordGoalSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: parsed.error.issues[0].message }
@@ -145,6 +147,7 @@ export async function createWordGoalAction(
 
   if (!newId) return { success: false, error: 'UNKNOWN' }
   return { success: true, data: { id: newId } }
+  })
 }
 
 // ── updateWordGoalAction ────────────────────────────────────────────────────
@@ -152,6 +155,7 @@ export async function createWordGoalAction(
 export async function updateWordGoalAction(
   input: UpdateWordGoalInput,
 ): Promise<ActionResult> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const parsed = updateWordGoalSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: parsed.error.issues[0].message }
@@ -182,11 +186,13 @@ export async function updateWordGoalAction(
   await db.update(hiveWordGoals).set(patch).where(eq(hiveWordGoals.id, id))
 
   return { success: true, data: undefined }
+  })
 }
 
 // ── archiveWordGoalAction ───────────────────────────────────────────────────
 
 export async function archiveWordGoalAction(id: string): Promise<ActionResult> {
+  return runAction(async () => {
   const userId = await requireAuth()
   if (!id) return { success: false, error: 'INVALID_INPUT' }
 
@@ -210,6 +216,7 @@ export async function archiveWordGoalAction(id: string): Promise<ActionResult> {
     .where(eq(hiveWordGoals.id, id))
 
   return { success: true, data: undefined }
+  })
 }
 
 // ── listHiveWordGoalsAction ─────────────────────────────────────────────────
@@ -217,6 +224,7 @@ export async function archiveWordGoalAction(id: string): Promise<ActionResult> {
 export async function listHiveWordGoalsAction(
   hiveId: string,
 ): Promise<ActionResult<WordGoalRecord[]>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   if (!hiveId) return { success: false, error: 'INVALID_INPUT' }
 
@@ -246,6 +254,7 @@ export async function listHiveWordGoalsAction(
     .orderBy(desc(hiveWordGoals.isActive), desc(hiveWordGoals.createdAt))
 
   return { success: true, data: rows.map(toGoalRecord) }
+  })
 }
 
 // ── getWordGoalProgressAction ───────────────────────────────────────────────
@@ -253,6 +262,7 @@ export async function listHiveWordGoalsAction(
 export async function getWordGoalProgressAction(input: {
   goalId: string
 }): Promise<ActionResult<WordGoalProgressData>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   if (!input?.goalId) return { success: false, error: 'INVALID_INPUT' }
 
@@ -344,6 +354,7 @@ export async function getWordGoalProgressAction(input: {
     success: true,
     data: { goal, progress, contributors, recentLogs },
   }
+  })
 }
 
 // ── getActiveWordGoalSummaryAction ──────────────────────────────────────────
@@ -357,6 +368,7 @@ export const getActiveWordGoalSummaryAction = cache(
   async (
     hiveId: string,
   ): Promise<ActionResult<{ goal: WordGoalRecord; progress: number } | null>> => {
+    return runAction(async () => {
     const userId = await requireAuth()
     if (!hiveId) return { success: false, error: 'INVALID_INPUT' }
 
@@ -389,5 +401,6 @@ export const getActiveWordGoalSummaryAction = cache(
     const progress = aggregateGoalProgress(primary, logsRaw)
 
     return { success: true, data: { goal: primary as WordGoalRecord, progress } }
+    })
   },
 )

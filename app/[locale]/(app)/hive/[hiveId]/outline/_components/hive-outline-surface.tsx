@@ -16,6 +16,7 @@ import { SaveStatusBadge, type FormSaveStatus } from '@/app/[locale]/(app)/studi
 import { OutlineBeatRow } from '@/app/[locale]/(app)/studio/[bookId]/_components/outline/outline-card'
 import { readBeats, type Beat, type OutlineContent } from '@/app/[locale]/(app)/studio/[bookId]/_components/outline/outline-board'
 import { BeatDialog } from '@/app/[locale]/(app)/studio/[bookId]/_components/outline/beat-dialog'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 
 type ChapterRef = { id: string; title: string; order: number }
 
@@ -92,10 +93,16 @@ function HiveOutlineSurfaceInner({
     if (readOnly) return
     if (trimmed === (outline.title || '').trim()) return
     setTitle(trimmed)
-    const r = await updateBinderItemAction(outline.id, { title: trimmed || 'Untitled outline' })
-    if (!r.success) {
-      // Roll back local state if the server rejected the rename.
+    try {
+      const r = await updateBinderItemAction(outline.id, { title: trimmed || 'Untitled outline' })
+      if (!r.success) {
+        // Roll back local state if the server rejected the rename.
+        setTitle(outline.title || '')
+        toastActionError(r.error)
+      }
+    } catch {
       setTitle(outline.title || '')
+      toastNetworkError()
     }
   }
   const [linkingBeatId, setLinkingBeatId] = useState<string | null>(null)
@@ -141,8 +148,15 @@ function HiveOutlineSurfaceInner({
     const content: OutlineContent = { beats: next }
     saveTimer.current = setTimeout(async () => {
       setSaveStatus('saving')
-      const result = await updateBinderItemAction(outline.id, { content: content as unknown as Record<string, unknown> })
-      setSaveStatus(result.success ? 'saved' : 'unsaved')
+      try {
+        const result = await updateBinderItemAction(outline.id, { content: content as unknown as Record<string, unknown> })
+        // Keep the user's beats either way; only the persisted state failed.
+        setSaveStatus(result.success ? 'saved' : 'unsaved')
+        if (!result.success) toastActionError(result.error)
+      } catch {
+        setSaveStatus('unsaved')
+        toastNetworkError()
+      }
     }, 2000)
   }
 

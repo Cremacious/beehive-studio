@@ -5,11 +5,13 @@ import { userMutes } from '@/db/schema/social'
 import { and, eq } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { userTargetSchema } from '@/lib/validations/social'
+import { runAction } from './safe-action'
 import type { ActionResult } from './book.actions'
 
 export async function muteUserAction(
   input: unknown,
 ): Promise<ActionResult<{ muted: boolean }>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const parsed = userTargetSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
@@ -22,11 +24,13 @@ export async function muteUserAction(
     .onConflictDoNothing()
 
   return { success: true, data: { muted: true } }
+  })
 }
 
 export async function unmuteUserAction(
   input: unknown,
 ): Promise<ActionResult<{ removed: boolean }>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const parsed = userTargetSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
@@ -39,6 +43,7 @@ export async function unmuteUserAction(
     )
 
   return { success: true, data: { removed: true } }
+  })
 }
 
 export async function getMutedUsersAction(): Promise<ActionResult<string[]>> {

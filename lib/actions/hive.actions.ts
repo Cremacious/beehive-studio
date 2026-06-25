@@ -14,6 +14,7 @@ import { recordSocialActivityTx } from '@/lib/social/record-activity'
 import { shouldSkipNotification } from '@/lib/notifications/check-preferences'
 import { friendships } from '@/db/schema/social'
 import { createId } from '@paralleldrive/cuid2'
+import { runAction } from './safe-action'
 import type { ActionResult } from './book.actions'
 
 export type HiveSummary = {
@@ -155,45 +156,47 @@ export async function getHiveAction(hiveId: string): Promise<ActionResult<{
   isEditor: boolean
   book: HiveBookSummary | null
 }>> {
-  const userId = await requireAuth()
-  await assertHiveMember(hiveId, userId)
+  return runAction(async () => {
+    const userId = await requireAuth()
+    await assertHiveMember(hiveId, userId)
 
-  const hive = await db.query.hives.findFirst({ where: eq(hives.id, hiveId) })
-  if (!hive) return { success: false, error: 'Hive not found' }
+    const hive = await db.query.hives.findFirst({ where: eq(hives.id, hiveId) })
+    if (!hive) return { success: false, error: 'Hive not found' }
 
-  const members = await db.query.hiveMembers.findMany({
-    where: eq(hiveMembers.hiveId, hiveId),
-    with: { user: { columns: { name: true, email: true, image: true } } },
-  })
-
-  const myMember = members.find(m => m.userId === userId)
-  const isOwner = hive.ownerId === userId
-  const isEditor = isOwner || myMember?.role === 'MODERATOR'
-
-  let book: HiveBookSummary | null = null
-  if (hive.bookId) {
-    const bookRow = await db.query.books.findFirst({
-      where: eq(books.id, hive.bookId),
-      columns: { id: true, title: true, coverUrl: true, status: true, userId: true },
+    const members = await db.query.hiveMembers.findMany({
+      where: eq(hiveMembers.hiveId, hiveId),
+      with: { user: { columns: { name: true, email: true, image: true } } },
     })
-    if (bookRow) {
-      const { userProfiles } = await import('@/db/schema')
-      const profile = await db.query.userProfiles.findFirst({
-        where: eq(userProfiles.userId, bookRow.userId),
-        columns: { username: true },
+
+    const myMember = members.find(m => m.userId === userId)
+    const isOwner = hive.ownerId === userId
+    const isEditor = isOwner || myMember?.role === 'MODERATOR'
+
+    let book: HiveBookSummary | null = null
+    if (hive.bookId) {
+      const bookRow = await db.query.books.findFirst({
+        where: eq(books.id, hive.bookId),
+        columns: { id: true, title: true, coverUrl: true, status: true, userId: true },
       })
-      book = {
-        id: bookRow.id,
-        title: bookRow.title,
-        coverUrl: bookRow.coverUrl,
-        status: bookRow.status,
-        userId: bookRow.userId,
-        authorUsername: profile?.username ?? null,
+      if (bookRow) {
+        const { userProfiles } = await import('@/db/schema')
+        const profile = await db.query.userProfiles.findFirst({
+          where: eq(userProfiles.userId, bookRow.userId),
+          columns: { username: true },
+        })
+        book = {
+          id: bookRow.id,
+          title: bookRow.title,
+          coverUrl: bookRow.coverUrl,
+          status: bookRow.status,
+          userId: bookRow.userId,
+          authorUsername: profile?.username ?? null,
+        }
       }
     }
-  }
 
-  return { success: true, data: { hive, members: members as HiveMemberRow[], isOwner, isEditor, book } }
+    return { success: true, data: { hive, members: members as HiveMemberRow[], isOwner, isEditor, book } }
+  })
 }
 
 // `getUserHivesAction` and `getMyHivesAction` deleted in H1 Task 6.
@@ -244,209 +247,228 @@ export async function updateHiveAction(input: unknown): Promise<ActionResult<voi
 }
 
 export async function deleteHiveAction(hiveId: string): Promise<ActionResult> {
-  const userId = await requireAuth()
-  await assertHiveOwner(hiveId, userId)
-  await db.delete(hives).where(eq(hives.id, hiveId))
-  return { success: true, data: undefined }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    await assertHiveOwner(hiveId, userId)
+    await db.delete(hives).where(eq(hives.id, hiveId))
+    return { success: true, data: undefined }
+  })
 }
 
 export async function inviteMemberByUsernameAction(hiveId: string, username: string): Promise<ActionResult> {
-  const userId = await requireAuth()
-  await assertHiveAdmin(hiveId, userId)
+  return runAction(async () => {
+    const userId = await requireAuth()
+    await assertHiveAdmin(hiveId, userId)
 
-  const { userProfiles } = await import('@/db/schema')
-  const profile = await db.query.userProfiles.findFirst({
-    where: eq(userProfiles.username, username),
-    columns: { userId: true },
-  })
-  if (!profile) return { success: false, error: 'User not found' }
-
-  const hive = await db.query.hives.findFirst({ where: eq(hives.id, hiveId), columns: { ownerId: true } })
-  if (!hive) return { success: false, error: 'Hive not found' }
-
-  const isPremium = await getUserPremiumStatus(hive.ownerId)
-  const memberCount = await getHiveMemberCount(hiveId)
-  if (!isPremium && memberCount >= FREE_HIVE_MEMBER_LIMIT) {
-    return { success: false, error: 'FREE_LIMIT_REACHED' }
-  }
-
-  const existing = await db.query.hiveInvites.findFirst({
-    where: and(eq(hiveInvites.hiveId, hiveId), eq(hiveInvites.inviteeId, profile.userId), eq(hiveInvites.status, 'PENDING')),
-  })
-  if (existing) return { success: false, error: 'Already invited' }
-
-  await db.insert(hiveInvites).values({ hiveId, inviteeId: profile.userId })
-  if (!(await shouldSkipNotification(profile.userId, 'HIVE_INVITE'))) {
-    await db.insert(notifications).values({
-      userId: profile.userId,
-      type: 'HIVE_INVITE',
-      actorId: userId,
-      resourceType: 'hive',
-      resourceId: hiveId,
+    const { userProfiles } = await import('@/db/schema')
+    const profile = await db.query.userProfiles.findFirst({
+      where: eq(userProfiles.username, username),
+      columns: { userId: true },
     })
-  }
-  return { success: true, data: undefined }
+    if (!profile) return { success: false, error: 'User not found' }
+
+    const hive = await db.query.hives.findFirst({ where: eq(hives.id, hiveId), columns: { ownerId: true } })
+    if (!hive) return { success: false, error: 'Hive not found' }
+
+    const isPremium = await getUserPremiumStatus(hive.ownerId)
+    const memberCount = await getHiveMemberCount(hiveId)
+    if (!isPremium && memberCount >= FREE_HIVE_MEMBER_LIMIT) {
+      return { success: false, error: 'FREE_LIMIT_REACHED' }
+    }
+
+    const existing = await db.query.hiveInvites.findFirst({
+      where: and(eq(hiveInvites.hiveId, hiveId), eq(hiveInvites.inviteeId, profile.userId), eq(hiveInvites.status, 'PENDING')),
+    })
+    if (existing) return { success: false, error: 'Already invited' }
+
+    await db.insert(hiveInvites).values({ hiveId, inviteeId: profile.userId })
+    if (!(await shouldSkipNotification(profile.userId, 'HIVE_INVITE'))) {
+      await db.insert(notifications).values({
+        userId: profile.userId,
+        type: 'HIVE_INVITE',
+        actorId: userId,
+        resourceType: 'hive',
+        resourceId: hiveId,
+      })
+    }
+    return { success: true, data: undefined }
+  })
 }
 
 export async function generateInviteLinkAction(hiveId: string): Promise<ActionResult<{ token: string }>> {
-  const userId = await requireAuth()
-  await assertHiveAdmin(hiveId, userId)
+  return runAction(async () => {
+    const userId = await requireAuth()
+    await assertHiveAdmin(hiveId, userId)
 
-  const token = createId()
-  await db.insert(hiveInvites).values({ hiveId, token, inviteeId: null })
-  return { success: true, data: { token } }
+    const token = createId()
+    await db.insert(hiveInvites).values({ hiveId, token, inviteeId: null })
+    return { success: true, data: { token } }
+  })
 }
 
 export async function joinHiveByLinkAction(token: string): Promise<ActionResult<{ hiveId: string }>> {
-  const userId = await requireAuth()
+  return runAction(async () => {
+    const userId = await requireAuth()
 
-  const invite = await db.query.hiveInvites.findFirst({
-    where: and(eq(hiveInvites.token, token), eq(hiveInvites.status, 'PENDING')),
-  })
-  if (!invite) return { success: false, error: 'Invite link invalid or expired' }
+    const invite = await db.query.hiveInvites.findFirst({
+      where: and(eq(hiveInvites.token, token), eq(hiveInvites.status, 'PENDING')),
+    })
+    if (!invite) return { success: false, error: 'Invite link invalid or expired' }
 
-  const hive = await db.query.hives.findFirst({ where: eq(hives.id, invite.hiveId), columns: { ownerId: true } })
-  if (!hive) return { success: false, error: 'Hive not found' }
+    const hive = await db.query.hives.findFirst({ where: eq(hives.id, invite.hiveId), columns: { ownerId: true } })
+    if (!hive) return { success: false, error: 'Hive not found' }
 
-  const isPremium = await getUserPremiumStatus(hive.ownerId)
-  const memberCount = await getHiveMemberCount(invite.hiveId)
-  if (!isPremium && memberCount >= FREE_HIVE_MEMBER_LIMIT) {
-    return { success: false, error: 'FREE_LIMIT_REACHED' }
-  }
-
-  const alreadyMember = await db.query.hiveMembers.findFirst({
-    where: and(eq(hiveMembers.hiveId, invite.hiveId), eq(hiveMembers.userId, userId)),
-  })
-  if (alreadyMember) return { success: true, data: { hiveId: invite.hiveId } }
-
-  await db.transaction(async (tx) => {
-    await tx.insert(hiveMembers).values({ hiveId: invite.hiveId, userId, role: invite.role })
-
-    // D2b: keep member_count denorm warm.
-    await tx
-      .update(hives)
-      .set({ memberCount: sql`${hives.memberCount} + 1` })
-      .where(eq(hives.id, invite.hiveId))
-
-    // C1 T8 hook: hive_joined. Gate on PUBLIC+discoverable. Spec §3.4.
-    const [hiveRow] = await tx
-      .select({ name: hives.name, visibility: hives.visibility, discoverable: hives.discoverable })
-      .from(hives)
-      .where(eq(hives.id, invite.hiveId))
-      .limit(1)
-    if (hiveRow && hiveRow.visibility === 'PUBLIC' && hiveRow.discoverable === true) {
-      await recordSocialActivityTx(tx, {
-        actorId: userId,
-        type: 'hive_joined',
-        subjectType: 'hive',
-        subjectId: invite.hiveId,
-        payload: { name: hiveRow.name },
-      })
+    const isPremium = await getUserPremiumStatus(hive.ownerId)
+    const memberCount = await getHiveMemberCount(invite.hiveId)
+    if (!isPremium && memberCount >= FREE_HIVE_MEMBER_LIMIT) {
+      return { success: false, error: 'FREE_LIMIT_REACHED' }
     }
+
+    const alreadyMember = await db.query.hiveMembers.findFirst({
+      where: and(eq(hiveMembers.hiveId, invite.hiveId), eq(hiveMembers.userId, userId)),
+    })
+    if (alreadyMember) return { success: true, data: { hiveId: invite.hiveId } }
+
+    await db.transaction(async (tx) => {
+      await tx.insert(hiveMembers).values({ hiveId: invite.hiveId, userId, role: invite.role })
+
+      // D2b: keep member_count denorm warm.
+      await tx
+        .update(hives)
+        .set({ memberCount: sql`${hives.memberCount} + 1` })
+        .where(eq(hives.id, invite.hiveId))
+
+      // C1 T8 hook: hive_joined. Gate on PUBLIC+discoverable. Spec §3.4.
+      const [hiveRow] = await tx
+        .select({ name: hives.name, visibility: hives.visibility, discoverable: hives.discoverable })
+        .from(hives)
+        .where(eq(hives.id, invite.hiveId))
+        .limit(1)
+      if (hiveRow && hiveRow.visibility === 'PUBLIC' && hiveRow.discoverable === true) {
+        await recordSocialActivityTx(tx, {
+          actorId: userId,
+          type: 'hive_joined',
+          subjectType: 'hive',
+          subjectId: invite.hiveId,
+          payload: { name: hiveRow.name },
+        })
+      }
+    })
+    return { success: true, data: { hiveId: invite.hiveId } }
   })
-  return { success: true, data: { hiveId: invite.hiveId } }
 }
 
 export async function acceptHiveInviteAction(inviteId: string): Promise<ActionResult<{ hiveId: string }>> {
-  const userId = await requireAuth()
+  return runAction(async () => {
+    const userId = await requireAuth()
 
-  const invite = await db.query.hiveInvites.findFirst({
-    where: and(eq(hiveInvites.id, inviteId), eq(hiveInvites.inviteeId, userId), eq(hiveInvites.status, 'PENDING')),
+    const invite = await db.query.hiveInvites.findFirst({
+      where: and(eq(hiveInvites.id, inviteId), eq(hiveInvites.inviteeId, userId), eq(hiveInvites.status, 'PENDING')),
+    })
+    if (!invite) return { success: false, error: 'Invite not found' }
+
+    await db.transaction(async (tx) => {
+      await tx.update(hiveInvites).set({ status: 'ACCEPTED' }).where(eq(hiveInvites.id, inviteId))
+      await tx.insert(hiveMembers).values({ hiveId: invite.hiveId, userId, role: invite.role })
+
+      // D2b: keep member_count denorm warm.
+      await tx
+        .update(hives)
+        .set({ memberCount: sql`${hives.memberCount} + 1` })
+        .where(eq(hives.id, invite.hiveId))
+
+      // C1 T8 hook: hive_joined. Gate on PUBLIC+discoverable. Spec §3.4.
+      const [hive] = await tx
+        .select({ name: hives.name, visibility: hives.visibility, discoverable: hives.discoverable })
+        .from(hives)
+        .where(eq(hives.id, invite.hiveId))
+        .limit(1)
+      if (hive && hive.visibility === 'PUBLIC' && hive.discoverable === true) {
+        await recordSocialActivityTx(tx, {
+          actorId: userId,
+          type: 'hive_joined',
+          subjectType: 'hive',
+          subjectId: invite.hiveId,
+          payload: { name: hive.name },
+        })
+      }
+    })
+    await recordHiveActivity({
+      hiveId: invite.hiveId,
+      actorId: userId,
+      type: 'member_joined',
+      subjectId: null,
+      payload: { role: invite.role },
+    })
+    return { success: true, data: { hiveId: invite.hiveId } }
   })
-  if (!invite) return { success: false, error: 'Invite not found' }
-
-  await db.transaction(async (tx) => {
-    await tx.update(hiveInvites).set({ status: 'ACCEPTED' }).where(eq(hiveInvites.id, inviteId))
-    await tx.insert(hiveMembers).values({ hiveId: invite.hiveId, userId, role: invite.role })
-
-    // D2b: keep member_count denorm warm.
-    await tx
-      .update(hives)
-      .set({ memberCount: sql`${hives.memberCount} + 1` })
-      .where(eq(hives.id, invite.hiveId))
-
-    // C1 T8 hook: hive_joined. Gate on PUBLIC+discoverable. Spec §3.4.
-    const [hive] = await tx
-      .select({ name: hives.name, visibility: hives.visibility, discoverable: hives.discoverable })
-      .from(hives)
-      .where(eq(hives.id, invite.hiveId))
-      .limit(1)
-    if (hive && hive.visibility === 'PUBLIC' && hive.discoverable === true) {
-      await recordSocialActivityTx(tx, {
-        actorId: userId,
-        type: 'hive_joined',
-        subjectType: 'hive',
-        subjectId: invite.hiveId,
-        payload: { name: hive.name },
-      })
-    }
-  })
-  await recordHiveActivity({
-    hiveId: invite.hiveId,
-    actorId: userId,
-    type: 'member_joined',
-    subjectId: null,
-    payload: { role: invite.role },
-  })
-  return { success: true, data: { hiveId: invite.hiveId } }
 }
 
 export async function declineHiveInviteAction(inviteId: string): Promise<ActionResult> {
-  const userId = await requireAuth()
-  await db.update(hiveInvites)
-    .set({ status: 'DECLINED' })
-    .where(and(eq(hiveInvites.id, inviteId), eq(hiveInvites.inviteeId, userId)))
-  return { success: true, data: undefined }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    await db.update(hiveInvites)
+      .set({ status: 'DECLINED' })
+      .where(and(eq(hiveInvites.id, inviteId), eq(hiveInvites.inviteeId, userId)))
+    return { success: true, data: undefined }
+  })
 }
 
 export async function removeMemberAction(hiveId: string, targetUserId: string): Promise<ActionResult> {
-  const userId = await requireAuth()
-  await assertHiveAdmin(hiveId, userId)
-  await db.transaction(async (tx) => {
-    const deleted = await tx
-      .delete(hiveMembers)
-      .where(and(eq(hiveMembers.hiveId, hiveId), eq(hiveMembers.userId, targetUserId)))
-      .returning({ id: hiveMembers.id })
-    if (deleted.length > 0) {
-      // D2b: keep member_count denorm warm. Floor at 1 — owner is always a member.
-      await tx
-        .update(hives)
-        .set({ memberCount: sql`GREATEST(${hives.memberCount} - 1, 1)` })
-        .where(eq(hives.id, hiveId))
-    }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    await assertHiveAdmin(hiveId, userId)
+    await db.transaction(async (tx) => {
+      const deleted = await tx
+        .delete(hiveMembers)
+        .where(and(eq(hiveMembers.hiveId, hiveId), eq(hiveMembers.userId, targetUserId)))
+        .returning({ id: hiveMembers.id })
+      if (deleted.length > 0) {
+        // D2b: keep member_count denorm warm. Floor at 1 — owner is always a member.
+        await tx
+          .update(hives)
+          .set({ memberCount: sql`GREATEST(${hives.memberCount} - 1, 1)` })
+          .where(eq(hives.id, hiveId))
+      }
+    })
+    return { success: true, data: undefined }
   })
-  return { success: true, data: undefined }
 }
 
 export async function updateMemberRoleAction(hiveId: string, targetUserId: string, role: 'OWNER' | 'MODERATOR' | 'CONTRIBUTOR' | 'BETA_READER'): Promise<ActionResult> {
-  const userId = await requireAuth()
-  await assertHiveOwner(hiveId, userId)
-  await db.update(hiveMembers).set({ role }).where(and(eq(hiveMembers.hiveId, hiveId), eq(hiveMembers.userId, targetUserId)))
-  return { success: true, data: undefined }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    await assertHiveOwner(hiveId, userId)
+    await db.update(hiveMembers).set({ role }).where(and(eq(hiveMembers.hiveId, hiveId), eq(hiveMembers.userId, targetUserId)))
+    return { success: true, data: undefined }
+  })
 }
 
 export async function leaveHiveAction(hiveId: string): Promise<ActionResult> {
-  const userId = await requireAuth()
-  const hive = await db.query.hives.findFirst({ where: eq(hives.id, hiveId), columns: { ownerId: true } })
-  if (!hive) return { success: false, error: 'Hive not found' }
-  if (hive.ownerId === userId) return { success: false, error: 'OWNER_MUST_TRANSFER_OR_DELETE' }
-  await db.transaction(async (tx) => {
-    const deleted = await tx
-      .delete(hiveMembers)
-      .where(and(eq(hiveMembers.hiveId, hiveId), eq(hiveMembers.userId, userId)))
-      .returning({ id: hiveMembers.id })
-    if (deleted.length > 0) {
-      // D2b: keep member_count denorm warm. Floor at 1 — owner is always a member.
-      await tx
-        .update(hives)
-        .set({ memberCount: sql`GREATEST(${hives.memberCount} - 1, 1)` })
-        .where(eq(hives.id, hiveId))
-    }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const hive = await db.query.hives.findFirst({ where: eq(hives.id, hiveId), columns: { ownerId: true } })
+    if (!hive) return { success: false, error: 'Hive not found' }
+    if (hive.ownerId === userId) return { success: false, error: 'OWNER_MUST_TRANSFER_OR_DELETE' }
+    await db.transaction(async (tx) => {
+      const deleted = await tx
+        .delete(hiveMembers)
+        .where(and(eq(hiveMembers.hiveId, hiveId), eq(hiveMembers.userId, userId)))
+        .returning({ id: hiveMembers.id })
+      if (deleted.length > 0) {
+        // D2b: keep member_count denorm warm. Floor at 1 — owner is always a member.
+        await tx
+          .update(hives)
+          .set({ memberCount: sql`GREATEST(${hives.memberCount} - 1, 1)` })
+          .where(eq(hives.id, hiveId))
+      }
+    })
+    return { success: true, data: undefined }
   })
-  return { success: true, data: undefined }
 }
 
 export async function getDiscoverableHivesAction(): Promise<ActionResult<HiveSummary[]>> {
+  return runAction(async () => {
   const viewerUserId = await requireAuth()
 
   // Pre-fetch viewer's ACCEPTED friend ids so FRIENDS-tier hives only surface
@@ -537,6 +559,7 @@ export async function getDiscoverableHivesAction(): Promise<ActionResult<HiveSum
     memberPreviews: row.memberPreviews,
   }))
   return { success: true, data: summaries }
+  })
 }
 
 export type UserHiveView = {

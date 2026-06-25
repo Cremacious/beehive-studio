@@ -1,6 +1,8 @@
 'use client'
 import Link from 'next/link'
 import { useTransition } from 'react'
+import { toast } from 'sonner'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 import { SparkVoteButton } from './spark-vote-button'
 import { setCreatorChoiceAction } from '@/lib/actions/sparks.actions'
 import type { SparkEntrySummary } from '@/lib/actions/sparks.actions'
@@ -29,7 +31,16 @@ export function SparkEntryCard({
 
   const handleCreatorChoice = () => {
     startChoiceTransition(async () => {
-      await setCreatorChoiceAction(sparkId, entry.id)
+      try {
+        const result = await setCreatorChoiceAction(sparkId, entry.id)
+        if (!result.success) {
+          toastActionError(result.error)
+          return
+        }
+        toast.success("Marked as creator's choice")
+      } catch {
+        toastNetworkError()
+      }
     })
   }
 

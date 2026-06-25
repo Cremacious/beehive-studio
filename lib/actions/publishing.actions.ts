@@ -8,6 +8,7 @@ import { assertBookOwner } from './_helpers'
 import { getUserPremiumStatus } from '@/lib/premium'
 import { updatePublishingMetadataSchema } from '@/lib/validations/book'
 import type { ActionResult } from './book.actions'
+import { runAction } from './safe-action'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -38,6 +39,7 @@ export type ExportPreset = {
 export async function getPublishingMetadataAction(
   bookId: string,
 ): Promise<ActionResult<PublishingMetadata>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   await assertBookOwner(bookId, userId)
 
@@ -75,6 +77,7 @@ export async function getPublishingMetadataAction(
       edition: meta.edition,
     },
   }
+  })
 }
 
 /**
@@ -93,6 +96,7 @@ export async function updatePublishingMetadataAction(
     edition?: string
   },
 ): Promise<ActionResult> {
+  return runAction(async () => {
   const userId = await requireAuth()
 
   const isPremium = await getUserPremiumStatus(userId)
@@ -144,6 +148,7 @@ export async function updatePublishingMetadataAction(
     })
 
   return { success: true, data: undefined }
+  })
 }
 
 /**
@@ -151,6 +156,7 @@ export async function updatePublishingMetadataAction(
  * Visible to all users; export itself is premium-gated in the UI.
  */
 export async function getExportPresetsAction(): Promise<ActionResult<ExportPreset[]>> {
+  return runAction(async () => {
   await requireAuth()
 
   const presets = await db
@@ -165,4 +171,5 @@ export async function getExportPresetsAction(): Promise<ActionResult<ExportPrese
     .orderBy(exportPresets.name)
 
   return { success: true, data: presets }
+  })
 }

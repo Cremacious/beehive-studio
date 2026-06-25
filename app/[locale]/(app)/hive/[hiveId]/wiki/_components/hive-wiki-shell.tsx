@@ -12,6 +12,7 @@ import { createId } from '@paralleldrive/cuid2'
 import { WikiCategoryPicker } from '@/app/[locale]/(app)/studio/[bookId]/_components/binder/wiki-category-picker'
 import { HivePageShell } from '../../_components/hive-page-shell'
 import { HiveSectionDivider } from '../../_components/hive-section-divider'
+import { toastNetworkError } from '@/lib/errors/notify'
 
 const TILE_HOVER =
   'transition-transform duration-150 hover:-translate-y-px active:translate-y-0'
@@ -48,24 +49,28 @@ export function HiveWikiShell({
       },
     ]
     startTransition(async () => {
-      const r = await createBinderItemAction({
-        bookId,
-        parentId: null,
-        type: 'wiki_entry',
-        title: `New ${template.label}`,
-        order: totalEntries + 1,
-        content: {
-          category,
-          sections: seededSections,
-          tags: [],
-          hints: {},
-        } as unknown as Record<string, unknown>,
-      })
-      if (!r.success) {
-        toast.error(r.error)
-        return
+      try {
+        const r = await createBinderItemAction({
+          bookId,
+          parentId: null,
+          type: 'wiki_entry',
+          title: `New ${template.label}`,
+          order: totalEntries + 1,
+          content: {
+            category,
+            sections: seededSections,
+            tags: [],
+            hints: {},
+          } as unknown as Record<string, unknown>,
+        })
+        if (!r.success) {
+          toast.error(r.error)
+          return
+        }
+        router.push(`/${locale}/hive/${hiveId}/wiki/entry/${r.data.id}`)
+      } catch {
+        toastNetworkError()
       }
-      router.push(`/${locale}/hive/${hiveId}/wiki/entry/${r.data.id}`)
     })
   }
 

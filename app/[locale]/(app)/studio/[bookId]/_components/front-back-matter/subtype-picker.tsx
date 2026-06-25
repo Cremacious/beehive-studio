@@ -2,6 +2,7 @@
 
 import { updateBinderItemAction } from '@/lib/actions/binder.actions'
 import { useBookEditor } from '../book-editor-provider'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 import {
   FRONT_MATTER_OPTIONS,
   BACK_MATTER_OPTIONS,
@@ -28,8 +29,18 @@ export function SubtypePicker({ itemId, itemType, activeSubtype }: Props) {
   async function pick(subtype: Subtype) {
     if (subtype === activeSubtype) return
     const newContent = { subtype, fields: {} }
+    const previousContent = { subtype: activeSubtype ?? null, fields: {} }
     updateBinderItem(itemId, { content: newContent })
-    await updateBinderItemAction(itemId, { content: newContent })
+    try {
+      const result = await updateBinderItemAction(itemId, { content: newContent })
+      if (!result.success) {
+        updateBinderItem(itemId, { content: previousContent })
+        toastActionError(result.error)
+      }
+    } catch {
+      updateBinderItem(itemId, { content: previousContent })
+      toastNetworkError()
+    }
   }
 
   return (

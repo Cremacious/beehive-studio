@@ -31,6 +31,7 @@ import { OutlineHelpPanel } from './outline-help-panel'
 import { BeatDialog } from './beat-dialog'
 import { groupBeatsByAct, distinctActs } from '@/lib/outline/group-by-act'
 import { migrateBeatStatus } from '@/lib/outline/migrate-beat-status'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 
 // ── Types ──────────────────────────────────────────────────────────────
 
@@ -196,7 +197,7 @@ export function OutlineBoard({ item }: Props) {
         collapsedActs: initial.collapsedActs ?? [],
         helpBannerDismissed: initial.helpBannerDismissed ?? false,
       }
-      void updateBinderItemAction(item.id, { content: next })
+      void updateBinderItemAction(item.id, { content: next }).catch(() => {})
       updateBinderItem(item.id, { content: next })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -222,8 +223,15 @@ export function OutlineBoard({ item }: Props) {
     saveTimer.current = setTimeout(async () => {
       setSaveStatus('saving')
       updateBinderItem(item.id, { content })
-      const result = await updateBinderItemAction(item.id, { content })
-      setSaveStatus(result.success ? 'saved' : 'unsaved')
+      try {
+        const result = await updateBinderItemAction(item.id, { content })
+        // Keep the user's outline edits on failure; just surface the error.
+        setSaveStatus(result.success ? 'saved' : 'unsaved')
+        if (!result.success) toastActionError(result.error)
+      } catch {
+        setSaveStatus('unsaved')
+        toastNetworkError()
+      }
     }, 2000)
   }
 

@@ -9,6 +9,7 @@ import { requireAuth } from '@/lib/require-auth'
 import { isBlocked } from '@/lib/social/is-blocked'
 import { shouldSkipNotification } from '@/lib/notifications/check-preferences'
 import { claimInviteSchema } from '@/lib/validations/social'
+import { runAction } from './safe-action'
 import type { ActionResult } from './book.actions'
 
 const INVITE_TTL_MS = 14 * 24 * 60 * 60 * 1000
@@ -16,6 +17,7 @@ const INVITE_TTL_MS = 14 * 24 * 60 * 60 * 1000
 export async function createFriendInviteAction(): Promise<
   ActionResult<{ token: string; expiresAt: Date }>
 > {
+  return runAction(async () => {
   const userId = await requireAuth()
   const token = randomBytes(24).toString('base64url')
   const expiresAt = new Date(Date.now() + INVITE_TTL_MS)
@@ -27,11 +29,13 @@ export async function createFriendInviteAction(): Promise<
   })
 
   return { success: true, data: { token, expiresAt } }
+  })
 }
 
 export async function claimFriendInviteAction(
   input: unknown,
 ): Promise<ActionResult<{ inviterUsername: string | null; alreadyFriends: boolean }>> {
+  return runAction<{ inviterUsername: string | null; alreadyFriends: boolean }>(async () => {
   const userId = await requireAuth()
   const parsed = claimInviteSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
@@ -123,4 +127,5 @@ export async function claimFriendInviteAction(
   })
 
   return { success: true, data: { inviterUsername, alreadyFriends: false } }
+  })
 }

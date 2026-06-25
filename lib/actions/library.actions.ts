@@ -29,6 +29,7 @@ import { and, eq, desc, inArray, count, sql, isNotNull } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { canReadBook } from '@/lib/books/can-read'
 import type { ActionResult } from './book.actions'
+import { runAction } from './safe-action'
 
 export type BookmarkSort = 'recent' | 'title' | 'author' | 'progress'
 export type BookmarkStatus = 'all' | 'reading' | 'not-started' | 'finished'
@@ -81,6 +82,7 @@ export async function getBookmarkedBooksAction(input: {
     facets: BookmarkFacets
   }>
 > {
+  return runAction(async () => {
   const userId = await requireAuth()
   const q = (input.q ?? '').trim().toLowerCase()
   const statusFilter: BookmarkStatus = input.status ?? 'all'
@@ -264,6 +266,7 @@ export async function getBookmarkedBooksAction(input: {
     success: true,
     data: { rows, totalCount: visible.length, filteredCount, facets },
   }
+  })
 }
 
 /**
@@ -274,6 +277,7 @@ export async function getBookmarkedBooksAction(input: {
 export async function getBookmarksEmptySuggestionsAction(input: {
   limit?: number
 }): Promise<ActionResult<TrendingBookCard[]>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const limit = Math.min(12, Math.max(1, input.limit ?? 4))
 
@@ -330,4 +334,5 @@ export async function getBookmarksEmptySuggestionsAction(input: {
       likeCount: Number(c.likeCount ?? 0),
     })),
   }
+  })
 }

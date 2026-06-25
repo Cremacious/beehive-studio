@@ -65,7 +65,11 @@ export async function updateProfileAction(data: {
   if (website !== undefined) updates.website = website
   if (location !== undefined) updates.location = location
 
-  await db.update(userProfiles).set(updates).where(eq(userProfiles.userId, userId))
+  try {
+    await db.update(userProfiles).set(updates).where(eq(userProfiles.userId, userId))
+  } catch {
+    return { success: false, error: 'Could not save your profile. Please try again.' }
+  }
 
   return { success: true }
 }
@@ -78,20 +82,24 @@ export async function updatePrivacySettingAction(
 ): Promise<{ success: boolean; error?: string }> {
   const userId = await requireAuth()
 
-  await db
-    .insert(userPrivacySettings)
-    .values({
-      userId,
-      [key]: value,
-      updatedAt: new Date(),
-    })
-    .onConflictDoUpdate({
-      target: userPrivacySettings.userId,
-      set: {
+  try {
+    await db
+      .insert(userPrivacySettings)
+      .values({
+        userId,
         [key]: value,
         updatedAt: new Date(),
-      },
-    })
+      })
+      .onConflictDoUpdate({
+        target: userPrivacySettings.userId,
+        set: {
+          [key]: value,
+          updatedAt: new Date(),
+        },
+      })
+  } catch {
+    return { success: false, error: 'Could not save your privacy setting. Please try again.' }
+  }
 
   return { success: true }
 }
@@ -159,28 +167,32 @@ export async function updatePreferencesAction(data: {
     }
   }
 
-  await db
-    .insert(userPreferences)
-    .values({
-      userId,
-      defaultBookVisibility: d.defaultBookVisibility ?? 'PRIVATE',
-      defaultGenre: d.defaultGenre ?? null,
-      defaultSparkWordLimit: d.defaultSparkWordLimit ?? null,
-      editorTheme: d.editorTheme ?? 'light',
-      genreInterests: d.genreInterests ?? [],
-      updatedAt: new Date(),
-    })
-    .onConflictDoUpdate({
-      target: userPreferences.userId,
-      set: {
-        ...(d.defaultBookVisibility !== undefined && { defaultBookVisibility: d.defaultBookVisibility }),
-        ...(d.defaultGenre !== undefined && { defaultGenre: d.defaultGenre }),
-        ...(d.defaultSparkWordLimit !== undefined && { defaultSparkWordLimit: d.defaultSparkWordLimit }),
-        ...(d.editorTheme !== undefined && { editorTheme: d.editorTheme }),
-        ...(d.genreInterests !== undefined && { genreInterests: d.genreInterests }),
+  try {
+    await db
+      .insert(userPreferences)
+      .values({
+        userId,
+        defaultBookVisibility: d.defaultBookVisibility ?? 'PRIVATE',
+        defaultGenre: d.defaultGenre ?? null,
+        defaultSparkWordLimit: d.defaultSparkWordLimit ?? null,
+        editorTheme: d.editorTheme ?? 'light',
+        genreInterests: d.genreInterests ?? [],
         updatedAt: new Date(),
-      },
-    })
+      })
+      .onConflictDoUpdate({
+        target: userPreferences.userId,
+        set: {
+          ...(d.defaultBookVisibility !== undefined && { defaultBookVisibility: d.defaultBookVisibility }),
+          ...(d.defaultGenre !== undefined && { defaultGenre: d.defaultGenre }),
+          ...(d.defaultSparkWordLimit !== undefined && { defaultSparkWordLimit: d.defaultSparkWordLimit }),
+          ...(d.editorTheme !== undefined && { editorTheme: d.editorTheme }),
+          ...(d.genreInterests !== undefined && { genreInterests: d.genreInterests }),
+          updatedAt: new Date(),
+        },
+      })
+  } catch {
+    return { success: false, error: 'Could not save your preferences. Please try again.' }
+  }
 
   return { success: true }
 }

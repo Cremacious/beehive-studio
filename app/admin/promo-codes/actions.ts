@@ -6,6 +6,7 @@ import { promoCodes } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { requireAdmin } from '@/lib/admin/require-admin'
 import { logAdminAction } from '@/lib/admin/log-action'
+import { runAdminWrite } from '@/lib/admin/safe-admin-action'
 
 export type PromoKind = 'DAYS_30' | 'DAYS_90' | 'DAYS_365' | 'LIFETIME'
 
@@ -63,28 +64,30 @@ export async function setPromoActiveAction(
   active: boolean,
 ): Promise<{ ok: boolean; error?: string }> {
   const admin = await requireAdmin()
-  await db.update(promoCodes).set({ isActive: active ? 'true' : 'false' }).where(eq(promoCodes.id, id))
-  await logAdminAction({
-    adminEmail: admin.email,
-    action: active ? 'promo.enable' : 'promo.disable',
-    targetType: 'promo_code',
-    targetId: id,
+  return runAdminWrite(async () => {
+    await db.update(promoCodes).set({ isActive: active ? 'true' : 'false' }).where(eq(promoCodes.id, id))
+    await logAdminAction({
+      adminEmail: admin.email,
+      action: active ? 'promo.enable' : 'promo.disable',
+      targetType: 'promo_code',
+      targetId: id,
+    })
+    revalidatePath('/admin/promo-codes')
   })
-  revalidatePath('/admin/promo-codes')
-  return { ok: true }
 }
 
 export async function deletePromoCodeAction(
   id: string,
 ): Promise<{ ok: boolean; error?: string }> {
   const admin = await requireAdmin()
-  await db.delete(promoCodes).where(eq(promoCodes.id, id))
-  await logAdminAction({
-    adminEmail: admin.email,
-    action: 'promo.delete',
-    targetType: 'promo_code',
-    targetId: id,
+  return runAdminWrite(async () => {
+    await db.delete(promoCodes).where(eq(promoCodes.id, id))
+    await logAdminAction({
+      adminEmail: admin.email,
+      action: 'promo.delete',
+      targetType: 'promo_code',
+      targetId: id,
+    })
+    revalidatePath('/admin/promo-codes')
   })
-  revalidatePath('/admin/promo-codes')
-  return { ok: true }
 }

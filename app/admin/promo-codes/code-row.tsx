@@ -1,6 +1,8 @@
 'use client'
 
 import { useTransition } from 'react'
+import { toast } from 'sonner'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 import { setPromoActiveAction, deletePromoCodeAction } from './actions'
 
 interface Row {
@@ -26,13 +28,31 @@ export function CodeRow({ row }: { row: Row }) {
 
   const toggle = () =>
     startTransition(async () => {
-      await setPromoActiveAction(row.id, !row.isActive)
+      try {
+        const res = await setPromoActiveAction(row.id, !row.isActive)
+        if (!res.ok) {
+          toastActionError(res.error)
+          return
+        }
+        toast.success(row.isActive ? 'Code disabled' : 'Code enabled')
+      } catch {
+        toastNetworkError()
+      }
     })
 
   const onDelete = () => {
     if (!window.confirm(`Delete code ${row.code}? Past redemptions stay valid.`)) return
     startTransition(async () => {
-      await deletePromoCodeAction(row.id)
+      try {
+        const res = await deletePromoCodeAction(row.id)
+        if (!res.ok) {
+          toastActionError(res.error)
+          return
+        }
+        toast.success('Code deleted')
+      } catch {
+        toastNetworkError()
+      }
     })
   }
 

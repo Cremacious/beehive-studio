@@ -11,6 +11,7 @@ import { useCloudinaryUpload } from '@/hooks/use-cloudinary-upload'
 import { validateImageFile } from '@/lib/upload/validate-image'
 import { optimizeCloudinaryUrl, ABOUT_AUTHOR_TRANSFORMS } from '@/lib/upload/cloudinary-url'
 import { deleteCloudinaryAssetAction } from '@/lib/actions/cloudinary-cleanup.actions'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 import type { AboutAuthorFields } from '@/lib/front-back-matter/types'
 import { SaveStatusBadge, type FormSaveStatus } from './save-status-badge'
 import { PageWrapper } from './page-wrapper'
@@ -52,8 +53,15 @@ export function AboutAuthorPreview({ itemId, initialFields }: Props) {
       setSaveStatus('saving')
       const newContent = { subtype: 'about_author' as const, fields: next }
       updateBinderItem(itemId, { content: newContent })
-      const result = await updateBinderItemAction(itemId, { content: newContent })
-      setSaveStatus(result.success ? 'saved' : 'unsaved')
+      try {
+        const result = await updateBinderItemAction(itemId, { content: newContent })
+        // Keep the user's edits on failure; just surface the error.
+        setSaveStatus(result.success ? 'saved' : 'unsaved')
+        if (!result.success) toastActionError(result.error)
+      } catch {
+        setSaveStatus('unsaved')
+        toastNetworkError()
+      }
     }, 1500)
   }
 
@@ -77,7 +85,7 @@ export function AboutAuthorPreview({ itemId, initialFields }: Props) {
         schedule({ ...fieldsRef.current, photoUrl: res.url })
         if (previousPhotoUrl) {
           // Best-effort cleanup of the prior Cloudinary asset
-          void deleteCloudinaryAssetAction(previousPhotoUrl, 'about-author/')
+          void deleteCloudinaryAssetAction(previousPhotoUrl, 'about-author/').catch(() => {})
         }
       } else {
         toast.error(`Upload failed: ${res.error}`)
@@ -104,7 +112,7 @@ export function AboutAuthorPreview({ itemId, initialFields }: Props) {
     schedule({ ...fieldsRef.current, photoUrl: undefined })
     if (previousPhotoUrl) {
       // Best-effort cleanup of the prior Cloudinary asset
-      void deleteCloudinaryAssetAction(previousPhotoUrl, 'about-author/')
+      void deleteCloudinaryAssetAction(previousPhotoUrl, 'about-author/').catch(() => {})
     }
   }
 

@@ -1,6 +1,7 @@
 'use client'
 import { useState, useTransition } from 'react'
 import { toggleFollowAction } from '@/lib/actions/social.actions'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 import Link from 'next/link'
 
 type Props = {
@@ -26,8 +27,16 @@ export function FollowButton({ targetUserId, locale, initialFollowing, isAuthent
     const next = !following
     setFollowing(next)
     startTransition(async () => {
-      const result = await toggleFollowAction(targetUserId)
-      if (!result.success) setFollowing(!next)
+      try {
+        const result = await toggleFollowAction(targetUserId)
+        if (!result.success) {
+          setFollowing(!next)
+          toastActionError(result.error)
+        }
+      } catch {
+        setFollowing(!next)
+        toastNetworkError()
+      }
     })
   }
 

@@ -7,6 +7,7 @@ import { Lock, Users, Globe, Check } from 'lucide-react'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { updateHiveAction, deleteHiveAction } from '@/lib/actions/hive.actions'
 import { HiveSectionDivider } from './hive-section-divider'
+import { toastNetworkError } from '@/lib/errors/notify'
 
 type Visibility = 'PRIVATE' | 'FRIENDS' | 'PUBLIC'
 
@@ -79,30 +80,39 @@ export function HiveSettingsForm({ hiveId, locale, initial }: Props) {
       return
     }
     setSaving(true)
-    const result = await updateHiveAction({
-      hiveId,
-      name: name.trim(),
-      description: description.trim() || null,
-      visibility,
-      discoverable,
-    })
-    setSaving(false)
-    if (result.success) {
-      toast.success('Hive updated')
-      router.refresh()
-    } else {
-      toast.error(result.error || 'Could not save')
+    try {
+      const result = await updateHiveAction({
+        hiveId,
+        name: name.trim(),
+        description: description.trim() || null,
+        visibility,
+        discoverable,
+      })
+      if (result.success) {
+        toast.success('Hive updated')
+        router.refresh()
+      } else {
+        toast.error(result.error || 'Could not save')
+      }
+    } catch {
+      toastNetworkError()
+    } finally {
+      setSaving(false)
     }
   }
 
   async function handleDelete() {
-    const result = await deleteHiveAction(hiveId)
-    if (result.success) {
-      toast.success(`Deleted "${initial.name}"`)
-      router.push(`/${locale}/studio`)
-      router.refresh()
-    } else {
-      toast.error(result.error || 'Could not delete')
+    try {
+      const result = await deleteHiveAction(hiveId)
+      if (result.success) {
+        toast.success(`Deleted "${initial.name}"`)
+        router.push(`/${locale}/studio`)
+        router.refresh()
+      } else {
+        toast.error(result.error || 'Could not delete')
+      }
+    } catch {
+      toastNetworkError()
     }
   }
 

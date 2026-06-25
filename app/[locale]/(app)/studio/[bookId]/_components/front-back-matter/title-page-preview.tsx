@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react'
 import { updateBinderItemAction } from '@/lib/actions/binder.actions'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 import { useBookEditor } from '../book-editor-provider'
 import type { TitlePageFields } from '@/lib/front-back-matter/types'
 import { SaveStatusBadge, type FormSaveStatus } from './save-status-badge'
@@ -39,8 +40,15 @@ export function TitlePagePreview({ itemId, initialFields }: Props) {
       setSaveStatus('saving')
       const newContent = { subtype: 'title_page' as const, fields: next }
       updateBinderItem(itemId, { content: newContent })
-      const result = await updateBinderItemAction(itemId, { content: newContent })
-      setSaveStatus(result.success ? 'saved' : 'unsaved')
+      try {
+        const result = await updateBinderItemAction(itemId, { content: newContent })
+        // Keep the user's edits on failure; just surface the error.
+        setSaveStatus(result.success ? 'saved' : 'unsaved')
+        if (!result.success) toastActionError(result.error)
+      } catch {
+        setSaveStatus('unsaved')
+        toastNetworkError()
+      }
     }, 1500)
   }
 

@@ -30,19 +30,27 @@ export async function updateAvatarAction(avatarUrl: string | null): Promise<{
     }
   }
 
-  await db
-    .insert(userProfiles)
-    .values({ userId, avatarUrl })
-    .onConflictDoUpdate({
-      target: userProfiles.userId,
-      set: { avatarUrl, updatedAt: new Date() },
-    })
+  // Profile avatar write + the better-auth users.image sync must land together
+  // — wrap both in one transaction so they can't diverge on a mid-step failure.
+  try {
+    await db.transaction(async (tx) => {
+      await tx
+        .insert(userProfiles)
+        .values({ userId, avatarUrl })
+        .onConflictDoUpdate({
+          target: userProfiles.userId,
+          set: { avatarUrl, updatedAt: new Date() },
+        })
 
-  // Keep better-auth's users.image in sync
-  await db
-    .update(users)
-    .set({ image: avatarUrl })
-    .where(eq(users.id, userId))
+      // Keep better-auth's users.image in sync
+      await tx
+        .update(users)
+        .set({ image: avatarUrl })
+        .where(eq(users.id, userId))
+    })
+  } catch {
+    return { success: false, error: 'Could not update your avatar. Please try again.' }
+  }
 
   return { success: true }
 }
@@ -66,18 +74,25 @@ export async function deleteAvatarAction(): Promise<{
     // Non-fatal: proceed even if Cloudinary deletion fails
   }
 
-  await db
-    .insert(userProfiles)
-    .values({ userId, avatarUrl: null })
-    .onConflictDoUpdate({
-      target: userProfiles.userId,
-      set: { avatarUrl: null, updatedAt: new Date() },
-    })
+  // Profile avatar clear + the better-auth users.image sync must land together.
+  try {
+    await db.transaction(async (tx) => {
+      await tx
+        .insert(userProfiles)
+        .values({ userId, avatarUrl: null })
+        .onConflictDoUpdate({
+          target: userProfiles.userId,
+          set: { avatarUrl: null, updatedAt: new Date() },
+        })
 
-  await db
-    .update(users)
-    .set({ image: null })
-    .where(eq(users.id, userId))
+      await tx
+        .update(users)
+        .set({ image: null })
+        .where(eq(users.id, userId))
+    })
+  } catch {
+    return { success: false, error: 'Could not remove your avatar. Please try again.' }
+  }
 
   return { success: true }
 }

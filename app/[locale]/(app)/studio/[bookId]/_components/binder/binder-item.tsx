@@ -7,6 +7,7 @@ import { useBinderTree, renderTree, type TreeNode } from './binder-tree'
 import { BinderItemMenu } from './binder-item-menu'
 import { updateBinderItemAction } from '@/lib/actions/binder.actions'
 import type { BinderItemRow } from '@/lib/actions/binder.actions'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 import type { ChapterStatus } from '@/lib/books/is-chapter-reader-visible'
 import { NOTE_COLOR_HEX } from '@/lib/notes/note-content'
 import {
@@ -135,9 +136,20 @@ export function BinderItem({ node, depth }: Props) {
 
   const commitRename = useCallback(async () => {
     const newTitle = inputRef.current?.value.trim() || node.title
+    const previousTitle = node.title
     setIsRenaming(false)
+    if (newTitle === previousTitle) return
     updateBinderItem(node.id, { title: newTitle })
-    await updateBinderItemAction(node.id, { title: newTitle })
+    try {
+      const result = await updateBinderItemAction(node.id, { title: newTitle })
+      if (!result.success) {
+        updateBinderItem(node.id, { title: previousTitle })
+        toastActionError(result.error)
+      }
+    } catch {
+      updateBinderItem(node.id, { title: previousTitle })
+      toastNetworkError()
+    }
   }, [node.id, node.title, updateBinderItem])
 
   const handleRenameKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {

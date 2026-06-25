@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { Heart } from 'lucide-react'
 import { toast } from 'sonner'
 import { toggleBuzzLikeAction } from '@/lib/actions/hive-buzz.actions'
+import { toastNetworkError } from '@/lib/errors/notify'
 
 export function LikeButton({
   buzzId,
@@ -26,14 +27,20 @@ export function LikeButton({
     setLiked(!prevLiked)
     setCount(prevCount + (prevLiked ? -1 : 1))
     startTransition(async () => {
-      const res = await toggleBuzzLikeAction({ buzzId })
-      if (!res.success) {
+      try {
+        const res = await toggleBuzzLikeAction({ buzzId })
+        if (!res.success) {
+          setLiked(prevLiked)
+          setCount(prevCount)
+          toast.error('Could not update like')
+        } else {
+          setLiked(res.data.liked)
+          setCount(res.data.likeCount)
+        }
+      } catch {
         setLiked(prevLiked)
         setCount(prevCount)
-        toast.error('Could not update like')
-      } else {
-        setLiked(res.data.liked)
-        setCount(res.data.likeCount)
+        toastNetworkError()
       }
     })
   }

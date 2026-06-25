@@ -6,6 +6,7 @@ import { and, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { isBlocked } from '@/lib/social/is-blocked'
 import { shouldSkipNotification } from '@/lib/notifications/check-preferences'
+import { runAction } from './safe-action'
 import type { ActionResult } from './book.actions'
 import {
   sendFriendRequestSchema,
@@ -58,6 +59,7 @@ async function findPairRow(a: string, b: string) {
 export async function sendFriendRequestAction(
   input: { recipientId: string },
 ): Promise<ActionResult<{ autoAccepted: boolean }>> {
+  return runAction<{ autoAccepted: boolean }>(async () => {
   const userId = await requireAuth()
   const parsed = sendFriendRequestSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
@@ -117,11 +119,13 @@ export async function sendFriendRequestAction(
     }
   })
   return { success: true, data: { autoAccepted: false } }
+  })
 }
 
 export async function acceptFriendRequestAction(
   input: { friendshipId: string },
 ): Promise<ActionResult<null>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const parsed = friendshipIdSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
@@ -152,11 +156,13 @@ export async function acceptFriendRequestAction(
     }
   })
   return { success: true, data: null }
+  })
 }
 
 export async function rejectFriendRequestAction(
   input: { friendshipId: string },
 ): Promise<ActionResult<null>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const parsed = friendshipIdSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
@@ -172,11 +178,13 @@ export async function rejectFriendRequestAction(
 
   await db.delete(friendships).where(eq(friendships.id, row.id))
   return { success: true, data: null }
+  })
 }
 
 export async function cancelFriendRequestAction(
   input: { friendshipId: string },
 ): Promise<ActionResult<null>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const parsed = friendshipIdSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
@@ -192,6 +200,7 @@ export async function cancelFriendRequestAction(
 
   await db.delete(friendships).where(eq(friendships.id, row.id))
   return { success: true, data: null }
+  })
 }
 
 /**
@@ -203,6 +212,7 @@ export async function cancelFriendRequestAction(
 export async function cancelFriendRequestByTargetAction(
   input: { targetUserId: string },
 ): Promise<ActionResult<null>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const targetUserId = input.targetUserId
   if (!targetUserId || typeof targetUserId !== 'string') {
@@ -222,11 +232,13 @@ export async function cancelFriendRequestByTargetAction(
   if (!row) return { success: false, error: 'NOT_FOUND' }
   await db.delete(friendships).where(eq(friendships.id, row.id))
   return { success: true, data: null }
+  })
 }
 
 export async function unfriendAction(
   input: { otherUserId: string },
 ): Promise<ActionResult<null>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const parsed = unfriendSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
@@ -250,6 +262,7 @@ export async function unfriendAction(
 
   await db.delete(friendships).where(eq(friendships.id, row.id))
   return { success: true, data: null }
+  })
 }
 
 export async function getFriendshipStatusAction(

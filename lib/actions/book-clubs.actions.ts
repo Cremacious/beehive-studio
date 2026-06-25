@@ -49,6 +49,7 @@ import { resolveMentionedUsers } from '@/lib/mentions/resolve-mentions'
 import { recordMentionNotificationsTx } from '@/lib/mentions/record-mention-notifications'
 import { shouldSkipNotification } from '@/lib/notifications/check-preferences'
 import { deleteCloudinaryImage, getCloudinaryPublicId } from '@/lib/cloudinary'
+import { runAction } from './safe-action'
 import type { ActionResult } from './book.actions'
 
 const DEFAULT_PAGE_SIZE = 20
@@ -200,102 +201,104 @@ function decodeCursor(s: string | undefined): CursorTuple | null {
 export async function createClubAction(
   input: unknown,
 ): Promise<ActionResult<{ id: string }>> {
-  const userId = await requireAuth()
-  const parsed = v.createClubSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = v.createClubSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  // C5a: extract mentions from description + rules separately; per-field cap check.
-  const descUsernames = extractMentionUsernamesFromText(parsed.data.description ?? '')
-  const rulesUsernames = extractMentionUsernamesFromText(parsed.data.rules ?? '')
-  if (descUsernames.length > 5 || rulesUsernames.length > 5) {
-    return { success: false, error: 'MENTION_CAP_EXCEEDED' }
-  }
-
-  const id = createId()
-  // D3b: stamp first-public if club is born PUBLIC+discoverable.
-  const now = new Date()
-  const isInitialPublicDiscoverable =
-    parsed.data.visibility === 'PUBLIC' && parsed.data.discoverable === true
-  await db.transaction(async (tx) => {
-    await tx.insert(bookClubs).values({
-      id,
-      ownerId: userId,
-      name: parsed.data.name,
-      description: parsed.data.description ?? null,
-      rules: parsed.data.rules ?? null,
-      tags: parsed.data.tags,
-      visibility: parsed.data.visibility,
-      discoverable: parsed.data.discoverable,
-      openJoin: parsed.data.openJoin,
-      coverImageUrl: parsed.data.coverImageUrl ?? null,
-      memberCount: 1,
-      firstPubliclyDiscoverableAt: isInitialPublicDiscoverable ? now : null,
-    })
-    await tx.insert(bookClubMembers).values({
-      id: createId(),
-      clubId: id,
-      userId,
-      role: 'OWNER',
-    })
-    if (parsed.data.visibility === 'PUBLIC' && parsed.data.discoverable) {
-      await recordSocialActivityTx(tx, {
-        actorId: userId,
-        type: 'book_club_created',
-        subjectType: 'book_club',
-        subjectId: id,
-        payload: { name: parsed.data.name },
-      })
+    // C5a: extract mentions from description + rules separately; per-field cap check.
+    const descUsernames = extractMentionUsernamesFromText(parsed.data.description ?? '')
+    const rulesUsernames = extractMentionUsernamesFromText(parsed.data.rules ?? '')
+    if (descUsernames.length > 5 || rulesUsernames.length > 5) {
+      return { success: false, error: 'MENTION_CAP_EXCEEDED' }
     }
 
-    // C5a: resolve + record mentions for description.
-    if (descUsernames.length > 0) {
-      const r = await resolveMentionedUsers({
-        tiptapUserIds: [],
-        textUsernames: descUsernames,
-        actorId: userId,
-        resourceType: 'book_club_description',
-        resourceId: id,
+    const id = createId()
+    // D3b: stamp first-public if club is born PUBLIC+discoverable.
+    const now = new Date()
+    const isInitialPublicDiscoverable =
+      parsed.data.visibility === 'PUBLIC' && parsed.data.discoverable === true
+    await db.transaction(async (tx) => {
+      await tx.insert(bookClubs).values({
+        id,
+        ownerId: userId,
+        name: parsed.data.name,
+        description: parsed.data.description ?? null,
+        rules: parsed.data.rules ?? null,
+        tags: parsed.data.tags,
+        visibility: parsed.data.visibility,
+        discoverable: parsed.data.discoverable,
+        openJoin: parsed.data.openJoin,
+        coverImageUrl: parsed.data.coverImageUrl ?? null,
+        memberCount: 1,
+        firstPubliclyDiscoverableAt: isInitialPublicDiscoverable ? now : null,
       })
-      if (r.ok && r.users.length > 0) {
-        const toNotify = r.users
-          .filter((u) => !r.alreadyNotified.has(u.userId))
-          .map((u) => u.userId)
-        if (toNotify.length > 0) {
-          await recordMentionNotificationsTx(tx, {
-            actorId: userId,
-            mentionedUserIds: toNotify,
-            resourceType: 'book_club_description',
-            resourceId: id,
-          })
+      await tx.insert(bookClubMembers).values({
+        id: createId(),
+        clubId: id,
+        userId,
+        role: 'OWNER',
+      })
+      if (parsed.data.visibility === 'PUBLIC' && parsed.data.discoverable) {
+        await recordSocialActivityTx(tx, {
+          actorId: userId,
+          type: 'book_club_created',
+          subjectType: 'book_club',
+          subjectId: id,
+          payload: { name: parsed.data.name },
+        })
+      }
+
+      // C5a: resolve + record mentions for description.
+      if (descUsernames.length > 0) {
+        const r = await resolveMentionedUsers({
+          tiptapUserIds: [],
+          textUsernames: descUsernames,
+          actorId: userId,
+          resourceType: 'book_club_description',
+          resourceId: id,
+        })
+        if (r.ok && r.users.length > 0) {
+          const toNotify = r.users
+            .filter((u) => !r.alreadyNotified.has(u.userId))
+            .map((u) => u.userId)
+          if (toNotify.length > 0) {
+            await recordMentionNotificationsTx(tx, {
+              actorId: userId,
+              mentionedUserIds: toNotify,
+              resourceType: 'book_club_description',
+              resourceId: id,
+            })
+          }
         }
       }
-    }
 
-    // C5a: resolve + record mentions for rules.
-    if (rulesUsernames.length > 0) {
-      const r = await resolveMentionedUsers({
-        tiptapUserIds: [],
-        textUsernames: rulesUsernames,
-        actorId: userId,
-        resourceType: 'book_club_rules',
-        resourceId: id,
-      })
-      if (r.ok && r.users.length > 0) {
-        const toNotify = r.users
-          .filter((u) => !r.alreadyNotified.has(u.userId))
-          .map((u) => u.userId)
-        if (toNotify.length > 0) {
-          await recordMentionNotificationsTx(tx, {
-            actorId: userId,
-            mentionedUserIds: toNotify,
-            resourceType: 'book_club_rules',
-            resourceId: id,
-          })
+      // C5a: resolve + record mentions for rules.
+      if (rulesUsernames.length > 0) {
+        const r = await resolveMentionedUsers({
+          tiptapUserIds: [],
+          textUsernames: rulesUsernames,
+          actorId: userId,
+          resourceType: 'book_club_rules',
+          resourceId: id,
+        })
+        if (r.ok && r.users.length > 0) {
+          const toNotify = r.users
+            .filter((u) => !r.alreadyNotified.has(u.userId))
+            .map((u) => u.userId)
+          if (toNotify.length > 0) {
+            await recordMentionNotificationsTx(tx, {
+              actorId: userId,
+              mentionedUserIds: toNotify,
+              resourceType: 'book_club_rules',
+              resourceId: id,
+            })
+          }
         }
       }
-    }
+    })
+    return { success: true, data: { id } }
   })
-  return { success: true, data: { id } }
 }
 
 export async function getClubsAction(input: {
@@ -634,177 +637,181 @@ export async function getClubAction(
 export async function updateClubAction(
   input: unknown,
 ): Promise<ActionResult<{ updated: boolean }>> {
-  const userId = await requireAuth()
-  const parsed = v.updateClubSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = v.updateClubSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  const club = await db.query.bookClubs.findFirst({
-    where: eq(bookClubs.id, parsed.data.clubId),
-    columns: { id: true, visibility: true, discoverable: true, coverImageUrl: true },
-  })
-  if (!club) return { success: false, error: 'NOT_FOUND' }
-
-  const membership = await getClubMembership(userId, parsed.data.clubId)
-  if (!canEditClubMetadata(membership.role)) {
-    return { success: false, error: 'NOT_ALLOWED' }
-  }
-
-  const updates: Partial<typeof bookClubs.$inferInsert> = {}
-  if (parsed.data.name !== undefined) updates.name = parsed.data.name
-  if (parsed.data.description !== undefined) updates.description = parsed.data.description
-  if (parsed.data.rules !== undefined) updates.rules = parsed.data.rules
-  if (parsed.data.tags !== undefined) updates.tags = parsed.data.tags
-  if (parsed.data.visibility !== undefined) updates.visibility = parsed.data.visibility
-  if (parsed.data.openJoin !== undefined) updates.openJoin = parsed.data.openJoin
-  if (parsed.data.coverImageUrl !== undefined) updates.coverImageUrl = parsed.data.coverImageUrl
-
-  // Best-effort: delete prior Cloudinary asset when cover changes (replace OR clear).
-  // Mirrors updateAvatarAction pattern. Non-fatal on any failure.
-  if (
-    parsed.data.coverImageUrl !== undefined &&
-    club.coverImageUrl &&
-    club.coverImageUrl !== parsed.data.coverImageUrl
-  ) {
-    try {
-      const oldId = getCloudinaryPublicId(club.coverImageUrl)
-      if (oldId) await deleteCloudinaryImage(oldId)
-    } catch {
-      // Non-fatal
-    }
-  }
-
-  // 3-layer discoverable defense
-  const effectiveVisibility = parsed.data.visibility ?? club.visibility
-  if (parsed.data.discoverable !== undefined) {
-    updates.discoverable =
-      effectiveVisibility === 'PUBLIC' ? parsed.data.discoverable : false
-  } else if (parsed.data.visibility !== undefined && effectiveVisibility !== 'PUBLIC') {
-    updates.discoverable = false
-  }
-
-  updates.updatedAt = new Date()
-
-  // C5a: extract mentions for any changed text fields; per-field cap check.
-  const descUsernames =
-    parsed.data.description !== undefined
-      ? extractMentionUsernamesFromText(parsed.data.description ?? '')
-      : []
-  const rulesUsernames =
-    parsed.data.rules !== undefined
-      ? extractMentionUsernamesFromText(parsed.data.rules ?? '')
-      : []
-  if (descUsernames.length > 5 || rulesUsernames.length > 5) {
-    return { success: false, error: 'MENTION_CAP_EXCEEDED' }
-  }
-
-  await db.transaction(async (tx) => {
-    // D3b: first-public stamp gate. If this update transitions the club into
-    // PUBLIC + discoverable for the first time, stamp firstPubliclyDiscoverableAt.
-    // Mirrors D3a updateListAction / D2b updateHiveAction.
-    const current = await tx.query.bookClubs.findFirst({
+    const club = await db.query.bookClubs.findFirst({
       where: eq(bookClubs.id, parsed.data.clubId),
-      columns: {
-        visibility: true,
-        discoverable: true,
-        firstPubliclyDiscoverableAt: true,
-      },
+      columns: { id: true, visibility: true, discoverable: true, coverImageUrl: true },
     })
-    if (current) {
-      const nextVisibility = updates.visibility ?? current.visibility
-      const nextDiscoverable =
-        updates.discoverable !== undefined
-          ? updates.discoverable
-          : current.discoverable
-      const becomingPublic =
-        nextVisibility === 'PUBLIC' &&
-        nextDiscoverable === true &&
-        current.firstPubliclyDiscoverableAt == null
-      if (becomingPublic) {
-        updates.firstPubliclyDiscoverableAt = updates.updatedAt as Date
+    if (!club) return { success: false, error: 'NOT_FOUND' }
+
+    const membership = await getClubMembership(userId, parsed.data.clubId)
+    if (!canEditClubMetadata(membership.role)) {
+      return { success: false, error: 'NOT_ALLOWED' }
+    }
+
+    const updates: Partial<typeof bookClubs.$inferInsert> = {}
+    if (parsed.data.name !== undefined) updates.name = parsed.data.name
+    if (parsed.data.description !== undefined) updates.description = parsed.data.description
+    if (parsed.data.rules !== undefined) updates.rules = parsed.data.rules
+    if (parsed.data.tags !== undefined) updates.tags = parsed.data.tags
+    if (parsed.data.visibility !== undefined) updates.visibility = parsed.data.visibility
+    if (parsed.data.openJoin !== undefined) updates.openJoin = parsed.data.openJoin
+    if (parsed.data.coverImageUrl !== undefined) updates.coverImageUrl = parsed.data.coverImageUrl
+
+    // Best-effort: delete prior Cloudinary asset when cover changes (replace OR clear).
+    // Mirrors updateAvatarAction pattern. Non-fatal on any failure.
+    if (
+      parsed.data.coverImageUrl !== undefined &&
+      club.coverImageUrl &&
+      club.coverImageUrl !== parsed.data.coverImageUrl
+    ) {
+      try {
+        const oldId = getCloudinaryPublicId(club.coverImageUrl)
+        if (oldId) await deleteCloudinaryImage(oldId)
+      } catch {
+        // Non-fatal
       }
     }
 
-    await tx.update(bookClubs).set(updates).where(eq(bookClubs.id, parsed.data.clubId))
+    // 3-layer discoverable defense
+    const effectiveVisibility = parsed.data.visibility ?? club.visibility
+    if (parsed.data.discoverable !== undefined) {
+      updates.discoverable =
+        effectiveVisibility === 'PUBLIC' ? parsed.data.discoverable : false
+    } else if (parsed.data.visibility !== undefined && effectiveVisibility !== 'PUBLIC') {
+      updates.discoverable = false
+    }
 
-    // C5a: resolve + record mentions for description.
-    if (descUsernames.length > 0) {
-      const r = await resolveMentionedUsers({
-        tiptapUserIds: [],
-        textUsernames: descUsernames,
-        actorId: userId,
-        resourceType: 'book_club_description',
-        resourceId: parsed.data.clubId,
+    updates.updatedAt = new Date()
+
+    // C5a: extract mentions for any changed text fields; per-field cap check.
+    const descUsernames =
+      parsed.data.description !== undefined
+        ? extractMentionUsernamesFromText(parsed.data.description ?? '')
+        : []
+    const rulesUsernames =
+      parsed.data.rules !== undefined
+        ? extractMentionUsernamesFromText(parsed.data.rules ?? '')
+        : []
+    if (descUsernames.length > 5 || rulesUsernames.length > 5) {
+      return { success: false, error: 'MENTION_CAP_EXCEEDED' }
+    }
+
+    await db.transaction(async (tx) => {
+      // D3b: first-public stamp gate. If this update transitions the club into
+      // PUBLIC + discoverable for the first time, stamp firstPubliclyDiscoverableAt.
+      // Mirrors D3a updateListAction / D2b updateHiveAction.
+      const current = await tx.query.bookClubs.findFirst({
+        where: eq(bookClubs.id, parsed.data.clubId),
+        columns: {
+          visibility: true,
+          discoverable: true,
+          firstPubliclyDiscoverableAt: true,
+        },
       })
-      if (r.ok && r.users.length > 0) {
-        const toNotify = r.users
-          .filter((u) => !r.alreadyNotified.has(u.userId))
-          .map((u) => u.userId)
-        if (toNotify.length > 0) {
-          await recordMentionNotificationsTx(tx, {
-            actorId: userId,
-            mentionedUserIds: toNotify,
-            resourceType: 'book_club_description',
-            resourceId: parsed.data.clubId,
-          })
+      if (current) {
+        const nextVisibility = updates.visibility ?? current.visibility
+        const nextDiscoverable =
+          updates.discoverable !== undefined
+            ? updates.discoverable
+            : current.discoverable
+        const becomingPublic =
+          nextVisibility === 'PUBLIC' &&
+          nextDiscoverable === true &&
+          current.firstPubliclyDiscoverableAt == null
+        if (becomingPublic) {
+          updates.firstPubliclyDiscoverableAt = updates.updatedAt as Date
         }
       }
-    }
 
-    // C5a: resolve + record mentions for rules.
-    if (rulesUsernames.length > 0) {
-      const r = await resolveMentionedUsers({
-        tiptapUserIds: [],
-        textUsernames: rulesUsernames,
-        actorId: userId,
-        resourceType: 'book_club_rules',
-        resourceId: parsed.data.clubId,
-      })
-      if (r.ok && r.users.length > 0) {
-        const toNotify = r.users
-          .filter((u) => !r.alreadyNotified.has(u.userId))
-          .map((u) => u.userId)
-        if (toNotify.length > 0) {
-          await recordMentionNotificationsTx(tx, {
-            actorId: userId,
-            mentionedUserIds: toNotify,
-            resourceType: 'book_club_rules',
-            resourceId: parsed.data.clubId,
-          })
+      await tx.update(bookClubs).set(updates).where(eq(bookClubs.id, parsed.data.clubId))
+
+      // C5a: resolve + record mentions for description.
+      if (descUsernames.length > 0) {
+        const r = await resolveMentionedUsers({
+          tiptapUserIds: [],
+          textUsernames: descUsernames,
+          actorId: userId,
+          resourceType: 'book_club_description',
+          resourceId: parsed.data.clubId,
+        })
+        if (r.ok && r.users.length > 0) {
+          const toNotify = r.users
+            .filter((u) => !r.alreadyNotified.has(u.userId))
+            .map((u) => u.userId)
+          if (toNotify.length > 0) {
+            await recordMentionNotificationsTx(tx, {
+              actorId: userId,
+              mentionedUserIds: toNotify,
+              resourceType: 'book_club_description',
+              resourceId: parsed.data.clubId,
+            })
+          }
         }
       }
-    }
+
+      // C5a: resolve + record mentions for rules.
+      if (rulesUsernames.length > 0) {
+        const r = await resolveMentionedUsers({
+          tiptapUserIds: [],
+          textUsernames: rulesUsernames,
+          actorId: userId,
+          resourceType: 'book_club_rules',
+          resourceId: parsed.data.clubId,
+        })
+        if (r.ok && r.users.length > 0) {
+          const toNotify = r.users
+            .filter((u) => !r.alreadyNotified.has(u.userId))
+            .map((u) => u.userId)
+          if (toNotify.length > 0) {
+            await recordMentionNotificationsTx(tx, {
+              actorId: userId,
+              mentionedUserIds: toNotify,
+              resourceType: 'book_club_rules',
+              resourceId: parsed.data.clubId,
+            })
+          }
+        }
+      }
+    })
+    return { success: true, data: { updated: true } }
   })
-  return { success: true, data: { updated: true } }
 }
 
 export async function deleteClubAction(
   input: unknown,
 ): Promise<ActionResult<{ deleted: boolean }>> {
-  const userId = await requireAuth()
-  const parsed = v.clubIdSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = v.clubIdSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  const membership = await getClubMembership(userId, parsed.data.clubId)
-  if (!canDeleteClub(membership.role)) {
-    return { success: false, error: 'NOT_ALLOWED' }
-  }
-
-  // Best-effort: clean up the Cloudinary asset before deleting the row. Non-fatal.
-  const existing = await db.query.bookClubs.findFirst({
-    where: eq(bookClubs.id, parsed.data.clubId),
-    columns: { coverImageUrl: true },
-  })
-  if (existing?.coverImageUrl) {
-    try {
-      const publicId = getCloudinaryPublicId(existing.coverImageUrl)
-      if (publicId) await deleteCloudinaryImage(publicId)
-    } catch {
-      // Non-fatal
+    const membership = await getClubMembership(userId, parsed.data.clubId)
+    if (!canDeleteClub(membership.role)) {
+      return { success: false, error: 'NOT_ALLOWED' }
     }
-  }
 
-  await db.delete(bookClubs).where(eq(bookClubs.id, parsed.data.clubId))
-  return { success: true, data: { deleted: true } }
+    // Best-effort: clean up the Cloudinary asset before deleting the row. Non-fatal.
+    const existing = await db.query.bookClubs.findFirst({
+      where: eq(bookClubs.id, parsed.data.clubId),
+      columns: { coverImageUrl: true },
+    })
+    if (existing?.coverImageUrl) {
+      try {
+        const publicId = getCloudinaryPublicId(existing.coverImageUrl)
+        if (publicId) await deleteCloudinaryImage(publicId)
+      } catch {
+        // Non-fatal
+      }
+    }
+
+    await db.delete(bookClubs).where(eq(bookClubs.id, parsed.data.clubId))
+    return { success: true, data: { deleted: true } }
+  })
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -814,258 +821,268 @@ export async function deleteClubAction(
 export async function joinClubAction(
   input: unknown,
 ): Promise<ActionResult<{ joined: boolean; requested: boolean }>> {
-  const userId = await requireAuth()
-  const parsed = v.clubIdSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction<{ joined: boolean; requested: boolean }>(async () => {
+    const userId = await requireAuth()
+    const parsed = v.clubIdSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  const club = await db.query.bookClubs.findFirst({
-    where: eq(bookClubs.id, parsed.data.clubId),
-    columns: {
-      id: true,
-      ownerId: true,
-      visibility: true,
-      openJoin: true,
-      name: true,
-    },
-  })
-  if (!club) return { success: false, error: 'NOT_FOUND' }
-
-  const membership = await getClubMembership(userId, club.id)
-  if (membership.role !== null) {
-    return { success: false, error: 'ALREADY_MEMBER' }
-  }
-  if (!(await canJoinClub(userId, club, membership))) {
-    return { success: false, error: 'NOT_FOUND' } // masquerade
-  }
-
-  if (club.openJoin) {
-    await db.transaction(async (tx) => {
-      await tx
-        .insert(bookClubMembers)
-        .values({ id: createId(), clubId: club.id, userId, role: 'MEMBER' })
-      // D3b: bump last_activity_at alongside member_count denorm.
-      await tx
-        .update(bookClubs)
-        .set({
-          memberCount: sql`${bookClubs.memberCount} + 1`,
-          lastActivityAt: new Date(),
-        })
-        .where(eq(bookClubs.id, club.id))
+    const club = await db.query.bookClubs.findFirst({
+      where: eq(bookClubs.id, parsed.data.clubId),
+      columns: {
+        id: true,
+        ownerId: true,
+        visibility: true,
+        openJoin: true,
+        name: true,
+      },
     })
-    return { success: true, data: { joined: true, requested: false } }
-  }
+    if (!club) return { success: false, error: 'NOT_FOUND' }
 
-  // Closed-join — request flow
-  const existing = await db.query.bookClubJoinRequests.findFirst({
-    where: and(
-      eq(bookClubJoinRequests.clubId, club.id),
-      eq(bookClubJoinRequests.userId, userId),
-      eq(bookClubJoinRequests.status, 'PENDING'),
-    ),
-  })
-  if (existing) return { success: false, error: 'REQUEST_ALREADY_PENDING' }
-
-  const requestId = createId()
-  await db.transaction(async (tx) => {
-    await tx.insert(bookClubJoinRequests).values({
-      id: requestId,
-      clubId: club.id,
-      userId,
-      status: 'PENDING',
-    })
-    // Fan-out notification to all OWNER + MOD members
-    const recipients = await tx.query.bookClubMembers.findMany({
-      where: and(
-        eq(bookClubMembers.clubId, club.id),
-        inArray(bookClubMembers.role, ['OWNER', 'MODERATOR']),
-      ),
-      columns: { userId: true },
-    })
-    if (recipients.length > 0) {
-      const skipResults = await Promise.all(
-        recipients.map((r) => shouldSkipNotification(r.userId, 'CLUB_JOIN_REQUEST')),
-      )
-      const filteredRecipients = recipients.filter((_, i) => !skipResults[i])
-      if (filteredRecipients.length > 0) {
-        await tx.insert(notifications).values(
-          filteredRecipients.map((r) => ({
-            id: createId(),
-            userId: r.userId,
-            type: 'CLUB_JOIN_REQUEST' as const,
-            actorId: userId,
-            resourceType: 'book_club_join_request',
-            resourceId: requestId,
-          })),
-        )
-      }
+    const membership = await getClubMembership(userId, club.id)
+    if (membership.role !== null) {
+      return { success: false, error: 'ALREADY_MEMBER' }
     }
+    if (!(await canJoinClub(userId, club, membership))) {
+      return { success: false, error: 'NOT_FOUND' } // masquerade
+    }
+
+    if (club.openJoin) {
+      await db.transaction(async (tx) => {
+        await tx
+          .insert(bookClubMembers)
+          .values({ id: createId(), clubId: club.id, userId, role: 'MEMBER' })
+        // D3b: bump last_activity_at alongside member_count denorm.
+        await tx
+          .update(bookClubs)
+          .set({
+            memberCount: sql`${bookClubs.memberCount} + 1`,
+            lastActivityAt: new Date(),
+          })
+          .where(eq(bookClubs.id, club.id))
+      })
+      return { success: true, data: { joined: true, requested: false } }
+    }
+
+    // Closed-join — request flow
+    const existing = await db.query.bookClubJoinRequests.findFirst({
+      where: and(
+        eq(bookClubJoinRequests.clubId, club.id),
+        eq(bookClubJoinRequests.userId, userId),
+        eq(bookClubJoinRequests.status, 'PENDING'),
+      ),
+    })
+    if (existing) return { success: false, error: 'REQUEST_ALREADY_PENDING' }
+
+    const requestId = createId()
+    await db.transaction(async (tx) => {
+      await tx.insert(bookClubJoinRequests).values({
+        id: requestId,
+        clubId: club.id,
+        userId,
+        status: 'PENDING',
+      })
+      // Fan-out notification to all OWNER + MOD members
+      const recipients = await tx.query.bookClubMembers.findMany({
+        where: and(
+          eq(bookClubMembers.clubId, club.id),
+          inArray(bookClubMembers.role, ['OWNER', 'MODERATOR']),
+        ),
+        columns: { userId: true },
+      })
+      if (recipients.length > 0) {
+        const skipResults = await Promise.all(
+          recipients.map((r) => shouldSkipNotification(r.userId, 'CLUB_JOIN_REQUEST')),
+        )
+        const filteredRecipients = recipients.filter((_, i) => !skipResults[i])
+        if (filteredRecipients.length > 0) {
+          await tx.insert(notifications).values(
+            filteredRecipients.map((r) => ({
+              id: createId(),
+              userId: r.userId,
+              type: 'CLUB_JOIN_REQUEST' as const,
+              actorId: userId,
+              resourceType: 'book_club_join_request',
+              resourceId: requestId,
+            })),
+          )
+        }
+      }
+    })
+    return { success: true, data: { joined: false, requested: true } }
   })
-  return { success: true, data: { joined: false, requested: true } }
 }
 
 export async function leaveClubAction(
   input: unknown,
 ): Promise<ActionResult<{ left: boolean }>> {
-  const userId = await requireAuth()
-  const parsed = v.clubIdSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = v.clubIdSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  const membership = await getClubMembership(userId, parsed.data.clubId)
-  if (membership.role === null) return { success: false, error: 'NOT_MEMBER' }
-  if (membership.role === 'OWNER') {
-    return { success: false, error: 'OWNER_CANNOT_LEAVE' }
-  }
+    const membership = await getClubMembership(userId, parsed.data.clubId)
+    if (membership.role === null) return { success: false, error: 'NOT_MEMBER' }
+    if (membership.role === 'OWNER') {
+      return { success: false, error: 'OWNER_CANNOT_LEAVE' }
+    }
 
-  await db.transaction(async (tx) => {
-    await tx
-      .delete(bookClubMembers)
-      .where(
-        and(
-          eq(bookClubMembers.clubId, parsed.data.clubId),
-          eq(bookClubMembers.userId, userId),
-        ),
-      )
-    await tx
-      .update(bookClubs)
-      .set({ memberCount: sql`greatest(${bookClubs.memberCount} - 1, 0)` })
-      .where(eq(bookClubs.id, parsed.data.clubId))
+    await db.transaction(async (tx) => {
+      await tx
+        .delete(bookClubMembers)
+        .where(
+          and(
+            eq(bookClubMembers.clubId, parsed.data.clubId),
+            eq(bookClubMembers.userId, userId),
+          ),
+        )
+      await tx
+        .update(bookClubs)
+        .set({ memberCount: sql`greatest(${bookClubs.memberCount} - 1, 0)` })
+        .where(eq(bookClubs.id, parsed.data.clubId))
+    })
+    return { success: true, data: { left: true } }
   })
-  return { success: true, data: { left: true } }
 }
 
 export async function removeClubMemberAction(
   input: unknown,
 ): Promise<ActionResult<{ removed: boolean }>> {
-  const userId = await requireAuth()
-  const parsed = v.targetUserSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = v.targetUserSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  const membership = await getClubMembership(userId, parsed.data.clubId)
-  if (!canManageMembers(membership.role)) {
-    return { success: false, error: 'NOT_ALLOWED' }
-  }
+    const membership = await getClubMembership(userId, parsed.data.clubId)
+    if (!canManageMembers(membership.role)) {
+      return { success: false, error: 'NOT_ALLOWED' }
+    }
 
-  const target = await db.query.bookClubMembers.findFirst({
-    where: and(
-      eq(bookClubMembers.clubId, parsed.data.clubId),
-      eq(bookClubMembers.userId, parsed.data.targetUserId),
-    ),
-    columns: { role: true },
+    const target = await db.query.bookClubMembers.findFirst({
+      where: and(
+        eq(bookClubMembers.clubId, parsed.data.clubId),
+        eq(bookClubMembers.userId, parsed.data.targetUserId),
+      ),
+      columns: { role: true },
+    })
+    if (!target) return { success: false, error: 'NOT_FOUND' }
+    if (target.role === 'OWNER') {
+      return { success: false, error: 'CANNOT_REMOVE_OWNER' }
+    }
+    // MODs cannot remove other MODs — only OWNER can.
+    if (target.role === 'MODERATOR' && membership.role !== 'OWNER') {
+      return { success: false, error: 'NOT_ALLOWED' }
+    }
+
+    await db.transaction(async (tx) => {
+      await tx
+        .delete(bookClubMembers)
+        .where(
+          and(
+            eq(bookClubMembers.clubId, parsed.data.clubId),
+            eq(bookClubMembers.userId, parsed.data.targetUserId),
+          ),
+        )
+      await tx
+        .update(bookClubs)
+        .set({ memberCount: sql`greatest(${bookClubs.memberCount} - 1, 0)` })
+        .where(eq(bookClubs.id, parsed.data.clubId))
+    })
+    return { success: true, data: { removed: true } }
   })
-  if (!target) return { success: false, error: 'NOT_FOUND' }
-  if (target.role === 'OWNER') {
-    return { success: false, error: 'CANNOT_REMOVE_OWNER' }
-  }
-  // MODs cannot remove other MODs — only OWNER can.
-  if (target.role === 'MODERATOR' && membership.role !== 'OWNER') {
-    return { success: false, error: 'NOT_ALLOWED' }
-  }
-
-  await db.transaction(async (tx) => {
-    await tx
-      .delete(bookClubMembers)
-      .where(
-        and(
-          eq(bookClubMembers.clubId, parsed.data.clubId),
-          eq(bookClubMembers.userId, parsed.data.targetUserId),
-        ),
-      )
-    await tx
-      .update(bookClubs)
-      .set({ memberCount: sql`greatest(${bookClubs.memberCount} - 1, 0)` })
-      .where(eq(bookClubs.id, parsed.data.clubId))
-  })
-  return { success: true, data: { removed: true } }
 }
 
 export async function changeClubMemberRoleAction(
   input: unknown,
 ): Promise<ActionResult<{ updated: boolean }>> {
-  const userId = await requireAuth()
-  const parsed = v.changeRoleSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = v.changeRoleSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  const membership = await getClubMembership(userId, parsed.data.clubId)
-  if (!canChangeRole(membership.role)) {
-    return { success: false, error: 'NOT_ALLOWED' }
-  }
-  if (parsed.data.targetUserId === userId) {
-    return { success: false, error: 'CANNOT_SELF_DEMOTE' }
-  }
+    const membership = await getClubMembership(userId, parsed.data.clubId)
+    if (!canChangeRole(membership.role)) {
+      return { success: false, error: 'NOT_ALLOWED' }
+    }
+    if (parsed.data.targetUserId === userId) {
+      return { success: false, error: 'CANNOT_SELF_DEMOTE' }
+    }
 
-  const target = await db.query.bookClubMembers.findFirst({
-    where: and(
-      eq(bookClubMembers.clubId, parsed.data.clubId),
-      eq(bookClubMembers.userId, parsed.data.targetUserId),
-    ),
-    columns: { role: true },
-  })
-  if (!target) return { success: false, error: 'NOT_FOUND' }
-  if (target.role === 'OWNER') {
-    return { success: false, error: 'CANNOT_CHANGE_OWNER' }
-  }
-
-  await db
-    .update(bookClubMembers)
-    .set({ role: parsed.data.newRole })
-    .where(
-      and(
+    const target = await db.query.bookClubMembers.findFirst({
+      where: and(
         eq(bookClubMembers.clubId, parsed.data.clubId),
         eq(bookClubMembers.userId, parsed.data.targetUserId),
       ),
-    )
-  return { success: true, data: { updated: true } }
-}
+      columns: { role: true },
+    })
+    if (!target) return { success: false, error: 'NOT_FOUND' }
+    if (target.role === 'OWNER') {
+      return { success: false, error: 'CANNOT_CHANGE_OWNER' }
+    }
 
-export async function transferClubOwnershipAction(
-  input: unknown,
-): Promise<ActionResult<{ transferred: boolean }>> {
-  const userId = await requireAuth()
-  const parsed = v.targetUserSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
-
-  const membership = await getClubMembership(userId, parsed.data.clubId)
-  if (membership.role !== 'OWNER') {
-    return { success: false, error: 'NOT_ALLOWED' }
-  }
-  if (parsed.data.targetUserId === userId) {
-    return { success: false, error: 'INVALID_TARGET' }
-  }
-
-  const target = await db.query.bookClubMembers.findFirst({
-    where: and(
-      eq(bookClubMembers.clubId, parsed.data.clubId),
-      eq(bookClubMembers.userId, parsed.data.targetUserId),
-    ),
-    columns: { role: true },
-  })
-  if (!target) return { success: false, error: 'NOT_FOUND' }
-
-  await db.transaction(async (tx) => {
-    await tx
+    await db
       .update(bookClubMembers)
-      .set({ role: 'OWNER' })
+      .set({ role: parsed.data.newRole })
       .where(
         and(
           eq(bookClubMembers.clubId, parsed.data.clubId),
           eq(bookClubMembers.userId, parsed.data.targetUserId),
         ),
       )
-    await tx
-      .update(bookClubMembers)
-      .set({ role: 'MEMBER' })
-      .where(
-        and(
-          eq(bookClubMembers.clubId, parsed.data.clubId),
-          eq(bookClubMembers.userId, userId),
-        ),
-      )
-    await tx
-      .update(bookClubs)
-      .set({ ownerId: parsed.data.targetUserId, updatedAt: new Date() })
-      .where(eq(bookClubs.id, parsed.data.clubId))
+    return { success: true, data: { updated: true } }
   })
-  return { success: true, data: { transferred: true } }
+}
+
+export async function transferClubOwnershipAction(
+  input: unknown,
+): Promise<ActionResult<{ transferred: boolean }>> {
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = v.targetUserSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+
+    const membership = await getClubMembership(userId, parsed.data.clubId)
+    if (membership.role !== 'OWNER') {
+      return { success: false, error: 'NOT_ALLOWED' }
+    }
+    if (parsed.data.targetUserId === userId) {
+      return { success: false, error: 'INVALID_TARGET' }
+    }
+
+    const target = await db.query.bookClubMembers.findFirst({
+      where: and(
+        eq(bookClubMembers.clubId, parsed.data.clubId),
+        eq(bookClubMembers.userId, parsed.data.targetUserId),
+      ),
+      columns: { role: true },
+    })
+    if (!target) return { success: false, error: 'NOT_FOUND' }
+
+    await db.transaction(async (tx) => {
+      await tx
+        .update(bookClubMembers)
+        .set({ role: 'OWNER' })
+        .where(
+          and(
+            eq(bookClubMembers.clubId, parsed.data.clubId),
+            eq(bookClubMembers.userId, parsed.data.targetUserId),
+          ),
+        )
+      await tx
+        .update(bookClubMembers)
+        .set({ role: 'MEMBER' })
+        .where(
+          and(
+            eq(bookClubMembers.clubId, parsed.data.clubId),
+            eq(bookClubMembers.userId, userId),
+          ),
+        )
+      await tx
+        .update(bookClubs)
+        .set({ ownerId: parsed.data.targetUserId, updatedAt: new Date() })
+        .where(eq(bookClubs.id, parsed.data.clubId))
+    })
+    return { success: true, data: { transferred: true } }
+  })
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -1075,210 +1092,220 @@ export async function transferClubOwnershipAction(
 export async function inviteUserToClubAction(
   input: unknown,
 ): Promise<ActionResult<{ inviteId: string }>> {
-  const userId = await requireAuth()
-  const parsed = v.inviteByUsernameSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = v.inviteByUsernameSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  const membership = await getClubMembership(userId, parsed.data.clubId)
-  if (!canInviteUser(membership.role)) {
-    return { success: false, error: 'NOT_ALLOWED' }
-  }
-
-  // Resolve username → userId
-  const recipientProfile = await db.query.userProfiles.findFirst({
-    where: eq(userProfiles.username, parsed.data.recipientUsername),
-    columns: { userId: true },
-  })
-  if (!recipientProfile) return { success: false, error: 'USER_NOT_FOUND' }
-  const recipientId = recipientProfile.userId
-
-  if (recipientId === userId) {
-    return { success: false, error: 'SELF_INVITE' }
-  }
-
-  // Block check (bidirectional)
-  if ((await isBlocked(userId, recipientId)) || (await isBlocked(recipientId, userId))) {
-    return { success: false, error: 'USER_NOT_FOUND' } // masquerade
-  }
-
-  // Already a member?
-  const recipientMembership = await getClubMembership(recipientId, parsed.data.clubId)
-  if (recipientMembership.role !== null) {
-    return { success: false, error: 'ALREADY_MEMBER' }
-  }
-
-  // Existing PENDING invite?
-  const existingInvite = await db.query.bookClubInvites.findFirst({
-    where: and(
-      eq(bookClubInvites.clubId, parsed.data.clubId),
-      eq(bookClubInvites.recipientId, recipientId),
-      eq(bookClubInvites.status, 'PENDING'),
-    ),
-    columns: { id: true },
-  })
-  if (existingInvite) return { success: false, error: 'INVITE_ALREADY_PENDING' }
-
-  const inviteId = createId()
-  const skipInvite = await shouldSkipNotification(recipientId, 'CLUB_INVITE')
-  await db.transaction(async (tx) => {
-    await tx.insert(bookClubInvites).values({
-      id: inviteId,
-      clubId: parsed.data.clubId,
-      inviterId: userId,
-      recipientId,
-      status: 'PENDING',
-    })
-    if (!skipInvite) {
-      await tx.insert(notifications).values({
-        id: createId(),
-        userId: recipientId,
-        type: 'CLUB_INVITE',
-        actorId: userId,
-        resourceType: 'book_club_invite',
-        resourceId: inviteId,
-      })
+    const membership = await getClubMembership(userId, parsed.data.clubId)
+    if (!canInviteUser(membership.role)) {
+      return { success: false, error: 'NOT_ALLOWED' }
     }
+
+    // Resolve username → userId
+    const recipientProfile = await db.query.userProfiles.findFirst({
+      where: eq(userProfiles.username, parsed.data.recipientUsername),
+      columns: { userId: true },
+    })
+    if (!recipientProfile) return { success: false, error: 'USER_NOT_FOUND' }
+    const recipientId = recipientProfile.userId
+
+    if (recipientId === userId) {
+      return { success: false, error: 'SELF_INVITE' }
+    }
+
+    // Block check (bidirectional)
+    if ((await isBlocked(userId, recipientId)) || (await isBlocked(recipientId, userId))) {
+      return { success: false, error: 'USER_NOT_FOUND' } // masquerade
+    }
+
+    // Already a member?
+    const recipientMembership = await getClubMembership(recipientId, parsed.data.clubId)
+    if (recipientMembership.role !== null) {
+      return { success: false, error: 'ALREADY_MEMBER' }
+    }
+
+    // Existing PENDING invite?
+    const existingInvite = await db.query.bookClubInvites.findFirst({
+      where: and(
+        eq(bookClubInvites.clubId, parsed.data.clubId),
+        eq(bookClubInvites.recipientId, recipientId),
+        eq(bookClubInvites.status, 'PENDING'),
+      ),
+      columns: { id: true },
+    })
+    if (existingInvite) return { success: false, error: 'INVITE_ALREADY_PENDING' }
+
+    const inviteId = createId()
+    const skipInvite = await shouldSkipNotification(recipientId, 'CLUB_INVITE')
+    await db.transaction(async (tx) => {
+      await tx.insert(bookClubInvites).values({
+        id: inviteId,
+        clubId: parsed.data.clubId,
+        inviterId: userId,
+        recipientId,
+        status: 'PENDING',
+      })
+      if (!skipInvite) {
+        await tx.insert(notifications).values({
+          id: createId(),
+          userId: recipientId,
+          type: 'CLUB_INVITE',
+          actorId: userId,
+          resourceType: 'book_club_invite',
+          resourceId: inviteId,
+        })
+      }
+    })
+    return { success: true, data: { inviteId } }
   })
-  return { success: true, data: { inviteId } }
 }
 
 export async function respondToClubInviteAction(
   input: unknown,
 ): Promise<ActionResult<{ accepted: boolean }>> {
-  const userId = await requireAuth()
-  const parsed = v.respondInviteSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction<{ accepted: boolean }>(async () => {
+    const userId = await requireAuth()
+    const parsed = v.respondInviteSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  const invite = await db.query.bookClubInvites.findFirst({
-    where: eq(bookClubInvites.id, parsed.data.inviteId),
+    const invite = await db.query.bookClubInvites.findFirst({
+      where: eq(bookClubInvites.id, parsed.data.inviteId),
+    })
+    if (!invite) return { success: false, error: 'NOT_FOUND' }
+    if (invite.recipientId !== userId) return { success: false, error: 'NOT_ALLOWED' }
+    if (invite.status !== 'PENDING') return { success: false, error: 'NOT_PENDING' }
+
+    if (!parsed.data.accept) {
+      await db
+        .update(bookClubInvites)
+        .set({ status: 'REJECTED', respondedAt: new Date() })
+        .where(eq(bookClubInvites.id, parsed.data.inviteId))
+      return { success: true, data: { accepted: false } }
+    }
+
+    // Accept path — tx
+    await db.transaction(async (tx) => {
+      await tx
+        .update(bookClubInvites)
+        .set({ status: 'ACCEPTED', respondedAt: new Date() })
+        .where(eq(bookClubInvites.id, parsed.data.inviteId))
+      await tx
+        .insert(bookClubMembers)
+        .values({ id: createId(), clubId: invite.clubId, userId, role: 'MEMBER' })
+      await tx
+        .update(bookClubs)
+        .set({ memberCount: sql`${bookClubs.memberCount} + 1` })
+        .where(eq(bookClubs.id, invite.clubId))
+      // Cancel any matching PENDING join request from same user
+      await tx
+        .delete(bookClubJoinRequests)
+        .where(
+          and(
+            eq(bookClubJoinRequests.clubId, invite.clubId),
+            eq(bookClubJoinRequests.userId, userId),
+            eq(bookClubJoinRequests.status, 'PENDING'),
+          ),
+        )
+    })
+    return { success: true, data: { accepted: true } }
   })
-  if (!invite) return { success: false, error: 'NOT_FOUND' }
-  if (invite.recipientId !== userId) return { success: false, error: 'NOT_ALLOWED' }
-  if (invite.status !== 'PENDING') return { success: false, error: 'NOT_PENDING' }
-
-  if (!parsed.data.accept) {
-    await db
-      .update(bookClubInvites)
-      .set({ status: 'REJECTED', respondedAt: new Date() })
-      .where(eq(bookClubInvites.id, parsed.data.inviteId))
-    return { success: true, data: { accepted: false } }
-  }
-
-  // Accept path — tx
-  await db.transaction(async (tx) => {
-    await tx
-      .update(bookClubInvites)
-      .set({ status: 'ACCEPTED', respondedAt: new Date() })
-      .where(eq(bookClubInvites.id, parsed.data.inviteId))
-    await tx
-      .insert(bookClubMembers)
-      .values({ id: createId(), clubId: invite.clubId, userId, role: 'MEMBER' })
-    await tx
-      .update(bookClubs)
-      .set({ memberCount: sql`${bookClubs.memberCount} + 1` })
-      .where(eq(bookClubs.id, invite.clubId))
-    // Cancel any matching PENDING join request from same user
-    await tx
-      .delete(bookClubJoinRequests)
-      .where(
-        and(
-          eq(bookClubJoinRequests.clubId, invite.clubId),
-          eq(bookClubJoinRequests.userId, userId),
-          eq(bookClubJoinRequests.status, 'PENDING'),
-        ),
-      )
-  })
-  return { success: true, data: { accepted: true } }
 }
 
 export async function cancelClubInviteAction(
   input: unknown,
 ): Promise<ActionResult<{ canceled: boolean }>> {
-  const userId = await requireAuth()
-  const parsed = v.inviteIdSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = v.inviteIdSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  const invite = await db.query.bookClubInvites.findFirst({
-    where: eq(bookClubInvites.id, parsed.data.inviteId),
-    columns: { inviterId: true, status: true },
+    const invite = await db.query.bookClubInvites.findFirst({
+      where: eq(bookClubInvites.id, parsed.data.inviteId),
+      columns: { inviterId: true, status: true },
+    })
+    if (!invite) return { success: false, error: 'NOT_FOUND' }
+    if (invite.inviterId !== userId) return { success: false, error: 'NOT_ALLOWED' }
+    if (invite.status !== 'PENDING') return { success: false, error: 'NOT_PENDING' }
+
+    await db
+      .update(bookClubInvites)
+      .set({ status: 'CANCELED', respondedAt: new Date() })
+      .where(eq(bookClubInvites.id, parsed.data.inviteId))
+    return { success: true, data: { canceled: true } }
   })
-  if (!invite) return { success: false, error: 'NOT_FOUND' }
-  if (invite.inviterId !== userId) return { success: false, error: 'NOT_ALLOWED' }
-  if (invite.status !== 'PENDING') return { success: false, error: 'NOT_PENDING' }
-
-  await db
-    .update(bookClubInvites)
-    .set({ status: 'CANCELED', respondedAt: new Date() })
-    .where(eq(bookClubInvites.id, parsed.data.inviteId))
-  return { success: true, data: { canceled: true } }
 }
 
 export async function createClubInviteTokenAction(
   input: unknown,
 ): Promise<ActionResult<{ token: string; expiresAt: Date }>> {
-  const userId = await requireAuth()
-  const parsed = v.clubIdSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = v.clubIdSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  const membership = await getClubMembership(userId, parsed.data.clubId)
-  if (!canInviteUser(membership.role)) {
-    return { success: false, error: 'NOT_ALLOWED' }
-  }
+    const membership = await getClubMembership(userId, parsed.data.clubId)
+    if (!canInviteUser(membership.role)) {
+      return { success: false, error: 'NOT_ALLOWED' }
+    }
 
-  const token = randomBytes(24).toString('base64url')
-  const expiresAt = new Date(Date.now() + INVITE_TOKEN_TTL_MS)
-  await db.insert(bookClubInviteTokens).values({
-    token,
-    clubId: parsed.data.clubId,
-    inviterId: userId,
-    expiresAt,
+    const token = randomBytes(24).toString('base64url')
+    const expiresAt = new Date(Date.now() + INVITE_TOKEN_TTL_MS)
+    await db.insert(bookClubInviteTokens).values({
+      token,
+      clubId: parsed.data.clubId,
+      inviterId: userId,
+      expiresAt,
+    })
+    return { success: true, data: { token, expiresAt } }
   })
-  return { success: true, data: { token, expiresAt } }
 }
 
 export async function claimClubInviteTokenAction(
   input: unknown,
 ): Promise<ActionResult<{ clubId: string }>> {
-  const userId = await requireAuth()
-  const parsed = v.claimTokenSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = v.claimTokenSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  const row = await db.query.bookClubInviteTokens.findFirst({
-    where: eq(bookClubInviteTokens.token, parsed.data.token),
+    const row = await db.query.bookClubInviteTokens.findFirst({
+      where: eq(bookClubInviteTokens.token, parsed.data.token),
+    })
+    if (!row) return { success: false, error: 'TOKEN_NOT_FOUND' }
+    if (row.claimedAt !== null) return { success: false, error: 'TOKEN_ALREADY_CLAIMED' }
+    if (row.expiresAt < new Date()) return { success: false, error: 'TOKEN_EXPIRED' }
+    if (row.inviterId === userId) return { success: false, error: 'SELF_INVITE' }
+
+    // Block check (bidirectional)
+    if (
+      (await isBlocked(userId, row.inviterId)) ||
+      (await isBlocked(row.inviterId, userId))
+    ) {
+      return { success: false, error: 'BLOCKED' }
+    }
+
+    // Already a member?
+    const membership = await getClubMembership(userId, row.clubId)
+    if (membership.role !== null) {
+      return { success: false, error: 'ALREADY_MEMBER' }
+    }
+
+    await db.transaction(async (tx) => {
+      await tx
+        .update(bookClubInviteTokens)
+        .set({ claimedBy: userId, claimedAt: new Date() })
+        .where(eq(bookClubInviteTokens.token, parsed.data.token))
+      await tx
+        .insert(bookClubMembers)
+        .values({ id: createId(), clubId: row.clubId, userId, role: 'MEMBER' })
+      await tx
+        .update(bookClubs)
+        .set({ memberCount: sql`${bookClubs.memberCount} + 1` })
+        .where(eq(bookClubs.id, row.clubId))
+    })
+    return { success: true, data: { clubId: row.clubId } }
   })
-  if (!row) return { success: false, error: 'TOKEN_NOT_FOUND' }
-  if (row.claimedAt !== null) return { success: false, error: 'TOKEN_ALREADY_CLAIMED' }
-  if (row.expiresAt < new Date()) return { success: false, error: 'TOKEN_EXPIRED' }
-  if (row.inviterId === userId) return { success: false, error: 'SELF_INVITE' }
-
-  // Block check (bidirectional)
-  if (
-    (await isBlocked(userId, row.inviterId)) ||
-    (await isBlocked(row.inviterId, userId))
-  ) {
-    return { success: false, error: 'BLOCKED' }
-  }
-
-  // Already a member?
-  const membership = await getClubMembership(userId, row.clubId)
-  if (membership.role !== null) {
-    return { success: false, error: 'ALREADY_MEMBER' }
-  }
-
-  await db.transaction(async (tx) => {
-    await tx
-      .update(bookClubInviteTokens)
-      .set({ claimedBy: userId, claimedAt: new Date() })
-      .where(eq(bookClubInviteTokens.token, parsed.data.token))
-    await tx
-      .insert(bookClubMembers)
-      .values({ id: createId(), clubId: row.clubId, userId, role: 'MEMBER' })
-    await tx
-      .update(bookClubs)
-      .set({ memberCount: sql`${bookClubs.memberCount} + 1` })
-      .where(eq(bookClubs.id, row.clubId))
-  })
-  return { success: true, data: { clubId: row.clubId } }
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -1288,104 +1315,110 @@ export async function claimClubInviteTokenAction(
 export async function respondToJoinRequestAction(
   input: unknown,
 ): Promise<ActionResult<{ accepted: boolean }>> {
-  const userId = await requireAuth()
-  const parsed = v.respondRequestSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction<{ accepted: boolean }>(async () => {
+    const userId = await requireAuth()
+    const parsed = v.respondRequestSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  const request = await db.query.bookClubJoinRequests.findFirst({
-    where: eq(bookClubJoinRequests.id, parsed.data.requestId),
-  })
-  if (!request) return { success: false, error: 'NOT_FOUND' }
-  if (request.status !== 'PENDING') return { success: false, error: 'NOT_PENDING' }
-
-  const membership = await getClubMembership(userId, request.clubId)
-  if (!canApproveJoinRequest(membership.role)) {
-    return { success: false, error: 'NOT_ALLOWED' }
-  }
-
-  if (!parsed.data.accept) {
-    await db
-      .update(bookClubJoinRequests)
-      .set({ status: 'REJECTED', respondedAt: new Date() })
-      .where(eq(bookClubJoinRequests.id, parsed.data.requestId))
-    return { success: true, data: { accepted: false } }
-  }
-
-  // Accept path
-  const skipApproved = await shouldSkipNotification(request.userId, 'CLUB_JOIN_APPROVED')
-  await db.transaction(async (tx) => {
-    await tx
-      .update(bookClubJoinRequests)
-      .set({ status: 'ACCEPTED', respondedAt: new Date() })
-      .where(eq(bookClubJoinRequests.id, parsed.data.requestId))
-    await tx.insert(bookClubMembers).values({
-      id: createId(),
-      clubId: request.clubId,
-      userId: request.userId,
-      role: 'MEMBER',
+    const request = await db.query.bookClubJoinRequests.findFirst({
+      where: eq(bookClubJoinRequests.id, parsed.data.requestId),
     })
-    await tx
-      .update(bookClubs)
-      .set({ memberCount: sql`${bookClubs.memberCount} + 1` })
-      .where(eq(bookClubs.id, request.clubId))
-    if (!skipApproved) {
-      await tx.insert(notifications).values({
-        id: createId(),
-        userId: request.userId,
-        type: 'CLUB_JOIN_APPROVED',
-        actorId: userId,
-        resourceType: 'book_club',
-        resourceId: request.clubId,
-      })
+    if (!request) return { success: false, error: 'NOT_FOUND' }
+    if (request.status !== 'PENDING') return { success: false, error: 'NOT_PENDING' }
+
+    const membership = await getClubMembership(userId, request.clubId)
+    if (!canApproveJoinRequest(membership.role)) {
+      return { success: false, error: 'NOT_ALLOWED' }
     }
+
+    if (!parsed.data.accept) {
+      await db
+        .update(bookClubJoinRequests)
+        .set({ status: 'REJECTED', respondedAt: new Date() })
+        .where(eq(bookClubJoinRequests.id, parsed.data.requestId))
+      return { success: true, data: { accepted: false } }
+    }
+
+    // Accept path
+    const skipApproved = await shouldSkipNotification(request.userId, 'CLUB_JOIN_APPROVED')
+    await db.transaction(async (tx) => {
+      await tx
+        .update(bookClubJoinRequests)
+        .set({ status: 'ACCEPTED', respondedAt: new Date() })
+        .where(eq(bookClubJoinRequests.id, parsed.data.requestId))
+      await tx.insert(bookClubMembers).values({
+        id: createId(),
+        clubId: request.clubId,
+        userId: request.userId,
+        role: 'MEMBER',
+      })
+      await tx
+        .update(bookClubs)
+        .set({ memberCount: sql`${bookClubs.memberCount} + 1` })
+        .where(eq(bookClubs.id, request.clubId))
+      if (!skipApproved) {
+        await tx.insert(notifications).values({
+          id: createId(),
+          userId: request.userId,
+          type: 'CLUB_JOIN_APPROVED',
+          actorId: userId,
+          resourceType: 'book_club',
+          resourceId: request.clubId,
+        })
+      }
+    })
+    return { success: true, data: { accepted: true } }
   })
-  return { success: true, data: { accepted: true } }
 }
 
 export async function cancelJoinRequestAction(
   input: unknown,
 ): Promise<ActionResult<{ canceled: boolean }>> {
-  const userId = await requireAuth()
-  const parsed = v.requestIdSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = v.requestIdSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  const request = await db.query.bookClubJoinRequests.findFirst({
-    where: eq(bookClubJoinRequests.id, parsed.data.requestId),
-    columns: { userId: true, status: true },
+    const request = await db.query.bookClubJoinRequests.findFirst({
+      where: eq(bookClubJoinRequests.id, parsed.data.requestId),
+      columns: { userId: true, status: true },
+    })
+    if (!request) return { success: false, error: 'NOT_FOUND' }
+    if (request.userId !== userId) return { success: false, error: 'NOT_ALLOWED' }
+    if (request.status !== 'PENDING') return { success: false, error: 'NOT_PENDING' }
+
+    await db
+      .delete(bookClubJoinRequests)
+      .where(eq(bookClubJoinRequests.id, parsed.data.requestId))
+    return { success: true, data: { canceled: true } }
   })
-  if (!request) return { success: false, error: 'NOT_FOUND' }
-  if (request.userId !== userId) return { success: false, error: 'NOT_ALLOWED' }
-  if (request.status !== 'PENDING') return { success: false, error: 'NOT_PENDING' }
-
-  await db
-    .delete(bookClubJoinRequests)
-    .where(eq(bookClubJoinRequests.id, parsed.data.requestId))
-  return { success: true, data: { canceled: true } }
 }
 
 export async function cancelMyPendingJoinRequestAction(input: {
   clubId: string
 }): Promise<ActionResult<void>> {
-  const userId = await requireAuth()
-  if (!input || typeof input.clubId !== 'string' || input.clubId.length === 0) {
-    return { success: false, error: 'INVALID_INPUT' }
-  }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    if (!input || typeof input.clubId !== 'string' || input.clubId.length === 0) {
+      return { success: false, error: 'INVALID_INPUT' }
+    }
 
-  const existing = await db.query.bookClubJoinRequests.findFirst({
-    where: and(
-      eq(bookClubJoinRequests.clubId, input.clubId),
-      eq(bookClubJoinRequests.userId, userId),
-      eq(bookClubJoinRequests.status, 'PENDING'),
-    ),
-    columns: { id: true },
+    const existing = await db.query.bookClubJoinRequests.findFirst({
+      where: and(
+        eq(bookClubJoinRequests.clubId, input.clubId),
+        eq(bookClubJoinRequests.userId, userId),
+        eq(bookClubJoinRequests.status, 'PENDING'),
+      ),
+      columns: { id: true },
+    })
+    if (!existing) return { success: false, error: 'REQUEST_NOT_FOUND' }
+
+    await db
+      .delete(bookClubJoinRequests)
+      .where(eq(bookClubJoinRequests.id, existing.id))
+
+    return { success: true, data: undefined }
   })
-  if (!existing) return { success: false, error: 'REQUEST_NOT_FOUND' }
-
-  await db
-    .delete(bookClubJoinRequests)
-    .where(eq(bookClubJoinRequests.id, existing.id))
-
-  return { success: true, data: undefined }
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -1395,204 +1428,214 @@ export async function cancelMyPendingJoinRequestAction(input: {
 export async function addClubBookAction(
   input: unknown,
 ): Promise<ActionResult<{ id: string }>> {
-  const userId = await requireAuth()
-  const parsed = v.addClubBookSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = v.addClubBookSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  const club = await db.query.bookClubs.findFirst({
-    where: eq(bookClubs.id, parsed.data.clubId),
-    columns: {
-      id: true,
-      name: true,
-      visibility: true,
-      discoverable: true,
-    },
-  })
-  if (!club) return { success: false, error: 'NOT_FOUND' }
+    const club = await db.query.bookClubs.findFirst({
+      where: eq(bookClubs.id, parsed.data.clubId),
+      columns: {
+        id: true,
+        name: true,
+        visibility: true,
+        discoverable: true,
+      },
+    })
+    if (!club) return { success: false, error: 'NOT_FOUND' }
 
-  const membership = await getClubMembership(userId, parsed.data.clubId)
-  if (!canManageBookQueue(membership.role)) {
-    return { success: false, error: 'NOT_ALLOWED' }
-  }
+    const membership = await getClubMembership(userId, parsed.data.clubId)
+    if (!canManageBookQueue(membership.role)) {
+      return { success: false, error: 'NOT_ALLOWED' }
+    }
 
-  // Validate optional bookId via canReadBook (positional signature)
-  if (parsed.data.bookId) {
-    const access = await canReadBook(parsed.data.bookId, userId)
-    if (!access.ok) return { success: false, error: 'BOOK_NOT_FOUND' }
-  }
+    // Validate optional bookId via canReadBook (positional signature)
+    if (parsed.data.bookId) {
+      const access = await canReadBook(parsed.data.bookId, userId)
+      if (!access.ok) return { success: false, error: 'BOOK_NOT_FOUND' }
+    }
 
-  if (parsed.data.status === 'CURRENT') {
-    const newRowId = createId()
+    if (parsed.data.status === 'CURRENT') {
+      const newRowId = createId()
+      await db.transaction(async (tx) => {
+        // Insert as QUEUE first (partial unique allows multiple QUEUE rows).
+        await tx.insert(bookClubBooks).values({
+          id: newRowId,
+          clubId: parsed.data.clubId,
+          bookId: parsed.data.bookId ?? null,
+          title: parsed.data.title,
+          author: parsed.data.author,
+          coverUrl: parsed.data.coverUrl ?? null,
+          status: 'QUEUE',
+        })
+        // Then delegate the transition.
+        await deriveCurrentBookTx(tx, {
+          clubId: parsed.data.clubId,
+          newCurrentBookId: newRowId,
+          actorId: userId,
+          clubName: club.name,
+          clubVisibility: club.visibility,
+          clubDiscoverable: club.discoverable,
+        })
+      })
+      return { success: true, data: { id: newRowId } }
+    }
+
+    // QUEUE: simple insert with next order
+    const id = createId()
     await db.transaction(async (tx) => {
-      // Insert as QUEUE first (partial unique allows multiple QUEUE rows).
+      const [orderRow] = await tx
+        .select({
+          maxOrder: sql<number>`coalesce(max(${bookClubBooks.order}), -1)::int`,
+        })
+        .from(bookClubBooks)
+        .where(
+          and(
+            eq(bookClubBooks.clubId, parsed.data.clubId),
+            eq(bookClubBooks.status, 'QUEUE'),
+          ),
+        )
+      const maxOrder = orderRow?.maxOrder ?? -1
       await tx.insert(bookClubBooks).values({
-        id: newRowId,
+        id,
         clubId: parsed.data.clubId,
         bookId: parsed.data.bookId ?? null,
         title: parsed.data.title,
         author: parsed.data.author,
         coverUrl: parsed.data.coverUrl ?? null,
         status: 'QUEUE',
+        order: maxOrder + 1,
       })
-      // Then delegate the transition.
+    })
+    return { success: true, data: { id } }
+  })
+}
+
+export async function updateClubBookAction(
+  input: unknown,
+): Promise<ActionResult<{ updated: boolean }>> {
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = v.updateClubBookSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+
+    const row = await db.query.bookClubBooks.findFirst({
+      where: eq(bookClubBooks.id, parsed.data.rowId),
+      columns: { clubId: true },
+    })
+    if (!row) return { success: false, error: 'NOT_FOUND' }
+
+    const membership = await getClubMembership(userId, row.clubId)
+    if (!canManageBookQueue(membership.role)) {
+      return { success: false, error: 'NOT_ALLOWED' }
+    }
+
+    const updates: Partial<typeof bookClubBooks.$inferInsert> = {}
+    if (parsed.data.title !== undefined) updates.title = parsed.data.title
+    if (parsed.data.author !== undefined) updates.author = parsed.data.author
+    if (parsed.data.coverUrl !== undefined) updates.coverUrl = parsed.data.coverUrl
+    if (parsed.data.order !== undefined) updates.order = parsed.data.order
+
+    await db.update(bookClubBooks).set(updates).where(eq(bookClubBooks.id, parsed.data.rowId))
+    return { success: true, data: { updated: true } }
+  })
+}
+
+export async function setCurrentBookAction(
+  input: unknown,
+): Promise<ActionResult<{ updated: boolean }>> {
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = v.rowIdSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+
+    const row = await db.query.bookClubBooks.findFirst({
+      where: eq(bookClubBooks.id, parsed.data.rowId),
+      columns: { clubId: true },
+    })
+    if (!row) return { success: false, error: 'NOT_FOUND' }
+
+    const club = await db.query.bookClubs.findFirst({
+      where: eq(bookClubs.id, row.clubId),
+      columns: { id: true, name: true, visibility: true, discoverable: true },
+    })
+    if (!club) return { success: false, error: 'NOT_FOUND' }
+
+    const membership = await getClubMembership(userId, row.clubId)
+    if (!canManageBookQueue(membership.role)) {
+      return { success: false, error: 'NOT_ALLOWED' }
+    }
+
+    await db.transaction(async (tx) => {
       await deriveCurrentBookTx(tx, {
-        clubId: parsed.data.clubId,
-        newCurrentBookId: newRowId,
+        clubId: row.clubId,
+        newCurrentBookId: parsed.data.rowId,
         actorId: userId,
         clubName: club.name,
         clubVisibility: club.visibility,
         clubDiscoverable: club.discoverable,
       })
     })
-    return { success: true, data: { id: newRowId } }
-  }
-
-  // QUEUE: simple insert with next order
-  const id = createId()
-  await db.transaction(async (tx) => {
-    const [orderRow] = await tx
-      .select({
-        maxOrder: sql<number>`coalesce(max(${bookClubBooks.order}), -1)::int`,
-      })
-      .from(bookClubBooks)
-      .where(
-        and(
-          eq(bookClubBooks.clubId, parsed.data.clubId),
-          eq(bookClubBooks.status, 'QUEUE'),
-        ),
-      )
-    const maxOrder = orderRow?.maxOrder ?? -1
-    await tx.insert(bookClubBooks).values({
-      id,
-      clubId: parsed.data.clubId,
-      bookId: parsed.data.bookId ?? null,
-      title: parsed.data.title,
-      author: parsed.data.author,
-      coverUrl: parsed.data.coverUrl ?? null,
-      status: 'QUEUE',
-      order: maxOrder + 1,
-    })
+    return { success: true, data: { updated: true } }
   })
-  return { success: true, data: { id } }
-}
-
-export async function updateClubBookAction(
-  input: unknown,
-): Promise<ActionResult<{ updated: boolean }>> {
-  const userId = await requireAuth()
-  const parsed = v.updateClubBookSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
-
-  const row = await db.query.bookClubBooks.findFirst({
-    where: eq(bookClubBooks.id, parsed.data.rowId),
-    columns: { clubId: true },
-  })
-  if (!row) return { success: false, error: 'NOT_FOUND' }
-
-  const membership = await getClubMembership(userId, row.clubId)
-  if (!canManageBookQueue(membership.role)) {
-    return { success: false, error: 'NOT_ALLOWED' }
-  }
-
-  const updates: Partial<typeof bookClubBooks.$inferInsert> = {}
-  if (parsed.data.title !== undefined) updates.title = parsed.data.title
-  if (parsed.data.author !== undefined) updates.author = parsed.data.author
-  if (parsed.data.coverUrl !== undefined) updates.coverUrl = parsed.data.coverUrl
-  if (parsed.data.order !== undefined) updates.order = parsed.data.order
-
-  await db.update(bookClubBooks).set(updates).where(eq(bookClubBooks.id, parsed.data.rowId))
-  return { success: true, data: { updated: true } }
-}
-
-export async function setCurrentBookAction(
-  input: unknown,
-): Promise<ActionResult<{ updated: boolean }>> {
-  const userId = await requireAuth()
-  const parsed = v.rowIdSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
-
-  const row = await db.query.bookClubBooks.findFirst({
-    where: eq(bookClubBooks.id, parsed.data.rowId),
-    columns: { clubId: true },
-  })
-  if (!row) return { success: false, error: 'NOT_FOUND' }
-
-  const club = await db.query.bookClubs.findFirst({
-    where: eq(bookClubs.id, row.clubId),
-    columns: { id: true, name: true, visibility: true, discoverable: true },
-  })
-  if (!club) return { success: false, error: 'NOT_FOUND' }
-
-  const membership = await getClubMembership(userId, row.clubId)
-  if (!canManageBookQueue(membership.role)) {
-    return { success: false, error: 'NOT_ALLOWED' }
-  }
-
-  await db.transaction(async (tx) => {
-    await deriveCurrentBookTx(tx, {
-      clubId: row.clubId,
-      newCurrentBookId: parsed.data.rowId,
-      actorId: userId,
-      clubName: club.name,
-      clubVisibility: club.visibility,
-      clubDiscoverable: club.discoverable,
-    })
-  })
-  return { success: true, data: { updated: true } }
 }
 
 export async function removeClubBookAction(
   input: unknown,
 ): Promise<ActionResult<{ removed: boolean }>> {
-  const userId = await requireAuth()
-  const parsed = v.rowIdSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = v.rowIdSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  const row = await db.query.bookClubBooks.findFirst({
-    where: eq(bookClubBooks.id, parsed.data.rowId),
-    columns: { clubId: true, status: true },
+    const row = await db.query.bookClubBooks.findFirst({
+      where: eq(bookClubBooks.id, parsed.data.rowId),
+      columns: { clubId: true, status: true },
+    })
+    if (!row) return { success: false, error: 'NOT_FOUND' }
+    if (row.status === 'CURRENT') {
+      return { success: false, error: 'CANNOT_REMOVE_CURRENT' }
+    }
+
+    const membership = await getClubMembership(userId, row.clubId)
+    if (!canManageBookQueue(membership.role)) {
+      return { success: false, error: 'NOT_ALLOWED' }
+    }
+
+    await db.delete(bookClubBooks).where(eq(bookClubBooks.id, parsed.data.rowId))
+    return { success: true, data: { removed: true } }
   })
-  if (!row) return { success: false, error: 'NOT_FOUND' }
-  if (row.status === 'CURRENT') {
-    return { success: false, error: 'CANNOT_REMOVE_CURRENT' }
-  }
-
-  const membership = await getClubMembership(userId, row.clubId)
-  if (!canManageBookQueue(membership.role)) {
-    return { success: false, error: 'NOT_ALLOWED' }
-  }
-
-  await db.delete(bookClubBooks).where(eq(bookClubBooks.id, parsed.data.rowId))
-  return { success: true, data: { removed: true } }
 }
 
 export async function reorderClubQueueAction(
   input: unknown,
 ): Promise<ActionResult<{ reordered: boolean }>> {
-  const userId = await requireAuth()
-  const parsed = v.reorderQueueSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = v.reorderQueueSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  const membership = await getClubMembership(userId, parsed.data.clubId)
-  if (!canManageBookQueue(membership.role)) {
-    return { success: false, error: 'NOT_ALLOWED' }
-  }
-
-  await db.transaction(async (tx) => {
-    for (let i = 0; i < parsed.data.orderedIds.length; i++) {
-      await tx
-        .update(bookClubBooks)
-        .set({ order: i })
-        .where(
-          and(
-            eq(bookClubBooks.id, parsed.data.orderedIds[i]),
-            eq(bookClubBooks.clubId, parsed.data.clubId),
-            eq(bookClubBooks.status, 'QUEUE'),
-          ),
-        )
+    const membership = await getClubMembership(userId, parsed.data.clubId)
+    if (!canManageBookQueue(membership.role)) {
+      return { success: false, error: 'NOT_ALLOWED' }
     }
+
+    await db.transaction(async (tx) => {
+      for (let i = 0; i < parsed.data.orderedIds.length; i++) {
+        await tx
+          .update(bookClubBooks)
+          .set({ order: i })
+          .where(
+            and(
+              eq(bookClubBooks.id, parsed.data.orderedIds[i]),
+              eq(bookClubBooks.clubId, parsed.data.clubId),
+              eq(bookClubBooks.status, 'QUEUE'),
+            ),
+          )
+      }
+    })
+    return { success: true, data: { reordered: true } }
   })
-  return { success: true, data: { reordered: true } }
 }
 
 export async function getClubBooksAction(input: {
@@ -1660,107 +1703,113 @@ export async function getClubBooksAction(input: {
 export async function addScheduleItemAction(
   input: unknown,
 ): Promise<ActionResult<{ id: string }>> {
-  const userId = await requireAuth()
-  const parsed = v.addScheduleItemSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = v.addScheduleItemSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  const membership = await getClubMembership(userId, parsed.data.clubId)
-  if (!canManageSchedule(membership.role)) {
-    return { success: false, error: 'NOT_ALLOWED' }
-  }
+    const membership = await getClubMembership(userId, parsed.data.clubId)
+    if (!canManageSchedule(membership.role)) {
+      return { success: false, error: 'NOT_ALLOWED' }
+    }
 
-  // Verify bookId belongs to clubId
-  const book = await db.query.bookClubBooks.findFirst({
-    where: and(
-      eq(bookClubBooks.id, parsed.data.bookId),
-      eq(bookClubBooks.clubId, parsed.data.clubId),
-    ),
-    columns: { id: true },
-  })
-  if (!book) return { success: false, error: 'BOOK_NOT_IN_CLUB' }
-
-  const id = createId()
-  await db.transaction(async (tx) => {
-    const [orderRow] = await tx
-      .select({
-        maxOrder: sql<number>`coalesce(max(${bookClubScheduleItems.order}), -1)::int`,
-      })
-      .from(bookClubScheduleItems)
-      .where(
-        and(
-          eq(bookClubScheduleItems.clubId, parsed.data.clubId),
-          eq(bookClubScheduleItems.bookId, parsed.data.bookId),
-        ),
-      )
-    const maxOrder = orderRow?.maxOrder ?? -1
-    await tx.insert(bookClubScheduleItems).values({
-      id,
-      clubId: parsed.data.clubId,
-      bookId: parsed.data.bookId,
-      chapterStart: parsed.data.chapterStart,
-      chapterEnd: parsed.data.chapterEnd,
-      targetDate: parsed.data.targetDate,
-      label: parsed.data.label ?? null,
-      order: maxOrder + 1,
+    // Verify bookId belongs to clubId
+    const book = await db.query.bookClubBooks.findFirst({
+      where: and(
+        eq(bookClubBooks.id, parsed.data.bookId),
+        eq(bookClubBooks.clubId, parsed.data.clubId),
+      ),
+      columns: { id: true },
     })
+    if (!book) return { success: false, error: 'BOOK_NOT_IN_CLUB' }
+
+    const id = createId()
+    await db.transaction(async (tx) => {
+      const [orderRow] = await tx
+        .select({
+          maxOrder: sql<number>`coalesce(max(${bookClubScheduleItems.order}), -1)::int`,
+        })
+        .from(bookClubScheduleItems)
+        .where(
+          and(
+            eq(bookClubScheduleItems.clubId, parsed.data.clubId),
+            eq(bookClubScheduleItems.bookId, parsed.data.bookId),
+          ),
+        )
+      const maxOrder = orderRow?.maxOrder ?? -1
+      await tx.insert(bookClubScheduleItems).values({
+        id,
+        clubId: parsed.data.clubId,
+        bookId: parsed.data.bookId,
+        chapterStart: parsed.data.chapterStart,
+        chapterEnd: parsed.data.chapterEnd,
+        targetDate: parsed.data.targetDate,
+        label: parsed.data.label ?? null,
+        order: maxOrder + 1,
+      })
+    })
+    return { success: true, data: { id } }
   })
-  return { success: true, data: { id } }
 }
 
 export async function updateScheduleItemAction(
   input: unknown,
 ): Promise<ActionResult<{ updated: boolean }>> {
-  const userId = await requireAuth()
-  const parsed = v.updateScheduleItemSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = v.updateScheduleItemSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  const item = await db.query.bookClubScheduleItems.findFirst({
-    where: eq(bookClubScheduleItems.id, parsed.data.itemId),
-    columns: { clubId: true },
+    const item = await db.query.bookClubScheduleItems.findFirst({
+      where: eq(bookClubScheduleItems.id, parsed.data.itemId),
+      columns: { clubId: true },
+    })
+    if (!item) return { success: false, error: 'NOT_FOUND' }
+
+    const membership = await getClubMembership(userId, item.clubId)
+    if (!canManageSchedule(membership.role)) {
+      return { success: false, error: 'NOT_ALLOWED' }
+    }
+
+    const updates: Partial<typeof bookClubScheduleItems.$inferInsert> = {}
+    if (parsed.data.chapterStart !== undefined) updates.chapterStart = parsed.data.chapterStart
+    if (parsed.data.chapterEnd !== undefined) updates.chapterEnd = parsed.data.chapterEnd
+    if (parsed.data.targetDate !== undefined) updates.targetDate = parsed.data.targetDate
+    if (parsed.data.label !== undefined) updates.label = parsed.data.label
+    if (parsed.data.order !== undefined) updates.order = parsed.data.order
+
+    await db
+      .update(bookClubScheduleItems)
+      .set(updates)
+      .where(eq(bookClubScheduleItems.id, parsed.data.itemId))
+    return { success: true, data: { updated: true } }
   })
-  if (!item) return { success: false, error: 'NOT_FOUND' }
-
-  const membership = await getClubMembership(userId, item.clubId)
-  if (!canManageSchedule(membership.role)) {
-    return { success: false, error: 'NOT_ALLOWED' }
-  }
-
-  const updates: Partial<typeof bookClubScheduleItems.$inferInsert> = {}
-  if (parsed.data.chapterStart !== undefined) updates.chapterStart = parsed.data.chapterStart
-  if (parsed.data.chapterEnd !== undefined) updates.chapterEnd = parsed.data.chapterEnd
-  if (parsed.data.targetDate !== undefined) updates.targetDate = parsed.data.targetDate
-  if (parsed.data.label !== undefined) updates.label = parsed.data.label
-  if (parsed.data.order !== undefined) updates.order = parsed.data.order
-
-  await db
-    .update(bookClubScheduleItems)
-    .set(updates)
-    .where(eq(bookClubScheduleItems.id, parsed.data.itemId))
-  return { success: true, data: { updated: true } }
 }
 
 export async function removeScheduleItemAction(
   input: unknown,
 ): Promise<ActionResult<{ removed: boolean }>> {
-  const userId = await requireAuth()
-  const parsed = v.itemIdSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = v.itemIdSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  const item = await db.query.bookClubScheduleItems.findFirst({
-    where: eq(bookClubScheduleItems.id, parsed.data.itemId),
-    columns: { clubId: true },
+    const item = await db.query.bookClubScheduleItems.findFirst({
+      where: eq(bookClubScheduleItems.id, parsed.data.itemId),
+      columns: { clubId: true },
+    })
+    if (!item) return { success: false, error: 'NOT_FOUND' }
+
+    const membership = await getClubMembership(userId, item.clubId)
+    if (!canManageSchedule(membership.role)) {
+      return { success: false, error: 'NOT_ALLOWED' }
+    }
+
+    await db
+      .delete(bookClubScheduleItems)
+      .where(eq(bookClubScheduleItems.id, parsed.data.itemId))
+    return { success: true, data: { removed: true } }
   })
-  if (!item) return { success: false, error: 'NOT_FOUND' }
-
-  const membership = await getClubMembership(userId, item.clubId)
-  if (!canManageSchedule(membership.role)) {
-    return { success: false, error: 'NOT_ALLOWED' }
-  }
-
-  await db
-    .delete(bookClubScheduleItems)
-    .where(eq(bookClubScheduleItems.id, parsed.data.itemId))
-  return { success: true, data: { removed: true } }
 }
 
 export async function getClubScheduleAction(
@@ -1799,426 +1848,442 @@ export async function getClubScheduleAction(
 export async function createClubDiscussionAction(
   input: unknown,
 ): Promise<ActionResult<{ id: string }>> {
-  const userId = await requireAuth()
-  const parsed = v.createDiscussionSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = v.createDiscussionSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  const club = await db.query.bookClubs.findFirst({
-    where: eq(bookClubs.id, parsed.data.clubId),
-    columns: { id: true, ownerId: true, visibility: true },
-  })
-  if (!club) return { success: false, error: 'NOT_FOUND' }
-
-  const membership = await getClubMembership(userId, parsed.data.clubId)
-  if (!canPostDiscussion(membership.role)) {
-    return { success: false, error: 'NOT_ALLOWED' }
-  }
-  if (!(await canViewClub(userId, club, membership))) {
-    return { success: false, error: 'NOT_FOUND' }
-  }
-
-  // C5a: extract mentions from content (stored as plain text per Zod schema); cap check.
-  const contentUsernames = extractMentionUsernamesFromText(parsed.data.content)
-  if (contentUsernames.length > 5) {
-    return { success: false, error: 'MENTION_CAP_EXCEEDED' }
-  }
-
-  const id = createId()
-  await db.transaction(async (tx) => {
-    await tx.insert(bookClubDiscussions).values({
-      id,
-      clubId: parsed.data.clubId,
-      authorId: userId,
-      title: parsed.data.title,
-      content: parsed.data.content,
+    const club = await db.query.bookClubs.findFirst({
+      where: eq(bookClubs.id, parsed.data.clubId),
+      columns: { id: true, ownerId: true, visibility: true },
     })
+    if (!club) return { success: false, error: 'NOT_FOUND' }
 
-    // D3b: bump last_activity_at on the club denorm.
-    await tx
-      .update(bookClubs)
-      .set({ lastActivityAt: new Date() })
-      .where(eq(bookClubs.id, parsed.data.clubId))
+    const membership = await getClubMembership(userId, parsed.data.clubId)
+    if (!canPostDiscussion(membership.role)) {
+      return { success: false, error: 'NOT_ALLOWED' }
+    }
+    if (!(await canViewClub(userId, club, membership))) {
+      return { success: false, error: 'NOT_FOUND' }
+    }
 
-    // C5a: resolve + record mentions.
-    if (contentUsernames.length > 0) {
-      const r = await resolveMentionedUsers({
-        tiptapUserIds: [],
-        textUsernames: contentUsernames,
-        actorId: userId,
-        resourceType: 'book_club_discussion',
-        resourceId: id,
+    // C5a: extract mentions from content (stored as plain text per Zod schema); cap check.
+    const contentUsernames = extractMentionUsernamesFromText(parsed.data.content)
+    if (contentUsernames.length > 5) {
+      return { success: false, error: 'MENTION_CAP_EXCEEDED' }
+    }
+
+    const id = createId()
+    await db.transaction(async (tx) => {
+      await tx.insert(bookClubDiscussions).values({
+        id,
+        clubId: parsed.data.clubId,
+        authorId: userId,
+        title: parsed.data.title,
+        content: parsed.data.content,
       })
-      if (r.ok && r.users.length > 0) {
-        const toNotify = r.users
-          .filter((u) => !r.alreadyNotified.has(u.userId))
-          .map((u) => u.userId)
-        if (toNotify.length > 0) {
-          await recordMentionNotificationsTx(tx, {
-            actorId: userId,
-            mentionedUserIds: toNotify,
-            resourceType: 'book_club_discussion',
-            resourceId: id,
-          })
+
+      // D3b: bump last_activity_at on the club denorm.
+      await tx
+        .update(bookClubs)
+        .set({ lastActivityAt: new Date() })
+        .where(eq(bookClubs.id, parsed.data.clubId))
+
+      // C5a: resolve + record mentions.
+      if (contentUsernames.length > 0) {
+        const r = await resolveMentionedUsers({
+          tiptapUserIds: [],
+          textUsernames: contentUsernames,
+          actorId: userId,
+          resourceType: 'book_club_discussion',
+          resourceId: id,
+        })
+        if (r.ok && r.users.length > 0) {
+          const toNotify = r.users
+            .filter((u) => !r.alreadyNotified.has(u.userId))
+            .map((u) => u.userId)
+          if (toNotify.length > 0) {
+            await recordMentionNotificationsTx(tx, {
+              actorId: userId,
+              mentionedUserIds: toNotify,
+              resourceType: 'book_club_discussion',
+              resourceId: id,
+            })
+          }
         }
       }
-    }
+    })
+    return { success: true, data: { id } }
   })
-  return { success: true, data: { id } }
 }
 
 export async function updateClubDiscussionAction(
   input: unknown,
 ): Promise<ActionResult<{ updated: boolean }>> {
-  const userId = await requireAuth()
-  const parsed = v.updateDiscussionSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = v.updateDiscussionSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  const discussion = await db.query.bookClubDiscussions.findFirst({
-    where: eq(bookClubDiscussions.id, parsed.data.discussionId),
-    columns: { authorId: true, clubId: true },
-  })
-  if (!discussion) return { success: false, error: 'NOT_FOUND' }
+    const discussion = await db.query.bookClubDiscussions.findFirst({
+      where: eq(bookClubDiscussions.id, parsed.data.discussionId),
+      columns: { authorId: true, clubId: true },
+    })
+    if (!discussion) return { success: false, error: 'NOT_FOUND' }
 
-  const membership = await getClubMembership(userId, discussion.clubId)
-  const isAuthor = discussion.authorId === userId
-  const isModPlus = membership.role === 'OWNER' || membership.role === 'MODERATOR'
-  if (!isAuthor && !isModPlus) return { success: false, error: 'NOT_ALLOWED' }
+    const membership = await getClubMembership(userId, discussion.clubId)
+    const isAuthor = discussion.authorId === userId
+    const isModPlus = membership.role === 'OWNER' || membership.role === 'MODERATOR'
+    if (!isAuthor && !isModPlus) return { success: false, error: 'NOT_ALLOWED' }
 
-  const updates: Partial<typeof bookClubDiscussions.$inferInsert> = {}
-  if (parsed.data.title !== undefined) updates.title = parsed.data.title
-  if (parsed.data.content !== undefined) updates.content = parsed.data.content
-  updates.updatedAt = new Date()
+    const updates: Partial<typeof bookClubDiscussions.$inferInsert> = {}
+    if (parsed.data.title !== undefined) updates.title = parsed.data.title
+    if (parsed.data.content !== undefined) updates.content = parsed.data.content
+    updates.updatedAt = new Date()
 
-  // C5a: extract mentions if content changed; cap check.
-  const contentUsernames =
-    parsed.data.content !== undefined
-      ? extractMentionUsernamesFromText(parsed.data.content)
-      : []
-  if (contentUsernames.length > 5) {
-    return { success: false, error: 'MENTION_CAP_EXCEEDED' }
-  }
+    // C5a: extract mentions if content changed; cap check.
+    const contentUsernames =
+      parsed.data.content !== undefined
+        ? extractMentionUsernamesFromText(parsed.data.content)
+        : []
+    if (contentUsernames.length > 5) {
+      return { success: false, error: 'MENTION_CAP_EXCEEDED' }
+    }
 
-  await db.transaction(async (tx) => {
-    await tx
-      .update(bookClubDiscussions)
-      .set(updates)
-      .where(eq(bookClubDiscussions.id, parsed.data.discussionId))
+    await db.transaction(async (tx) => {
+      await tx
+        .update(bookClubDiscussions)
+        .set(updates)
+        .where(eq(bookClubDiscussions.id, parsed.data.discussionId))
 
-    // C5a: resolve + record mentions (edit-fire dedupe gives real alreadyNotified set).
-    if (contentUsernames.length > 0) {
-      const r = await resolveMentionedUsers({
-        tiptapUserIds: [],
-        textUsernames: contentUsernames,
-        actorId: userId,
-        resourceType: 'book_club_discussion',
-        resourceId: parsed.data.discussionId,
-      })
-      if (r.ok && r.users.length > 0) {
-        const toNotify = r.users
-          .filter((u) => !r.alreadyNotified.has(u.userId))
-          .map((u) => u.userId)
-        if (toNotify.length > 0) {
-          await recordMentionNotificationsTx(tx, {
-            actorId: userId,
-            mentionedUserIds: toNotify,
-            resourceType: 'book_club_discussion',
-            resourceId: parsed.data.discussionId,
-          })
+      // C5a: resolve + record mentions (edit-fire dedupe gives real alreadyNotified set).
+      if (contentUsernames.length > 0) {
+        const r = await resolveMentionedUsers({
+          tiptapUserIds: [],
+          textUsernames: contentUsernames,
+          actorId: userId,
+          resourceType: 'book_club_discussion',
+          resourceId: parsed.data.discussionId,
+        })
+        if (r.ok && r.users.length > 0) {
+          const toNotify = r.users
+            .filter((u) => !r.alreadyNotified.has(u.userId))
+            .map((u) => u.userId)
+          if (toNotify.length > 0) {
+            await recordMentionNotificationsTx(tx, {
+              actorId: userId,
+              mentionedUserIds: toNotify,
+              resourceType: 'book_club_discussion',
+              resourceId: parsed.data.discussionId,
+            })
+          }
         }
       }
-    }
+    })
+    return { success: true, data: { updated: true } }
   })
-  return { success: true, data: { updated: true } }
 }
 
 export async function deleteClubDiscussionAction(
   input: unknown,
 ): Promise<ActionResult<{ deleted: boolean }>> {
-  const userId = await requireAuth()
-  const parsed = v.discussionIdSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = v.discussionIdSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  const discussion = await db.query.bookClubDiscussions.findFirst({
-    where: eq(bookClubDiscussions.id, parsed.data.discussionId),
-    columns: { authorId: true, clubId: true },
+    const discussion = await db.query.bookClubDiscussions.findFirst({
+      where: eq(bookClubDiscussions.id, parsed.data.discussionId),
+      columns: { authorId: true, clubId: true },
+    })
+    if (!discussion) return { success: false, error: 'NOT_FOUND' }
+
+    const membership = await getClubMembership(userId, discussion.clubId)
+    const isAuthor = discussion.authorId === userId
+    const isModPlus = membership.role === 'OWNER' || membership.role === 'MODERATOR'
+    if (!isAuthor && !isModPlus) return { success: false, error: 'NOT_ALLOWED' }
+
+    await db
+      .delete(bookClubDiscussions)
+      .where(eq(bookClubDiscussions.id, parsed.data.discussionId))
+    return { success: true, data: { deleted: true } }
   })
-  if (!discussion) return { success: false, error: 'NOT_FOUND' }
-
-  const membership = await getClubMembership(userId, discussion.clubId)
-  const isAuthor = discussion.authorId === userId
-  const isModPlus = membership.role === 'OWNER' || membership.role === 'MODERATOR'
-  if (!isAuthor && !isModPlus) return { success: false, error: 'NOT_ALLOWED' }
-
-  await db
-    .delete(bookClubDiscussions)
-    .where(eq(bookClubDiscussions.id, parsed.data.discussionId))
-  return { success: true, data: { deleted: true } }
 }
 
 export async function pinClubDiscussionAction(
   input: unknown,
 ): Promise<ActionResult<{ pinned: boolean }>> {
-  const userId = await requireAuth()
-  const parsed = v.pinDiscussionSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = v.pinDiscussionSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  const discussion = await db.query.bookClubDiscussions.findFirst({
-    where: eq(bookClubDiscussions.id, parsed.data.discussionId),
-    columns: { clubId: true },
+    const discussion = await db.query.bookClubDiscussions.findFirst({
+      where: eq(bookClubDiscussions.id, parsed.data.discussionId),
+      columns: { clubId: true },
+    })
+    if (!discussion) return { success: false, error: 'NOT_FOUND' }
+
+    const membership = await getClubMembership(userId, discussion.clubId)
+    if (!canPinDiscussion(membership.role)) {
+      return { success: false, error: 'NOT_ALLOWED' }
+    }
+
+    await db
+      .update(bookClubDiscussions)
+      .set({ isPinned: parsed.data.pin, updatedAt: new Date() })
+      .where(eq(bookClubDiscussions.id, parsed.data.discussionId))
+    return { success: true, data: { pinned: parsed.data.pin } }
   })
-  if (!discussion) return { success: false, error: 'NOT_FOUND' }
-
-  const membership = await getClubMembership(userId, discussion.clubId)
-  if (!canPinDiscussion(membership.role)) {
-    return { success: false, error: 'NOT_ALLOWED' }
-  }
-
-  await db
-    .update(bookClubDiscussions)
-    .set({ isPinned: parsed.data.pin, updatedAt: new Date() })
-    .where(eq(bookClubDiscussions.id, parsed.data.discussionId))
-  return { success: true, data: { pinned: parsed.data.pin } }
 }
 
 export async function replyToClubDiscussionAction(
   input: unknown,
 ): Promise<ActionResult<{ id: string }>> {
-  const userId = await requireAuth()
-  const parsed = v.replyToDiscussionSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = v.replyToDiscussionSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  const discussion = await db.query.bookClubDiscussions.findFirst({
-    where: eq(bookClubDiscussions.id, parsed.data.discussionId),
-    columns: { clubId: true },
-  })
-  if (!discussion) return { success: false, error: 'NOT_FOUND' }
-
-  const club = await db.query.bookClubs.findFirst({
-    where: eq(bookClubs.id, discussion.clubId),
-    columns: { id: true, ownerId: true, visibility: true },
-  })
-  if (!club) return { success: false, error: 'NOT_FOUND' }
-
-  const membership = await getClubMembership(userId, discussion.clubId)
-  if (!canPostDiscussion(membership.role)) {
-    return { success: false, error: 'NOT_ALLOWED' }
-  }
-  if (!(await canViewClub(userId, club, membership))) {
-    return { success: false, error: 'NOT_FOUND' }
-  }
-
-  // C5a: extract mentions from reply content; cap check.
-  const contentUsernames = extractMentionUsernamesFromText(parsed.data.content)
-  if (contentUsernames.length > 5) {
-    return { success: false, error: 'MENTION_CAP_EXCEEDED' }
-  }
-
-  const id = createId()
-  await db.transaction(async (tx) => {
-    await tx.insert(bookClubDiscussionReplies).values({
-      id,
-      discussionId: parsed.data.discussionId,
-      authorId: userId,
-      content: parsed.data.content,
+    const discussion = await db.query.bookClubDiscussions.findFirst({
+      where: eq(bookClubDiscussions.id, parsed.data.discussionId),
+      columns: { clubId: true },
     })
-    await tx
-      .update(bookClubDiscussions)
-      .set({ replyCount: sql`${bookClubDiscussions.replyCount} + 1` })
-      .where(eq(bookClubDiscussions.id, parsed.data.discussionId))
+    if (!discussion) return { success: false, error: 'NOT_FOUND' }
 
-    // C5a: resolve + record mentions.
-    if (contentUsernames.length > 0) {
-      const r = await resolveMentionedUsers({
-        tiptapUserIds: [],
-        textUsernames: contentUsernames,
-        actorId: userId,
-        resourceType: 'book_club_discussion_reply',
-        resourceId: id,
+    const club = await db.query.bookClubs.findFirst({
+      where: eq(bookClubs.id, discussion.clubId),
+      columns: { id: true, ownerId: true, visibility: true },
+    })
+    if (!club) return { success: false, error: 'NOT_FOUND' }
+
+    const membership = await getClubMembership(userId, discussion.clubId)
+    if (!canPostDiscussion(membership.role)) {
+      return { success: false, error: 'NOT_ALLOWED' }
+    }
+    if (!(await canViewClub(userId, club, membership))) {
+      return { success: false, error: 'NOT_FOUND' }
+    }
+
+    // C5a: extract mentions from reply content; cap check.
+    const contentUsernames = extractMentionUsernamesFromText(parsed.data.content)
+    if (contentUsernames.length > 5) {
+      return { success: false, error: 'MENTION_CAP_EXCEEDED' }
+    }
+
+    const id = createId()
+    await db.transaction(async (tx) => {
+      await tx.insert(bookClubDiscussionReplies).values({
+        id,
+        discussionId: parsed.data.discussionId,
+        authorId: userId,
+        content: parsed.data.content,
       })
-      if (r.ok && r.users.length > 0) {
-        const toNotify = r.users
-          .filter((u) => !r.alreadyNotified.has(u.userId))
-          .map((u) => u.userId)
-        if (toNotify.length > 0) {
-          await recordMentionNotificationsTx(tx, {
-            actorId: userId,
-            mentionedUserIds: toNotify,
-            resourceType: 'book_club_discussion_reply',
-            resourceId: id,
-          })
+      await tx
+        .update(bookClubDiscussions)
+        .set({ replyCount: sql`${bookClubDiscussions.replyCount} + 1` })
+        .where(eq(bookClubDiscussions.id, parsed.data.discussionId))
+
+      // C5a: resolve + record mentions.
+      if (contentUsernames.length > 0) {
+        const r = await resolveMentionedUsers({
+          tiptapUserIds: [],
+          textUsernames: contentUsernames,
+          actorId: userId,
+          resourceType: 'book_club_discussion_reply',
+          resourceId: id,
+        })
+        if (r.ok && r.users.length > 0) {
+          const toNotify = r.users
+            .filter((u) => !r.alreadyNotified.has(u.userId))
+            .map((u) => u.userId)
+          if (toNotify.length > 0) {
+            await recordMentionNotificationsTx(tx, {
+              actorId: userId,
+              mentionedUserIds: toNotify,
+              resourceType: 'book_club_discussion_reply',
+              resourceId: id,
+            })
+          }
         }
       }
-    }
+    })
+    return { success: true, data: { id } }
   })
-  return { success: true, data: { id } }
 }
 
 export async function deleteClubDiscussionReplyAction(
   input: unknown,
 ): Promise<ActionResult<{ deleted: boolean }>> {
-  const userId = await requireAuth()
-  const parsed = v.replyIdSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = v.replyIdSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  const reply = await db.query.bookClubDiscussionReplies.findFirst({
-    where: eq(bookClubDiscussionReplies.id, parsed.data.replyId),
-    columns: { authorId: true, discussionId: true },
+    const reply = await db.query.bookClubDiscussionReplies.findFirst({
+      where: eq(bookClubDiscussionReplies.id, parsed.data.replyId),
+      columns: { authorId: true, discussionId: true },
+    })
+    if (!reply) return { success: false, error: 'NOT_FOUND' }
+
+    const discussion = await db.query.bookClubDiscussions.findFirst({
+      where: eq(bookClubDiscussions.id, reply.discussionId),
+      columns: { clubId: true },
+    })
+    if (!discussion) return { success: false, error: 'NOT_FOUND' }
+
+    const membership = await getClubMembership(userId, discussion.clubId)
+    const isAuthor = reply.authorId === userId
+    const isModPlus = membership.role === 'OWNER' || membership.role === 'MODERATOR'
+    if (!isAuthor && !isModPlus) return { success: false, error: 'NOT_ALLOWED' }
+
+    await db.transaction(async (tx) => {
+      await tx
+        .delete(bookClubDiscussionReplies)
+        .where(eq(bookClubDiscussionReplies.id, parsed.data.replyId))
+      await tx
+        .update(bookClubDiscussions)
+        .set({ replyCount: sql`greatest(${bookClubDiscussions.replyCount} - 1, 0)` })
+        .where(eq(bookClubDiscussions.id, reply.discussionId))
+    })
+    return { success: true, data: { deleted: true } }
   })
-  if (!reply) return { success: false, error: 'NOT_FOUND' }
-
-  const discussion = await db.query.bookClubDiscussions.findFirst({
-    where: eq(bookClubDiscussions.id, reply.discussionId),
-    columns: { clubId: true },
-  })
-  if (!discussion) return { success: false, error: 'NOT_FOUND' }
-
-  const membership = await getClubMembership(userId, discussion.clubId)
-  const isAuthor = reply.authorId === userId
-  const isModPlus = membership.role === 'OWNER' || membership.role === 'MODERATOR'
-  if (!isAuthor && !isModPlus) return { success: false, error: 'NOT_ALLOWED' }
-
-  await db.transaction(async (tx) => {
-    await tx
-      .delete(bookClubDiscussionReplies)
-      .where(eq(bookClubDiscussionReplies.id, parsed.data.replyId))
-    await tx
-      .update(bookClubDiscussions)
-      .set({ replyCount: sql`greatest(${bookClubDiscussions.replyCount} - 1, 0)` })
-      .where(eq(bookClubDiscussions.id, reply.discussionId))
-  })
-  return { success: true, data: { deleted: true } }
 }
 
 export async function toggleClubDiscussionLikeAction(
   input: unknown,
 ): Promise<ActionResult<{ liked: boolean }>> {
-  const userId = await requireAuth()
-  const parsed = v.discussionIdSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = v.discussionIdSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  const discussion = await db.query.bookClubDiscussions.findFirst({
-    where: eq(bookClubDiscussions.id, parsed.data.discussionId),
-    columns: { clubId: true },
-  })
-  if (!discussion) return { success: false, error: 'NOT_FOUND' }
-
-  const club = await db.query.bookClubs.findFirst({
-    where: eq(bookClubs.id, discussion.clubId),
-    columns: { id: true, ownerId: true, visibility: true },
-  })
-  if (!club) return { success: false, error: 'NOT_FOUND' }
-
-  const membership = await getClubMembership(userId, discussion.clubId)
-  if (!(await canViewClub(userId, club, membership))) {
-    return { success: false, error: 'NOT_FOUND' }
-  }
-
-  let liked = false
-  await db.transaction(async (tx) => {
-    const existing = await tx.query.bookClubDiscussionLikes.findFirst({
-      where: and(
-        eq(bookClubDiscussionLikes.userId, userId),
-        eq(bookClubDiscussionLikes.discussionId, parsed.data.discussionId),
-      ),
+    const discussion = await db.query.bookClubDiscussions.findFirst({
+      where: eq(bookClubDiscussions.id, parsed.data.discussionId),
+      columns: { clubId: true },
     })
-    if (existing) {
-      await tx
-        .delete(bookClubDiscussionLikes)
-        .where(
-          and(
-            eq(bookClubDiscussionLikes.userId, userId),
-            eq(bookClubDiscussionLikes.discussionId, parsed.data.discussionId),
-          ),
-        )
-      await tx
-        .update(bookClubDiscussions)
-        .set({
-          likeCount: sql`greatest(${bookClubDiscussions.likeCount} - 1, 0)`,
-        })
-        .where(eq(bookClubDiscussions.id, parsed.data.discussionId))
-      liked = false
-    } else {
-      await tx.insert(bookClubDiscussionLikes).values({
-        userId,
-        discussionId: parsed.data.discussionId,
-      })
-      await tx
-        .update(bookClubDiscussions)
-        .set({ likeCount: sql`${bookClubDiscussions.likeCount} + 1` })
-        .where(eq(bookClubDiscussions.id, parsed.data.discussionId))
-      liked = true
+    if (!discussion) return { success: false, error: 'NOT_FOUND' }
+
+    const club = await db.query.bookClubs.findFirst({
+      where: eq(bookClubs.id, discussion.clubId),
+      columns: { id: true, ownerId: true, visibility: true },
+    })
+    if (!club) return { success: false, error: 'NOT_FOUND' }
+
+    const membership = await getClubMembership(userId, discussion.clubId)
+    if (!(await canViewClub(userId, club, membership))) {
+      return { success: false, error: 'NOT_FOUND' }
     }
+
+    let liked = false
+    await db.transaction(async (tx) => {
+      const existing = await tx.query.bookClubDiscussionLikes.findFirst({
+        where: and(
+          eq(bookClubDiscussionLikes.userId, userId),
+          eq(bookClubDiscussionLikes.discussionId, parsed.data.discussionId),
+        ),
+      })
+      if (existing) {
+        await tx
+          .delete(bookClubDiscussionLikes)
+          .where(
+            and(
+              eq(bookClubDiscussionLikes.userId, userId),
+              eq(bookClubDiscussionLikes.discussionId, parsed.data.discussionId),
+            ),
+          )
+        await tx
+          .update(bookClubDiscussions)
+          .set({
+            likeCount: sql`greatest(${bookClubDiscussions.likeCount} - 1, 0)`,
+          })
+          .where(eq(bookClubDiscussions.id, parsed.data.discussionId))
+        liked = false
+      } else {
+        await tx.insert(bookClubDiscussionLikes).values({
+          userId,
+          discussionId: parsed.data.discussionId,
+        })
+        await tx
+          .update(bookClubDiscussions)
+          .set({ likeCount: sql`${bookClubDiscussions.likeCount} + 1` })
+          .where(eq(bookClubDiscussions.id, parsed.data.discussionId))
+        liked = true
+      }
+    })
+    return { success: true, data: { liked } }
   })
-  return { success: true, data: { liked } }
 }
 
 export async function toggleClubReplyLikeAction(
   input: unknown,
 ): Promise<ActionResult<{ liked: boolean }>> {
-  const userId = await requireAuth()
-  const parsed = v.replyIdSchema.safeParse(input)
-  if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
+  return runAction(async () => {
+    const userId = await requireAuth()
+    const parsed = v.replyIdSchema.safeParse(input)
+    if (!parsed.success) return { success: false, error: 'INVALID_INPUT' }
 
-  const reply = await db.query.bookClubDiscussionReplies.findFirst({
-    where: eq(bookClubDiscussionReplies.id, parsed.data.replyId),
-    columns: { discussionId: true },
-  })
-  if (!reply) return { success: false, error: 'NOT_FOUND' }
-
-  const discussion = await db.query.bookClubDiscussions.findFirst({
-    where: eq(bookClubDiscussions.id, reply.discussionId),
-    columns: { clubId: true },
-  })
-  if (!discussion) return { success: false, error: 'NOT_FOUND' }
-
-  const club = await db.query.bookClubs.findFirst({
-    where: eq(bookClubs.id, discussion.clubId),
-    columns: { id: true, ownerId: true, visibility: true },
-  })
-  if (!club) return { success: false, error: 'NOT_FOUND' }
-
-  const membership = await getClubMembership(userId, discussion.clubId)
-  if (!(await canViewClub(userId, club, membership))) {
-    return { success: false, error: 'NOT_FOUND' }
-  }
-
-  let liked = false
-  await db.transaction(async (tx) => {
-    const existing = await tx.query.bookClubDiscussionReplyLikes.findFirst({
-      where: and(
-        eq(bookClubDiscussionReplyLikes.userId, userId),
-        eq(bookClubDiscussionReplyLikes.replyId, parsed.data.replyId),
-      ),
+    const reply = await db.query.bookClubDiscussionReplies.findFirst({
+      where: eq(bookClubDiscussionReplies.id, parsed.data.replyId),
+      columns: { discussionId: true },
     })
-    if (existing) {
-      await tx
-        .delete(bookClubDiscussionReplyLikes)
-        .where(
-          and(
-            eq(bookClubDiscussionReplyLikes.userId, userId),
-            eq(bookClubDiscussionReplyLikes.replyId, parsed.data.replyId),
-          ),
-        )
-      await tx
-        .update(bookClubDiscussionReplies)
-        .set({
-          likeCount: sql`greatest(${bookClubDiscussionReplies.likeCount} - 1, 0)`,
-        })
-        .where(eq(bookClubDiscussionReplies.id, parsed.data.replyId))
-      liked = false
-    } else {
-      await tx.insert(bookClubDiscussionReplyLikes).values({
-        userId,
-        replyId: parsed.data.replyId,
-      })
-      await tx
-        .update(bookClubDiscussionReplies)
-        .set({ likeCount: sql`${bookClubDiscussionReplies.likeCount} + 1` })
-        .where(eq(bookClubDiscussionReplies.id, parsed.data.replyId))
-      liked = true
+    if (!reply) return { success: false, error: 'NOT_FOUND' }
+
+    const discussion = await db.query.bookClubDiscussions.findFirst({
+      where: eq(bookClubDiscussions.id, reply.discussionId),
+      columns: { clubId: true },
+    })
+    if (!discussion) return { success: false, error: 'NOT_FOUND' }
+
+    const club = await db.query.bookClubs.findFirst({
+      where: eq(bookClubs.id, discussion.clubId),
+      columns: { id: true, ownerId: true, visibility: true },
+    })
+    if (!club) return { success: false, error: 'NOT_FOUND' }
+
+    const membership = await getClubMembership(userId, discussion.clubId)
+    if (!(await canViewClub(userId, club, membership))) {
+      return { success: false, error: 'NOT_FOUND' }
     }
+
+    let liked = false
+    await db.transaction(async (tx) => {
+      const existing = await tx.query.bookClubDiscussionReplyLikes.findFirst({
+        where: and(
+          eq(bookClubDiscussionReplyLikes.userId, userId),
+          eq(bookClubDiscussionReplyLikes.replyId, parsed.data.replyId),
+        ),
+      })
+      if (existing) {
+        await tx
+          .delete(bookClubDiscussionReplyLikes)
+          .where(
+            and(
+              eq(bookClubDiscussionReplyLikes.userId, userId),
+              eq(bookClubDiscussionReplyLikes.replyId, parsed.data.replyId),
+            ),
+          )
+        await tx
+          .update(bookClubDiscussionReplies)
+          .set({
+            likeCount: sql`greatest(${bookClubDiscussionReplies.likeCount} - 1, 0)`,
+          })
+          .where(eq(bookClubDiscussionReplies.id, parsed.data.replyId))
+        liked = false
+      } else {
+        await tx.insert(bookClubDiscussionReplyLikes).values({
+          userId,
+          replyId: parsed.data.replyId,
+        })
+        await tx
+          .update(bookClubDiscussionReplies)
+          .set({ likeCount: sql`${bookClubDiscussionReplies.likeCount} + 1` })
+          .where(eq(bookClubDiscussionReplies.id, parsed.data.replyId))
+        liked = true
+      }
+    })
+    return { success: true, data: { liked } }
   })
-  return { success: true, data: { liked } }
 }
 
 export async function listClubDiscussionsAction(input: {

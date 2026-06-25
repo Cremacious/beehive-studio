@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { deleteBookAction } from '@/lib/actions/book.actions'
 
@@ -19,14 +20,18 @@ export function DeleteBookButton({ bookId, bookTitle, locale, children }: Props)
   const [open, setOpen] = useState(false)
 
   async function handleConfirm() {
-    const result = await deleteBookAction(bookId, locale)
-    if (!result.success) {
-      toast.error('Could not delete book')
-      return
+    try {
+      const result = await deleteBookAction(bookId, locale)
+      if (!result.success) {
+        toastActionError(result.error)
+        return
+      }
+      toast.success(`Deleted "${bookTitle}"`)
+      router.push(`/${locale}/studio`)
+      router.refresh()
+    } catch {
+      toastNetworkError()
     }
-    toast.success(`Deleted "${bookTitle}"`)
-    router.push(`/${locale}/studio`)
-    router.refresh()
   }
 
   return (

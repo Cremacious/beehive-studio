@@ -16,6 +16,7 @@ import {
   submitSubmissionAction,
 } from '@/lib/actions/hive-submissions.actions'
 import { extractWordCount } from '@/lib/tiptap-utils'
+import { toastNetworkError } from '@/lib/errors/notify'
 import { SaveStatusBadge, type FormSaveStatus } from '@/app/[locale]/(app)/studio/[bookId]/_components/front-back-matter/save-status-badge'
 import { HivePageShell } from '../../_components/hive-page-shell'
 import { ComposerToolbar } from './composer-toolbar'
@@ -118,7 +119,16 @@ export function SubmissionComposer({
         if (inflightRef.current) await inflightRef.current
         const p = performSave()
         inflightRef.current = p
-        try { await p } finally { inflightRef.current = null }
+        try {
+          await p
+        } catch {
+          // Autosave threw (offline / server crash). Keep the user's text; just
+          // reflect the failed save and surface the transport error.
+          setSaveStatus('unsaved')
+          toastNetworkError()
+        } finally {
+          inflightRef.current = null
+        }
       }
       void run()
     }, 800)
@@ -172,6 +182,8 @@ export function SubmissionComposer({
       } else {
         toast.error(`Could not submit: ${result.error}`)
       }
+    } catch {
+      toastNetworkError()
     } finally {
       setSubmitting(false)
     }

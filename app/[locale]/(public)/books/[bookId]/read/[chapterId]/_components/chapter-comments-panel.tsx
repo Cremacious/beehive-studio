@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { toast } from 'sonner'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 import {
   addChapterCommentAction,
   getChapterCommentsAction,
@@ -75,13 +75,18 @@ export function ChapterCommentsPanel({
     if (!trimmed || !isAuthenticated) return
     setDraft('')
     startTransition(async () => {
-      const result = await addChapterCommentAction(chapterId, trimmed)
-      if (result.success) {
-        setComments((prev) => [result.data, ...prev])
-        setCount((c) => c + 1)
-      } else {
+      try {
+        const result = await addChapterCommentAction(chapterId, trimmed)
+        if (result.success) {
+          setComments((prev) => [result.data, ...prev])
+          setCount((c) => c + 1)
+        } else {
+          setDraft(trimmed)
+          toastActionError(result.error)
+        }
+      } catch {
         setDraft(trimmed)
-        toast.error('Could not post comment')
+        toastNetworkError()
       }
     })
   }
@@ -89,13 +94,17 @@ export function ChapterCommentsPanel({
   const loadMore = () => {
     startTransition(async () => {
       const nextPage = page + 1
-      const result = await getChapterCommentsAction(chapterId, nextPage)
-      if (result.success) {
-        setComments((prev) => [...prev, ...result.data.comments])
-        setHasMore(result.data.hasMore)
-        setPage(nextPage)
-      } else {
-        toast.error('Could not load more comments')
+      try {
+        const result = await getChapterCommentsAction(chapterId, nextPage)
+        if (result.success) {
+          setComments((prev) => [...prev, ...result.data.comments])
+          setHasMore(result.data.hasMore)
+          setPage(nextPage)
+        } else {
+          toastActionError(result.error)
+        }
+      } catch {
+        toastNetworkError()
       }
     })
   }

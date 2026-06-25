@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { EditGoalModal } from './edit-goal-modal'
 import { archiveWordGoalAction, type WordGoalRecord } from '@/lib/actions/hive-word-goals.actions'
+import { toastNetworkError } from '@/lib/errors/notify'
 import type { WordGoalType } from '@/lib/hive/goal-progress'
 import { HivePill } from '../../_components/hive-pill'
 
@@ -59,13 +60,17 @@ export function GoalCard({ goal, progress, canManage }: Props) {
   const remaining = formatRemaining(goal.endDate)
 
   async function handleArchive() {
-    const result = await archiveWordGoalAction(goal.id)
-    if (!result.success) {
-      toast.error(result.error === 'NOT_AUTHORIZED' ? 'You do not have permission.' : result.error)
-      return
+    try {
+      const result = await archiveWordGoalAction(goal.id)
+      if (!result.success) {
+        toast.error(result.error === 'NOT_AUTHORIZED' ? 'You do not have permission.' : result.error)
+        return
+      }
+      toast.success('Goal archived.')
+      router.refresh()
+    } catch {
+      toastNetworkError()
     }
-    toast.success('Goal archived.')
-    router.refresh()
   }
 
   return (

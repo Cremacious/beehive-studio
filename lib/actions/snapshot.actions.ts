@@ -6,6 +6,7 @@ import { eq, desc } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { getUserPremiumStatus } from '@/lib/premium'
 import type { ActionResult } from './book.actions'
+import { runAction } from './safe-action'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -38,6 +39,7 @@ async function assertChapterOwner(chapterId: string, userId: string): Promise<vo
 export async function getChapterSnapshotsAction(
   chapterId: string,
 ): Promise<ActionResult<SnapshotSummary[]>> {
+  return runAction(async () => {
   const userId = await requireAuth()
 
   const isPremium = await getUserPremiumStatus(userId)
@@ -59,6 +61,7 @@ export async function getChapterSnapshotsAction(
     .limit(50)
 
   return { success: true, data: snapshots }
+  })
 }
 
 /**
@@ -71,6 +74,7 @@ export async function getChapterSnapshotsAction(
 export async function getSnapshotContentAction(
   snapshotId: string,
 ): Promise<ActionResult<{ id: string; content: unknown; wordCount: number; createdAt: Date }>> {
+  return runAction(async () => {
   const userId = await requireAuth()
 
   const isPremium = await getUserPremiumStatus(userId)
@@ -100,6 +104,7 @@ export async function getSnapshotContentAction(
       createdAt: snapshot.createdAt,
     },
   }
+  })
 }
 
 /**
@@ -110,6 +115,7 @@ export async function getSnapshotContentAction(
 export async function restoreSnapshotAction(
   snapshotId: string,
 ): Promise<ActionResult<{ wordCount: number }>> {
+  return runAction(async () => {
   const userId = await requireAuth()
 
   const isPremium = await getUserPremiumStatus(userId)
@@ -163,4 +169,5 @@ export async function restoreSnapshotAction(
   })
 
   return { success: true, data: { wordCount: snapshot.wordCount } }
+  })
 }

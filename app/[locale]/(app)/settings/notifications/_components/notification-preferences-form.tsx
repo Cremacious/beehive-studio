@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { toast } from 'sonner'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 import { Switch } from '@/components/ui/switch'
 import { updateNotificationPreferenceAction } from '@/lib/notifications/update-preferences'
 
@@ -145,13 +145,18 @@ export function NotificationPreferencesForm({
     setOptedOut(nextSet)
 
     startTransition(async () => {
-      const result = await updateNotificationPreferenceAction({
-        type,
-        optedOut: optedOutNext,
-      })
-      if (!result.success) {
+      try {
+        const result = await updateNotificationPreferenceAction({
+          type,
+          optedOut: optedOutNext,
+        })
+        if (!result.success) {
+          setOptedOut(prevSet)
+          toastActionError(result.error)
+        }
+      } catch {
         setOptedOut(prevSet)
-        toast.error('Could not save preference')
+        toastNetworkError()
       }
     })
   }

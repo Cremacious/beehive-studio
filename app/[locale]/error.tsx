@@ -1,26 +1,31 @@
 'use client'
 
 import { useEffect } from 'react'
+import { useParams } from 'next/navigation'
+import { ErrorFallback } from '@/components/error-fallback'
 
-export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
-  // Log the actual error so we can debug instead of staring at "Something went wrong."
+export default function Error({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string }
+  reset: () => void
+}) {
+  // Log the real error for debugging; users only ever see branded copy.
   useEffect(() => {
     console.error('[error boundary]', error)
     if (error?.stack) console.error(error.stack)
   }, [error])
 
+  const params = useParams()
+  const locale = typeof params?.locale === 'string' ? params.locale : 'en'
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen gap-4 px-6">
-      <p className="text-white/70">Something went wrong.</p>
-      <pre className="max-w-2xl whitespace-pre-wrap text-xs text-white/40 bg-[#1a1a1a] border border-[#2a2a2a] rounded-md p-3 max-h-64 overflow-auto">
-        {error?.message ?? String(error)}
-      </pre>
-      {error?.digest && (
-        <p className="text-[10px] text-white/30">digest: {error.digest}</p>
-      )}
-      <button onClick={reset} className="text-[var(--brand)] hover:underline text-sm">
-        Try again
-      </button>
-    </div>
+    <ErrorFallback
+      onReset={reset}
+      homeHref={`/${locale}`}
+      homeLabel="Back to home"
+      error={error}
+    />
   )
 }

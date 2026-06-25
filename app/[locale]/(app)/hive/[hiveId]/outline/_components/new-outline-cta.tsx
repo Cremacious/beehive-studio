@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { createHiveOutlineAction } from '@/lib/actions/hive-content.actions'
+import { toastNetworkError } from '@/lib/errors/notify'
 
 export function NewOutlineCTA({
   hiveId,
@@ -19,16 +20,20 @@ export function NewOutlineCTA({
   function handleClick() {
     if (pending) return
     startTransition(async () => {
-      const r = await createHiveOutlineAction(hiveId)
-      if (!r.success) {
-        toast.error(
-          r.error === 'NOT_AUTHORIZED'
-            ? 'You do not have permission to create an outline.'
-            : 'Could not create outline. Please try again.',
-        )
-        return
+      try {
+        const r = await createHiveOutlineAction(hiveId)
+        if (!r.success) {
+          toast.error(
+            r.error === 'NOT_AUTHORIZED'
+              ? 'You do not have permission to create an outline.'
+              : 'Could not create outline. Please try again.',
+          )
+          return
+        }
+        router.push(`/${locale}/hive/${hiveId}/outline/${r.data.outlineId}`)
+      } catch {
+        toastNetworkError()
       }
-      router.push(`/${locale}/hive/${hiveId}/outline/${r.data.outlineId}`)
     })
   }
 

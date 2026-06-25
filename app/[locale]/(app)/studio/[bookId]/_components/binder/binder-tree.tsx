@@ -9,6 +9,7 @@ import { BinderHiveFooter } from './binder-hive-footer'
 import { reorderBinderItemsAction } from '@/lib/actions/binder.actions'
 import { updateBookAction } from '@/lib/actions/book.actions'
 import type { BinderItemRow } from '@/lib/actions/binder.actions'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { Settings } from 'lucide-react'
@@ -102,8 +103,16 @@ export function BinderTree() {
     if (next === localBookTitle) return
     const prev = localBookTitle
     setLocalBookTitle(next)
-    const result = await updateBookAction(bookId, { title: next })
-    if (!result.success) setLocalBookTitle(prev)
+    try {
+      const result = await updateBookAction(bookId, { title: next })
+      if (!result.success) {
+        setLocalBookTitle(prev)
+        toastActionError(result.error)
+      }
+    } catch {
+      setLocalBookTitle(prev)
+      toastNetworkError()
+    }
   }
 
   const tree = useMemo(() => buildTree(binderItems), [binderItems])
@@ -178,13 +187,7 @@ export function BinderTree() {
         }),
       )
 
-      const result = await reorderBinderItemsAction(bookId, [
-        { id: info.self.id, order: selfNewOrder, parentId: info.self.parentId },
-        { id: neighbor.id, order: neighborNewOrder, parentId: neighbor.parentId },
-      ])
-
-      if (!result.success) {
-        // Rollback.
+      const rollback = () => {
         setBinderItems(prev =>
           prev.map(item => {
             if (item.id === info.self.id) return { ...item, order: info.self.order }
@@ -192,6 +195,21 @@ export function BinderTree() {
             return item
           }),
         )
+      }
+
+      try {
+        const result = await reorderBinderItemsAction(bookId, [
+          { id: info.self.id, order: selfNewOrder, parentId: info.self.parentId },
+          { id: neighbor.id, order: neighborNewOrder, parentId: neighbor.parentId },
+        ])
+
+        if (!result.success) {
+          rollback()
+          toastActionError(result.error)
+        }
+      } catch {
+        rollback()
+        toastNetworkError()
       }
     },
     [bookId, findNeighborInfo, setBinderItems],

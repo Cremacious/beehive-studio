@@ -15,6 +15,7 @@ import { TagChipStrip } from './tag-chip-strip'
 import { WikiSection } from './wiki-section'
 import { SaveStatusBadge, type FormSaveStatus } from '../front-back-matter/save-status-badge'
 import { useBookEditor } from '../book-editor-provider'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 
 type WikiEntryContent = {
   category: WikiCategory
@@ -68,9 +69,17 @@ export function WikiEntryEditor({ item, readOnly = false }: { item: BinderItemRo
     setStatus('unsaved')
     saveTimer.current = setTimeout(async () => {
       setStatus('saving')
-      const r = await updateBinderItemAction(item.id, { content: next as unknown as Record<string, unknown> })
-      setStatus(r.success ? 'saved' : 'unsaved')
-      if (r.success) updateBinderItem(item.id, { content: next })
+      try {
+        const r = await updateBinderItemAction(item.id, { content: next as unknown as Record<string, unknown> })
+        // Do NOT discard the user's edits on failure — surface the error and
+        // leave status 'unsaved' so the next edit retries.
+        setStatus(r.success ? 'saved' : 'unsaved')
+        if (r.success) updateBinderItem(item.id, { content: next })
+        else toastActionError(r.error)
+      } catch {
+        setStatus('unsaved')
+        toastNetworkError()
+      }
     }, 800)
   }, [item.id, readOnly, updateBinderItem])
 
@@ -102,8 +111,13 @@ export function WikiEntryEditor({ item, readOnly = false }: { item: BinderItemRo
   async function commitTitle(title: string) {
     const trimmed = title.trim()
     if (!trimmed || trimmed === item.title) return
-    const r = await updateBinderItemAction(item.id, { title: trimmed })
-    if (r.success) updateBinderItem(item.id, { title: trimmed })
+    try {
+      const r = await updateBinderItemAction(item.id, { title: trimmed })
+      if (r.success) updateBinderItem(item.id, { title: trimmed })
+      else toastActionError(r.error)
+    } catch {
+      toastNetworkError()
+    }
   }
 
   const IconComponent = template.icon

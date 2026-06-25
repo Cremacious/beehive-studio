@@ -27,6 +27,7 @@ import {
   type ToggleBuzzLikeInput,
   type BuzzPostType,
 } from '@/lib/validations/hive-buzz'
+import { runAction } from './safe-action'
 import type { ActionResult } from './book.actions'
 
 // ── Public types ────────────────────────────────────────────────────────────
@@ -51,6 +52,7 @@ export type BuzzPostSummary = {
 export async function createBuzzPostAction(
   input: CreateBuzzPostInput,
 ): Promise<ActionResult<{ id: string }>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const parsed = createBuzzPostSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: parsed.error.issues[0].message }
@@ -125,6 +127,7 @@ export async function createBuzzPostAction(
   })
 
   return { success: true, data: { id } }
+  })
 }
 
 // ── updateBuzzPostAction ─────────────────────────────────────────────────────
@@ -132,6 +135,7 @@ export async function createBuzzPostAction(
 export async function updateBuzzPostAction(
   input: UpdateBuzzPostInput,
 ): Promise<ActionResult> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const parsed = updateBuzzPostSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: parsed.error.issues[0].message }
@@ -202,11 +206,13 @@ export async function updateBuzzPostAction(
   })
 
   return { success: true, data: undefined }
+  })
 }
 
 // ── deleteBuzzPostAction ─────────────────────────────────────────────────────
 
 export async function deleteBuzzPostAction(id: string): Promise<ActionResult> {
+  return runAction(async () => {
   const userId = await requireAuth()
 
   const post = await db.query.hiveBuzzPosts.findFirst({
@@ -228,6 +234,7 @@ export async function deleteBuzzPostAction(id: string): Promise<ActionResult> {
   await db.delete(hiveBuzzPosts).where(eq(hiveBuzzPosts.id, id))
 
   return { success: true, data: undefined }
+  })
 }
 
 // ── listBuzzPostsAction ──────────────────────────────────────────────────────
@@ -235,6 +242,7 @@ export async function deleteBuzzPostAction(id: string): Promise<ActionResult> {
 export async function listBuzzPostsAction(
   input: ListBuzzPostsInput,
 ): Promise<ActionResult<{ posts: BuzzPostSummary[]; nextCursor: { createdAt: Date; id: string } | null }>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const parsed = listBuzzPostsSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: parsed.error.issues[0].message }
@@ -316,6 +324,7 @@ export async function listBuzzPostsAction(
   })
 
   return { success: true, data: { posts, nextCursor } }
+  })
 }
 
 // ── toggleBuzzLikeAction ─────────────────────────────────────────────────────
@@ -323,6 +332,7 @@ export async function listBuzzPostsAction(
 export async function toggleBuzzLikeAction(
   input: ToggleBuzzLikeInput,
 ): Promise<ActionResult<{ liked: boolean; likeCount: number }>> {
+  return runAction(async () => {
   const userId = await requireAuth()
   const parsed = toggleBuzzLikeSchema.safeParse(input)
   if (!parsed.success) return { success: false, error: parsed.error.issues[0].message }
@@ -380,6 +390,7 @@ export async function toggleBuzzLikeAction(
   const likeCount = fresh?.likeCount ?? 0
 
   return { success: true, data: { liked: result.liked, likeCount } }
+  })
 }
 
 // -----------------------------------------------------------------------------
@@ -392,6 +403,7 @@ export async function getBuzzHiveIdAction(
   | { success: true; data: { hiveId: string } }
   | { success: false; error: string }
 > {
+  return runAction(async () => {
   await requireAuth()
   const row = await db.query.hiveBuzzPosts.findFirst({
     where: eq(hiveBuzzPosts.id, buzzId),
@@ -399,4 +411,5 @@ export async function getBuzzHiveIdAction(
   })
   if (!row) return { success: false, error: 'NOT_FOUND' }
   return { success: true, data: { hiveId: row.hiveId } }
+  })
 }

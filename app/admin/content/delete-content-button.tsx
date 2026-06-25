@@ -1,6 +1,8 @@
 'use client'
 
 import { useTransition } from 'react'
+import { toast } from 'sonner'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 import { deleteContentAction, type ContentKind } from './actions'
 
 export function DeleteContentButton({
@@ -16,7 +18,16 @@ export function DeleteContentButton({
   const onDelete = () => {
     if (!window.confirm(`Permanently delete "${title}"? This cannot be undone.`)) return
     startTransition(async () => {
-      await deleteContentAction(kind, id)
+      try {
+        const res = await deleteContentAction(kind, id)
+        if (!res.ok) {
+          toastActionError(res.error)
+          return
+        }
+        toast.success('Deleted')
+      } catch {
+        toastNetworkError()
+      }
     })
   }
   return (

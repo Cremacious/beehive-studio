@@ -21,6 +21,7 @@ import {
   useResizablePanel,
   type UseResizablePanelReturn,
 } from '@/lib/hooks/use-resizable-panel'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 
 // Panel size constants per spec (issue #36).
 export const BINDER_DEFAULT_WIDTH = 240
@@ -270,19 +271,28 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     // round-trip so we ship plain prototype-less objects across the
     // server-action boundary.
     const plainContent = JSON.parse(JSON.stringify(content)) as unknown
-    const result = await saveChapterAction(cachedChapter.id, plainContent)
-    if (result.success) {
-      setSaveStatus('saved')
-      setWordCount(result.data.wordCount)
-      setChapterCache(prev => {
-        const m = new Map(prev)
-        const ch = m.get(targetItemId)
-        if (ch) m.set(targetItemId, { ...ch, content, wordCount: result.data.wordCount })
-        return m
-      })
-    } else {
+    try {
+      const result = await saveChapterAction(cachedChapter.id, plainContent)
+      if (result.success) {
+        setSaveStatus('saved')
+        setWordCount(result.data.wordCount)
+        setChapterCache(prev => {
+          const m = new Map(prev)
+          const ch = m.get(targetItemId)
+          if (ch) m.set(targetItemId, { ...ch, content, wordCount: result.data.wordCount })
+          return m
+        })
+      } else {
+        // Do NOT discard the user's edits — just surface the failure and leave
+        // the status at 'unsaved' so a future keystroke (or flush) retries.
+        setSaveStatus('unsaved')
+        pushError("Couldn't save. Retrying…")
+        toastActionError(result.error)
+      }
+    } catch {
       setSaveStatus('unsaved')
       pushError("Couldn't save. Retrying…")
+      toastNetworkError()
     }
   }, [pushError])
 
@@ -359,8 +369,9 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
         maybeAutoOpenGutter(id, result.data)
       } else {
         pushError(`Couldn't load chapter: ${result.error}`)
+        toastActionError(result.error)
       }
-    })
+    }).catch(() => toastNetworkError())
   }, [pushError, flushPendingSave])
 
   const addBinderItem = useCallback((item: BinderItemRow) => {
@@ -422,9 +433,7 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
       prev.map(i => (i.id === activeItemId ? { ...i, chapterStatus: status } : i)),
     )
 
-    const result = await updateChapterStatusAction(previous.id, status)
-    if (!result.success) {
-      // Rollback
+    const rollback = () => {
       setChapterCache(prev => {
         const m = new Map(prev)
         const ch = m.get(activeItemId)
@@ -436,7 +445,19 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
           i.id === activeItemId ? { ...i, chapterStatus: previous.status } : i,
         ),
       )
-      pushError(`Couldn't update status: ${result.error}`)
+    }
+
+    try {
+      const result = await updateChapterStatusAction(previous.id, status)
+      if (!result.success) {
+        rollback()
+        pushError(`Couldn't update status: ${result.error}`)
+        toastActionError(result.error)
+      }
+    } catch {
+      rollback()
+      pushError("Couldn't update status. Please try again.")
+      toastNetworkError()
     }
   }, [activeItemId, chapterCache, pushError])
 
@@ -452,9 +473,15 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
 
       if (!cachedChapter) return
 
-      const result = await updateChapterNotesAction(cachedChapter.id, notes)
-      if (!result.success) {
+      try {
+        const result = await updateChapterNotesAction(cachedChapter.id, notes)
+        if (!result.success) {
+          pushError("Couldn't save notes. Please try again.")
+          toastActionError(result.error)
+        }
+      } catch {
         pushError("Couldn't save notes. Please try again.")
+        toastNetworkError()
       }
     }, 2000)
   }, [activeItemId, pushError])
@@ -464,16 +491,22 @@ export function BookEditorProvider({ bookId, bookTitle, locale, initialBinderIte
     if (!itemId) return
     const item = binderItems.find(x => x.id === itemId)
     if (!item || !CHAPTER_TYPES.has(item.type) || !item.chapterId) return
-    const result = await getChapterAction(item.chapterId)
-    if (result.success) {
-      setChapterCache(c => new Map(c).set(itemId, result.data))
-      setLiveCollabCounts({
-        annotations: result.data.annotationCount,
-        suggestions: result.data.pendingSuggestionCount,
-      })
-      maybeAutoOpenGutter(itemId, result.data)
-    } else {
-      pushError(`Couldn't reload chapter: ${result.error}`)
+    try {
+      const result = await getChapterAction(item.chapterId)
+      if (result.success) {
+        setChapterCache(c => new Map(c).set(itemId, result.data))
+        setLiveCollabCounts({
+          annotations: result.data.annotationCount,
+          suggestions: result.data.pendingSuggestionCount,
+        })
+        maybeAutoOpenGutter(itemId, result.data)
+      } else {
+        pushError(`Couldn't reload chapter: ${result.error}`)
+        toastActionError(result.error)
+      }
+    } catch {
+      pushError("Couldn't reload chapter. Please try again.")
+      toastNetworkError()
     }
   }, [activeItemId, binderItems, pushError])
 

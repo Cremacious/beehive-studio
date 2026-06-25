@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { toast } from 'sonner'
 import {
@@ -98,6 +98,29 @@ export function NotificationsBell() {
   // the server-side deep-link lookup is in flight (typically <50ms but visible
   // on cold network).
   const [pendingRowId, setPendingRowId] = useState<string | null>(null)
+  const rootRef = useRef<HTMLDivElement>(null)
+
+  // Close the dropdown on any outside click or Escape. A document-level
+  // listener scoped to rootRef is used instead of a fixed-position backdrop
+  // because the navbar's `backdrop-blur` makes a `position: fixed` backdrop
+  // relative to the header box (not the viewport), so it can't cover the page.
+  useEffect(() => {
+    if (!open) return
+    function onPointerDown(e: PointerEvent) {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [open])
 
   async function load() {
     const result = await getNotificationsAction()
@@ -274,7 +297,7 @@ export function NotificationsBell() {
   }
 
   return (
-    <div className="relative">
+    <div className="relative" ref={rootRef}>
       <button
         onClick={handleOpen}
         aria-label="Notifications"
@@ -316,7 +339,6 @@ export function NotificationsBell() {
 
       {open && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div
             className="absolute right-0 z-50 overflow-hidden"
             style={{

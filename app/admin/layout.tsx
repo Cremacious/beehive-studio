@@ -10,6 +10,7 @@ const NAV: { href: string; label: string; devOnly?: boolean }[] = [
   { href: '/admin/promo-codes', label: 'Promo Codes' },
   { href: '/admin/content', label: 'Content' },
   { href: '/admin/audit', label: 'Audit log' },
+  { href: '/admin/support', label: 'Support' },
   { href: '/admin/wipe', label: 'Wipe DB', devOnly: true },
 ]
 

@@ -84,5 +84,66 @@ export async function sendPasswordResetEmail(email: string, url: string) {
   if (error) throw new Error(`Failed to send email: ${error.message}`)
 }
 
+export async function sendSupportNotificationEmail(opts: {
+  to: string
+  fromEmail: string
+  category: string
+  subject: string
+  message: string
+  userId?: string | null
+}) {
+  const categoryLabel =
+    opts.category === 'general'
+      ? 'General question'
+      : opts.category === 'technical'
+        ? 'Technical support'
+        : 'User feedback'
+
+  const body = [
+    `<strong>From:</strong> ${opts.fromEmail}`,
+    opts.userId ? `<strong>User ID:</strong> ${opts.userId}` : null,
+    `<strong>Category:</strong> ${categoryLabel}`,
+    `<strong>Message:</strong><br/><pre style="white-space:pre-wrap;font-size:14px;">${opts.message}</pre>`,
+  ]
+    .filter(Boolean)
+    .join('<br/><br/>')
+
+  try {
+    const { error } = await getResend().emails.send({
+      from: FROM,
+      to: opts.to,
+      replyTo: opts.fromEmail,
+      subject: `[Support] ${opts.subject}`,
+      html: brandedEmail('New support message', body, 'View in admin', `${APP_URL}/admin/support`),
+    })
+    if (error) console.error('[support email] notification failed:', error.message)
+  } catch (err) {
+    console.error('[support email] notification threw:', err)
+  }
+}
+
+export async function sendSupportResponseEmail(opts: {
+  to: string
+  subject: string
+  adminResponse: string
+}) {
+  try {
+    const { error } = await getResend().emails.send({
+      from: FROM,
+      to: opts.to,
+      subject: `Re: ${opts.subject}`,
+      html: brandedEmail(
+        `Re: ${opts.subject}`,
+        opts.adminResponse.replace(/\n/g, '<br/>'),
+        'Visit Beehive Books',
+        APP_URL,
+      ),
+    })
+    if (error) console.error('[support email] response failed:', error.message)
+  } catch (err) {
+    console.error('[support email] response threw:', err)
+  }
+}
+
 // APP_URL available for future use (e.g. constructing links server-side)
 export { APP_URL }

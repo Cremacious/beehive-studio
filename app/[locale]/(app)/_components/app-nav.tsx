@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { HelpCircle } from 'lucide-react'
 import { NotificationsBell } from './notifications-bell'
 import { UserMenuDropdown } from '@/components/nav/user-menu-dropdown'
 import { CommunityNavDropdown } from '@/components/nav/community-nav-dropdown'
@@ -109,8 +110,18 @@ export function AppNav({ locale, user, username }: AppNavProps) {
           })}
         </nav>
 
-        {/* RIGHT — notifications + avatar */}
+        {/* RIGHT — support + notifications + avatar */}
         <div className="flex items-center gap-3.5">
+          <Link
+            href={`/${locale}/support`}
+            aria-label="Support"
+            className="inline-flex items-center justify-center w-8 h-8 rounded-full transition-colors"
+            style={{ color: 'var(--canvas-dark-ink-muted)' }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--canvas-dark-ink)' }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--canvas-dark-ink-muted)' }}
+          >
+            <HelpCircle size={18} />
+          </Link>
           <NotificationsBell />
           <UserMenuDropdown
             locale={locale}

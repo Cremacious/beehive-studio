@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { requireAuth } from '@/lib/require-auth'
 import { getPreferencesAction } from '@/lib/actions/settings.actions'
 import { PreferencesForm } from './_components/preferences-form'
+import { ResetTipsSection } from '@/components/tips/reset-tips-section'
 
 export const metadata = { title: 'Preferences · Settings · Beehive Studio' }
 
@@ -43,6 +44,10 @@ export default async function PreferencesSettingsPage({
         defaultSparkWordLimit={prefs.defaultSparkWordLimit}
         genreInterests={prefs.genreInterests}
       />
+
+      <div className="mt-8">
+        <ResetTipsSection />
+      </div>
     </>
   )
 }

@@ -14,6 +14,7 @@ import { ListsFilters } from './_components/lists-filters'
 import { ListsGrid } from './_components/lists-grid'
 import { ClubsFilters } from './_components/clubs-filters'
 import { ClubsGrid } from './_components/clubs-grid'
+import { PageExplainer } from '@/components/tips/page-explainer'
 
 type SP = Record<string, string | string[] | undefined>
 
@@ -46,6 +47,8 @@ export default async function DiscoverPage({ params, searchParams }: Props) {
         sidebar={renderSidebar(tab, sp, locale)}
         main={renderMain(tab, sp, locale)}
       />
+
+      <PageExplainer tipKey="discover-intro" />
     </main>
   )
 }

@@ -102,13 +102,19 @@ export function PlanCard({ locale, isAuthed, monthly, annual, savingsPct }: Prop
     setError(null)
     setLoading(true)
     trackEvent('checkout_started', { cycle })
-    const result = await createCheckoutSessionAction({ priceKey: cycle, locale })
-    if (result.success) {
-      window.location.href = result.data.url
-    } else {
+    try {
+      const result = await createCheckoutSessionAction({ priceKey: cycle, locale })
+      if (result.success) {
+        window.location.href = result.data.url
+        return // keep the button in its loading state while the browser navigates away
+      }
       setError(result.error)
-      setLoading(false)
+    } catch (err) {
+      // A thrown server action (auth, Stripe, or DB error) would otherwise leave
+      // the button stuck on "Preparing checkout..." with no feedback.
+      setError(err instanceof Error ? err.message : 'Could not start checkout. Please try again.')
     }
+    setLoading(false)
   }
 
   const signUpHref = `/${locale}/sign-up?next=${encodeURIComponent(`/${locale}/pricing`)}`

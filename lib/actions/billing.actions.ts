@@ -17,13 +17,30 @@ type PriceKey = keyof typeof PRICE_IDS
 /**
  * Ensures the user has a Stripe customer record. Creates one on first call
  * (lazy creation pattern); returns the existing ID on subsequent calls.
+ *
+ * Self-heals a dangling customer id: if the stored id no longer resolves in
+ * Stripe (deleted, or the account's test data was reset between sessions), a
+ * fresh customer is created and persisted. Without this, checkout throws
+ * "No such customer" forever for that user.
  */
 async function ensureStripeCustomer(userId: string, userEmail: string): Promise<string> {
   const billing = await db.query.userBilling.findFirst({
     where: eq(userBilling.userId, userId),
     columns: { stripeCustomerId: true },
   })
-  if (billing?.stripeCustomerId) return billing.stripeCustomerId
+
+  if (billing?.stripeCustomerId) {
+    try {
+      const existing = await stripe.customers.retrieve(billing.stripeCustomerId)
+      if (!existing.deleted) return billing.stripeCustomerId
+      // deleted customer -> fall through and recreate
+    } catch (err) {
+      // 'resource_missing' means the id is dangling -> recreate. Anything else
+      // (network, auth) is a real failure and should propagate.
+      const code = (err as { code?: string } | null)?.code
+      if (code !== 'resource_missing') throw err
+    }
+  }
 
   const customer = await stripe.customers.create({
     email: userEmail,

@@ -115,6 +115,41 @@ describe('handleSubscriptionEvent', () => {
     expect(valuesMock).not.toHaveBeenCalled()
   })
 
+  it('reads current_period_end from the subscription root (basil API shape)', async () => {
+    findFirstMock.mockResolvedValue({ userId: 'user_basil' })
+    const unix = Math.floor(Date.now() / 1000) + 30 * 86400
+    // basil and earlier put current_period_end on the root, with no per-item field.
+    const sub = {
+      id: 'sub_basil',
+      customer: 'cus_basil',
+      status: 'active' as const,
+      current_period_end: unix,
+      items: { data: [{}] },
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await handleSubscriptionEvent(sub as any)
+
+    const arg = valuesMock.mock.calls[0][0]
+    expect(arg.subscriptionStatus).toBe('active')
+    expect(arg.currentPeriodEnd).toBeInstanceOf(Date)
+    expect(arg.currentPeriodEnd.getTime()).toBe(unix * 1000)
+  })
+
+  it('upserts with null period end (never an Invalid Date) when absent', async () => {
+    findFirstMock.mockResolvedValue({ userId: 'user_noend' })
+    const sub = {
+      id: 'sub_noend',
+      customer: 'cus_noend',
+      status: 'active' as const,
+      items: { data: [{}] },
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await handleSubscriptionEvent(sub as any)
+
+    const arg = valuesMock.mock.calls[0][0]
+    expect(arg.currentPeriodEnd).toBeNull()
+  })
+
   it('throws on unknown subscription status', async () => {
     findFirstMock.mockResolvedValue({ userId: 'user_x' })
     // 'paused' is now valid in the enum after Task 1's extension, so use an

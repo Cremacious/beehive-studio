@@ -24,6 +24,21 @@ function isKnownStatus(s: string): s is KnownStatus {
 }
 
 /**
+ * Reads the subscription's current period end as a Date, tolerating both API
+ * version shapes (root field on basil and earlier, per-item field on clover and
+ * later). Returns null when absent or non-numeric so a bad value never becomes
+ * an Invalid Date (which would throw on DB insert and 500 the webhook).
+ */
+function extractPeriodEnd(subscription: Stripe.Subscription): Date | null {
+  const rootEnd = (subscription as unknown as { current_period_end?: number })
+    .current_period_end
+  const itemEnd = subscription.items?.data?.[0]?.current_period_end
+  const unix = typeof itemEnd === 'number' ? itemEnd : rootEnd
+  if (typeof unix !== 'number' || !Number.isFinite(unix)) return null
+  return new Date(unix * 1000)
+}
+
+/**
  * Handles customer.subscription.{created,updated,deleted} events.
  *
  * Idempotent by construction — every call upserts userBilling to the
@@ -80,13 +95,14 @@ export async function handleSubscriptionEvent(
     userId = metaUserId
   }
 
-  // In the pinned API version (2026-02-25.clover), current_period_end moved
-  // from the Subscription to its items. Read from the first item; all items
-  // in a single subscription share the same billing cycle.
-  const firstItem = subscription.items.data[0]
-  const periodEnd = firstItem
-    ? new Date(firstItem.current_period_end * 1000)
-    : null
+  // current_period_end location depends on the account's API version:
+  //  - <= 2025-08-27.basil: on the Subscription root
+  //  - >= 2026-02-25.clover: on each subscription item
+  // The pinned SDK version does not control how webhook events are serialized
+  // (they arrive in the account's default version), so read whichever field is
+  // present and guard against missing/NaN so an Invalid Date never throws on
+  // insert (which would 500 the webhook and silently block entitlement).
+  const periodEnd = extractPeriodEnd(subscription)
 
   await db
     .insert(userBilling)

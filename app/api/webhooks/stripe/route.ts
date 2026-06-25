@@ -35,12 +35,15 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     )
   }
 
+  console.log(`[stripe webhook] received ${event.type}`)
+
   try {
     switch (event.type) {
       case 'customer.subscription.created':
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted':
         await handleSubscriptionEvent(event.data.object)
+        console.log(`[stripe webhook] handled ${event.type} OK`)
         break
       default:
         console.log(`[stripe webhook] ignored ${event.type}`)

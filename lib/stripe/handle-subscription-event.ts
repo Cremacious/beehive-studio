@@ -122,4 +122,8 @@ export async function handleSubscriptionEvent(
         currentPeriodEnd: periodEnd,
       },
     })
+
+  console.log(
+    `[stripe webhook] userBilling set subscriptionStatus=${subscription.status} for user=${userId} (customer=${customerId})`,
+  )
 }

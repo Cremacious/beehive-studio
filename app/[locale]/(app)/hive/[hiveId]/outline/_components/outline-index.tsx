@@ -1,7 +1,8 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import Link from 'next/link'
+import { Search, ChevronRight } from 'lucide-react'
 import type { BinderItemRow } from '@/lib/actions/binder.actions'
 import { readContent, type Beat, type BeatColor } from '@/app/[locale]/(app)/studio/[bookId]/_components/outline/outline-board'
 import { HiveSectionDivider } from '../../_components/hive-section-divider'
@@ -48,10 +49,16 @@ export function OutlineIndex({
   outlines,
   hiveId,
   locale,
+  cta,
+  mobile,
 }: {
   outlines: OutlineSummary[]
   hiveId: string
   locale: string
+  /** Mobile-only New Outline button (issue #50), rendered in the mobile body. */
+  cta?: ReactNode
+  /** Render the mobile card layout (issue #50) instead of the desktop table. */
+  mobile?: boolean
 }) {
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<SortKey>('recent')
@@ -74,6 +81,116 @@ export function OutlineIndex({
     return list
   }, [outlines, search, sort])
 
+  // ── Mobile (issue #50, variant A — outline cards) ──
+  if (mobile) {
+    return (
+      <div className="flex flex-col gap-3 pb-6">
+        {cta}
+        <div className="flex gap-2">
+          <label className="relative flex-1">
+            <Search
+              size={14}
+              className="absolute pointer-events-none"
+              style={{ left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--canvas-dark-ink-muted)' }}
+            />
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search outlines…"
+              className="w-full outline-none"
+              style={{
+                height: 40,
+                padding: '0 14px 0 34px',
+                borderRadius: 'var(--r-row)',
+                background: 'var(--canvas-dark-100)',
+                boxShadow: 'var(--sh-inset)',
+                color: 'var(--canvas-dark-ink)',
+              }}
+            />
+          </label>
+          <select
+            value={sort}
+            onChange={e => setSort(e.target.value as SortKey)}
+            className="shrink-0 outline-none"
+            style={{
+              height: 40,
+              padding: '0 10px',
+              borderRadius: 'var(--r-row)',
+              background: 'var(--canvas-dark-100)',
+              boxShadow: 'var(--sh-inset)',
+              color: 'var(--canvas-dark-ink)',
+            }}
+          >
+            <option value="recent">Recent</option>
+            <option value="beats">Beats</option>
+            <option value="alpha">A – Z</option>
+          </select>
+        </div>
+
+        {filtered.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-sm font-medium" style={{ color: 'var(--canvas-dark-ink-strong)' }}>
+              {outlines.length === 0 ? 'No outlines yet' : 'No matches'}
+            </p>
+            <p className="text-xs font-mono mt-1" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
+              {outlines.length === 0 ? 'Start one with the button above.' : 'Try a different search term.'}
+            </p>
+          </div>
+        ) : (
+          filtered.map(o => {
+            const beats = getBeats(o.outline)
+            const colors = uniqueColorsInUse(beats)
+            return (
+              <Link
+                key={o.outline.id}
+                href={`/${locale}/hive/${hiveId}/outline/${o.outline.id}`}
+                className="flex items-center gap-3 p-4 no-underline"
+                style={{
+                  background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+                  borderRadius: 'var(--r-card)',
+                  border: 'var(--br-card)',
+                  boxShadow: 'var(--sh-card)',
+                }}
+              >
+                <div className="flex-1 min-w-0 flex flex-col gap-2">
+                  <span
+                    className="font-comfortaa truncate"
+                    style={{ color: 'var(--canvas-dark-ink-strong)', fontWeight: 500, fontSize: 15 }}
+                  >
+                    {o.outline.title || 'Untitled outline'}
+                  </span>
+                  {colors.length > 0 && (
+                    <span className="inline-flex gap-[5px]">
+                      {colors.map(c => (
+                        <span
+                          key={c}
+                          style={{
+                            width: 11,
+                            height: 11,
+                            borderRadius: 'var(--r-pill)',
+                            background: `var(--beat-${c})`,
+                            display: 'inline-block',
+                            flexShrink: 0,
+                          }}
+                        />
+                      ))}
+                    </span>
+                  )}
+                  <span className="font-mono text-[11px]" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
+                    {beats.length} {beats.length === 1 ? 'beat' : 'beats'} · edited {relTime(o.lastEditedAt)}
+                  </span>
+                </div>
+                <ChevronRight className="w-4 h-4 shrink-0" style={{ color: 'var(--canvas-dark-ink-muted)' }} />
+              </Link>
+            )
+          })
+        )}
+      </div>
+    )
+  }
+
+  // ── Desktop — unchanged ──
   return (
     <div className="pb-6">
       <HiveSectionDivider label="Filter" hideTopBorder>

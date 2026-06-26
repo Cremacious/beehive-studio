@@ -7,6 +7,7 @@ import { requireAuth } from '@/lib/require-auth'
 import { HivePageShell } from './_components/hive-page-shell'
 import { HiveSectionDivider } from './_components/hive-section-divider'
 import { HiveDashboardActivitySection } from './_components/hive-dashboard-activity-section'
+import { HiveOverviewMobile } from './_components/hive-overview-mobile'
 import { optimizeCloudinaryUrl, BOOK_COVER_TRANSFORMS } from '@/lib/upload/cloudinary-url'
 
 function relTime(d: Date): string {
@@ -38,6 +39,29 @@ export default async function HiveDashboardPage({ params }: { params: Promise<{ 
   const showBookCard = book && !isShadow
 
   return (
+    <>
+    {/* Mobile redesign (issue #50, variant A — stacked cards). */}
+    <div className="md:hidden">
+      <HiveOverviewMobile
+        locale={locale}
+        hiveId={hiveId}
+        hiveName={hive.name}
+        description={hive.description ?? null}
+        memberCount={members.length}
+        lastActive={lastActive ?? null}
+        book={
+          showBookCard && book
+            ? { id: book.id, title: book.title, coverUrl: book.coverUrl, authorUsername: book.authorUsername }
+            : null
+        }
+        isShadow={isShadow}
+        isAuthor={isAuthor}
+        activityEvents={activityEvents}
+      />
+    </div>
+
+    {/* Desktop — unchanged. */}
+    <div className="max-md:hidden">
     <HivePageShell
       width="standard"
       back={{ href: `/${locale}/community/hives`, label: 'hives' }}
@@ -122,5 +146,7 @@ export default async function HiveDashboardPage({ params }: { params: Promise<{ 
         locale={locale}
       />
     </HivePageShell>
+    </div>
+    </>
   )
 }

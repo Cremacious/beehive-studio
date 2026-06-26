@@ -50,7 +50,7 @@ export function DiscussionRow({
   return (
     <Link
       href={`/${locale}/hive/${hiveId}/discussions/${row.id}`}
-      className="grid grid-cols-[1fr_90px_130px] items-center gap-3 px-5 py-4 transition-colors hover:bg-[var(--canvas-dark-300)]"
+      className="grid grid-cols-[1fr_90px_130px] max-md:grid-cols-1 max-md:gap-1.5 items-center gap-3 px-5 py-4 transition-colors hover:bg-[var(--canvas-dark-300)]"
     >
       <div className="min-w-0 flex flex-col gap-1.5">
         <div className="flex items-center gap-2.5 min-w-0">

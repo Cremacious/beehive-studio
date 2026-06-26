@@ -21,6 +21,9 @@ export type HivePageShellProps = {
    * The caller is responsible for the exact shape; the shell only renders the slot.
    */
   headerSlot?: ReactNode
+  /** Mobile (issue #50): hide the panel header on phones when the page renders
+   * its own mobile header/CTA in the body. Desktop is unaffected. */
+  headerHideOnMobile?: boolean
   /** Page body — rendered directly inside the panel under the header. */
   children: ReactNode
 }
@@ -39,6 +42,7 @@ export function HivePageShell({
   subtitle,
   back,
   headerSlot,
+  headerHideOnMobile,
   children,
 }: HivePageShellProps) {
   return (
@@ -64,7 +68,7 @@ export function HivePageShell({
         }}
       >
         {(title || subtitle || headerSlot) && (
-          <header className="flex items-start justify-between gap-4 px-6 pt-6 pb-4">
+          <header className={`flex items-start justify-between gap-4 px-6 pt-6 pb-4${headerHideOnMobile ? ' max-md:hidden' : ''}`}>
             <div className="min-w-0 flex-1">
               {title && (
                 <h1

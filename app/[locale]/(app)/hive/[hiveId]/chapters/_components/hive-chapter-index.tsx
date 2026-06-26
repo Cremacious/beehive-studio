@@ -49,7 +49,7 @@ export function HiveChapterIndex({ hiveId, locale, chapters }: Props) {
     <>
       {/* Column-header strip */}
       <div
-        className="grid grid-cols-[40px_1fr_180px] gap-3 px-5 py-2.5 font-mono text-[10px] uppercase tracking-wider text-[var(--canvas-dark-ink-muted)]"
+        className="grid grid-cols-[40px_1fr_180px] gap-3 px-5 py-2.5 font-mono text-[10px] uppercase tracking-wider text-[var(--canvas-dark-ink-muted)] max-md:hidden"
         style={{
           background: 'var(--canvas-dark-100)',
           borderTop: 'var(--br-card)',
@@ -73,7 +73,7 @@ export function HiveChapterIndex({ hiveId, locale, chapters }: Props) {
             return (
               <li
                 key={chapter.id}
-                className="grid grid-cols-[40px_1fr_180px] items-center gap-3 px-5 py-3 opacity-60"
+                className="grid grid-cols-[40px_1fr_180px] max-md:grid-cols-[36px_1fr] items-center gap-3 px-5 py-3 opacity-60"
               >
                 {num}
                 <div className="min-w-0">
@@ -81,7 +81,7 @@ export function HiveChapterIndex({ hiveId, locale, chapters }: Props) {
                     {chapter.title}
                   </span>
                 </div>
-                <span className="font-mono text-[11px] uppercase tracking-wider text-[var(--canvas-dark-ink-muted)] text-right">
+                <span className="font-mono text-[11px] uppercase tracking-wider text-[var(--canvas-dark-ink-muted)] text-right max-md:hidden">
                   (no longer accessible)
                 </span>
               </li>
@@ -94,7 +94,7 @@ export function HiveChapterIndex({ hiveId, locale, chapters }: Props) {
             <li key={chapter.id} className="group">
               <Link
                 href={chapterHref}
-                className="grid grid-cols-[40px_1fr_180px] items-center gap-3 px-5 py-3 hover:bg-[var(--canvas-dark-300)] transition-colors no-underline"
+                className="grid grid-cols-[40px_1fr_180px] max-md:grid-cols-[36px_1fr] items-center gap-3 px-5 py-3 hover:bg-[var(--canvas-dark-300)] transition-colors no-underline"
               >
                 {num}
                 <div className="min-w-0">
@@ -110,7 +110,7 @@ export function HiveChapterIndex({ hiveId, locale, chapters }: Props) {
                     {chapter.title}
                   </span>
                 </div>
-                <span className="font-mono text-[11px] tracking-wider text-[var(--canvas-dark-ink-muted)] text-right">
+                <span className="font-mono text-[11px] tracking-wider text-[var(--canvas-dark-ink-muted)] text-right max-md:hidden">
                   {relTime(chapter.updatedAt)}
                 </span>
               </Link>

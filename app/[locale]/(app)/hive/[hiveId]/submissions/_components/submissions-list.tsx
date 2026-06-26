@@ -160,7 +160,7 @@ function SubmissionsSection({
       />
       {/* Tier 2 — column sub-header bar (lighter than the section header) */}
       <div
-        className="grid grid-cols-[1fr_110px_130px] gap-3 px-5 py-2.5 font-mono text-[10px] uppercase tracking-wider"
+        className="grid grid-cols-[1fr_110px_130px] max-md:hidden gap-3 px-5 py-2.5 font-mono text-[10px] uppercase tracking-wider"
         style={{
           background: 'var(--canvas-dark-300)',
           borderBottom: 'var(--br-card)',

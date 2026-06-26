@@ -99,7 +99,7 @@ export function HiveMembers({
   return (
     <div className="px-6 py-5 flex flex-col gap-4">
       {/* Search toolbar */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 max-md:flex-col max-md:items-stretch">
         <span
           className="font-mono uppercase"
           style={{
@@ -111,13 +111,12 @@ export function HiveMembers({
           All members · {members.length}
         </span>
         <div
-          className="inline-flex items-center gap-2 px-3"
+          className="inline-flex items-center gap-2 px-3 w-full md:w-[240px]"
           style={{
             background: 'var(--canvas-dark-100)',
             boxShadow: 'var(--sh-inset)',
             borderRadius: 'var(--r-pill)',
             height: 34,
-            width: 240,
           }}
         >
           <Search size={13} style={{ color: 'var(--canvas-dark-ink-muted)' }} />
@@ -145,7 +144,7 @@ export function HiveMembers({
       >
         {/* Header strip */}
         <div
-          className="grid items-center gap-3 px-5 py-2.5 font-mono uppercase"
+          className="grid items-center gap-3 px-5 py-2.5 font-mono uppercase hive-row-grid max-md:hidden"
           style={{
             gridTemplateColumns: 'minmax(0, 1fr) 150px 110px 48px',
             background: 'var(--canvas-dark-100)',
@@ -188,7 +187,7 @@ export function HiveMembers({
               return (
                 <li
                   key={m.id}
-                  className="grid items-center gap-3 px-5 py-3.5 transition-colors hover:bg-white/[0.025]"
+                  className="grid items-center gap-3 px-5 py-3.5 transition-colors hover:bg-white/[0.025] hive-row-grid max-md:items-start"
                   style={{
                     gridTemplateColumns: 'minmax(0, 1fr) 150px 110px 48px',
                   }}

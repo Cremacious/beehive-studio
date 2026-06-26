@@ -12,6 +12,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Button } from '@/components/ui/button'
 import type { Beat, BeatColor, BeatLabel } from './outline-board'
 import { BEAT_LABEL_DISPLAY } from './beat-label-badge'
+import { useIsMobile } from '@/lib/hooks/use-is-mobile'
 
 const COLOR_ORDER: BeatColor[] = [
   'yellow', 'orange', 'pink', 'purple', 'blue', 'mint', 'lime', 'slate',
@@ -55,6 +56,12 @@ type BeatDialogProps = {
   mode: 'create' | 'edit'
   initial: Partial<Beat>
   defaultAct?: string | null
+  /**
+   * When provided, an "Act" picker is shown ON MOBILE ONLY (issue #50) so the
+   * user can set the beat's act from the form instead of dragging. Desktop is
+   * unchanged. The patch then carries `act`. Omit to keep the form as-is.
+   */
+  actOptions?: string[]
   /** Chapters available to link to. Empty array hides the chapter picker. */
   chapters?: Array<{ id: string; title: string }>
   onSave: (patch: Partial<Beat>) => void
@@ -67,18 +74,22 @@ export function BeatDialog({
   open,
   mode,
   initial,
-  defaultAct: _defaultAct,
+  defaultAct = null,
+  actOptions,
   chapters = [],
   onSave,
   onDelete,
   onOpenChange,
   readOnly = false,
 }: BeatDialogProps) {
+  const isMobile = useIsMobile()
+  const showActField = !!actOptions && isMobile
   const [title, setTitle] = useState(initial.title ?? '')
   const [description, setDescription] = useState(initial.description ?? '')
   const [color, setColor] = useState<BeatColor | null>(initial.color ?? null)
   const [label, setLabel] = useState<BeatLabel | null>(initial.label ?? null)
   const [linkedChapterId, setLinkedChapterId] = useState<string | null>(initial.linkedChapterId ?? null)
+  const [act, setAct] = useState<string | null>(initial.act ?? defaultAct ?? null)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const titleRef = useRef<HTMLInputElement>(null)
 
@@ -89,7 +100,8 @@ export function BeatDialog({
     setColor(initial.color ?? null)
     setLabel(initial.label ?? null)
     setLinkedChapterId(initial.linkedChapterId ?? null)
-  }, [open, initial])
+    setAct(initial.act ?? defaultAct ?? null)
+  }, [open, initial, defaultAct])
 
   useEffect(() => {
     if (!open) return
@@ -112,6 +124,9 @@ export function BeatDialog({
       color,
       label,
       linkedChapterId,
+      // Only carry `act` when an act picker is in play (hive mobile); keeps
+      // every other consumer's patch shape identical.
+      ...(actOptions ? { act } : {}),
     })
     onOpenChange(false)
   }
@@ -143,6 +158,23 @@ export function BeatDialog({
               style={{ background: 'var(--canvas-dark-100)', color: 'var(--canvas-dark-ink)' }}
             />
           </Field>
+
+          {showActField && (
+            <Field label="Act">
+              <select
+                value={act ?? '__none__'}
+                onChange={e => setAct(e.target.value === '__none__' ? null : e.target.value)}
+                disabled={readOnly}
+                className="w-full px-3 py-2 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[var(--brand)] disabled:opacity-60"
+                style={{ background: 'var(--canvas-dark-100)', color: 'var(--canvas-dark-ink)' }}
+              >
+                <option value="__none__">No act</option>
+                {actOptions!.map(a => (
+                  <option key={a} value={a}>{a}</option>
+                ))}
+              </select>
+            </Field>
+          )}
 
           <Field label="Description">
             <textarea

@@ -78,7 +78,7 @@ export function DiscussionsList({ posts, hiveId, locale }: Props) {
 
       <section className="pt-6">
         <div
-          className="grid items-center gap-3 px-5 py-2.5 text-[10px] font-mono uppercase tracking-wider text-[var(--canvas-dark-ink-muted)]"
+          className="grid items-center gap-3 px-5 py-2.5 text-[10px] font-mono uppercase tracking-wider text-[var(--canvas-dark-ink-muted)] max-md:hidden"
           style={{
             gridTemplateColumns: '1fr 90px 130px',
             background: 'var(--canvas-dark-100)',

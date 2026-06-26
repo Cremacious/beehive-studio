@@ -19,17 +19,33 @@ export default async function HiveOutlineIndexPage({
   const showCta = canEditOutline(r.data.viewerRole)
 
   return (
-    <HivePageShell
-      width="wide"
-      title="Outlines"
-      subtitle={subtitle}
-      headerSlot={showCta ? <NewOutlineCTA hiveId={hiveId} locale={locale} /> : null}
-    >
-      <OutlineIndex
-        outlines={r.data.outlines}
-        hiveId={hiveId}
-        locale={locale}
-      />
-    </HivePageShell>
+    <>
+      {/* Mobile (issue #50, variant A) — outside the shell so it gets full width. */}
+      <div className="md:hidden pt-3">
+        <OutlineIndex
+          outlines={r.data.outlines}
+          hiveId={hiveId}
+          locale={locale}
+          cta={showCta ? <NewOutlineCTA hiveId={hiveId} locale={locale} fullWidth /> : null}
+          mobile
+        />
+      </div>
+
+      {/* Desktop — unchanged. */}
+      <div className="max-md:hidden">
+        <HivePageShell
+          width="wide"
+          title="Outlines"
+          subtitle={subtitle}
+          headerSlot={showCta ? <NewOutlineCTA hiveId={hiveId} locale={locale} /> : null}
+        >
+          <OutlineIndex
+            outlines={r.data.outlines}
+            hiveId={hiveId}
+            locale={locale}
+          />
+        </HivePageShell>
+      </div>
+    </>
   )
 }

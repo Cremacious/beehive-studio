@@ -7,7 +7,7 @@ import {
   type DragEndEvent, type DragOverEvent, type DragStartEvent,
 } from '@dnd-kit/core'
 import { SortableContext, arrayMove } from '@dnd-kit/sortable'
-import { Pencil, Plus, Search, X } from 'lucide-react'
+import { Pencil, Plus, Search, X, ChevronUp, ChevronDown, Link as LinkIcon } from 'lucide-react'
 import { updateBinderItemAction } from '@/lib/actions/binder.actions'
 import type { BinderItemRow } from '@/lib/actions/binder.actions'
 import { groupBeatsByAct, distinctActs } from '@/lib/outline/group-by-act'
@@ -220,6 +220,43 @@ function HiveOutlineSurfaceInner({
     setPendingActs(prev => prev.includes(name) ? prev : [...prev, name])
   }
 
+  // Mobile reorder (issue #50, variant C): swap a beat with its nearest
+  // same-act neighbour instead of dragging. Reorders within the act only.
+  function moveBeat(beatId: string, dir: 'up' | 'down') {
+    if (readOnly) return
+    const idx = beats.findIndex(b => b.id === beatId)
+    if (idx < 0) return
+    const act = beats[idx]!.act ?? null
+    let j = -1
+    if (dir === 'up') {
+      for (let i = idx - 1; i >= 0; i--) {
+        if ((beats[i]!.act ?? null) === act) { j = i; break }
+      }
+    } else {
+      for (let i = idx + 1; i < beats.length; i++) {
+        if ((beats[i]!.act ?? null) === act) { j = i; break }
+      }
+    }
+    if (j < 0) return
+    const next = [...beats]
+    const tmp = next[idx]!
+    next[idx] = next[j]!
+    next[j] = tmp
+    commit(next)
+  }
+
+  function canMove(beatId: string, dir: 'up' | 'down'): boolean {
+    const idx = beats.findIndex(b => b.id === beatId)
+    if (idx < 0) return false
+    const act = beats[idx]!.act ?? null
+    if (dir === 'up') {
+      for (let i = idx - 1; i >= 0; i--) if ((beats[i]!.act ?? null) === act) return true
+    } else {
+      for (let i = idx + 1; i < beats.length; i++) if ((beats[i]!.act ?? null) === act) return true
+    }
+    return false
+  }
+
   function isChapterAvailable(chapterId: string | null | undefined): boolean {
     if (!chapterId) return false
     return chapters.some(c => c.id === chapterId)
@@ -230,7 +267,7 @@ function HiveOutlineSurfaceInner({
   }
 
   return (
-    <div data-slot="outline-pane" className="px-6 pb-6">
+    <div data-slot="outline-pane" className="px-6 pb-6 max-md:px-3">
       <style>{`
         [data-slot="outline-pane"] {
           --sheet-canvas:     transparent;
@@ -256,7 +293,7 @@ function HiveOutlineSurfaceInner({
         }
       `}</style>
 
-      <header className="flex items-start justify-between gap-4 pt-6 pb-3 mb-2">
+      <header className="flex items-start justify-between gap-4 pt-6 pb-3 mb-2 max-md:flex-col max-md:items-start max-md:gap-2 max-md:pt-4">
         <div className="min-w-0 flex-1">
           <div className="inline-flex items-center gap-2 group">
             <h1
@@ -265,10 +302,9 @@ function HiveOutlineSurfaceInner({
               contentEditable={!readOnly}
               suppressContentEditableWarning
               data-placeholder="Untitled outline"
-              className="font-comfortaa font-bold leading-tight outline-none"
+              className="font-comfortaa font-bold leading-tight outline-none text-[28px] max-md:text-[22px]"
               style={{
                 color: 'var(--brand)',
-                fontSize: 28,
                 cursor: readOnly ? 'default' : 'text',
               }}
               onBlur={e => commitTitle(e.currentTarget.textContent ?? '')}
@@ -294,7 +330,7 @@ function HiveOutlineSurfaceInner({
           </div>
           {!readOnly && (
             <p
-              className="mt-1.5 text-[12px]"
+              className="mt-1.5 text-[12px] max-md:mt-2.5 max-md:leading-relaxed"
               style={{ color: 'var(--canvas-dark-ink-muted)' }}
             >
               Click the title above to rename this outline.
@@ -302,7 +338,7 @@ function HiveOutlineSurfaceInner({
           )}
           {(lastEditedByUsername || lastEditedAt) && (
             <p
-              className="mt-1 text-[13px]"
+              className="mt-1 text-[13px] max-md:mt-1.5"
               style={{ color: 'var(--canvas-dark-ink-muted)' }}
             >
               {lastEditedByUsername
@@ -311,14 +347,14 @@ function HiveOutlineSurfaceInner({
             </p>
           )}
         </div>
-        <div className="shrink-0 pt-1">
+        <div className="shrink-0 pt-1 max-md:pt-0">
           <SaveStatusBadge status={saveStatus} />
         </div>
       </header>
 
       {!readOnly && (
         <p
-          className="mb-4 text-[12.5px] leading-relaxed"
+          className="mb-4 text-[12.5px] leading-relaxed max-md:hidden"
           style={{ color: 'var(--canvas-dark-ink-muted)' }}
         >
           <span style={{ color: 'var(--canvas-dark-ink-strong)', fontWeight: 600 }}>Outline basics:</span>{' '}
@@ -328,7 +364,219 @@ function HiveOutlineSurfaceInner({
         </p>
       )}
 
-      <div data-slot="outline-pane-body">
+      {/* ── Mobile beat sheet (issue #50, variant C — cards + arrows) ── */}
+      <div className="md:hidden flex flex-col gap-3 pb-2">
+        {beats.length === 0 && pendingActs.length === 0 && readOnly ? (
+          <p className="text-center text-sm italic py-6" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
+            The outline is empty.
+          </p>
+        ) : (
+          <>
+            {groupBeatsByAct(beats).map(group => {
+              const actKey = group.act ?? '__noact__'
+              return (
+                <section key={actKey} className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between px-1">
+                    <span className="font-mono text-[11px] uppercase tracking-wider" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
+                      {group.act ?? 'No act'}
+                    </span>
+                    <span className="font-mono text-[10px]" style={{ color: 'var(--canvas-dark-ink-faint)' }}>
+                      {group.beats.length} {group.beats.length === 1 ? 'beat' : 'beats'}
+                    </span>
+                  </div>
+
+                  {group.beats.map(beat => {
+                    const linked = beat.linkedChapterId && isChapterAvailable(beat.linkedChapterId)
+                    const chapTitle = chapterTitleFor(beat.linkedChapterId)
+                    return (
+                      <div
+                        key={beat.id}
+                        className="rounded-[var(--r-row)] p-3"
+                        style={{
+                          background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+                          boxShadow: 'var(--sh-tile)',
+                        }}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => openEdit(beat)}
+                          className="flex w-full items-start gap-2.5 text-left"
+                        >
+                          <span
+                            className="mt-1 shrink-0"
+                            style={{
+                              width: 12,
+                              height: 12,
+                              borderRadius: '50%',
+                              background: beat.color ? `var(--beat-${beat.color})` : 'transparent',
+                              border: beat.color ? 0 : '1px dashed var(--canvas-dark-300)',
+                            }}
+                          />
+                          <span
+                            className="flex-1 min-w-0 font-comfortaa font-semibold text-[14px] leading-snug"
+                            style={{ color: 'var(--canvas-dark-ink-strong)' }}
+                          >
+                            {beat.title || <span className="italic opacity-55">Untitled beat</span>}
+                          </span>
+                          {!readOnly && <Pencil className="w-3.5 h-3.5 mt-1 shrink-0" style={{ color: 'var(--canvas-dark-ink-muted)' }} />}
+                        </button>
+
+                        <div className="flex items-center justify-between mt-2.5">
+                          {linked ? (
+                            <span className="inline-flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--brand)' }}>
+                              <LinkIcon className="w-3 h-3" />
+                              <span className="truncate max-w-[150px]">{chapTitle ?? 'Chapter'}</span>
+                            </span>
+                          ) : !readOnly ? (
+                            <button
+                              type="button"
+                              onClick={() => setLinkingBeatId(beat.id)}
+                              className="inline-flex items-center gap-1.5 text-[11px]"
+                              style={{ color: 'var(--canvas-dark-ink-muted)' }}
+                            >
+                              <LinkIcon className="w-3 h-3" />
+                              Link a chapter
+                            </button>
+                          ) : (
+                            <span />
+                          )}
+
+                          {!readOnly && (
+                            <span className="flex gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => moveBeat(beat.id, 'up')}
+                                disabled={!canMove(beat.id, 'up')}
+                                aria-label="Move beat up"
+                                className="inline-flex items-center justify-center w-8 h-8 rounded-[var(--r-btn)] disabled:opacity-30"
+                                style={{ background: 'var(--canvas-dark-200)', color: 'var(--canvas-dark-ink)' }}
+                              >
+                                <ChevronUp className="w-4 h-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => moveBeat(beat.id, 'down')}
+                                disabled={!canMove(beat.id, 'down')}
+                                aria-label="Move beat down"
+                                className="inline-flex items-center justify-center w-8 h-8 rounded-[var(--r-btn)] disabled:opacity-30"
+                                style={{ background: 'var(--canvas-dark-200)', color: 'var(--canvas-dark-ink)' }}
+                              >
+                                <ChevronDown className="w-4 h-4" />
+                              </button>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+
+                  {!readOnly && (
+                    <button
+                      type="button"
+                      onClick={() => openCreate(group.act)}
+                      className="inline-flex items-center justify-center gap-1.5 w-full min-h-[40px] rounded-[var(--r-row)] text-[13px] font-semibold"
+                      style={{ border: '1.5px dashed var(--canvas-dark-300)', color: 'var(--canvas-dark-ink-muted)', fontFamily: 'var(--font-display)' }}
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add a beat
+                    </button>
+                  )}
+                </section>
+              )
+            })}
+
+            {/* Empty (pending) acts — created via "New act" below, awaiting beats. */}
+            {!readOnly && pendingActs
+              .filter(name => !beats.some(b => b.act === name))
+              .map(name => (
+                <section key={`pending:${name}`} className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between px-1">
+                    <span className="font-mono text-[11px] uppercase tracking-wider" style={{ color: 'var(--canvas-dark-ink-strong)' }}>
+                      {name}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setPendingActs(prev => prev.filter(a => a !== name))}
+                      aria-label={`Discard empty act ${name}`}
+                      className="px-2 text-[16px]"
+                      style={{ color: 'var(--canvas-dark-ink-muted)' }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => openCreate(name)}
+                    className="inline-flex items-center justify-center gap-1.5 w-full min-h-[40px] rounded-[var(--r-row)] text-[13px] font-semibold"
+                    style={{ border: '1.5px dashed var(--canvas-dark-300)', color: 'var(--canvas-dark-ink-muted)', fontFamily: 'var(--font-display)' }}
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add a beat
+                  </button>
+                </section>
+              ))}
+
+            {/* New act / new beat controls */}
+            {!readOnly && (newActDraft !== null ? (
+              <div className="flex items-stretch gap-2">
+                <input
+                  autoFocus
+                  value={newActDraft}
+                  onChange={e => setNewActDraft(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') { e.preventDefault(); commitNewAct(newActDraft) }
+                    if (e.key === 'Escape') setNewActDraft(null)
+                  }}
+                  placeholder="Act name"
+                  className="flex-1 min-w-0 outline-none px-3"
+                  style={{ height: 42, borderRadius: 'var(--r-row)', background: 'var(--canvas-dark-100)', boxShadow: 'var(--sh-inset)', color: 'var(--canvas-dark-ink)' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => commitNewAct(newActDraft)}
+                  disabled={!newActDraft.trim()}
+                  className="shrink-0 px-4 rounded-[var(--r-row)] text-[13px] font-bold disabled:opacity-40"
+                  style={{ background: 'var(--brand)', color: 'var(--brand-ink)' }}
+                >
+                  Add
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNewActDraft(null)}
+                  aria-label="Cancel new act"
+                  className="shrink-0 inline-flex items-center justify-center w-10 rounded-[var(--r-row)]"
+                  style={{ color: 'var(--canvas-dark-ink-muted)', background: 'var(--canvas-dark-200)' }}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2 mt-1">
+                <button
+                  type="button"
+                  onClick={() => setNewActDraft('')}
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 min-h-[42px] rounded-[var(--r-row)] text-[13px] font-semibold"
+                  style={{ border: '1.5px dashed var(--canvas-dark-300)', color: 'var(--canvas-dark-ink)', fontFamily: 'var(--font-display)' }}
+                >
+                  <Plus className="w-4 h-4" />
+                  New act
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openCreate(null)}
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 min-h-[42px] rounded-[var(--r-pill)] text-[13px] font-bold"
+                  style={{ background: 'var(--brand)', color: 'var(--brand-ink)', boxShadow: 'var(--sh-tile)' }}
+                >
+                  <Plus className="w-4 h-4" />
+                  New beat
+                </button>
+              </div>
+            ))}
+          </>
+        )}
+      </div>
+
+      <div data-slot="outline-pane-body" className="max-md:hidden">
         <div className="mx-auto" style={{ maxWidth: '100%' }}>
           {beats.length === 0 && pendingActs.length === 0 && newActDraft === null ? (
             !readOnly ? (
@@ -687,6 +935,7 @@ function HiveOutlineSurfaceInner({
         mode={dialogState.mode === 'edit' ? 'edit' : 'create'}
         initial={editingBeat ?? {}}
         defaultAct={dialogState.mode === 'create' ? dialogState.defaultAct : null}
+        actOptions={Array.from(new Set([...distinctActs(beats), ...pendingActs]))}
         chapters={chapters}
         readOnly={readOnly}
         onOpenChange={open => { if (!open) closeDialog() }}
@@ -700,7 +949,7 @@ function HiveOutlineSurfaceInner({
               description: patch.description,
               color: patch.color,
               label: patch.label,
-              act: dialogState.defaultAct,
+              act: patch.act !== undefined ? patch.act : dialogState.defaultAct,
               linkedChapterId: patch.linkedChapterId ?? null,
             }
             commit([...beats, newBeat])
@@ -741,7 +990,7 @@ function HiveChapterLinkPopover({
     >
       <div
         onClick={e => e.stopPropagation()}
-        className="min-w-[280px] w-[360px] max-w-[calc(100vw-1.5rem)] max-h-[60vh] flex flex-col p-2"
+        className="min-w-[280px] w-[360px] max-w-[calc(100vw-1.5rem)] max-md:min-w-0 max-md:w-[calc(100vw-1.5rem)] max-h-[60vh] flex flex-col p-2"
         style={{
           background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
           borderRadius: 'var(--r-card)',

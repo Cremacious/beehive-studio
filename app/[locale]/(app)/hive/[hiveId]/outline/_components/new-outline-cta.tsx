@@ -10,9 +10,12 @@ import { toastNetworkError } from '@/lib/errors/notify'
 export function NewOutlineCTA({
   hiveId,
   locale,
+  fullWidth = false,
 }: {
   hiveId: string
   locale: string
+  /** Mobile (issue #50): stretch full-width + center its label. */
+  fullWidth?: boolean
 }) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
@@ -42,7 +45,7 @@ export function NewOutlineCTA({
       type="button"
       onClick={handleClick}
       disabled={pending}
-      className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-semibold transition-[background,transform] duration-150 disabled:opacity-60"
+      className={`inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-semibold transition-[background,transform] duration-150 disabled:opacity-60${fullWidth ? ' w-full justify-center min-h-[42px]' : ''}`}
       style={{
         background: 'var(--brand)',
         color: 'var(--brand-ink)',

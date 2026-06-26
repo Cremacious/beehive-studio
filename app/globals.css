@@ -443,6 +443,14 @@ body {
     grid-template-columns: minmax(0, 1fr) !important;
   }
 
+  /* Hive list "table" rows (Members/Discussions/Submissions/Chapters): the
+     fixed metadata columns (date/role/status) reserve ~220-310px and crush
+     the title on a phone. Collapse to a single stacked column. */
+  .hive-row-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 4px !important;
+  }
+
   /* New-book wizard: roomier full-bleed layout on phones. The desktop card
      stacks a 28px outer gutter + 36px inner padding that eats ~64px/side at
      375px; mobile drops to a full-width sheet with comfortable 16px gutters. */

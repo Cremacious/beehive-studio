@@ -865,7 +865,7 @@ function PastReadsAccordion({ past }: { past: ClubBookRowType[] }) {
           fontWeight: 700,
         }}
       >
-        <span>📚 Past reads &middot; {past.length}</span>
+        <span>Past reads &middot; {past.length}</span>
         <span>+</span>
       </summary>
       <div style={{ padding: '0 14px 12px' }}>

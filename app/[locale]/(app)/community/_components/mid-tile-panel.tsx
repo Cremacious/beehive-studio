@@ -1,6 +1,18 @@
 import Link from 'next/link';
+import { Hexagon, Sparkles, Zap, BookOpen, PenLine } from 'lucide-react';
 import type { PanelRow, RowLeading } from '@/lib/actions/community-dashboard.shared';
 import { optimizeCloudinaryUrl, BOOK_COVER_TRANSFORMS } from '@/lib/upload/cloudinary-url';
+
+// Maps a leading-icon glyph KEY to a lucide icon. Producers emit these keys
+// instead of emoji; a literal typographic glyph (e.g. "★") that isn't a key
+// falls through and renders as text.
+const GLYPH_ICONS: Record<string, React.ComponentType<{ size?: number }>> = {
+  hive: Hexagon,
+  spark: Sparkles,
+  bolt: Zap,
+  books: BookOpen,
+  write: PenLine,
+};
 
 type NudgeRow = {
   id: string;
@@ -49,7 +61,7 @@ function Leading({ leading }: { leading: RowLeading }) {
         width: 28, height: 28, borderRadius: 8,
         background: toneBg[leading.tone], color: toneColor[leading.tone],
         display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, flexShrink: 0,
-      }}>{leading.glyph}</div>
+      }}>{(() => { const Icon = GLYPH_ICONS[leading.glyph]; return Icon ? <Icon size={15} /> : leading.glyph; })()}</div>
     );
   }
   if (leading.kind === 'cover-stack') {

@@ -12,7 +12,7 @@ export type HeroKind =
 export type HeroSignal = {
   kind: HeroKind;
   label: string;              // "★ FRESH FROM A FRIEND" etc.
-  metaInline: string;         // "2h ago · ♥ 24 · 💬 6"
+  metaInline: string;         // "2h ago · ♥ 24 · 6 comments"
   headline: string;
   quote: string | null;
   coverUrl: string | null;    // null when kind === 'TODAYS_SPARK' → glyph fallback rendered client-side
@@ -55,7 +55,7 @@ export type PanelRow = {
 };
 
 export type MidPanelData = {
-  label: string;              // "🐝 HIVES · 3 ACTIVE"
+  label: string;              // "HIVES · 3 ACTIVE"
   seeAllHref: string;
   rows: PanelRow[];           // length <= 3
   isEmpty: boolean;           // when true, rows = nudge rows
@@ -100,11 +100,11 @@ export const EMPTY_PULSE: PulseStats = {
 export const EMPTY_DASHBOARD: CommunityDashboardData = {
   hero: null,
   pulse: EMPTY_PULSE,
-  hives:  { label: '🐝 HIVES',  seeAllHref: '/community/hives',         rows: [], isEmpty: true },
-  sparks: { label: '✨ SPARKS', seeAllHref: '/community/sparks',        rows: [], isEmpty: true },
-  lists:  { label: '📚 LISTS',  seeAllHref: '/community/reading-lists', rows: [], isEmpty: true },
+  hives:  { label: 'HIVES',  seeAllHref: '/community/hives',         rows: [], isEmpty: true },
+  sparks: { label: 'SPARKS', seeAllHref: '/community/sparks',        rows: [], isEmpty: true },
+  lists:  { label: 'LISTS',  seeAllHref: '/community/reading-lists', rows: [], isEmpty: true },
   friends:{ label: 'FRIENDS\' DESKS · CHRONOLOGICAL', seeAllHref: '/community/feed', rows: [], nextCursor: null, isEmpty: true },
-  clubs:  { label: '📖 CLUBS',  seeAllHref: '/community/clubs',         rows: [], isEmpty: true },
+  clubs:  { label: 'CLUBS',  seeAllHref: '/community/clubs',         rows: [], isEmpty: true },
   fallbacks: {
     todaysSpark: null, trendingHive: null, votingSpark: null, trendingList: null,
     topClubs: [], openHivesCount: 0, openClubsCount: 0,

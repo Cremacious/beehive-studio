@@ -153,7 +153,7 @@ export default async function SparkDetailPage({ params }: Props) {
                 margin: 0,
               }}
             >
-              🏆 Most Voted:{' '}
+              Most Voted:{' '}
               <span style={{ color: 'var(--canvas-dark-ink-strong)' }}>
                 {winnerEntry?.authorDisplayName ?? winnerEntry?.authorUsername ?? 'Unknown'}
               </span>
@@ -167,7 +167,7 @@ export default async function SparkDetailPage({ params }: Props) {
                   marginBottom: 0,
                 }}
               >
-                ⭐ Creator&apos;s choice:{' '}
+                ★ Creator&apos;s choice:{' '}
                 <span style={{ color: 'var(--canvas-dark-ink)' }}>
                   {creatorChoiceEntry?.authorDisplayName ??
                     creatorChoiceEntry?.authorUsername ??

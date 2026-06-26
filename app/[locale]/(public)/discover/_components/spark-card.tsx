@@ -107,8 +107,6 @@ export function SparkCard({
                 fontFamily: 'var(--font-mono)',
               }}
             >
-              {isOpen && <span aria-hidden="true">⚡</span>}
-              {isVoting && <span aria-hidden="true">🗳</span>}
               {isClosed && <span aria-hidden="true">○</span>}
               {statusLabel(spark.status)}
               {countdownLabel ? ` · ${countdownLabel}` : ''}

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Sparkles } from 'lucide-react';
 import type { HeroSignal, DashboardFallbacks } from '@/lib/actions/community-dashboard.shared';
 import { optimizeCloudinaryUrl, BOOK_COVER_TRANSFORMS } from '@/lib/upload/cloudinary-url';
 
@@ -27,8 +28,8 @@ function GlyphCover() {
       borderRadius: 8, flexShrink: 0,
       background: 'linear-gradient(135deg, rgba(255,195,0,0.18), rgba(255,195,0,0.04))',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      color: 'var(--brand)', fontSize: 52,
-    }}>✨</div>
+      color: 'var(--brand)',
+    }}><Sparkles size={48} aria-hidden /></div>
   );
 }
 
@@ -64,8 +65,7 @@ export function HeroPanel({ hero, fallbacks, locale }: Props) {
     return (
       <div style={panelStyle}>
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 10, color: 'var(--canvas-dark-ink-muted)' }}>
-          <div style={{ fontSize: 32 }}>🐝</div>
-          <div style={{ fontFamily: 'var(--font-mono, monospace)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Nothing fresh right now, check back soon</div>
+          <div style={{ fontFamily: 'var(--font-display, Comfortaa, sans-serif)', fontSize: 14 }}>Nothing fresh right now, check back soon</div>
         </div>
       </div>
     );

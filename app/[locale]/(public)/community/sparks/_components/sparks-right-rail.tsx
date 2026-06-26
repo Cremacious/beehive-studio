@@ -69,7 +69,7 @@ export async function SparksRightRail({ locale }: Props) {
                 className="text-[10px] uppercase tracking-[0.06em]"
                 style={{ color: 'var(--canvas-dark-ink-muted)', fontFamily: 'var(--font-mono)' }}
               >
-                {s.status === 'VOTING' ? '🗳️ VOTING' : '⚡ OPEN'} · {s.entryCount} entries
+                {s.status === 'VOTING' ? 'VOTING' : 'OPEN'} · {s.entryCount} entries
                 {s.deadline ? ` · ${formatLeft(s.deadline)}` : ''}
               </div>
             </Link>

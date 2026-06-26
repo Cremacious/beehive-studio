@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import { Camera } from 'lucide-react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
@@ -257,7 +258,7 @@ export function AboutAuthorPreview({ itemId, initialFields }: Props) {
               pointerEvents: 'none',
             }}
           >
-            <span style={{ fontSize: 18, lineHeight: 1 }}>📷</span>
+            <Camera size={18} aria-hidden />
             <span
               style={{
                 fontSize: 9,

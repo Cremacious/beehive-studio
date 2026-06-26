@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { X } from 'lucide-react'
+import { X, Zap, User, Handshake, Lightbulb, PenLine, type LucideIcon } from 'lucide-react'
 import type { GhostVariant } from './pick-ghosts'
 import type { PromptTemplate } from '@/lib/sparks/prompt-templates'
 
@@ -29,35 +29,35 @@ const COPY: Record<
     body: string
     ctaLabel: string
     iconTint: string
-    icon: string
+    icon: LucideIcon
   }
 > = {
   'from-discover': {
     labelNote: 'From Discover',
-    eyebrow: '⚡ TRENDING THIS WEEK',
+    eyebrow: 'TRENDING THIS WEEK',
     title: 'See what writers are sparking now',
     body: 'Open Sparks platform-wide, pick one and enter.',
     ctaLabel: 'Browse Discover →',
     iconTint: 'oklch(from var(--brand) l c h / 0.18)',
-    icon: '⚡',
+    icon: Zap,
   },
   'follow-writers': {
     labelNote: 'Suggestion',
-    eyebrow: '👤 FILL YOUR FEED',
+    eyebrow: 'FILL YOUR FEED',
     title: 'Follow writers to fill this tab',
     body: 'Your Following tab is empty. We can suggest 5 active writers whose Sparks you might like.',
     ctaLabel: 'Find writers →',
     iconTint: 'oklch(0.6 0.15 240 / 0.18)',
-    icon: '👤',
+    icon: User,
   },
   'connect-friends': {
     labelNote: 'Suggestion',
-    eyebrow: '🤝 BUILD YOUR CIRCLE',
+    eyebrow: 'BUILD YOUR CIRCLE',
     title: 'Connect with friends',
     body: "When friends accept your request, their open Sparks show up here automatically.",
     ctaLabel: 'Manage friends →',
     iconTint: 'oklch(0.55 0.18 310 / 0.18)',
-    icon: '🤝',
+    icon: Handshake,
   },
   'prompt-template': {
     labelNote: 'Prompt template',
@@ -66,25 +66,25 @@ const COPY: Record<
     body: '',
     ctaLabel: 'Use this prompt →',
     iconTint: 'oklch(from var(--brand) l c h / 0.18)',
-    icon: '✦',
+    icon: Lightbulb,
   },
   'enter-a-spark': {
     labelNote: 'Suggestion',
-    eyebrow: '📝 TRACK YOUR ENTRIES',
+    eyebrow: 'TRACK YOUR ENTRIES',
     title: 'Enter a Spark to see it here',
     body: "Sparks you enter (yours or anyone else's) collect in the Entered tab so you can track results.",
     ctaLabel: 'Browse open Sparks →',
     iconTint: 'oklch(0.6 0.15 150 / 0.18)',
-    icon: '📝',
+    icon: PenLine,
   },
   'create-first': {
     labelNote: 'Suggestion',
-    eyebrow: '⚡ START WRITING',
+    eyebrow: 'START WRITING',
     title: "You haven't written a Spark yet",
     body: 'Got a prompt nagging at you?',
     ctaLabel: '+ New Spark',
     iconTint: 'oklch(from var(--brand) l c h / 0.18)',
-    icon: '⚡',
+    icon: Zap,
   },
 }
 
@@ -169,11 +169,11 @@ export function GhostCard({
 
       <div className="pt-5">
         <div
-          className="inline-flex items-center justify-center rounded-xl text-lg"
-          style={{ width: 36, height: 36, background: copy.iconTint }}
+          className="inline-flex items-center justify-center rounded-xl"
+          style={{ width: 36, height: 36, background: copy.iconTint, color: 'var(--brand)' }}
           aria-hidden="true"
         >
-          {copy.icon}
+          <copy.icon size={18} />
         </div>
         <div
           className="text-[9px] font-bold uppercase tracking-[0.1em] mt-3"

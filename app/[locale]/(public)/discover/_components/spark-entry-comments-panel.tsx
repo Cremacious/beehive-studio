@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState, useTransition } from 'react'
+import { User } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -50,7 +51,7 @@ function Avatar({ url, size = 28 }: { url?: string | null; size?: number }) {
         // eslint-disable-next-line @next/next/no-img-element
         <img src={url} alt="" className="w-full h-full object-cover" />
       ) : (
-        '✍'
+        <User size={14} aria-hidden />
       )}
     </div>
   )

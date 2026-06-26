@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { X } from 'lucide-react'
+import { X, BookOpen, DoorOpen, Users, BookMarked, ListPlus, MessageCircle, type LucideIcon } from 'lucide-react'
 import type { ClubGhostVariant } from './pick-club-ghosts'
 
 export type ClubGhostCardProps = {
@@ -25,17 +25,17 @@ const COPY: Record<
     body: string
     ctaLabel: string
     iconTint: string
-    icon: string
+    icon: LucideIcon
   }
 > = {
   'create-club': {
     labelNote: 'Suggestion',
-    eyebrow: '⚡ NEW CLUB',
+    eyebrow: 'NEW CLUB',
     title: 'Create your first club',
     body: 'Read together with friends. Pick a book, set a schedule, get discussions going.',
     ctaLabel: '+ New Club →',
     iconTint: 'oklch(from var(--brand) l c h / 0.18)',
-    icon: '📚',
+    icon: BookOpen,
   },
   'join-suggested': {
     labelNote: 'From Discover',
@@ -44,43 +44,43 @@ const COPY: Record<
     body: 'Open clubs accept new members without approval.',
     ctaLabel: 'View club →',
     iconTint: 'oklch(0.55 0.18 310 / 0.18)',
-    icon: '🚪',
+    icon: DoorOpen,
   },
   'invite-members': {
     labelNote: 'Suggestion',
-    eyebrow: '👥 BUILD YOUR CIRCLE',
+    eyebrow: 'BUILD YOUR CIRCLE',
     title: 'Invite members',
     body: 'Bring readers you trust into your club.',
     ctaLabel: 'Manage members →',
     iconTint: 'oklch(0.6 0.15 240 / 0.18)',
-    icon: '👥',
+    icon: Users,
   },
   'set-current-book': {
     labelNote: 'Suggestion',
-    eyebrow: '📖 SET THE CURRENT BOOK',
+    eyebrow: 'SET THE CURRENT BOOK',
     title: 'Pick your next read',
     body: 'Clubs revolve around a current book. Set yours to kick off the next chapter.',
     ctaLabel: 'Set the book →',
     iconTint: 'oklch(0.6 0.15 150 / 0.18)',
-    icon: '📖',
+    icon: BookMarked,
   },
   'add-to-queue': {
     labelNote: 'Suggestion',
-    eyebrow: '📋 BUILD THE QUEUE',
+    eyebrow: 'BUILD THE QUEUE',
     title: 'Add books to the queue',
     body: 'Queue future reads so the club always has a next-up.',
     ctaLabel: 'Open queue →',
     iconTint: 'oklch(0.55 0.18 310 / 0.18)',
-    icon: '📋',
+    icon: ListPlus,
   },
   'start-discussion': {
     labelNote: 'Suggestion',
-    eyebrow: '💬 SPARK A CHAT',
+    eyebrow: 'SPARK A CHAT',
     title: 'Post the first discussion',
     body: 'Quick questions, chapter recaps, or open prompts to get conversation going.',
     ctaLabel: 'Start a discussion →',
     iconTint: 'rgba(255,255,255,0.06)',
-    icon: '💬',
+    icon: MessageCircle,
   },
 }
 
@@ -169,11 +169,11 @@ export function ClubGhostCard({
       </div>
 
       <div
-        className="inline-flex items-center justify-center rounded-xl text-lg"
-        style={{ width: 36, height: 36, background: copy.iconTint }}
+        className="inline-flex items-center justify-center rounded-xl"
+        style={{ width: 36, height: 36, background: copy.iconTint, color: 'var(--brand)' }}
         aria-hidden="true"
       >
-        {copy.icon}
+        <copy.icon size={18} />
       </div>
       <div
         className="text-[9px] font-bold uppercase tracking-[0.1em]"

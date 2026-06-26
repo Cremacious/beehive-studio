@@ -7,7 +7,7 @@
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import Link from 'next/link'
-import { Lock, Users } from 'lucide-react'
+import { Hexagon, Lock, Users } from 'lucide-react'
 import { auth } from '@/lib/auth'
 import { db } from '@/db'
 import { hiveInvites, hiveMembers, hives, userProfiles, users } from '@/db/schema'
@@ -173,8 +173,8 @@ export default async function HiveAcceptByIdPage({
 
   return (
     <PanelShell>
-      <div className="text-4xl mb-2" aria-hidden>
-        🐝
+      <div className="mb-2" aria-hidden style={{ color: 'var(--brand)' }}>
+        <Hexagon size={40} />
       </div>
       <h1
         style={{ color: 'var(--brand)' }}

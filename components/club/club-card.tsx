@@ -35,7 +35,7 @@ function rolePillStyle(club: ClubCardData): RolePillStyle {
     return {
       bg: 'oklch(from var(--brand) l c h / 0.85)',
       color: 'var(--brand-ink)',
-      label: '⭐ OWNER',
+      label: '★ OWNER',
     }
   }
   if (club.viewerRole === 'MODERATOR') {
@@ -112,12 +112,12 @@ export function ClubCard({ club, locale }: Props) {
     ? {
         bg: 'oklch(0.6 0.15 150 / 0.18)',
         color: 'oklch(0.75 0.15 150)',
-        label: '🟢 OPEN',
+        label: 'OPEN',
       }
     : {
         bg: 'rgba(255,255,255,0.05)',
         color: 'var(--canvas-dark-ink-muted)',
-        label: '🔒 CLOSED',
+        label: 'CLOSED',
       }
 
   const hasDescription = club.description !== null && club.description.trim().length > 0

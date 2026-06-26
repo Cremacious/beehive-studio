@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
+import { Users } from 'lucide-react';
 import type { FriendsDeskData, PanelRow, RowLeading, PillTone } from '@/lib/actions/community-dashboard.shared';
 import { getFriendsDeskNextPageAction } from '@/lib/actions/community-dashboard.actions';
 
@@ -91,7 +92,7 @@ export function FriendsDeskPanel({ initial, locale }: { initial: FriendsDeskData
       </div>
       {rows.length === 0 ? (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12, textAlign: 'center' }}>
-          <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(255,195,0,0.12)', color: 'var(--brand)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>🐝</div>
+          <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(255,195,0,0.12)', color: 'var(--brand)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} aria-hidden="true"><Users size={22} strokeWidth={2} /></div>
           <div style={{ fontSize: 15, color: 'var(--canvas-dark-ink-strong)', fontWeight: 700 }}>Your friends&apos; writing lives here.</div>
           <div style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 13, color: 'var(--canvas-dark-ink-muted)', maxWidth: 340 }}>Follow other writers and you&apos;ll see their chapters, sparks, and progress fill in below, chronologically.</div>
           <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>

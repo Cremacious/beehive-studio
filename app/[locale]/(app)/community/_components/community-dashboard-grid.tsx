@@ -13,7 +13,7 @@ function buildHivesNudges(d: CommunityDashboardData): NudgeRow[] {
   if (d.fallbacks.openHivesCount > 0) {
     out.push({
       id: 'hive-browse',
-      leading: { kind: 'icon', glyph: '🐝', tone: 'brand' },
+      leading: { kind: 'icon', glyph: 'hive', tone: 'brand' },
       t1: `${d.fallbacks.openHivesCount} open hives looking for writers`,
       t2: 'In your genres',
       cta: { label: 'Browse', href: '/discover?tab=hives' },
@@ -43,7 +43,7 @@ function buildSparksNudges(d: CommunityDashboardData): NudgeRow[] {
   if (d.fallbacks.todaysSpark) {
     out.push({
       id: 'spark-today',
-      leading: { kind: 'icon', glyph: '✨', tone: 'brand' },
+      leading: { kind: 'icon', glyph: 'spark', tone: 'brand' },
       t1: `Today's prompt: "${d.fallbacks.todaysSpark.prompt.slice(0, 60)}${d.fallbacks.todaysSpark.prompt.length > 60 ? '...' : ''}"`,
       t2: `${d.fallbacks.todaysSpark.wordLimit ?? ''}${d.fallbacks.todaysSpark.wordLimit ? ' words · ' : ''}${d.fallbacks.todaysSpark.entriesCount} entries · ends ${d.fallbacks.todaysSpark.deadlineLabel}`,
       cta: { label: 'Enter', href: `/sparks/${d.fallbacks.todaysSpark.id}` },
@@ -59,7 +59,7 @@ function buildSparksNudges(d: CommunityDashboardData): NudgeRow[] {
   if (d.fallbacks.votingSpark) {
     out.push({
       id: 'spark-vote',
-      leading: { kind: 'icon', glyph: '⚡', tone: 'brand' },
+      leading: { kind: 'icon', glyph: 'bolt', tone: 'brand' },
       t1: `${d.fallbacks.votingSpark.title} voting now`,
       t2: `${d.fallbacks.votingSpark.entriesCount} entries`,
       cta: { label: 'Vote', href: `/sparks/${d.fallbacks.votingSpark.id}` },
@@ -88,7 +88,7 @@ function buildListsNudges(d: CommunityDashboardData): NudgeRow[] {
   });
   out.push({
     id: 'list-browse',
-    leading: { kind: 'icon', glyph: '📚', tone: 'brand' },
+    leading: { kind: 'icon', glyph: 'books', tone: 'brand' },
     t1: 'Discover lists',
     t2: "Tuned to what you've liked",
     cta: { label: 'Browse', href: '/discover?tab=lists' },

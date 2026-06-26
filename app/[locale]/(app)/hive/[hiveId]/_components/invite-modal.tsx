@@ -569,7 +569,7 @@ function FriendsBlock({
           }}
         >
           {allFriendsInHive
-            ? 'All of your friends are already in this hive. 🎉'
+            ? 'All of your friends are already in this hive.'
             : "You don’t have any friends yet. Add friends from their profile pages, then come back to invite them here."}
         </p>
       </div>

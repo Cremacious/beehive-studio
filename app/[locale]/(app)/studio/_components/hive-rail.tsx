@@ -55,6 +55,13 @@ const PANEL_STYLE = {
   display: 'flex',
   flexDirection: 'column' as const,
   gap: '12px',
+  // Stretch the panel down its grid cell so the bottom lands on the books
+  // column's shelf-foot divider (the border above "Showing X of Y"), not the
+  // full footer. The cell height is the full books-column height; we subtract
+  // the shelf-foot's below-border portion (paddingTop 20px + one ~13px text
+  // line ≈ 34px) so the card bottom aligns with that border. Top stays at the
+  // filter row; content stays top-aligned with the empty space below.
+  height: 'calc(100% - 34px)',
 } as const
 
 export function HiveRail({ hives, locale }: Props) {

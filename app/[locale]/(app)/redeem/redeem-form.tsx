@@ -16,7 +16,7 @@ export function RedeemForm() {
           setSuccess(null)
           const result = await redeemPromoCodeAction(fd)
           if (!result.ok) setError(result.error ?? 'Could not redeem.')
-          else setSuccess(`You've unlocked ${result.grantLabel}. 🎉`)
+          else setSuccess(`You've unlocked ${result.grantLabel}.`)
         })
       }
       className="flex flex-col gap-4"

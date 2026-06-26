@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowRight, Globe, Lock, Users } from 'lucide-react'
+import { ArrowRight, Globe, Lock, Trophy, Users } from 'lucide-react'
 import type { SparkCard } from '@/lib/actions/discover-sparks.actions'
 
 function timeLeftLabel(deadline: Date): string {
@@ -238,9 +238,10 @@ export function DiscoverSparkCard({ spark, locale, variant = 'grid' }: Props) {
                 ) : null}
                 {isClosed && spark.winnerUsername ? (
                   <span
+                    className="inline-flex items-center gap-1"
                     style={{ color: 'var(--brand)', fontWeight: 700 }}
                   >
-                    🏆 @{spark.winnerUsername}
+                    <Trophy size={12} aria-hidden /> @{spark.winnerUsername}
                   </span>
                 ) : countdownLabel ? (
                   <span style={{ color: accent, fontWeight: 700 }}>

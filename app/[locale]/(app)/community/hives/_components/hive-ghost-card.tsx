@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { X } from 'lucide-react'
+import { X, Hexagon, DoorOpen, Users, TrendingUp, Sparkles, MessageCircle, type LucideIcon } from 'lucide-react'
 import type { HiveGhostVariant } from './pick-hive-ghosts'
 
 export type HiveGhostCardProps = {
@@ -23,44 +23,44 @@ const COPY: Record<
     body: string
     ctaLabel: string
     iconTint: string
-    icon: string
+    icon: LucideIcon
   }
 > = {
   'create-hive': {
     labelNote: 'Suggestion',
-    eyebrow: '⚡ NEW HIVE',
+    eyebrow: 'NEW HIVE',
     title: 'Create your second hive',
     body: 'Hives are great for collaborative books, beta-reader pools, or accountability groups.',
     ctaLabel: '+ New Hive →',
     iconTint: 'oklch(from var(--brand) l c h / 0.18)',
-    icon: '🐝',
+    icon: Hexagon,
   },
   'join-open': {
     labelNote: 'From Discover',
-    eyebrow: '⚡ OPEN HIVE',
+    eyebrow: 'OPEN HIVE',
     title: 'Find an open hive',
     body: 'Open hives accept new members without approval.',
     ctaLabel: 'View hive →',
     iconTint: 'oklch(0.55 0.18 310 / 0.18)',
-    icon: '🚪',
+    icon: DoorOpen,
   },
   'invite-collaborators': {
     labelNote: 'Suggestion',
-    eyebrow: '👥 BUILD YOUR CIRCLE',
+    eyebrow: 'BUILD YOUR CIRCLE',
     title: 'Invite collaborators',
     body: 'Bring writers you trust into your existing hive.',
     ctaLabel: 'Manage members →',
     iconTint: 'oklch(0.6 0.15 240 / 0.18)',
-    icon: '👥',
+    icon: Users,
   },
   'set-word-goal': {
     labelNote: 'Suggestion',
-    eyebrow: '📈 SHARED ACCOUNTABILITY',
+    eyebrow: 'SHARED ACCOUNTABILITY',
     title: 'Set a hive word goal',
     body: "Word goals track every member's contribution to a shared target.",
     ctaLabel: 'Set a goal →',
     iconTint: 'oklch(0.6 0.15 150 / 0.18)',
-    icon: '📈',
+    icon: TrendingUp,
   },
   'try-standalone': {
     labelNote: 'Suggestion',
@@ -69,16 +69,16 @@ const COPY: Record<
     body: 'Standalone hives are great for writing groups not tied to one book.',
     ctaLabel: '+ Standalone hive →',
     iconTint: 'rgba(255,255,255,0.06)',
-    icon: '✦',
+    icon: Sparkles,
   },
   'set-buzz-up': {
     labelNote: 'Suggestion',
-    eyebrow: '💬 STIR THE BUZZ',
+    eyebrow: 'STIR THE BUZZ',
     title: 'Post to the buzz board',
     body: 'Quick updates, link drops, and feedback prompts keep your hive alive.',
     ctaLabel: 'Open buzz board →',
     iconTint: 'rgba(255,255,255,0.06)',
-    icon: '💬',
+    icon: MessageCircle,
   },
 }
 
@@ -149,11 +149,11 @@ export function HiveGhostCard({
 
       <div className="pt-5">
         <div
-          className="inline-flex items-center justify-center rounded-xl text-lg"
-          style={{ width: 36, height: 36, background: copy.iconTint }}
+          className="inline-flex items-center justify-center rounded-xl"
+          style={{ width: 36, height: 36, background: copy.iconTint, color: 'var(--brand)' }}
           aria-hidden="true"
         >
-          {copy.icon}
+          <copy.icon size={18} />
         </div>
         <div
           className="text-[9px] font-bold uppercase tracking-[0.1em] mt-3"

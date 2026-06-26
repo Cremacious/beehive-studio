@@ -85,7 +85,7 @@ async function tryNewChapterFromFollowed(viewerId: string): Promise<HeroSignal |
   return {
     kind: 'NEW_CHAPTER_FROM_FOLLOWED',
     label: '★ FRESH FROM A FRIEND',
-    metaInline: `${relTime(r.recencyAt)} · ♥ ${r.likes} · 💬 ${r.comments}`,
+    metaInline: `${relTime(r.recencyAt)} · ♥ ${r.likes} · ${r.comments} comments`,
     headline: `@${r.authorUsername} just published Chapter ${r.chapterIdx}`,
     quote,
     coverUrl: r.bookCover,
@@ -606,7 +606,7 @@ export async function getSparksPanelRows(viewerId: string): Promise<PanelRow[]> 
     const hrs = Math.max(1, Math.floor((new Date(s.deadline!).getTime() - Date.now()) / MS_HOUR));
     rows.push({
       id: `endsoon:${s.id}`,
-      leading: { kind: 'icon', glyph: '✨', tone: 'brand' },
+      leading: { kind: 'icon', glyph: 'spark', tone: 'brand' },
       t1: s.title,
       t2: `${s.entries} entries · ends ${hrs}h`,
       trailingPill: { label: `${hrs}H`, tone: 'mono' },
@@ -737,7 +737,7 @@ export async function getFriendsDeskRows(viewerId: string, limit = 6, cursor?: s
       case 'chapter_posted':
         t1 = `**@${e.actorUsername}** published Chapter ${p.chapterIdx ?? '?'} of *"${p.bookTitle ?? '?'}"*`;
         href = `/books/${p.bookId}/read/${p.chapterId}`;
-        trailingPill = { label: '📝 WRITING', tone: 'mono' };
+        trailingPill = { label: 'WRITING', tone: 'mono' };
         break;
       case 'book_published':
         t1 = `**@${e.actorUsername}** published *"${p.bookTitle ?? '?'}"*`;

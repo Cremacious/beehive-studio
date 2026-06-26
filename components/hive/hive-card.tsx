@@ -26,7 +26,7 @@ function rolePillStyle(hive: HiveCardData): RolePillStyle {
     return {
       bg: 'oklch(from var(--brand) l c h / 0.18)',
       color: 'var(--brand)',
-      label: '⭐ OWNER',
+      label: '★ OWNER',
     }
   }
   if (hive.source === 'member') {

@@ -456,7 +456,7 @@ export function BookCreationForm({ locale, templates, isPremium }: Props) {
                   <WizardFooter
                     onBack={goBack}
                     onNext={submit}
-                    nextLabel="Create your book ✨"
+                    nextLabel="Create your book"
                     submitting={submitting}
                   />
                 </div>

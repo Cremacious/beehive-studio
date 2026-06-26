@@ -3,7 +3,7 @@
 /* OutlineHelpBanner — sticky dismissible "how this works" banner.
  * Renders when not dismissed AND beat count < 3. */
 
-import { X } from 'lucide-react'
+import { Info, X } from 'lucide-react'
 
 export function OutlineHelpBanner({
   beatCount,
@@ -36,7 +36,7 @@ export function OutlineHelpBanner({
         lineHeight: 1.4,
       }}
     >
-      <span aria-hidden style={{ fontSize: 14 }}>ℹ️</span>
+      <Info size={14} aria-hidden style={{ flexShrink: 0 }} />
       <span style={{ flex: 1, minWidth: 0 }}>
         <strong style={{ color: 'var(--outline-ink-strong)' }}>Outline basics:</strong>
         {' '}

@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowRight, Globe, Lock, Users } from 'lucide-react'
+import { ArrowRight, BookOpen, Globe, Lock, Users } from 'lucide-react'
 import type { ListCard } from '@/lib/actions/discover-lists.actions'
 import { BookStack, OwnerAvatar } from './rail-list-card'
 import { relTime } from '@/lib/utils/rel-time'
@@ -138,8 +138,8 @@ export function DiscoverListCard({ list, locale, variant = 'grid' }: Props) {
                   fontFamily: 'var(--font-mono)',
                 }}
               >
-                <span>📚 {list.bookCount}</span>
-                <span>👥 {list.followerCount}</span>
+                <span className="inline-flex items-center gap-1"><BookOpen size={11} aria-hidden /> {list.bookCount}</span>
+                <span className="inline-flex items-center gap-1"><Users size={11} aria-hidden /> {list.followerCount}</span>
 
                 <span
                   className="inline-flex items-center gap-1 px-1.5 py-0.5 uppercase"

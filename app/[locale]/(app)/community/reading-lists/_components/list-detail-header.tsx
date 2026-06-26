@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
-import { MoreHorizontal } from 'lucide-react'
+import { Heart, MoreHorizontal } from 'lucide-react'
 import type {
   ListSummary,
   ListOwner,
@@ -33,7 +33,7 @@ type Props = {
 }
 
 /**
- * T13 enriched: visibility pill (or 🤍 Auto for Liked), tag chips row,
+ * T13 enriched: visibility pill (or Auto for Liked), tag chips row,
  * created-on stat, owner ⋯ kebab with Edit metadata + Delete. Delete is
  * hidden for the Liked list (server returns LIKED_LIST_UNDELETABLE).
  */
@@ -79,7 +79,7 @@ export function ListDetailHeader({
                 className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-wider border border-[var(--br-card)] text-[var(--canvas-dark-ink-muted)]"
                 title="Auto-managed Liked list"
               >
-                🤍 Auto
+                <Heart size={11} aria-hidden /> Auto
               </span>
             ) : (
               <VisibilityPill visibility={list.visibility} />

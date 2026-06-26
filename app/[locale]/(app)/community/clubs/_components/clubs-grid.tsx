@@ -29,7 +29,7 @@ type Props = {
  * Mirrors <HivesGrid> precedent at app/[locale]/(app)/hives/_components/hives-grid.tsx.
  *
  * The shared <ClubCard> renders at a FIXED 340x360 (T5), so the grid
- * uses minmax(340px, 1fr) auto-fill columns.
+ * uses minmax(min(100%, 340px), 1fr) auto-fill columns.
  */
 export function ClubsGrid({
   clubs,
@@ -58,7 +58,7 @@ export function ClubsGrid({
     <div
       className="grid gap-4"
       style={{
-        gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))',
         alignItems: 'stretch',
         justifyItems: 'start',
       }}

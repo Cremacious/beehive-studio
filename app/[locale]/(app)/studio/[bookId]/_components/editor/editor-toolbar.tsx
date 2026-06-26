@@ -186,7 +186,7 @@ export function EditorToolbar({ editor, onToggleAnalysis, analysisOpen, onToggle
     <TooltipProvider>
       <div
         data-slot="editor-toolbar"
-        className="flex items-center gap-1 px-3 py-2"
+        className="flex items-center gap-1 px-3 py-2 max-md:overflow-x-auto max-md:flex-nowrap scrollbar-hide"
         style={{
           background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
           borderTopLeftRadius: 'var(--r-card)',

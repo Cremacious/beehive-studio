@@ -28,7 +28,7 @@ export default async function HiveLayout({
       style={{
         background: 'linear-gradient(180deg, var(--canvas-dark-150), var(--canvas-dark-100))',
       }}
-      className="flex gap-4 px-4 py-4 h-[calc(100vh-68px)] overflow-hidden"
+      className="flex gap-4 px-4 py-4 h-[calc(100vh-68px)] overflow-hidden max-md:flex-col max-md:h-auto max-md:overflow-visible max-md:px-3"
     >
       <HiveSidebar
         hiveId={hiveId}
@@ -36,7 +36,7 @@ export default async function HiveLayout({
         hiveName={hive.name}
         wordGoalPct={wordGoalPct}
       />
-      <main className="flex-1 min-w-0 overflow-y-auto">{children}</main>
+      <main className="flex-1 min-w-0 overflow-y-auto max-md:overflow-visible">{children}</main>
     </div>
   )
 }

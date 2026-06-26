@@ -107,7 +107,7 @@ export function BookmarksEmpty({ locale, trending }: Props) {
           </h3>
           <div
             className="grid gap-[18px]"
-            style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}
+            style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 200px), 1fr))' }}
           >
             {trending.map((b) => (
               <TrendingCard key={b.id} book={b} locale={locale} />

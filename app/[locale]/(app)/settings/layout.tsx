@@ -3,6 +3,7 @@ import { SettingsNav } from './_components/settings-nav'
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
   return (
     <div
+      className="settings-grid"
       style={{
         maxWidth: '960px',
         margin: '0 auto',

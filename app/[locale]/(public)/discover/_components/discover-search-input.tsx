@@ -34,7 +34,7 @@ export function DiscoverSearchInput({
   }
 
   return (
-    <form onSubmit={submit} className="relative">
+    <form onSubmit={submit} className="relative max-md:w-full">
       <Search
         size={14}
         className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--canvas-dark-ink-muted)]"
@@ -46,7 +46,7 @@ export function DiscoverSearchInput({
         onChange={(e) => setQ(e.target.value)}
         placeholder={placeholder ?? 'Search books, authors, tags...'}
         aria-label={ariaLabel ?? 'Search Discover'}
-        className="h-9 w-[280px] pl-9 pr-3 text-[13px] rounded-[var(--r-row)] focus:outline-none focus:ring-2 focus:ring-[var(--brand)]"
+        className="h-9 w-[280px] max-md:w-full pl-9 pr-3 text-[13px] rounded-[var(--r-row)] focus:outline-none focus:ring-2 focus:ring-[var(--brand)]"
         style={{
           background: 'var(--canvas-dark-100)',
           boxShadow: 'var(--sh-inset)',

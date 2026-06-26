@@ -17,15 +17,19 @@ import { EditorStatusBar } from './editor/editor-status-bar'
 // which lives inside ChapterEditor and shouldn't be lifted into context.
 // The gutter mounts inline inside ChapterEditor's chapter-render branch
 // as a sibling column, controlled by `gutterOpen` from the provider.
-export function RightPanelSlot() {
+export function RightPanelSlot({ mobile = false }: { mobile?: boolean } = {}) {
   const { historyOpen, focusMode, metadataPanel } = useBookEditor()
-  const hidden = focusMode || metadataPanel.collapsed
+  // On mobile the metadata/history panel is an overlay drawer (issue #50):
+  // the drawer wrapper owns visibility, so it always renders + fills the drawer.
+  const hidden = mobile ? false : (focusMode || metadataPanel.collapsed)
 
   return (
     <div
       style={{
-        width: hidden ? 0 : metadataPanel.width,
-        transition: metadataPanel.isDragging
+        width: mobile ? '100%' : (hidden ? 0 : metadataPanel.width),
+        transition: mobile
+          ? 'none'
+          : metadataPanel.isDragging
           ? 'none'
           : 'width 200ms ease-out, opacity 200ms ease-out, transform 200ms ease-out',
       }}

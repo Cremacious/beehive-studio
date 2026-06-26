@@ -133,7 +133,7 @@ export function ClubCard({ club, locale }: Props) {
     <Link href={href} className="block no-underline">
       <div
         style={{
-          width: 340,
+          width: 'min(340px, 100%)',
           height: 360,
           background: cardBg,
           boxShadow:

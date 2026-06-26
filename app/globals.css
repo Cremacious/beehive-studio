@@ -386,6 +386,135 @@ body {
   font-family: var(--font-comfortaa), 'Comfortaa', ui-sans-serif, system-ui, sans-serif;
 }
 
+/* ── Mobile pass (issue #50) ──────────────────────────────────────────
+   Everything here is gated to the small end (<768px = below the `md`
+   breakpoint from #49). Desktop (>=768px) renders byte-for-byte as before
+   because none of these rules exist above the media query. */
+
+@media (max-width: 767px) {
+  /* Kill sideways scrolling on phones. `clip` (not `hidden`) avoids creating
+     a scroll container so sticky/position contexts are preserved. */
+  html, body {
+    overflow-x: clip;
+  }
+
+  /* Prevent iOS Safari's auto-zoom on focus: any focusable text control
+     under 16px triggers it. Force the effective size to 16px on mobile only.
+     Range/checkbox/radio excluded (not text fields). */
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+
+  /* Multi-column layouts that don't auto-fill: stack into one column on
+     phones. The !important beats the inline grid-template / grid-column. */
+  .dashboard-bento {
+    grid-template-columns: 1fr !important;
+  }
+  .dashboard-bento > * {
+    grid-column: auto !important;
+  }
+  .continue-writing-grid {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+
+  /* Settings: stack the nav above content; drop sticky on mobile. */
+  .settings-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+    padding: 16px 16px 32px !important;
+  }
+  .settings-grid > aside {
+    position: static !important;
+  }
+
+  /* Studio library: books + hive rail stack on mobile. */
+  .studio-library-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Generic helper for inline-styled 2-col grids (wizard steps, details
+     form field pairs, cover+fields splits) that should stack on phones. */
+  .stack-mobile {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* New-book wizard: roomier full-bleed layout on phones. The desktop card
+     stacks a 28px outer gutter + 36px inner padding that eats ~64px/side at
+     375px; mobile drops to a full-width sheet with comfortable 16px gutters. */
+  .wizard-root {
+    padding: 0 !important;
+  }
+  .wizard-card {
+    border-radius: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+  .wizard-step-pad {
+    padding: 22px 16px 28px !important;
+  }
+
+  /* Studio empty state: tighten the desktop-sized padding/heading and stack
+     the CTAs full-width. Sits between the top nav + bottom tab bar. */
+  .studio-empty {
+    padding: 0 18px calc(32px + env(safe-area-inset-bottom)) !important;
+    min-height: calc(100dvh - 56px - 56px) !important;
+  }
+  .studio-empty-inner {
+    padding: 36px 0 24px !important;
+  }
+  .studio-empty-copy {
+    margin-top: 36px !important;
+  }
+  .studio-empty-copy h2 {
+    font-size: 27px !important;
+  }
+  .studio-empty-cta {
+    flex-direction: column !important;
+    width: 100%;
+  }
+  .studio-empty-cta > a {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Shared shadcn Dialog → bottom-sheet on phones (issue #50). Scoped to <640px
+   (sm) and uses !important to beat the inline top/left/transform/border-radius
+   set on [data-slot="dialog-content"]. Desktop + tablet keep the centered card.
+   Every modal in the app inherits this since they all use the shared chrome. */
+@media (max-width: 639px) {
+  [data-slot='dialog-content'] {
+    top: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    /* Tailwind v4's -translate-x/y-1/2 use the `translate` property, not
+       `transform`, so both must be reset or the sheet shifts off-screen. */
+    transform: none !important;
+    translate: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    max-height: 92dvh;
+    overflow-y: auto;
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* Safe-area helpers — env() resolves to 0 where there is no inset (every
+   desktop browser + most phones in portrait without a notch), so applying
+   these is desktop-safe and only adds padding under a notch / home bar. */
+@utility pt-safe { padding-top: env(safe-area-inset-top); }
+@utility pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+@utility pl-safe { padding-left: env(safe-area-inset-left); }
+@utility pr-safe { padding-right: env(safe-area-inset-right); }
+/* Add the inset on top of an existing fixed bottom-bar height. */
+@utility min-h-safe-bottom { min-height: calc(56px + env(safe-area-inset-bottom)); }
+
 @utility mainFont {
   font-family: var(--font-comfortaa), sans-serif;
 }

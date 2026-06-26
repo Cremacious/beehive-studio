@@ -145,7 +145,7 @@ export function StepTwo({ genre, subgenre, tags, targetAudience, contentWarnings
   return (
     <div className="flex flex-col" style={{ gap: 18 }}>
       {/* Genre + Subgenre */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 max-md:grid-cols-1 gap-3">
         <WizardField label="Genre" optionalMarker="optional">
           <HelperText>
             Pick the one closest to your story, even if it&apos;s not a perfect fit. We use this to group your book on /discover.

@@ -35,12 +35,12 @@ function HoneycombCluster() {
   const right = hex(370, 114)
 
   return (
-    <div className="relative" style={{ width: '460px', maxWidth: '100%' }}>
+    <div className="relative w-full" style={{ maxWidth: '460px' }}>
       <svg
         width="460"
         height="220"
         viewBox="0 0 460 220"
-        style={{ display: 'block', overflow: 'visible' }}
+        style={{ display: 'block', width: '100%', height: 'auto', overflow: 'hidden' }}
         aria-hidden="true"
       >
         <defs>
@@ -118,7 +118,7 @@ function HoneycombCluster() {
 export function StudioEmptyState({ locale, templates: _templates }: Props) {
   return (
     <main
-      className="relative z-[1] flex flex-col"
+      className="studio-empty relative z-[1] flex flex-col"
       style={{
         maxWidth: '1280px',
         margin: '0 auto',
@@ -127,7 +127,7 @@ export function StudioEmptyState({ locale, templates: _templates }: Props) {
       }}
     >
       <div
-        className="flex-1 grid place-items-center relative z-[1]"
+        className="studio-empty-inner flex-1 grid place-items-center relative z-[1]"
         style={{ padding: '88px 0 64px' }}
       >
         <div className="flex flex-col items-center max-w-full">
@@ -135,7 +135,7 @@ export function StudioEmptyState({ locale, templates: _templates }: Props) {
 
           {/* Copy + CTAs */}
           <div
-            className="text-center"
+            className="studio-empty-copy text-center"
             style={{ marginTop: '64px', maxWidth: '540px' }}
           >
             <h2
@@ -176,7 +176,7 @@ export function StudioEmptyState({ locale, templates: _templates }: Props) {
               Every story begins with a single buzz. Drop your first chapter.
               Your library will fill itself.
             </p>
-            <div className="flex gap-3 justify-center flex-wrap">
+            <div className="studio-empty-cta flex gap-3 justify-center flex-wrap">
               <Link
                 href={`/${locale}/studio/new`}
                 className="inline-flex items-center gap-2 no-underline whitespace-nowrap"

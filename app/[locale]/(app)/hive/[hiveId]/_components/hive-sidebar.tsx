@@ -51,10 +51,10 @@ export function HiveSidebar({ hiveId, locale, hiveName, wordGoalPct }: Props) {
         boxShadow: 'var(--sh-card)',
         border: 'var(--br-card)',
       }}
-      className="w-[260px] shrink-0 flex flex-col overflow-hidden"
+      className="w-[260px] shrink-0 flex flex-col overflow-hidden max-md:w-full max-md:shrink"
     >
       <div
-        className="px-4 py-4 flex items-center justify-center"
+        className="px-4 py-4 flex items-center justify-center max-md:hidden"
         style={{ borderBottom: 'var(--br-card)' }}
       >
         <h2
@@ -64,7 +64,7 @@ export function HiveSidebar({ hiveId, locale, hiveName, wordGoalPct }: Props) {
           {hiveName}
         </h2>
       </div>
-      <nav className="flex flex-col gap-1 p-2 flex-1 overflow-y-auto">
+      <nav className="flex flex-col gap-1 p-2 flex-1 overflow-y-auto max-md:flex-row max-md:overflow-x-auto max-md:overflow-y-hidden scrollbar-hide">
         {NAV_ITEMS.map(({ label, icon: Icon, segment }) => {
           const active = isActive(segment)
           const showBadge =
@@ -82,8 +82,8 @@ export function HiveSidebar({ hiveId, locale, hiveName, wordGoalPct }: Props) {
               }}
               className={
                 active
-                  ? 'flex flex-col gap-1 px-3 py-2 text-sm transition-colors text-[var(--canvas-dark-ink-strong)]'
-                  : 'flex flex-col gap-1 px-3 py-2 text-sm transition-colors text-[var(--canvas-dark-ink)] hover:bg-[linear-gradient(180deg,var(--canvas-dark-250),var(--canvas-dark-200))]'
+                  ? 'flex flex-col gap-1 px-3 py-2 text-sm transition-colors max-md:shrink-0 max-md:whitespace-nowrap text-[var(--canvas-dark-ink-strong)]'
+                  : 'flex flex-col gap-1 px-3 py-2 text-sm transition-colors max-md:shrink-0 max-md:whitespace-nowrap text-[var(--canvas-dark-ink)] hover:bg-[linear-gradient(180deg,var(--canvas-dark-250),var(--canvas-dark-200))]'
               }
             >
               <div className="flex items-center gap-2">

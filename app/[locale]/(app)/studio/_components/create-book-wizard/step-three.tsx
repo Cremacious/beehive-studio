@@ -210,7 +210,7 @@ export function StepThree({ templateId, isSeriesBook, seriesName, seriesNumber, 
               >
                 If you&apos;re writing the second book of <em>The Stormlight Archive</em>, name the series and put <strong>&lsquo;2&rsquo;</strong> here. We&apos;ll show prev/next links on the reader page.
               </p>
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 10 }}>
+              <div className="stack-mobile" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 10 }}>
                 <input
                   type="text"
                   placeholder="Series name"
@@ -292,7 +292,7 @@ export function StepThree({ templateId, isSeriesBook, seriesName, seriesNumber, 
             onBlur={recessBlur}
             style={RECESSED_INPUT_STYLE}
           />
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div className="stack-mobile" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <select
               value={trimSize}
               onChange={e => onUpdate({ trimSize: e.target.value })}

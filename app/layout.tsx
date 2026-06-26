@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono, Comfortaa, Fraunces, Newsreader, JetBrains_Mono } from 'next/font/google'
 import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
@@ -35,6 +35,17 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: 'Beehive Studio · Craft your story. Grow your hive.',
   description: 'The professional writing studio where authors write, collaborate, and publish to a community of readers.',
+}
+
+// Mobile pass (issue #50). viewport-fit=cover lets safe-area-inset-* env()
+// values resolve under the notch / home indicator. maximumScale is left
+// unset so users can still pinch-zoom (accessibility); iOS auto-zoom on
+// focus is prevented by sizing inputs >=16px in globals.css instead.
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#262728',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

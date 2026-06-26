@@ -44,7 +44,7 @@ const PANEL: CSSProperties = {
 // Fluid grid for cards that fill their cell (books, sparks, lists).
 const GRID_FLUID: CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+  gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 220px), 1fr))',
   gap: 14,
 }
 

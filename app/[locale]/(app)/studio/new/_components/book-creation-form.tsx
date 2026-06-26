@@ -89,13 +89,15 @@ export function BookCreationForm({ locale, templates, isPremium }: Props) {
   const [step, setStep] = useState<Step>(1)
   const [direction, setDirection] = useState<'forward' | 'back'>('forward')
 
-  // Scroll back to the top of the page on every step change so the user
-  // doesn't land mid-page when the new step renders. Smooth scroll respects
+  // Scroll back to the top of the page on every step OR path change so the
+  // user doesn't land mid-page (e.g. landing -> scratch keeps step=1, and the
+  // first field's autofocus would otherwise pull the view down). Runs after
+  // the focus commit so the top wins. Smooth scroll respects
   // prefers-reduced-motion automatically in modern browsers.
   useEffect(() => {
     if (typeof window === 'undefined') return
     window.scrollTo({ top: 0, behavior: 'smooth' })
-  }, [step])
+  }, [step, path])
   const [form, setForm] = useState<FormData>(initial)
   const [titleError, setTitleError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -221,7 +223,7 @@ export function BookCreationForm({ locale, templates, isPremium }: Props) {
 
   return (
     <div
-      className="min-h-screen w-full flex flex-col"
+      className="wizard-root min-h-screen w-full flex flex-col"
       style={{
         background: 'transparent',
         color: 'var(--canvas-dark-ink-strong, #fff)',
@@ -229,7 +231,7 @@ export function BookCreationForm({ locale, templates, isPremium }: Props) {
       }}
     >
       <div
-        className="mx-auto w-full flex flex-col"
+        className="wizard-card mx-auto w-full flex flex-col"
         style={{
           maxWidth: '1040px',
           background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
@@ -240,7 +242,7 @@ export function BookCreationForm({ locale, templates, isPremium }: Props) {
       >
         {/* ── Progress bar ── */}
         <div
-          className="flex items-center gap-2 px-6 py-[18px]"
+          className="flex items-center gap-2 px-6 py-[18px] max-md:px-3 max-md:gap-1"
           style={{ borderBottom: '1px solid oklch(1 0 0 / 0.05)' }}
         >
           {([1, 2, 3, 4] as const).map((n, i) => {
@@ -265,7 +267,7 @@ export function BookCreationForm({ locale, templates, isPremium }: Props) {
                   disabled={!isReached}
                   aria-current={isActive ? 'step' : undefined}
                   aria-label={`Step ${n}: ${STEP_LABELS[n - 1]}`}
-                  className="inline-flex items-center gap-2 px-3 py-1.5"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 max-md:px-1.5 max-md:gap-0"
                   style={{
                     borderRadius: 'var(--r-pill)',
                     background: isActive || isDone
@@ -297,6 +299,7 @@ export function BookCreationForm({ locale, templates, isPremium }: Props) {
                     {isDone ? <Check size={11} strokeWidth={3} /> : n}
                   </span>
                   <span
+                    className="max-md:hidden"
                     style={{
                       fontFamily: 'var(--font-display)',
                       fontSize: '12px',
@@ -313,7 +316,7 @@ export function BookCreationForm({ locale, templates, isPremium }: Props) {
           <Link
             href={`/${locale}/studio`}
             aria-label="Cancel and return to studio"
-            className="inline-flex items-center justify-center ml-3"
+            className="inline-flex items-center justify-center ml-3 shrink-0 max-md:ml-1"
             style={{
               width: '32px',
               height: '32px',
@@ -338,7 +341,7 @@ export function BookCreationForm({ locale, templates, isPremium }: Props) {
             }}
           >
             <div
-              className="mx-auto w-full"
+              className="wizard-step-pad mx-auto w-full"
               style={{
                 maxWidth: '880px',
                 padding: '26px 36px 18px',

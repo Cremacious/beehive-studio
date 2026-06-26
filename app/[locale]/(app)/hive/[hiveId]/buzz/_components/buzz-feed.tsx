@@ -96,7 +96,7 @@ export function BuzzFeed({
         <div
           className="relative grid gap-7"
           style={{
-            gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 260px), 1fr))',
             alignItems: 'start',
           }}
         >

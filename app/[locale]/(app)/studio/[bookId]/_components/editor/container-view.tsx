@@ -164,7 +164,7 @@ export function ContainerView({ item }: Props) {
         {/* Children grid — paper cards on the lifted canvas */}
         <ul
           className="grid gap-3.5"
-          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}
+          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 240px), 1fr))' }}
         >
           {children.map(child => {
             const meta = TYPE_META[child.type] ?? {

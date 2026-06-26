@@ -78,9 +78,11 @@ export function renderTree(nodes: TreeNode[], depth: number): React.ReactNode[] 
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function BinderTree() {
+export function BinderTree({ mobile = false }: { mobile?: boolean } = {}) {
   const { bookId, bookTitle, binderItems, setBinderItems, focusMode, binderPanel } = useBookEditor()
-  const binderHidden = focusMode || binderPanel.collapsed
+  // On mobile the binder is an overlay drawer (issue #50): the drawer wrapper
+  // owns visibility, so the panel always renders its content + fills the drawer.
+  const binderHidden = mobile ? false : (focusMode || binderPanel.collapsed)
   const params = useParams<{ locale: string }>()
   const locale = params?.locale ?? 'en'
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
@@ -232,22 +234,32 @@ export function BinderTree() {
       <aside
         aria-hidden={binderHidden}
         style={{
-          background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
-          borderRadius: 'var(--r-card)',
-          boxShadow: 'var(--sh-card)',
-          border: 'var(--br-card)',
-          width: binderHidden ? 0 : binderPanel.width,
+          // On mobile the drawer wrapper provides the card chrome, so the
+          // binder renders transparent and seamless inside it (issue #50).
+          background: mobile ? 'transparent' : 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+          borderRadius: mobile ? 0 : 'var(--r-card)',
+          boxShadow: mobile ? 'none' : 'var(--sh-card)',
+          border: mobile ? 'none' : 'var(--br-card)',
+          width: mobile ? '100%' : (binderHidden ? 0 : binderPanel.width),
+          height: mobile ? '100%' : undefined,
           // Drag updates must feel instant — no transition while dragging.
           // Collapse/uncollapse still animates smoothly.
-          transition: binderPanel.isDragging
+          transition: mobile
+            ? 'none'
+            : binderPanel.isDragging
             ? 'none'
             : 'width 200ms ease-out, opacity 200ms ease-out, transform 200ms ease-out',
         }}
         className={cn(
-          'flex-shrink-0 flex flex-col overflow-hidden',
-          binderHidden
-            ? 'opacity-0 -translate-x-2 pointer-events-none'
-            : 'opacity-100 translate-x-0',
+          'flex flex-col overflow-hidden',
+          mobile
+            ? 'w-full opacity-100'
+            : cn(
+                'flex-shrink-0',
+                binderHidden
+                  ? 'opacity-0 -translate-x-2 pointer-events-none'
+                  : 'opacity-100 translate-x-0',
+              ),
         )}
       >
         <div className="px-3.5 pt-4 pb-3">

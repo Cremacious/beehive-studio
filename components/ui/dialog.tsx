@@ -70,6 +70,11 @@ function DialogContent({
         }}
         className={cn(
           "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 p-4 text-sm text-popover-foreground duration-100 outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          // Mobile (issue #50): become a bottom-sheet. These max-sm utilities
+          // live on the component (same Tailwind layer) so they reliably beat
+          // the base top/left/translate by source order, then are overridden
+          // again at sm+ for the desktop centered card.
+          "max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:w-full max-sm:max-w-full max-sm:max-h-[92dvh] max-sm:overflow-y-auto max-sm:rounded-b-none max-sm:pb-[max(1rem,env(safe-area-inset-bottom))]",
           className
         )}
         {...props}

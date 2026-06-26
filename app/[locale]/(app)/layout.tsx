@@ -34,8 +34,10 @@ export default async function AppLayout({
     image: profile.avatarUrl ?? session.user.image ?? null,
   }
 
+  // Bottom padding on mobile clears the fixed bottom tab bar (issue #50);
+  // zero at md+ so desktop is unchanged.
   return (
-    <div className="min-h-screen bg-[#262728] flex flex-col">
+    <div className="min-h-screen bg-[#262728] flex flex-col max-md:pb-[calc(56px+env(safe-area-inset-bottom))]">
       <AppNav locale={locale} user={navUser} username={profile.username ?? null} />
       <main className="flex-1 flex flex-col pt-1.5">{children}</main>
       <AppFooter />

@@ -154,27 +154,30 @@ export function WizardFooter({ onBack, onCancel, onSkip, onNext, nextLabel, next
   const isDisabled = nextDisabled || submitting
   return (
     <div
-      className="flex items-center justify-between"
+      className="flex items-center justify-between max-md:flex-col-reverse max-md:items-stretch max-md:gap-3"
       style={{
         marginTop: 20,
         paddingTop: 22,
         borderTop: '1px solid oklch(1 0 0 / 0.05)',
       }}
     >
-      {onCancel ? (
-        <button type="button" onClick={onCancel} className="back-link">← Cancel</button>
-      ) : onBack ? (
-        <button type="button" onClick={onBack} className="back-link">← Back</button>
-      ) : <span />}
+      <div className="max-md:flex max-md:justify-center">
+        {onCancel ? (
+          <button type="button" onClick={onCancel} className="back-link max-md:py-2">← Cancel</button>
+        ) : onBack ? (
+          <button type="button" onClick={onBack} className="back-link max-md:py-2">← Back</button>
+        ) : <span />}
+      </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 max-md:flex-col-reverse max-md:items-stretch max-md:gap-2">
         {onSkip && (
-          <button type="button" onClick={onSkip} className="back-link">Skip</button>
+          <button type="button" onClick={onSkip} className="back-link max-md:py-2">Skip</button>
         )}
         <button
           type="button"
           onClick={onNext}
           disabled={isDisabled}
+          className="max-md:w-full"
           style={{
             background: 'var(--brand)',
             color: 'var(--brand-ink)',
@@ -190,7 +193,9 @@ export function WizardFooter({ onBack, onCancel, onSkip, onNext, nextLabel, next
             transition: 'transform 150ms ease',
             display: 'inline-flex',
             alignItems: 'center',
+            justifyContent: 'center',
             gap: 8,
+            whiteSpace: 'nowrap',
           }}
           onMouseEnter={e => { if (!isDisabled) e.currentTarget.style.transform = 'translateY(-1px)' }}
           onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)' }}

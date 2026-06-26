@@ -741,7 +741,7 @@ function HiveChapterLinkPopover({
     >
       <div
         onClick={e => e.stopPropagation()}
-        className="min-w-[280px] w-[360px] max-h-[60vh] flex flex-col p-2"
+        className="min-w-[280px] w-[360px] max-w-[calc(100vw-1.5rem)] max-h-[60vh] flex flex-col p-2"
         style={{
           background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
           borderRadius: 'var(--r-card)',

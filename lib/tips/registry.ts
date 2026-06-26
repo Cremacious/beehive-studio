@@ -15,7 +15,7 @@ export const TIPS = {
   'editor-intro': {
     key: 'editor-intro',
     title: 'Welcome to your studio',
-    body: 'The binder on the left holds your chapters, characters, and notes. The center is where you write. The panel on the right shows status and details for whatever is open. Everything autosaves as you go.',
+    body: 'The binder on the left holds your chapters, characters, and notes. The center is where you write. The panel on the right shows status and details for whatever is open. On desktop, drag the edge of either side panel to make it larger or smaller. Everything autosaves as you go.',
   },
   'editor-resize-panels': {
     key: 'editor-resize-panels',

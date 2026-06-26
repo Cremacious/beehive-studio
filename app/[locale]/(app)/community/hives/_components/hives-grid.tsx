@@ -49,7 +49,7 @@ export function HivesGrid({
     <div
       className="grid gap-4"
       style={{
-        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))',
         alignItems: 'stretch',
       }}
     >

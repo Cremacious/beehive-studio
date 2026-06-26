@@ -19,7 +19,7 @@ export function BookmarksGrid({ rows, locale }: Props) {
   return (
     <div
       className="grid gap-[18px]"
-      style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}
+      style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 220px), 1fr))' }}
     >
       {rows.map((row) => (
         <BookmarkCard key={row.id} row={row} locale={locale} />

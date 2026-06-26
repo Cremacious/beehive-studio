@@ -79,7 +79,7 @@ export async function ClubMembersSection({ clubId, viewerRole, locale }: Props) 
           padding: '10px 20px 14px',
           margin: 0,
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 160px), 1fr))',
           gap: 6,
         }}
       >

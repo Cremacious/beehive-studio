@@ -340,10 +340,8 @@ export function NotificationsBell() {
       {open && (
         <>
           <div
-            className="absolute right-0 z-50 overflow-hidden"
+            className="absolute right-0 top-14 w-[380px] z-50 overflow-hidden max-md:fixed max-md:left-2 max-md:right-2 max-md:top-[60px] max-md:w-auto"
             style={{
-              top: 56,
-              width: 380,
               borderRadius: 'var(--r-card)',
               background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
               boxShadow: 'var(--sh-card)',

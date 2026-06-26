@@ -161,6 +161,7 @@ export function CommunityDashboardGrid({ data, locale }: Props) {
       <CommunityNavStrip locale={locale} />
 
       <div
+        className="dashboard-bento"
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(12, 1fr)',

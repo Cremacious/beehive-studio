@@ -42,7 +42,7 @@ export function ImportWizardPanel({ locale, isPremium, onBack, onConfirm }: Prop
             type="button"
             onClick={onBack}
             aria-label="Back"
-            className="inline-flex items-center justify-center"
+            className="inline-flex items-center justify-center shrink-0"
             style={{
               width: 32, height: 32, borderRadius: 'var(--r-pill)',
               background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',

@@ -69,7 +69,7 @@ export default async function StudioPage({
 
       {/* 2-col split: books main + 300px hive rail */}
       <div
-        className="grid gap-5"
+        className="grid gap-5 studio-library-grid"
         style={{ gridTemplateColumns: 'minmax(0, 1fr) 300px' }}
       >
         <div>

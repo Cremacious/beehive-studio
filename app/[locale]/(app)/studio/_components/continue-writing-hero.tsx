@@ -125,10 +125,10 @@ export function ContinueWritingHero({ book, locale }: Props) {
   const hasChapters = book.chapterCount > 0
 
   return (
-    <div style={PANEL_STYLE} className="relative w-full">
+    <div style={PANEL_STYLE} className="relative w-full continue-writing-panel">
       {/* Top meta strip */}
       <div
-        className="flex items-center gap-3.5 uppercase mb-4 flex-wrap"
+        className="flex items-center gap-3.5 uppercase mb-4 flex-wrap continue-writing-meta"
         style={{
           fontFamily: 'var(--font-mono)',
           fontSize: '11px',
@@ -167,7 +167,7 @@ export function ContinueWritingHero({ book, locale }: Props) {
         {/* LEFT — title block */}
         <div style={{ minWidth: 0 }}>
           <h2
-            className="m-0 mb-3"
+            className="m-0 mb-3 continue-writing-title"
             style={{
               fontFamily: 'var(--font-display)',
               fontWeight: 700,
@@ -181,7 +181,7 @@ export function ContinueWritingHero({ book, locale }: Props) {
             {book.title}
           </h2>
           <p
-            className="m-0"
+            className="m-0 continue-writing-sub"
             style={{
               fontFamily: 'var(--font-prose)',
               fontSize: '17px',
@@ -200,7 +200,7 @@ export function ContinueWritingHero({ book, locale }: Props) {
         </div>
 
         {/* RIGHT — primary CTA */}
-        <div className="flex flex-col gap-4 items-end">
+        <div className="flex flex-col gap-4 items-end continue-writing-cta">
           <Link
             href={`/${locale}/studio/${book.id}`}
             aria-label={`Continue writing: ${book.title}`}
@@ -244,6 +244,16 @@ export function ContinueWritingHero({ book, locale }: Props) {
             grid-template-columns: 1fr !important;
             gap: 24px !important;
           }
+        }
+        /* Slimmer on phones (issue #50). Desktop is unchanged. */
+        @media (max-width: 767px) {
+          .continue-writing-panel { padding: 16px 16px 16px !important; }
+          .continue-writing-meta { margin-bottom: 10px !important; }
+          .continue-writing-title { font-size: 22px !important; line-height: 1.12 !important; margin-bottom: 4px !important; }
+          .continue-writing-sub { font-size: 14px !important; line-height: 1.3 !important; }
+          .continue-writing-grid { gap: 14px !important; }
+          .continue-writing-cta { align-items: stretch !important; }
+          .continue-writing-cta > a { min-width: 0 !important; width: 100% !important; padding: 10px 16px !important; }
         }
       `}</style>
     </div>

@@ -27,10 +27,10 @@ type Props = {
 export function StepOne({ title, subtitle, synopsis, coverUrl, coverFile, onUpdate, onNext, onCancel, titleError }: Props) {
   return (
     <div>
-      <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '22px' }}>
+      <div className="stack-mobile" style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '22px' }}>
         <CoverPicker coverUrl={coverUrl} coverFile={coverFile} onChange={patch => onUpdate(patch)} />
 
-        <div className="flex flex-col gap-[18px]">
+        <div className="flex flex-col gap-[18px] max-md:gap-6">
           <WizardField label="Title" required>
             <HelperText id="title-help">
               What&apos;s this book called? A working title is fine. You can change it any time.

@@ -401,7 +401,7 @@ export function BookDetailsForm({ locale, bookId, initial, isPremium }: Props) {
 
       {/* ── Body ───────────────────────────────────────────────────────────── */}
       <div style={{ flex: 1, overflowY: 'auto' }}>
-        <div style={{
+        <div className="stack-mobile" style={{
           maxWidth: 980,
           margin: '0 auto',
           padding: '36px 24px 120px',

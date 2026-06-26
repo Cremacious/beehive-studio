@@ -49,7 +49,7 @@ export function PageExplainer({ tipKey, enabled = true }: Props) {
     <div
       role="dialog"
       aria-label={tip.title}
-      className="fixed bottom-4 right-4 z-50 w-[360px] max-w-[calc(100vw-2rem)]"
+      className="fixed bottom-4 right-4 z-50 w-[360px] max-w-[calc(100vw-2rem)] max-md:left-4 max-md:right-4 max-md:w-auto max-md:bottom-[calc(64px+env(safe-area-inset-bottom))]"
       style={{
         background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
         borderRadius: 'var(--r-card)',

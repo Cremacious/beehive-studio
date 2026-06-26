@@ -72,7 +72,7 @@ export function DiscoverRailSubPage<TItem extends { id: string } = BookCard>({
         </p>
       )}
 
-      <div className="grid grid-cols-[240px_1fr] gap-6">
+      <div className="grid grid-cols-[240px_1fr] max-md:grid-cols-1 gap-6">
         <aside>{filterRail ?? null}</aside>
         <div>
           {result.books.length === 0 ? (

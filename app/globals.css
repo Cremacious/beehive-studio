@@ -410,19 +410,19 @@ body {
   /* Multi-column layouts that don't auto-fill: stack into one column on
      phones. The !important beats the inline grid-template / grid-column. */
   .dashboard-bento {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: minmax(0, 1fr) !important;
   }
   .dashboard-bento > * {
     grid-column: auto !important;
   }
   .continue-writing-grid {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: minmax(0, 1fr) !important;
     gap: 20px !important;
   }
 
   /* Settings: stack the nav above content; drop sticky on mobile. */
   .settings-grid {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: minmax(0, 1fr) !important;
     gap: 16px !important;
     padding: 16px 16px 32px !important;
   }
@@ -430,15 +430,17 @@ body {
     position: static !important;
   }
 
-  /* Studio library: books + hive rail stack on mobile. */
+  /* Studio library: books + hive rail stack on mobile. minmax(0,1fr) (not a
+     bare 1fr, whose min-width:auto lets wide children push past the viewport)
+     so the column clamps to the screen and content reflows inside it. */
   .studio-library-grid {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: minmax(0, 1fr) !important;
   }
 
   /* Generic helper for inline-styled 2-col grids (wizard steps, details
      form field pairs, cover+fields splits) that should stack on phones. */
   .stack-mobile {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: minmax(0, 1fr) !important;
   }
 
   /* New-book wizard: roomier full-bleed layout on phones. The desktop card

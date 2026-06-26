@@ -150,7 +150,7 @@ export function LibraryGrid({ books, hives, locale, authorName }: Props) {
           boxShadow: 'var(--sh-card)',
         }}
       >
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 max-md:hidden">
           {/* Filter chip strip */}
           <div className="flex items-center gap-1.5" role="tablist" aria-label="Filter by type">
             {(['all', 'books', 'hives'] as const).map((key) => {
@@ -308,6 +308,146 @@ export function LibraryGrid({ books, hives, locale, authorName }: Props) {
             }}
           >
             <Plus size={14} strokeWidth={2.5} />
+            New book
+          </Link>
+        </div>
+
+        {/* Mobile controls (issue #50, variant C). Segmented filter + search/sort
+            row + full-width New book. Desktop row above is untouched. */}
+        <div className="md:hidden flex flex-col gap-2.5">
+          {/* Segmented filter control */}
+          <div
+            className="flex p-[3px]"
+            role="tablist"
+            aria-label="Filter by type"
+            style={{
+              background: 'var(--canvas-dark-100)',
+              boxShadow: 'var(--sh-inset)',
+              borderRadius: 'var(--r-row)',
+            }}
+          >
+            {(['all', 'books', 'hives'] as const).map((key) => {
+              const active = tab === key
+              const count = counts[key]
+              const label = key === 'all' ? 'All' : key === 'books' ? 'Books' : 'Hives'
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setTab(key)}
+                  role="tab"
+                  aria-selected={active}
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 min-h-[36px]"
+                  style={{
+                    borderRadius: 'calc(var(--r-row) - 3px)',
+                    background: active ? 'var(--brand)' : 'transparent',
+                    color: active ? 'var(--brand-ink)' : 'var(--canvas-dark-ink)',
+                    fontFamily: 'var(--font-display)',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    boxShadow: active ? 'var(--sh-tile)' : 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {label}
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '10px',
+                      padding: '1px 6px',
+                      borderRadius: 'var(--r-pill)',
+                      background: active
+                        ? 'oklch(from var(--brand-ink) l c h / 0.18)'
+                        : 'oklch(0 0 0 / 0.25)',
+                      color: active ? 'var(--brand-ink)' : 'var(--canvas-dark-ink-muted)',
+                    }}
+                  >
+                    {count}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Search + Sort */}
+          <div className="flex gap-2">
+            <label className="relative flex-1">
+              <Search
+                size={14}
+                className="absolute pointer-events-none"
+                style={{ left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--canvas-dark-ink-muted)' }}
+              />
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search your library…"
+                className="w-full outline-none"
+                style={{
+                  height: '40px',
+                  padding: '0 14px 0 34px',
+                  borderRadius: 'var(--r-row)',
+                  background: 'var(--canvas-dark-100)',
+                  boxShadow: 'var(--sh-inset)',
+                  border: 'none',
+                  color: 'var(--canvas-dark-ink-strong)',
+                  fontFamily: 'inherit',
+                }}
+              />
+            </label>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1.5 shrink-0"
+                  style={{
+                    height: '40px',
+                    padding: '0 14px',
+                    borderRadius: 'var(--r-row)',
+                    background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+                    color: 'var(--canvas-dark-ink-strong)',
+                    fontFamily: 'var(--font-display)',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    border: 'var(--br-card)',
+                    boxShadow: 'var(--sh-tile)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {SORT_LABELS[sort]}
+                  <ChevronDown size={14} strokeWidth={2} />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {(Object.keys(SORT_LABELS) as Sort[]).map((opt) => (
+                  <DropdownMenuItem
+                    key={opt}
+                    onSelect={() => setSort(opt)}
+                    className={sort === opt ? 'font-semibold' : ''}
+                  >
+                    {SORT_LABELS[opt]}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          {/* New book (full-width) */}
+          <Link
+            href={`/${locale}/studio/new`}
+            className="flex w-full items-center justify-center gap-1.5 no-underline"
+            style={{
+              minHeight: '42px',
+              borderRadius: 'var(--r-pill)',
+              background: 'var(--brand)',
+              color: 'var(--brand-ink)',
+              fontFamily: 'var(--font-display)',
+              fontSize: '13px',
+              fontWeight: 700,
+              boxShadow: 'var(--sh-tile)',
+            }}
+          >
+            <Plus size={15} strokeWidth={2.5} />
             New book
           </Link>
         </div>

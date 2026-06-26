@@ -30,10 +30,7 @@ export default async function DiscoverPage({ params, searchParams }: Props) {
   const tab = parseTab(rawTab)
 
   return (
-    <main
-      className="mx-auto w-full px-6 pt-7 pb-6"
-      style={{ maxWidth: '1920px' }}
-    >
+    <main className="page-x tier-max pt-7 pb-6">
       <PageHead
         title="Discover"
         subtitle="Books, sparks, lists, clubs, and hives from across the community."

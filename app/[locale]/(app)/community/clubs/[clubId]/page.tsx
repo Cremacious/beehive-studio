@@ -62,13 +62,7 @@ export default async function ClubDetailPage({
   }
 
   return (
-    <div
-      style={{
-        maxWidth: 1080,
-        margin: '0 auto',
-        padding: '0 16px 48px',
-      }}
-    >
+    <div className="page-x tier-reader" style={{ paddingBottom: 48 }}>
       <BackLinkBadge href={`/${locale}/community/clubs`} label="clubs" />
       <InviteClaimedToast copy={`Welcome to ${club.name}!`} />
 

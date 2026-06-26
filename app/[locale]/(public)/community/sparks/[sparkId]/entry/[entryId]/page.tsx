@@ -37,7 +37,7 @@ export default async function SparkEntryPage({ params }: Props) {
 
   return (
     <main className="cm-main">
-      <div className="cm-wrap w-3xl" data-screen-label="Spark entry reader">
+      <div className="page-x tier-prose pt-7 pb-24" data-screen-label="Spark entry reader">
         <Link
           href={`/${locale}/community/sparks/${sparkId}`}
           className="eyebrow-mono"

@@ -51,7 +51,7 @@ export function DiscoverRailSubPage<TItem extends { id: string } = BookCard>({
 }: Props<TItem>) {
   const render = renderCard ?? defaultRender
   return (
-    <main className="max-w-5xl mx-auto px-4 py-6">
+    <main className="page-x tier-standard py-6">
       <Link
         href={`/${locale}/discover`}
         className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-[family-name:var(--font-mono)] text-[var(--canvas-dark-ink-muted)] hover:text-[var(--brand)] mb-4"

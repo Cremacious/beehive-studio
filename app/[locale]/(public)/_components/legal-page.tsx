@@ -16,7 +16,7 @@ export function LegalPage({
   children: ReactNode
 }) {
   return (
-    <div className="max-w-3xl mx-auto px-6 py-16">
+    <div className="page-x tier-prose py-16">
       {preHeader}
       <h1
         className="font-display"

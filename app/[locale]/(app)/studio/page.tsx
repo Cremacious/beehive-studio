@@ -59,8 +59,8 @@ export default async function StudioPage({
 
   return (
     <main
-      className="relative z-[1] mx-auto"
-      style={{ maxWidth: '1680px', padding: '8px 16px 48px' }}
+      className="relative z-[1] page-x tier-wide"
+      style={{ paddingTop: 8, paddingBottom: 48 }}
     >
       {/* Continue Writing hero — full width above the 2-col split */}
       <section style={{ marginBottom: '24px' }}>

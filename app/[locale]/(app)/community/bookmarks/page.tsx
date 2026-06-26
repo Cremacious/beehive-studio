@@ -58,7 +58,7 @@ export default async function BookmarksPage({ params, searchParams }: Props) {
 
   if (!result.success) {
     return (
-      <main className="mx-auto w-full px-6 pt-7 pb-6" style={{ maxWidth: '1440px' }}>
+      <main className="page-x tier-wide pt-7 pb-6">
         <BackToCommunity href={`/${locale}/community`} />
         <p className="text-red-400 text-sm">Could not load bookmarks.</p>
       </main>
@@ -92,7 +92,7 @@ export default async function BookmarksPage({ params, searchParams }: Props) {
   const hasActiveFilters = q !== '' || status !== 'all' || genres.length > 0
 
   return (
-    <main className="mx-auto w-full px-6 pt-7 pb-12" style={{ maxWidth: '1440px' }}>
+    <main className="page-x tier-wide pt-7 pb-12">
       <BackToCommunity href={`/${locale}/community`} />
 
       <div

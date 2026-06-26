@@ -340,7 +340,7 @@ export default async function AuthorProfilePage({ params }: Props) {
 
   return (
     <main style={{ background: 'var(--canvas-dark-100)', minHeight: '100vh' }}>
-      <div style={{ maxWidth: 1120, margin: '0 auto', padding: '28px 20px 80px' }}>
+      <div className="page-x tier-standard" style={{ paddingTop: 28, paddingBottom: 80 }}>
         <InviteClaimedToast copy={`You and @${profile.username} are now friends.`} />
 
         {/* ─── Header panel (flat) ─────────────────────────────────────────── */}

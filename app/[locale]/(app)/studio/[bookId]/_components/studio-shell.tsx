@@ -32,7 +32,14 @@ export function StudioShell() {
        flex-1 ancestor resolves to content-height — not viewport. Pin the
        studio columns to viewport-minus-nav (h-14 = 56px) so the binder /
        editor / metadata fill the screen instead of stopping ~80% down. */
-    <div className="flex gap-2 h-[calc(100vh-68px)] overflow-hidden">
+    /* Capped at the `max` width tier (issue #49) so the editor stays
+       flush-bleed up to 1920px then centers on ultrawide instead of
+       sprawling across a 32" monitor. No side gutters here by design —
+       the binder reads better anchored near the edge. */
+    <div
+      className="mx-auto w-full flex gap-2 h-[calc(100vh-68px)] overflow-hidden"
+      style={{ maxWidth: 'var(--page-w-max)' }}
+    >
       <BinderTree />
       {!binderHidden && (
         <ResizeHandle

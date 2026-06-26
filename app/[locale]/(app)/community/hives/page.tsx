@@ -60,8 +60,7 @@ export default async function HivesHubPage({ params, searchParams }: Props) {
   if (!result.success) {
     return (
       <main
-        className="mx-auto w-full px-6 pt-7 pb-6"
-        style={{ maxWidth: '1680px' }}
+        className="page-x tier-wide pt-7 pb-6"
       >
         <p className="text-red-400 text-sm">Failed to load hives.</p>
       </main>
@@ -95,8 +94,7 @@ export default async function HivesHubPage({ params, searchParams }: Props) {
 
   return (
     <main
-      className="mx-auto w-full px-6 pt-7 pb-6"
-      style={{ maxWidth: '1680px' }}
+      className="page-x tier-wide pt-7 pb-6"
     >
       <div className="grid items-start xl:grid-cols-[minmax(0,1fr)_300px] grid-cols-1 gap-8">
         <div className="min-w-0">

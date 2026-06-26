@@ -7,7 +7,7 @@ export default async function RedeemPage() {
   await requireAuth()
 
   return (
-    <main className="mx-auto max-w-md px-4 py-12">
+    <main className="page-x tier-narrow py-12">
       <div
         className="rounded-[var(--r-card)] p-7"
         style={{

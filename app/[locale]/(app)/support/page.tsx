@@ -430,7 +430,7 @@ export default function SupportPage() {
   const activeTopic = TOPICS.find((t) => t.id === activeId) ?? TOPICS[0]
 
   return (
-    <div style={{ maxWidth: 1120, margin: '0 auto', padding: '32px 24px 64px' }}>
+    <div className="page-x tier-standard" style={{ paddingTop: 32, paddingBottom: 64 }}>
       {/* Page header */}
       <div style={{ marginBottom: 28 }}>
         <h1

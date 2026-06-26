@@ -45,7 +45,7 @@ export default async function Page({
 
   return (
     <main className="cm-main">
-      <div className="cm-wrap w-3xl">
+      <div className="page-x tier-prose pt-7 pb-24">
         <PageHead
           back={{
             href: `/${locale}/community/clubs/${clubId}`,

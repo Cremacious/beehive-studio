@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { getAdminSession } from '@/lib/admin/require-admin'
 import { adminLogoutAction } from './login/actions'
+import { PageContainer } from '@/components/layout/page-container'
 
 export const dynamic = 'force-dynamic'
 
@@ -73,7 +74,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </button>
         </form>
       </aside>
-      <main className="flex-1 min-w-0 px-8 py-6">{children}</main>
+      <main className="flex-1 min-w-0 py-6">
+        {/* Cap admin content (issue #49) so tables/forms don't run
+            edge-to-edge in the content area on large monitors. */}
+        <PageContainer tier="wide">{children}</PageContainer>
+      </main>
     </div>
   )
 }

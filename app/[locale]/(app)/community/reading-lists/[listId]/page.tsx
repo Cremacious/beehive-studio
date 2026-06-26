@@ -22,7 +22,7 @@ export default async function ListDetailPage({
   const readCount = books.filter((b) => b.isRead).length
 
   return (
-    <main className="cm-wrap w-5xl">
+    <main className="page-x tier-standard pt-7 pb-24">
       <BackLinkBadge href={`/${locale}/community/reading-lists`} label="reading lists" />
       <ListDetailHeader
         list={list}

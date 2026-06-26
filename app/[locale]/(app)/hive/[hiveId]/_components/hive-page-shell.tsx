@@ -25,9 +25,12 @@ export type HivePageShellProps = {
   children: ReactNode
 }
 
-const WIDTH_CLASS: Record<HivePageShellProps['width'], string> = {
-  standard: 'max-w-3xl',
-  wide: 'max-w-5xl',
+// Maps the shell's two width modes onto the shared page-width tiers
+// (issue #49). `standard` keeps the narrow reading measure; `wide` steps
+// up to the shared `standard` tier for the roomier hive/club surfaces.
+const TIER_CLASS: Record<HivePageShellProps['width'], string> = {
+  standard: 'tier-prose',
+  wide: 'tier-standard',
 }
 
 export function HivePageShell({
@@ -39,7 +42,7 @@ export function HivePageShell({
   children,
 }: HivePageShellProps) {
   return (
-    <div className={`mx-auto w-full ${WIDTH_CLASS[width]} p-6 flex flex-col min-h-screen`}>
+    <div className={`page-x ${TIER_CLASS[width]} py-6 flex flex-col min-h-screen`}>
       {back && (
         <div className="page-head" style={{ marginBottom: 18 }}>
           <Link href={back.href} className="back">

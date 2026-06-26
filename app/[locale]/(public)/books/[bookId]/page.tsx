@@ -179,7 +179,7 @@ export default async function BookReaderPage({ params }: Props) {
           backgroundSize: '26px 26px',
         }}
       />
-      <div className="relative z-10 mx-auto max-w-[1080px] px-4 py-10 sm:px-7">
+      <div className="relative z-10 page-x tier-reader py-10">
         <div className="flex flex-col gap-7">
           <ReaderPageShell
             hero={{

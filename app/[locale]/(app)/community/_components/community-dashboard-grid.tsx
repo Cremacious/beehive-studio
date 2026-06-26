@@ -125,7 +125,7 @@ function buildClubsNudges(d: CommunityDashboardData): NudgeRow[] {
 
 export function CommunityDashboardGrid({ data, locale }: Props) {
   return (
-    <div style={{ maxWidth: 1680, margin: '0 auto', padding: '24px 16px' }}>
+    <div className="page-x tier-wide" style={{ paddingBlock: 24 }}>
       <div
         style={{
           display: 'flex',

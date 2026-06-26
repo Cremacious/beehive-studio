@@ -62,8 +62,7 @@ export default async function FriendsPage({ params, searchParams }: Props) {
 
   return (
     <main
-      className="mx-auto w-full px-6 pt-7 pb-6"
-      style={{ maxWidth: '1120px' }}
+      className="page-x tier-standard pt-7 pb-6"
     >
       <div className="grid items-start xl:grid-cols-[minmax(0,1fr)_300px] grid-cols-1 gap-4">
         <div className="min-w-0 w-full">

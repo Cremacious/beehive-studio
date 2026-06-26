@@ -63,7 +63,7 @@ export default async function SparkDetailPage({ params }: Props) {
 
   return (
     <main className="cm-main">
-      <div className="cm-wrap w-3xl">
+      <div className="page-x tier-prose pt-7 pb-24">
         <PageHead
           back={{ href: `/${locale}/community/sparks`, label: 'sparks' }}
           eyebrow={`Spark · ${creatorLabel}`}

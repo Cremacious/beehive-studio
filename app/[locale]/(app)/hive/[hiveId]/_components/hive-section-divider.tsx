@@ -31,7 +31,7 @@ export function HiveSectionDivider({
   return (
     <section
       id={id}
-      className="px-6 py-5"
+      className="px-6 py-5 max-md:px-4 max-md:py-4"
       style={{
         borderTop: hideTopBorder
           ? undefined

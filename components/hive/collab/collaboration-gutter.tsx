@@ -7,6 +7,7 @@ import type { HiveRole } from '@/lib/hive/permissions'
 import type { AnnotationRow } from '@/lib/actions/hive-annotations.actions'
 import type { SuggestionRow } from '@/lib/actions/hive-suggestions.actions'
 import { useCollabData } from '@/lib/hooks/use-collab-data'
+import { useIsMobile } from '@/lib/hooks/use-is-mobile'
 import {
   GutterFilterStrip,
   defaultFilterState,
@@ -98,6 +99,10 @@ export function CollaborationGutter({
     refresh,
     mutate,
   } = useCollabData({ chapterId, hiveId, refreshTrigger })
+
+  // Mobile (issue #50): the inline gutter reflows from a sticky side column to
+  // a full-width "notes below" list under the prose.
+  const isMobile = useIsMobile()
 
   const [filter, setFilter] = useState<FilterState>(defaultFilterState)
 
@@ -258,20 +263,27 @@ export function CollaborationGutter({
   if (inline) {
     return (
       <aside
-        style={{
-          width: EXPANDED_WIDTH,
-          borderLeft:
-            '1px solid oklch(from var(--canvas-dark-300) l c h / 0.5)',
-          paddingLeft: 20,
-          position: 'sticky',
-          top: 16,
-          alignSelf: 'flex-start',
-        }}
-        className="flex shrink-0 flex-col gap-3"
+        style={
+          isMobile
+            ? {
+                width: '100%',
+                borderTop: '1px solid oklch(from var(--canvas-dark-300) l c h / 0.5)',
+                paddingTop: 16,
+              }
+            : {
+                width: EXPANDED_WIDTH,
+                borderLeft: '1px solid oklch(from var(--canvas-dark-300) l c h / 0.5)',
+                paddingLeft: 20,
+                position: 'sticky',
+                top: 16,
+                alignSelf: 'flex-start',
+              }
+        }
+        className={isMobile ? 'flex flex-col gap-3' : 'flex shrink-0 flex-col gap-3'}
       >
         <div className="flex items-center justify-between gap-2">
           <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--canvas-dark-ink-muted)]">
-            Collaboration
+            {isMobile ? 'Notes & suggestions' : 'Collaboration'}
           </span>
           <span className="font-mono text-[10px] text-[var(--canvas-dark-ink-muted)]">
             {activeCount} active

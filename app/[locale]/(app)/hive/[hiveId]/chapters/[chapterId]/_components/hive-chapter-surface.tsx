@@ -158,10 +158,10 @@ export function HiveChapterSurface({
       )}
 
       <HiveSectionDivider label="Body">
-        <div className="flex items-start gap-6">
-          <div className="flex-1 min-w-0">
+        <div className="flex items-start gap-6 max-md:flex-col max-md:gap-4">
+          <div className="flex-1 min-w-0 max-md:w-full">
             <div
-              className="hive-chapter-prose"
+              className="hive-chapter-prose max-md:!px-4 max-md:!py-5"
               style={{
                 background: 'var(--canvas-dark-100)',
                 boxShadow: 'var(--sh-inset)',

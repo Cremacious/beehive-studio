@@ -17,16 +17,26 @@ export default async function HiveChaptersPage({
   if (!r.success) notFound()
   const count = r.data.chapters.length
   return (
-    <HivePageShell
-      width="standard"
-      title="Chapters"
-      subtitle={`${count} ${count === 1 ? 'chapter' : 'chapters'}`}
-    >
-      <HiveChapterIndex
-        hiveId={hiveId}
-        locale={locale}
-        chapters={r.data.chapters}
-      />
-    </HivePageShell>
+    <>
+      {/* Mobile (issue #50, variant C) — outside the shell for full width. */}
+      <div className="md:hidden pt-3">
+        <HiveChapterIndex hiveId={hiveId} locale={locale} chapters={r.data.chapters} mobile />
+      </div>
+
+      {/* Desktop — unchanged. */}
+      <div className="max-md:hidden">
+        <HivePageShell
+          width="standard"
+          title="Chapters"
+          subtitle={`${count} ${count === 1 ? 'chapter' : 'chapters'}`}
+        >
+          <HiveChapterIndex
+            hiveId={hiveId}
+            locale={locale}
+            chapters={r.data.chapters}
+          />
+        </HivePageShell>
+      </div>
+    </>
   )
 }

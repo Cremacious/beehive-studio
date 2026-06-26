@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { BookOpen } from 'lucide-react'
+import { BookOpen, ChevronRight } from 'lucide-react'
 import { relTime } from '@/components/hive/collab/rel-time'
 
 type Chapter = {
@@ -16,9 +16,11 @@ type Props = {
   hiveId: string
   locale: string
   chapters: Chapter[]
+  /** Render the mobile reading-list cards (issue #50) instead of the table. */
+  mobile?: boolean
 }
 
-export function HiveChapterIndex({ hiveId, locale, chapters }: Props) {
+export function HiveChapterIndex({ hiveId, locale, chapters, mobile }: Props) {
   const base = `/${locale}/hive/${hiveId}`
 
   if (chapters.length === 0) {
@@ -41,6 +43,62 @@ export function HiveChapterIndex({ hiveId, locale, chapters }: Props) {
             This is a standalone hive. Link a book to get a manuscript.
           </p>
         </div>
+      </div>
+    )
+  }
+
+  // ── Mobile (issue #50, variant C — reading list) ──
+  if (mobile) {
+    return (
+      <div className="flex flex-col gap-2.5 pb-6">
+        {chapters.map((chapter, i) => {
+          const accessible = !!chapter.chapterId
+          const cardStyle = {
+            background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+            boxShadow: 'var(--sh-tile)',
+            borderRadius: 'var(--r-card)',
+          } as const
+          const badge = (
+            <span
+              className="shrink-0 inline-flex items-center justify-center font-comfortaa font-medium"
+              style={{ width: 38, height: 38, borderRadius: 10, background: 'oklch(from var(--brand) l c h / 0.12)', color: 'var(--brand)', fontSize: 16 }}
+            >
+              {i + 1}
+            </span>
+          )
+          const body = (
+            <div className="flex-1 min-w-0">
+              {chapter.collectionTitle && (
+                <span className="block font-mono text-[10px] uppercase tracking-wider truncate" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
+                  {chapter.collectionTitle}
+                </span>
+              )}
+              <span className="block font-medium text-[15px] leading-snug" style={{ color: 'var(--canvas-dark-ink-strong)' }}>
+                {chapter.title}
+              </span>
+              <span className="block font-mono text-[10px] mt-1" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
+                {accessible ? `edited ${relTime(chapter.updatedAt)}` : 'no longer accessible'}
+              </span>
+            </div>
+          )
+          return accessible ? (
+            <Link
+              key={chapter.id}
+              href={`${base}/chapters/${chapter.chapterId}`}
+              className="flex items-center gap-3 p-3.5 no-underline"
+              style={cardStyle}
+            >
+              {badge}
+              {body}
+              <ChevronRight className="w-4 h-4 shrink-0" style={{ color: 'var(--canvas-dark-ink-muted)' }} />
+            </Link>
+          ) : (
+            <div key={chapter.id} className="flex items-center gap-3 p-3.5 opacity-60" style={cardStyle}>
+              {badge}
+              {body}
+            </div>
+          )
+        })}
       </div>
     )
   }

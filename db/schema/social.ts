@@ -52,13 +52,24 @@ export const follows = pgTable('follows', {
   followerId: text('follower_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   followeeId: text('followee_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-}, (t) => [primaryKey({ columns: [t.followerId, t.followeeId] })])
+}, (t) => [
+  primaryKey({ columns: [t.followerId, t.followeeId] }),
+  // Issue #37: PK leads with follower_id (serves "who does X follow"). Filtering
+  // by followee_id alone (follower counts, notification fan-out, discover
+  // ranking subqueries) had no index. See scripts/migrate-perf-indexes.ts.
+  index('follows_followee_id_idx').on(t.followeeId),
+])
 
 export const bookLikes = pgTable('book_likes', {
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   bookId: text('book_id').notNull().references(() => books.id, { onDelete: 'cascade' }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-}, (t) => [primaryKey({ columns: [t.userId, t.bookId] })])
+}, (t) => [
+  primaryKey({ columns: [t.userId, t.bookId] }),
+  // Issue #37: PK leads with user_id. Every trending/ranking path counts likes
+  // per book (`WHERE book_id IN (...) GROUP BY book_id`) which the PK can't serve.
+  index('book_likes_book_id_idx').on(t.bookId),
+])
 
 export const sparkLikes = pgTable('spark_likes', {
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
@@ -93,7 +104,12 @@ export const bookmarks = pgTable('bookmarks', {
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   bookId: text('book_id').notNull().references(() => books.id, { onDelete: 'cascade' }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-}, (t) => [primaryKey({ columns: [t.userId, t.bookId] })])
+}, (t) => [
+  primaryKey({ columns: [t.userId, t.bookId] }),
+  // Issue #37: PK leads with user_id; bookmark-count-per-book aggregation in
+  // discover ranking filters/groups by book_id alone.
+  index('bookmarks_book_id_idx').on(t.bookId),
+])
 
 export const readingProgress = pgTable('reading_progress', {
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
@@ -279,6 +295,9 @@ export const readingLists = pgTable(
     index('reading_lists_discoverable_visibility_idx').on(t.discoverable, t.visibility),
     index('reading_lists_last_updated_idx').on(t.lastUpdatedAt.desc()),
     index('reading_lists_follower_count_idx').on(t.followerCount.desc()),
+    // Issue #37: D3a discover lists filter by genre; the text column had no btree
+    // (only the tags GIN index existed).
+    index('reading_lists_genre_idx').on(t.genre),
     // first_public partial index created in migrate-d3a.ts (drizzle has no
     // first-class partial-index DSL for the predicate we need).
   ],

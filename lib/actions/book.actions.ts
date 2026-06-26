@@ -18,6 +18,7 @@ import type { ImportedChapter } from '@/lib/import/types'
 import { recordSocialActivityTx } from '@/lib/social/record-activity'
 import { deleteCloudinaryImage, getCloudinaryPublicId } from '@/lib/cloudinary'
 import { runAction } from './safe-action'
+import { cachedAction } from '@/lib/cache'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -344,6 +345,17 @@ export async function getUserBooksAction(): Promise<
  */
 export async function getStudioStatsAction(): Promise<ActionResult<StudioStats>> {
   const userId = await requireAuth()
+  // Issue #37: 4 parallel aggregate counts for the studio library header. Plain
+  // numbers (JSON-safe). Short TTL so a writer's own stats lag at most a minute.
+  const data = await cachedAction(
+    `studio:stats:v1:${userId}`,
+    () => computeStudioStats(userId),
+    60,
+  )
+  return { success: true, data }
+}
+
+async function computeStudioStats(userId: string): Promise<StudioStats> {
   const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000)
 
   const userBooksSq = db
@@ -384,13 +396,10 @@ export async function getStudioStatsAction(): Promise<ActionResult<StudioStats>>
     ])
 
   return {
-    success: true,
-    data: {
-      totalWords: Number(totalWordsRow[0]?.total ?? 0),
-      booksInProgress: Number(booksInProgressRow[0]?.total ?? 0),
-      wordsThisWeek: Number(wordsThisWeekRow[0]?.total ?? 0),
-      chaptersPublished: Number(chaptersPublishedRow[0]?.total ?? 0),
-    },
+    totalWords: Number(totalWordsRow[0]?.total ?? 0),
+    booksInProgress: Number(booksInProgressRow[0]?.total ?? 0),
+    wordsThisWeek: Number(wordsThisWeekRow[0]?.total ?? 0),
+    chaptersPublished: Number(chaptersPublishedRow[0]?.total ?? 0),
   }
 }
 

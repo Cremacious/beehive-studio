@@ -7,6 +7,7 @@
  * modules import from here freely.
  */
 
+import { cache } from 'react'
 import { db } from '@/db'
 import {
   books,
@@ -91,10 +92,16 @@ const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000
  * Resolves the bidirectional blocked-author set for a viewer in a single query.
  * Empty Set for guests. Used by every rail action so blocked authors' books
  * never leak into Discover.
+ *
+ * Issue #37: wrapped in React cache() for per-request dedup. The discover home
+ * tab (and books tab) call this several times per render (featured + trending +
+ * popular + for-you each resolve the same set), so memoizing by viewerId
+ * collapses N identical queries to one per request. (Stays React cache(), not
+ * Upstash: it returns a Set, which doesn't JSON-serialize.)
  */
-export async function getBlockedAuthorIdsForViewer(
+export const getBlockedAuthorIdsForViewer = cache(async (
   viewerId: string | null,
-): Promise<Set<string>> {
+): Promise<Set<string>> => {
   if (!viewerId) return new Set()
   const rows = await db
     .select({
@@ -114,7 +121,7 @@ export async function getBlockedAuthorIdsForViewer(
     else set.add(r.blockerId)
   }
   return set
-}
+})
 
 /**
  * Builds the canonical WHERE filter for any public+discoverable book lookup.

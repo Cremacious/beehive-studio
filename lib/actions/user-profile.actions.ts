@@ -23,6 +23,62 @@ import type { ActionResult } from './book.actions'
 import type { ClubSummary, ClubCurrentBook } from './book-clubs.actions'
 import { projectToBookCards, type BookCard } from './discover-shared'
 import { projectToSparkCards, type SparkCard } from './discover-sparks.actions'
+import { cachedAction } from '@/lib/cache'
+
+// Issue #37: the 6 aggregate stat counts on a public profile are viewer-independent
+// and read-only, so they cache cleanly per user. `isFollowing` is viewer-specific and
+// stays uncached (a single indexed lookup). Counts are plain numbers (JSON-safe).
+const PROFILE_STATS_TTL_SECONDS = 120
+
+type ProfileStats = {
+  followerCount: number
+  followingCount: number
+  wordCount: number
+  bookCount: number
+  sparkCount: number
+  clubCount: number
+}
+
+function getProfileStatsCached(userId: string): Promise<ProfileStats> {
+  return cachedAction(
+    `profile:stats:v1:${userId}`,
+    async () => {
+      const [
+        followerResult,
+        followingResult,
+        wordCountResult,
+        bookCountResult,
+        sparkCountResult,
+        clubCountResult,
+      ] = await Promise.all([
+        db.select({ total: count() }).from(follows).where(eq(follows.followeeId, userId)),
+        db.select({ total: count() }).from(follows).where(eq(follows.followerId, userId)),
+        db
+          .select({ total: sql<number>`COALESCE(SUM(${chapters.wordCount}), 0)` })
+          .from(chapters)
+          .innerJoin(books, eq(chapters.bookId, books.id))
+          // shadow books are excluded by the PUBLISHED filter
+          .where(and(eq(books.userId, userId), eq(books.status, 'PUBLISHED'))),
+        db
+          .select({ total: count() })
+          .from(books)
+          // shadow books are excluded by the PUBLISHED filter
+          .where(and(eq(books.userId, userId), eq(books.status, 'PUBLISHED'))),
+        db.select({ total: count() }).from(sparks).where(eq(sparks.creatorId, userId)),
+        db.select({ total: count() }).from(bookClubMembers).where(eq(bookClubMembers.userId, userId)),
+      ])
+      return {
+        followerCount: Number(followerResult[0]?.total ?? 0),
+        followingCount: Number(followingResult[0]?.total ?? 0),
+        wordCount: Number(wordCountResult[0]?.total ?? 0),
+        bookCount: Number(bookCountResult[0]?.total ?? 0),
+        sparkCount: Number(sparkCountResult[0]?.total ?? 0),
+        clubCount: Number(clubCountResult[0]?.total ?? 0),
+      }
+    },
+    PROFILE_STATS_TTL_SECONDS,
+  )
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -79,42 +135,7 @@ export async function getPublicProfileAction(
 
   const { userId } = profile
 
-  const [
-    followerResult,
-    followingResult,
-    wordCountResult,
-    bookCountResult,
-    sparkCountResult,
-    clubCountResult,
-  ] = await Promise.all([
-    db
-      .select({ total: count() })
-      .from(follows)
-      .where(eq(follows.followeeId, userId)),
-    db
-      .select({ total: count() })
-      .from(follows)
-      .where(eq(follows.followerId, userId)),
-    db
-      .select({ total: sql<number>`COALESCE(SUM(${chapters.wordCount}), 0)` })
-      .from(chapters)
-      .innerJoin(books, eq(chapters.bookId, books.id))
-      // shadow books are excluded by the PUBLISHED filter
-      .where(and(eq(books.userId, userId), eq(books.status, 'PUBLISHED'))),
-    db
-      .select({ total: count() })
-      .from(books)
-      // shadow books are excluded by the PUBLISHED filter
-      .where(and(eq(books.userId, userId), eq(books.status, 'PUBLISHED'))),
-    db
-      .select({ total: count() })
-      .from(sparks)
-      .where(eq(sparks.creatorId, userId)),
-    db
-      .select({ total: count() })
-      .from(bookClubMembers)
-      .where(eq(bookClubMembers.userId, userId)),
-  ])
+  const stats = await getProfileStatsCached(userId)
 
   let isFollowing = false
   try {
@@ -137,12 +158,12 @@ export async function getPublicProfileAction(
       displayName: profile.displayName ?? null,
       avatarUrl: profile.avatarUrl ?? null,
       bio: profile.bio ?? null,
-      followerCount: Number(followerResult[0]?.total ?? 0),
-      followingCount: Number(followingResult[0]?.total ?? 0),
-      wordCount: Number(wordCountResult[0]?.total ?? 0),
-      bookCount: Number(bookCountResult[0]?.total ?? 0),
-      sparkCount: Number(sparkCountResult[0]?.total ?? 0),
-      clubCount: Number(clubCountResult[0]?.total ?? 0),
+      followerCount: stats.followerCount,
+      followingCount: stats.followingCount,
+      wordCount: stats.wordCount,
+      bookCount: stats.bookCount,
+      sparkCount: stats.sparkCount,
+      clubCount: stats.clubCount,
       isFollowing,
     },
   }

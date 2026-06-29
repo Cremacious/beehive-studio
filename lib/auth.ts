@@ -14,6 +14,31 @@ const appleConfigured =
   !!process.env.APPLE_KEY_ID &&
   !!process.env.APPLE_PRIVATE_KEY
 
+const baseURL = process.env.BETTER_AUTH_URL ?? 'http://localhost:3000'
+
+// Trust both the apex and www variants of the configured origin so an auth
+// request isn't rejected if a user lands on the non-canonical host (e.g. before
+// Vercel's apex/www redirect kicks in, or a stale bookmark). Vercel should still
+// redirect one host to the other so OAuth state cookies stay on a single domain.
+function originVariants(url: string): string[] {
+  try {
+    const u = new URL(url)
+    const variants = new Set([`${u.protocol}//${u.host}`])
+    if (u.host.startsWith('www.')) {
+      variants.add(`${u.protocol}//${u.host.slice(4)}`)
+    } else {
+      variants.add(`${u.protocol}//www.${u.host}`)
+    }
+    return [...variants]
+  } catch {
+    return [url]
+  }
+}
+
+const trustedOrigins = [
+  ...new Set([...originVariants(baseURL), 'http://localhost:3000']),
+]
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: 'pg',
@@ -24,9 +49,9 @@ export const auth = betterAuth({
       verification: schema.verifications,
     },
   }),
-  baseURL: process.env.BETTER_AUTH_URL ?? 'http://localhost:3000',
+  baseURL,
   secret: process.env.BETTER_AUTH_SECRET,
-  trustedOrigins: [process.env.BETTER_AUTH_URL ?? 'http://localhost:3000'],
+  trustedOrigins,
   session: {
     expiresIn: 60 * 60 * 24 * 30,
     updateAge: 60 * 60 * 24,

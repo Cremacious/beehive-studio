@@ -1,6 +1,6 @@
 import { LegalPage, LegalSection } from '../_components/legal-page'
 
-export const metadata = { title: 'Privacy Policy · Beehive Books' }
+export const metadata = { title: 'Privacy Policy' }
 
 export default function PrivacyPage() {
   return (

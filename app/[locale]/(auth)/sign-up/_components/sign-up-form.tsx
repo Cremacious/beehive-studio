@@ -352,17 +352,6 @@ export function SignUpForm({ locale }: { locale: string }) {
             {' '}and{' '}
             <Link href={`/${locale}/privacy`} className="hover:underline underline-offset-4" style={{ color: 'var(--brand)' }}>Privacy Policy</Link>.
           </p>
-
-          {/* Trust signal */}
-          <div
-            className="flex items-center justify-center gap-2 pt-1 text-[12.5px]"
-            style={{ color: 'var(--canvas-dark-ink-faint)' }}
-          >
-            <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 shrink-0" style={{ color: 'oklch(0.74 0.12 145)' }} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
-            Your writing is private by default.
-          </div>
         </form>
       </div>
 

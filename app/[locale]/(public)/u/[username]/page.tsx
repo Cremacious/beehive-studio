@@ -17,7 +17,7 @@ import { ProfileUnavailable } from './_components/profile-unavailable'
 import { optimizeCloudinaryUrl, AVATAR_TRANSFORMS } from '@/lib/upload/cloudinary-url'
 import { FriendButton } from '@/components/friendship/friend-button'
 import { db } from '@/db'
-import { friendships, userMutes } from '@/db/schema'
+import { friendships, userMutes, userProfiles } from '@/db/schema'
 import { and, eq, or } from 'drizzle-orm'
 import { isBlocked } from '@/lib/social/is-blocked'
 import { getMutualFriends } from '@/lib/social/get-mutual-friends'
@@ -29,8 +29,61 @@ import { BookGridCard } from '@/app/[locale]/(public)/discover/_components/book-
 import { SparkGridCard } from '@/app/[locale]/(public)/discover/_components/spark-grid-card'
 import { RenderMentionsInText } from '@/components/mentions/render-mentions-in-text'
 import { InviteClaimedToast } from '@/components/invite-claimed-toast'
+import type { Metadata } from 'next'
+import { JsonLd } from '@/components/seo/json-ld'
+import { SITE_NAME, absoluteUrl, localeAlternates, toMetaDescription } from '@/lib/seo/site'
 
 type Props = { params: Promise<{ locale: string; username: string }> }
+
+// ─── SEO (issue #52) ──────────────────────────────────────────────────────────
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale, username } = await params
+
+  const [row] = await db
+    .select({
+      username: userProfiles.username,
+      displayName: userProfiles.displayName,
+      bio: userProfiles.bio,
+      avatarUrl: userProfiles.avatarUrl,
+    })
+    .from(userProfiles)
+    .where(eq(userProfiles.username, username))
+    .limit(1)
+
+  if (!row || !row.username) {
+    return { title: SITE_NAME, robots: { index: false, follow: false } }
+  }
+
+  const name = row.displayName ?? row.username
+  const title = `${name} (@${row.username})`
+  const description =
+    toMetaDescription(row.bio) ??
+    `${name} is writing and sharing books on ${SITE_NAME}. Read their work, lists, and clubs.`
+  const path = `/u/${row.username}`
+  const ogImage = row.avatarUrl
+    ? optimizeCloudinaryUrl(row.avatarUrl, AVATAR_TRANSFORMS)
+    : undefined
+
+  return {
+    title,
+    description,
+    alternates: localeAlternates(locale, path),
+    openGraph: {
+      type: 'profile',
+      title,
+      description,
+      url: absoluteUrl(`/${locale}${path}`),
+      images: ogImage ? [{ url: ogImage, alt: name }] : undefined,
+    },
+    twitter: {
+      card: 'summary',
+      title,
+      description,
+      images: ogImage ? [ogImage] : undefined,
+    },
+  }
+}
 
 // ─── Canonical chrome (matches the dark iOS design system) ────────────────────
 
@@ -338,8 +391,26 @@ export default async function AuthorProfilePage({ params }: Props) {
     background: gradient,
   }
 
+  // Person / ProfilePage structured data (issue #52). The profile page is
+  // public for any username; block masquerade already returned above for
+  // blocked viewers, so emitting here is safe.
+  const profileUrl = absoluteUrl(`/${locale}/u/${profile.username}`)
+  const personJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ProfilePage',
+    mainEntity: {
+      '@type': 'Person',
+      name: profile.displayName ?? profile.username,
+      alternateName: `@${profile.username}`,
+      url: profileUrl,
+      ...(avatarSrc ? { image: avatarSrc } : {}),
+      ...(profile.bio ? { description: profile.bio } : {}),
+    },
+  }
+
   return (
     <main style={{ background: 'var(--canvas-dark-100)', minHeight: '100vh' }}>
+      <JsonLd data={personJsonLd} />
       <div className="page-x tier-standard" style={{ paddingTop: 28, paddingBottom: 80 }}>
         <InviteClaimedToast copy={`You and @${profile.username} are now friends.`} />
 

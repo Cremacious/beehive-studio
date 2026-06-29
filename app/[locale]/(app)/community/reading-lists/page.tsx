@@ -34,6 +34,8 @@ function pickRaw(sp: SP, key: string): string | undefined {
   return typeof v === 'string' ? v : undefined
 }
 
+export const metadata = { title: 'Reading lists' }
+
 export default async function ReadingListsHubPage({
   params,
   searchParams,

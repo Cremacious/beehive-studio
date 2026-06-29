@@ -15,12 +15,30 @@ import { ListsGrid } from './_components/lists-grid'
 import { ClubsFilters } from './_components/clubs-filters'
 import { ClubsGrid } from './_components/clubs-grid'
 import { PageExplainer } from '@/components/tips/page-explainer'
+import type { Metadata } from 'next'
+import { SITE_NAME, localeAlternates } from '@/lib/seo/site'
 
 type SP = Record<string, string | string[] | undefined>
 
 type Props = {
   params: Promise<{ locale: string }>
   searchParams: Promise<SP>
+}
+
+// ─── SEO (issue #52) ──────────────────────────────────────────────────────────
+// Canonical intentionally drops filter/tab query params so the many filtered
+// permutations all consolidate to the one /discover URL.
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params
+  const title = 'Discover books, sparks, lists, clubs, and hives'
+  const description = `Browse books, writing sparks, reading lists, clubs, and collaborative hives from across the ${SITE_NAME} community.`
+  return {
+    title,
+    description,
+    alternates: localeAlternates(locale, '/discover'),
+    openGraph: { title: `Discover · ${SITE_NAME}`, description, type: 'website' },
+    twitter: { card: 'summary_large_image', title: `Discover · ${SITE_NAME}`, description },
+  }
 }
 
 export default async function DiscoverPage({ params, searchParams }: Props) {

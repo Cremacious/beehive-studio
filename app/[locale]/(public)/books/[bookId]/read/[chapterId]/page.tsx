@@ -33,8 +33,65 @@ import {
   getChapterCommentsAction,
   getChapterCommentsCountAction,
 } from '@/lib/actions/chapter-comments.actions'
+import type { Metadata } from 'next'
+import { SITE_NAME, absoluteUrl, localeAlternates } from '@/lib/seo/site'
 
 type Props = { params: Promise<{ locale: string; bookId: string; chapterId: string }> }
+
+// ─── SEO (issue #52) ──────────────────────────────────────────────────────────
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale, bookId, chapterId } = await params
+
+  // Same anonymous gate as the book reader: only PUBLIC books expose chapter
+  // metadata; FRIENDS / PRIVATE books noindex and never leak titles.
+  const access = await canReadBook(bookId, null)
+  if (!access.ok) {
+    return { title: SITE_NAME, robots: { index: false, follow: false } }
+  }
+
+  const [row] = await db
+    .select({
+      status: chapters.status,
+      chapterTitle: binderItems.title,
+      bookTitle: books.title,
+      discoverable: books.discoverable,
+      authorUsername: userProfiles.username,
+      authorDisplayName: userProfiles.displayName,
+    })
+    .from(chapters)
+    .innerJoin(binderItems, eq(binderItems.id, chapters.binderItemId))
+    .innerJoin(books, eq(books.id, chapters.bookId))
+    .leftJoin(userProfiles, eq(userProfiles.userId, books.userId))
+    .where(and(eq(chapters.id, chapterId), eq(chapters.bookId, bookId)))
+    .limit(1)
+
+  if (!row) return { title: SITE_NAME, robots: { index: false, follow: false } }
+
+  const author =
+    row.authorDisplayName ?? (row.authorUsername ? `@${row.authorUsername}` : null)
+  const chapterTitle = row.chapterTitle || 'Chapter'
+  const title = `${chapterTitle} · ${row.bookTitle}`
+  const description = `Read ${chapterTitle} from ${row.bookTitle}${author ? ` by ${author}` : ''} on ${SITE_NAME}.`
+  const path = `/books/${bookId}/read/${chapterId}`
+  // Draft chapters (not REVISED / FINAL) render a locked placeholder to
+  // non-authors, so they must never be indexed even on a public book.
+  const indexable = row.discoverable && isChapterReaderVisible(row.status)
+
+  return {
+    title,
+    description,
+    alternates: localeAlternates(locale, path),
+    robots: indexable ? undefined : { index: false, follow: true },
+    openGraph: {
+      type: 'article',
+      title,
+      description,
+      url: absoluteUrl(`/${locale}${path}`),
+    },
+    twitter: { card: 'summary', title, description },
+  }
+}
 
 export default async function ChapterReaderPage({ params }: Props) {
   const { locale, bookId, chapterId } = await params

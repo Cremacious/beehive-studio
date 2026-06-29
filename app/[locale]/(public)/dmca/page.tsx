@@ -1,6 +1,6 @@
 import { LegalPage, LegalSection } from '../_components/legal-page'
 
-export const metadata = { title: 'DMCA Policy · Beehive Books' }
+export const metadata = { title: 'DMCA Policy' }
 
 export default function DmcaPage() {
   return (

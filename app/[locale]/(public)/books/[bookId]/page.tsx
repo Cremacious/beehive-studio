@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { headers } from 'next/headers'
 import { db } from '@/db'
@@ -18,8 +19,80 @@ import { AccessDenied } from '../_components/access-denied'
 import { ReaderPageShell } from '../_components/reader-page-shell'
 import { CommentsPanel } from '../_components/comments-panel'
 import { SeriesFooter } from '../../_components/series-footer'
+import { JsonLd } from '@/components/seo/json-ld'
+import {
+  SITE_NAME,
+  absoluteUrl,
+  localeAlternates,
+  toMetaDescription,
+} from '@/lib/seo/site'
 
 type Props = { params: Promise<{ locale: string; bookId: string }> }
+
+// ─── SEO (issue #52) ──────────────────────────────────────────────────────────
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale, bookId } = await params
+
+  // Gate on anonymous access: a crawler (or a social-card scraper) is never
+  // signed in, so a book is only indexable / metadata-bearing when it is
+  // readable with no viewer. PRIVATE / FRIENDS books therefore noindex and
+  // never leak their title or synopsis.
+  const access = await canReadBook(bookId, null)
+  if (!access.ok) {
+    return { title: SITE_NAME, robots: { index: false, follow: false } }
+  }
+
+  const [row] = await db
+    .select({
+      title: books.title,
+      synopsis: books.synopsis,
+      coverUrl: books.coverUrl,
+      genre: books.genre,
+      tags: books.tags,
+      discoverable: books.discoverable,
+      updatedAt: books.updatedAt,
+      authorUsername: userProfiles.username,
+      authorDisplayName: userProfiles.displayName,
+    })
+    .from(books)
+    .leftJoin(userProfiles, eq(userProfiles.userId, books.userId))
+    .where(eq(books.id, bookId))
+    .limit(1)
+
+  if (!row) return { title: SITE_NAME, robots: { index: false, follow: false } }
+
+  const author = row.authorDisplayName ?? (row.authorUsername ? `@${row.authorUsername}` : null)
+  const title = author ? `${row.title} by ${author}` : row.title
+  const description =
+    toMetaDescription(row.synopsis) ??
+    `Read ${row.title}${author ? ` by ${author}` : ''} on ${SITE_NAME}.`
+  const path = `/books/${bookId}`
+  const ogImage = row.coverUrl ?? undefined
+
+  return {
+    title,
+    description,
+    keywords: [row.genre, ...(row.tags ?? [])].filter(Boolean) as string[],
+    alternates: localeAlternates(locale, path),
+    // PUBLIC-but-not-discoverable books stay readable by link (and unfurl with
+    // a rich preview when their author shares them) but are not indexed.
+    robots: row.discoverable ? undefined : { index: false, follow: true },
+    openGraph: {
+      type: 'book',
+      title,
+      description,
+      url: absoluteUrl(`/${locale}${path}`),
+      images: ogImage ? [{ url: ogImage, alt: row.title }] : undefined,
+    },
+    twitter: {
+      card: ogImage ? 'summary_large_image' : 'summary',
+      title,
+      description,
+      images: ogImage ? [ogImage] : undefined,
+    },
+  }
+}
 
 export default async function BookReaderPage({ params }: Props) {
   const { locale, bookId } = await params
@@ -168,8 +241,56 @@ export default async function BookReaderPage({ params }: Props) {
 
   const visibility = (bookExtra.visibility ?? 'PUBLIC') as 'PUBLIC' | 'FRIENDS' | 'PRIVATE'
 
+  // Structured data only for genuinely public books (issue #52). Never emit
+  // JSON-LD describing a FRIENDS / PRIVATE book even when the author or a
+  // friend is the one viewing it.
+  const authorName =
+    book.authorDisplayName ?? (book.authorUsername ? `@${book.authorUsername}` : 'Unknown')
+  const bookJsonLd =
+    visibility === 'PUBLIC'
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'Book',
+          name: book.title,
+          url: shareUrl,
+          inLanguage: 'en',
+          ...(book.synopsis ? { description: book.synopsis } : {}),
+          ...(book.coverUrl ? { image: book.coverUrl } : {}),
+          ...(book.genre ? { genre: book.genre } : {}),
+          datePublished: bookExtra.createdAt.toISOString(),
+          dateModified: bookExtra.updatedAt.toISOString(),
+          author: {
+            '@type': 'Person',
+            name: authorName,
+            ...(book.authorUsername
+              ? { url: absoluteUrl(`/${locale}/u/${book.authorUsername}`) }
+              : {}),
+          },
+          publisher: { '@type': 'Organization', name: SITE_NAME },
+        }
+      : null
+  const breadcrumbJsonLd =
+    visibility === 'PUBLIC'
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: SITE_NAME, item: absoluteUrl(`/${locale}`) },
+            {
+              '@type': 'ListItem',
+              position: 2,
+              name: 'Discover',
+              item: absoluteUrl(`/${locale}/discover`),
+            },
+            { '@type': 'ListItem', position: 3, name: book.title, item: shareUrl },
+          ],
+        }
+      : null
+
   return (
     <div className="relative min-h-screen bg-[#262728]">
+      {bookJsonLd && <JsonLd data={bookJsonLd} />}
+      {breadcrumbJsonLd && <JsonLd data={breadcrumbJsonLd} />}
       <div
         aria-hidden
         className="pointer-events-none fixed inset-0 z-0"

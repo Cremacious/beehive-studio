@@ -2,10 +2,26 @@ import { headers } from 'next/headers'
 import { auth } from '@/lib/auth'
 import { getPricingData } from '@/lib/upgrade/pricing-data'
 import { PlanCard } from './_components/plan-card'
+import type { Metadata } from 'next'
+import { SITE_NAME, localeAlternates } from '@/lib/seo/site'
 
 export const revalidate = 3600 // ISR — refresh Stripe prices hourly
 
 type Props = { params: Promise<{ locale: string }> }
+
+// ─── SEO (issue #52) ──────────────────────────────────────────────────────────
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params
+  const title = 'Pricing'
+  const description = `Start writing on ${SITE_NAME} for free. Upgrade to Premium for unlimited books, version history, and unlimited collaborators. Simple monthly or annual plans, no trial games.`
+  return {
+    title,
+    description,
+    alternates: localeAlternates(locale, '/pricing'),
+    openGraph: { title: `Pricing · ${SITE_NAME}`, description, type: 'website' },
+    twitter: { card: 'summary_large_image', title: `Pricing · ${SITE_NAME}`, description },
+  }
+}
 
 export default async function PricingPage({ params }: Props) {
   const { locale } = await params

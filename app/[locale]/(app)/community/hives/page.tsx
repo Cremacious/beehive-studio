@@ -25,6 +25,8 @@ function pickRaw(sp: SP, key: string): string | undefined {
   return typeof v === 'string' ? v : undefined
 }
 
+export const metadata = { title: 'Hives' }
+
 export default async function HivesHubPage({ params, searchParams }: Props) {
   const { locale } = await params
   const sp = await searchParams

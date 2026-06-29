@@ -25,6 +25,8 @@ function pickRaw(sp: SP, key: string): string | undefined {
   return typeof v === 'string' ? v : undefined
 }
 
+export const metadata = { title: 'Book clubs' }
+
 export default async function ClubsHubPage({ params, searchParams }: Props) {
   const { locale } = await params
   const sp = await searchParams

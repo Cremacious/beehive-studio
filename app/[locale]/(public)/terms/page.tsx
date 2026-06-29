@@ -1,6 +1,6 @@
 import { LegalPage, LegalSection } from '../_components/legal-page'
 
-export const metadata = { title: 'Terms of Service · Beehive Books' }
+export const metadata = { title: 'Terms of Service' }
 
 export default function TermsPage() {
   return (

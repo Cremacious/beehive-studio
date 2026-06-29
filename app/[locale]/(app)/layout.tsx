@@ -7,6 +7,11 @@ import { eq } from 'drizzle-orm'
 import { AppNav } from './_components/app-nav'
 import { AppFooter } from '@/components/app-footer'
 
+// Every authenticated app surface (studio, community, hive, settings, welcome,
+// redeem, support) is private and must never be indexed or leaked (issue #52).
+// Child pages may still set their own `title`; they inherit this robots default.
+export const metadata = { robots: { index: false, follow: false } }
+
 export default async function AppLayout({
   children,
   params,

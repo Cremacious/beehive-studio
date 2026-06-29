@@ -6,6 +6,13 @@ import { BeehiveMark } from '@/components/brand/beehive-mark'
 
 export const dynamic = 'force-dynamic'
 
+// The admin console is internal-only and must never be indexed (issue #52).
+// robots.ts also disallows /admin; this is the in-document belt-and-braces.
+export const metadata = {
+  title: 'Beehive Admin',
+  robots: { index: false, follow: false },
+}
+
 const NAV: { href: string; label: string; devOnly?: boolean }[] = [
   { href: '/admin', label: 'Dashboard' },
   { href: '/admin/users', label: 'Users' },

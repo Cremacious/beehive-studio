@@ -4,7 +4,7 @@ import { getPreferencesAction } from '@/lib/actions/settings.actions'
 import { PreferencesForm } from './_components/preferences-form'
 import { ResetTipsSection } from '@/components/tips/reset-tips-section'
 
-export const metadata = { title: 'Preferences · Settings · Beehive Books' }
+export const metadata = { title: 'Preferences · Settings' }
 
 export default async function PreferencesSettingsPage({
   params,

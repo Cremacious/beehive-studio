@@ -1,6 +1,6 @@
 import { LegalPage, LegalSection } from '../_components/legal-page'
 
-export const metadata = { title: 'Cookie Policy · Beehive Books' }
+export const metadata = { title: 'Cookie Policy' }
 
 export default function CookiesPage() {
   return (

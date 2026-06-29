@@ -5,6 +5,10 @@ import { db } from '@/db'
 import { userProfiles } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 
+// Auth surfaces (sign in / up, password reset, onboarding) carry no indexable
+// content and should stay out of search results (issue #52).
+export const metadata = { robots: { index: false, follow: false } }
+
 export default async function AuthLayout({
   children,
   params,

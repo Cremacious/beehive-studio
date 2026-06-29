@@ -30,6 +30,8 @@ function pickRaw(sp: SP, key: string): string | undefined {
   return typeof v === 'string' ? v : undefined
 }
 
+export const metadata = { title: 'Sparks' }
+
 export default async function SparksHubPage({ params, searchParams }: Props) {
   const { locale } = await params
   const sp = await searchParams

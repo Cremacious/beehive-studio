@@ -3,7 +3,7 @@ import { requireAuth } from '@/lib/require-auth'
 import { getPrivacySettingsAction } from '@/lib/actions/settings.actions'
 import { PrivacyForm } from './_components/privacy-form'
 
-export const metadata = { title: 'Privacy · Settings · Beehive Books' }
+export const metadata = { title: 'Privacy · Settings' }
 
 export default async function PrivacySettingsPage({
   params,

@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { ForgotPasswordForm } from './_components/forgot-password-form'
 import { BeehiveMark } from '@/components/brand/beehive-mark'
 
-export const metadata = { title: 'Reset password · Beehive Books' }
+export const metadata = { title: 'Reset password' }
 
 export default async function ForgotPasswordPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params

@@ -21,7 +21,11 @@ function landingHtml(locale: string): string {
   const check =
     '<svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>'
   const hex =
-    '<span class="hex"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2.5 20 7v10l-8 4.5L4 17V7l8-4.5Z" stroke="var(--brand)" stroke-width="2" stroke-linejoin="round"/><path d="M12 8.2 15.2 10v4L12 15.8 8.8 14v-4L12 8.2Z" fill="var(--brand)"/></svg></span>'
+    '<span class="brand-logo" style="display:inline-flex;align-items:center"><svg height="26" viewBox="0 0 791 398" fill="none" style="display:block;width:auto" aria-hidden="true">' +
+    '<g><path d="M 171.5,10 L 678,10 A 22 22 0 0 1 700,32 L 700,91 A 22 22 0 0 1 678,113 L 171.5,113 A 51.5 51.5 0 0 1 171.5,10 Z" fill="#FFC300"/><rect x="445" y="24" width="241" height="75" rx="13" fill="#FFFFFF"/><g stroke="#FFC300" stroke-width="5" stroke-linecap="round"><line x1="456" y1="34" x2="675" y2="34"/><line x1="456" y1="48" x2="675" y2="48"/><line x1="456" y1="62" x2="675" y2="62"/><line x1="456" y1="76" x2="675" y2="76"/><line x1="456" y1="90" x2="675" y2="90"/></g><path d="M 149,32.7 A 36.5 36.5 0 0 0 149,90.3" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round"/></g>' +
+    '<g><path d="M 119.5,120 L 713,120 A 22 22 0 0 1 735,142 L 735,201 A 22 22 0 0 1 713,223 L 119.5,223 A 51.5 51.5 0 0 1 119.5,120 Z" fill="#FFC300"/><rect x="442" y="134" width="279" height="75" rx="13" fill="#FFFFFF"/><g stroke="#FFC300" stroke-width="5" stroke-linecap="round"><line x1="453" y1="144" x2="710" y2="144"/><line x1="453" y1="158" x2="710" y2="158"/><line x1="453" y1="172" x2="710" y2="172"/><line x1="453" y1="186" x2="710" y2="186"/><line x1="453" y1="200" x2="710" y2="200"/></g><path d="M 97,142.7 A 36.5 36.5 0 0 0 97,200.3" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round"/></g>' +
+    '<g><path d="M 76,232 L 738,232 A 22 22 0 0 1 760,254 L 760,318 A 22 22 0 0 1 738,340 L 76,340 A 54 54 0 0 1 76,232 Z" fill="#FFC300"/><rect x="435" y="247" width="311" height="78" rx="13" fill="#FFFFFF"/><g stroke="#FFC300" stroke-width="5" stroke-linecap="round"><line x1="446" y1="257" x2="735" y2="257"/><line x1="446" y1="273" x2="735" y2="273"/><line x1="446" y1="289" x2="735" y2="289"/><line x1="446" y1="305" x2="735" y2="305"/><line x1="446" y1="321" x2="735" y2="321"/></g><path d="M 52,255.3 A 39 39 0 0 0 52,316.7" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round"/></g>' +
+    '<rect x="6" y="352" width="779" height="44" rx="16" fill="#FFC300"/></svg></span>'
 
   return `
 <!-- NAV -->
@@ -32,8 +36,8 @@ function landingHtml(locale: string): string {
       <span>Beehive Books</span>
     </a>
     <div class="nav-right">
-      <a class="btn btn-ghost" href="${p}/sign-in">Sign In</a>
-      <a class="btn btn-brand" href="${p}/sign-up">Start Writing</a>
+      <a class="btn btn-ghost" href="${p}/sign-in">Login</a>
+      <a class="btn btn-brand" href="${p}/sign-up">Sign Up</a>
     </div>
   </div>
 </nav>
@@ -42,7 +46,7 @@ function landingHtml(locale: string): string {
 <header class="hero">
   <div class="hero-glow"></div>
   <div class="wrap">
-    <span class="badge"><span class="dot"></span>Now in open beta. Hives 1.0 just shipped</span>
+    <span class="badge"><span class="dot"></span>Now in alpha testing</span>
     <h1>Get <span class="yellow">buzzed</span> about writing!</h1>
     <p class="hero-sub">Draft your book, build it with other writers, and share it with readers who care. More than a text editor, it's a community built to carry your book from blank page to bookshelf.</p>
     <div class="hero-cta">

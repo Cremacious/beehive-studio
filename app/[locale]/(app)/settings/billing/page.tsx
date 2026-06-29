@@ -9,7 +9,7 @@ import { ManageButton } from './_components/manage-button'
 import { CreditCard, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
-export const metadata = { title: 'Billing · Settings · Beehive Studio' }
+export const metadata = { title: 'Billing · Settings · Beehive Books' }
 
 type Props = { params: Promise<{ locale: string }> }
 

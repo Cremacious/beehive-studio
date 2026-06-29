@@ -1,13 +1,13 @@
 import { LegalPage, LegalSection } from '../_components/legal-page'
 
-export const metadata = { title: 'DMCA Policy · Beehive Studio' }
+export const metadata = { title: 'DMCA Policy · Beehive Books' }
 
 export default function DmcaPage() {
   return (
     <LegalPage title="DMCA Policy" updated="Last updated: May 2026">
       <LegalSection heading="Reporting Infringement">
         <p>
-          If you believe content on Beehive Studio infringes your copyright,
+          If you believe content on Beehive Books infringes your copyright,
           please send a DMCA takedown notice to dmca@beehive-studio.app. Your
           notice must include:
         </p>

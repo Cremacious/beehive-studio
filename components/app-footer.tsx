@@ -44,7 +44,7 @@ export function AppFooter() {
             className="font-bold tracking-wide"
             style={{ color: 'var(--brand)', fontFamily: 'var(--font-display)' }}
           >
-            Beehive Studio
+            Beehive Books
           </span>
           <span aria-hidden="true">·</span>
           <span>Get buzzed about writing!</span>

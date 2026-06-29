@@ -4,8 +4,9 @@ import { headers } from 'next/headers'
 import { auth } from '@/lib/auth'
 import { safeNextPath } from '@/lib/utils'
 import { SignInForm } from './_components/sign-in-form'
+import { BeehiveMark } from '@/components/brand/beehive-mark'
 
-export const metadata = { title: 'Sign in · Beehive Studio' }
+export const metadata = { title: 'Sign in · Beehive Books' }
 
 type Props = {
   params: Promise<{ locale: string }>
@@ -35,20 +36,14 @@ export default async function SignInPage({ params, searchParams }: Props) {
       {/* Header */}
       <header className="relative z-10">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link href={`/${locale}`} className="flex items-center gap-2.5">
+          <Link href={`/${locale}`} className="flex items-center gap-2">
+            <BeehiveMark className="h-6 w-auto" />
             <span
               className="mainFont font-bold text-[17px] tracking-tight"
-              style={{ color: 'var(--brand)' }}
+              style={{ color: 'var(--canvas-dark-ink-strong)' }}
             >
-              Beehive Studio
+              Beehive Books
             </span>
-          </Link>
-          <Link
-            href={`/${locale}/sign-up`}
-            className="text-sm transition-colors"
-            style={{ color: 'var(--canvas-dark-ink-muted)' }}
-          >
-            Create an account
           </Link>
         </div>
       </header>
@@ -64,7 +59,7 @@ export default async function SignInPage({ params, searchParams }: Props) {
           className="max-w-7xl mx-auto px-6 lg:px-8 flex flex-wrap items-center justify-between gap-3 text-[12px]"
           style={{ color: 'var(--canvas-dark-ink-muted)' }}
         >
-          <div>© 2026 Beehive Studio</div>
+          <div>© 2026 Beehive Books</div>
           <div className="flex items-center gap-5">
             <Link href={`/${locale}/privacy`} className="hover:opacity-80 transition-opacity">Privacy</Link>
             <Link href={`/${locale}/terms`} className="hover:opacity-80 transition-opacity">Terms</Link>

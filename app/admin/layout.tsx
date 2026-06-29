@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { getAdminSession } from '@/lib/admin/require-admin'
 import { adminLogoutAction } from './login/actions'
 import { PageContainer } from '@/components/layout/page-container'
+import { BeehiveMark } from '@/components/brand/beehive-mark'
 
 export const dynamic = 'force-dynamic'
 
@@ -37,11 +38,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         }}
       >
         <div className="px-2 mb-4">
-          <div
-            className="font-bold text-lg"
-            style={{ fontFamily: 'var(--font-display, Comfortaa)', color: 'var(--brand)' }}
-          >
-            Beehive Admin
+          <div className="flex items-center gap-2">
+            <BeehiveMark className="h-5 w-auto" />
+            <div
+              className="font-bold text-lg"
+              style={{ fontFamily: 'var(--font-display, Comfortaa)', color: 'var(--brand)' }}
+            >
+              Beehive Admin
+            </div>
           </div>
           <div
             className="text-[10px] font-mono uppercase tracking-[0.14em] mt-0.5 truncate"

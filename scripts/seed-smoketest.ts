@@ -948,7 +948,7 @@ async function seedNotifications(
 // ─── MAIN ────────────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log('\n🌼 Beehive Studio — Smoke-test seed\n')
+  console.log('\n🌼 Beehive Books — Smoke-test seed\n')
   await wipe()
   const u = await seedUsers()
   await seedSocialGraph(u)

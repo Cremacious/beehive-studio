@@ -1,13 +1,13 @@
 import { LegalPage, LegalSection } from '../_components/legal-page'
 
-export const metadata = { title: 'Privacy Policy · Beehive Studio' }
+export const metadata = { title: 'Privacy Policy · Beehive Books' }
 
 export default function PrivacyPage() {
   return (
     <LegalPage title="Privacy Policy" updated="Last updated: May 11, 2026">
       <LegalSection heading="1. Introduction">
         <p>
-          Beehive Studio (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) is committed to protecting
+          Beehive Books (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) is committed to protecting
           your privacy. This Privacy Policy explains how we collect, use,
           disclose, and safeguard your information when you use our web
           application and related services (the &quot;Service&quot;).
@@ -72,7 +72,7 @@ export default function PrivacyPage() {
       <LegalSection heading="5. Your content and manuscripts">
         <p>
           Your writing is yours. We do not claim ownership of any content you
-          create on Beehive Studio. We access your manuscripts only to provide
+          create on Beehive Books. We access your manuscripts only to provide
           the Service (rendering, syncing, collaboration) and to comply with
           legal obligations.
         </p>

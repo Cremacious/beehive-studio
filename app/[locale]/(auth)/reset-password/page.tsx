@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import { ResetPasswordForm } from './_components/reset-password-form'
+import { BeehiveMark } from '@/components/brand/beehive-mark'
 
-export const metadata = { title: 'Set new password · Beehive Studio' }
+export const metadata = { title: 'Set new password · Beehive Books' }
 
 const panelStyle: React.CSSProperties = {
   background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
@@ -37,12 +38,13 @@ export default async function ResetPasswordPage({
       {/* Header */}
       <header className="relative z-10">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link href={`/${locale}`} className="flex items-center gap-2.5">
+          <Link href={`/${locale}`} className="flex items-center gap-2">
+            <BeehiveMark className="h-6 w-auto" />
             <span
               className="mainFont font-bold text-[17px] tracking-tight"
-              style={{ color: 'var(--brand)' }}
+              style={{ color: 'var(--canvas-dark-ink-strong)' }}
             >
-              Beehive Studio
+              Beehive Books
             </span>
           </Link>
           <Link
@@ -90,7 +92,7 @@ export default async function ResetPasswordPage({
           className="max-w-7xl mx-auto px-6 lg:px-8 flex flex-wrap items-center justify-between gap-3 text-[12px]"
           style={{ color: 'var(--canvas-dark-ink-muted)' }}
         >
-          <div>© 2026 Beehive Studio</div>
+          <div>© 2026 Beehive Books</div>
           <div className="flex items-center gap-5">
             <Link href={`/${locale}/privacy`} className="hover:opacity-80 transition-opacity">Privacy</Link>
             <Link href={`/${locale}/terms`} className="hover:opacity-80 transition-opacity">Terms</Link>

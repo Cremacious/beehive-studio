@@ -7,6 +7,7 @@ import { checkUsernameAvailableAction, completeOnboardingAction } from '@/lib/ac
 import { MentionableTextarea } from '@/components/mentions/mentionable-textarea'
 import { useCloudinaryUpload } from '@/hooks/use-cloudinary-upload'
 import { validateImageFile } from '@/lib/upload/validate-image'
+import { BeehiveMark } from '@/components/brand/beehive-mark'
 
 const CLOUDINARY_CONFIGURED = !!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
 
@@ -311,12 +312,13 @@ export function OnboardingFlow({ locale }: { locale: string }) {
       {/* Header */}
       <header className="relative z-10">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 h-16 flex items-center">
-          <Link href={`/${locale}`} className="flex items-center gap-2.5">
+          <Link href={`/${locale}`} className="flex items-center gap-2">
+            <BeehiveMark className="h-6 w-auto" />
             <span
               className="mainFont font-bold text-[17px] tracking-tight"
-              style={{ color: 'var(--brand)' }}
+              style={{ color: 'var(--canvas-dark-ink-strong)' }}
             >
-              Beehive Studio
+              Beehive Books
             </span>
           </Link>
         </div>
@@ -609,7 +611,7 @@ export function OnboardingFlow({ locale }: { locale: string }) {
           className="max-w-7xl mx-auto px-6 lg:px-8 flex flex-wrap items-center justify-between gap-3 text-[12px]"
           style={{ color: 'var(--canvas-dark-ink-muted)' }}
         >
-          <div>© 2026 Beehive Studio</div>
+          <div>© 2026 Beehive Books</div>
           <div className="flex items-center gap-5">
             <Link href={`/${locale}/privacy`} className="hover:opacity-80 transition-opacity">Privacy</Link>
             <Link href={`/${locale}/terms`} className="hover:opacity-80 transition-opacity">Terms</Link>

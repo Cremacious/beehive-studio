@@ -8,7 +8,7 @@ import { ProfileForm } from './_components/profile-form'
 import { PasswordSection } from './_components/password-section'
 import { DeleteAccountSection } from './_components/delete-account-section'
 
-export const metadata = { title: 'Account · Settings · Beehive Studio' }
+export const metadata = { title: 'Account · Settings · Beehive Books' }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (

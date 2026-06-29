@@ -1,7 +1,7 @@
 import { LegalPage, LegalSection } from '../../_components/legal-page'
 import { BackLink } from './back-link'
 
-export const metadata = { title: 'Submissions · Beehive Studio Docs' }
+export const metadata = { title: 'Submissions · Beehive Books Docs' }
 
 export default function SubmissionsDocsPage() {
   return (

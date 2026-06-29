@@ -386,6 +386,29 @@
   .bb-landing .prose{padding:28px 26px}
 }
 
+/* ===== Mobile homepage pass (issue #51) ===== */
+/* On phones, show the editor mockup as a shrunk-to-fit snapshot: keep the full
+   three-pane layout but scale the whole window down so it stays within the page
+   width, instead of stacking the panes into a tall vertical strip. `zoom` is
+   used (not transform) so the scaled mockup also collapses its layout box, so
+   there is no leftover whitespace below it. */
+@media(max-width:680px){
+  .bb-landing .editor-cols{grid-template-columns:190px 1fr 210px;min-height:520px}
+  .bb-landing .binder{border:none;border-right:1px solid oklch(0 0 0/.25)}
+  .bb-landing .meta{border:none;border-left:1px solid oklch(0 0 0/.25)}
+  .bb-landing .editor-window{width:1000px;zoom:0.27;margin-left:auto;margin-right:auto}
+}
+/* Compact the marketing nav on phones so the logo, the "Beehive Books"
+   wordmark, and both auth buttons fit on a single line: smaller logo +
+   wordmark and compact Login / Sign Up buttons. */
+@media(max-width:560px){
+  .bb-landing .nav-inner{height:56px}
+  .bb-landing .nav .brand-mark{gap:8px;font-size:15px}
+  .bb-landing .nav .brand-logo svg{height:20px}
+  .bb-landing .nav-right{gap:8px}
+  .bb-landing .nav-right .btn{padding:8px 13px;font-size:13px}
+}
+
 /* ============ PRICING (added — styles shipped in the design, section was not) ============ */
 .bb-landing .pricing{padding:80px 0;text-align:center}
 .bb-landing .pricing .eyebrow{display:block;margin-bottom:14px}
@@ -426,3 +449,15 @@
 
 /* logo hex */
 .bb-landing .hex svg{width:30px;height:30px;display:block}
+
+/* Compact the footer on phones (issue #51): brand row on top, link groups in
+   two columns instead of one tall vertical stack, with trimmed vertical
+   padding. Placed after the ≤440 rule above so it wins at narrow widths. */
+@media(max-width:560px){
+  .bb-landing .footer{padding-top:36px}
+  .bb-landing .footer-top{grid-template-columns:1fr 1fr;gap:22px 18px;padding-bottom:26px}
+  .bb-landing .footer-brand{grid-column:1/-1}
+  .bb-landing .footer-brand .slogan{margin-bottom:12px}
+  .bb-landing .fcol a{margin-bottom:9px}
+  .bb-landing .footer-bottom{flex-direction:column;align-items:flex-start;gap:6px;padding:16px 0}
+}

@@ -8,7 +8,7 @@ import { db } from '@/db'
 import { userProfiles } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 
-export const metadata = { title: 'Notifications · Settings · Beehive Studio' }
+export const metadata = { title: 'Notifications · Settings · Beehive Books' }
 
 function pickAvatarAccent(seed: string): string {
   const accents = ['a-mint', 'a-blue', 'a-coral', 'a-lilac', 'a-slate'] as const

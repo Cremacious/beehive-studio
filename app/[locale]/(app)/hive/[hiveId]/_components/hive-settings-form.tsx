@@ -146,7 +146,7 @@ export function HiveSettingsForm({ hiveId, locale, initial }: Props) {
       </HiveSectionDivider>
 
       <HiveSectionDivider label="Visibility">
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-3 max-md:grid-cols-1">
           {VISIBILITY_OPTIONS.map(({ value, icon: Icon, label, desc }) => {
             const active = visibility === value
             return (
@@ -176,27 +176,31 @@ export function HiveSettingsForm({ hiveId, locale, initial }: Props) {
                   onChange={() => setVisibility(value)}
                   className="sr-only"
                 />
-                <span
-                  aria-hidden
-                  className="inline-flex items-center justify-center mb-[10px]"
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 9,
-                    background: active
-                      ? 'var(--brand-soft)'
-                      : 'var(--canvas-dark-300)',
-                    color: active ? 'var(--brand)' : 'var(--canvas-dark-ink)',
-                  }}
-                >
-                  <Icon size={16} strokeWidth={1.8} />
-                </span>
-                <span
-                  className="font-comfortaa font-semibold text-[14px]"
-                  style={{ color: 'var(--canvas-dark-ink-strong)' }}
-                >
-                  {label}
-                </span>
+                {/* Icon + label: stacked on desktop, inline on mobile (issue #50). */}
+                <div className="flex flex-col items-start max-md:flex-row max-md:items-center max-md:gap-2.5">
+                  <span
+                    aria-hidden
+                    className="inline-flex items-center justify-center mb-[10px] max-md:mb-0"
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 9,
+                      flexShrink: 0,
+                      background: active
+                        ? 'var(--brand-soft)'
+                        : 'var(--canvas-dark-300)',
+                      color: active ? 'var(--brand)' : 'var(--canvas-dark-ink)',
+                    }}
+                  >
+                    <Icon size={16} strokeWidth={1.8} />
+                  </span>
+                  <span
+                    className="font-comfortaa font-semibold text-[14px]"
+                    style={{ color: 'var(--canvas-dark-ink-strong)' }}
+                  >
+                    {label}
+                  </span>
+                </div>
                 <span
                   className="text-[12.5px] mt-1"
                   style={{ color: 'var(--canvas-dark-ink-muted)' }}
@@ -259,7 +263,7 @@ export function HiveSettingsForm({ hiveId, locale, initial }: Props) {
       </HiveSectionDivider>
 
       <HiveSectionDivider label="Danger zone" tone="danger">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-4 max-md:flex-col max-md:items-stretch">
           <p
             className="text-[12.5px] m-0"
             style={{ color: 'var(--canvas-dark-ink-muted)' }}
@@ -280,14 +284,14 @@ export function HiveSettingsForm({ hiveId, locale, initial }: Props) {
               border:
                 '1px solid oklch(from var(--status-error) l c h / 0.3)',
             }}
-            className="inline-flex items-center px-4 py-2.5 font-geist text-[13px] transition-all hover:-translate-y-px"
+            className="inline-flex items-center justify-center px-4 py-2.5 font-geist text-[13px] transition-all hover:-translate-y-px max-md:w-full"
           >
             Delete hive
           </button>
         </div>
       </HiveSectionDivider>
 
-      <section className="px-6 py-5 flex justify-end">
+      <section className="px-6 py-5 flex justify-end max-md:px-4">
         <button
           type="submit"
           disabled={saving}
@@ -298,7 +302,7 @@ export function HiveSettingsForm({ hiveId, locale, initial }: Props) {
             boxShadow: 'var(--sh-tile)',
             opacity: saving ? 0.5 : 1,
           }}
-          className="inline-flex items-center px-4 py-2 font-geist font-semibold text-[13px] transition-transform hover:-translate-y-px hover:bg-[var(--brand-hover)] active:translate-y-0 active:bg-[var(--brand-active)]"
+          className="inline-flex items-center justify-center px-4 py-2 font-geist font-semibold text-[13px] transition-transform hover:-translate-y-px hover:bg-[var(--brand-hover)] active:translate-y-0 active:bg-[var(--brand-active)] max-md:w-full max-md:py-2.5"
         >
           {saving ? 'Saving…' : 'Save changes'}
         </button>

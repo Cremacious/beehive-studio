@@ -13,12 +13,29 @@ if (!key) {
   )
 }
 
-// Runtime sanity check — fail loud if test keys leak to prod or vice versa.
-if (process.env.NODE_ENV === 'production' && !key.startsWith('sk_live_')) {
-  throw new Error('STRIPE_SECRET_KEY in production must start with sk_live_')
+// Validate the key is a real Stripe secret key shape.
+const isLiveKey = key.startsWith('sk_live_')
+const isTestKey = key.startsWith('sk_test_')
+if (!isLiveKey && !isTestKey) {
+  throw new Error('STRIPE_SECRET_KEY must start with sk_live_ or sk_test_')
 }
-if (process.env.NODE_ENV !== 'production' && !key.startsWith('sk_test_')) {
-  throw new Error('STRIPE_SECRET_KEY in non-production must start with sk_test_')
+
+// Going-live guard (opt-in). Vercel runs EVERY deploy — production, preview,
+// and alpha — with NODE_ENV=production, so we can't key "must be live" off
+// NODE_ENV or test-mode deploys would fail to build. Instead, set
+// STRIPE_REQUIRE_LIVE=true in Vercel when you switch from the Stripe sandbox to
+// real payments; until then test keys are accepted everywhere so the app stays
+// deployable in alpha.
+if (process.env.STRIPE_REQUIRE_LIVE === 'true' && !isLiveKey) {
+  throw new Error(
+    'STRIPE_REQUIRE_LIVE=true but STRIPE_SECRET_KEY is a test key. Use an sk_live_ key, or unset STRIPE_REQUIRE_LIVE.',
+  )
+}
+
+// Guard against a live key leaking into local dev (real cards). Never fires
+// during a Vercel build, where NODE_ENV is always production.
+if (process.env.NODE_ENV !== 'production' && isLiveKey) {
+  throw new Error('A live STRIPE_SECRET_KEY (sk_live_) must not be used in a non-production environment.')
 }
 
 export const stripe = new Stripe(key, {

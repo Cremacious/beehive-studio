@@ -57,6 +57,7 @@ export default async function WordGoalsPage({
   return (
     <HivePageShell
       width="standard"
+      mobileBleed
       title="Word Goals"
       subtitle="Set a shared writing target with your hive."
       headerSlot={
@@ -65,13 +66,13 @@ export default async function WordGoalsPage({
             hiveId={hiveId}
             existingActiveTypes={activeTypes}
             triggerLabel="+ New Goal"
-            triggerClassName="!px-4 !py-2 !text-[13px] !rounded-[var(--r-pill)]"
+            triggerClassName="!px-4 !py-2 !text-[13px] !rounded-[var(--r-pill)] max-md:!w-full max-md:!justify-center max-md:!min-h-[42px]"
           />
         ) : undefined
       }
     >
       {activeGoals.length === 0 ? (
-        <div className="px-6 pb-6">
+        <div className="px-6 pb-6 max-md:px-3">
           <EmptyState
             hiveId={hiveId}
             canCreate={canManage}

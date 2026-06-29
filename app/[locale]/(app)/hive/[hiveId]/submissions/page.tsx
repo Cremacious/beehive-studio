@@ -45,21 +45,49 @@ export default async function SubmissionsPage({
   const canSubmit = canSubmitChapter(viewerRole)
 
   return (
-    <HivePageShell
-      width="standard"
-      title="Submissions"
-      subtitle="Chapter drafts submitted for review."
-      headerSlot={canSubmit ? <NewSubmissionCTA locale={locale} hiveId={hiveId} /> : undefined}
-    >
-      <SubmissionsExplainer viewerRole={viewerRole} locale={locale} />
-      <SubmissionsList
-        hiveId={hiveId}
-        locale={locale}
-        viewerRole={viewerRole}
-        myDrafts={r.data.myDrafts}
-        mySubmissions={r.data.mySubmissions}
-        allInHive={r.data.allInHive}
-      />
-    </HivePageShell>
+    <>
+      {/* Mobile (issue #50) — full-width outside the shell. */}
+      <div className="md:hidden flex flex-col gap-3 pt-3">
+        {canSubmit && (
+          <Link
+            href={`/${locale}/hive/${hiveId}/submissions/new`}
+            className="inline-flex w-full items-center justify-center gap-1.5 min-h-[42px] text-[13px] font-semibold no-underline"
+            style={{ background: 'var(--brand)', color: 'var(--brand-ink)', borderRadius: 'var(--r-pill)', boxShadow: 'var(--sh-tile)' }}
+          >
+            <span aria-hidden>+</span> New submission
+          </Link>
+        )}
+        <SubmissionsExplainer viewerRole={viewerRole} locale={locale} />
+        <SubmissionsList
+          hiveId={hiveId}
+          locale={locale}
+          viewerRole={viewerRole}
+          myDrafts={r.data.myDrafts}
+          mySubmissions={r.data.mySubmissions}
+          allInHive={r.data.allInHive}
+          mobile
+        />
+      </div>
+
+      {/* Desktop — unchanged. */}
+      <div className="max-md:hidden">
+        <HivePageShell
+          width="standard"
+          title="Submissions"
+          subtitle="Chapter drafts submitted for review."
+          headerSlot={canSubmit ? <NewSubmissionCTA locale={locale} hiveId={hiveId} /> : undefined}
+        >
+          <SubmissionsExplainer viewerRole={viewerRole} locale={locale} />
+          <SubmissionsList
+            hiveId={hiveId}
+            locale={locale}
+            viewerRole={viewerRole}
+            myDrafts={r.data.myDrafts}
+            mySubmissions={r.data.mySubmissions}
+            allInHive={r.data.allInHive}
+          />
+        </HivePageShell>
+      </div>
+    </>
   )
 }

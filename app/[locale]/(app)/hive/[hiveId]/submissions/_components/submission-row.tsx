@@ -35,15 +35,49 @@ export function SubmissionRow({
   row,
   hiveId,
   locale,
+  mobile,
 }: {
   row: SubmissionRowData
   hiveId: string
   locale: string
+  /** Render a stacked card (issue #50) instead of the desktop table row. */
+  mobile?: boolean
 }) {
+  if (mobile) {
+    return (
+      <Link
+        href={`/${locale}/hive/${hiveId}/submissions/${row.id}`}
+        className="flex flex-col gap-1.5 p-3.5 no-underline"
+        style={{
+          background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+          borderRadius: 'var(--r-card)',
+          boxShadow: 'var(--sh-tile)',
+        }}
+      >
+        <div className="flex items-start justify-between gap-2.5">
+          <span
+            className="font-comfortaa font-semibold text-[14px] leading-snug min-w-0"
+            style={{ color: 'var(--canvas-dark-ink-strong)' }}
+          >
+            {row.title || 'Untitled submission'}
+          </span>
+          <span className="shrink-0">
+            <HivePill token={STATUS_TOKEN[row.draftStatus]}>{STATUS_LABEL[row.draftStatus]}</HivePill>
+          </span>
+        </div>
+        <span className="font-mono text-[10px]" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
+          {row.authorUsername && <>@{row.authorUsername} · </>}
+          {row.wordCount.toLocaleString()} words · {targetOrderLabel(row.targetChapterOrder)}
+          {row.draftStatus !== 'DRAFT' && <> · {relTime(row.updatedAt)}</>}
+        </span>
+      </Link>
+    )
+  }
+
   return (
     <Link
       href={`/${locale}/hive/${hiveId}/submissions/${row.id}`}
-      className="grid grid-cols-[1fr_110px_130px] max-md:grid-cols-1 max-md:gap-1.5 items-center gap-3 px-5 py-3 transition-colors hover:bg-[var(--canvas-dark-300)]"
+      className="grid grid-cols-[1fr_110px_130px] items-center gap-3 px-5 py-3 transition-colors hover:bg-[var(--canvas-dark-300)]"
     >
       <div className="min-w-0">
         <p

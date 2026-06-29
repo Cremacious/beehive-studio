@@ -207,6 +207,7 @@ export function SubmissionComposer({
       title={shellTitle}
       subtitle="Draft · Auto-saves as you type"
       back={{ href: `/${locale}/hive/${hiveId}/submissions`, label: 'submissions' }}
+      mobileBleed
     >
       <div data-slot="submission-composer-pane">
         <style>{`
@@ -245,7 +246,7 @@ export function SubmissionComposer({
           }
         `}</style>
 
-        <div className="px-6 py-5">
+        <div className="px-6 py-5 max-md:px-3">
           <div className="flex flex-col gap-4">
             {/* Save status row */}
             <div className="flex items-center justify-between gap-3">
@@ -425,7 +426,7 @@ export function SubmissionComposer({
                   e.currentTarget.style.background = 'var(--brand-hover)'
                   e.currentTarget.style.transform = 'translateY(-1px)'
                 }}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-[13px] font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2 max-md:w-full max-md:min-h-[42px] text-[13px] font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Send size={14} />
                 {submitting ? 'Submitting…' : 'Submit for review'}

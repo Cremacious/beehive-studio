@@ -443,6 +443,18 @@ body {
     grid-template-columns: minmax(0, 1fr) !important;
   }
 
+  /* Hive page shell mobileBleed (issue #50): drop the page-x gutters + the
+     panel chrome on phones so prose/editor surfaces go edge-to-edge. */
+  [data-mobile-bleed] {
+    padding-inline: 0 !important;
+  }
+  [data-mobile-bleed-panel] {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+  }
+
   /* Hive list "table" rows (Members/Discussions/Submissions/Chapters): the
      fixed metadata columns (date/role/status) reserve ~220-310px and crush
      the title on a phone. Collapse to a single stacked column. */

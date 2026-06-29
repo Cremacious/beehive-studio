@@ -24,6 +24,9 @@ export type HivePageShellProps = {
   /** Mobile (issue #50): hide the panel header on phones when the page renders
    * its own mobile header/CTA in the body. Desktop is unaffected. */
   headerHideOnMobile?: boolean
+  /** Mobile (issue #50): drop the page-x gutters + panel chrome on phones so
+   * the content (prose / editor) goes edge-to-edge. Desktop is unaffected. */
+  mobileBleed?: boolean
   /** Page body — rendered directly inside the panel under the header. */
   children: ReactNode
 }
@@ -43,10 +46,14 @@ export function HivePageShell({
   back,
   headerSlot,
   headerHideOnMobile,
+  mobileBleed,
   children,
 }: HivePageShellProps) {
   return (
-    <div className={`page-x ${TIER_CLASS[width]} py-6 flex flex-col min-h-screen`}>
+    <div
+      className={`page-x ${TIER_CLASS[width]} py-6 max-md:py-4 flex flex-col min-h-screen`}
+      data-mobile-bleed={mobileBleed ? '' : undefined}
+    >
       {back && (
         <div className="page-head" style={{ marginBottom: 18 }}>
           <Link href={back.href} className="back">
@@ -60,6 +67,7 @@ export function HivePageShell({
 
       <section
         className="rounded-[var(--r-card)] overflow-hidden flex-1"
+        data-mobile-bleed-panel={mobileBleed ? '' : undefined}
         style={{
           background:
             'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
@@ -68,11 +76,11 @@ export function HivePageShell({
         }}
       >
         {(title || subtitle || headerSlot) && (
-          <header className={`flex items-start justify-between gap-4 px-6 pt-6 pb-4${headerHideOnMobile ? ' max-md:hidden' : ''}`}>
+          <header className={`flex items-start justify-between gap-4 px-6 pt-6 pb-4 max-md:px-4 max-md:pt-4 max-md:flex-col max-md:items-stretch max-md:gap-3${headerHideOnMobile ? ' max-md:hidden' : ''}`}>
             <div className="min-w-0 flex-1">
               {title && (
                 <h1
-                  className="font-comfortaa text-[28px] font-bold leading-tight"
+                  className="font-comfortaa text-[28px] font-bold leading-tight max-md:text-[22px]"
                   style={{ color: 'var(--brand)' }}
                 >
                   {title}
@@ -87,7 +95,7 @@ export function HivePageShell({
                 </p>
               )}
             </div>
-            {headerSlot && <div className="shrink-0">{headerSlot}</div>}
+            {headerSlot && <div className="shrink-0 max-md:w-full">{headerSlot}</div>}
           </header>
         )}
         {children}

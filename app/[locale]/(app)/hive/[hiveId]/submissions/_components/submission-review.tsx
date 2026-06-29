@@ -101,7 +101,7 @@ export function SubmissionReview({ submission, submitter, book, hiveId, locale }
   const busy = approving || rejecting
 
   const approveRejectGroup = (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 max-md:w-full [&>button]:max-md:flex-1 [&>button]:max-md:justify-center">
       <button
         type="button"
         onClick={handleApprove}
@@ -175,6 +175,7 @@ export function SubmissionReview({ submission, submitter, book, hiveId, locale }
       subtitle={`Pending review from @${submitter.username ?? 'unknown'}`}
       back={{ href: `/${locale}/hive/${hiveId}/submissions`, label: 'submissions' }}
       headerSlot={approveRejectGroup}
+      mobileBleed
     >
       <div data-slot="submission-read-pane">
         <ReadOnlyBodyStyles />

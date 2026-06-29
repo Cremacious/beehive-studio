@@ -17,6 +17,8 @@ type Props = {
   myDrafts: SubmissionRowData[]
   mySubmissions: SubmissionRowData[]
   allInHive: SubmissionRowData[]
+  /** Render full-width mobile card sections (issue #50). */
+  mobile?: boolean
 }
 
 export function SubmissionsList({
@@ -26,6 +28,7 @@ export function SubmissionsList({
   myDrafts,
   mySubmissions,
   allInHive,
+  mobile,
 }: Props) {
   const canReview = canReviewSubmissions(viewerRole)
   const canSubmit = canSubmitChapter(viewerRole)
@@ -79,6 +82,30 @@ export function SubmissionsList({
             + Start a draft
           </Link>
         </div>
+      </div>
+    )
+  }
+
+  if (mobile) {
+    const sections: { title: string; rows: SubmissionRowData[]; show: boolean; emptyMsg?: string }[] = [
+      { title: 'My drafts', rows: myDrafts, show: showDrafts },
+      { title: 'My submissions', rows: mySubmissions, show: showMine },
+      { title: 'All in this hive', rows: allInHive, show: showAll, emptyMsg: 'Nothing to review yet.' },
+    ]
+    return (
+      <div className="flex flex-col gap-5 pb-6">
+        {sections.filter(s => s.show).map(s => (
+          <section key={s.title} className="flex flex-col gap-2">
+            <span className="font-mono text-[10px] uppercase tracking-wider px-1" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
+              {s.title} · {s.rows.length}
+            </span>
+            {s.rows.length === 0 ? (
+              <p className="text-[13px] px-1" style={{ color: 'var(--canvas-dark-ink-muted)' }}>{s.emptyMsg}</p>
+            ) : (
+              s.rows.map(r => <SubmissionRow key={r.id} row={r} hiveId={hiveId} locale={locale} mobile />)
+            )}
+          </section>
+        ))}
       </div>
     )
   }

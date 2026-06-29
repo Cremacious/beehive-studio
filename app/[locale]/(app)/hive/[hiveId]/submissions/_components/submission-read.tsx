@@ -50,6 +50,7 @@ export function SubmissionRead({ submission, submitter, book, hiveId, locale }: 
       subtitle={`Submitted by @${submitter.username ?? 'unknown'}`}
       back={{ href: `/${locale}/hive/${hiveId}/submissions`, label: 'submissions' }}
       headerSlot={<StatusPill status={submission.draftStatus} />}
+      mobileBleed
     >
       <div data-slot="submission-read-pane">
         <ReadOnlyBodyStyles />

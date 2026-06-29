@@ -271,6 +271,12 @@ function HiveWikiEntryEditorInner({
           color: var(--wiki-ink-faint);
           font-style: italic;
         }
+        @media (max-width: 767px) {
+          [data-slot="wiki-entry-pane"] .wiki-title-field {
+            font-size: 24px;
+            padding: 4px 8px;
+          }
+        }
 
         [data-slot="wiki-entry-pane"] .wiki-section-label {
           font-family: ui-monospace, "SF Mono", monospace;
@@ -346,15 +352,19 @@ function HiveWikiEntryEditorInner({
         }
       `}</style>
 
-      <div className="mx-auto max-w-[840px] p-8">
+      <div className="mx-auto max-w-[840px] p-8 max-md:px-3 max-md:pt-4 max-md:pb-8">
         <header
-          className="wiki-ink-muted flex items-center justify-end gap-3 pb-5"
+          className="wiki-ink-muted flex items-center justify-between gap-3 pb-5"
           style={{ borderBottom: '1px solid oklch(from var(--canvas-dark-300) l c h / 0.5)' }}
         >
-          <span className="text-[10px] font-mono uppercase tracking-[0.08em]">
+          <span className="text-[10px] font-mono uppercase tracking-[0.08em] truncate min-w-0">
             {authorUsername ? `Edited by @${authorUsername} · ` : ''}{relTime(lastEditedAt)}
           </span>
-          {!readOnly && <SaveStatusBadge status={status} />}
+          {!readOnly && (
+            <span className="shrink-0">
+              <SaveStatusBadge status={status} />
+            </span>
+          )}
         </header>
 
         <section className="space-y-2 pt-7 text-center">

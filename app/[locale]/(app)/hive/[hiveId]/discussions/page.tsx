@@ -27,19 +27,37 @@ export default async function DiscussionsPage({
   const canPost = canPostDiscussion(viewerRole)
 
   return (
-    <HivePageShell
-      width="wide"
-      title="Discussions"
-      subtitle="Talk shop with your hive."
-      headerSlot={canPost ? <NewDiscussionCTA hiveId={hiveId} /> : undefined}
-    >
-      <DiscussionsList
-        posts={r.data}
-        hiveId={hiveId}
-        locale={locale}
-        viewerRole={viewerRole}
-        viewerUserId={userId}
-      />
-    </HivePageShell>
+    <>
+      {/* Mobile (issue #50, variant C) — outside the shell for full width. */}
+      <div className="md:hidden pt-3">
+        <DiscussionsList
+          posts={r.data}
+          hiveId={hiveId}
+          locale={locale}
+          viewerRole={viewerRole}
+          viewerUserId={userId}
+          mobile
+          cta={canPost ? <NewDiscussionCTA hiveId={hiveId} fullWidth /> : undefined}
+        />
+      </div>
+
+      {/* Desktop — unchanged. */}
+      <div className="max-md:hidden">
+        <HivePageShell
+          width="wide"
+          title="Discussions"
+          subtitle="Talk shop with your hive."
+          headerSlot={canPost ? <NewDiscussionCTA hiveId={hiveId} /> : undefined}
+        >
+          <DiscussionsList
+            posts={r.data}
+            hiveId={hiveId}
+            locale={locale}
+            viewerRole={viewerRole}
+            viewerUserId={userId}
+          />
+        </HivePageShell>
+      </div>
+    </>
   )
 }

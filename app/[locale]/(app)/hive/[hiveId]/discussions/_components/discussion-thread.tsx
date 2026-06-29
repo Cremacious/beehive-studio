@@ -1,8 +1,9 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { MoreVertical, Pencil, Trash2, Reply } from 'lucide-react'
+import { MoreVertical, Pencil, Trash2, Reply, ArrowLeft } from 'lucide-react'
 import { toast } from 'sonner'
 import type { DiscussionPostRow } from '@/lib/actions/hive-discussions.actions'
 import {
@@ -64,6 +65,13 @@ type Props = {
   locale: string
   viewerRole: HiveRole
   viewerUserId: string
+  /** Mobile (issue #50): render a slim full-width layout with its own header. */
+  mobile?: boolean
+  /** Thread title (derived in the page); shown in the mobile header. */
+  title?: string
+  /** Viewer identity for the reply composer avatar. */
+  viewerUsername?: string | null
+  viewerAvatarUrl?: string | null
 }
 
 export function DiscussionThread({
@@ -73,6 +81,10 @@ export function DiscussionThread({
   locale,
   viewerRole,
   viewerUserId,
+  mobile,
+  title,
+  viewerUsername,
+  viewerAvatarUrl,
 }: Props) {
   const router = useRouter()
   const replyRef = useRef<HTMLTextAreaElement>(null)
@@ -117,7 +129,30 @@ export function DiscussionThread({
   const replyCount = replies.length
 
   return (
-    <div className="px-6 pb-6">
+    <div className="px-6 pb-6 max-md:px-0 max-md:pt-3">
+      {/* Mobile header (issue #50): back link + title, since the thread renders
+          outside the shell on phones. */}
+      {mobile && (
+        <div className="flex flex-col gap-1.5 mb-4">
+          <Link
+            href={`/${locale}/hive/${hiveId}/discussions`}
+            className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider w-fit"
+            style={{ color: 'var(--canvas-dark-ink-muted)' }}
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Discussions
+          </Link>
+          {title && (
+            <h1 className="font-comfortaa font-bold text-[20px] leading-tight" style={{ color: 'var(--brand)' }}>
+              {title}
+            </h1>
+          )}
+          <span className="font-mono text-[11px]" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
+            {post.username ? `Started by @${post.username}` : 'Started by unknown'}
+          </span>
+        </div>
+      )}
+
       {/* OP card — Facebook-style. No left-side identity; meta cluster
           sits in top-right (timestamp + topic pill + kebab). Bottom strip
           shows reply count + a Reply CTA that focuses the composer. */}
@@ -137,12 +172,11 @@ export function DiscussionThread({
           the textarea + post button. The line runs through the replies
           block (borderLeft) + extends as a short absolute "stub" into the
           composer up to the elbow position, then ends. */}
-      <div className="mt-4 ml-5">
+      <div className="mt-4 ml-5 max-md:ml-1">
         {/* Replies block — thread line runs full height of this section. */}
         <div
-          className="relative"
+          className="relative pl-6 max-md:pl-3"
           style={{
-            paddingLeft: 24,
             borderLeft: '2px solid oklch(from var(--canvas-dark-ink) l c h / 0.10)',
           }}
         >
@@ -187,10 +221,10 @@ export function DiscussionThread({
             from the gap above down to the elbow (44px total: 20px of mt-5
             gap + 24px to the elbow). Below the elbow there's NO line — so
             it doesn't dangle past the textarea. */}
-        <div className="mt-5 relative" style={{ paddingLeft: 24 }}>
+        <div className="mt-5 relative pl-6 max-md:pl-0">
           <span
             aria-hidden
-            className="absolute"
+            className="absolute max-md:hidden"
             style={{
               left: 0, top: -20,
               width: 2, height: 44,
@@ -199,7 +233,7 @@ export function DiscussionThread({
           />
           <span
             aria-hidden
-            className="absolute"
+            className="absolute max-md:hidden"
             style={{
               left: 0, top: 24,
               width: 16, height: 2,
@@ -207,8 +241,20 @@ export function DiscussionThread({
               borderRadius: 1,
             }}
           />
-          <div className="flex gap-3">
-            <Avatar size="md" username="you" />
+          <div
+            className="flex gap-3 max-md:p-3"
+            style={
+              mobile
+                ? {
+                    background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+                    boxShadow: 'var(--sh-tile)',
+                    border: 'var(--br-card)',
+                    borderRadius: 'var(--r-row)',
+                  }
+                : undefined
+            }
+          >
+            <Avatar size="md" username={viewerUsername ?? 'you'} avatarUrl={viewerAvatarUrl} />
             <div className="flex-1 min-w-0">
               <MentionableTextarea
                 ref={replyRef}
@@ -373,7 +419,7 @@ function PostBody({
   return (
     <article
       style={cardStyle}
-      className={`relative flex gap-4 px-5 py-4`}
+      className={`relative flex gap-4 px-5 py-4 max-md:gap-3 max-md:px-4`}
     >
       {/* Horizontal connector elbow from the vertical thread line into the
           reply card. Only renders for replies — OP sits above the line. */}

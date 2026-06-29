@@ -4,7 +4,7 @@ import { useMemo, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Plus, Search } from 'lucide-react'
+import { Plus, Search, ArrowLeft } from 'lucide-react'
 import { createBinderItemAction } from '@/lib/actions/binder.actions'
 import { createId } from '@paralleldrive/cuid2'
 import { canEditWiki, type HiveRole } from '@/lib/hive/permissions'
@@ -132,6 +132,95 @@ export function HiveWikiCategoryView({
   const accent = template.accentColor
 
   return (
+    <>
+    {/* ── Mobile (issue #50, compact) — full-width outside the shell ── */}
+    <div className="md:hidden flex flex-col gap-3 pt-3 pb-6">
+      <Link
+        href={`/${locale}/hive/${hiveId}/wiki`}
+        className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider w-fit"
+        style={{ color: 'var(--canvas-dark-ink-muted)' }}
+      >
+        <ArrowLeft className="w-3.5 h-3.5" />
+        Wiki
+      </Link>
+      <div className="flex items-center gap-2.5">
+        <span
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px]"
+          style={{ background: `oklch(from var(${accent}) l c h / 0.16)`, color: `var(${accent})` }}
+        >
+          <Icon size={17} />
+        </span>
+        <h1 className="font-comfortaa font-bold text-[20px] leading-tight" style={{ color: 'var(--brand)' }}>
+          {template.label}s
+        </h1>
+      </div>
+      {canEdit && (
+        <button
+          type="button"
+          onClick={handleCreate}
+          className="inline-flex w-full items-center justify-center gap-1.5 min-h-[42px] text-[13px] font-semibold"
+          style={{ background: 'var(--brand)', color: 'var(--brand-ink)', borderRadius: 'var(--r-pill)', boxShadow: 'var(--sh-tile)' }}
+        >
+          <Plus size={15} /> New {template.label.toLowerCase()}
+        </button>
+      )}
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--canvas-dark-ink-muted)' }} />
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search…"
+            style={{ background: 'var(--canvas-dark-100)', borderRadius: 'var(--r-row)', boxShadow: 'var(--sh-inset)', border: 'var(--br-card)', color: 'var(--canvas-dark-ink)' }}
+            className="w-full pl-9 pr-3 h-10 text-sm font-geist placeholder:text-[var(--canvas-dark-ink-muted)] focus:outline-none"
+          />
+        </div>
+        <select
+          value={sort}
+          onChange={e => setSort(e.target.value as SortMode)}
+          style={{ background: 'var(--canvas-dark-100)', borderRadius: 'var(--r-row)', boxShadow: 'var(--sh-inset)', border: 'var(--br-card)', color: 'var(--canvas-dark-ink)' }}
+          className="h-10 px-2 text-sm font-geist cursor-pointer focus:outline-none shrink-0"
+        >
+          <option value="recent-edit">Recent</option>
+          <option value="a-z">A – Z</option>
+          <option value="recent-add">Added</option>
+        </select>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="py-10 text-center">
+          <p className="text-sm italic" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
+            {search.trim() ? 'No entries match your search.' : `No ${template.label.toLowerCase()} entries yet.`}
+          </p>
+        </div>
+      ) : (
+        filtered.map(entry => (
+          <Link
+            key={entry.id}
+            href={`/${locale}/hive/${hiveId}/wiki/entry/${entry.id}`}
+            className="flex flex-col gap-2 p-4 text-inherit no-underline"
+            style={{ background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))', borderRadius: 'var(--r-card)', boxShadow: 'var(--sh-tile)' }}
+          >
+            <span className="font-comfortaa font-bold text-[15px] leading-tight line-clamp-1" style={{ color: 'var(--canvas-dark-ink-strong)' }}>
+              {entry.title || 'Untitled entry'}
+            </span>
+            {entry.excerpt && (
+              <p className="text-[13px] leading-[1.5] line-clamp-2 m-0" style={{ color: 'var(--canvas-dark-ink)' }}>
+                {entry.excerpt}
+              </p>
+            )}
+            <span className="font-mono text-[11px]" style={{ color: 'var(--canvas-dark-ink-muted)' }}>
+              {entry.authorUsername ? `edited by @${entry.authorUsername} · ` : 'edited '}
+              {relTime(entry.lastEditedAt)}
+            </span>
+          </Link>
+        ))
+      )}
+    </div>
+
+    {/* Desktop — unchanged. */}
+    <div className="max-md:hidden">
     <HivePageShell
       width="wide"
       back={{ href: `/${locale}/hive/${hiveId}/wiki`, label: 'wiki' }}
@@ -297,5 +386,7 @@ export function HiveWikiCategoryView({
 
       <div className="pb-6" />
     </HivePageShell>
+    </div>
+    </>
   )
 }

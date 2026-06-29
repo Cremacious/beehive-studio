@@ -92,6 +92,87 @@ export function HiveWikiShell({
 
   return (
     <>
+      {/* ── Mobile (issue #50, variant C — compact category list) ── */}
+      <div className="md:hidden flex flex-col gap-3 pt-3 pb-6">
+        {canEdit && (
+          <button
+            type="button"
+            onClick={() => setPickerOpen(true)}
+            className="inline-flex w-full items-center justify-center gap-1.5 min-h-[42px] text-[13px] font-semibold"
+            style={{ background: 'var(--brand)', color: 'var(--brand-ink)', borderRadius: 'var(--r-pill)', boxShadow: 'var(--sh-tile)' }}
+          >
+            <Plus size={15} /> New entry
+          </button>
+        )}
+        <div className="relative">
+          <Search
+            size={16}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
+            style={{ color: 'var(--canvas-dark-ink-muted)' }}
+          />
+          <input
+            type="text"
+            placeholder={`Search ${totalEntries} ${totalEntries === 1 ? 'entry' : 'entries'}…`}
+            style={{
+              background: 'var(--canvas-dark-100)',
+              borderRadius: 'var(--r-row)',
+              boxShadow: 'var(--sh-inset)',
+              border: 'var(--br-card)',
+              color: 'var(--canvas-dark-ink)',
+            }}
+            className="w-full pl-9 pr-3 py-2.5 text-sm font-geist placeholder:text-[var(--canvas-dark-ink-muted)] focus:outline-none"
+            readOnly
+            aria-label="Search wiki entries (not yet wired)"
+          />
+        </div>
+        <div
+          className="overflow-hidden"
+          style={{
+            background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+            borderRadius: 'var(--r-card)',
+            boxShadow: 'var(--sh-tile)',
+          }}
+        >
+          {CATEGORY_TEMPLATES.map((template, i) => {
+            const count = counts[template.category] ?? 0
+            const isZero = count === 0
+            const Icon = template.icon
+            const accent = template.accentColor
+            return (
+              <Link
+                key={template.category}
+                href={`/${locale}/hive/${hiveId}/wiki/category/${template.category}`}
+                className="flex items-center gap-3 px-3.5 min-h-[50px] no-underline text-inherit"
+                style={{
+                  borderBottom:
+                    i === CATEGORY_TEMPLATES.length - 1
+                      ? undefined
+                      : '1px solid oklch(from var(--canvas-dark-200) l c h / 0.6)',
+                }}
+              >
+                <span
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px]"
+                  style={{ background: `oklch(from var(${accent}) l c h / 0.16)`, color: `var(${accent})` }}
+                >
+                  <Icon size={16} />
+                </span>
+                <span className="flex-1 min-w-0 truncate font-comfortaa font-medium text-[14px]" style={{ color: 'var(--canvas-dark-ink-strong)' }}>
+                  {template.label}
+                </span>
+                <span
+                  className="font-mono text-[11px] shrink-0"
+                  style={{ color: isZero ? 'var(--canvas-dark-ink-muted)' : `var(${accent})` }}
+                >
+                  {count}
+                </span>
+              </Link>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Desktop — unchanged. */}
+      <div className="max-md:hidden">
       <HivePageShell width="wide" title="Wiki" subtitle={subtitle} headerSlot={headerSlot}>
         <HiveSectionDivider label="Search" hideTopBorder>
           <div className="relative">
@@ -179,6 +260,7 @@ export function HiveWikiShell({
 
         <div className="pb-6" />
       </HivePageShell>
+      </div>
       <WikiCategoryPicker
         open={pickerOpen}
         onOpenChange={setPickerOpen}

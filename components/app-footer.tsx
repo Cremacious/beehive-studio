@@ -29,7 +29,7 @@ export function AppFooter() {
 
   return (
     <footer
-      className="w-full mt-auto"
+      className="w-full mt-auto max-md:hidden"
       style={{
         borderTop: '1px solid rgba(255, 255, 255, 0.05)',
         background: 'linear-gradient(180deg, #1d1e20 0%, #181a1c 100%)',

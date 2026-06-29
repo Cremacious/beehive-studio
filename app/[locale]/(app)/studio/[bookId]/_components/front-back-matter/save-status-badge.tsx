@@ -16,7 +16,7 @@ export function SaveStatusBadge({ status }: Props) {
   if (status === 'idle') {
     return (
       <span
-        className="inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-[0.10em] font-semibold"
+        className="inline-flex items-center gap-1 text-[10px] max-md:text-[9px] font-mono uppercase tracking-[0.10em] font-semibold"
         style={{ color: 'currentColor' }}
       >
         Auto-saves as you type
@@ -27,7 +27,7 @@ export function SaveStatusBadge({ status }: Props) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 text-[10px] uppercase tracking-wide',
+        'inline-flex items-center gap-1 text-[10px] max-md:text-[9px] uppercase tracking-wide',
         status === 'unsaved' && 'text-brand',
         status === 'saving' && 'text-muted-foreground animate-pulse',
         status === 'saved' && 'text-muted-foreground',

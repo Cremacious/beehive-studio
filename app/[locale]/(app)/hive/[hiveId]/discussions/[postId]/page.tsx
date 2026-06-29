@@ -1,6 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
 import { db } from '@/db'
-import { hiveDiscussionPosts } from '@/db/schema'
+import { hiveDiscussionPosts, userProfiles } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { getDiscussionThreadAction } from '@/lib/actions/hive-discussions.actions'
@@ -43,28 +43,56 @@ export default async function DiscussionThreadPage({
     notFound()
   }
 
+  const viewerProfile = await db.query.userProfiles.findFirst({
+    where: eq(userProfiles.userId, userId),
+    columns: { username: true, avatarUrl: true },
+  })
+
   const { post, replies } = r.data
   const title = deriveTitle(post.body)
   const subtitle = post.username ? `Started by @${post.username}` : 'Started by unknown'
 
   return (
-    <HivePageShell
-      width="wide"
-      title={title}
-      subtitle={subtitle}
-      back={{
-        href: `/${locale}/hive/${hiveId}/discussions`,
-        label: 'discussions',
-      }}
-    >
-      <DiscussionThread
-        post={post}
-        replies={replies}
-        hiveId={hiveId}
-        locale={locale}
-        viewerRole={viewerRole}
-        viewerUserId={userId}
-      />
-    </HivePageShell>
+    <>
+      {/* Mobile (issue #50) — full-width outside the shell, own slim header. */}
+      <div className="md:hidden">
+        <DiscussionThread
+          post={post}
+          replies={replies}
+          hiveId={hiveId}
+          locale={locale}
+          viewerRole={viewerRole}
+          viewerUserId={userId}
+          viewerUsername={viewerProfile?.username ?? null}
+          viewerAvatarUrl={viewerProfile?.avatarUrl ?? null}
+          mobile
+          title={title}
+        />
+      </div>
+
+      {/* Desktop — unchanged. */}
+      <div className="max-md:hidden">
+        <HivePageShell
+          width="wide"
+          title={title}
+          subtitle={subtitle}
+          back={{
+            href: `/${locale}/hive/${hiveId}/discussions`,
+            label: 'discussions',
+          }}
+        >
+          <DiscussionThread
+            post={post}
+            replies={replies}
+            hiveId={hiveId}
+            locale={locale}
+            viewerRole={viewerRole}
+            viewerUserId={userId}
+            viewerUsername={viewerProfile?.username ?? null}
+            viewerAvatarUrl={viewerProfile?.avatarUrl ?? null}
+          />
+        </HivePageShell>
+      </div>
+    </>
   )
 }

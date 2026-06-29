@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { DiscussionComposeModal } from './discussion-compose-modal'
 
-export function NewDiscussionCTA({ hiveId }: { hiveId: string }) {
+export function NewDiscussionCTA({ hiveId, fullWidth = false }: { hiveId: string; fullWidth?: boolean }) {
   const [open, setOpen] = useState(false)
   return (
     <>
@@ -34,7 +34,7 @@ export function NewDiscussionCTA({ hiveId }: { hiveId: string }) {
           e.currentTarget.style.background = 'var(--brand-hover)'
           e.currentTarget.style.transform = 'translateY(-1px)'
         }}
-        className="inline-flex items-center gap-1.5 px-4 py-2 text-[13px] font-semibold"
+        className={`inline-flex items-center gap-1.5 px-4 py-2 text-[13px] font-semibold${fullWidth ? ' w-full justify-center min-h-[42px]' : ''}`}
       >
         <Plus size={15} strokeWidth={2.4} />
         New Discussion

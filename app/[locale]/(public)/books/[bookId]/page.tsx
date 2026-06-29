@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // never leak their title or synopsis.
   const access = await canReadBook(bookId, null)
   if (!access.ok) {
-    return { title: SITE_NAME, robots: { index: false, follow: false } }
+    return { title: { absolute: SITE_NAME }, robots: { index: false, follow: false } }
   }
 
   const [row] = await db
@@ -60,7 +60,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .where(eq(books.id, bookId))
     .limit(1)
 
-  if (!row) return { title: SITE_NAME, robots: { index: false, follow: false } }
+  if (!row) return { title: { absolute: SITE_NAME }, robots: { index: false, follow: false } }
 
   const author = row.authorDisplayName ?? (row.authorUsername ? `@${row.authorUsername}` : null)
   const title = author ? `${row.title} by ${author}` : row.title

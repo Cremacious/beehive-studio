@@ -90,5 +90,10 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  // Exclude API, Next internals, and any path containing a dot. The dot rule
+  // exempts static assets AND the SEO/PWA metadata endpoints (robots.txt,
+  // sitemap.xml, manifest.webmanifest, og-default.png, icon-*.png) from the
+  // auth gate so crawlers can fetch them. Real page routes never contain a dot
+  // (usernames are [a-zA-Z0-9_]+, book ids are cuid).
+  matcher: ['/((?!api|_next/static|_next/image|.*\\..*).*)'],
 }

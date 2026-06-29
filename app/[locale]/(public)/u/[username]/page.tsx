@@ -52,7 +52,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .limit(1)
 
   if (!row || !row.username) {
-    return { title: SITE_NAME, robots: { index: false, follow: false } }
+    return { title: { absolute: SITE_NAME }, robots: { index: false, follow: false } }
   }
 
   const name = row.displayName ?? row.username

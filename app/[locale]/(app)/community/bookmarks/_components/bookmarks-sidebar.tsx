@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
-import { Search } from 'lucide-react'
+import { Search, SlidersHorizontal, ChevronDown } from 'lucide-react'
 import type { BookmarkFacets, BookmarkStatus } from '@/lib/actions/library.actions'
 import { GENRE_LABEL } from '@/lib/discover/genres'
 
@@ -34,6 +34,9 @@ export function BookmarksSidebar({
   const pathname = usePathname()
   const params = useSearchParams()
   const [query, setQuery] = useState(currentQuery)
+  // Mobile (issue #50): status + genre collapse behind a Filters disclosure.
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const activeCount = (currentStatus !== 'all' ? 1 : 0) + currentGenres.length
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
@@ -99,7 +102,7 @@ export function BookmarksSidebar({
   }
 
   return (
-    <aside className="sticky" style={{ top: '24px' }}>
+    <aside className="sticky max-md:static" style={{ top: '24px' }}>
       {/* Search input — top of sidebar */}
       <div
         className="flex items-center gap-2.5 px-4 py-3 mb-3"
@@ -136,6 +139,57 @@ export function BookmarksSidebar({
         </kbd>
       </div>
 
+      {/* Mobile filters toggle (issue #50) — desktop always shows the sections. */}
+      <button
+        type="button"
+        onClick={() => setFiltersOpen((o) => !o)}
+        aria-expanded={filtersOpen}
+        className="md:hidden w-full flex items-center justify-between gap-3 px-4 mb-3 min-h-[46px] rounded-[var(--r-card)]"
+        style={{
+          background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
+          boxShadow: 'var(--sh-card)',
+          border: '0.5px solid oklch(1 0 0 / 0.04)',
+        }}
+      >
+        <span className="flex items-center gap-2.5">
+          <SlidersHorizontal size={15} style={{ color: 'var(--brand)' }} />
+          <span
+            style={{
+              color: 'var(--canvas-dark-ink-strong)',
+              fontFamily: 'var(--font-display)',
+              fontWeight: 600,
+              fontSize: 14,
+            }}
+          >
+            Filters
+          </span>
+          {activeCount > 0 && (
+            <span
+              style={{
+                background: 'var(--brand)',
+                color: 'var(--brand-ink)',
+                fontSize: 10,
+                fontWeight: 700,
+                borderRadius: 999,
+                padding: '1px 7px',
+              }}
+            >
+              {activeCount}
+            </span>
+          )}
+        </span>
+        <ChevronDown
+          size={16}
+          style={{
+            color: 'var(--canvas-dark-ink-muted)',
+            transform: filtersOpen ? 'rotate(180deg)' : 'none',
+            transition: 'transform 150ms ease',
+          }}
+        />
+      </button>
+
+      {/* Filter sections: always shown on desktop; toggled on mobile. */}
+      <div className={filtersOpen ? '' : 'max-md:hidden'}>
       {/* Status filter */}
       <Section title="Filter">
         <div className="flex flex-col gap-1">
@@ -228,16 +282,19 @@ export function BookmarksSidebar({
         )}
       </Section>
 
-      {/* Help block — pinned bottom of sidebar */}
-      <Section title="Tip">
-        <p
-          className="m-0 text-[12px] leading-snug"
-          style={{ color: 'var(--canvas-dark-ink-muted)' }}
-        >
-          Tap the bookmark icon on any book page to save it here. Progress
-          updates as you read chapters.
-        </p>
-      </Section>
+      {/* Help block — pinned bottom of sidebar (hidden on mobile) */}
+      <div className="max-md:hidden">
+        <Section title="Tip">
+          <p
+            className="m-0 text-[12px] leading-snug"
+            style={{ color: 'var(--canvas-dark-ink-muted)' }}
+          >
+            Tap the bookmark icon on any book page to save it here. Progress
+            updates as you read chapters.
+          </p>
+        </Section>
+      </div>
+      </div>
     </aside>
   )
 }

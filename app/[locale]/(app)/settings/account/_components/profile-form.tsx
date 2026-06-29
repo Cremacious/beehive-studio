@@ -66,7 +66,7 @@ export function ProfileForm({ displayName, username, bio, website, location }: P
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       {/* Display name + Username row */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4 max-md:grid-cols-1">
         <div className="flex flex-col gap-1.5">
           <label htmlFor="displayName" style={labelStyle}>
             Display name
@@ -139,7 +139,7 @@ export function ProfileForm({ displayName, username, bio, website, location }: P
       </div>
 
       {/* Website + Location row */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4 max-md:grid-cols-1">
         <div className="flex flex-col gap-1.5">
           <label htmlFor="website" style={labelStyle}>
             Website
@@ -176,11 +176,11 @@ export function ProfileForm({ displayName, username, bio, website, location }: P
       </div>
 
       {/* Save */}
-      <div className="flex justify-end pt-1">
+      <div className="flex justify-end pt-1 max-md:justify-stretch">
         <button
           type="submit"
           disabled={isPending}
-          className="px-5 py-2.5 text-[13px] font-semibold rounded-[12px] disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:-translate-y-px disabled:transform-none"
+          className="px-5 py-2.5 text-[13px] font-semibold rounded-[12px] disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:-translate-y-px disabled:transform-none max-md:w-full"
           style={{
             background: 'var(--brand)',
             color: 'var(--brand-ink)',

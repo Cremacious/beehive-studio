@@ -95,10 +95,7 @@ export default async function BookmarksPage({ params, searchParams }: Props) {
     <main className="page-x tier-wide pt-7 pb-12">
       <BackToCommunity href={`/${locale}/community`} />
 
-      <div
-        className="grid gap-6"
-        style={{ gridTemplateColumns: 'minmax(0, 260px) minmax(0, 1fr)', alignItems: 'start' }}
-      >
+      <div className="grid gap-6 max-md:gap-4 items-start grid-cols-1 md:[grid-template-columns:minmax(0,260px)_minmax(0,1fr)]">
         <BookmarksSidebar
           facets={facets}
           currentStatus={status}
@@ -111,7 +108,7 @@ export default async function BookmarksPage({ params, searchParams }: Props) {
           <header className="flex items-end justify-between gap-4 mb-5 flex-wrap">
             <div>
               <h1
-                className="m-0 text-[30px] font-bold leading-tight flex items-center gap-3.5"
+                className="m-0 text-[30px] max-md:text-[22px] font-bold leading-tight flex items-center gap-3.5 max-md:gap-2.5"
                 style={{
                   color: 'var(--canvas-dark-ink-strong)',
                   fontFamily: 'var(--font-display)',

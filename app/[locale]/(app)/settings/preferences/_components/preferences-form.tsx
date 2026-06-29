@@ -146,7 +146,7 @@ export function PreferencesForm({
           </div>
 
           {/* Default genre + Spark word limit row */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4 max-md:grid-cols-1">
             <div className="flex flex-col gap-1.5">
               <label htmlFor="defaultGenre" style={labelStyle}>
                 Default genre for new books
@@ -240,11 +240,11 @@ export function PreferencesForm({
       </section>
 
       {/* Save button */}
-      <div className="flex justify-end">
+      <div className="flex justify-end max-md:justify-stretch">
         <button
           type="submit"
           disabled={isPending}
-          className="px-5 py-2.5 text-[13px] font-semibold rounded-[12px] disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:-translate-y-px disabled:transform-none"
+          className="px-5 py-2.5 text-[13px] font-semibold rounded-[12px] disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:-translate-y-px disabled:transform-none max-md:w-full"
           style={{
             background: 'var(--brand)',
             color: 'var(--brand-ink)',

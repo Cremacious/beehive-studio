@@ -14,8 +14,8 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
         alignItems: 'start',
       }}
     >
-      {/* Sidebar */}
-      <aside style={{ position: 'sticky', top: '88px' }}>
+      {/* Sidebar (dropdown selector on mobile) */}
+      <aside className="max-md:!static" style={{ position: 'sticky', top: '88px' }}>
         <SettingsNav />
       </aside>
 

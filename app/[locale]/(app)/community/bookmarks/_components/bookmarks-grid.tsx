@@ -17,10 +17,7 @@ type Props = {
 
 export function BookmarksGrid({ rows, locale }: Props) {
   return (
-    <div
-      className="grid gap-[18px]"
-      style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 220px), 1fr))' }}
-    >
+    <div className="grid gap-[18px] max-md:gap-3 [grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr))] max-md:[grid-template-columns:repeat(2,minmax(0,1fr))]">
       {rows.map((row) => (
         <BookmarkCard key={row.id} row={row} locale={locale} />
       ))}

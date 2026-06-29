@@ -29,7 +29,7 @@ const SELECTED_TOKEN_MAP: Record<string, string> = {
 
 export function VisibilityPicker<T extends string>({ value, onChange, options }: Props<T>) {
   return (
-    <div className="grid grid-cols-3 gap-2">
+    <div className="grid grid-cols-3 gap-2 max-md:grid-cols-1 max-md:gap-2.5">
       {options.map((opt) => {
         const Icon = opt.icon
         const active = value === opt.value

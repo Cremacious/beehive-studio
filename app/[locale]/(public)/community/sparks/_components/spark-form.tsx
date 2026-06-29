@@ -236,7 +236,7 @@ export function SparkForm(props: SparkFormProps) {
         }}
       >
         {/* Fields */}
-        <div style={{ padding: '8px 24px 0' }}>
+        <div className="pt-2 px-6 max-md:px-4">
           <SectionDivider label="Content" />
 
           {/* Title */}
@@ -379,8 +379,8 @@ export function SparkForm(props: SparkFormProps) {
             )}
           </div>
 
-          {/* Deadline + Genre — two-column */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+          {/* Deadline + Genre — two-column on desktop, stacked on mobile (issue #50) */}
+          <div className="grid grid-cols-2 gap-3 max-md:grid-cols-1 max-md:gap-3.5" style={{ marginBottom: 14 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <label className={LABEL_CLASS} style={LABEL_STYLE}>Deadline</label>
@@ -485,18 +485,16 @@ export function SparkForm(props: SparkFormProps) {
 
         {/* ── Sticky CTA bar ──────────────────────────── */}
         <div
+          className="px-6 max-md:px-4 flex items-center justify-between gap-3 max-md:flex-col max-md:items-stretch max-md:gap-2.5"
           style={{
             position: 'sticky',
             bottom: 0,
-            padding: '14px 24px',
+            paddingTop: 14,
+            paddingBottom: 14,
             background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
             borderTop: '0.5px solid rgba(255,255,255,0.06)',
             boxShadow: '0 -4px 20px rgba(0,0,0,0.35)',
             borderRadius: '0 0 var(--r-card) var(--r-card)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 12,
             marginTop: 20,
             zIndex: 10,
           }}
@@ -507,11 +505,12 @@ export function SparkForm(props: SparkFormProps) {
             {', '}
             <span style={{ color: s.prompt.trim().length >= 10 ? 'var(--canvas-dark-ink)' : 'var(--brand)' }}>Prompt</span>
           </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div className="flex items-center gap-2.5 max-md:w-full">
             <button
               type="button"
               onClick={() => router.back()}
               disabled={pending}
+              className="inline-flex items-center justify-center"
               style={{
                 height: 38,
                 padding: '0 16px',
@@ -530,6 +529,7 @@ export function SparkForm(props: SparkFormProps) {
             <button
               type="submit"
               disabled={!canSubmit}
+              className="inline-flex items-center justify-center max-md:flex-1"
               style={{
                 height: 38,
                 padding: '0 24px',

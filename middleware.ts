@@ -70,22 +70,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(signInUrl)
   }
 
-  try {
-    const sessionRes = await fetch(
-      `${process.env.BETTER_AUTH_URL ?? 'http://localhost:3000'}/api/auth/get-session`,
-      { headers: { cookie: request.headers.get('cookie') ?? '' } },
-    )
-    const session = await sessionRes.json()
-
-    if (!session?.user) {
-      const signInUrl = new URL(`/${defaultLocale}/sign-in`, request.url)
-      return NextResponse.redirect(signInUrl)
-    }
-  } catch {
-    const signInUrl = new URL(`/${defaultLocale}/sign-in`, request.url)
-    return NextResponse.redirect(signInUrl)
-  }
-
+  // Optimistic gate only: a session token cookie exists, so let the request
+  // through. We deliberately do NOT validate the session here. Server
+  // components call auth.api.getSession() and redirect stale/forged sessions to
+  // sign-in, so validity is enforced where it can read cookies reliably.
+  //
+  // The previous fetch to ${BETTER_AUTH_URL}/api/auth/get-session caused an
+  // infinite redirect loop on the Vercel (apex/www) deploy: that cross-origin
+  // request returned null (the __Secure- session cookie wasn't carried across
+  // the host redirect) while in-process getSession returned the real user, so
+  // middleware bounced to /sign-in and the page bounced back to /studio forever.
   return intlResponse ?? NextResponse.next()
 }
 

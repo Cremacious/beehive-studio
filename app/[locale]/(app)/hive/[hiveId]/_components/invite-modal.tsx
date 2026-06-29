@@ -104,6 +104,7 @@ export function InviteModal({
         type="button"
         onClick={() => setOpen(true)}
         style={{ ...brandButtonStyle, height: '36px', padding: '0 16px' }}
+        className="max-md:w-full max-md:justify-center"
         onMouseEnter={(e) => {
           e.currentTarget.style.background = 'var(--brand-hover)'
         }}

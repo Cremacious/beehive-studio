@@ -78,8 +78,8 @@ export function BuzzFeed({
 
   if (posts.length === 0) {
     return (
-      <div className="p-6">
-        <div style={corkboardStyle}>
+      <div className="p-6 max-md:px-0 max-md:py-2">
+        <div className="buzz-corkboard" style={corkboardStyle}>
           <DotGrid />
           <div className="relative">
             <BuzzEmptyState canPost={canPost} hiveId={hiveId} />
@@ -90,11 +90,11 @@ export function BuzzFeed({
   }
 
   return (
-    <div className="p-6">
-      <div style={corkboardStyle}>
+    <div className="p-6 max-md:px-0 max-md:py-2">
+      <div className="buzz-corkboard" style={corkboardStyle}>
         <DotGrid />
         <div
-          className="relative grid gap-7"
+          className="relative grid gap-7 max-md:gap-3"
           style={{
             gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 260px), 1fr))',
             alignItems: 'start',

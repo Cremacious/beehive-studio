@@ -455,6 +455,13 @@ body {
     border-radius: 0 !important;
   }
 
+  /* Buzz board (issue #50, variant A "slim corkboard"): keep the cork texture
+     + the slight note tilt, but thin the frame padding so cards fill the phone
+     width. Inline style sets 34px 28px 28px, so override needs !important. */
+  .buzz-corkboard {
+    padding: 14px 12px 12px !important;
+  }
+
   /* Hive list "table" rows (Members/Discussions/Submissions/Chapters): the
      fixed metadata columns (date/role/status) reserve ~220-310px and crush
      the title on a phone. Collapse to a single stacked column. */

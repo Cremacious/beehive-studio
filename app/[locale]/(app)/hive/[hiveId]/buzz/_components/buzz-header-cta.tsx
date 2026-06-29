@@ -17,7 +17,7 @@ export function BuzzHeaderCTA({ hiveId }: { hiveId: string }) {
           borderRadius: 'var(--r-pill)',
           boxShadow: 'var(--sh-tile)',
         }}
-        className="inline-flex items-center gap-1.5 px-4 py-2 text-[13px] font-semibold transition-transform hover:-translate-y-px hover:bg-[var(--brand-hover)] active:translate-y-0 active:bg-[var(--brand-active)]"
+        className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-[13px] font-semibold transition-transform hover:-translate-y-px hover:bg-[var(--brand-hover)] active:translate-y-0 active:bg-[var(--brand-active)] max-md:w-full max-md:min-h-[42px]"
       >
         <Plus size={15} strokeWidth={2.4} />
         New Buzz

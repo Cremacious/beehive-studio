@@ -29,6 +29,7 @@ export default async function BuzzPage({
   return (
     <HivePageShell
       width="standard"
+      mobileBleed
       title="Buzz Board"
       subtitle="Inspiration, links, and vibes from your hive."
       headerSlot={canPost ? <BuzzHeaderCTA hiveId={hiveId} /> : undefined}

@@ -97,9 +97,9 @@ export function HiveMembers({
   }
 
   return (
-    <div className="px-6 py-5 flex flex-col gap-4">
+    <div className="px-6 py-5 flex flex-col gap-4 max-md:px-4 max-md:py-4">
       {/* Search toolbar */}
-      <div className="flex items-center justify-between gap-3 max-md:flex-col max-md:items-stretch">
+      <div className="flex items-center justify-between gap-3 max-md:flex-col-reverse max-md:items-stretch">
         <span
           className="font-mono uppercase"
           style={{
@@ -134,9 +134,9 @@ export function HiveMembers({
         </div>
       </div>
 
-      {/* Forum-table members list */}
+      {/* Forum-table members list (desktop) */}
       <div
-        className="overflow-hidden"
+        className="overflow-hidden max-md:hidden"
         style={{
           borderRadius: 'var(--r-row)',
           border: 'var(--br-card)',
@@ -337,6 +337,164 @@ export function HiveMembers({
           </ul>
         )}
       </div>
+
+      {/* Compact list (mobile, issue #50, variant B) */}
+      <ul className="md:hidden flex flex-col">
+        {filtered.length === 0 ? (
+          <li
+            className="py-8 text-center italic"
+            style={{ fontSize: 13, color: 'var(--canvas-dark-ink-muted)' }}
+          >
+            {query ? 'No members match that search.' : 'No members yet.'}
+          </li>
+        ) : (
+          filtered.map((m) => {
+            const role = m.role as Role
+            const isSelf = m.userId === currentUserId
+            const isMemberOwner = role === 'OWNER'
+            const canChangeRole = isOwner && !isSelf && !isMemberOwner
+            const canRemove = (isOwner || isEditor) && !isSelf && !isMemberOwner
+
+            return (
+              <li
+                key={m.id}
+                className="flex items-center gap-2.5 py-3 border-b border-[var(--canvas-dark-300)]/30 last:border-b-0"
+              >
+                <div
+                  className="rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 font-comfortaa font-semibold"
+                  style={{
+                    width: 34,
+                    height: 34,
+                    fontSize: 13,
+                    background: 'oklch(from var(--brand) l c h / 0.18)',
+                    color: 'var(--brand)',
+                  }}
+                >
+                  {m.user.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={m.user.image}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    (m.user.name?.[0] ?? '?').toUpperCase()
+                  )}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <p
+                    className="font-comfortaa font-bold truncate"
+                    style={{
+                      fontSize: 14,
+                      color: 'var(--canvas-dark-ink-strong)',
+                      margin: 0,
+                    }}
+                  >
+                    {m.user.name ?? m.user.email}
+                    {isSelf && (
+                      <span
+                        className="ml-2 font-mono uppercase"
+                        style={{
+                          fontSize: 9.5,
+                          letterSpacing: '0.14em',
+                          color: 'var(--canvas-dark-ink-muted)',
+                          fontWeight: 400,
+                        }}
+                      >
+                        You
+                      </span>
+                    )}
+                  </p>
+                  {canChangeRole ? (
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <select
+                        value={role}
+                        onChange={(e) =>
+                          handleRoleChange(m.userId, e.target.value as Role)
+                        }
+                        aria-label={`Role for ${m.user.name ?? 'member'}`}
+                        style={
+                          {
+                            ['--pill-accent' as string]: `var(${ROLE_TOKEN[role]})`,
+                            appearance: 'none',
+                            cursor: 'pointer',
+                            padding: '0 16px 0 0',
+                            border: 0,
+                            background: 'transparent',
+                            color: 'var(--pill-accent)',
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: 10,
+                            fontWeight: 700,
+                            letterSpacing: '0.07em',
+                            textTransform: 'uppercase',
+                            backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>")`,
+                            backgroundRepeat: 'no-repeat',
+                            backgroundPosition: 'right 1px center',
+                            backgroundSize: '9px',
+                          } as React.CSSProperties
+                        }
+                        className="focus:outline-none"
+                      >
+                        {ASSIGNABLE_ROLES.map((r) => (
+                          <option key={r} value={r}>
+                            {ROLE_LABEL[r]}
+                          </option>
+                        ))}
+                      </select>
+                      <span
+                        className="font-mono"
+                        style={{
+                          fontSize: 10,
+                          color: 'var(--canvas-dark-ink-muted)',
+                        }}
+                      >
+                        · joined {formatJoinDate(m.joinedAt)}
+                      </span>
+                    </div>
+                  ) : (
+                    <p
+                      className="font-mono uppercase truncate"
+                      style={{
+                        fontSize: 10,
+                        letterSpacing: '0.06em',
+                        margin: '3px 0 0',
+                      }}
+                    >
+                      <span style={{ color: `var(${ROLE_TOKEN[role]})`, fontWeight: 700 }}>
+                        {ROLE_LABEL[role]}
+                      </span>
+                      <span style={{ color: 'var(--canvas-dark-ink-muted)' }}>
+                        {' · joined '}
+                        {formatJoinDate(m.joinedAt)}
+                      </span>
+                    </p>
+                  )}
+                </div>
+
+                {canRemove ? (
+                  <button
+                    type="button"
+                    onClick={() => handleRemove(m.userId)}
+                    aria-label={`Remove ${m.user.name ?? 'member'}`}
+                    style={{
+                      color: 'var(--canvas-dark-ink-muted)',
+                      borderRadius: 'var(--r-btn)',
+                      background: 'transparent',
+                      border: 0,
+                      width: 32,
+                      height: 32,
+                    }}
+                    className="inline-flex items-center justify-center flex-shrink-0 transition-colors hover:bg-white/[0.05] hover:text-[var(--canvas-dark-ink-strong)]"
+                  >
+                    <X size={15} />
+                  </button>
+                ) : null}
+              </li>
+            )
+          })
+        )}
+      </ul>
     </div>
   )
 }

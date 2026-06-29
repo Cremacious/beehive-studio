@@ -59,7 +59,7 @@ export function DiscoveryModeToggle({
 
   return (
     <nav
-      className="inline-flex items-center gap-0.5 rounded-xl p-1 self-start"
+      className="grid grid-cols-2 gap-1 w-full rounded-xl p-1 md:inline-flex md:w-auto md:items-center md:gap-0.5 md:self-start"
       style={{ background: 'rgba(255, 255, 255, 0.04)' }}
       aria-label="Discovery mode"
     >
@@ -69,7 +69,7 @@ export function DiscoveryModeToggle({
           return (
             <span
               key={m.id}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[12px] font-bold rounded-lg"
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 text-[12px] font-bold rounded-lg max-md:w-full"
               style={{
                 background: 'var(--brand)',
                 color: 'var(--brand-ink)',
@@ -85,7 +85,7 @@ export function DiscoveryModeToggle({
           <Link
             key={m.id}
             href={hrefFor(m.id)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[12px] text-[var(--canvas-dark-ink)] hover:text-[var(--brand)] transition-colors rounded-lg"
+            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 text-[12px] text-[var(--canvas-dark-ink)] hover:text-[var(--brand)] transition-colors rounded-lg max-md:w-full"
           >
             <m.Icon size={13} aria-hidden="true" />
             {m.label}

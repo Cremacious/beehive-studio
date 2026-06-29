@@ -195,8 +195,9 @@ function EntitySection({
         </Link>
       </div>
 
-      {/* Card row — overflow:hidden clips cards that don't fit the viewport */}
-      <div className="flex gap-3 overflow-hidden">
+      {/* Card row — desktop clips to the viewport; mobile (issue #50) scrolls
+          horizontally so every card in the section is reachable by swipe. */}
+      <div className="flex gap-3 overflow-x-auto overflow-y-hidden md:overflow-hidden [-webkit-overflow-scrolling:touch]">
         {section.kind === 'books' && section.items.map((book) => (
           <div key={book.id} style={{ width: cardWidth!, flexShrink: 0 }}>
             <BookGridCard book={book} locale={locale} />

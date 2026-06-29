@@ -285,13 +285,7 @@ export async function BooksGrid({ sp, locale }: Props) {
         </p>
       ) : (
         <>
-          <div
-            className="grid gap-4"
-            style={{
-              gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 180px), 1fr))',
-              justifyItems: 'start',
-            }}
-          >
+          <div className="grid gap-4 max-md:gap-3 justify-items-start max-md:justify-items-stretch [grid-template-columns:repeat(auto-fill,minmax(min(100%,180px),1fr))] max-md:[grid-template-columns:repeat(2,minmax(0,1fr))]">
             {books.map((book) => (
               <BookGridCard key={book.id} book={book} locale={locale} />
             ))}

@@ -5,6 +5,10 @@ import { userBilling } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { requireAuth } from '@/lib/require-auth'
 import { stripe } from '@/lib/stripe/client'
+import {
+  statusGrantsPremium,
+  upsertUserBillingFromSubscription,
+} from '@/lib/stripe/sync-subscription'
 import type { ActionResult } from './book.actions'
 
 const PRICE_IDS = {
@@ -97,6 +101,97 @@ export async function createCheckoutSessionAction(args: {
     return { success: false, error: 'Failed to create checkout session' }
   }
   return { success: true, data: { url: session.url } }
+}
+
+/**
+ * Reconciles a completed Checkout Session into userBilling, server-side.
+ *
+ * Called from the /welcome success page (where Stripe redirects after payment)
+ * so premium entitlement is synced the moment the user lands, independent of
+ * whether the Stripe webhook is configured/reachable. The webhook remains the
+ * source of truth for later lifecycle events (renewal, cancellation, dunning).
+ *
+ * Security: only the caller's own checkout session can be reconciled. We set
+ * client_reference_id = userId at checkout creation and verify it here, so a
+ * user passing someone else's session_id cannot sync another account.
+ */
+export async function reconcileCheckoutSessionAction(args: {
+  sessionId: string
+}): Promise<ActionResult<{ premium: boolean }>> {
+  const userId = await requireAuth()
+
+  try {
+    const checkout = await stripe.checkout.sessions.retrieve(args.sessionId, {
+      expand: ['subscription'],
+    })
+
+    if (checkout.client_reference_id !== userId) {
+      return { success: false, error: 'Checkout session does not belong to this user' }
+    }
+
+    const subscription = checkout.subscription
+    if (!subscription || typeof subscription === 'string') {
+      // Payment succeeded but the subscription is not yet attached/expanded.
+      // The webhook is the backstop; report not-yet-premium so the page can
+      // show a "activating" message rather than a false celebration.
+      return { success: true, data: { premium: false } }
+    }
+
+    await upsertUserBillingFromSubscription(userId, subscription)
+
+    return { success: true, data: { premium: statusGrantsPremium(subscription.status) } }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Could not reconcile checkout session'
+    console.error('[billing] reconcileCheckoutSession failed:', message)
+    return { success: false, error: message }
+  }
+}
+
+/**
+ * Pulls the user's latest Stripe subscription and upserts userBilling from it.
+ *
+ * A manual fallback for the billing page: covers cases where a portal-driven
+ * change (cancel, resubscribe, plan swap) did not reach the app via webhook —
+ * most relevant in local dev without `stripe listen`, but also a safe "force
+ * refresh" anywhere. Picks the most relevant subscription: an active/trialing/
+ * past_due one if present, else the most recently created.
+ */
+export async function syncMyBillingFromStripeAction(): Promise<
+  ActionResult<{ status: string | null }>
+> {
+  const userId = await requireAuth()
+
+  const billing = await db.query.userBilling.findFirst({
+    where: eq(userBilling.userId, userId),
+    columns: { stripeCustomerId: true },
+  })
+  if (!billing?.stripeCustomerId) {
+    return { success: false, error: 'No Stripe customer to sync yet' }
+  }
+
+  try {
+    const subs = await stripe.subscriptions.list({
+      customer: billing.stripeCustomerId,
+      status: 'all',
+      limit: 10,
+    })
+
+    if (subs.data.length === 0) {
+      return { success: true, data: { status: null } }
+    }
+
+    const premiumOne = subs.data.find((s) => statusGrantsPremium(s.status))
+    const chosen =
+      premiumOne ??
+      [...subs.data].sort((a, b) => b.created - a.created)[0]
+
+    await upsertUserBillingFromSubscription(userId, chosen)
+    return { success: true, data: { status: chosen.status } }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Could not sync from Stripe'
+    console.error('[billing] syncMyBillingFromStripe failed:', message)
+    return { success: false, error: message }
+  }
 }
 
 /**

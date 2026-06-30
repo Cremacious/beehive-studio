@@ -6,6 +6,7 @@ import { db } from '@/db'
 import { userBilling } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { ManageButton } from './_components/manage-button'
+import { RefreshStatusButton } from './_components/refresh-status-button'
 import { CreditCard, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -241,6 +242,10 @@ export default async function BillingPage({ params }: Props) {
           <ManageButton locale={locale} />
         </section>
       )}
+
+      {/* Manual re-sync fallback: visible once a Stripe customer exists, so a
+          change that missed the webhook can be pulled in on demand. */}
+      {billing?.stripeCustomerId && <RefreshStatusButton />}
     </>
   )
 }

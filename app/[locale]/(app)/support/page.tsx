@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useRef, useEffect } from 'react'
 import {
   BookOpen,
   Users,
@@ -9,6 +9,7 @@ import {
   ChevronDown,
   ChevronUp,
   CheckCircle2,
+  Check,
   Send,
   MessageSquare,
 } from 'lucide-react'
@@ -317,7 +318,10 @@ function ContactForm() {
 
   return (
     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+      <div
+        className="support-form-pair"
+        style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}
+      >
         <div>
           <label htmlFor="support-email" style={LABEL_STYLE}>
             Your email
@@ -398,6 +402,7 @@ function ContactForm() {
         <button
           type="submit"
           disabled={isPending || !email || !subject || !message}
+          className="support-send-btn"
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -420,6 +425,195 @@ function ContactForm() {
         </button>
       </div>
     </form>
+  )
+}
+
+// ─── Topic dropdown (mobile only) ─────────────────────────────────────────────
+
+function TopicDropdown({
+  topics,
+  activeId,
+  onSelect,
+}: {
+  topics: typeof TOPICS
+  activeId: string
+  onSelect: (id: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const active = topics.find((t) => t.id === activeId) ?? topics[0]
+  const ActiveIcon = active.icon
+
+  // Close on outside tap.
+  useEffect(() => {
+    if (!open) return
+    const onDoc = (e: PointerEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('pointerdown', onDoc)
+    return () => document.removeEventListener('pointerdown', onDoc)
+  }, [open])
+
+  return (
+    <div ref={ref} style={{ position: 'relative', marginBottom: 18 }}>
+      <p
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 10,
+          letterSpacing: '0.14em',
+          textTransform: 'uppercase',
+          color: 'var(--canvas-dark-ink-muted)',
+          margin: '0 0 8px',
+        }}
+      >
+        Browse by topic
+      </p>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 11,
+          padding: '13px 14px',
+          borderRadius: 'var(--r-row)',
+          background: 'linear-gradient(180deg, var(--canvas-dark-350), var(--canvas-dark-300))',
+          boxShadow: 'var(--sh-tile)',
+          border: `1.5px solid ${active.accent}`,
+          cursor: 'pointer',
+          textAlign: 'left',
+        }}
+      >
+        <span
+          style={{
+            width: 30,
+            height: 30,
+            borderRadius: 9,
+            background: active.accentBg,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}
+        >
+          <ActiveIcon size={16} style={{ color: active.accent }} />
+        </span>
+        <span style={{ flex: 1, minWidth: 0 }}>
+          <span
+            style={{
+              display: 'block',
+              fontFamily: 'var(--font-display)',
+              fontWeight: 700,
+              fontSize: 14.5,
+              color: 'var(--canvas-dark-ink-strong)',
+              lineHeight: 1.2,
+            }}
+          >
+            {active.label}
+          </span>
+          <span
+            style={{
+              display: 'block',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 10.5,
+              color: 'var(--canvas-dark-ink-muted)',
+              letterSpacing: '0.04em',
+              marginTop: 2,
+            }}
+          >
+            {active.items.length} questions
+          </span>
+        </span>
+        <ChevronDown
+          size={18}
+          style={{
+            color: 'var(--canvas-dark-ink-muted)',
+            flexShrink: 0,
+            transform: open ? 'rotate(180deg)' : 'none',
+            transition: 'transform 150ms',
+          }}
+        />
+      </button>
+
+      {open && (
+        <div
+          role="listbox"
+          style={{
+            marginTop: 8,
+            borderRadius: 'var(--r-row)',
+            background: 'var(--canvas-dark-200)',
+            boxShadow: 'var(--sh-card)',
+            border: 'var(--br-card)',
+            overflow: 'hidden',
+          }}
+        >
+          {topics.map((t) => {
+            const Icon = t.icon
+            const isActive = t.id === activeId
+            return (
+              <button
+                key={t.id}
+                type="button"
+                role="option"
+                aria-selected={isActive}
+                onClick={() => {
+                  onSelect(t.id)
+                  setOpen(false)
+                }}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 11,
+                  padding: '13px 14px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  border: 0,
+                  borderBottom: '1px solid rgba(255,255,255,0.05)',
+                  background: isActive
+                    ? 'linear-gradient(180deg, var(--canvas-dark-300), var(--canvas-dark-250))'
+                    : 'transparent',
+                }}
+              >
+                <span
+                  style={{
+                    width: 30,
+                    height: 30,
+                    borderRadius: 9,
+                    background: t.accentBg,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  <Icon size={15} style={{ color: t.accent }} />
+                </span>
+                <span
+                  style={{
+                    flex: 1,
+                    fontFamily: 'var(--font-display)',
+                    fontWeight: isActive ? 700 : 600,
+                    fontSize: 14,
+                    color: isActive
+                      ? 'var(--canvas-dark-ink-strong)'
+                      : 'var(--canvas-dark-ink)',
+                  }}
+                >
+                  {t.label}
+                </span>
+                {isActive && (
+                  <Check size={16} style={{ color: 'var(--brand)', flexShrink: 0 }} />
+                )}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -453,6 +647,7 @@ export default function SupportPage() {
           Columns use minmax(0, Nfr) so expanding an FAQ grows the panel
           downward only — the column width never changes. */}
       <div
+        className="support-grid"
         style={{
           display: 'grid',
           gridTemplateColumns: 'minmax(0, 1.5fr) minmax(0, 1fr)',
@@ -462,6 +657,7 @@ export default function SupportPage() {
       >
         {/* FAQ column */}
         <div
+          className="support-card"
           style={{
             background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
             borderRadius: 'var(--r-card)',
@@ -469,8 +665,11 @@ export default function SupportPage() {
             boxShadow: 'var(--sh-card)',
           }}
         >
-          {/* Topic pills */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 18 }}>
+          {/* Topic selector — pills on desktop, a dropdown on mobile. */}
+          <div
+            className="support-topic-pills"
+            style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 18 }}
+          >
             {TOPICS.map((topic) => (
               <TopicPill
                 key={topic.id}
@@ -479,6 +678,9 @@ export default function SupportPage() {
                 onClick={() => setActiveId(topic.id)}
               />
             ))}
+          </div>
+          <div className="support-topic-dd">
+            <TopicDropdown topics={TOPICS} activeId={activeId} onSelect={setActiveId} />
           </div>
 
           {/* Section header */}
@@ -540,8 +742,9 @@ export default function SupportPage() {
           </div>
         </div>
 
-        {/* Contact form column (sticky) */}
+        {/* Contact form column (sticky on desktop, static on mobile) */}
         <div
+          className="support-form-col support-card"
           style={{
             position: 'sticky',
             top: 80,

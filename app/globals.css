@@ -601,6 +601,31 @@ body {
   }
 }
 
+/* Support page: the mobile topic dropdown is hidden on desktop (pills show
+   instead). The mobile rules below flip them. */
+.support-topic-dd { display: none; }
+
+@media (max-width: 767px) {
+  /* Stack the FAQ + contact-form two-column grid into one column. */
+  .support-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 16px !important;
+  }
+  /* Drop the form's sticky positioning + slim the card padding. */
+  .support-form-col { position: static !important; }
+  .support-card { padding: 16px 16px 20px !important; }
+  /* Swap the wrapping topic pills for the dropdown selector. */
+  .support-topic-pills { display: none !important; }
+  .support-topic-dd { display: block !important; }
+  /* Email + Category stack instead of a cramped 2-up row. */
+  .support-form-pair { grid-template-columns: 1fr !important; }
+  /* Full-width Send button. */
+  .support-send-btn {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+}
+
 /* Shared shadcn Dialog → bottom-sheet on phones (issue #50). Scoped to <640px
    (sm) and uses !important to beat the inline top/left/transform/border-radius
    set on [data-slot="dialog-content"]. Desktop + tablet keep the centered card.

@@ -308,7 +308,7 @@ export function LibraryGrid({ books, hives, locale, authorName }: Props) {
             }}
           >
             <Plus size={14} strokeWidth={2.5} />
-            New book
+            New Book
           </Link>
         </div>
 
@@ -448,7 +448,7 @@ export function LibraryGrid({ books, hives, locale, authorName }: Props) {
             }}
           >
             <Plus size={15} strokeWidth={2.5} />
-            New book
+            New Book
           </Link>
         </div>
       </div>

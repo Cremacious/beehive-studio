@@ -116,7 +116,7 @@ export function ContinueWritingHero({ book, locale }: Props) {
           }}
         >
           <Plus size={16} strokeWidth={2.5} />
-          New book
+          New Book
         </Link>
       </div>
     )

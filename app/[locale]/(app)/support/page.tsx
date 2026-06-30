@@ -27,7 +27,7 @@ const TOPICS = [
     items: [
       {
         q: 'How do I create a new book?',
-        a: 'Go to your Studio and click "New book." You can start from scratch, choose a template, or import a manuscript from DOCX, PDF, or EPUB.',
+        a: 'Go to your Studio and click "New Book." You can start from scratch, choose a template, or import a manuscript from DOCX, PDF, or EPUB.',
       },
       {
         q: 'What is the binder?',

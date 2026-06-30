@@ -508,6 +508,97 @@ body {
     width: 100%;
     justify-content: center;
   }
+
+  /* ── Book reader surfaces (overview + chapter reader) ─────────────────
+     These components are inline-styled, so the mobile overrides need a
+     class hook + !important to beat the inline grid-template / padding. */
+
+  /* Book hero: stack the cover above the content, center it, tighten the
+     34px card padding, and shrink the title. */
+  .book-hero-card { padding: 18px !important; }
+  .book-hero-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 20px !important;
+  }
+  .book-hero-cover {
+    margin: 0 auto !important;
+    width: 160px !important;
+    height: 240px !important;
+  }
+  .book-hero-title { font-size: 28px !important; text-align: center !important; }
+  .book-hero-toprow,
+  .book-hero-author,
+  .book-hero-tags,
+  .book-hero-meta {
+    justify-content: center !important;
+    text-align: center !important;
+  }
+  /* 4 stat tiles → 2×2 (four-across is illegible at phone width). */
+  .book-hero-stats { grid-template-columns: 1fr 1fr !important; }
+  /* CTA: the read button spans full width; like / share / bookmark wrap
+     onto the next row underneath it. */
+  .book-hero-cta > a[data-cta='read'] {
+    flex: 1 1 100% !important;
+    justify-content: center !important;
+  }
+
+  /* Chapters panel: slimmer side padding on phones. */
+  .chapters-panel { padding: 20px 16px 22px !important; }
+  /* Two-line chapter rows: number + title on the top line (title wraps up to
+     2 lines instead of truncating early), and the "Updated" date / draft label
+     drops to a muted second line. This is the core fix: the trailing date no
+     longer steals horizontal room, so titles get the full width and only
+     ellipsize when genuinely long. */
+  .ch-row {
+    display: grid !important;
+    grid-template-columns: 26px auto minmax(0, 1fr) !important;
+    grid-template-areas: 'chk num ttl' 'chk dat dat' !important;
+    column-gap: 11px !important;
+    row-gap: 4px !important;
+    align-items: start !important;
+  }
+  .ch-row > .ch-check { grid-area: chk !important; }
+  .ch-row > .ch-num { grid-area: num !important; }
+  .ch-row > .ch-title {
+    grid-area: ttl !important;
+    white-space: normal !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+  .ch-row > .ch-date { grid-area: dat !important; }
+
+  /* Chapter reader: slim the prose side padding (56/64px is huge on a phone)
+     so more text shows per line, and let the card go near full-bleed. */
+  .reader-prose {
+    padding: 30px 18px !important;
+    margin: 16px 10px !important;
+  }
+  /* Stack the prev / back / next chapter-nav cards. */
+  .reader-nav-grid { grid-template-columns: minmax(0, 1fr) !important; }
+
+  /* Chapter comments: the desktop chrome is a 24px slot gutter + a 32px card
+     pad (~56px/side), which crushes the content on a phone. Slim both to near
+     full-bleed, drop the composer's avatar gutter so the textarea gets the
+     full width, make Post a full-width tap target, and give the comment rows a
+     comfortable rhythm. */
+  .reader-comments-slot { padding: 12px 10px 4px !important; }
+  .comments-panel { padding: 20px 16px 24px !important; }
+  .comments-header { margin-bottom: 16px !important; }
+  .comments-composer {
+    gap: 0 !important;
+    margin-bottom: 22px !important;
+  }
+  .comments-composer-avatar { display: none !important; }
+  .comments-post-row > button {
+    width: 100% !important;
+    padding: 13px !important;
+  }
+  .comment-row {
+    gap: 11px !important;
+    padding: 15px 0 !important;
+  }
 }
 
 /* Shared shadcn Dialog → bottom-sheet on phones (issue #50). Scoped to <640px

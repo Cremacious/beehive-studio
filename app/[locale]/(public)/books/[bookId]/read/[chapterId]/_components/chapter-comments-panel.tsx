@@ -112,7 +112,7 @@ export function ChapterCommentsPanel({
   return (
     <section
       id="comments"
-      className="scroll-mt-20 rounded-[var(--r-card)]"
+      className="comments-panel scroll-mt-20 rounded-[var(--r-card)]"
       style={{
         padding: '30px 32px 32px',
         background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
@@ -120,7 +120,7 @@ export function ChapterCommentsPanel({
         borderTop: '1px solid var(--br-card)',
       }}
     >
-      <div className="mb-[22px] flex items-baseline justify-between gap-4">
+      <div className="comments-header mb-[22px] flex items-baseline justify-between gap-4">
         <h2
           style={{
             fontFamily: 'var(--font-display)',
@@ -148,11 +148,12 @@ export function ChapterCommentsPanel({
       </div>
 
       {isAuthenticated ? (
-        <div className="mb-[26px] flex" style={{ gap: '12px' }}>
+        <div className="comments-composer mb-[26px] flex" style={{ gap: '12px' }}>
           {viewerAvatarUrl ? (
             <img
               src={viewerAvatarUrl}
               alt=""
+              className="comments-composer-avatar"
               style={{
                 width: '36px',
                 height: '36px',
@@ -163,7 +164,7 @@ export function ChapterCommentsPanel({
             />
           ) : (
             <span
-              className="inline-flex items-center justify-center"
+              className="comments-composer-avatar inline-flex items-center justify-center"
               style={{
                 width: '36px',
                 height: '36px',
@@ -211,7 +212,7 @@ export function ChapterCommentsPanel({
                 e.currentTarget.style.boxShadow = 'var(--sh-inset)'
               }}
             />
-            <div className="mt-[10px] flex justify-end">
+            <div className="comments-post-row mt-[10px] flex justify-end">
               <button
                 type="button"
                 onClick={submit}
@@ -275,7 +276,7 @@ export function ChapterCommentsPanel({
           {comments.map((c, idx) => (
             <article
               key={c.id}
-              className="flex"
+              className="comment-row flex"
               style={{
                 gap: '12px',
                 padding: '16px 0',

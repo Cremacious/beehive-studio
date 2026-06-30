@@ -213,7 +213,7 @@ export function StudioEmptyState({ locale, templates: _templates }: Props) {
                 }}
               >
                 <Search size={14} />
-                Explore books
+                Explore Books
               </Link>
             </div>
           </div>

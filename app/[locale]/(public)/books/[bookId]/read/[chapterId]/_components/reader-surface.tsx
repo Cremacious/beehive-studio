@@ -84,8 +84,10 @@ export function ReaderSurface({
           borderColor: 'var(--canvas-dark-350)',
         }}
       >
+        {/* Desktop top bar — single row. Hidden below md; the phone layout
+            (two stacked rows) renders separately underneath. */}
         <div
-          className="mx-auto grid items-center gap-5 px-4 py-3"
+          className="mx-auto hidden items-center gap-5 px-4 py-3 md:grid"
           style={{
             maxWidth: '1080px',
             gridTemplateColumns: '1fr minmax(0, auto) 1fr',
@@ -185,36 +187,110 @@ export function ReaderSurface({
               aria-label="Reader background theme"
               className="flex items-center gap-2"
             >
-              {THEME_TILES.map(tile => {
-              const active = theme === tile.id
-              return (
-                <button
-                  key={tile.id}
-                  type="button"
-                  aria-label={tile.label}
-                  title={tile.label}
-                  aria-pressed={active}
-                  onClick={() => setTheme(tile.id)}
-                  className="relative inline-flex items-center justify-center transition-all hover:-translate-y-px"
-                  style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '14px',
-                    background: tile.fill,
-                    color: tile.ink,
-                    fontFamily: 'var(--font-display)',
-                    fontWeight: 700,
-                    fontSize: '12px',
-                    lineHeight: 1,
-                    border: active ? '2px solid var(--brand)' : '1px solid var(--canvas-dark-350)',
-                    boxShadow: active ? '0 0 0 3px rgba(255,195,0,0.18)' : 'none',
-                    padding: 0,
-                  }}
-                >
-                  Aa
-                </button>
-              )
-            })}
+              <ThemeTiles theme={theme} setTheme={setTheme} />
+            </div>
+          </div>
+        </div>
+
+        {/* Phone top bar — two stacked rows so the back link, title, and the
+            accessibility controls each get room. Hidden at md+ (desktop bar
+            above takes over). Shares the same theme + font-size state. */}
+        <div className="md:hidden">
+          <div
+            className="grid items-center gap-2 px-3 py-2.5"
+            style={{ gridTemplateColumns: 'auto minmax(0, 1fr) auto' }}
+          >
+            <Link
+              href={backHref}
+              aria-label={`Back to ${bookTitle}`}
+              className="group inline-flex items-center gap-1 justify-self-start rounded-full py-1 pl-1 pr-2 transition-colors hover:bg-[var(--canvas-dark-300)]"
+              style={{ color: 'rgba(255,255,255,0.7)' }}
+            >
+              <ChevronLeft className="h-4 w-4 shrink-0" style={{ color: 'var(--brand)' }} />
+              <span className="whitespace-nowrap text-xs font-medium font-ui group-hover:text-[var(--brand)]">
+                Book
+              </span>
+            </Link>
+            <div className="min-w-0 text-center">
+              <div
+                className="mx-auto truncate uppercase"
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontSize: '9.5px',
+                  fontWeight: 500,
+                  letterSpacing: '0.09em',
+                  color: 'rgba(255,255,255,0.6)',
+                }}
+              >
+                {bookTitle}
+              </div>
+              <div
+                className="mx-auto truncate"
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  letterSpacing: '-0.01em',
+                  color: '#ffffff',
+                  marginTop: '1px',
+                }}
+              >
+                {chapterTitle}
+              </div>
+            </div>
+            {/* Spacer to balance the back link so the title stays centered. */}
+            <span aria-hidden="true" style={{ width: '28px' }} />
+          </div>
+
+          {/* Row 2 — accessibility toolbar with roomy, finger-sized targets */}
+          <div
+            className="flex items-center justify-between gap-2 px-3 pb-3 pt-2.5"
+            style={{ borderTop: '1px solid var(--canvas-dark-300)' }}
+          >
+            <div role="group" aria-label="Reader font size" className="flex items-center gap-2">
+              <span
+                aria-hidden="true"
+                className="uppercase"
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '9px',
+                  letterSpacing: '0.14em',
+                  color: 'rgba(255,255,255,0.45)',
+                }}
+              >
+                Text
+              </span>
+              <MobileFontButton
+                direction="decrement"
+                disabled={!canDecrement}
+                onClick={decrement}
+                tooltipLabel={READER_FONT_SIZE_LABELS[size]}
+              />
+              <MobileFontButton
+                direction="increment"
+                disabled={!canIncrement}
+                onClick={increment}
+                tooltipLabel={READER_FONT_SIZE_LABELS[size]}
+              />
+            </div>
+            <div
+              role="group"
+              aria-label="Reader background theme"
+              className="flex items-center gap-2.5"
+            >
+              <span
+                aria-hidden="true"
+                className="uppercase"
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '9px',
+                  letterSpacing: '0.14em',
+                  color: 'rgba(255,255,255,0.45)',
+                }}
+              >
+                Theme
+              </span>
+              <ThemeTiles theme={theme} setTheme={setTheme} size={38} />
             </div>
           </div>
         </div>
@@ -239,7 +315,7 @@ export function ReaderSurface({
         {/* ② PROSE PANEL — flips with reader theme */}
         <article
           data-reader-theme={theme}
-          className="mx-auto"
+          className="reader-prose mx-auto"
           style={{
             maxWidth: '760px',
             margin: '32px auto',
@@ -355,7 +431,7 @@ export function ReaderSurface({
 
         {commentsSlot && (
           <div
-            className="mx-auto"
+            className="reader-comments-slot mx-auto"
             style={{ maxWidth: '900px', padding: '32px 24px 16px' }}
           >
             {commentsSlot}
@@ -369,7 +445,7 @@ export function ReaderSurface({
           style={{ maxWidth: '1080px' }}
         >
           <div
-            className="grid gap-4"
+            className="reader-nav-grid grid gap-4"
             style={{ gridTemplateColumns: '1fr 1fr 1fr' }}
           >
             {/* PREV */}
@@ -402,6 +478,96 @@ export function ReaderSurface({
         </nav>
       </main>
     </div>
+  )
+}
+
+function ThemeTiles({
+  theme,
+  setTheme,
+  size = 32,
+}: {
+  theme: ReaderTheme
+  setTheme: (t: ReaderTheme) => void
+  size?: number
+}) {
+  return (
+    <>
+      {THEME_TILES.map(tile => {
+        const active = theme === tile.id
+        return (
+          <button
+            key={tile.id}
+            type="button"
+            aria-label={tile.label}
+            title={tile.label}
+            aria-pressed={active}
+            onClick={() => setTheme(tile.id)}
+            className="relative inline-flex items-center justify-center transition-all hover:-translate-y-px"
+            style={{
+              width: `${size}px`,
+              height: `${size}px`,
+              borderRadius: size >= 36 ? '13px' : '14px',
+              background: tile.fill,
+              color: tile.ink,
+              fontFamily: 'var(--font-display)',
+              fontWeight: 700,
+              fontSize: size >= 36 ? '13px' : '12px',
+              lineHeight: 1,
+              border: active ? '2px solid var(--brand)' : '1px solid var(--canvas-dark-350)',
+              boxShadow: active ? '0 0 0 3px rgba(255,195,0,0.18)' : 'none',
+              padding: 0,
+            }}
+          >
+            Aa
+          </button>
+        )
+      })}
+    </>
+  )
+}
+
+// Compact font-size stepper for the phone toolbar — short "A−" / "A+" labels
+// with a 40px tap target (the desktop FontSizeButton's full "− Font Size"
+// label is far too wide for a phone row).
+function MobileFontButton({
+  direction,
+  disabled,
+  onClick,
+  tooltipLabel,
+}: {
+  direction: 'increment' | 'decrement'
+  disabled: boolean
+  onClick: () => void
+  tooltipLabel: string
+}) {
+  const isIncrement = direction === 'increment'
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={`${isIncrement ? 'Increase' : 'Decrease'} font size${
+        disabled ? (isIncrement ? ' (at maximum)' : ' (at minimum)') : ''
+      }`}
+      title={`Font size: ${tooltipLabel}`}
+      className="inline-flex items-center justify-center transition-transform active:translate-y-px disabled:cursor-not-allowed disabled:opacity-40"
+      style={{
+        height: '40px',
+        minWidth: '48px',
+        padding: '0 12px',
+        gap: '2px',
+        borderRadius: '12px',
+        background: 'var(--canvas-dark-150)',
+        color: 'rgba(255,255,255,0.9)',
+        border: '1px solid var(--canvas-dark-350)',
+        fontFamily: 'var(--font-display)',
+        fontWeight: 700,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+      }}
+    >
+      <span style={{ fontSize: '14px' }}>A</span>
+      <span style={{ fontSize: '18px', lineHeight: 1 }}>{isIncrement ? '+' : '−'}</span>
+    </button>
   )
 }
 

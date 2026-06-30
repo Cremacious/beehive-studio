@@ -190,7 +190,7 @@ export function BookHero({
 
   return (
     <section
-      className="relative overflow-hidden rounded-[var(--r-card)]"
+      className="book-hero-card relative overflow-hidden rounded-[var(--r-card)]"
       style={{
         padding: '34px',
         background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',
@@ -199,12 +199,12 @@ export function BookHero({
       }}
     >
       <div
-        className="relative grid"
+        className="book-hero-grid relative grid"
         style={{ gridTemplateColumns: '200px minmax(0, 1fr)', gap: '34px', alignItems: 'start' }}
       >
         {/* Cover */}
         <div
-          className="relative overflow-hidden"
+          className="book-hero-cover relative overflow-hidden"
           style={{
             width: '200px',
             height: '300px',
@@ -326,7 +326,7 @@ export function BookHero({
         {/* Main content */}
         <div className="min-w-0">
           {/* Top row: privacy + series */}
-          <div className="mb-[14px] flex flex-wrap items-center gap-3">
+          <div className="book-hero-toprow mb-[14px] flex flex-wrap items-center gap-3">
             <span
               className="inline-flex items-center"
               style={{
@@ -383,6 +383,7 @@ export function BookHero({
 
           {/* Title */}
           <h1
+            className="book-hero-title"
             style={{
               fontFamily: 'var(--font-display)',
               fontWeight: 700,
@@ -398,7 +399,7 @@ export function BookHero({
           </h1>
 
           {/* Author row */}
-          <div className="mb-[18px] flex items-center gap-2.5">
+          <div className="book-hero-author mb-[18px] flex items-center gap-2.5">
             <span style={{ fontSize: '14px', color: 'var(--canvas-dark-ink-muted)' }}>
               Written by{' '}
               <Link
@@ -416,7 +417,7 @@ export function BookHero({
           </div>
 
           {/* Tag row */}
-          <div className="mb-[22px] flex flex-wrap gap-2">
+          <div className="book-hero-tags mb-[22px] flex flex-wrap gap-2">
             {book.genre && (
               <span
                 className="inline-flex items-center"
@@ -454,7 +455,7 @@ export function BookHero({
 
           {/* 4-stat strip */}
           <div
-            className="mb-[22px] grid"
+            className="book-hero-stats mb-[22px] grid"
             style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}
           >
             {statCells.map(({ label, Icon, node }) => (
@@ -504,7 +505,7 @@ export function BookHero({
 
           {/* Meta line */}
           <p
-            className="mb-4"
+            className="book-hero-meta mb-4"
             style={{
               fontFamily: 'var(--font-mono)',
               fontSize: '11px',
@@ -564,10 +565,11 @@ export function BookHero({
           )}
 
           {/* CTA row */}
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="book-hero-cta flex flex-wrap items-center gap-3">
             {readCta && (
               <Link
                 href={readCta}
+                data-cta="read"
                 className="inline-flex items-center"
                 style={{
                   gap: '10px',

@@ -160,7 +160,7 @@ export function ChaptersPanel({
       return (
         <li
           key={ch.chapterId}
-          className="flex items-center"
+          className="ch-row flex items-center"
           style={{
             gap: '16px',
             padding: '14px 18px',
@@ -171,12 +171,13 @@ export function ChaptersPanel({
         >
           <span
             aria-hidden
-            className="inline-flex flex-shrink-0 items-center justify-center"
+            className="ch-check inline-flex flex-shrink-0 items-center justify-center"
             style={{ width: '26px', color: 'var(--canvas-dark-ink-faint)' }}
           >
             <Lock size={17} strokeWidth={1.9} />
           </span>
           <span
+            className="ch-num"
             style={{
               flexShrink: 0,
               fontFamily: 'var(--font-mono)',
@@ -189,7 +190,7 @@ export function ChaptersPanel({
             {pad2(displayIndex)}
           </span>
           <span
-            className="flex-1 truncate"
+            className="ch-title flex-1 truncate"
             style={{
               fontStyle: 'italic',
               fontWeight: 400,
@@ -200,6 +201,7 @@ export function ChaptersPanel({
             {ch.title}
           </span>
           <span
+            className="ch-date"
             style={{
               flexShrink: 0,
               fontSize: '13px',
@@ -216,7 +218,7 @@ export function ChaptersPanel({
       <li key={ch.chapterId}>
         <Link
           href={`${readerBasePath}/read/${ch.chapterId}`}
-          className="group flex items-center no-underline"
+          className="ch-row group flex items-center no-underline"
           style={{
             gap: '16px',
             padding: '14px 18px',
@@ -247,7 +249,7 @@ export function ChaptersPanel({
               }}
               aria-pressed={isRead}
               aria-label={`Mark "${ch.title}" as ${isRead ? 'unread' : 'read'}`}
-              className="inline-flex items-center justify-center"
+              className="ch-check inline-flex items-center justify-center"
               style={{
                 flexShrink: 0,
                 width: '26px',
@@ -266,9 +268,10 @@ export function ChaptersPanel({
               )}
             </button>
           ) : (
-            <span style={{ width: '26px', height: '26px', flexShrink: 0 }} />
+            <span className="ch-check" style={{ width: '26px', height: '26px', flexShrink: 0 }} />
           )}
           <span
+            className="ch-num"
             style={{
               flexShrink: 0,
               fontFamily: 'var(--font-mono)',
@@ -281,7 +284,7 @@ export function ChaptersPanel({
             {pad2(displayIndex)}
           </span>
           <span
-            className="flex-1 truncate"
+            className="ch-title flex-1 truncate"
             style={{
               fontFamily: 'var(--font-ui)',
               fontSize: '15px',
@@ -294,6 +297,7 @@ export function ChaptersPanel({
             {ch.title}
           </span>
           <span
+            className="ch-date"
             style={{
               flexShrink: 0,
               fontFamily: 'var(--font-mono)',
@@ -312,7 +316,7 @@ export function ChaptersPanel({
   return (
     <section
       id="chapters"
-      className="scroll-mt-20 rounded-[var(--r-card)]"
+      className="chapters-panel scroll-mt-20 rounded-[var(--r-card)]"
       style={{
         padding: '30px 32px 32px',
         background: 'linear-gradient(180deg, var(--canvas-dark-250), var(--canvas-dark-200))',

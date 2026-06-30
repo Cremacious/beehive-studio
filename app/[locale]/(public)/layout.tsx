@@ -28,8 +28,17 @@ export default async function PublicLayout({
   // get the consistent top chrome they have everywhere else in the app. Guests
   // get the bare page (no nav) for now — a guest-mode nav with Sign in / Sign
   // up CTAs is a follow-up if it becomes worth it.
+  //
+  // When the AppNav is shown, it includes a fixed mobile bottom tab bar (56px +
+  // safe area). Reserve that space at the bottom on mobile — mirroring
+  // (app)/layout.tsx — so the bar never covers the last of the page content
+  // (e.g. the next-chapter nav, comments). Guests have no bar, so no padding.
   return (
-    <div className="min-h-screen bg-[#262728] flex flex-col">
+    <div
+      className={`min-h-screen bg-[#262728] flex flex-col${
+        session?.user ? ' max-md:pb-[calc(56px+env(safe-area-inset-bottom))]' : ''
+      }`}
+    >
       {session?.user && (
         <AppNav locale={locale} user={session.user} username={profile?.username ?? null} />
       )}

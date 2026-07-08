@@ -24,7 +24,7 @@ function buildHivesNudges(d: CommunityDashboardData): NudgeRow[] {
     leading: { kind: 'icon', glyph: '+', tone: 'brand' },
     t1: 'Start your own Hive',
     t2: 'Invite collaborators to your book',
-    cta: { label: 'Create', href: '/studio?createHive=1' },
+    cta: { label: 'Create', href: '/studio?newHive=1' },
   });
   if (d.fallbacks.trendingHive) {
     out.push({
@@ -46,7 +46,7 @@ function buildSparksNudges(d: CommunityDashboardData): NudgeRow[] {
       leading: { kind: 'icon', glyph: 'spark', tone: 'brand' },
       t1: `Today's prompt: "${d.fallbacks.todaysSpark.prompt.slice(0, 60)}${d.fallbacks.todaysSpark.prompt.length > 60 ? '...' : ''}"`,
       t2: `${d.fallbacks.todaysSpark.wordLimit ?? ''}${d.fallbacks.todaysSpark.wordLimit ? ' words · ' : ''}${d.fallbacks.todaysSpark.entriesCount} entries · ends ${d.fallbacks.todaysSpark.deadlineLabel}`,
-      cta: { label: 'Enter', href: `/sparks/${d.fallbacks.todaysSpark.id}` },
+      cta: { label: 'Enter', href: `/community/sparks/${d.fallbacks.todaysSpark.id}` },
     });
   }
   out.push({
@@ -62,7 +62,7 @@ function buildSparksNudges(d: CommunityDashboardData): NudgeRow[] {
       leading: { kind: 'icon', glyph: 'bolt', tone: 'brand' },
       t1: `${d.fallbacks.votingSpark.title} voting now`,
       t2: `${d.fallbacks.votingSpark.entriesCount} entries`,
-      cta: { label: 'Vote', href: `/sparks/${d.fallbacks.votingSpark.id}` },
+      cta: { label: 'Vote', href: `/community/sparks/${d.fallbacks.votingSpark.id}` },
     });
   }
   return out.slice(0, 3);
@@ -76,7 +76,7 @@ function buildListsNudges(d: CommunityDashboardData): NudgeRow[] {
       leading: { kind: 'cover-stack', covers: d.fallbacks.trendingList.covers },
       t1: d.fallbacks.trendingList.title,
       t2: 'Trending with curators in your taste',
-      cta: { label: 'Open', href: `/reading-lists/${d.fallbacks.trendingList.id}` },
+      cta: { label: 'Open', href: `/community/reading-lists/${d.fallbacks.trendingList.id}` },
     });
   }
   out.push({
@@ -110,7 +110,7 @@ function buildClubsNudges(d: CommunityDashboardData): NudgeRow[] {
       t2: c.bookTitle
         ? `Reading ${c.bookTitle} · ${c.memberCount} readers`
         : `${c.memberCount} readers`,
-      cta: { label: 'Join', href: `/clubs/${c.id}` },
+      cta: { label: 'Join', href: `/community/clubs/${c.id}` },
     });
   }
   out.push({

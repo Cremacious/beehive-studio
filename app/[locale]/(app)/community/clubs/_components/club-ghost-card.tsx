@@ -14,6 +14,11 @@ export type ClubGhostCardProps = {
   smallestOwnedClubId?: string | null
   /** Any owned club id used to deep-link books/discussions tabs */
   anyOwnedClubId?: string | null
+  /**
+   * When provided for the `create-club` variant, the CTA opens the create-club
+   * modal instead of navigating (create is a modal, not a route).
+   */
+  onCreate?: () => void
 }
 
 const COPY: Record<
@@ -126,6 +131,7 @@ export function ClubGhostCard({
   trendingClub,
   smallestOwnedClubId,
   anyOwnedClubId,
+  onCreate,
 }: ClubGhostCardProps) {
   const copy = COPY[variant]
   const title =
@@ -136,6 +142,7 @@ export function ClubGhostCard({
     smallestOwnedClubId,
     anyOwnedClubId,
   })
+  const opensModal = variant === 'create-club' && typeof onCreate === 'function'
 
   return (
     <div
@@ -202,13 +209,24 @@ export function ClubGhostCard({
         </div>
       ) : null}
 
-      <Link
-        href={href}
-        className="text-[12px] font-bold inline-flex items-center mt-1 self-start"
-        style={{ color: 'var(--brand)' }}
-      >
-        {copy.ctaLabel}
-      </Link>
+      {opensModal ? (
+        <button
+          type="button"
+          onClick={onCreate}
+          className="text-[12px] font-bold inline-flex items-center mt-1 self-start"
+          style={{ color: 'var(--brand)' }}
+        >
+          {copy.ctaLabel}
+        </button>
+      ) : (
+        <Link
+          href={href}
+          className="text-[12px] font-bold inline-flex items-center mt-1 self-start"
+          style={{ color: 'var(--brand)' }}
+        >
+          {copy.ctaLabel}
+        </Link>
+      )}
     </div>
   )
 }

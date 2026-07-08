@@ -42,4 +42,15 @@ describe('pickHiveGhosts', () => {
     })
     expect(ghosts).not.toContain('set-word-goal')
   })
+
+  it('ownCount=0 → excludes set-word-goal (no owned hive to deep-link to)', () => {
+    const ghosts = pickHiveGhosts({
+      tab: 'all',
+      realCount: 0,
+      ...ctx,
+      ownCount: 0,
+      hasSoloHive: false,
+    })
+    expect(ghosts).not.toContain('set-word-goal')
+  })
 })

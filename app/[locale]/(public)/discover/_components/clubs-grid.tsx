@@ -222,7 +222,7 @@ export async function ClubsGrid({ sp, locale }: Props) {
       ? {
           title: featuredRes.data.name,
           caption: 'Open + active',
-          href: `/${locale}/clubs/${featuredRes.data.id}`,
+          href: `/${locale}/community/clubs/${featuredRes.data.id}`,
         }
       : null
 

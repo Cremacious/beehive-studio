@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { ListCard, type ListCardData } from '@/components/list/list-card'
 import { ListGhostCard } from '@/components/list/list-ghost-card'
 import {
@@ -7,6 +8,7 @@ import {
   type ListGhostContext,
 } from '@/lib/lists/pick-list-ghosts'
 import { useDismissedListGhosts } from '@/lib/lists/use-dismissed-list-ghosts'
+import { CreateListModal } from './create-list-modal'
 
 type Props = {
   rows: ListCardData[]
@@ -49,6 +51,7 @@ export function ListsGrid({
     return `/${locale}/community/reading-lists${qs ? `?${qs}` : ''}`
   }
   const { dismissed, dismiss } = useDismissedListGhosts()
+  const [createOpen, setCreateOpen] = useState(false)
 
   const ghosts = pickListGhosts({
     ...ghostContext,
@@ -56,34 +59,44 @@ export function ListsGrid({
   })
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-      {rows.map((row) => (
-        <ListCard
-          key={row.id}
-          list={row}
-          size="md"
-          showSourceTag={true}
-          href={`/${locale}/community/reading-lists/${row.id}`}
-          tagHrefBuilder={tagHrefBuilder}
-        />
-      ))}
-      {ghosts.map((variant, i) => (
-        <ListGhostCard
-          key={`ghost-${variant}-${i}`}
-          variant={variant}
-          locale={locale}
-          onDismiss={() => dismiss(variant)}
-          trendingHint={
-            variant === 'trending-from-network' ? trendingHint : null
-          }
-          smallestOwnedListId={
-            variant === 'themed-list-nudge' ? smallestOwnedListId : null
-          }
-          highestFollowerListId={
-            variant === 'share-list-link' ? highestFollowerListId : null
-          }
-        />
-      ))}
-    </div>
+    <>
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        {rows.map((row) => (
+          <ListCard
+            key={row.id}
+            list={row}
+            size="md"
+            showSourceTag={true}
+            href={`/${locale}/community/reading-lists/${row.id}`}
+            tagHrefBuilder={tagHrefBuilder}
+          />
+        ))}
+        {ghosts.map((variant, i) => (
+          <ListGhostCard
+            key={`ghost-${variant}-${i}`}
+            variant={variant}
+            locale={locale}
+            onDismiss={() => dismiss(variant)}
+            onCreate={
+              variant === 'create-list' ? () => setCreateOpen(true) : undefined
+            }
+            trendingHint={
+              variant === 'trending-from-network' ? trendingHint : null
+            }
+            smallestOwnedListId={
+              variant === 'themed-list-nudge' ? smallestOwnedListId : null
+            }
+            highestFollowerListId={
+              variant === 'share-list-link' ? highestFollowerListId : null
+            }
+          />
+        ))}
+      </div>
+      <CreateListModal
+        locale={locale}
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+      />
+    </>
   )
 }

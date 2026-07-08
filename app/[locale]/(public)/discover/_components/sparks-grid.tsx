@@ -213,7 +213,7 @@ export async function SparksGrid({ sp, locale }: Props) {
       ? {
           title: featuredRes.data.title,
           caption: 'Open spark, deadline coming soon',
-          href: `/${locale}/sparks/${featuredRes.data.id}`,
+          href: `/${locale}/community/sparks/${featuredRes.data.id}`,
         }
       : null
 

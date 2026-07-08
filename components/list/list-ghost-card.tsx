@@ -15,6 +15,12 @@ export type ListGhostCardProps = {
   smallestOwnedListId?: string | null
   /** Required when variant === 'share-list-link' */
   highestFollowerListId?: string | null
+  /**
+   * When provided for the `create-list` variant, the CTA opens the create-list
+   * modal instead of navigating (the create flow is a modal, not a route, so a
+   * plain link would just reload the same page).
+   */
+  onCreate?: () => void
 }
 
 type IconCmp = ComponentType<{ size?: number; 'aria-hidden'?: boolean | 'true' | 'false' }>
@@ -92,7 +98,9 @@ function ctaHref(
     case 'create-list':
       return `/${locale}/community/reading-lists`
     case 'follow-curator':
-      return `/${locale}/discover?tab=people`
+      // No dedicated curator directory exists; Discover → Lists is where you
+      // browse lists and click through to follow their curators.
+      return `/${locale}/discover?tab=lists`
     case 'themed-list-nudge':
       return `/${locale}/community/reading-lists/${opts.smallestOwnedListId ?? ''}`
     case 'trending-from-network':
@@ -111,6 +119,7 @@ export function ListGhostCard({
   trendingHint,
   smallestOwnedListId,
   highestFollowerListId,
+  onCreate,
 }: ListGhostCardProps) {
   // Defensive null guards for variants that need parent-threaded context.
   if (variant === 'themed-list-nudge' && !smallestOwnedListId) return null
@@ -120,6 +129,13 @@ export function ListGhostCard({
   const copy = COPY[variant]
   const Icon = copy.Icon
   const href = ctaHref(variant, locale, { smallestOwnedListId, highestFollowerListId })
+  const opensModal = variant === 'create-list' && typeof onCreate === 'function'
+  const ctaClassName = 'mt-3 inline-flex items-center px-3 py-1.5 text-[12px] font-bold'
+  const ctaStyle = {
+    color: 'var(--brand)',
+    background: 'oklch(from var(--brand) l c h / 0.12)',
+    borderRadius: 'var(--r-pill)',
+  } as const
 
   return (
     <div
@@ -195,17 +211,20 @@ export function ListGhostCard({
         </div>
       </div>
 
-      <Link
-        href={href}
-        className="mt-3 inline-flex items-center px-3 py-1.5 text-[12px] font-bold"
-        style={{
-          color: 'var(--brand)',
-          background: 'oklch(from var(--brand) l c h / 0.12)',
-          borderRadius: 'var(--r-pill)',
-        }}
-      >
-        {copy.cta}
-      </Link>
+      {opensModal ? (
+        <button
+          type="button"
+          onClick={onCreate}
+          className={ctaClassName}
+          style={ctaStyle}
+        >
+          {copy.cta}
+        </button>
+      ) : (
+        <Link href={href} className={ctaClassName} style={ctaStyle}>
+          {copy.cta}
+        </Link>
+      )}
     </div>
   )
 }

@@ -241,7 +241,7 @@ export async function ListsGrid({ sp, locale }: Props) {
       ? {
           title: featuredRes.data.title,
           caption: 'Rising curator',
-          href: `/${locale}/reading-lists/${featuredRes.data.id}`,
+          href: `/${locale}/community/reading-lists/${featuredRes.data.id}`,
         }
       : null
 

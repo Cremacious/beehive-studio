@@ -1,9 +1,11 @@
 'use client'
 
+import { useState } from 'react'
 import { ClubHubCard } from './club-card'
 import { ClubGhostCard } from './club-ghost-card'
 import { pickClubGhosts } from './pick-club-ghosts'
 import { useDismissedClubGhosts } from './use-dismissed-club-ghosts'
+import { CreateClubModal } from './create-club-modal'
 import type { CommunityClubRow } from '@/lib/actions/clubs-hub.actions'
 
 type ClubsTab = 'all' | 'yours' | 'member' | 'suggested'
@@ -42,6 +44,7 @@ export function ClubsGrid({
   anyOwnedClubId,
 }: Props) {
   const { dismissed, dismiss } = useDismissedClubGhosts()
+  const [createOpen, setCreateOpen] = useState(false)
 
   const ghosts = pickClubGhosts({
     tab,
@@ -55,36 +58,46 @@ export function ClubsGrid({
   })
 
   return (
-    <div
-      className="grid gap-4"
-      style={{
-        gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))',
-        alignItems: 'stretch',
-        justifyItems: 'start',
-      }}
-    >
-      {clubs.map((c) => (
-        <ClubHubCard key={c.id} club={c} locale={locale} />
-      ))}
-      {ghosts.map((variant, i) => (
-        <ClubGhostCard
-          key={`ghost-${variant}-${i}`}
-          variant={variant}
-          locale={locale}
-          onDismiss={dismiss}
-          trendingClub={variant === 'join-suggested' ? trendingClub : null}
-          smallestOwnedClubId={
-            variant === 'invite-members' ? smallestOwnedClubId : null
-          }
-          anyOwnedClubId={
-            variant === 'set-current-book' ||
-            variant === 'add-to-queue' ||
-            variant === 'start-discussion'
-              ? anyOwnedClubId
-              : null
-          }
-        />
-      ))}
-    </div>
+    <>
+      <div
+        className="grid gap-4"
+        style={{
+          gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))',
+          alignItems: 'stretch',
+          justifyItems: 'start',
+        }}
+      >
+        {clubs.map((c) => (
+          <ClubHubCard key={c.id} club={c} locale={locale} />
+        ))}
+        {ghosts.map((variant, i) => (
+          <ClubGhostCard
+            key={`ghost-${variant}-${i}`}
+            variant={variant}
+            locale={locale}
+            onDismiss={dismiss}
+            onCreate={
+              variant === 'create-club' ? () => setCreateOpen(true) : undefined
+            }
+            trendingClub={variant === 'join-suggested' ? trendingClub : null}
+            smallestOwnedClubId={
+              variant === 'invite-members' ? smallestOwnedClubId : null
+            }
+            anyOwnedClubId={
+              variant === 'set-current-book' ||
+              variant === 'add-to-queue' ||
+              variant === 'start-discussion'
+                ? anyOwnedClubId
+                : null
+            }
+          />
+        ))}
+      </div>
+      <CreateClubModal
+        locale={locale}
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+      />
+    </>
   )
 }

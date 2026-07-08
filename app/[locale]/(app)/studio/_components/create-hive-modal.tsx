@@ -17,6 +17,12 @@ type Props = {
   onOpenChange: (open: boolean) => void
   prelockBookId?: string | null
   defaultBookId?: string | null
+  /**
+   * Skip the path picker and open straight into the details form for this path.
+   * Used by the "try a standalone hive" ghost CTA. Ignored when a book is
+   * pre-locked (that always opens the linked-book details form).
+   */
+  initialPath?: Path
 }
 
 const labelClass = 'text-[10px] font-mono uppercase tracking-[0.14em]'
@@ -34,13 +40,21 @@ export function CreateHiveModal({
   onOpenChange,
   prelockBookId,
   defaultBookId,
+  initialPath,
 }: Props) {
   const lockedId = prelockBookId ?? defaultBookId ?? null
+  // A standalone (or otherwise pre-chosen) initial path skips the picker and
+  // lands on the details form directly. 'new' is ignored here since it routes
+  // out to the book wizard rather than showing a details form.
+  const jumpPath =
+    !lockedId && initialPath && initialPath !== 'new' ? initialPath : null
 
   const router = useRouter()
   const { locale } = useParams<{ locale: string }>()
-  const [step, setStep] = useState<'pick' | 'details'>(lockedId ? 'details' : 'pick')
-  const [path, setPath] = useState<Path>('link')
+  const [step, setStep] = useState<'pick' | 'details'>(
+    lockedId || jumpPath ? 'details' : 'pick',
+  )
+  const [path, setPath] = useState<Path>(jumpPath ?? 'link')
   const [bookId, setBookId] = useState<string | null>(lockedId)
   const [pending, start] = useTransition()
   const [err, setErr] = useState<string | null>(null)
@@ -54,12 +68,12 @@ export function CreateHiveModal({
 
   useEffect(() => {
     if (!open) return
-    setStep(lockedId ? 'details' : 'pick')
-    setPath('link')
+    setStep(lockedId || jumpPath ? 'details' : 'pick')
+    setPath(jumpPath ?? 'link')
     setBookId(lockedId)
     setErr(null)
     setForm({ name: '', description: '', visibility: 'PRIVATE', discoverable: false })
-  }, [open, lockedId])
+  }, [open, lockedId, jumpPath])
 
   useEffect(() => {
     if (open && path === 'new' && step === 'pick') {

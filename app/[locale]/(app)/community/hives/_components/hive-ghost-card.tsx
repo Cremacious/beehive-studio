@@ -12,6 +12,12 @@ export type HiveGhostCardProps = {
   trendingHive?: { id: string; name: string } | null
   /** Smallest owned hive id used to deep-link manage/word-goals/buzz pages */
   hiveId?: string | null
+  /**
+   * When provided for the `create-hive` / `try-standalone` variants, the CTA
+   * opens the create-hive modal instead of navigating (create is a modal, not
+   * a route, so a plain link would just reload the same hub page).
+   */
+  onCreate?: () => void
 }
 
 const COPY: Record<
@@ -110,12 +116,16 @@ export function HiveGhostCard({
   onDismiss,
   trendingHive,
   hiveId,
+  onCreate,
 }: HiveGhostCardProps) {
   const copy = COPY[variant]
   const title =
     variant === 'join-open' && trendingHive ? trendingHive.name : copy.title
   const body = copy.body
   const href = ctaHref(variant, locale, { trendingHive, hiveId })
+  const opensModal =
+    (variant === 'create-hive' || variant === 'try-standalone') &&
+    typeof onCreate === 'function'
 
   return (
     <div
@@ -183,13 +193,24 @@ export function HiveGhostCard({
         ) : null}
       </div>
 
-      <Link
-        href={href}
-        className="text-[12px] font-bold inline-flex items-center"
-        style={{ color: 'var(--brand)' }}
-      >
-        {copy.ctaLabel}
-      </Link>
+      {opensModal ? (
+        <button
+          type="button"
+          onClick={onCreate}
+          className="text-[12px] font-bold inline-flex items-center self-start"
+          style={{ color: 'var(--brand)' }}
+        >
+          {copy.ctaLabel}
+        </button>
+      ) : (
+        <Link
+          href={href}
+          className="text-[12px] font-bold inline-flex items-center"
+          style={{ color: 'var(--brand)' }}
+        >
+          {copy.ctaLabel}
+        </Link>
+      )}
     </div>
   )
 }

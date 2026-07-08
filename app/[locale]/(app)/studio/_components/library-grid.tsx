@@ -47,20 +47,25 @@ export function LibraryGrid({ books, hives, locale, authorName }: Props) {
   const [createOpen, setCreateOpen] = useState(false)
   const [prelockBookId, setPrelockBookId] = useState<string | null>(null)
 
-  // Auto-open hive create modal when redirected from book wizard with ?createHive=<bookId>
+  // Auto-open hive create modal when redirected here.
+  //  - ?createHive=<bookId> pre-locks the modal to that book (book wizard flow).
+  //  - ?newHive=1 opens the modal generically at the path picker, with no
+  //    pre-locked book (community dashboard "Start your own Hive" nudge).
   const router = useRouter()
   const pathname = usePathname()
   const sp = useSearchParams()
   const createHiveParam = sp.get('createHive')
+  const newHiveParam = sp.get('newHive')
   useEffect(() => {
-    if (!createHiveParam) return
-    setPrelockBookId(createHiveParam)
+    if (!createHiveParam && !newHiveParam) return
+    setPrelockBookId(createHiveParam ?? null)
     setCreateOpen(true)
     const next = new URLSearchParams(sp.toString())
     next.delete('createHive')
+    next.delete('newHive')
     const qs = next.toString()
     router.replace(qs ? `${pathname}?${qs}` : pathname)
-  }, [createHiveParam, pathname, router, sp])
+  }, [createHiveParam, newHiveParam, pathname, router, sp])
 
   // Normalize books + hives into a single sortable/filterable list.
   const items = useMemo<LibraryItem[]>(() => {

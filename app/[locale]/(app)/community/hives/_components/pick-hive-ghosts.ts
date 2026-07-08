@@ -75,7 +75,10 @@ export function pickHiveGhosts(input: PickHiveGhostsInput): HiveGhostVariant[] {
     if (dismissed.has(v)) continue
     // Conditional filters
     if (v === 'invite-collaborators' && !hasSoloHive) continue
-    if (v === 'set-word-goal' && hasActiveWordGoal) continue
+    // set-word-goal deep-links to an owned hive's word-goals page; hide it when
+    // the viewer owns no hive (ownCount === 0) so the CTA never dead-ends on the
+    // hub, and when a goal is already active.
+    if (v === 'set-word-goal' && (hasActiveWordGoal || ownCount === 0)) continue
     if (v === 'set-buzz-up' && (hasRecentBuzz || ownCount === 0)) continue
     out.push(v)
   }

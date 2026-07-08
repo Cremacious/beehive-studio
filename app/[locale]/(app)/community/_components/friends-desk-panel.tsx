@@ -96,7 +96,7 @@ export function FriendsDeskPanel({ initial, locale }: { initial: FriendsDeskData
           <div style={{ fontSize: 15, color: 'var(--canvas-dark-ink-strong)', fontWeight: 700 }}>Your friends&apos; writing lives here.</div>
           <div style={{ fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 13, color: 'var(--canvas-dark-ink-muted)', maxWidth: 340 }}>Follow other writers and you&apos;ll see their chapters, sparks, and progress fill in below, chronologically.</div>
           <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>
-            <Link href={`/${locale}/discover?tab=writers`} style={{ padding: '8px 14px', fontSize: 12, fontWeight: 700, fontFamily: 'var(--font-mono, monospace)', textTransform: 'uppercase', letterSpacing: '0.05em', background: 'var(--brand)', color: 'var(--brand-ink, #1a1b1c)', borderRadius: 999, textDecoration: 'none' }}>Find writers</Link>
+            <Link href={`/${locale}/discover?tab=books`} style={{ padding: '8px 14px', fontSize: 12, fontWeight: 700, fontFamily: 'var(--font-mono, monospace)', textTransform: 'uppercase', letterSpacing: '0.05em', background: 'var(--brand)', color: 'var(--brand-ink, #1a1b1c)', borderRadius: 999, textDecoration: 'none' }}>Find writers</Link>
             <Link href={`/${locale}/community/friends`} style={{ padding: '8px 14px', fontSize: 12, fontFamily: 'var(--font-mono, monospace)', textTransform: 'uppercase', letterSpacing: '0.05em', background: 'rgba(255,255,255,0.06)', color: 'var(--canvas-dark-ink)', borderRadius: 999, textDecoration: 'none' }}>Invite a friend</Link>
           </div>
         </div>

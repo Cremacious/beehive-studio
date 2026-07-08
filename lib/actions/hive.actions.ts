@@ -41,6 +41,15 @@ export type HiveMemberRow = {
   user: { name: string | null; email: string; image: string | null }
 }
 
+export type HivePendingInvite = {
+  inviteId: string
+  userId: string
+  username: string | null
+  displayName: string | null
+  avatarUrl: string | null
+  createdAt: Date
+}
+
 async function getHiveCount(userId: string): Promise<number> {
   const rows = await db
     .select({ count: count() })
@@ -265,21 +274,27 @@ export async function inviteMemberByUsernameAction(hiveId: string, username: str
       where: eq(userProfiles.username, username),
       columns: { userId: true },
     })
-    if (!profile) return { success: false, error: 'User not found' }
+    if (!profile) return { success: false, error: 'USER_NOT_FOUND' }
 
     const hive = await db.query.hives.findFirst({ where: eq(hives.id, hiveId), columns: { ownerId: true } })
-    if (!hive) return { success: false, error: 'Hive not found' }
+    if (!hive) return { success: false, error: 'HIVE_NOT_FOUND' }
+
+    const alreadyMember = await db.query.hiveMembers.findFirst({
+      where: and(eq(hiveMembers.hiveId, hiveId), eq(hiveMembers.userId, profile.userId)),
+      columns: { id: true },
+    })
+    if (alreadyMember) return { success: false, error: 'INVITEE_ALREADY_MEMBER' }
+
+    const existing = await db.query.hiveInvites.findFirst({
+      where: and(eq(hiveInvites.hiveId, hiveId), eq(hiveInvites.inviteeId, profile.userId), eq(hiveInvites.status, 'PENDING')),
+    })
+    if (existing) return { success: false, error: 'ALREADY_INVITED' }
 
     const isPremium = await getUserPremiumStatus(hive.ownerId)
     const memberCount = await getHiveMemberCount(hiveId)
     if (!isPremium && memberCount >= FREE_HIVE_MEMBER_LIMIT) {
       return { success: false, error: 'FREE_LIMIT_REACHED' }
     }
-
-    const existing = await db.query.hiveInvites.findFirst({
-      where: and(eq(hiveInvites.hiveId, hiveId), eq(hiveInvites.inviteeId, profile.userId), eq(hiveInvites.status, 'PENDING')),
-    })
-    if (existing) return { success: false, error: 'Already invited' }
 
     await db.insert(hiveInvites).values({ hiveId, inviteeId: profile.userId })
     if (!(await shouldSkipNotification(profile.userId, 'HIVE_INVITE'))) {
@@ -303,6 +318,72 @@ export async function generateInviteLinkAction(hiveId: string): Promise<ActionRe
     const token = createId()
     await db.insert(hiveInvites).values({ hiveId, token, inviteeId: null })
     return { success: true, data: { token } }
+  })
+}
+
+/**
+ * Pending person-invites for a hive (invitee resolved, still PENDING). Powers
+ * the pending-invites panel on the members page so inviters can see the outcome
+ * of an invite. Link invites (inviteeId null) are excluded since they name no
+ * person. Admin-gated.
+ */
+export async function listHivePendingInvitesAction(
+  hiveId: string,
+): Promise<ActionResult<HivePendingInvite[]>> {
+  return runAction(async () => {
+    const userId = await requireAuth()
+    await assertHiveAdmin(hiveId, userId)
+
+    const { userProfiles } = await import('@/db/schema')
+    const rows = await db
+      .select({
+        inviteId: hiveInvites.id,
+        userId: hiveInvites.inviteeId,
+        username: userProfiles.username,
+        displayName: userProfiles.displayName,
+        avatarUrl: userProfiles.avatarUrl,
+        createdAt: hiveInvites.createdAt,
+      })
+      .from(hiveInvites)
+      .innerJoin(userProfiles, eq(userProfiles.userId, hiveInvites.inviteeId))
+      .where(and(eq(hiveInvites.hiveId, hiveId), eq(hiveInvites.status, 'PENDING')))
+      .orderBy(sql`${hiveInvites.createdAt} DESC`)
+
+    const invites: HivePendingInvite[] = rows.map((r) => ({
+      inviteId: r.inviteId,
+      userId: r.userId as string,
+      username: r.username,
+      displayName: r.displayName,
+      avatarUrl: r.avatarUrl,
+      createdAt: r.createdAt,
+    }))
+    return { success: true, data: invites }
+  })
+}
+
+/** Admin-side cancel of a pending invite (sets it DECLINED). */
+export async function revokeHiveInviteAction(
+  hiveId: string,
+  inviteId: string,
+): Promise<ActionResult> {
+  return runAction(async () => {
+    const userId = await requireAuth()
+    await assertHiveAdmin(hiveId, userId)
+
+    const result = await db
+      .update(hiveInvites)
+      .set({ status: 'DECLINED' })
+      .where(
+        and(
+          eq(hiveInvites.id, inviteId),
+          eq(hiveInvites.hiveId, hiveId),
+          eq(hiveInvites.status, 'PENDING'),
+        ),
+      )
+      .returning({ id: hiveInvites.id })
+
+    if (result.length === 0) return { success: false, error: 'NOT_PENDING' }
+    return { success: true, data: undefined }
   })
 }
 

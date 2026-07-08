@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import {
   UserPlus,
@@ -27,7 +28,7 @@ import {
 import type { FriendSummary } from '@/lib/actions/friendships.actions'
 import { FREE_HIVE_MEMBER_LIMIT } from '@/lib/premium'
 import { UpgradeModal } from '@/components/upgrade/upgrade-modal'
-import { toastNetworkError } from '@/lib/errors/notify'
+import { toastActionError, toastNetworkError } from '@/lib/errors/notify'
 
 const FRIEND_PAGE_SIZE = 5
 
@@ -192,7 +193,7 @@ function InviteLinkBlock({ hiveId, locale }: { hiveId: string; locale: string })
         )
         toast.success('Invite link generated')
       } else {
-        toast.error(result.error || 'Could not generate link')
+        toastActionError(result.error)
       }
     } catch {
       toastNetworkError()
@@ -385,6 +386,7 @@ function UsernameBlock({
   hiveId: string
   onLimitReached: () => void
 }) {
+  const router = useRouter()
   const [username, setUsername] = useState('')
   const [, startTransition] = useTransition()
   const [submitting, setSubmitting] = useState(false)
@@ -401,10 +403,11 @@ function UsernameBlock({
         if (result.success) {
           toast.success(`Invite sent to @${trimmed}`)
           setUsername('')
+          router.refresh()
         } else if (result.error === 'FREE_LIMIT_REACHED') {
           onLimitReached()
         } else {
-          toast.error(result.error || 'Could not send invite')
+          toastActionError(result.error)
         }
       } catch {
         toastNetworkError()
@@ -488,6 +491,7 @@ function FriendsBlock({
   memberUserIds: Set<string>
   onLimitReached: () => void
 }) {
+  const router = useRouter()
   const [query, setQuery] = useState('')
   const [visibleCount, setVisibleCount] = useState(FRIEND_PAGE_SIZE)
   const [invitedUserIds, setInvitedUserIds] = useState<Set<string>>(new Set())
@@ -535,10 +539,11 @@ function FriendsBlock({
         if (result.success) {
           setInvitedUserIds((prev) => new Set(prev).add(friend.userId))
           toast.success(`Invite sent to @${friend.username}`)
+          router.refresh()
         } else if (result.error === 'FREE_LIMIT_REACHED') {
           onLimitReached()
         } else {
-          toast.error(result.error || 'Could not send invite')
+          toastActionError(result.error)
         }
       } catch {
         toastNetworkError()

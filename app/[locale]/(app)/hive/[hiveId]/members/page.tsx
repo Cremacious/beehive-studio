@@ -1,11 +1,12 @@
 import { notFound } from 'next/navigation'
 import { headers } from 'next/headers'
 import { auth } from '@/lib/auth'
-import { getHiveAction } from '@/lib/actions/hive.actions'
+import { getHiveAction, listHivePendingInvitesAction } from '@/lib/actions/hive.actions'
 import { listFriendsAction } from '@/lib/actions/friendships.actions'
 import { HivePageShell } from '../_components/hive-page-shell'
 import { HiveMembers } from '../_components/hive-members'
 import { InviteModal } from '../_components/invite-modal'
+import { PendingInvitesPanel } from '../_components/pending-invites-panel'
 
 export default async function HiveMembersPage({ params }: { params: Promise<{ locale: string; hiveId: string }> }) {
   const { locale, hiveId } = await params
@@ -18,6 +19,13 @@ export default async function HiveMembersPage({ params }: { params: Promise<{ lo
   const canInvite = result.data.isOwner || result.data.isEditor
   const friendsResult = canInvite ? await listFriendsAction().catch(() => null) : null
   const friends = friendsResult?.success ? friendsResult.data : []
+
+  // Pending person-invites power the panel above the member list so the inviter
+  // can see the outcome of an invite. Only inviters (OWNER + MODERATOR) fetch it.
+  const invitesResult = canInvite
+    ? await listHivePendingInvitesAction(hiveId).catch(() => null)
+    : null
+  const pendingInvites = invitesResult?.success ? invitesResult.data : []
 
   const memberCount = result.data.members.length
   const memberUserIds = new Set(result.data.members.map((m) => m.userId))
@@ -39,6 +47,13 @@ export default async function HiveMembersPage({ params }: { params: Promise<{ lo
         ) : undefined
       }
     >
+      {canInvite ? (
+        <PendingInvitesPanel
+          hiveId={hiveId}
+          invites={pendingInvites}
+          canManage={canInvite}
+        />
+      ) : null}
       <HiveMembers
         hiveId={hiveId}
         members={result.data.members}

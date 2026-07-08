@@ -41,6 +41,8 @@ const KNOWN: Record<string, string> = {
   INTERNAL_ERROR: 'Something went wrong on our end. Please try again.',
   UNKNOWN: 'Something went wrong. Please try again.',
   ALREADY_MEMBER: "You're already a member.",
+  INVITEE_ALREADY_MEMBER: 'That person is already a member of this hive.',
+  ALREADY_INVITED: 'That person already has a pending invite.',
   NOT_MEMBER: "You're not a member of this.",
   NOT_PENDING: 'That request is no longer pending.',
   SELF_INVITE: "You can't invite yourself.",

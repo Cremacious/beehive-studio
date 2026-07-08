@@ -650,7 +650,8 @@ export type TaskRow = {
   creatorId: string
   status: string
   createdAt: Date
-  assignee: { name: string | null; image: string | null } | null
+  // Onboarding-chosen identity only (issue #55) — never the OAuth users table.
+  assignee: { displayName: string | null; username: string | null; avatarUrl: string | null } | null
 }
 
 export async function getTasksAction(hiveId: string): Promise<ActionResult<TaskRow[]>> {
@@ -659,10 +660,44 @@ export async function getTasksAction(hiveId: string): Promise<ActionResult<TaskR
   await assertHiveMember(hiveId, userId)
   const tasks = await db.query.hiveTasks.findMany({
     where: eq(hiveTasks.hiveId, hiveId),
-    with: { assignee: { columns: { name: true, image: true } } },
     orderBy: (t, { asc }) => [asc(t.createdAt)],
   })
-  return { success: true, data: tasks as TaskRow[] }
+
+  // Resolve assignee identity from userProfiles, not the OAuth users table.
+  const assigneeIds = [
+    ...new Set(tasks.map((t) => t.assigneeId).filter((id): id is string => id != null)),
+  ]
+  const profiles = assigneeIds.length
+    ? await db
+        .select({
+          userId: userProfiles.userId,
+          displayName: userProfiles.displayName,
+          username: userProfiles.username,
+          avatarUrl: userProfiles.avatarUrl,
+        })
+        .from(userProfiles)
+        .where(inArray(userProfiles.userId, assigneeIds))
+    : []
+  const profileMap = new Map(profiles.map((p) => [p.userId, p]))
+
+  const data: TaskRow[] = tasks.map((t) => ({
+    id: t.id,
+    hiveId: t.hiveId,
+    title: t.title,
+    description: t.description,
+    assigneeId: t.assigneeId,
+    creatorId: t.creatorId,
+    status: t.status,
+    createdAt: t.createdAt,
+    assignee: t.assigneeId
+      ? {
+          displayName: profileMap.get(t.assigneeId)?.displayName ?? null,
+          username: profileMap.get(t.assigneeId)?.username ?? null,
+          avatarUrl: profileMap.get(t.assigneeId)?.avatarUrl ?? null,
+        }
+      : null,
+  }))
+  return { success: true, data }
   })
 }
 

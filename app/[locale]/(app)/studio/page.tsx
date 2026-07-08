@@ -38,11 +38,11 @@ export default async function StudioPage({
 
   const books = booksResult.success ? booksResult.data : []
   const hives = hivesResult.success ? hivesResult.data : []
+  // Onboarding-chosen identity only (issue #55) — never the Google/OAuth
+  // session.user.name.
   const authorName =
     viewerProfile?.displayName ??
-    (viewerProfile?.username ? `@${viewerProfile.username}` : null) ??
-    session?.user?.name ??
-    null
+    (viewerProfile?.username ? `@${viewerProfile.username}` : null)
 
   if (books.length === 0 && hives.length === 0) {
     return <StudioEmptyState locale={locale} templates={templates} />

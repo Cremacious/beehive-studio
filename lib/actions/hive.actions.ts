@@ -38,7 +38,12 @@ export type HiveMemberRow = {
   userId: string
   role: 'OWNER' | 'MODERATOR' | 'CONTRIBUTOR' | 'BETA_READER'
   joinedAt: Date
-  user: { name: string | null; email: string; image: string | null }
+  // Onboarding-chosen identity only. NEVER the Google/OAuth `users.name` /
+  // `users.image` (issue #55). displayName is nullable; UI falls back to
+  // @username, never the OAuth name.
+  displayName: string | null
+  username: string | null
+  avatarUrl: string | null
 }
 
 export type HivePendingInvite = {
@@ -172,10 +177,25 @@ export async function getHiveAction(hiveId: string): Promise<ActionResult<{
     const hive = await db.query.hives.findFirst({ where: eq(hives.id, hiveId) })
     if (!hive) return { success: false, error: 'Hive not found' }
 
-    const members = await db.query.hiveMembers.findMany({
-      where: eq(hiveMembers.hiveId, hiveId),
-      with: { user: { columns: { name: true, email: true, image: true } } },
-    })
+    // Member identity comes from userProfiles (onboarding-chosen), NOT the
+    // OAuth `users.name` / `users.image` (issue #55). leftJoin so a member is
+    // never dropped if their profile row is somehow missing; UI falls back to
+    // @username / initial.
+    const { userProfiles } = await import('@/db/schema')
+    const members: HiveMemberRow[] = await db
+      .select({
+        id: hiveMembers.id,
+        hiveId: hiveMembers.hiveId,
+        userId: hiveMembers.userId,
+        role: hiveMembers.role,
+        joinedAt: hiveMembers.joinedAt,
+        displayName: userProfiles.displayName,
+        username: userProfiles.username,
+        avatarUrl: userProfiles.avatarUrl,
+      })
+      .from(hiveMembers)
+      .leftJoin(userProfiles, eq(userProfiles.userId, hiveMembers.userId))
+      .where(eq(hiveMembers.hiveId, hiveId))
 
     const myMember = members.find(m => m.userId === userId)
     const isOwner = hive.ownerId === userId
@@ -204,7 +224,7 @@ export async function getHiveAction(hiveId: string): Promise<ActionResult<{
       }
     }
 
-    return { success: true, data: { hive, members: members as HiveMemberRow[], isOwner, isEditor, book } }
+    return { success: true, data: { hive, members, isOwner, isEditor, book } }
   })
 }
 

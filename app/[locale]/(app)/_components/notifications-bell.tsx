@@ -434,7 +434,8 @@ export function NotificationsBell() {
                     <div>
                       <div style={{ fontSize: 13, lineHeight: 1.45, color: 'var(--canvas-dark-ink)' }}>
                         <b style={{ color: 'var(--canvas-dark-ink-strong)', fontWeight: 600 }}>
-                          {n.actor?.name ?? 'Someone'}
+                          {n.actor?.displayName ??
+                            (n.actor?.username ? `@${n.actor.username}` : 'Someone')}
                         </b>{' '}
                         {renderLabel(n)}
                       </div>

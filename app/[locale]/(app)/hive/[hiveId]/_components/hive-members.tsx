@@ -42,6 +42,12 @@ function formatJoinDate(d: Date | string): string {
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
 
+// Onboarding-chosen name only (issue #55). Falls back to @username, then a
+// neutral label — NEVER the Google/OAuth name.
+function memberName(m: HiveMemberRow): string {
+  return m.displayName ?? (m.username ? `@${m.username}` : 'Member')
+}
+
 export function HiveMembers({
   hiveId,
   members: initialMembers,
@@ -56,9 +62,9 @@ export function HiveMembers({
     const q = query.trim().toLowerCase()
     if (!q) return members
     return members.filter((m) => {
-      const name = (m.user.name ?? '').toLowerCase()
-      const email = (m.user.email ?? '').toLowerCase()
-      return name.includes(q) || email.includes(q)
+      const name = (m.displayName ?? '').toLowerCase()
+      const handle = (m.username ?? '').toLowerCase()
+      return name.includes(q) || handle.includes(q)
     })
   }, [members, query])
 
@@ -204,15 +210,15 @@ export function HiveMembers({
                         color: 'var(--brand)',
                       }}
                     >
-                      {m.user.image ? (
+                      {m.avatarUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
-                          src={m.user.image}
+                          src={m.avatarUrl}
                           alt=""
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        (m.user.name?.[0] ?? '?').toUpperCase()
+                        (memberName(m)[0] ?? '?').toUpperCase()
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -224,7 +230,7 @@ export function HiveMembers({
                           margin: 0,
                         }}
                       >
-                        {m.user.name ?? m.user.email}
+                        {memberName(m)}
                         {isSelf && (
                           <span
                             className="ml-2 font-mono uppercase"
@@ -248,7 +254,7 @@ export function HiveMembers({
                           margin: '2px 0 0',
                         }}
                       >
-                        {m.user.name ? `@${m.user.name}` : m.user.email}
+                        {m.displayName && m.username ? `@${m.username}` : ''}
                       </p>
                     </div>
                   </div>
@@ -316,7 +322,7 @@ export function HiveMembers({
                       <button
                         type="button"
                         onClick={() => handleRemove(m.userId)}
-                        aria-label={`Remove ${m.user.name ?? 'member'}`}
+                        aria-label={`Remove ${memberName(m)}`}
                         style={{
                           color: 'var(--canvas-dark-ink-muted)',
                           borderRadius: 'var(--r-btn)',
@@ -370,15 +376,15 @@ export function HiveMembers({
                     color: 'var(--brand)',
                   }}
                 >
-                  {m.user.image ? (
+                  {m.avatarUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={m.user.image}
+                      src={m.avatarUrl}
                       alt=""
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    (m.user.name?.[0] ?? '?').toUpperCase()
+                    (memberName(m)[0] ?? '?').toUpperCase()
                   )}
                 </div>
 
@@ -391,7 +397,7 @@ export function HiveMembers({
                       margin: 0,
                     }}
                   >
-                    {m.user.name ?? m.user.email}
+                    {memberName(m)}
                     {isSelf && (
                       <span
                         className="ml-2 font-mono uppercase"
@@ -413,7 +419,7 @@ export function HiveMembers({
                         onChange={(e) =>
                           handleRoleChange(m.userId, e.target.value as Role)
                         }
-                        aria-label={`Role for ${m.user.name ?? 'member'}`}
+                        aria-label={`Role for ${memberName(m)}`}
                         style={
                           {
                             ['--pill-accent' as string]: `var(${ROLE_TOKEN[role]})`,
@@ -476,7 +482,7 @@ export function HiveMembers({
                   <button
                     type="button"
                     onClick={() => handleRemove(m.userId)}
-                    aria-label={`Remove ${m.user.name ?? 'member'}`}
+                    aria-label={`Remove ${memberName(m)}`}
                     style={{
                       color: 'var(--canvas-dark-ink-muted)',
                       borderRadius: 'var(--r-btn)',

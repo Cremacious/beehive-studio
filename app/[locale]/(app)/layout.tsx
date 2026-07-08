@@ -26,17 +26,20 @@ export default async function AppLayout({
 
   const profile = await db.query.userProfiles.findFirst({
     where: eq(userProfiles.userId, session.user.id),
-    columns: { onboardingComplete: true, username: true, avatarUrl: true },
+    columns: { onboardingComplete: true, username: true, displayName: true, avatarUrl: true },
   })
 
   if (!profile?.onboardingComplete) redirect(`/${locale}/onboarding`)
 
-  // Read the avatar from userProfiles (the source of truth) rather than
-  // session.user.image, which better-auth caches in a signed cookie for 5
-  // minutes — so a freshly-uploaded avatar would otherwise lag in the navbar.
+  // Identity comes from userProfiles only (issue #55) — NEVER the Google/OAuth
+  // `session.user.name` / `session.user.image`. The name falls back to
+  // @username; the avatar falls back to the initial letter (no OAuth photo).
+  // userProfiles is also the source of truth better-auth's 5-minute cookie
+  // cache would otherwise lag on a fresh avatar upload.
   const navUser = {
     ...session.user,
-    image: profile.avatarUrl ?? session.user.image ?? null,
+    name: profile.displayName ?? (profile.username ? `@${profile.username}` : null),
+    image: profile.avatarUrl ?? null,
   }
 
   // Bottom padding on mobile clears the fixed bottom tab bar (issue #50);

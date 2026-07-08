@@ -6,6 +6,7 @@ import { useBookEditor } from '../book-editor-provider'
 import { BinderAddMenu } from './binder-add-menu'
 import { BinderItem } from './binder-item'
 import { BinderHiveFooter } from './binder-hive-footer'
+import { BinderExitButton } from './binder-exit-button'
 import { reorderBinderItemsAction } from '@/lib/actions/binder.actions'
 import { updateBookAction } from '@/lib/actions/book.actions'
 import type { BinderItemRow } from '@/lib/actions/binder.actions'
@@ -321,6 +322,7 @@ export function BinderTree({ mobile = false }: { mobile?: boolean } = {}) {
             </Link>
           </div>
           <BinderHiveFooter />
+          <BinderExitButton />
         </div>
 
       </aside>
